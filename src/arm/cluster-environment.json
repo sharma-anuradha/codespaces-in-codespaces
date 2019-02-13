@@ -1,0 +1,62 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "type": "string"
+    },
+    "keyVaultAccessPolicies": {
+      "type": "array",
+      "defaultValue": []
+    },
+    "resourceNamePrefix": {
+      "type": "string",
+      "defaultValue": "vssvc-"
+    },
+    "serviceName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "tenantId": "[subscription().tenantId]",
+    "env": "[parameters('env')]",
+    "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
+    "serviceName": "[parameters('serviceName')]",
+    "baseResourceName": "[concat(variables('resourceNamePrefix'),variables('serviceName'),'-',variables('env'))]",
+    "keyVaultName": "[concat(variables('baseResourceName'),'-kv')]",
+    "azureServiceDeploymentInternalId": "175890fa-bd80-4743-86d9-faed7653f078",
+    "baseKeyVaultAccessPolicies": [
+      {
+        "tenantId": "[variables('tenantId')]",
+        "objectId": "[variables('azureServiceDeploymentInternalId')]",
+        "permissions": {
+          "secrets": [
+            "Get",
+            "List"
+          ]
+        }
+      }
+    ],
+    "keyVaultAccessPolicies": "[concat(parameters('keyVaultAccessPolicies'),variables('baseKeyVaultAccessPolicies'))]"
+  },
+  "resources": [
+    {
+      "comments": "** Environment Key Vault **",
+      "type": "Microsoft.KeyVault/vaults",
+      "name": "[variables('keyVaultName')]",
+      "apiVersion": "2016-10-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[variables('tenantId')]",
+        "accessPolicies": "[variables('keyVaultAccessPolicies')]",
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true
+      }
+    }
+  ]
+}

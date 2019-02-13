@@ -1,0 +1,71 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "type": "string"
+    },
+    "instance": {
+      "type": "string"
+    },
+    "resourceNamePrefix": {
+      "type": "string",
+      "defaultValue": "vssvc-"
+    },
+    "serviceName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "tenantId": "[subscription().tenantId]",
+    "env": "[parameters('env')]",
+    "instance": "[parameters('instance')]",
+    "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
+    "serviceName": "[parameters('serviceName')]",
+    "baseResourceName": "[concat(variables('resourceNamePrefix'),variables('serviceName'),'-',variables('env'),'-',variables('instance'))]",
+    "trafficManagerName": "[concat(variables('baseResourceName'),'-tm')]"
+  },
+  "resources": [
+    {
+      "comments": "** Instance Global Traffic Manager **",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "[variables('trafficManagerName')]",
+      "apiVersion": "2018-04-01",
+      "location": "global",
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "Performance",
+        "dnsConfig": {
+          "relativeName": "[variables('trafficManagerName')]",
+          "ttl": 300
+        },
+        "endpoints": [],
+        "monitorConfig": {
+          "protocol": "TCP",
+          "port": 80,
+          "intervalInSeconds": 30,
+          "timeoutInSeconds": 10,
+          "toleratedNumberOfFailures": 3
+        },
+        "trafficViewEnrollmentStatus": "Disabled"
+      },
+      "dependsOn": []
+    }
+  ],
+  "outputs": {
+    "variables": {
+      "type": "object",
+      "value": {
+        "location": "[variables('location')]",
+        "tenantId": "[variables('tenantId')]",
+        "env": "[variables('env')]",
+        "instance": "[variables('instance')]",
+        "serviceName": "[variables('serviceName')]",
+        "resourceNamePrefix": "[variables('resourceNamePrefix')]",
+        "baseResourceName": "[variables('baseResourceName')]",
+        "trafficManagerName": "[variables('trafficManagerName')]"
+      }
+    }
+  }
+}

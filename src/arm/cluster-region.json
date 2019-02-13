@@ -1,0 +1,155 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "type": "string"
+    },
+    "clusterServicePrincipalAppId": {
+      "type": "string"
+    },
+    "clusterServicePrincipalSecret": {
+      "type": "string"
+    },
+    "instance": {
+      "type": "string"
+    },
+    "resourceNamePrefix": {
+      "type": "string",
+      "defaultValue": "vssvc-"
+    },
+    "serviceName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "tenantId": "[subscription().tenantId]",
+    "env": "[parameters('env')]",
+    "clusterServicePrincipalAppId": "[parameters('clusterServicePrincipalAppId')]",
+    "clusterServicePrincipalSecret": "[parameters('clusterServicePrincipalSecret')]",
+    "instance": "[parameters('instance')]",
+    "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
+    "serviceName": "[parameters('serviceName')]",
+    "baseResourceName": "[concat(variables('resourceNamePrefix'),variables('serviceName'),'-',variables('env'),'-',variables('instance'),'-',variables('location'))]",
+    "clusterName": "[concat(variables('baseResourceName'),'-cluster')]",
+    "vnetName": "[concat(variables('baseResourceName'),'-vnet')]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+    "vnetSubnetNameDefault": "default",
+    "vnetSubnetIdDefault": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('vnetName'),variables('vnetSubnetNameDefault'))]",
+    "vnetSubnetNameVirtualNodeAci": "virtual-node-aci",
+    "logAnalyticsWorkspaceName": "[concat(variables('baseResourceName'),'-laworkspace')]",
+    "logAnalyticsWorkspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces',variables('logAnalyticsWorkspaceName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[variables('logAnalyticsWorkspaceName')]",
+      "apiVersion": "2017-03-15-preview",
+      "location": "[variables('location')]",
+      "properties": {
+        "sku": {
+          "Name": "PerGB2018"
+        },
+        "features": {
+          "searchVersion": 1
+        }
+      }
+    },
+    {
+      "comments": "** Clsuter Virtual Network **",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2018-10-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/8"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnetSubnetNameDefault')]",
+            "properties": {
+              "addressPrefix": "10.240.0.0/16"
+            }
+          },
+          {
+            "name": "[variables('vnetSubnetNameVirtualNodeAci')]",
+            "properties": {
+              "addressPrefix": "10.241.0.0/16",
+              "delegations": [
+                {
+                  "name": "aciDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.ContainerInstance/containerGroups",
+                    "actions": [
+                      "Microsoft.Network/virtualNetworks/subnets/action"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "** Regional K8s Cluster **",
+      "type": "Microsoft.ContainerService/managedClusters",
+      "name": "[variables('clusterName')]",
+      "apiVersion": "2018-03-31",
+      "location": "[variables('location')]",
+      "properties": {
+        "kubernetesVersion": "1.11.5",
+        "dnsPrefix": "[variables('clusterName')]",
+        "agentPoolProfiles": [
+          {
+            "name": "agentpool",
+            "count": 3,
+            "vmSize": "Standard_DS2_v2",
+            "osDiskSizeGB": 30,
+            "storageProfile": "ManagedDisks",
+            "vnetSubnetID": "[variables('vnetSubnetIdDefault')]",
+            "maxPods": 30,
+            "osType": "Linux"
+          }
+        ],
+        "servicePrincipalProfile": {
+          "clientId": "[variables('clusterServicePrincipalAppId')]",
+          "secret": "[variables('clusterServicePrincipalSecret')]"
+        },
+        "addonProfiles": {
+          "aciConnectorLinux": {
+            "enabled": true,
+            "config": {
+              "SubnetName": "[variables('vnetSubnetNameVirtualNodeAci')]"
+            }
+          },
+          "httpApplicationRouting": {
+            "enabled": false
+          },
+          "omsagent": {
+            "enabled": true,
+            "config": {
+              "logAnalyticsWorkspaceResourceID": "[variables('logAnalyticsWorkspaceId')]"
+            }
+          }
+        },
+        "enableRBAC": true,
+        "networkProfile": {
+          "networkPlugin": "azure",
+          "serviceCidr": "10.0.0.0/16",
+          "dnsServiceIP": "10.0.0.10",
+          "dockerBridgeCidr": "172.17.0.1/16"
+        }
+      },
+      "dependsOn": [
+        "[variables('vnetId')]",
+        "[variables('logAnalyticsWorkspaceId')]"
+      ]
+    }
+  ]
+}
