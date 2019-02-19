@@ -2,4 +2,4 @@
 * text=auto
 
 # Never modify line endings in bash scripts
-*.sh text=lf -crlf
+*.sh text eol=lf
