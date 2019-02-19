@@ -225,9 +225,8 @@ function main()
     set_environment_vars || return $?
     dump_environment_vars
 
-    pushd "${parameters_templates_dir}" > /dev/null 
     last_error=0
-    for f in *.parameters.json; do
+    for f in ${parameters_templates_dir}/*.parameters.json; do
         [ -f "${f}" ] || break
         pre_process_parameter_json "${f}"
         last_error=$?
@@ -235,7 +234,6 @@ function main()
             break;
         fi 
     done
-    popd > /dev/null
     return $last_error
 }
 
