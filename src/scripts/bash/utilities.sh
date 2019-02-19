@@ -45,8 +45,8 @@ function get_debug()
 
 function add_option()
 {
-    long=
-    short=
+    local long=
+    local short=
 
     if [ ! -z ${1+x} ]; then
         long="${1}"
@@ -84,7 +84,7 @@ function get_long_options()
 
 function echo_warning()
 {
-    message=
+    local message=
     if [ ! -z ${1+x} ]; then
         message="Warning: $1"
     fi
@@ -93,7 +93,7 @@ function echo_warning()
 
 function echo_error()
 {
-    message=
+    local message=
     if [ ! -z ${1+x} ]; then
         message="Error: $1"
     fi

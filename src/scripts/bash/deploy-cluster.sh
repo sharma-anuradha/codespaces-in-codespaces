@@ -4,7 +4,8 @@
 set -o errexit -o pipefail -o noclobber -o nounset
 
 # Import utilities
-. "utilities.sh"
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+. "${script_dir}/utilities.sh"
 
 # Initialize script parameters
 add_option "subscription:" "s:"
@@ -97,16 +98,16 @@ extra_args=("${extra_args[@]/${dummy_arg}}")
 
 # Debug output for parameters
 echo_debug "Parameters: "
-echo_debug "  short options: $options"
-echo_debug "  long options: $longoptions"
-echo_debug "  subscription: $subscription"
-echo_debug "  prefix: $prefix"
-echo_debug "  name: $name"
-echo_debug "  env: $env"
-echo_debug "  instance: $instance"
-echo_debug "  location: $location"
-echo_debug "  keyvault_reader_objectid: $keyvault_reader_objectid"
-echo_debug "  keyvault_reader_tenantid: $keyvault_reader_tenantid"
+echo_debug "  short options: ${options}"
+echo_debug "  long options: ${longoptions}"
+echo_debug "  subscription: ${subscription}"
+echo_debug "  prefix: ${prefix}"
+echo_debug "  name: ${name}"
+echo_debug "  env: ${env}"
+echo_debug "  instance: ${instance}"
+echo_debug "  location: ${location}"
+echo_debug "  keyvault_reader_objectid: ${keyvault_reader_objectid}"
+echo_debug "  keyvault_reader_tenantid: ${keyvault_reader_tenantid}"
 echo_debug "  generate_only: ${generate_only}"
 echo_debug "  validate_only: ${validate_only}"
 echo_debug "  cluster_only: ${cluster_only}"
@@ -350,7 +351,6 @@ function generate_parameters()
 }
 
 # Script Variables
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 src_dir="$( cd "${script_dir}/../.." >/dev/null 2>&1 && pwd )"
 template_dir="${src_dir}/arm"
 parameters_dir="${template_dir}/parameters"

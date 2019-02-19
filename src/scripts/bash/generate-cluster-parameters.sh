@@ -4,7 +4,8 @@
 set -o errexit -o pipefail -o noclobber -o nounset
 
 # Import utilities
-. "utilities.sh"
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+. "${script_dir}/utilities.sh"
 
 # Script parameters
 # An option followed by a single colon ':' means that it *needs* an argument.
@@ -91,17 +92,17 @@ extra_args=("${extra_args[@]/${dummy_arg}}")
 
 # Debug output for parameters
 echo_debug "Parameters: "
-echo_debug "  short options: $options"
-echo_debug "  long options: $longoptions"
-echo_debug "  subscription: $subscription"
-echo_debug "  prefix: $prefix"
-echo_debug "  name: $name"
-echo_debug "  env: $env"
-echo_debug "  instance: $instance"
-echo_debug "  keyvault_rg: $keyvault_rg"
-echo_debug "  keyvault_name: $keyvault_name"
-echo_debug "  keyvault_reader_objectid: $keyvault_reader_objectid"
-echo_debug "  keyvault_reader_tenantid: $keyvault_reader_tenantid"
+echo_debug "  short options: ${options}"
+echo_debug "  long options: ${longoptions}"
+echo_debug "  subscription_id: ${subscription_id}"
+echo_debug "  prefix: ${prefix}"
+echo_debug "  name: ${name}"
+echo_debug "  env: ${env}"
+echo_debug "  instance: ${instance}"
+echo_debug "  keyvault_rg: ${keyvault_rg}"
+echo_debug "  keyvault_name: ${keyvault_name}"
+echo_debug "  keyvault_reader_objectid: ${keyvault_reader_objectid}"
+echo_debug "  keyvault_reader_tenantid: ${keyvault_reader_tenantid}"
 echo_debug "  verbose: ${verbose}"
 echo_debug "  debug: ${debug}"
 echo_debug "  help: ${help}"
@@ -158,11 +159,10 @@ if [[ -z ${keyvault_reader_tenantid} ]] ; then
 fi
 
 # Script Variables
-dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-echo_debug "dir=$dir"
-parameters_dir="$( cd "$dir/../../arm/parameters" >/dev/null 2>&1 && pwd )"
+echo_debug "script_dir=$script_dir"
+parameters_dir="$( cd "$script_dir/../../arm/parameters" >/dev/null 2>&1 && pwd )"
 echo_debug "parameters_dir: $parameters_dir"
-parameters_templates_dir="$( cd "$dir/../../arm/parameters-templates" >/dev/null 2>&1 && pwd )"
+parameters_templates_dir="$( cd "$script_dir/../../arm/parameters-templates" >/dev/null 2>&1 && pwd )"
 echo_debug "parameters_templates_dir: $parameters_templates_dir"
 
 echo_debug "Script variables:"
