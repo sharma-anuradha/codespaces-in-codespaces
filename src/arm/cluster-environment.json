@@ -10,8 +10,7 @@
       "defaultValue": []
     },
     "resourceNamePrefix": {
-      "type": "string",
-      "defaultValue": "vssvc-"
+      "type": "string"
     },
     "serviceName": {
       "type": "string"
@@ -23,7 +22,7 @@
     "env": "[parameters('env')]",
     "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
     "serviceName": "[parameters('serviceName')]",
-    "baseResourceName": "[concat(variables('resourceNamePrefix'),variables('serviceName'),'-',variables('env'))]",
+    "baseResourceName": "[concat(variables('resourceNamePrefix'),'-',variables('serviceName'),'-',variables('env'))]",
     "keyVaultName": "[concat(variables('baseResourceName'),'-kv')]",
     "azureServiceDeploymentInternalId": "175890fa-bd80-4743-86d9-faed7653f078",
     "baseKeyVaultAccessPolicies": [
