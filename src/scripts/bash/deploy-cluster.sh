@@ -338,7 +338,7 @@ function generate_parameters()
     get_debug && params="${params} -d"
     get_verbose && params="${params} -v"
     echo_verbose "calling generate-cluster-parameters.sh ${params} ..."
-    . "generate-cluster-parameters.sh" ${params} \
+    . "${script_dir}/generate-cluster-parameters.sh" ${params} \
         --subscription-id $subscription_id \
         --prefix $prefix \
         --name $name \
