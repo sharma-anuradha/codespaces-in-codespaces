@@ -2,33 +2,45 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "env": {
+    "appSpObjectId": {
       "type": "string"
     },
-    "keyVaultAccessPolicies": {
-      "type": "array",
-      "defaultValue": []
+    "devOpsSpObjectId": {
+      "type": "string"
+    },
+    "env": {
+      "type": "string"
     },
     "resourceNamePrefix": {
       "type": "string"
     },
     "serviceName": {
       "type": "string"
+    },
+    "teamObjectId": {
+      "type": "string"
+    },
+    "userObjectId": {
+      "type": "string"
     }
   },
   "variables": {
     "location": "[resourceGroup().location]",
     "tenantId": "[subscription().tenantId]",
+    "appSpObjectId": "[parameters('appSpObjectId')]",
+    "devOpsSpObjectId": "[parameters('devOpsSpObjectId')]",
     "env": "[parameters('env')]",
     "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
     "serviceName": "[parameters('serviceName')]",
+    "teamObjectId": "[parameters('teamObjectId')]",
+    "userObjectId": "[parameters('userObjectId')]",
     "baseResourceName": "[concat(variables('resourceNamePrefix'),'-',variables('serviceName'),'-',variables('env'))]",
     "keyVaultName": "[concat(variables('baseResourceName'),'-kv')]",
     "azureServiceDeploymentInternalId": "175890fa-bd80-4743-86d9-faed7653f078",
-    "baseKeyVaultAccessPolicies": [
+    "azureServiceDeploymentKeyVaultAccessPolicies": [
       {
-        "tenantId": "[variables('tenantId')]",
         "objectId": "[variables('azureServiceDeploymentInternalId')]",
+        "tenantId": "[variables('tenantId')]",
         "permissions": {
           "secrets": [
             "Get",
@@ -37,7 +49,70 @@
         }
       }
     ],
-    "keyVaultAccessPolicies": "[concat(parameters('keyVaultAccessPolicies'),variables('baseKeyVaultAccessPolicies'))]"
+    "devOpsSpKeyVaultAccessPolicies": [
+      {
+        "objectId": "[variables('devOpsSpObjectId')]",
+        "tenantId": "[variables('tenantId')]",
+        "permissions": {
+          "secrets": [
+            "Get",
+            "List",
+            "Set"
+          ]
+        }
+      }
+    ],
+    "appSpKeyVaultAccessPolicies": [
+      {
+        "objectId": "[variables('appSpObjectId')]",
+        "tenantId": "[variables('tenantId')]",
+        "permissions": {
+          "secrets": [
+            "Get",
+            "List"
+          ]
+        }
+      }
+    ],
+    "teamKeyVaultAccessPolicies":[
+      {
+        "objectId": "[variables('teamObjectId')]",
+        "tenantId": "[variables('tenantId')]",
+        "permissions": {
+          "secrets": [
+            "All"
+          ],
+          "keys": [
+            "All"
+          ],
+          "certificates": [
+            "All"
+          ]
+        }
+      }
+    ],
+    "userKeyVaultAccessPolicies": [
+      {
+        "objectId": "[variables('userObjectId')]",
+        "tenantId": "[variables('tenantId')]",
+        "permissions": {
+          "secrets": [
+            "All"
+          ],
+          "keys": [
+            "All"
+          ],
+          "certificates": [
+            "All"
+          ]
+        }
+      }
+    ],
+    "emptyArray": [],
+    "keyVaultAccessPolicies0": "[concat(variables('azureServiceDeploymentKeyVaultAccessPolicies'),variables('devOpsSpKeyVaultAccessPolicies'),variables('appSpKeyVaultAccessPolicies'))]",
+    "keyVaultAccessPolicies1": "[if(not(equals(variables('userObjectId'), variables('devOpsSpObjectId'))),variables('userKeyVaultAccessPolicies'),variables('emptyArray'))]",
+    "keyVaultAccessPolicies2": "[if(equals(variables('env'), 'dev'), variables('teamKeyVaultAccessPolicies'),variables('emptyArray'))]",
+    "keyVaultAccessPolicies": "[concat(variables('keyVaultAccessPolicies0'),variables('keyVaultAccessPolicies1'),variables('keyVaultAccessPolicies2'))]"
   },
   "resources": [
     {

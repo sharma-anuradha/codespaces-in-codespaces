@@ -29,6 +29,9 @@
     },
     "serviceName": {
       "value": "${SERVICE_NAME}"
+    },
+    "stampName": {
+      "value": "${SERVICE_STAMP}"
     }
   }
 }

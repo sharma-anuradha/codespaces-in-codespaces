@@ -4,6 +4,8 @@
 # saner programming env: these switches turn some bugs into errors
 set -o errexit -o pipefail -o noclobber -o nounset
 
+# For colors see https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
+color_info="\e[1;34m"       # blue
 color_debug="\e[1;30m"      # dark gray
 color_error="\e[0;31m"      # red
 color_verbose="\e[1;36m"    # cyan
@@ -12,14 +14,17 @@ color_normal="\e[0m"        # (unset)
 
 function init_utilities()
 {
+    init_flag=1
     verbose=0
     debug=0
+    dry_run=0
     short_options=""
     long_options=""
 }
 
 function set_verbose()
 {
+    echo_debug "$0::${FUNCNAME[0]} $1"
     verbose=$1
 }
 
@@ -33,12 +38,27 @@ function get_verbose()
 
 function set_debug()
 {
+    echo_debug "$0::${FUNCNAME[0]} $1"
     debug=$1
 }
 
 function get_debug()
 {
     if [ $debug -eq 1 ]; then
+        return 0
+    fi
+    return 1
+}
+
+function set_dry_run()
+{
+    echo_debug "$0::${FUNCNAME[0]} $1"
+    dry_run=$1
+}
+
+function get_dry_run()
+{
+    if [ $dry_run -eq 1 ]; then
         return 0
     fi
     return 1
@@ -55,6 +75,8 @@ function add_option()
     if [ ! -z ${2+x} ]; then
         short="${2}"
     fi
+
+    echo_debug "$0::${FUNCNAME[0]} $long $short"
 
     if [ ! -z ${long} ]; then
         if [ -z ${long_options} ]; then
@@ -92,6 +114,16 @@ function echo_warning()
     echo -e "${color_warning}${message}${color_normal}"
 }
 
+function echo_info()
+{
+    local message=
+    if [ ! -z ${1+x} ]; then
+        message="$1"
+    fi
+    echo -e "${color_info}${message}${color_normal}" >&2
+}
+
+
 function echo_error()
 {
     local message=
@@ -106,7 +138,7 @@ function echo_verbose()
     get_verbose || return 0
     local message=
     if [ ! -z ${1+x} ]; then
-        message="Verbose: $1"
+        message="VERBOSE: $1"
     fi
     echo -e "${color_verbose}${message}${color_normal}"
 }
@@ -116,11 +148,27 @@ function echo_debug()
     get_debug || return 0
     local message=
     if [ ! -z ${1+x} ]; then
-        message="Debug: $1"
+        message="DEBUG: $1"
     fi
     echo -e "${color_debug}${message}${color_normal}"
 }
 
+function exec_verbose()
+{
+    echo_debug "$0::${FUNCNAME[0]}"
+    local command="$@"
+    echo_verbose "${command}"
+    $command
+}
+
+function exec_dry_run()
+{
+    echo_debug "$0::${FUNCNAME[0]}"
+    local command="$@"
+    get_dry_run && echo_verbose "DRY-RUN: ${command}"
+    get_dry_run && return 0
+    exec_verbose "${command}"
+}
 
 function test_utilities()
 {
@@ -156,12 +204,16 @@ function test_utilities()
     echo "get_short_options '$(get_short_options)' expected 's:,h'"
 }
 
-init_utilities
+# Default initialization happens on first import
+if [ -z ${init_flag+x} ]; then
+    init_utilities
+fi
 
-# testing
+# Testing
 if [ ! -z ${1+x} ]; then
     if [ "${1}" == "test" ]; then
         test_utilities
+        # Reset options after test
         init_utilities
     fi
 fi

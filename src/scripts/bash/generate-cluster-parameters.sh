@@ -27,17 +27,26 @@ env=
 add_option "instance:" "i:"
 instance=
 
+add_option "stamp:" "m:"
+stamp=
+
 add_option "keyvault-resource-group:"
 keyvault_rg=
 
 add_option "keyvault-name:"
 keyvault_name=
 
-add_option "keyvault-reader-object-id:"
-keyvault_reader_objectid=
+add_option "app-sp-id:"
+app_sp_objectid=
 
-add_option "keyvault-reader-tenant-id:"
-keyvault_reader_tenantid=
+add_option "devops-sp-id:"
+devops_sp_objectid=
+
+add_option "team-id:"
+team_objectid=
+
+add_option "user-id:"
+user_objectid=
 
 add_option "help" "h"
 help=0
@@ -71,14 +80,20 @@ do
             env="$1";;
         -i|--instance) shift
             instance="$1";;
+        -m|--stamp) shift
+            stamp="$1";;
         --keyvault-resource-group) shift
             keyvault_rg="$1";;
         --keyvault-name) shift
             keyvault_name="$1";;
-        --keyvault-reader-object-id) shift
-            keyvault_reader_objectid="$1";;
-        --keyvault-reader-tenant-id) shift
-            keyvault_reader_tenantid="$1";;
+        --app-sp-id) shift
+            app_sp_objectid="$1";; 
+        --devops-sp-id) shift
+            devops_sp_objectid="$1";; 
+        --team-id) shift
+            team_objectid="$1";; 
+        --user-id) shift
+            user_objectid="$1";; 
         -h|--help) help=1;;
         -d|--debug) set_debug 1;;
         -v|--verbose) set_verbose 1;;
@@ -100,10 +115,13 @@ echo_debug "  prefix: ${prefix}"
 echo_debug "  name: ${name}"
 echo_debug "  env: ${env}"
 echo_debug "  instance: ${instance}"
+echo_debug "  stamp: ${stamp}"
 echo_debug "  keyvault_rg: ${keyvault_rg}"
 echo_debug "  keyvault_name: ${keyvault_name}"
-echo_debug "  keyvault_reader_objectid: ${keyvault_reader_objectid}"
-echo_debug "  keyvault_reader_tenantid: ${keyvault_reader_tenantid}"
+echo_debug "  app_sp_objectid: ${app_sp_objectid}"
+echo_debug "  devops_sp_objectid: ${devops_sp_objectid}"
+echo_debug "  team_objectid: ${team_objectid}"
+echo_debug "  user_objectid: ${user_objectid}"
 echo_debug "  verbose: ${verbose}"
 echo_debug "  debug: ${debug}"
 echo_debug "  help: ${help}"
@@ -115,13 +133,14 @@ if [ $help != 0 ]; then
     echo " -n, --name             the service base name"
     echo " -e, --env              the service environment, 'dev', 'ppe', 'prod', 'rel'"
     echo " -i, --instance         the service instance name, defaults to environment name"
+    echo " -t, --stamp            the service stamp name"
     echo "     --keyvault-resource-group"
     echo "                        the keyvault resource group"
     echo "     --keyvault-name    the keyvault name"
-    echo "     --keyvault-reader-object-id"
-    echo "                        the keyvault reader service principal object id"
-    echo "     --keyvault-reader-tenant-id"
-    echo "                        the keyvault reader service principal tenant id"
+    echo "     --app-sp-id        the application service principal id"
+    echo "     --devops-sp-id     the devops service principal id"
+    echo "     --team-id          the team ad group id"
+    echo "     --user-id          the current user ad user id"
     echo " -v, --verbose          emit verbose info"
     echo " -d, --debug            emit debug info"
     echo " -h, --help             show help"
@@ -144,6 +163,9 @@ if [[ -z ${instance} ]] ; then
     instance=$env
     echo_warning "Parameter --instance (-i) is not specified, using '${instance}'"
 fi
+if [[ -z ${stamp} ]] ; then
+    echo_error "Parameter --stamp (-m) is required" && exit 1
+fi
 if [[ -z ${keyvault_rg} ]] ; then
     keyvault_rg="${prefix}-${name}-${env}"
     echo_warning "Parameter --keyvault-resource-group is not specified, using '${keyvault_rg}'"
@@ -152,11 +174,17 @@ if [[ -z ${keyvault_name} ]] ; then
     keyvault_name="${keyvault_rg}-kv"
     echo_warning "Parameter --keyvault-name is not specified, using '${keyvault_name}'"
 fi
-if [[ -z ${keyvault_reader_objectid} ]] ; then
-    echo_error "Parameter --keyvault-reader-object-id is required" && exit 1
+if [[ -z ${app_sp_objectid} ]] ; then
+    echo_error "Parameter --app-sp-id is required" && exit 1
 fi
-if [[ -z ${keyvault_reader_tenantid} ]] ; then
-    echo_error "Parameter --keyvault-reader-tenant-id is required" && exit 1
+if [[ -z ${devops_sp_objectid} ]] ; then
+    echo_error "Parameter --devops-sp-id is required" && exit 1
+fi
+if [[ -z ${team_objectid} ]] ; then
+    echo_error "Parameter --team-id is required" && exit 1
+fi
+if [[ -z ${user_objectid} ]] ; then
+    echo_error "Parameter --user-id is required" && exit 1
 fi
 
 # Script Variables
@@ -179,10 +207,13 @@ dump_environment_vars()
     echo_verbose "  SERVICE_NAME=$SERVICE_NAME"
     echo_verbose "  SERVICE_ENVIRONMENT=$SERVICE_ENVIRONMENT"
     echo_verbose "  SERVICE_INSTANCE=$SERVICE_INSTANCE"
+    echo_verbose "  SERVICE_STAMP=$SERVICE_STAMP"
     echo_verbose "  SERVICE_KEYVAULT_RESOURCE_GROUP=$SERVICE_KEYVAULT_RESOURCE_GROUP"
     echo_verbose "  SERVICE_KEYVAULT_NAME=$SERVICE_KEYVAULT_NAME"
-    echo_verbose "  SERVICE_KEYVAULT_READER_OBJECTID=$SERVICE_KEYVAULT_READER_OBJECTID"
-    echo_verbose "  SERVICE_KEYVAULT_READER_TENANTID=$SERVICE_KEYVAULT_READER_TENANTID"
+    echo_verbose "  SERVICE_APP_SP_OBJECTID=$app_sp_objectid"
+    echo_verbose "  SERVICE_DEVOPS_SP_OBJECTID=$devops_sp_objectid"
+    echo_verbose "  SERVICE_TEAM_OBJECTID=$team_objectid"
+    echo_verbose "  SERVICE_USER_OBJECTID=$user_objectid"
 }
 
 set_environment_vars()
@@ -193,10 +224,13 @@ set_environment_vars()
     export SERVICE_NAME=$name
     export SERVICE_ENVIRONMENT=$env
     export SERVICE_INSTANCE=$instance
+    export SERVICE_STAMP=$stamp
     export SERVICE_KEYVAULT_RESOURCE_GROUP=$keyvault_rg
     export SERVICE_KEYVAULT_NAME=$keyvault_name
-    export SERVICE_KEYVAULT_READER_OBJECTID=$keyvault_reader_objectid 
-    export SERVICE_KEYVAULT_READER_TENANTID=$keyvault_reader_tenantid
+    export SERVICE_APP_SP_OBJECTID=$app_sp_objectid
+    export SERVICE_DEVOPS_SP_OBJECTID=$devops_sp_objectid
+    export SERVICE_TEAM_OBJECTID=$team_objectid
+    export SERVICE_USER_OBJECTID=$user_objectid
 }
 
 function pre_process_parameter_json()
@@ -211,12 +245,10 @@ function pre_process_parameter_json()
         rm "${output_filename}"
     fi
     envsubst < $input_filename > $output_filename
-    echo "${input_filename} --> ${output_filename}"
+    echo_info "ARM parameters generated from '${input_filename}' to '${output_filename}'"
     echo_verbose "${output_filename}:\n$(cat "${output_filename}")"
 
     return 0
-    # echo_error "${f}"
-    # return 1
 }
 
 function main()

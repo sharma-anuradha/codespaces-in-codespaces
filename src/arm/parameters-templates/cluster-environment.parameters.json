@@ -2,36 +2,26 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "appSpObjectId": {
+      "value": "${SERVICE_APP_SP_OBJECTID}"
+    },
+    "devOpsSpObjectId": {
+      "value": "${SERVICE_DEVOPS_SP_OBJECTID}"
+    },
     "env": {
       "value": "${SERVICE_ENVIRONMENT}"
-    },
-    "keyVaultAccessPolicies": {
-      "value": [
-        {
-          "objectId": "${SERVICE_KEYVAULT_READER_OBJECTID}",
-          "tenantId": "${SERVICE_KEYVAULT_READER_TENANTID}",
-          "permissions": {
-            "keys": [
-              "Get",
-              "List"
-            ],
-            "secrets": [
-              "Get",
-              "List"
-            ],
-            "certificates": [
-              "Get",
-              "List"
-            ]
-          }
-        }
-      ]
     },
     "resourceNamePrefix": {
       "value": "${SERVICE_PREFIX}"
     },
     "serviceName": {
       "value": "${SERVICE_NAME}"
+    },
+    "teamObjectId": {
+      "value": "${SERVICE_TEAM_OBJECTID}"
+    },
+    "userObjectId": {
+      "value": "${SERVICE_USER_OBJECTID}"
     }
   }
 }

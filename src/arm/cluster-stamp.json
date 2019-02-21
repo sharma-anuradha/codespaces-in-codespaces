@@ -20,6 +20,9 @@
     },
     "serviceName": {
       "type": "string"
+    },
+    "stampName": {
+      "type": "string"
     }
   },
   "variables": {
@@ -31,7 +34,8 @@
     "instance": "[parameters('instance')]",
     "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
     "serviceName": "[parameters('serviceName')]",
-    "baseResourceName": "[concat(variables('resourceNamePrefix'),variables('serviceName'),'-',variables('env'),'-',variables('instance'),'-',variables('location'))]",
+    "stampName": "[parameters('stampName')]",
+    "baseResourceName": "[concat(variables('resourceNamePrefix'),variables('serviceName'),'-',variables('env'),'-',variables('instance'),'-',variables('stampName'))]",
     "clusterName": "[concat(variables('baseResourceName'),'-cluster')]",
     "vnetName": "[concat(variables('baseResourceName'),'-vnet')]",
     "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
