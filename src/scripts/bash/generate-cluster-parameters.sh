@@ -5,8 +5,9 @@
 set -o errexit -o pipefail -o noclobber -o nounset
 
 # Import utilities
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-. "${script_dir}/utilities.sh"
+generate_cluster_script_name="$( basename "${BASH_SOURCE}" )"
+generate_cluster_script_dir="$( cd "$( dirname "${BASH_SOURCE}" )" >/dev/null 2>&1 && pwd )"
+. "${generate_cluster_script_dir}/utilities.sh"
 
 # Script parameters
 # An option followed by a single colon ':' means that it *needs* an argument.
@@ -122,9 +123,9 @@ echo_debug "  app_sp_objectid: ${app_sp_objectid}"
 echo_debug "  devops_sp_objectid: ${devops_sp_objectid}"
 echo_debug "  team_objectid: ${team_objectid}"
 echo_debug "  user_objectid: ${user_objectid}"
-echo_debug "  verbose: ${verbose}"
-echo_debug "  debug: ${debug}"
 echo_debug "  help: ${help}"
+echo_debug "  verbose: ${utilities_verbose}"
+echo_debug "  debug: ${utilities_debug}"
 
 if [ $help != 0 ]; then
     echo "usage $(basename $0) [options]"
@@ -188,10 +189,10 @@ if [[ -z ${user_objectid} ]] ; then
 fi
 
 # Script Variables
-echo_debug "script_dir=$script_dir"
-parameters_dir="$( cd "$script_dir/../../arm/parameters" >/dev/null 2>&1 && pwd )"
+echo_debug "generate_cluster_script_dir=$generate_cluster_script_dir"
+parameters_dir="$( cd "$generate_cluster_script_dir/../../arm/parameters" >/dev/null 2>&1 && pwd )"
 echo_debug "parameters_dir: $parameters_dir"
-parameters_templates_dir="$( cd "$script_dir/../../arm/parameters-templates" >/dev/null 2>&1 && pwd )"
+parameters_templates_dir="$( cd "$generate_cluster_script_dir/../../arm/parameters-templates" >/dev/null 2>&1 && pwd )"
 echo_debug "parameters_templates_dir: $parameters_templates_dir"
 
 echo_debug "Script variables:"
@@ -200,7 +201,7 @@ echo_debug "  parameters_templates_dir=${parameters_templates_dir}"
 
 dump_environment_vars()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${generate_cluster_script_name}::${FUNCNAME[0]}"
     echo_verbose "Substitution environment variables:"
     echo_verbose "  SERVICE_SUBSCRIPTION=$SERVICE_SUBSCRIPTION"
     echo_verbose "  SERVICE_PREFIX=$SERVICE_PREFIX"
@@ -218,7 +219,7 @@ dump_environment_vars()
 
 set_environment_vars()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${generate_cluster_script_name}::${FUNCNAME[0]}"
     export SERVICE_SUBSCRIPTION=$subscription_id
     export SERVICE_PREFIX=$prefix
     export SERVICE_NAME=$name
@@ -235,7 +236,7 @@ set_environment_vars()
 
 function pre_process_parameter_json()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${generate_cluster_script_name}::${FUNCNAME[0]}"
     echo_verbose "Pre-processing ${f}"
     
     filename="$(basename "${f}")"
@@ -253,7 +254,7 @@ function pre_process_parameter_json()
 
 function main()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${generate_cluster_script_name}::${FUNCNAME[0]}"
     set_environment_vars || return $?
     dump_environment_vars
 

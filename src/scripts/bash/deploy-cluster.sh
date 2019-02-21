@@ -1,12 +1,12 @@
 #!/bin/bash
-# renormalize
 
 # saner programming env: these switches turn some bugs into errors
 set -o errexit -o pipefail -o noclobber -o nounset
 
 # Import utilities
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-. "${script_dir}/utilities.sh"
+deploy_cluster_script_name="$( basename "${BASH_SOURCE}" )"
+deploy_cluster_script_dir="$( cd "$( dirname "${BASH_SOURCE}" )" >/dev/null 2>&1 && pwd )"
+. "${deploy_cluster_script_dir}/utilities.sh"
 
 # Initialize script parameters
 add_option "subscription:" "s:"
@@ -109,10 +109,10 @@ echo_debug "  location: ${location}"
 echo_debug "  team_group_name: ${team_group_name}"
 echo_debug "  validate_only: ${validate_only}"
 echo_debug "  cluster_only: ${cluster_only}"
-echo_debug "  dry_run: ${dry_run}"
 echo_debug "  help: ${help}"
-echo_debug "  verbose: ${verbose}"
-echo_debug "  debug: ${debug}"
+echo_debug "  dry_run: ${utilities_dry_run}"
+echo_debug "  verbose: ${utilities_verbose}"
+echo_debug "  debug: ${utilities_debug}"
 
 if [ $help != 0 ] ; then
     echo "usage $(basename $0) [options]"
@@ -163,7 +163,7 @@ fi
 
 function create_resource_group()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     local resource_group="${1}"
     local location="${2}"
     echo_info "Creating resource group '$resource_group' in '$location'"
@@ -175,13 +175,13 @@ function create_resource_group()
 
 function create_instance_resource_group()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     create_resource_group $instance_rg $location
 }
 
 function create_environment_keyvault()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     local resource_group=${keyvault_rg}
     local vault_name=${keyvault_name}
     local enabledForDeployment="true"
@@ -198,7 +198,7 @@ function create_environment_keyvault()
 
 function az_group_deployment_create()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     local arm_template_name="${1}"
     local resource_group="${2}"
     local template_file="${template_dir}/${arm_template_name}.json"
@@ -209,7 +209,7 @@ function az_group_deployment_create()
 
 function init_cluster_envrionment_base_resources()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
 
     echo_info "Creating environment groups, keyvault, service principals, and RBAC"
  
@@ -242,28 +242,28 @@ function init_cluster_envrionment_base_resources()
 
 function deploy_cluster_environment_resources()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     echo_info "Deploying cluster environment ARM resources"
     az_group_deployment_create "cluster-environment" "${environment_rg}"
 }
 
 function deploy_cluster_instance_resources()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     echo_info "Deploying cluster instance ARM resources"
     az_group_deployment_create "cluster-instance" "${instance_rg}"
 }
 
 function deploy_cluster_stamp_resources()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     echo_info "Deploying cluster stamp ARM resources"
     az_group_deployment_create "cluster-stamp" "${instance_rg}"
 }
 
 function az_keyvault_secret_set()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     local name="${1}"
     local value="${2}"
     local expires="${3:-''}"
@@ -279,7 +279,7 @@ function az_keyvault_secret_set()
 
 function az_keyvault_secret_set_if_unset()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     local name="${1}"
     local value="${2}"
     local expires="${3}"
@@ -299,7 +299,7 @@ function get_sp_name()
 
 function ensure_service_principal()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     local base_name="${1}"
     local secret_base_name="${base_name}-sp"
     local sp_name="$(get_sp_name ${base_name})" || return $?
@@ -369,7 +369,7 @@ function ensure_service_principal()
 
 function az_role_assignment_create_scope_resource_group()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     local base_name="${1}"
     local resource_group="${2}"
     local role="${3}"
@@ -385,7 +385,7 @@ function az_role_assignment_create_scope_resource_group()
 
 function az_aks_get_credentials()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     echo_info "Getting the AKS credentials for ${cluster_name}"
     local cluster_name="${1}"
     local cluster_rg="${2}"
@@ -395,7 +395,7 @@ function az_aks_get_credentials()
 
 function az_account_set()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
 
     if [[ -z $subscription ]] ; then
         echo_error "Subscription is not set."
@@ -414,7 +414,7 @@ function az_account_set()
 
 function kubectl_apply()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
     local file="${1}"
     local kubectl_command="kubectl apply -f $file"
     exec_dry_run $kubectl_command
@@ -422,14 +422,14 @@ function kubectl_apply()
 
 function generate_parameters()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
 
     echo_info "Generating cluster parameters files"
 
     # parameters require object ids
     set_ad_object_ids || return $?
     
-    exec_verbose . "${script_dir}/generate-cluster-parameters.sh" \
+    exec_verbose . "${deploy_cluster_script_dir}/generate-cluster-parameters.sh" \
         --subscription-id $subscription_id \
         --prefix $prefix \
         --name $name \
@@ -466,7 +466,7 @@ function az_ad_group_objectid()
 
 function set_ad_object_ids()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
 
     echo_verbose "getting user object id"
     user_objectid="$(az_ad_signed_in_user_object_id)" || return $?
@@ -488,7 +488,7 @@ function set_ad_object_ids()
 }
 
 # Script Variables
-src_dir="$( cd "${script_dir}/../.." >/dev/null 2>&1 && pwd )"
+src_dir="$( cd "${deploy_cluster_script_dir}/../.." >/dev/null 2>&1 && pwd )"
 template_dir="${src_dir}/arm"
 parameters_dir="${template_dir}/parameters"
 k8s_dir="${src_dir}/k8s"
@@ -512,7 +512,7 @@ if [ $validate_only != 0 ] ; then
 fi
 
 echo_debug "Script variables:"
-echo_debug "  script_dir: ${script_dir}"
+echo_debug "  deploy_cluster_script_dir: ${deploy_cluster_script_dir}"
 echo_debug "  template_dir: ${template_dir}"
 echo_debug "  parameters_dir: ${parameters_dir}"
 echo_debug "  k8s_dir: ${k8s_dir}"
@@ -530,7 +530,7 @@ echo_debug "  deployment_verb: $deployment_verb"
 
 function main()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
 
     # Set the Azure subscription
     az_account_set || return $?

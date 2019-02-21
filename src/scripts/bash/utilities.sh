@@ -3,34 +3,35 @@
 
 # saner programming env: these switches turn some bugs into errors
 set -o errexit -o pipefail -o noclobber -o nounset
+utilities_script_name="$( basename "${BASH_SOURCE}" )"
 
 # For colors see https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
-color_info="\e[1;34m"       # blue
-color_debug="\e[1;30m"      # dark gray
-color_error="\e[0;31m"      # red
-color_verbose="\e[1;36m"    # cyan
-color_warning="\e[1;33m"    # yellow
-color_normal="\e[0m"        # (unset)
+utilities_color_info="\e[1;34m"       # blue
+utilities_color_debug="\e[1;30m"      # dark gray
+utilities_color_error="\e[0;31m"      # red
+utilities_color_verbose="\e[1;36m"    # cyan
+utilities_color_warning="\e[1;33m"    # yellow
+utilities_color_normal="\e[0m"        # (unset)
 
 function init_utilities()
 {
-    init_flag=1
-    verbose=0
-    debug=0
-    dry_run=0
-    short_options=""
-    long_options=""
+    utilities_init_flag=1
+    utilities_verbose=0
+    utilities_debug=0
+    utilities_dry_run=0
+    utilities_short_options=""
+    utilities_long_options=""
 }
 
 function set_verbose()
 {
-    echo_debug "$0::${FUNCNAME[0]} $1"
-    verbose=$1
+    echo_debug "$utilities_script_name::${FUNCNAME[0]} $1"
+    utilities_verbose=$1
 }
 
 function get_verbose()
 {
-    if [ $verbose -eq 1 ] ; then
+    if [ $utilities_verbose -eq 1 ] ; then
         return 0
     fi
     return 1
@@ -38,13 +39,13 @@ function get_verbose()
 
 function set_debug()
 {
-    echo_debug "$0::${FUNCNAME[0]} $1"
-    debug=$1
+    echo_debug "$utilities_script_name::${FUNCNAME[0]} $1"
+    utilities_debug=$1
 }
 
 function get_debug()
 {
-    if [ $debug -eq 1 ]; then
+    if [ $utilities_debug -eq 1 ]; then
         return 0
     fi
     return 1
@@ -52,13 +53,13 @@ function get_debug()
 
 function set_dry_run()
 {
-    echo_debug "$0::${FUNCNAME[0]} $1"
-    dry_run=$1
+    echo_debug "$utilities_script_name::${FUNCNAME[0]} $1"
+    utilities_dry_run=$1
 }
 
 function get_dry_run()
 {
-    if [ $dry_run -eq 1 ]; then
+    if [ $utilities_dry_run -eq 1 ]; then
         return 0
     fi
     return 1
@@ -76,33 +77,33 @@ function add_option()
         short="${2}"
     fi
 
-    echo_debug "$0::${FUNCNAME[0]} $long $short"
+    echo_debug "$utilities_script_name::${FUNCNAME[0]} $long $short"
 
     if [ ! -z ${long} ]; then
-        if [ -z ${long_options} ]; then
-            long_options="${long}"
+        if [ -z ${utilities_long_options} ]; then
+            utilities_long_options="${long}"
         else
-            long_options="${long_options},${long}"
+            utilities_long_options="${utilities_long_options},${long}"
         fi
     fi
 
     if [ ! -z ${short} ]; then
-        if [ -z ${short_options} ]; then
-            short_options="${short}"
+        if [ -z ${utilities_short_options} ]; then
+            utilities_short_options="${short}"
         else
-            short_options="${short_options},${short}"
+            utilities_short_options="${utilities_short_options},${short}"
         fi
     fi
 }
 
 function get_short_options()
 {
-    echo "${short_options}"
+    echo "${utilities_short_options}"
 }
 
 function get_long_options()
 {
-    echo "${long_options}"
+    echo "${utilities_long_options}"
 }
 
 function echo_warning()
@@ -111,7 +112,7 @@ function echo_warning()
     if [ ! -z ${1+x} ]; then
         message="Warning: $1"
     fi
-    echo -e "${color_warning}${message}${color_normal}"
+    echo -e "${utilities_color_warning}${message}${utilities_color_normal}"
 }
 
 function echo_info()
@@ -120,7 +121,7 @@ function echo_info()
     if [ ! -z ${1+x} ]; then
         message="$1"
     fi
-    echo -e "${color_info}${message}${color_normal}" >&2
+    echo -e "${utilities_color_info}${message}${utilities_color_normal}" >&2
 }
 
 
@@ -130,7 +131,7 @@ function echo_error()
     if [ ! -z ${1+x} ]; then
         message="Error: $1"
     fi
-    echo -e "${color_error}${message}${color_normal}" >&2
+    echo -e "${utilities_color_error}${message}${utilities_color_normal}" >&2
 }
 
 function echo_verbose()
@@ -140,7 +141,7 @@ function echo_verbose()
     if [ ! -z ${1+x} ]; then
         message="VERBOSE: $1"
     fi
-    echo -e "${color_verbose}${message}${color_normal}"
+    echo -e "${utilities_color_verbose}${message}${utilities_color_normal}"
 }
 
 function echo_debug()
@@ -150,12 +151,12 @@ function echo_debug()
     if [ ! -z ${1+x} ]; then
         message="DEBUG: $1"
     fi
-    echo -e "${color_debug}${message}${color_normal}"
+    echo -e "${utilities_color_debug}${message}${utilities_color_normal}"
 }
 
 function exec_verbose()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "$utilities_script_name::${FUNCNAME[0]}"
     local command="$@"
     echo_verbose "${command}"
     $command
@@ -163,7 +164,7 @@ function exec_verbose()
 
 function exec_dry_run()
 {
-    echo_debug "$0::${FUNCNAME[0]}"
+    echo_debug "$utilities_script_name::${FUNCNAME[0]}"
     local command="$@"
     get_dry_run && echo_verbose "DRY-RUN: ${command}"
     get_dry_run && return 0
@@ -205,7 +206,7 @@ function test_utilities()
 }
 
 # Default initialization happens on first import
-if [ -z ${init_flag+x} ]; then
+if [ -z ${utilities_init_flag+x} ]; then
     init_utilities
 fi
 
@@ -213,7 +214,6 @@ fi
 if [ ! -z ${1+x} ]; then
     if [ "${1}" == "test" ]; then
         test_utilities
-        # Reset options after test
         init_utilities
     fi
 fi
