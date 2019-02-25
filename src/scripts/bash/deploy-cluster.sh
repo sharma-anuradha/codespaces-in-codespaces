@@ -595,7 +595,7 @@ function main()
     az_aks_get_credentials $cluster_name $cluster_rg || return $?
     exec_dry_run kubectl cluster-info || return $?
 
-    echo_info "Applying K8s RBAC and default pod security policy"
+    echo_info "Applying K8s default cluster configuration"
     kubectl_apply "$k8s_dir/custom-default-psp.yml" || return $?
     kubectl_apply "$k8s_dir/custom-default-psp-role.yml" || return $?
     kubectl_apply "$k8s_dir/custom-default-psp-rolebinding.yml" || return $?
@@ -609,7 +609,9 @@ function main()
     exec_dry_run helm init --service-account "tiller-sa" --wait || return $?
 
     echo_info "Installing nginx with load balancer"
-    exec_dry_run helm install "$charts_dir/nginx-ingress" --name "nginx-ingress" --wait
+    local install_name="nginx-ingress"
+    # TODO: the --replace switch is documented not safe for production
+    exec_dry_run helm install "$charts_dir/nginx-ingress" --name ${install_name} --replace --wait
 
     # TODO
     # - Traffic manager endpoints
