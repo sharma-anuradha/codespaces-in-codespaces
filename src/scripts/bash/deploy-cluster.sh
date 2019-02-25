@@ -4,9 +4,12 @@
 set -o errexit -o pipefail -o noclobber -o nounset
 
 # Import utilities
-deploy_cluster_script_name="$( basename "${BASH_SOURCE}" )"
-deploy_cluster_script_dir="$( cd "$( dirname "${BASH_SOURCE}" )" >/dev/null 2>&1 && pwd )"
-. "${deploy_cluster_script_dir}/utilities.sh"
+# Script PIN 1753 to avoid global name conflicts
+script_name_1753="$( basename "${BASH_SOURCE}" )"
+script_dir_1753="$( cd "$( dirname "${BASH_SOURCE}" )" >/dev/null 2>&1 && pwd )"
+. "${script_dir_1753}/utilities.sh"
+echo_debug "Script 1753 name ${script_name_1753}"
+echo_debug "Script 1753 dir ${script_dir_1753}"
 
 # Initialize script parameters
 add_option "subscription:" "s:"
@@ -161,114 +164,100 @@ if [[ -z $team_group_name ]] ; then
     echo_error "Parameter --team-group-name is required" && exit 1
 fi
 
-function create_resource_group()
+function az_group_create()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local resource_group="${1}"
     local location="${2}"
     echo_info "Creating resource group '$resource_group' in '$location'"
-    local STATE=$(exec_dry_run az group show -n $resource_group --query properties.provisioningState -o tsv 2>/dev/null)
-    if [[ $STATE != "Succeeded" ]] ; then
-        exec_dry_run az group create -n $resource_group -l $location >/dev/null || return $?
-    fi
-}
-
-function create_instance_resource_group()
-{
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
-    create_resource_group $instance_rg $location
+    local az_group_create_command="az group create --name $resource_group --location $location --query id --output tsv"
+    exec_dry_run "${az_group_create_command}" || return $?
 }
 
 function create_environment_keyvault()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local resource_group=${keyvault_rg}
     local vault_name=${keyvault_name}
     local enabledForDeployment="true"
     local enabledForTemplateDeployment="true"
 
-    local show_keyvault_command="az keyvault show --resource-group ${resource_group} --name ${vault_name}"
-    local create_keyvault_command="az keyvault create --resource-group ${resource_group} --name ${vault_name} --location $location --enabled-for-deployment ${enabledForDeployment} --enabled-for-template-deployment ${enabledForTemplateDeployment} --query id --output tsv"
-
-    if [ ! $(exec_dry_run az ${show_keyvault_command} > /dev/null) ]; then
-        local kv_id="$(exec_dry_run ${create_keyvault_command})" || return $? 
-        echo_debug "Created keyvault ${kv_id}"
-    fi
+    echo_info "Creating keyvault '${vault_name}'"
+    local az_keyvault_create_command="az keyvault create --resource-group ${resource_group} --name ${vault_name} --location $location --enabled-for-deployment ${enabledForDeployment} --enabled-for-template-deployment ${enabledForTemplateDeployment} --query id --output tsv"
+    exec_dry_run "${az_keyvault_create_command}" || return $?
 }
 
 function az_group_deployment_create()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local arm_template_name="${1}"
     local resource_group="${2}"
     local template_file="${template_dir}/${arm_template_name}.json"
     local paramters_file="$parameters_dir/${arm_template_name}.parameters.json"
-    local az_command="az group deployment $deployment_verb --subscription ${subscription_id} --resource-group ${resource_group} --template-file ${template_file} --parameters @${paramters_file} --output jsonc"
+    local az_command="az group deployment $deployment_verb --subscription ${subscription_id} --resource-group ${resource_group} --template-file ${template_file} --parameters @${paramters_file} --query id --output tsv"
     exec_dry_run $az_command
 }
 
 function init_cluster_envrionment_base_resources()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
-
-    echo_info "Creating environment groups, keyvault, service principals, and RBAC"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
  
     # We always need the environment resource group and key vault before running ARM templates, 
     # so we have somewhere to pull parameter secrets from.
     # We also need the other resource groups in order to assign RBAC to service principals
     # that get created and added to the keyvault
-    create_resource_group $environment_rg $location
-    create_resource_group $instance_rg $location
-    create_resource_group $cluster_rg $location
+    az_group_create $environment_rg $location || return $?
+    az_group_create $instance_rg $location || return $?
+    az_group_create $cluster_rg $location || return $?
 
     # Create the keyvault to store service principal attributes
-    create_environment_keyvault
+    create_environment_keyvault || return $?
 
     # We need these service principals to exist and to be used by
     # deployment, or to be referenced by ARM parameters.
-    ensure_service_principal "devops"
-    az_role_assignment_create_scope_resource_group "devops" ${environment_rg} "Contributor"
-    az_role_assignment_create_scope_resource_group "devops" ${instance_rg} "Contributor"
-    az_role_assignment_create_scope_resource_group "devops" ${cluster_rg} "Contributor"
+    ensure_service_principal "devops" || return $?
+    az_role_assignment_create_scope_resource_group "devops" ${environment_rg} "Contributor" || return $?
+    az_role_assignment_create_scope_resource_group "devops" ${instance_rg} "Contributor" || return $?
+    az_role_assignment_create_scope_resource_group "devops" ${cluster_rg} "Contributor" || return $?
 
-    ensure_service_principal "app"
-    az_role_assignment_create_scope_resource_group "app" ${environment_rg} "Reader"
-    az_role_assignment_create_scope_resource_group "app" ${instance_rg} "Reader"
-    az_role_assignment_create_scope_resource_group "app" ${cluster_rg} "Reader"
+    ensure_service_principal "app" || return $?
+    az_role_assignment_create_scope_resource_group "app" ${environment_rg} "Reader" || return $?
+    az_role_assignment_create_scope_resource_group "app" ${instance_rg} "Reader" || return $?
+    az_role_assignment_create_scope_resource_group "app" ${cluster_rg} "Reader" || return $?
 
-    ensure_service_principal "cluster"
-    az_role_assignment_create_scope_resource_group "app" ${cluster_rg} "Contributor"    
+    ensure_service_principal "cluster" || return $?
+    az_role_assignment_create_scope_resource_group "cluster" ${cluster_rg} "Contributor" || return $?
 }
 
 function deploy_cluster_environment_resources()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     echo_info "Deploying cluster environment ARM resources"
     az_group_deployment_create "cluster-environment" "${environment_rg}"
 }
 
 function deploy_cluster_instance_resources()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     echo_info "Deploying cluster instance ARM resources"
     az_group_deployment_create "cluster-instance" "${instance_rg}"
 }
 
 function deploy_cluster_stamp_resources()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     echo_info "Deploying cluster stamp ARM resources"
-    az_group_deployment_create "cluster-stamp" "${instance_rg}"
+    az_group_deployment_create "cluster-stamp" "${cluster_rg}"
 }
 
 function az_keyvault_secret_set()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local name="${1}"
     local value="${2}"
-    local expires="${3:-''}"
+    local expires="$(set +u; echo ${3})"
 
-    local az_command="az keyvault secret set --vault-name $keyvault_name --name $name --value $value"
+    local az_command="az keyvault secret set --vault-name $keyvault_name --name $name --value $value --query id --output tsv"
 
     if [ ! -z $expires ] ; then
         az_command="${az_command} --expires $expires"
@@ -277,16 +266,23 @@ function az_keyvault_secret_set()
     exec_dry_run $az_command
 }
 
+function az_keyvault_secret_exists()
+{
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
+    local name="${1}"
+    local az_command="az keyvault secret show --vault-name $keyvault_name --name $name"
+    get_dry_run && return 1 # doesn't exist for dry-run
+    exec_dry_run "${az_command}" 2> /dev/null > /dev/null
+}
+
 function az_keyvault_secret_set_if_unset()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local name="${1}"
     local value="${2}"
-    local expires="${3}"
+    local expires="$(set +u; echo "${3}")"
 
-    local az_command="az keyvault secret show --vault-name $keyvault_name --name $name"
-    echo_debug "$az_command"
-    if [ ! $(exec_dry_run $az_command > /dev/null)  ]; then
+    if ! az_keyvault_secret_exists $name; then
         az_keyvault_secret_set $name $value $expires
     fi
 }
@@ -297,79 +293,114 @@ function get_sp_name()
     echo "${environment_name}-${base_name}-sp"
 }
 
+function jq_json64()
+{
+    local json64="${1}"
+    local json=$(echo $json64 | base64 -d)
+    local query="${2}"
+    echo $json | jq ${query} | tr -d '"'
+}
+
+function az_ad_sp_exists()
+{
+    local sp_name="$1"
+    local az_ad_sp_show_command="az ad sp show --id http://${sp_name}"
+    get_dry_run && return 1 # doesn't exist for dry-run
+    exec_dry_run "${az_ad_sp_show_command}" 2> /dev/null > /dev/null
+}
+
+function az_ad_sp_show_json()
+{
+    local sp_name="$1"
+    local az_command="az ad sp show --id http://${sp_name} --output json"
+    if get_dry_run; then
+        echo "{
+            \"appDisplayName\": \"${sp_name}\",
+            \"appId\": \"dry-run-appid\",
+            \"appOwnerTenantId\": \"dry-run-tenant\",
+            \"objectId\": \"dry-run-objectid\",
+            \"servicePrincipalNames\": [
+                \"http://${sp_name}\"
+            ]
+        }"
+    else
+        ${az_command}
+    fi
+}
+
+function az_ad_sp_create_for_rbac()
+{
+    local sp_name="$1"
+    local password="$2"
+    local az_command="az ad sp create-for-rbac --name http://${sp_name} --password ${password} --skip-assignment -o json"
+    exec_dry_run "${az_command}" > /dev/null 
+}
+
+
 function ensure_service_principal()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local base_name="${1}"
     local secret_base_name="${base_name}-sp"
     local sp_name="$(get_sp_name ${base_name})" || return $?
+    local sp=
 
-    echo_info "Ensuring service principal ${sp_name} exists"
-    local sp="{}"
-    get_dry_run || sp=$(az ad sp show --id "http://${sp_name}" -o json)
-    local spResult=$?
-    if [ ! $spResult -eq 0 ]; then
-        echo_verbose "Creating service principal '${sp_name}'"
+    if ! az_ad_sp_exists $sp_name ; then
+        echo_info "Creating service principal '${sp_name}'"
         local passwordLength=128
         local password=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${passwordLength} | head -n 1)
-        local sp=$(exec_dry_run az ad sp create-for-rbac --name ${sp_name} --password ${password} --skip-assignment -o json) || return $?
-        echo_verbose "Created sp: ${sp_name}"
-        local appid=$(echo $sp | jq .appId | tr -d '"')
-        local name=$(echo $sp | jq .name | tr -d '"')
-        local tenant=$(echo $sp | jq .tenant  | tr -d '"')
         local expires="$(date -u -d "+1 year" -I)T00:00:00Z"
-        sp="{}"
-        get_dry_run || sp=$(az ad sp show --id "http://${sp_name}" -o json) || return $?
-        local spid=$(echo $sp | jq .objectId  | tr -d '"')
-        get_dry_run && appid="unknown"
-        get_dry_run && spid="unknown"
-        get_dry_run && name="unknown"
-        get_dry_run && tenant="unknown"
-        get_dry_run && password="unknown"
-        get_dry_run && expires="unknown"
-
-        # set sp secrets into the keyvault for use with ARM
-        az_keyvault_secret_set "${secret_base_name}-id" "$spid" "" || return $?
-        az_keyvault_secret_set "${secret_base_name}-appid" "$appid" "" || return $?
-        az_keyvault_secret_set "${secret_base_name}-name" "$name" "" || return $?
-        az_keyvault_secret_set "${secret_base_name}-tenant" "$tenant" "" || return $?
-        az_keyvault_secret_set "${secret_base_name}-password" "$password" "$expires" || return $?
+        az_ad_sp_create_for_rbac $sp_name $password || return $?
+        local set_secret=az_keyvault_secret_set
     else
-        echo_verbose "Service principal '${sp_name}' already exists"
-        local spid=$(echo $sp | jq .objectId  | tr -d '"')
-        local appid=$(echo $sp | jq .appId | tr -d '"')
-        local name=$(echo $sp | jq .name | tr -d '"')
-        local tenant=$(echo $sp | jq .appOwnerTenantId  | tr -d '"')
-        local password=""
-        local expires=""
-        get_dry_run && appid="unknown"
-        get_dry_run && spid="unknown"
-        get_dry_run && name="unknown"
-        get_dry_run && tenant="unknown"
-        get_dry_run && password="unknown"
-        get_dry_run && expires="unknown"
+        echo_verbose "Service principal '${sp_name}' already exists."
+        local password=
+        local expires=
+        local set_secret=az_keyvault_secret_set_if_unset
+    fi
 
-        # track the object ids for later
-        principal_objectids[$sp_name]=$spid
-        principal_appids[$sp_name]=$appid
-        # ensure required secrets are set in the keyvault for this sp
-        az_keyvault_secret_set_if_unset "${secret_base_name}-id" "$spid" "" || return $?
-        az_keyvault_secret_set_if_unset "${secret_base_name}-appid" "$appid" "" || return $?
-        az_keyvault_secret_set_if_unset "${secret_base_name}-name" "$name" "" || return $?
-        az_keyvault_secret_set_if_unset "${secret_base_name}-tenant" "$tenant" "" || return $?
-        az_keyvault_secret_set_if_unset "${secret_base_name}-password" "$password" "$expires" || return $?
+    echo_verbose "Getting service principal '${sp_name}' attributes"
+    sp=$(az_ad_sp_show_json $sp_name) || return $?
+    echo_debug "$sp"
+
+    local sp_json64=$(echo $sp | base64 --wrap=0) || return $?
+
+    local spid=$(jq_json64 $sp_json64 .objectId) || return $?
+    echo_debug "service principal spid:     ${spid}"
+
+    local appid=$(jq_json64 $sp_json64 .appId) || return $?
+    echo_debug "service principal appid:    ${appid}"
+
+    local name=$(jq_json64 $sp_json64 .servicePrincipalNames[0]) || return $?
+    echo_debug "service principal name:     ${name}"
+
+    local tenant=$(jq_json64 $sp_json64 .appOwnerTenantId) || return $?
+    echo_debug "service principal tenant:   ${tenant}"
+
+    echo_debug "service principal password: ${password}"
+    echo_debug "service principal expires:  ${expires}"
+
+    # ensure required secrets are set in the keyvault for this sp
+    echo_info "Updating keyvault properties for service principal '${sp_name}'"
+    ${set_secret} "${secret_base_name}-id" "$spid" || return $?
+    ${set_secret} "${secret_base_name}-appid" "$appid" || return $?
+    ${set_secret} "${secret_base_name}-name" "$name" || return $?
+    ${set_secret} "${secret_base_name}-tenant" "$tenant" || return $?
+    if [ ! -z $password ]; then
+        ${set_secret} "${secret_base_name}-password" $password $expires || return $?
     fi
 
     # track the object ids for later
-    principal_objectids[$sp_name]=$spid
+    echo_verbose "Setting principal_objectids and principal_appids"
+    principal_objectids[${sp_name}]=$spid
     echo_debug "Service principal id ${sp_name} : ${principal_objectids[$sp_name]}"
-    principal_appids[$sp_name]=$appid
+    principal_appids[${sp_name}]=$appid
     echo_debug "Service principal appid ${sp_name} : ${principal_appids[$sp_name]}"
 }
 
 function az_role_assignment_create_scope_resource_group()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local base_name="${1}"
     local resource_group="${2}"
     local role="${3}"
@@ -377,15 +408,17 @@ function az_role_assignment_create_scope_resource_group()
     local sp_name="$(get_sp_name ${base_name})"
     local appId="${principal_appids[$sp_name]}"
     local scope="/subscriptions/${subscription_id}/resourceGroups/${resource_group}"
-    local az_command="az role assignment create --assignee ${appId} --scope $scope --role ${role}"
-    exec_dry_run $az_command
+    local az_command="az role assignment create --assignee ${appId} --scope $scope --role ${role} --query id --output tsv"
+
+    echo_info "Granting role '${role}' to service principal '${sp_name}' for scope '${scope}'"
+    exec_dry_run "${az_command}"
     # ignore assignment errors; could already be set
     return 0
 }
 
 function az_aks_get_credentials()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     echo_info "Getting the AKS credentials for ${cluster_name}"
     local cluster_name="${1}"
     local cluster_rg="${2}"
@@ -395,26 +428,25 @@ function az_aks_get_credentials()
 
 function az_account_set()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
-
-    if [[ -z $subscription ]] ; then
-        echo_error "Subscription is not set."
-        return 1
-    fi
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
 
     echo_info "Setting the azure subscription to $subscription"
-    exec_dry_run az account set -s $subscription >/dev/null || return $?
-    get_dry_run && subscription_id="unknown"
-    get_dry_run && subscription_name="unknown" 
-    get_dry_run && return 0
-    subscription_name=$(az account show --query name -o tsv) || return $?
-    subscription_id=$(az account show --query id -o tsv) || return $?    
+    exec_dry_run az account set -s $subscription || return $?
+
+    if get_dry_run ; then
+        subscription_id="dry-run-subscription-id"
+        subscription_name="dry-run-subscription-name" 
+    else
+        local account=$(az account show --output json) || return $?
+        subscription_name=$(echo $account | jq .name | tr -d '"')
+        subscription_id=$(echo $account | jq .id | tr -d '"')
+    fi
     echo_info "Azure subscription: $subscription_name [$subscription_id]"
 }
 
 function kubectl_apply()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local file="${1}"
     local kubectl_command="kubectl apply -f $file"
     exec_dry_run $kubectl_command
@@ -422,14 +454,14 @@ function kubectl_apply()
 
 function generate_parameters()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
 
     echo_info "Generating cluster parameters files"
 
     # parameters require object ids
     set_ad_object_ids || return $?
     
-    exec_verbose . "${deploy_cluster_script_dir}/generate-cluster-parameters.sh" \
+    exec_verbose . "${script_dir_1753}/generate-cluster-parameters.sh" \
         --subscription-id $subscription_id \
         --prefix $prefix \
         --name $name \
@@ -446,15 +478,20 @@ function generate_parameters()
 
 function az_ad_signed_in_user_object_id()
 {
-    get_dry_run && echo "unknown"
-    get_dry_run && return 0
+    if get_dry_run; then
+        echo "dry-run-user"
+        return 0
+    fi
+
     az ad signed-in-user show --query objectId -o tsv
 }
 
 function az_ad_group_objectid()
 {
-    get_dry_run && echo "unknown"
-    get_dry_run && return 0
+    if get_dry_run; then
+        echo "dry-run-group"
+        return 0
+    fi
     local group_name="${1}"
     local id="$(az ad group show -g ${group_name} --query objectId -o tsv)"
     if [ -z $id ]; then
@@ -466,7 +503,7 @@ function az_ad_group_objectid()
 
 function set_ad_object_ids()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
 
     echo_verbose "getting user object id"
     user_objectid="$(az_ad_signed_in_user_object_id)" || return $?
@@ -478,17 +515,17 @@ function set_ad_object_ids()
 
     echo_verbose "getting app service principal object id"
     local sp_name=$(get_sp_name "app")
-    app_sp_objectid="${principal_appids[$sp_name]}"
+    app_sp_objectid="${principal_objectids[$sp_name]}"
     echo_debug "app_sp_objectid: ${app_sp_objectid}"
 
     echo_verbose "getting devops service principal object id"
     local sp_name=$(get_sp_name "devops")
-    devops_sp_objectid="${principal_appids[$sp_name]}"
+    devops_sp_objectid="${principal_objectids[$sp_name]}"
     echo_debug "devops_sp_objectid: ${devops_sp_objectid}"
 }
 
 # Script Variables
-src_dir="$( cd "${deploy_cluster_script_dir}/../.." >/dev/null 2>&1 && pwd )"
+src_dir="$( cd "${script_dir_1753}/../.." >/dev/null 2>&1 && pwd )"
 template_dir="${src_dir}/arm"
 parameters_dir="${template_dir}/parameters"
 k8s_dir="${src_dir}/k8s"
@@ -499,8 +536,8 @@ environment_rg="${environment_name}"
 instance_rg="${instance_name}"
 keyvault_rg="${environment_rg}"
 keyvault_name="${environment_name}-kv"
-cluster_rg="${instance_rg}"
-cluster_name="${instance_name}-cluster"
+cluster_rg="${instance_rg}-${stamp}"
+cluster_name="${cluster_rg}-cluster"
 declare -A principal_objectids=()
 declare -A principal_appids=()
 # Initialize the verb to use for deployment
@@ -512,7 +549,7 @@ if [ $validate_only != 0 ] ; then
 fi
 
 echo_debug "Script variables:"
-echo_debug "  deploy_cluster_script_dir: ${deploy_cluster_script_dir}"
+echo_debug "  script_dir_1753: ${script_dir_1753}"
 echo_debug "  template_dir: ${template_dir}"
 echo_debug "  parameters_dir: ${parameters_dir}"
 echo_debug "  k8s_dir: ${k8s_dir}"
@@ -530,30 +567,28 @@ echo_debug "  deployment_verb: $deployment_verb"
 
 function main()
 {
-    echo_debug "${deploy_cluster_script_name}::${FUNCNAME[0]}"
+    echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
 
     # Set the Azure subscription
     az_account_set || return $?
 
-    # Everything depends on the base resoruce and service principals
-    init_cluster_envrionment_base_resources || return $?
-
-    # Generate ARM parameters files
-    generate_parameters || return $?
-
-    # Deploy environment and instance ARM templates
     if [ ! $cluster_only -eq 1 ] ; then
+        # Everything depends on the base resoruce and service principals
+        init_cluster_envrionment_base_resources || return $?
+
+        # Generate ARM parameters files
+        generate_parameters || return $?
+
+        # Deploy environment and instance ARM templates
         echo_verbose "Deploy cluster environment"
         deploy_cluster_environment_resources || return $?
         echo_verbose "Deploy cluster instance"
         deploy_cluster_instance_resources || return $? 
-    fi
-
-    echo_verbose "Deploy the cluster to a stamp ($location)"
-    deploy_cluster_stamp_resources || return $?
-
-    if [ $validate_only -eq 1 ]; then
-        return 0
+        echo_verbose "Deploy the cluster to a stamp ($location)"
+        deploy_cluster_stamp_resources || return $?
+        if [ $validate_only -eq 1 ]; then
+            return 0
+        fi
     fi
 
     # Connect kubectl to the AKS cluster
@@ -564,6 +599,7 @@ function main()
     kubectl_apply "$k8s_dir/custom-default-psp.yml" || return $?
     kubectl_apply "$k8s_dir/custom-default-psp-role.yml" || return $?
     kubectl_apply "$k8s_dir/custom-default-psp-rolebinding.yml" || return $?
+    kubectl_apply "$k8s_dir/kubernetes-dashboard-clusterrolebinding.yml" || return $?
     kubectl_apply "$k8s_dir/nginx-ingress-clusterrole.yml" || return $?
     kubectl_apply "$k8s_dir/nginx-ingress-clusterrolebinding.yml" || return $?
     kubectl_apply "$k8s_dir/tiller-sa.yml" || return $?

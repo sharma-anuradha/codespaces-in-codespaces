@@ -35,7 +35,7 @@
     "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
     "serviceName": "[parameters('serviceName')]",
     "stampName": "[parameters('stampName')]",
-    "baseResourceName": "[concat(variables('resourceNamePrefix'),variables('serviceName'),'-',variables('env'),'-',variables('instance'),'-',variables('stampName'))]",
+    "baseResourceName": "[concat(variables('resourceNamePrefix'),'-',variables('serviceName'),'-',variables('env'),'-',variables('instance'),'-',variables('stampName'))]",
     "clusterName": "[concat(variables('baseResourceName'),'-cluster')]",
     "vnetName": "[concat(variables('baseResourceName'),'-vnet')]",
     "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
@@ -107,7 +107,7 @@
       "apiVersion": "2018-03-31",
       "location": "[variables('location')]",
       "properties": {
-        "kubernetesVersion": "1.11.5",
+        "kubernetesVersion": "1.12.5",
         "dnsPrefix": "[variables('clusterName')]",
         "agentPoolProfiles": [
           {
