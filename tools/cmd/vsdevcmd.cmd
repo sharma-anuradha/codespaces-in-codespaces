@@ -5,6 +5,7 @@
 :: A local dev box might have 2017 preview or 2019 preview
 set "VSROOTDIR=%ProgramFiles(x86)%\Microsoft Visual Studio"
 set "VSDEVCMD="
+if not exist "%VSDEVCMD%" set "VSDEVCMD=%VSROOTDIR%\2019\Enterprise\Common7\Tools\VsDevCmd.bat"
 if not exist "%VSDEVCMD%" set "VSDEVCMD=%VSROOTDIR%\2019\Preview\Common7\Tools\VsDevCmd.bat"
 if not exist "%VSDEVCMD%" set "VSDEVCMD=%VSROOTDIR%\2017\Enterprise\Common7\Tools\VsDevCmd.bat"
 if not exist "%VSDEVCMD%" set "VSDEVCMD=%VSROOTDIR%\Preview\Enterprise\Common7\Tools\VsDevCmd.bat"
