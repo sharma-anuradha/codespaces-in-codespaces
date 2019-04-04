@@ -33,6 +33,9 @@ stamp=""
 add_option "location:" "l:"
 location=""
 
+add_option "stamp-location:"
+cluster_location=""
+
 add_option "validate-only"
 validate_only=0
 
@@ -79,6 +82,8 @@ do
             instance="$1";;
         -m|--stamp) shift
             stamp="$1";;
+        --stamp-location) shift
+            cluster_location="$1";;
         -l|--location) shift
             location="$1";;
         --team-group-name) shift
@@ -108,6 +113,7 @@ echo_debug "  name: ${name}"
 echo_debug "  env: ${env}"
 echo_debug "  instance: ${instance}"
 echo_debug "  stamp: ${stamp}"
+echo_debug "  cluster_location: ${cluster_location}"
 echo_debug "  location: ${location}"
 echo_debug "  team_group_name: ${team_group_name}"
 echo_debug "  validate_only: ${validate_only}"
@@ -129,7 +135,7 @@ if [ $help != 0 ] ; then
     echo "     --team-group-name   the dev team group display name"
     echo "     --generate-only generate ARM parameters only"
     echo "     --cluster-only  deploy only the cluster, not the environment or instance"
-    echo "     --validate_only      validate_only deployment templates, do not deploy"
+    echo "     --validate-only validate_only deployment templates, do not deploy"
     echo "     --dry-run       do not create or deploye Azure resources"
     echo " -h, --help          show help"
     echo " -v, --verbose       emit verbose info"
@@ -159,6 +165,10 @@ if [[ -z $stamp ]] ; then
 fi
 if [[ -z $location ]] ; then
     echo_error "Parameter --location is required" && exit 1
+fi
+if [[ -z $cluster_location ]] ; then
+    cluster_location="${location}"
+    echo_warning "Parameter --stamp-location is not specified, using '${cluster_location}'"
 fi
 if [[ -z $team_group_name ]] ; then
     echo_error "Parameter --team-group-name is required" && exit 1
@@ -208,7 +218,7 @@ function init_cluster_envrionment_base_resources()
     # that get created and added to the keyvault
     az_group_create $environment_rg $location || return $?
     az_group_create $instance_rg $location || return $?
-    az_group_create $cluster_rg $location || return $?
+    az_group_create $cluster_rg $cluster_location || return $?
 
     # Create the keyvault to store service principal attributes
     create_environment_keyvault || return $?
@@ -349,6 +359,7 @@ function ensure_service_principal()
         echo_info "Creating service principal '${sp_name}'"
         local passwordLength=128
         local password=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${passwordLength} | head -n 1)
+        password="${password}!"
         local expires="$(date -u -d "+1 year" -I)T00:00:00Z"
         az_ad_sp_create_for_rbac $sp_name $password || return $?
         local set_secret=az_keyvault_secret_set
@@ -422,7 +433,7 @@ function az_aks_get_credentials()
     echo_info "Getting the AKS credentials for ${cluster_name}"
     local cluster_name="${1}"
     local cluster_rg="${2}"
-    local az_command="az aks get-credentials --resource-group $cluster_rg --name $cluster_name"
+    local az_command="az aks get-credentials --resource-group $cluster_rg --name $cluster_name --overwrite-existing" 
     exec_dry_run $az_command
 }
 
@@ -444,12 +455,57 @@ function az_account_set()
     echo_info "Azure subscription: $subscription_name [$subscription_id]"
 }
 
+function az_trafficmanager_endpoint_exists()
+{
+    local resource_group="${1}"
+    local profile_name="${2}"
+    local endpoint_name="${3}"
+    local az_command="az network traffic-manager endpoint show --resource-group ${resource_group} --profile-name ${profile_name} --name ${endpoint_name} --type externalEndpoints"
+
+    if get_dry_run; then
+        echo_verbose "${az_command}"
+        return 1
+    fi
+    exec_dry_run "${az_command}" 2> /dev/null > /dev/null
+}
+
+function az_trafficmanager_endpoint_create_or_update()
+{
+    local resource_group="${1}"
+    local profile_name="${2}"
+    local endpoint_name="${3}"
+    local endpoint_location="${4}"
+    local endpoint_ip_address="${5}"
+
+    local verb="update"
+    local location_arg=""
+    if ! az_trafficmanager_endpoint_exists $resource_group $profile_name $endpoint_name; then
+        verb="create"
+        location_arg="--endpoint-location ${endpoint_location}"
+    fi
+
+    local az_command="az network traffic-manager endpoint $verb --resource-group ${resource_group} --profile-name ${profile_name} --name ${endpoint_name} --type externalEndpoints --target ${endpoint_ip_address} ${location_arg}"
+
+    exec_dry_run "${az_command}"
+}
+
 function kubectl_apply()
 {
     echo_debug "${script_name_1753}::${FUNCNAME[0]} $@"
     local file="${1}"
     local kubectl_command="kubectl apply -f $file"
     exec_dry_run $kubectl_command
+}
+
+function kubectl_get_ip_address()
+{
+    if get_dry_run; then
+        echo "0.0.0.0"
+        return 0
+    fi
+    local serviceName="${1}"
+    local command="kubectl get service ${serviceName} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'"
+    $command
 }
 
 function generate_parameters()
@@ -538,6 +594,7 @@ keyvault_rg="${environment_rg}"
 keyvault_name="${environment_name}-kv"
 cluster_rg="${instance_rg}-${stamp}"
 cluster_name="${cluster_rg}-cluster"
+cluster_tm="${cluster_rg}-tm"
 declare -A principal_objectids=()
 declare -A principal_appids=()
 # Initialize the verb to use for deployment
@@ -584,7 +641,7 @@ function main()
         deploy_cluster_environment_resources || return $?
         echo_verbose "Deploy cluster instance"
         deploy_cluster_instance_resources || return $? 
-        echo_verbose "Deploy the cluster to a stamp ($location)"
+        echo_verbose "Deploy the cluster to a stamp ($cluster_location)"
         deploy_cluster_stamp_resources || return $?
         if [ $validate_only -eq 1 ]; then
             return 0
@@ -610,11 +667,16 @@ function main()
 
     echo_info "Installing nginx with load balancer"
     local install_name="nginx-ingress"
-    # TODO: the --replace switch is documented not safe for production
-    exec_dry_run helm install "$charts_dir/nginx-ingress" --name ${install_name} --replace --wait
+    exec_dry_run helm upgrade --install ${install_name} "$charts_dir/nginx-ingress" --wait --force
+
+    # Update the cluster IP address in the cluster traffic manager.
+    # The Azure Front Door backend points to this traffic manager.
+    cluster_ip=$(kubectl_get_ip_address "nginx-ingress-controller")
+    cluster_ip="${cluster_ip//\'/}"
+    echo_info "Cluster ip address: $cluster_ip"
+    az_trafficmanager_endpoint_create_or_update $cluster_rg $cluster_tm primary $cluster_location $cluster_ip
 
     # TODO
-    # - Traffic manager endpoints
     # - DNS names
     # See [authenticate-with-acr](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-aks?toc=%2Fen-us%2Fazure%2Faks%2FTOC.json&bc=%2Fen-us%2Fazure%2Fbread%2Ftoc.json).
     # See [control-kubeconfig-access](https://docs.microsoft.com/en-us/azure/aks/control-kubeconfig-access).

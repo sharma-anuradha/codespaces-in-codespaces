@@ -27,7 +27,6 @@
   },
   "variables": {
     "location": "[resourceGroup().location]",
-    "tenantId": "[subscription().tenantId]",
     "env": "[parameters('env')]",
     "clusterServicePrincipalAppId": "[parameters('clusterServicePrincipalAppId')]",
     "clusterServicePrincipalSecret": "[parameters('clusterServicePrincipalSecret')]",
@@ -43,17 +42,20 @@
     "vnetSubnetIdDefault": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('vnetName'),variables('vnetSubnetNameDefault'))]",
     "vnetSubnetNameVirtualNodeAci": "virtual-node-aci",
     "logAnalyticsWorkspaceName": "[concat(variables('baseResourceName'),'-laworkspace')]",
-    "logAnalyticsWorkspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces',variables('logAnalyticsWorkspaceName'))]"
+    "logAnalyticsWorkspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces',variables('logAnalyticsWorkspaceName'))]",
+    "signalRName": "[concat(variables('baseResourceName'),'-signalr')]",
+    "trafficManagerName": "[concat(variables('baseResourceName'),'-tm')]"
   },
   "resources": [
     {
+      "comments": "*** Cluster Log Analytics ***",
       "type": "Microsoft.OperationalInsights/workspaces",
       "name": "[variables('logAnalyticsWorkspaceName')]",
       "apiVersion": "2017-03-15-preview",
       "location": "[variables('location')]",
       "properties": {
         "sku": {
-          "Name": "PerGB2018"
+          "name": "PerGB2018"
         },
         "features": {
           "searchVersion": 1
@@ -154,6 +156,46 @@
         "[variables('vnetId')]",
         "[variables('logAnalyticsWorkspaceId')]"
       ]
+    },
+    {
+      "comments": "*** Regional SingalR ***",
+      "type": "Microsoft.SignalRService/SignalR",
+      "apiVersion": "2018-10-01",
+      "name": "[variables('signalRName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard_S1",
+        "tier": "Standard",
+        "size": "S1",
+        "capacity": 1
+      },
+      "properties": {
+        "hostNamePrefix": "[variables('baseResourceName')]"
+      }
+    },
+    {
+      "comments": "** Regional Traffic Manager -- provides DNS name for front-door to map to cluster **",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "[variables('trafficManagerName')]",
+      "apiVersion": "2018-04-01",
+      "location": "global",
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "Performance",
+        "dnsConfig": {
+          "relativeName": "[variables('trafficManagerName')]",
+          "ttl": 300
+        },
+        "endpoints": [],
+        "monitorConfig": {
+          "protocol": "TCP",
+          "port": 80,
+          "intervalInSeconds": 30,
+          "timeoutInSeconds": 10,
+          "toleratedNumberOfFailures": 3
+        },
+        "trafficViewEnrollmentStatus": "Disabled"
+      }
     }
   ]
 }

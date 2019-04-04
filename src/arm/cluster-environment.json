@@ -35,6 +35,18 @@
     "teamObjectId": "[parameters('teamObjectId')]",
     "userObjectId": "[parameters('userObjectId')]",
     "baseResourceName": "[concat(variables('resourceNamePrefix'),'-',variables('serviceName'),'-',variables('env'))]",
+    "vnetName": "[concat(variables('baseResourceName'),'-vnet')]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+    "databaseAccountName": "[concat(variables('baseResourceName'),'-db')]",
+    "databaseAccountId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('databaseAccountName'))]",
+    "databaseAccountKind": "GlobalDocumentDB",
+    "databaseAccountDefaultConsistencyLevel": "Session",
+    "databaseAccountOfferType": "Standard",
+    "datababseAccountFailoverPriority": 0,
+    "databaseThrottledRequestsRuleName": "[concat(variables('databaseAccountName'),'-throttled-requests')]",
+    "databaseThrottedlRequestsThreshold": 5,
+    "databaseThrottledRequestswindowSize": "PT30M",
+    "databaseThrottledRequestsEmailAddress": "cascadecore@microsoft.com",
     "keyVaultName": "[concat(variables('baseResourceName'),'-kv')]",
     "azureServiceDeploymentInternalId": "175890fa-bd80-4743-86d9-faed7653f078",
     "azureServiceDeploymentKeyVaultAccessPolicies": [
@@ -74,7 +86,7 @@
         }
       }
     ],
-    "teamKeyVaultAccessPolicies":[
+    "teamKeyVaultAccessPolicies": [
       {
         "objectId": "[variables('teamObjectId')]",
         "tenantId": "[variables('tenantId')]",
@@ -131,6 +143,122 @@
         "enabledForDeployment": true,
         "enabledForTemplateDeployment": true
       }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2018-12-01",
+      "name": "[variables('vnetName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "serviceEndpoints": [
+                {
+                  "provisioningState": "Succeeded",
+                  "service": "Microsoft.AzureCosmosDB",
+                  "locations": [
+                    "*"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "comments": "***** Environment CosmosDB Database Account *****",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "name": "[variables('databaseAccountName')]",
+      "apiVersion": "2015-04-08",
+      "location": "[variables('location')]",
+      "kind": "[variables('databaseAccountKind')]",
+      "properties": {
+        "name": "[variables('databaseAccountName')]",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": true,
+        "isVirtualNetworkFilterEnabled": true,
+        "virtualNetworkRules": [
+          {
+            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'default')]"
+          }
+        ],
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "[variables('databaseAccountDefaultConsistencyLevel')]"
+        },
+        "locations": [
+          {
+            "locationName": "[variables('location')]",
+            "failoverPriority": "[variables('datababseAccountFailoverPriority')]"
+          }
+        ],
+        "databaseAccountOfferType": "[variables('databaseAccountOfferType')]"
+      },
+      "tags": {
+        "defaultExperience": "Core (SQL)"
+      },
+      "dependsOn": [
+        "[variables('vnetId')]"
+      ]
+    },
+    {
+      "comments": "***** CosmosDB Database Account Alert Rule: Throttled Requests *****",
+      "type": "microsoft.insights/alertrules",
+      "name": "[variables('databaseThrottledRequestsRuleName')]",
+      "apiVersion": "2016-03-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "name": "[variables('databaseThrottledRequestsRuleName')]",
+        "description": "[variables('databaseThrottledRequestsRuleName')]",
+        "isEnabled": true,
+        "condition": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+          "dataSource": {
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+            "resourceUri": "[variables('databaseAccountId')]",
+            "metricNamespace": null,
+            "metricName": "Throttled Requests"
+          },
+          "operator": "GreaterThan",
+          "threshold": "[variables('databaseThrottedlRequestsThreshold')]",
+          "windowSize": "[variables('databaseThrottledRequestswindowSize')]"
+        },
+        "action": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+          "sendToServiceOwners": false,
+          "customEmails": [
+            "[variables('databaseThrottledRequestsEmailAddress')]"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[variables('databaseAccountId')]"
+      ]
+    },
+    {
+      "comments": "***** KeyVault Secret For Cosmos DB Endpoint *****",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "name": "[concat(variables('keyVaultName'),'/Config-AzureCosmosDbHost')]",
+      "apiVersion": "2016-10-01",
+      "properties": {
+        "contentType": "text/plain",
+        "value": "[reference(variables('databaseAccountId')).documentEndpoint]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+        "[variables('databaseAccountId')]"
+      ]
     }
   ]
 }

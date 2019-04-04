@@ -249,3 +249,37 @@ function az_role_assignment_create_scope_resource_group()
     echo_info "Granting role '${role}' to application id '${appid}' for scope '${scope}'"
     exec_dry_run ${az_command}
 }
+
+function az_trafficmanager_endpoint_exists()
+{
+    local resource_group="${1}"
+    local profile_name="${2}"
+    local endpoint_name="${3}"
+    local az_command="az network traffic-manager endpoint show --resource-group ${resource_group} --profile-name ${profile_name} --name ${endpoint_name} --type externalEndpoints"
+
+    if get_dry_run; then
+        echo_verbose "${az_command}"
+        return 1
+    fi
+    exec_dry_run "${az_command}" 2> /dev/null > /dev/null
+}
+
+function az_trafficmanager_endpoint_create_or_update()
+{
+    local resource_group="${1}"
+    local profile_name="${2}"
+    local endpoint_name="${3}"
+    local endpoint_location="${4}"
+    local endpoint_ip_address="${5}"
+
+    local verb="update"
+    local location_arg=""
+    if ! az_trafficmanager_endpoint_exists $resource_group $profile_name $endpoint_name; then
+        verb="update"
+        location_arg="--endpoint-location ${endpoint_location}"
+    fi
+
+    local az_command="az network traffic-manager endpoint $verb --resource-group ${resource_group} --profile-name ${profile_name} --name ${endpoint_name} --type externalEndpoints --target ${endpoint_ip_address} ${location_arg}"
+
+    exec_dry_run "${az_command}"
+}
