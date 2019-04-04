@@ -1,0 +1,9 @@
+# For full annotated example, please visit
+#   https://onebranch.visualstudio.com/Pipeline/_wiki/wikis/Pipeline.wiki
+
+version:
+  name: 'vsclk-core'
+  major: 0
+  minor: 1
+  tag: 'alpha'
+  system: 'buildrevision'

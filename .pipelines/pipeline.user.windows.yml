@@ -1,0 +1,32 @@
+# For full annotated example, please visit
+#   https://onebranch.visualstudio.com/Pipeline/_wiki/wikis/Pipeline.wiki
+
+environment:
+  host:
+    os: 'windows'
+    flavor: 'server'
+    version: '2016'
+  runtime:
+    provider: 'appcontainer'
+    image: 'cdpxtest.azurecr.io/global/vse2017u5-external-win14393.1884:1.0'
+    source_mode: 'link'
+
+restore:
+  commands:
+    - !!defaultcommand
+      name: 'Update nuget credentials'
+      command: '.pipelines\replaceNugetConfig.cmd'    
+    - !!defaultcommand                            
+      name: 'cdpx-restore'
+      command: 'cdpx-restore.cmd'
+
+build:
+  commands:
+    - !!buildcommand
+      name: 'cdpx-build'
+      command: 'cdpx-build.cmd'
+      artifacts:
+        - from: 'bin\debug'
+          to: 'binaries'          
+          include:
+            - '**/*'
