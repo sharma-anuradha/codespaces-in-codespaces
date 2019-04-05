@@ -1,0 +1,9 @@
+{
+  "tool": "Credential Scanner",
+  "suppressions": [
+    {
+      "file": ".pipelines\\replaceNugetConfig.ps1",
+      "_justification": "The '*' pat not a real secret; it is used only for testing the script."
+    }
+  ]
+}

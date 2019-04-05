@@ -1,0 +1,76 @@
+<Project>
+
+  <PropertyGroup>
+    <GitRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.gitignore'))\</GitRoot>
+    <SourceRoot>$(GitRoot)src\</SourceRoot>
+    <BuildScriptsDir>$(GitRoot)build\</BuildScriptsDir>
+    <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
+    <BaseOutputPath>$(GitRoot)bin\$(Configuration.ToLowerInvariant())\</BaseOutputPath>
+    <OutputPath>$(BaseOutputPath)$(MSBuildProjectName)\</OutputPath>
+    <PackageOutputPath>$(BaseOutputPath)nupkgs\</PackageOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <BaseIntermediateOutputPath>$(GitRoot)bin\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <IsTraversal Condition="'$(MSBuildProjectFile)'=='dirs.proj'">true</IsTraversal>
+    <AssemblyName>Microsoft.VsCloudKernel.Services.$(MSBuildProjectName)</AssemblyName>
+  </PropertyGroup>
+  
+  <!-- .Net Targets -->
+  <PropertyGroup>
+    <NetCoreAppTargetFramework>netcoreapp2.2</NetCoreAppTargetFramework>
+    <NetStandardTargetFramework>netstandard2.0</NetStandardTargetFramework>
+  </PropertyGroup>
+
+  <!-- NuGet Package Versions -->
+  <PropertyGroup>
+    <AdalVersion>4.5.1</AdalVersion>
+    <AspNetCoreAppVersion>2.2.3</AspNetCoreAppVersion>
+    <IdentityClient>3.0.0-preview</IdentityClient>
+    <IdentityModelS2SVersion>3.0.0-preview-60213030153</IdentityModelS2SVersion>
+    <IdentiyModelVersion>6.0.0-preview-60212030309</IdentiyModelVersion>
+    <NerdBankGitVersioningVersion>2.2.13</NerdBankGitVersioningVersion>
+    <OctokitVersion>0.32.0</OctokitVersion>
+    <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
+    <VsclkSdkVersion>0.1.2</VsclkSdkVersion>
+  </PropertyGroup>
+
+  <!-- Common Assemblies -->
+  <ItemGroup>
+    <NewtonsoftJson Include="Newtonsoft.Json" Version="12.0.1" />
+    <MicrosoftVsSaaSAspNetCoreDiagnostics Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSAspNetCoreHosting Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSAspNetCoreHttp Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSAspNetCoreMvcFiltersThrottling Include="Microsoft.VsSaaS.AspNetCore.Mvc.Filters.Throttling" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSAzureStorageBlob Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSAzureStorageDocumentDB Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSCaching Include="Microsoft.VsSaaS.Caching" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSCachingRedis Include="Microsoft.VsSaaS.Caching.Redis" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSCommon Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSDiagnostics Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSCommonExtensions Include="Microsoft.VsSaaS.Common.Extensions" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSDiagnosticsExtensions Include="Microsoft.VsSaaS.Diagnostics.Extensions" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSDiagnosticsHealth Include="Microsoft.VsSaaS.Diagnostics.Health" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSAspNetCoreAuthenticationJwtBearer Include="Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer" Version="$(VsSaaSPackageVersion)" />
+  </ItemGroup>
+
+  <Choose>
+    <When Condition="'$(IsTraversal)'!='true'">
+      <!-- Common Package Refs -->
+      <ItemGroup>
+        <PackageReference Include="Microsoft.VisualStudio.Validation" Version="$(VisualStudioValidationVersion)" />
+      </ItemGroup>
+      <!-- Versioning Support -->
+      <ItemGroup Condition="'$(IsTraversal)'!='true'">
+        <PackageReference Include="Nerdbank.GitVersioning" Version="$(NerdBankGitVersioningVersion)" PrivateAssets="All" />
+      </ItemGroup>
+      <ItemGroup>
+        <!-- All projects need to be rebuilt if the version changes. -->
+        <Content Include="$(MSBuildThisFileDirectory)version.json" Link="version.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <Visible>false</Visible> <!-- Hide from VS solution explorer -->
+          <Pack>false</Pack> <!--Exclude from NuGet Packages -->
+        </Content>
+      </ItemGroup>
+    </When>
+  </Choose>
+
+</Project>

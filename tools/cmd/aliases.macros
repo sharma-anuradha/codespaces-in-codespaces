@@ -1,0 +1,13 @@
+bin=pushd "%ROOT%\bin\$*"
+build=dotnet build --no-restore /m /v:minimal /fl /flp:Summary;Verbosity=Normal;LogFile=build.log $*
+clean=dotnet clean /m /v:quiet $*
+clients=pushd "%ROOT%\src\clients\$*"
+k=kubectl $*
+publish=dotnet publish --no-build /m /v:minimal /fl /flp:Verbosity=Normal;LogFile=publish.log $*
+restore=dotnet restore /m /v:quiet /fl /flp:Verbosity=Minimal;LogFile=restore.log $*
+root=pushd "%ROOT%\$*"
+services=pushd "%ROOT%\src\services\$*"
+src=pushd "%ROOT%\src\$*"
+test=pushd "%ROOT%\test\$*"
+tools=pushd "%ROOT%\tools\$*"
+vscode=code "%ROOT%"
