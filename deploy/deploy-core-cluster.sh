@@ -30,7 +30,7 @@ default_name="core-svc"
 default_env="dev"
 default_instance="ci"
 default_location="eastus"
-default_stamp="${default_location}"
+default_stamp="use"
 default_stamp_location="${default_location}"
 default_team_group_name="vsclk-core-contributors-3a5d"
 
