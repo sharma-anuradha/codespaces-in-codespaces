@@ -109,7 +109,7 @@
       "apiVersion": "2018-03-31",
       "location": "[variables('location')]",
       "properties": {
-        "kubernetesVersion": "1.12.5",
+        "kubernetesVersion": "1.12.7",
         "dnsPrefix": "[variables('clusterName')]",
         "agentPoolProfiles": [
           {

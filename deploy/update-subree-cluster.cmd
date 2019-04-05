@@ -20,10 +20,10 @@ git remote set-url --push %REMOTE% dont-push-to-%REMOTE% >nul
 :: Add or pull the subtree
 if not exist "%ROOT%\%PREFIX:/=\%" (
     echo adding subtree %PREFIX%
-    git subtree add --prefix=%PREFIX% %REMOTE% master --message "add subtree '%PREFIX%' from %REMOTE% master" --squash
+    git subtree add --prefix=%PREFIX% %REMOTE% master --message "add subtree '%PREFIX%' from %REMOTE% master"
 ) else (
     echo pulling subtree %PREFIX%
-    git subtree pull --prefix=%PREFIX% %REMOTE% master --message "pull subtree '%PREFIX%' from %REMOTE% master" --squash
+    git subtree pull --prefix=%PREFIX% %REMOTE% master --message "pull subtree '%PREFIX%' from %REMOTE% master"
 )
 
 popd

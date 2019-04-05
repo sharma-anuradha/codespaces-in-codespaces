@@ -24,17 +24,25 @@ fi
 . "${cluster_scripts_dir}/utilities.sh"
 
 # Set up deployment parameters and defaults
+default_subscription="vsclk-core-dev"
+default_prefix="vsclk"
+default_name="core-svc"
+default_env="dev"
+default_instance="ci"
 default_location="eastus"
+default_stamp="use"
+default_stamp_location="${default_location}"
+default_team_group_name="vsclk-core-contributors-3a5d"
 
-subscription=$(set +u; [ ! -z $SERVICE_SUBSCRIPTION ] && echo $SERVICE_SUBSCRIPTION || echo "vsclk-core-dev")
-prefix=$(set +u; [ ! -z $SERVICE_PREFIX ] && echo $SERVICE_PREFIX || echo "vsclk")
-name=$(set +u; [ ! -z $SERVICE_NAME ] && echo $SERVICE_NAME || echo "core")
-env=$(set +u; [ ! -z $SERVICE_ENV ] && echo $SERVICE_ENV || echo "dev")
-instance=$(set +u; [ ! -z $SERVICE_INSTANCE ] && echo $SERVICE_INSTANCE || echo "ci")
-stamp=$(set +u; [ ! -z $SERVICE_STAMP ] && echo $SERVICE_STAMP || echo "${default_location}")
-stamp_location=$(set +u; [ ! -z $SERVICE_STAMP_LOCATION ] && echo $SERVICE_STAMP_LOCATION || echo "${default_location}")
+subscription=$(set +u; [ ! -z $SERVICE_SUBSCRIPTION ] && echo $SERVICE_SUBSCRIPTION || echo "${default_subscription}")
+prefix=$(set +u; [ ! -z $SERVICE_PREFIX ] && echo $SERVICE_PREFIX || echo "${default_prefix}")
+name=$(set +u; [ ! -z $SERVICE_NAME ] && echo $SERVICE_NAME || echo "${default_name}")
+env=$(set +u; [ ! -z $SERVICE_ENV ] && echo $SERVICE_ENV || echo "${default_env}")
+instance=$(set +u; [ ! -z $SERVICE_INSTANCE ] && echo $SERVICE_INSTANCE || echo "${default_instance}")
+stamp=$(set +u; [ ! -z $SERVICE_STAMP ] && echo $SERVICE_STAMP || echo "${default_stamp}")
+stamp_location=$(set +u; [ ! -z $SERVICE_STAMP_LOCATION ] && echo $SERVICE_STAMP_LOCATION || echo "${default_stamp_location}")
 location=$(set +u; [ ! -z $SERVICE_LOCATION ] && echo $SERVICE_LOCATION || echo "${default_location}")
-team_group_name=$(set +u; [ ! -z $SERVICE_TEAM_GROUP_NAME ] && echo $SERVICE_TEAM_GROUP_NAME || echo "vsclk-core-contributors-3a5d")
+team_group_name=$(set +u; [ ! -z $SERVICE_TEAM_GROUP_NAME ] && echo $SERVICE_TEAM_GROUP_NAME || echo "${default_team_group_name}")
 
 # Other command line options that can be passed
 #      --generate-only generate ARM parameters only
