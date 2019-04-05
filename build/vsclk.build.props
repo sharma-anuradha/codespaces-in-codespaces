@@ -23,7 +23,7 @@
   <!-- NuGet Package Versions -->
   <PropertyGroup>
     <AdalVersion>4.5.1</AdalVersion>
-    <AspNetCoreAppVersion>2.1.1</AspNetCoreAppVersion>
+    <AspNetCoreAppVersion>2.2.3</AspNetCoreAppVersion>
     <IdentityClient>3.0.0-preview</IdentityClient>
     <IdentityModelS2SVersion>3.0.0-preview-60213030153</IdentityModelS2SVersion>
     <IdentiyModelVersion>6.0.0-preview-60212030309</IdentiyModelVersion>
@@ -46,8 +46,10 @@
     <MicrosoftVsSaaSCachingRedis Include="Microsoft.VsSaaS.Caching.Redis" Version="$(VsSaaSPackageVersion)" />
     <MicrosoftVsSaaSCommon Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
     <MicrosoftVsSaaSDiagnostics Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSCommonExtensions Include="Microsoft.VsSaaS.Common.Extensions" Version="$(VsSaaSPackageVersion)" />
     <MicrosoftVsSaaSDiagnosticsExtensions Include="Microsoft.VsSaaS.Diagnostics.Extensions" Version="$(VsSaaSPackageVersion)" />
     <MicrosoftVsSaaSDiagnosticsHealth Include="Microsoft.VsSaaS.Diagnostics.Health" Version="$(VsSaaSPackageVersion)" />
+    <MicrosoftVsSaaSAspNetCoreAuthenticationJwtBearer Include="Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
 
   <Choose>
