@@ -1,0 +1,27 @@
+{
+  "": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appSpObjectId": {
+      "value": "86c6884f-0d24-4f87-8297-37b1ff310c92"
+    },
+    "devOpsSpObjectId": {
+      "value": "6f91782b-c9ec-485f-804b-2ac473d686a1"
+    },
+    "env": {
+      "value": "dev"
+    },
+    "resourceNamePrefix": {
+      "value": "vsclk"
+    },
+    "serviceName": {
+      "value": "core-svc"
+    },
+    "teamObjectId": {
+      "value": "76ed1206-72df-4116-8e6a-747439d31855"
+    },
+    "userObjectId": {
+      "value": "7e311755-2704-4c20-bbe4-d764ddef471c"
+    }
+  }
+}
