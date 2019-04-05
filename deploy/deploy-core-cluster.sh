@@ -33,6 +33,8 @@ default_location="eastus"
 default_stamp="use"
 default_stamp_location="${default_location}"
 default_team_group_name="vsclk-core-contributors-3a5d"
+default_ssl_kv="vsclk-core-dev-kv"
+default_ssl_secret="dev-core-vsengsaas-visualstudio-com-ssl"
 
 subscription=$(set +u; [ ! -z $SERVICE_SUBSCRIPTION ] && echo $SERVICE_SUBSCRIPTION || echo "${default_subscription}")
 prefix=$(set +u; [ ! -z $SERVICE_PREFIX ] && echo $SERVICE_PREFIX || echo "${default_prefix}")
@@ -43,6 +45,8 @@ stamp=$(set +u; [ ! -z $SERVICE_STAMP ] && echo $SERVICE_STAMP || echo "${defaul
 stamp_location=$(set +u; [ ! -z $SERVICE_STAMP_LOCATION ] && echo $SERVICE_STAMP_LOCATION || echo "${default_stamp_location}")
 location=$(set +u; [ ! -z $SERVICE_LOCATION ] && echo $SERVICE_LOCATION || echo "${default_location}")
 team_group_name=$(set +u; [ ! -z $SERVICE_TEAM_GROUP_NAME ] && echo $SERVICE_TEAM_GROUP_NAME || echo "${default_team_group_name}")
+ssl_kv=$(set +u; [ ! -z $SSL_KV ] && echo $SSL_KV || echo "${default_ssl_kv}")
+ssl_secret=$(set +u; [ ! -z $SSL_SECRET ] && echo $SSL_SECRET || echo "${default_ssl_secret}")
 
 # Other command line options that can be passed
 #      --generate-only generate ARM parameters only
@@ -65,4 +69,6 @@ echo_info "Deploying cluster $prefix-$name-$env-$instance-$stamp into subscripti
     --stamp-location $stamp_location \
     --location $location \
     --team-group-name $team_group_name \
+    --ssl-cert-kv-name $ssl_kv \
+    --ssl-cert-secret-name $ssl_secret \
     ${args}
