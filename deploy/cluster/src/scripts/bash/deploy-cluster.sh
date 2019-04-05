@@ -45,6 +45,12 @@ cluster_only=0
 add_option "team-group-name:"
 team_group_name=
 
+add_option "ssl-cert-kv-name:"
+ssl_cert_kv_name=
+
+add_option "ssl-cert-secret-name:"
+ssl_cert_secret_name=
+
 add_option "help" "h"
 help=0
 add_option "dry-run"
@@ -88,6 +94,10 @@ do
             location="$1";;
         --team-group-name) shift
             team_group_name="$1";;
+        --ssl-cert-kv-name) shift
+            ssl_cert_kv_name="$1";;
+        --ssl-cert-secret-name) shift
+            ssl_cert_secret_name="$1";;
         --cluster-only) cluster_only=1;;
         --validate-only) validate_only=1;;
         --dry-run) set_dry_run 1;;
@@ -125,21 +135,24 @@ echo_debug "  debug: ${utilities_debug}"
 
 if [ $help != 0 ] ; then
     echo "usage $(basename $0) [options]"
-    echo " -s, --subscription  the subscription name or id [optional]"
-    echo " -p, --prefix        the service name prefix, for example, 'vsclk'"
-    echo " -n, --name          the service base name"
-    echo " -e, --env           the service environment, 'dev', 'ppe', 'prod', 'rel'"
-    echo " -i, --instance      the service instance name, defaults to env name"
-    echo " -m, --stamp         the service stamp name"
-    echo " -l, --location      the service primary location"
-    echo "     --team-group-name   the dev team group display name"
-    echo "     --generate-only generate ARM parameters only"
-    echo "     --cluster-only  deploy only the cluster, not the environment or instance"
-    echo "     --validate-only validate_only deployment templates, do not deploy"
-    echo "     --dry-run       do not create or deploye Azure resources"
-    echo " -h, --help          show help"
-    echo " -v, --verbose       emit verbose info"
-    echo " -d, --debug         emit debug info"
+    echo " -s, --subscription           the subscription name or id [optional]"
+    echo " -p, --prefix                 the service name prefix, for example, 'vsclk'"
+    echo " -n, --name                   the service base name"
+    echo " -e, --env                    the service environment, 'dev', 'ppe', 'prod', 'rel'"
+    echo " -i, --instance               the service instance name, defaults to env name"
+    echo " -m, --stamp                  the service stamp name"
+    echo "     --stamp-location         the service stamp name"
+    echo " -l, --location               the service primary location"
+    echo "     --team-group-name        the dev team group display name"
+    echo "     --ssl-cert-kv-name       the azure key vault that contains the default ssl certificate"
+    echo "     --ssl-cert-secret-name   the azure key vault secret name for the ssl certificate"
+    echo "     --generate-only          generate ARM parameters only"
+    echo "     --cluster-only           deploy only the cluster, not the environment or instance"
+    echo "     --validate-only          validate_only deployment templates, do not deploy"
+    echo "     --dry-run                do not create or deploye Azure resources"
+    echo " -h, --help                   show help"
+    echo " -v, --verbose                emit verbose info"
+    echo " -d, --debug                  emit debug info"
     exit 0
 fi
 
@@ -172,6 +185,12 @@ if [[ -z $cluster_location ]] ; then
 fi
 if [[ -z $team_group_name ]] ; then
     echo_error "Parameter --team-group-name is required" && exit 1
+fi
+if [[ -z $ssl_cert_kv_name ]] ; then
+    echo_error "Parameter --ssl-cert-kv-name is required" && exit 1
+fi
+if [[ -z $ssl_cert_secret_name ]] ; then
+    echo_error "Parameter --ssl-cert-secret-name is required" && exit 1
 fi
 
 function az_group_create()
@@ -580,6 +599,54 @@ function set_ad_object_ids()
     echo_debug "devops_sp_objectid: ${devops_sp_objectid}"
 }
 
+function apply_default_cluster_configuration()
+{
+    echo_info "Applying K8s default cluster configuration"
+    kubectl_apply "$k8s_dir/custom-default-psp.yml" || return $?
+    kubectl_apply "$k8s_dir/custom-default-psp-role.yml" || return $?
+    kubectl_apply "$k8s_dir/custom-default-psp-rolebinding.yml" || return $?
+    kubectl_apply "$k8s_dir/kubernetes-dashboard-clusterrolebinding.yml" || return $?
+    kubectl_apply "$k8s_dir/nginx-ingress-clusterrole.yml" || return $?
+    kubectl_apply "$k8s_dir/nginx-ingress-clusterrolebinding.yml" || return $?
+    kubectl_apply "$k8s_dir/tiller-sa.yml" || return $?
+    kubectl_apply "$k8s_dir/tiller-sa-clusterrolebinding.yml" || return $?
+}
+
+function az_download_and_split_ssl_certificate()
+{
+    # expects the a filename like foo.pfx
+    # will generate output names like foo.cer and foo.cer.64
+    local pfx_file="${1}"
+    local base_name=$(basename ${pfx_file} .pfx)
+    local cer_file="${base_name}.cer"
+    local key_file="${base_name}.key"
+    local rsa_key_file="${base_name}.rsa.key"
+    local az_command="az keyvault secret download --vault-name ${ssl_cert_kv_name} --name ${ssl_cert_secret_name} --encoding base64 --file ${pfx_file}"
+    exec_dry_run "${az_command}" || return $?
+
+    local passwordplaintext=""
+    exec_dry_run "openssl pkcs12 -in $pfx_file -out $cer_file -nokeys -clcerts -password pass:$passwordplaintext" || return $?
+    exec_dry_run "openssl pkcs12 -in $pfx_file -out $key_file -nocerts -nodes -password pass:$passwordplaintext" || return $?
+    exec_dry_run "openssl rsa -in $key_file -out $rsa_key_file" || return $?
+}
+
+function apply_default_cluster_ssl_certificate()
+{
+    echo_info "Downloading SSL certificate"
+    if [ -f "ssl.pfx" ]; then
+       exec_dry_run "rm ssl.*"
+    fi
+    az_download_and_split_ssl_certificate "ssl.pfx" || return $?
+    echo_info "Creating the ssl-cert secret in the cluster"
+    if exec_dry_run "kubectl get secret ssl-cert"; then
+        exec_dry_run "kubectl delete secret ssl-cert" || return $?
+    fi
+    exec_dry_run "kubectl create secret tls ssl-cert --cert=ssl.cer --key=ssl.key" || return $?
+    if [ -f "ssl.pfx" ]; then
+       exec_dry_run "rm ssl.*"
+    fi
+}
+
 # Script Variables
 src_dir="$( cd "${script_dir_1753}/../.." >/dev/null 2>&1 && pwd )"
 template_dir="${src_dir}/arm"
@@ -652,16 +719,10 @@ function main()
     az_aks_get_credentials $cluster_name $cluster_rg || return $?
     exec_dry_run kubectl cluster-info || return $?
 
-    echo_info "Applying K8s default cluster configuration"
-    kubectl_apply "$k8s_dir/custom-default-psp.yml" || return $?
-    kubectl_apply "$k8s_dir/custom-default-psp-role.yml" || return $?
-    kubectl_apply "$k8s_dir/custom-default-psp-rolebinding.yml" || return $?
-    kubectl_apply "$k8s_dir/kubernetes-dashboard-clusterrolebinding.yml" || return $?
-    kubectl_apply "$k8s_dir/nginx-ingress-clusterrole.yml" || return $?
-    kubectl_apply "$k8s_dir/nginx-ingress-clusterrolebinding.yml" || return $?
-    kubectl_apply "$k8s_dir/tiller-sa.yml" || return $?
-    kubectl_apply "$k8s_dir/tiller-sa-clusterrolebinding.yml" || return $?
-
+    # Configure the cluster
+    apply_default_cluster_configuration || return $?
+    apply_default_cluster_ssl_certificate || return $?
+     
     echo_info "Installing helm-tiller to system namespace"
     exec_dry_run helm init --service-account "tiller-sa" --wait || return $?
 
