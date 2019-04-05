@@ -1,0 +1,175 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "type": "string"
+    },
+    "instance": {
+      "type": "string"
+    },
+    "resourceNamePrefix": {
+      "type": "string",
+      "defaultValue": "vsclk-"
+    },
+    "serviceName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "env": "[parameters('env')]",
+    "instance": "[parameters('instance')]",
+    "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
+    "serviceName": "[parameters('serviceName')]",
+    "baseResourceName": "[concat(variables('resourceNamePrefix'),'-',variables('serviceName'),'-',variables('env'),'-',variables('instance'))]",
+    "frontDoorName": "[concat(variables('baseResourceName'),'-fd')]",
+    "frontDoorId": "[resourceId('Microsoft.Network/frontdoors', variables('frontDoorName'))]",
+    "frontendEndpointHostName1": "[concat(variables('frontDoorName'),'.azurefd.net')]",
+    "frontendEndpointName1": "[replace(variables('frontendEndpointHostName1'),'.','-')]",
+    "frontendEndpointId1": "[concat(variables('frontDoorId'), '/FrontendEndpoints/', variables('frontendEndpointName1'))]",
+    "frontendEndpoitnEnabledState1": "Enabled",
+    "backendPoolName": "[concat(variables('baseResourceName'),'-clusters-backendPool')]",
+    "backendPoolId": "[concat(variables('frontDoorId'), '/BackendPools/',variables('backendPoolName'))]",
+    "healthProbeSettingsName": "healthProbeSettings-1",
+    "healthProbeSettingsId": "[concat(variables('frontDoorId'), '/HealthProbeSettings/', variables('healthProbeSettingsName'))]",
+    "loadBalancingSettingsName": "loadBalancingSettings-1",
+    "loadBalancingSettingsId": "[concat(variables('frontDoorId'), '/LoadBalancingSettings/', variables('loadBalancingSettingsName'))]",
+    "backend1": "[concat(variables('baseResourceName'),'-eastus-tm.trafficmanager.net')]",
+    "backend2": "[concat(variables('baseResourceName'),'-westus2-tm.trafficmanager.net')]",
+    "backend3": "[concat(variables('baseResourceName'),'-westeurope-tm.trafficmanager.net')]",
+    "backend4": "[concat(variables('baseResourceName'),'-southeastasia-tm.trafficmanger.net')]",
+    "backendEnabledState1": "Enabled",
+    "backendEnabledState2": "Enabled",
+    "backendEnabledState3": "Enabled",
+    "backendEnabledState4": "Enabled",
+    "routingRulesName": "[concat(variables('baseResourceName'),'-clusters-routingRules')]",
+    "routingRulesId": "[concat(variables('frontDoorId'), '/RoutingRules/', variables('routingRulesName'))]"
+  },
+  "resources": [
+    {
+      "comments": "*** Instance Front Door ***",
+      "type": "Microsoft.Network/frontdoors",
+      "apiVersion": "2018-08-01",
+      "name": "[variables('frontDoorName')]",
+      "location": "Global",
+      "properties": {
+        "resourceState": "Enabled",
+        "frontendEndpoints": [
+          {
+            "name": "[variables('frontendEndpointName1')]",
+            "id": "[variables('frontendEndpointId1')]",
+            "properties": {
+              "hostName": "[variables('frontendEndpointHostName1')]",
+              "sessionAffinityEnabledState": "Disabled",
+              "sessionAffinityTtlSeconds": 0,
+              "resourceState": "[variables('frontendEndpoitnEnabledState1')]"
+            }
+          }
+        ],
+        "backendPools": [
+          {
+            "name": "[variables('backendPoolName')]",
+            "id": "[variables('backendPoolId')]",
+            "properties": {
+              "backends": [
+                {
+                  "address": "[variables('backend1')]",
+                  "httpPort": 80,
+                  "httpsPort": 443,
+                  "priority": 1,
+                  "weight": 50,
+                  "backendHostHeader": "[variables('backend1')]",
+                  "enabledState": "[variables('backendEnabledState1')]"
+                },
+                {
+                  "address": "[variables('backend2')]",
+                  "httpPort": 80,
+                  "httpsPort": 443,
+                  "priority": 1,
+                  "weight": 50,
+                  "backendHostHeader": "[variables('backend2')]",
+                  "enabledState": "[variables('backendEnabledState2')]"
+                },
+                {
+                  "address": "[variables('backend3')]",
+                  "httpPort": 80,
+                  "httpsPort": 443,
+                  "priority": 1,
+                  "weight": 50,
+                  "backendHostHeader": "[variables('backend3')]",
+                  "enabledState": "[variables('backendEnabledState3')]"
+                },
+                {
+                  "address": "[variables('backend4')]",
+                  "httpPort": 80,
+                  "httpsPort": 443,
+                  "priority": 1,
+                  "weight": 50,
+                  "backendHostHeader": "[variables('backend4')]",
+                  "enabledState": "[variables('backendEnabledState4')]"
+                }
+              ],
+              "healthProbeSettings": {
+                "id": "[variables('healthProbeSettingsId')]"
+              },
+              "loadBalancingSettings": {
+                "id": "[variables('loadBalancingSettingsId')]"
+              },
+              "resourceState": "Enabled"
+            }
+          }
+        ],
+        "healthProbeSettings": [
+          {
+            "name": "[variables('healthProbeSettingsName')]",
+            "id": "[variables('healthProbeSettingsId')]",
+            "properties": {
+              "path": "/",
+              "protocol": "Http",
+              "intervalInSeconds": 60,
+              "resourceState": "Enabled"
+            }
+          }
+        ],
+        "loadBalancingSettings": [
+          {
+            "name": "[variables('loadBalancingSettingsName')]",
+            "id": "[variables('loadBalancingSettingsId')]",
+            "properties": {
+              "additionalLatencyMilliseconds": 0,
+              "sampleSize": 4,
+              "successfulSamplesRequired": 2,
+              "resourceState": "Enabled"
+            }
+          }
+        ],
+        "routingRules": [
+          {
+            "name": "[variables('routingRulesName')]",
+            "id": "[variables('routingRulesId')]",
+            "properties": {
+              "frontendEndpoints": [
+                {
+                  "id": "[variables('frontendEndpointId1')]"
+                }
+              ],
+              "acceptedProtocols": [
+                "Http",
+                "Https"
+              ],
+              "forwardingProtocol": "MatchRequest",
+              "patternsToMatch": [
+                "/*"
+              ],
+              "backendPool": {
+                "id": "[variables('backendPoolId')]"
+              },
+              "enabledState": "Enabled",
+              "resourceState": "Enabled"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
