@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreDiagnostics)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHosting)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHttp)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreMvcFiltersThrottling)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAzureStorageBlob)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAzureStorageDocumentDB)" />
+    <PackageReference Include="@(MicrosoftVsSaaSCaching)" />
+    <PackageReference Include="@(MicrosoftVsSaaSCachingRedis)" />
+    <PackageReference Include="@(MicrosoftVsSaaSCommon)" />
+    <PackageReference Include="@(MicrosoftVsSaaSDiagnostics)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\lib\VsClk.Hosting\VsClk.Hosting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.Development.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Dockerfile">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
