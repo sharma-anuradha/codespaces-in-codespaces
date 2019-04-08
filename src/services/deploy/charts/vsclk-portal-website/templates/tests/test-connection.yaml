@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "vsclk-portal-website.fullname" . }}-test-connection"
+  labels:
+    app.kubernetes.io/name: {{ include "vsclk-portal-website.name" . }}
+    helm.sh/chart: {{ include "vsclk-portal-website.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args:  ['{{ include "vsclk-portal-website.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
