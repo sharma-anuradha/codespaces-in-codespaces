@@ -5,8 +5,10 @@ set -o errexit -o pipefail -o noclobber -o nounset
 
 deploy_cluster_cmd="./deploy-core-cluster.sh -v"
 
-export SERVICE_ENV="dev"
-export SERVICE_INSTANCE="ci"
+export SERVICE_SUBSCRIPTION="vsclk-core-prod"
+export SERVICE_ENV="prod"
+export SERVICE_INSTANCE="rel"
+export SERVICE_DNS_NAME="rel.core.vsengsaas.visualstudio.com"
 
 # East US
 export SERVICE_STAMP="use"
