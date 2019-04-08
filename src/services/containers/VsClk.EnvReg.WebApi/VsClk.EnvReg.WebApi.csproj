@@ -6,16 +6,16 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreDiagnostics)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHosting)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHttp)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreMvcFiltersThrottling)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAzureStorageBlob)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAzureStorageDocumentDB)" />
-    <PackageReference Include="@(MicrosoftVsSaaSCaching)" />
-    <PackageReference Include="@(MicrosoftVsSaaSCachingRedis)" />
-    <PackageReference Include="@(MicrosoftVsSaaSCommon)" />
-    <PackageReference Include="@(MicrosoftVsSaaSDiagnostics)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreDiagnostics)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHosting)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHttp)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreMvcFiltersThrottling)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAzureStorageBlob)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSAzureStorageDocumentDB)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSCaching)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSCachingRedis)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSCommon)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="@(MicrosoftVsSaaSDiagnostics)" Version="$(VsclkSdkVersion)" />
   </ItemGroup>
 
   <ItemGroup>

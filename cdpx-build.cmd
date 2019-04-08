@@ -12,7 +12,7 @@ pushd "%~dp0"
 set DOTNET_VERSION=2.2.202
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
-set DOTNET_ARGS=/m /v:m
+set DOTNET_ARGS=/m /v:m /p:RestorePackages=false
 
 :: Dotnet Build
 echo.

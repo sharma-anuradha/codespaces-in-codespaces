@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="docker-compose\docker-compose.csproj" />
+    <ProjectReference Include="VsClk.EnvReg.WebApi\VsClk.EnvReg.WebApi.csproj" />
+    <ProjectReference Include="VsClk.Portal.WebSite\VsClk.Portal.WebSite.csproj" />
+  </ItemGroup>
+
+</Project>
