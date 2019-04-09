@@ -1,11 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="@(MicrosoftVisualStudioAzureContainersToolsTargets)" />
     <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreDiagnostics)" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHosting)" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHttp)" Version="$(VsclkSdkVersion)" />
