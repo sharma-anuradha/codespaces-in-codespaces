@@ -7,17 +7,17 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="@(MicrosoftVisualStudioAzureContainersToolsTargets)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreDiagnostics)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHosting)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreHttp)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAspNetCoreMvcFiltersThrottling)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAzureStorageBlob)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSAzureStorageDocumentDB)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSCaching)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSCachingRedis)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSCommon)" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="@(MicrosoftVsSaaSDiagnostics)" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="$(AzureContainersToolsVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Mvc.Filters.Throttling" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Caching" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Caching.Redis" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsclkSdkVersion)" />
   </ItemGroup>
 
   <ItemGroup>
