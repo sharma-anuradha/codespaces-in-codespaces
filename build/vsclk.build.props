@@ -36,6 +36,7 @@
   <!-- Common Assemblies -->
   <ItemGroup>
     <NewtonsoftJson Include="Newtonsoft.Json" Version="12.0.1" />
+    <MicrosoftVisualStudioAzureContainersToolsTargets Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.4.10" />
     <MicrosoftVsSaaSAspNetCoreDiagnostics Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsSaaSPackageVersion)" />
     <MicrosoftVsSaaSAspNetCoreHosting Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsSaaSPackageVersion)" />
     <MicrosoftVsSaaSAspNetCoreHttp Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
