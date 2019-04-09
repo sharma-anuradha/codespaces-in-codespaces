@@ -31,27 +31,9 @@
     <OctokitVersion>0.32.0</OctokitVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
     <VsclkSdkVersion>0.1.2</VsclkSdkVersion>
+    <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
+    <NewtonsoftJsonVersion>12.0.1</NewtonsoftJsonVersion>
   </PropertyGroup>
-
-  <!-- Common Assemblies -->
-  <ItemGroup>
-    <NewtonsoftJson Include="Newtonsoft.Json" Version="12.0.1" />
-    <MicrosoftVisualStudioAzureContainersToolsTargets Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.4.10" />
-    <MicrosoftVsSaaSAspNetCoreDiagnostics Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSAspNetCoreHosting Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSAspNetCoreHttp Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSAspNetCoreMvcFiltersThrottling Include="Microsoft.VsSaaS.AspNetCore.Mvc.Filters.Throttling" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSAzureStorageBlob Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSAzureStorageDocumentDB Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSCaching Include="Microsoft.VsSaaS.Caching" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSCachingRedis Include="Microsoft.VsSaaS.Caching.Redis" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSCommon Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSDiagnostics Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSCommonExtensions Include="Microsoft.VsSaaS.Common.Extensions" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSDiagnosticsExtensions Include="Microsoft.VsSaaS.Diagnostics.Extensions" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSDiagnosticsHealth Include="Microsoft.VsSaaS.Diagnostics.Health" Version="$(VsSaaSPackageVersion)" />
-    <MicrosoftVsSaaSAspNetCoreAuthenticationJwtBearer Include="Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer" Version="$(VsSaaSPackageVersion)" />
-  </ItemGroup>
 
   <Choose>
     <When Condition="'$(IsTraversal)'!='true'">
