@@ -4,4 +4,4 @@ LABEL maintainer="johnri@microsoft.com"
 ARG source
 WORKDIR /app
 COPY ${source:-publish} .
-ENTRYPOINT ["dotnet", "VsClk.EnvReg.WebApi.dll"]
+ENTRYPOINT ["dotnet", "Microsoft.VsCloudKernel.Services.VsClk.EnvReg.WebApi.dll"]

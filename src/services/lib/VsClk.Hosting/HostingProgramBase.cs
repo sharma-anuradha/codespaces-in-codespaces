@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.Services.VsClk.Hosting
             var host = new WebHostBuilder()
                 .UseKestrel()
                 // TEMP ENDPOINT
-                .Configure(app => app.Map("/echo", EchoHandler))
+                .Configure(app => app.Map("", EchoHandler))
                 .Build();
 
             host.Run();
@@ -31,6 +31,7 @@ namespace Microsoft.VsCloudKernel.Services.VsClk.Hosting
                 await context.Response.WriteAsync(
                     JsonConvert.SerializeObject(new
                     {
+                        Server = typeof(STARTUP).Assembly.GetName().Name,
                         StatusCode = context.Response.StatusCode.ToString(),
                         PathBase = context.Request.PathBase.Value.Trim('/'),
                         Path = context.Request.Path.Value.Trim('/'),
