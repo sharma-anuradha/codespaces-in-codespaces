@@ -5,28 +5,26 @@
 replicaCount: 1
 
 image:
-  repository: vsclkapps.azurecr.io/vsclkportal
-  tag: static
+  repository: vsclk.portal.website
+  tag: stable
   pullPolicy: IfNotPresent
-  registrykey: vsclkappsregistrykey
-
-nameOverride: ""
-fullnameOverride: ""
 
 service:
   type: ClusterIP
   port: 80
 
 ingress:
-  enabled: false
+  enabled: true
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
-  paths: ['/']
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  path: /
+  hosts:
+    - ci.dev.core.vsengsaas.visualstudio.com
+  tls:
+    - secretName: ssl-cert
+      hosts:
+        - ci.dev.core.vsengsaas.visualstudio.com
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

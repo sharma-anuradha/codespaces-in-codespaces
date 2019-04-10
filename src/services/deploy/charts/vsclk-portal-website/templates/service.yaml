@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "vsclk-portal-website.fullname" . }}
+  name: {{ template "vsclk-portal-website.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "vsclk-portal-website.name" . }}
-    helm.sh/chart: {{ include "vsclk-portal-website.chart" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app: {{ template "vsclk-portal-website.name" . }}
+    chart: {{ template "vsclk-portal-website.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -15,5 +15,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app.kubernetes.io/name: {{ include "vsclk-portal-website.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app: {{ template "vsclk-portal-website.name" . }}
+    release: {{ .Release.Name }}

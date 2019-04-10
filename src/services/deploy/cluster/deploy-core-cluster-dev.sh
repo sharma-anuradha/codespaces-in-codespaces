@@ -3,7 +3,7 @@
 # saner programming env: these switches turn some bugs into errors
 set -o errexit -o pipefail -o noclobber -o nounset
 
-deploy_cluster_cmd="./deploy-core-cluster.sh -v"
+deploy_cluster_cmd="./deploy-core-cluster.sh -v $@"
 
 export SERVICE_SUBSCRIPTION="vsclk-core-dev"
 export SERVICE_ENV="dev"
@@ -13,7 +13,7 @@ export SERVICE_DNS_NAME="ci.dev.core.vsengsaas.visualstudio.com"
 # East US
 export SERVICE_STAMP="use"
 export SERVICE_STAMP_LOCATION="eastus"
-${deploy_cluster_cmd} || exit $?
+#${deploy_cluster_cmd} || exit $?
 
 # West US 2
 export SERVICE_STAMP="usw2"
