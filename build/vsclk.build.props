@@ -14,6 +14,11 @@
     <AssemblyName>Microsoft.VsCloudKernel.Services.$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
   
+  <!-- Compiler options -->
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
   <!-- .Net Targets -->
   <PropertyGroup>
     <NetCoreAppTargetFramework>netcoreapp2.2</NetCoreAppTargetFramework>
