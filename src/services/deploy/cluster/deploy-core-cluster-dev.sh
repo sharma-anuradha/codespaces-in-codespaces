@@ -13,7 +13,7 @@ export SERVICE_DNS_NAME="ci.dev.core.vsengsaas.visualstudio.com"
 # East US
 export SERVICE_STAMP="use"
 export SERVICE_STAMP_LOCATION="eastus"
-#${deploy_cluster_cmd} || exit $?
+${deploy_cluster_cmd} || exit $?
 
 # West US 2
 export SERVICE_STAMP="usw2"
