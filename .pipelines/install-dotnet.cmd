@@ -6,7 +6,7 @@ echo Running %~nx0
 setlocal
 set "version=%1"
 set "install_dir=%2"
-if not defined version set "version=2.2.202"
+if not defined version set "version=2.2.106"
 if not defined install_dir set "install_dir=%LOCALAPPDATA%\Microsoft\dotnet"
 echo.
 echo %~n0 -Version %version% -InstallDir %install_dir%

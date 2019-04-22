@@ -3,12 +3,14 @@
 # saner programming env: these switches turn some bugs into errors
 set -o errexit -o pipefail -o noclobber -o nounset
 
-deploy_cluster_cmd="./deploy-core-cluster.sh -v"
+deploy_cluster_cmd="./deploy-core-cluster.sh -v $@"
 
 export SERVICE_SUBSCRIPTION="vsclk-core-ppe"
 export SERVICE_ENV="ppe"
 export SERVICE_INSTANCE="rel"
 export SERVICE_DNS_NAME="ppe.core.vsengsaas.visualstudio.com"
+export SSL_KV="vsclk-core-${SERVICE_ENV}-kv"
+export SSL_SECRET="core-vsengsaas-visualstudio-com-ssl"
 
 # East US
 export SERVICE_STAMP="use"

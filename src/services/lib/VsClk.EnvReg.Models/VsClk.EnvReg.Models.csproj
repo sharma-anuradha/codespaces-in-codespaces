@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsclkSdkVersion)" />
   </ItemGroup>
 
 </Project>

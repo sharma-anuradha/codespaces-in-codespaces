@@ -35,7 +35,7 @@
     <NerdBankGitVersioningVersion>2.2.13</NerdBankGitVersioningVersion>
     <OctokitVersion>0.32.0</OctokitVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
-    <VsclkSdkVersion>0.1.2</VsclkSdkVersion>
+    <VsclkSdkVersion>0.1.10</VsclkSdkVersion>
     <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
     <NewtonsoftJsonVersion>12.0.1</NewtonsoftJsonVersion>
   </PropertyGroup>

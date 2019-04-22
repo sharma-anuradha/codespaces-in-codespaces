@@ -7,6 +7,15 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" />
+    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.2.2" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
+    <ProjectReference Include="..\VsClk.EnvReg.Models\VsClk.EnvReg.Models.csproj" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Caching" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics.Extensions" Version="$(VsclkSdkVersion)" />
   </ItemGroup>
 
 </Project>

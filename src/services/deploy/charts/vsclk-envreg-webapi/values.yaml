@@ -2,16 +2,27 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+pods:
+  replicaCount: 2
+  maxReplicaCount: 5
+  minReadySeconds: 1
+  progressDeadlineSeconds: 300
+  livenessProbePath:
+  readinessProbePath:
+  targetCpuUtilizationPercentage: 60
 
 image:
-  repository: vsclk.envreg.webapi
-  tag: stable
+  tag:
+  repositoryUrl:
+  repositoryName: vsclk.envreg.webapi
   pullPolicy: IfNotPresent
+  imagePullSecret:
 
 service:
+  name: envreg
   type: ClusterIP
-  port: 80
+  externalPort: 80
+  internalPort: 80
 
 ingress:
   enabled: true
@@ -25,20 +36,26 @@ ingress:
       hosts:
         - ci.dev.core.vsengsaas.visualstudio.com
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
+appSettings:
+- ASPNETCORE_ENVIRONMENT
+- ENVREG_AppSettings__AuthJwtAudiences
+- ENVREG_AppSettings__AuthJwtAuthority
+- ENVREG_AppSettings__VsClkEnvRegDbHost
+- ENVREG_AppSettings__VsClkEnvRegDbKey
+- ENVREG_AppSettings__VsClkEnvRegPreferredLocation
+- ENVREG_AppSettings__VsClkEnvRegDbId
+- ENVREG_AppSettings__KeyVaultName
+- ENVREG_AppSettings__VsClkRedisConnectionString
 
-nodeSelector: {}
+azure-secrets:
+  # vsclk-core-dev
+  subscriptionId-dev: 86642df6-843e-4610-a956-fdd497102261
+  keyVaultName-dev: vsclk-core-svc-dev-kv
 
-tolerations: []
-
-affinity: {}
+# TODO: these would need to be generated/overriden per environment
+# See src\Deployment\ValuesFiles\values.{env}.yaml in IntelliCode
+config:
+  aspNetEnv: Development
+  databaseId: environment-registration
+  dbPreferredLocation: eastus
+  keyVaultName: vsclk-core-svc-dev-kv

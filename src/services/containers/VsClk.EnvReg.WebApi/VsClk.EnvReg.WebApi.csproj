@@ -6,7 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="2.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="$(AzureContainersToolsVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsclkSdkVersion)" />
@@ -21,6 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\lib\VsClk.EnvReg.Models\VsClk.EnvReg.Models.csproj" />
+    <ProjectReference Include="..\..\lib\VsClk.EnvReg.Repositories\VsClk.EnvReg.Repositories.csproj" />
     <ProjectReference Include="..\..\lib\VsClk.Hosting\VsClk.Hosting.csproj" />
   </ItemGroup>
 

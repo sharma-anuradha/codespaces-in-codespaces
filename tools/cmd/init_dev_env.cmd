@@ -37,6 +37,9 @@ echo.
 echo %ENVIRONMENT_NAME% macros:
 for /f "delims== tokens=1,2" %%i in ('doskey /macros') do call :echo_key_value %%i %%j
 
+:: Local Tools
+set "PATH=%PATH%;%~dp0"
+
 :: Done
 exit /b 0
 
