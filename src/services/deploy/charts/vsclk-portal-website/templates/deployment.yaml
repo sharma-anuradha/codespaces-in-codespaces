@@ -1,51 +1,62 @@
+{{- $root := . -}}
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: {{ template "vsclk-portal-website.fullname" . }}
-  labels:
-    app: {{ template "vsclk-portal-website.name" . }}
-    chart: {{ template "vsclk-portal-website.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+  name: {{ template "service.fullname" . }}
+  {{ template "labels" . }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.pods.replicaCount }}
   selector:
     matchLabels:
-      app: {{ template "vsclk-portal-website.name" . }}
+      app: {{ template "service.name" . }}
       release: {{ .Release.Name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  minReadySeconds: {{ .Values.pods.minReadySeconds }}
+  progressDeadlineSeconds: {{ .Values.pods.progressDeadlineSeconds }}
   template:
     metadata:
       labels:
-        app: {{ template "vsclk-portal-website.name" . }}
+        app: {{ template "service.name" . }}
         release: {{ .Release.Name }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
-    {{- with .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
+      - name: {{ .Chart.Name }}
+        image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.repositoryName not specified" .Values.image.repositoryName }}:{{ required "Value image.tag not specified" .Values.image.tag }}'
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}
+        env:
+        {{- range .Values.appSettings }}
+        - name: {{ . }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "service.fullname" $root }}-settings
+              key: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
+{{- if .Values.pods.livenessProbePath }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.pods.livenessProbePath }}
+            port: {{ .Values.service.internalPort }}
+          initialDelaySeconds: 15
+{{ end -}}
+{{- if .Values.pods.readinessProbePath }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.pods.readinessProbePath }}
+            port: {{ .Values.service.internalPort }}
+          initialDelaySeconds: 15
+          timeoutSeconds: 60
+{{ end -}}
+{{- if .Values.image.imagePullSecret }}
+      imagePullSecrets:
+      - name: {{ .Values.image.imagePullSecret }}
+{{ end -}}

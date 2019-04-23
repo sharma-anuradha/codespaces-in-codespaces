@@ -1,0 +1,5 @@
+
+
+.menubar > .menubar-menu-button.disabled {
+    opacity: 0.3;
+}

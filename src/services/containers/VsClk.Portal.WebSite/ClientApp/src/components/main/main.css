@@ -1,0 +1,19 @@
+.web {
+    --monaco-monospace-font: Monaco, Menlo, Inconsolata, "Courier New", monospace;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.monaco-workbench {
+    font-size: 13px;
+    line-height: 1.4em;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.vssass .monaco-workbench {
+    position: unset !important;
+}
+
+.monaco-workbench .part.titlebar>.window-appicon {
+    background-image: url(logo.png) !important;
+}

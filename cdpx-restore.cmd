@@ -20,9 +20,54 @@ call dotnet restore dirs.proj %DOTNET_ARGS%
 set EX=%ERRORLEVEL%
 if "%EX%" neq "0" (
     popd
-    echo "Failed to restore correctly."
+    echo Failed to restore correctly.
 	exit /b %EX%
 )
+
+:: NPM install and build
+:: We need to copy sources to a tmp directory, call install and build, and then copy the built binaries back to our ClientApp directory
+echo.
+echo npm install and build
+pushd ".\src\services\containers\VsClk.Portal.WebSite\ClientApp"
+call robocopy . %tmp%\portalspabuild\ /s 
+pushd %tmp%\portalspabuild\
+echo.
+echo npm-build-npm
+call npm install -g npm
+set EX=%ERRORLEVEL%
+if "%EX%" neq "0" (
+    popd
+    echo Failed to npm-build-npm correctly.
+	exit /b %EX%
+)
+echo.
+echo npm-install-project
+call npm install
+set EX=%ERRORLEVEL%
+if "%EX%" neq "0" (
+    echo Failed to npm-install-project correctly.
+    echo .npmrc:
+    type ".npmrc"
+    echo %userprofile%\.npmrc:
+    type "%userprofile%\.npmrc"
+    popd
+	exit /b %EX%
+)
+echo.
+echo npm-build-project
+call node_modules\.bin\react-scripts build
+set EX=%ERRORLEVEL%
+if "%EX%" neq "0" (
+    popd
+    echo Failed to npm-build-project correctly.
+	exit /b %EX%
+)
+popd
+
+echo.
+echo copy output files
+call robocopy %tmp%\portalspabuild\build\ .\build /s
+popd
 
 :: Restore working directory of user so this works fine in dev box.
 popd

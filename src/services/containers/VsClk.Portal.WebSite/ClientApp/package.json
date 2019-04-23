@@ -1,0 +1,46 @@
+{
+  "name": "vsa-portal-webapp",
+  "version": "0.1.0",
+  "private": true,
+  "readme": "README.md",
+  "dependencies": {
+    "react": "^16.8.4",
+    "react-dom": "^16.8.4",
+    "react-scripts": "2.1.8",
+    "react-router": "4.3.1",
+    "react-router-dom": "4.3.1",
+    "react-modal": "3.8.1",
+    "typescript": "3.3.3333",
+    "rimraf": "2.6.2",
+    "@environments/vscode-web": "^0.0.2"
+  },
+  "devDependencies": {
+    "@types/jest": "24.0.11",
+    "@types/node": "11.11.3",
+    "@types/react": "16.8.8",
+    "@types/react-dom": "16.8.2",
+    "@types/react-router": "4.4.5",
+    "@types/react-router-dom": "4.3.1",
+    "@types/react-modal": "3.8.1",
+    "tslint": "5.14.0",
+    "tslint-microsoft-contrib": "6.1.0",
+    "adm-zip": "0.4.13",
+    "fs-extra": "7.0.1"
+  },
+  "scripts": {
+    "postinstall": "node scripts/npm/postinstall.js",
+    "start": "rimraf ./build && react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not ie < 11",
+    "not op_mini all"
+  ]
+}

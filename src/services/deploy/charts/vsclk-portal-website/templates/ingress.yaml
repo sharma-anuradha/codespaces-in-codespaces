@@ -1,20 +1,16 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "vsclk-portal-website.fullname" . -}}
-{{- $servicePort := .Values.service.port -}}
+{{- $serviceName := include "service.servicename" . -}}
+{{- $servicePort := .Values.service.externalPort -}}
 {{- $ingressPath := .Values.ingress.path -}}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ $fullName }}
-  labels:
-    app: {{ template "vsclk-portal-website.name" . }}
-    chart: {{ template "vsclk-portal-website.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-{{- with .Values.ingress.annotations }}
+  name: {{ template "service.fullname" . }}
+  {{ template "labels" . }}
   annotations:
-{{ toYaml . | indent 4 }}
-{{- end }}
+  {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
 spec:
 {{- if .Values.ingress.tls }}
   tls:
@@ -33,7 +29,7 @@ spec:
         paths:
           - path: {{ $ingressPath }}
             backend:
-              serviceName: {{ $fullName }}
-              servicePort: http
+              serviceName: {{ $serviceName}}
+              servicePort: {{ $servicePort }}
   {{- end }}
 {{- end }}

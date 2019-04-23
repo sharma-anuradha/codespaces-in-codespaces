@@ -1,0 +1,3 @@
+The `_templates` directory contains templates to be generated prior to Helm templating.
+Run `..\..\bootstrap-secrets.ps1` to generate the secrets template. Because the generated templates contain secret values, the generated files are ignored via `.gitignore`.
+See the Helm [azure-secrets](https://devdiv.visualstudio.com/DevDiv/_wiki/wikis/DevDiv.wiki?wikiVersion=GBwikiMaster&pagePath=%2FEngineering%20System%20%26%20Tools%2FVSEng%20SaaS%2FOnboarding%20Tools%2FAzure%20Secrets%20Helm%20Plugin&pageId=957) plugin documentation for more information about secret templating and bootstrapping.

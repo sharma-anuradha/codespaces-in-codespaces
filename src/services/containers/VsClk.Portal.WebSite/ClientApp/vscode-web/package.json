@@ -1,0 +1,14 @@
+{
+  "name": "@environments/vscode-web",
+  "version": "0.0.2",
+  "description": "Visual Studio Code for Web",
+  "scripts": {
+    "update": "git clone -b web-hackathon https://github.com/Microsoft/vscode-remote.git && node ./scripts/preupdate.js && cd vscode-remote && yarn && yarn compile && cd .. && node scripts/postupdate.js"
+  },
+  "author": "Microsoft",
+  "dependencies": {},
+  "devDependencies": {},
+  "files": [
+    "vscode.zip"
+  ]
+}

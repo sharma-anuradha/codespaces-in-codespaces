@@ -1,0 +1,15 @@
+
+/* Editor */
+
+.monaco-workbench .part.editor > .content .editor-group-container.empty > .editor-container  {
+	display: none;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .editor-container > .editor-instance {
+	height: 100%;
+}
+
+.monaco-workbench .part.editor > .content .grid-view-container {
+	width: 100%;
+	height: 100%;
+}

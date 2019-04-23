@@ -1,0 +1,10 @@
+{
+    "extends": [
+        "tslint-microsoft-contrib/recommended"
+    ],
+    "rules": {
+        "prefer-type-cast": false,
+        "no-relative-imports": false,
+        "quotemark": [ true, "single" ]
+    }
+}

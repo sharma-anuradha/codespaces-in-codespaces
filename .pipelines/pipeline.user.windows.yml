@@ -11,6 +11,17 @@ environment:
     image: 'cdpxtest.azurecr.io/global/vse2017u5-external-win14393.1884:1.0'
     source_mode: 'map'
 
+package_sources:
+  npm:
+    config_files:
+      - include:
+        - 'src/**/*.npmrc'
+        - 'src\**\*.npmrc'
+        - 'src\\**\\*.npmrc'
+    feeds:                                     # Feeds to inject with credentials in generated .npmrc. Use this if you don't have .npmrc checked in and use a global or team wide configuration.
+      registry: https://registry.npmjs.org/    # This is the main registry.
+      "@environments:registry": https://devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/registry/      
+
 restore:
   commands:
     - !!defaultcommand

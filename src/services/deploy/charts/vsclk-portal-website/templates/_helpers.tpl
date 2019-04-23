@@ -2,16 +2,15 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "vsclk-portal-website.name" -}}
+{{- define "service.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
 */}}
-{{- define "vsclk-portal-website.fullname" -}}
+{{- define "service.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -25,8 +24,19 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
-Create chart name and version as used by the chart label.
+Create a default service name.
 */}}
-{{- define "vsclk-portal-website.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- define "service.servicename" -}}
+{{ if .Values.service.singleton }}{{ .Values.service.name }}{{ else }}{{ template "service.fullname" . }}{{ end }}
+{{- end -}}
+
+{{/*
+Define the metadata labels for every Kubernetes object in the chart.
+*/}}
+{{- define "labels" -}}
+  labels:
+    app: {{ template "service.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 {{- end -}}

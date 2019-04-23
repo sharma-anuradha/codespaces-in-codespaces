@@ -29,6 +29,7 @@
   <PropertyGroup>
     <AdalVersion>4.5.1</AdalVersion>
     <AspNetCoreAppVersion>2.2.3</AspNetCoreAppVersion>
+    <AspNetCoreDllVersions>2.2.0</AspNetCoreDllVersions>
     <IdentityClient>3.0.0-preview</IdentityClient>
     <IdentityModelS2SVersion>3.0.0-preview-60213030153</IdentityModelS2SVersion>
     <IdentiyModelVersion>6.0.0-preview-60212030309</IdentiyModelVersion>

@@ -2,22 +2,31 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+pods:
+  replicaCount: 2
+  maxReplicaCount: 5
+  minReadySeconds: 1
+  progressDeadlineSeconds: 300
+  livenessProbePath:
+  readinessProbePath:
+  targetCpuUtilizationPercentage: 60
 
 image:
-  repository: vsclk.portal.website
-  tag: stable
+  tag:
+  repositoryUrl:
+  repositoryName: vsclk.portal.website
   pullPolicy: IfNotPresent
+  imagePullSecret:
 
 service:
+  name: portal
   type: ClusterIP
-  port: 80
+  externalPort: 80
+  internalPort: 80
 
 ingress:
   enabled: true
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
   path: /
   hosts:
     - ci.dev.core.vsengsaas.visualstudio.com
@@ -26,20 +35,20 @@ ingress:
       hosts:
         - ci.dev.core.vsengsaas.visualstudio.com
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
+appSettings:
+- ASPNETCORE_ENVIRONMENT
+- PORTAL_AppSettings__KeyVaultName
+- PORTAL_AppSettings__VsClkRedisConnectionString
+- PORTAL_AppSettings__MicrosoftAppClientId
+- PORTAL_AppSettings__MicrosoftAppClientSecret
 
-nodeSelector: {}
+azure-secrets:
+  # vsclk-core-dev
+  subscriptionId-dev: 86642df6-843e-4610-a956-fdd497102261
+  keyVaultName-dev: vsclk-core-svc-dev-kv
 
-tolerations: []
-
-affinity: {}
+# TODO: these would need to be generated/overriden per environment
+# See src\Deployment\ValuesFiles\values.{env}.yaml in IntelliCode
+config:
+  aspNetEnv: Development
+  keyVaultName: vsclk-core-svc-dev-kv
