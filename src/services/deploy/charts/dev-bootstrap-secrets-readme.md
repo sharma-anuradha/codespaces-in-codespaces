@@ -11,7 +11,7 @@ See the 'azure-secrets' section in values.yaml for static config for dev.
 ```cmd
 set env=dev
 set chart_directory=vsclk-envreg-webapi
-set chart_directory=vsclk-envreg-portal
+set chart_directory=vsclk-portal-website
 call helm azure-secrets -bootstrap -env %env% -chartDirectory %chart_directory%
 ```
 
