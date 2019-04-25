@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="VsClk.EnvReg.WebApi\VsClk.EnvReg.WebApi.csproj" />
     <ProjectReference Include="VsClk.Portal.WebSite\VsClk.Portal.WebSite.csproj" />
+    <ProjectReference Include="VsClk.SignalService\SignalService\SignalService.csproj" />
   </ItemGroup>
 
 </Project>

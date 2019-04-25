@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>SignalService.Client.CLI</AssemblyName>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="DictionaryHelpers.cs" />
+    <Compile Include="$(ServiceRoot)\Shared\TraceSourceExtensions.cs" Link="TraceSourceExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Client\SignalService.Client.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="1.1.0-preview3-35497" />
+    <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.0.0-preview.18572.1" />
+  </ItemGroup>
+
+</Project>

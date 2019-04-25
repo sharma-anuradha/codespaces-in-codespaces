@@ -1,0 +1,17 @@
+name: '$(date:yyyyMMdd)$(rev:.r)'
+
+resources:
+- repo: self
+
+variables:
+  TeamName: VSSaaS
+
+jobs:
+- template: templates/vsclk-core-packages-build-and-publish-job.yaml
+  parameters:
+    artifactsStagingDirectory: $(build.artifactsStagingDirectory)
+    configuration: Debug
+    outputDirectory: $(System.DefaultWorkingDirectory)\bin\Debug
+    platform: any cpu
+    publishEnabled: false
+    signType: Test

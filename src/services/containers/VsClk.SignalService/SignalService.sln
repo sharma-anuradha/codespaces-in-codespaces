@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.527
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PresenceServiceHub", "PresenceServiceHub\PresenceServiceHub.csproj", "{C8C29D33-75B1-4C14-B5BC-4347BDB1CF34}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseBackplaneProvider", "BackplaneProviders\DatabaseBackplaneProvider\DatabaseBackplaneProvider.csproj", "{E00BE0F5-D232-49E2-817B-2FC323B292BE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalService", "SignalService\SignalService.csproj", "{4548B516-13E3-4F0A-B34F-ECAE01AFD492}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PresenceServiceHub.Test", "..\..\..\..\test\services\containers\VsClk.SignalService\PresenceServiceHub.Test\PresenceServiceHub.Test.csproj", "{77899370-C871-464A-9558-5CC793C383B6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalService.Client", "..\..\..\client\VsClk.SignalService\Client\SignalService.Client.csproj", "{9335C95F-6501-4A12-9069-6CB6A79583EE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalService.Client.CLI", "..\..\..\client\VsClk.SignalService\Client.CLI\SignalService.Client.CLI.csproj", "{F8212461-6FB4-4BE5-8710-92684BF49560}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C8C29D33-75B1-4C14-B5BC-4347BDB1CF34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8C29D33-75B1-4C14-B5BC-4347BDB1CF34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8C29D33-75B1-4C14-B5BC-4347BDB1CF34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8C29D33-75B1-4C14-B5BC-4347BDB1CF34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E00BE0F5-D232-49E2-817B-2FC323B292BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E00BE0F5-D232-49E2-817B-2FC323B292BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E00BE0F5-D232-49E2-817B-2FC323B292BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E00BE0F5-D232-49E2-817B-2FC323B292BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4548B516-13E3-4F0A-B34F-ECAE01AFD492}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4548B516-13E3-4F0A-B34F-ECAE01AFD492}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4548B516-13E3-4F0A-B34F-ECAE01AFD492}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4548B516-13E3-4F0A-B34F-ECAE01AFD492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77899370-C871-464A-9558-5CC793C383B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77899370-C871-464A-9558-5CC793C383B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77899370-C871-464A-9558-5CC793C383B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77899370-C871-464A-9558-5CC793C383B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9335C95F-6501-4A12-9069-6CB6A79583EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9335C95F-6501-4A12-9069-6CB6A79583EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9335C95F-6501-4A12-9069-6CB6A79583EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9335C95F-6501-4A12-9069-6CB6A79583EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8212461-6FB4-4BE5-8710-92684BF49560}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8212461-6FB4-4BE5-8710-92684BF49560}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8212461-6FB4-4BE5-8710-92684BF49560}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8212461-6FB4-4BE5-8710-92684BF49560}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2E7F43C5-21DA-4025-BD03-6CEE8EB2EB2F}
+	EndGlobalSection
+EndGlobal

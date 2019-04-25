@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "databaseSetting.endpointUrl": {
+      "value": "https://vsls-dev-db.documents.azure.com:443/"
+    },
+    "databaseSetting.authorizationKey": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/6df2d40d-d43f-4744-b1a5-8b748dc5d237/resourceGroups/vsls-dev/providers/Microsoft.KeyVault/vaults/vsls-dev-kv"
+        },
+        "secretName": "Config-AzureCosmosDbAuthKey",
+        "secretVersion": "699ff7222f7e43619d07c15a93f300d1"
+      }
+    },
+    "dockerRegistryUrl": {
+      "value": "https://vslsdev.azurecr.io"
+    },
+    "dockerRegistryUsername": {
+      "value": "vslsdev"
+    },
+    "dockerRegistryPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/6df2d40d-d43f-4744-b1a5-8b748dc5d237/resourceGroups/vsls-dev/providers/Microsoft.KeyVault/vaults/vsls-dev-kv"
+        },
+        "secretName": "vsengsaas-dockerRegistry-ServerPassword",
+        "secretVersion": "aeece86651da4375aab3a4f715182350"
+      }
+    }
+  }
+}

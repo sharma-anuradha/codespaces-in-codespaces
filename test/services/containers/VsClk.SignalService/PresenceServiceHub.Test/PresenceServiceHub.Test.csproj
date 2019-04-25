@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.PresenceServiceHub.Test</AssemblyName>
+    <RootNamespace>Microsoft.VsCloudKernel.SignalService.PresenceServiceHub</RootNamespace>
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\Shared\DictionaryHelpers.cs" Link="DictionaryHelpers.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\DatabaseBackplaneProvider\DatabaseBackplaneProvider.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\PresenceServiceHub\PresenceServiceHub.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0-preview3-35497" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

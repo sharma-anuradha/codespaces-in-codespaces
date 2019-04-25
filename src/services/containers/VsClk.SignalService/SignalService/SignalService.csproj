@@ -1,0 +1,66 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService</AssemblyName>
+    <LangVersion>7.1</LangVersion>
+    <Timestamp>$([System.DateTime]::Now.ToString("yyyyMMdd.HHmmss"))</Timestamp>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.0.*" />
+    <PackageReference Include="@(MicrosoftVisualStudioValidationPackageReference)" />
+    <PackageReference Include="@(NewtonsoftJsonPackageReference)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BackplaneProviders\DatabaseBackplaneProvider\DatabaseBackplaneProvider.csproj" />
+    <ProjectReference Include="..\PresenceServiceHub\PresenceServiceHub.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DockerFiles Include="Dockerfile" />
+    <DockerFiles Include="docker-compose.yml" />
+    <AzureDeployFiles Include="./Deployment/azure*.json" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  
+  <Target Name="GenerateTags" AfterTargets="build">
+    <Message Text="GitCommitId: $(GitCommitId) version:$(Version) buildtag:$(Timestamp)" />
+
+    <WriteLinesToFile
+            File="$(Outdir)buildtag.txt"
+            Lines="$(Timestamp)"
+            Overwrite="true"/>
+    <WriteLinesToFile
+            File="$(Outdir)version.txt"
+            Lines="$(Version)"
+            Overwrite="true"/>
+    <WriteLinesToFile
+            File="$(Outdir)gitcommitid.txt"
+            Lines="$(GitCommitId)"
+            Overwrite="true"/>
+  </Target>
+  
+  <Target Name="CopyDeploymentFiles" AfterTargets="Publish">
+    <Copy SourceFiles="@(DockerFiles)" DestinationFolder="$(Outdir)\%(RecursiveDir)" SkipUnchangedFiles="false" />
+    <Copy SourceFiles="@(AzureDeployFiles)" DestinationFolder="$(Outdir)\%(RecursiveDir)" SkipUnchangedFiles="false" />
+    <ItemGroup>
+      <FileWrites Include="$(OutDir)\**\*.*" />
+    </ItemGroup>
+  </Target>
+  
+</Project>

@@ -1,0 +1,113 @@
+parameters:
+  apiScanEnabled: false
+  configuration: 'Release'
+  outputDirectory:
+  nugetConfigPath: 'nuget.config'
+  nugetVersionSpec: 4.7
+  platform: 'any cpu'
+  poolName: 'VSEng-MicroBuildVS2017'
+  publishEnabled: false
+  publishVstsFeed: '11b82e9d-2671-42c3-b9d3-72ea07295ddb'
+  signType: 'Test'
+  solution: 'src/client/vsclk-core-packages.sln'
+  artifactsStagingDirectory:
+
+jobs:
+- job: BuildAndPublshPackages
+  displayName: 'Build and Publish Packages'
+
+  pool:
+    name: ${{ parameters.poolName }}
+    demands:
+    - 'msbuild'
+    - 'vstest'
+
+  steps:
+  - task: NuGetToolInstaller@0
+    displayName: 'Install NuGet ${{ parameters.nugetVersionSpec }}'
+    inputs:
+      versionSpec: ${{ parameters.nugetVersionSpec }}
+
+  - task: ms-vseng.MicroBuildTasks.30666190-6959-11e5-9f96-f56098202fef.MicroBuildSigningPlugin@2
+    displayName: 'Install Signing Plugin'
+    inputs:
+      signType: ${{ parameters.signType }}
+
+  - task: ms-vseng.MicroBuildShipTasks.7c429315-71ba-4cb3-94bb-f829c95f7915.MicroBuildCodesignVerify@1
+    displayName: 'Verify Signed Files'
+
+  - task: ms-vseng.MicroBuildShipTasks.8d7ae058-5d31-4092-9666-bf0d957afeea.MicroBuildAPIScanPlugin@2
+    displayName: 'Install APIScan Plugin'
+    condition: eq(True, ${{ parameters.apiScanEnabled }})
+
+  - task: NuGetCommand@2
+    displayName: 'NuGet Restore'
+    inputs:
+      feedsToUse: config
+      nugetConfigPath: ${{ parameters.nugetConfigPath }}
+      restoreSolution: ${{ parameters.solution }}
+      verbosityRestore: Normal
+
+  - task: MSBuild@1
+    displayName: 'Build and Pack Solution'
+    inputs:
+      configuration: ${{ parameters.configuration }}
+      createLogFile: true
+      logProjectEvents: true
+      maximumCpuCount: true
+      msbuildArguments: '/t:Build;Pack'
+      platform: ${{ parameters.platform }}
+      solution: ${{ parameters.solution }}
+
+  - task: ms-vseng.MicroBuildShipTasks.b1552754-dc1b-4835-a4f3-d970061e178d.MicroBuildAPIScanResultsAnalysis@1
+    displayName: 'Analyze APIScan Results'
+    condition: eq(True, ${{ parameters.apiScanEnabled }})
+
+  - task: VSTest@2
+    displayName: 'Test Solution'
+    inputs:
+      codeCoverageEnabled: true
+      configuration: ${{ parameters.configuration }}
+      platform: ${{ parameters.platform }}
+      publishRunAttachments: false
+      runInParallel: true
+      searchFolder: ${{ parameters.outputDirectory }}
+      testAssemblyVer2: |
+        **\*tests.dll
+        !**\*TestAdapter.dll
+        !**\obj\**
+      testRunTitle: '${{ parameters.solution }} tests'
+
+  - task: CopyFiles@2
+    displayName: 'Copy Files to Staging'
+    inputs:
+      SourceFolder: ${{ parameters.outputDirectory }}
+      TargetFolder: ${{ parameters.artifactsStagingDirectory }}
+    condition: eq(True, ${{ parameters.publishEnabled }})
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifacts'
+    inputs:
+      PathtoPublish: ${{ parameters.artifactsStagingDirectory }}
+    condition: eq(True, ${{ parameters.publishEnabled }})
+
+  - task: NuGetCommand@2
+    displayName: 'NuGet Push'
+    inputs:
+      allowPackageConflicts: true
+      command: push
+      packagesToPush: ${{ parameters.artifactsStagingDirectory}}/**/Microsoft.VsSaaS.*.nupkg;!${{ parameters.artifactsStagingDirectory }}/**/*.symbols.nupkg'
+      publishVstsFeed: ${{ parameters.publishVstsFeed }}
+      verbosityPush: Normal
+    condition: eq(True, ${{ parameters.publishEnabled }})
+
+  - task: PublishSymbols@2
+    displayName: 'Index Sources and Publish Symbols'
+    inputs:
+      SymbolServerType: TeamServices
+      DetailedLog: false
+    condition: eq(True, ${{ parameters.publishEnabled }})
+
+  - task: ms-vseng.MicroBuildTasks.521a94ea-9e68-468a-8167-6dcf361ea776.MicroBuildCleanup@1
+    displayName: 'Send Microbuild Telemetry'
+    condition: succeededOrFailed()

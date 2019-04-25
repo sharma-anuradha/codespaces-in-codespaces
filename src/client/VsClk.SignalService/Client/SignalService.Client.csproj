@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.Client</AssemblyName>
+    <RootNamespace>Microsoft.VsCloudKernel.SignalService.Client</RootNamespace>
+
+    <IsPackable>true</IsPackable>
+    <Description>VS Cloud Kernel Signal Service Client</Description>
+    <!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
+    <PackageTags>Visual Studio Cloud Kernel</PackageTags>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+
+    <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ServiceRoot)\Contracts\IPresenceServiceClientHub.cs" Link="Contracts\IPresenceServiceClientHub.cs" />
+    <Compile Include="$(ServiceRoot)\Contracts\IPresenceServiceHub.cs" Link="Contracts\IPresenceServiceHub.cs" />
+    <Compile Include="$(ServiceRoot)\Contracts\Methods.cs" Link="Contracts\Methods.cs" />
+    <Compile Include="$(ServiceRoot)\Contracts\Properties.cs" Link="Contracts\Properties.cs" />
+    <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
+    <Compile Include="$(ServiceRoot)\Shared\TraceSourceExtensions.cs" Link="Shared\TraceSourceExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="1.1.0-preview3-35497" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="15.6.56" />
+  </ItemGroup>
+
+</Project>
