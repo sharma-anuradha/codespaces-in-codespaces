@@ -11,6 +11,7 @@ import { StatusBar } from '../statusbar/statusbar';
 import { TitleBar } from '../titlebar/titlebar';
 import { ActivityBar } from '../activitybar/activitybar';
 import { PromptModal } from '../dialogs/prompt/prompt';
+import { Loader } from '../loader/loader';
 
 import { loader } from '../../loader';
 import envRegService from '../../services/envRegService';
@@ -65,7 +66,7 @@ export class Main extends Component<MainProps, MainState> {
 
     render() {
         const { loading } = this.state;
-        if (loading) return <div />
+        if (loading) return <Loader mainMessage='Loading...'/>
 
         return (
             <div>

@@ -1,16 +1,18 @@
-interface AuthServiceResponse {
-    name: string;
-    accessToken: string;
+interface AuthServiceResponse extends AuthUser {
 }
 
 interface AuthUser {
     name: string;
+    email: string;
+    accessToken: string;
 }
 
 export class AuthService {
 
     private static instance: AuthService;
     private user: AuthUser;
+
+    private ready: Promise<void>;
 
     constructor() {
     }
@@ -23,32 +25,37 @@ export class AuthService {
     }
 
     init() {
-        this.authorize();
+        this.ready = new Promise((resolve, reject) => {
+            this.authorize().then(() => {
+                resolve();
+            });
+        });
     }
 
     login() {
 
     }
 
-    logout() {
-        return fetch('/signout', {
+    async logout() {
+        await fetch('/signout', {
             method: 'POST'
-        }).then(() => {
-            this.user = undefined;
-        })
+        });
+        this.user = undefined;
     }
 
-    getUser() {
+    async getUser() {
+        await this.ready;
         return this.user;
     }
 
-    isAuthenticated() {
+    async isAuthenticated() {
+        await this.ready;
         return !!this.user;
     }
 
     async getToken() {
-        const authResponse = await this.authorize();
-        return authResponse ? authResponse.accessToken : undefined;
+        await this.ready;
+        return this.user ? this.user.accessToken : undefined;
     }
 
     private authorize(): Promise<AuthServiceResponse> {
@@ -64,7 +71,9 @@ export class AuthService {
             .then(data => {
                 if (data) {
                     this.user = {
-                        name: data.name   
+                        name: data.name,
+                        email: data.email,
+                        accessToken: data.accessToken   
                     };
                 }
                 return data;

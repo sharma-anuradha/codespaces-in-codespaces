@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <RootNamespace>Microsoft.VsCloudKernel.Services.EnvReg.WebApi</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -45,4 +46,7 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Util\" />
+  </ItemGroup>
 </Project>

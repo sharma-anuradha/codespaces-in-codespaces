@@ -1,15 +1,25 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.DataProtection;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
+using System.Linq;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using StackExchange.Redis;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -49,13 +59,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.Configure<AppSettings>(appSettingsConfiguration);
             services.AddSingleton(appSettings);
             AppSettings = appSettings;
-
-            services.AddVsSaaSHosting(HostEnvironment,
-                new LoggingBaseValues
-                {
-                    CommitId = AppSettings.GitCommit,
-                    ServiceName = "portal",
-                });
 
             ConfigureAuthentication(services, appSettings);
         }
@@ -97,6 +100,46 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 options.ClientId = appSettings.MicrosoftAppClientId;
                 options.ClientSecret = appSettings.MicrosoftAppClientSecret;
                 options.SaveTokens = true;
+                options.Events.OnCreatingTicket = ctx =>
+                {
+                    var handler = new JwtSecurityToken(ctx.AccessToken);
+                    var identity = handler.Claims.ToList();
+
+                    // Tenant ID is required.
+                    var tenantId = identity.Find(x => x.Type == "tid")?.Value;
+                    if (tenantId == null)
+                    {
+                        return Task.FromException(new System.Exception("MissingTenantIdClaim"));
+                    }
+
+                    // Temporary: Check if the user is in the Microsoft tenant
+                    if (!tenantId.Equals("72f988bf-86f1-41af-91ab-2d7cd011db47"))
+                    {
+                        return Task.FromException(new System.Exception("UnauthorizedTenant"));
+                    }
+
+                    // User ID is required.
+                    // Try both AAD and MSA claims for identifying a user
+                    var msaAltSecId = identity.Find(x => x.Type == "altsecid")?.Value;
+                    var userId = identity.Find(x => x.Type == "oid")?.Value ?? msaAltSecId;
+                    if (userId == null)
+                    {
+                        return Task.FromException(new System.Exception("MissingObjectIdClaim"));
+                    }
+
+                    // Use an underscore to separate the two sections because we use this as the primary key for a user
+                    // in CosmosDB. Certain characters are not allowed in  CosmosDB keys, including /\?#
+                    // See https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.documents.resource.id?view=azure-dotnet
+                    var fullyQualifiedUserId = $"{tenantId}_{userId}";
+
+                    var claimsIdentity = ctx.Principal.Identity as ClaimsIdentity;
+                    claimsIdentity.AddClaim(new Claim(
+                        "FullyQualifiedUserId",
+                        fullyQualifiedUserId
+                    ));
+
+                    return Task.CompletedTask;
+                };
             })
             ;
         }

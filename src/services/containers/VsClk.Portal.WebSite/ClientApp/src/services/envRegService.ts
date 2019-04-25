@@ -39,10 +39,10 @@ export default class EnvRegService {
         return undefined;
     }
 
-    static fetchEnvironments(): Promise<ICloudEnvironment[]> {
+    static async fetchEnvironments(): Promise<ICloudEnvironment[]> {
         let env: ICloudEnvironment[] = [];
-        const isAuthenticated = AuthService.Instance.isAuthenticated();
-        if (!isAuthenticated) return Promise.resolve([]);
+        const isAuthenticated = await AuthService.Instance.isAuthenticated();
+        if (!isAuthenticated) return [];
         return this.get(`${EnvRegService.servicePath}/registration`)
             .then(response => {
                 if (response && response.status === 200) {

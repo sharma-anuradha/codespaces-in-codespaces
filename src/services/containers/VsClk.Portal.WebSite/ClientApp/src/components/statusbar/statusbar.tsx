@@ -6,9 +6,29 @@ import { AuthService } from '../../services/authService';
 export interface StatusBarProps {
 }
 
-export class StatusBar extends Component<StatusBarProps> {
+export interface StatusBarState {
+    username?: string;
+    useremail?: string;
+}
+
+export class StatusBar extends Component<StatusBarProps, StatusBarState> {
 
     private loginForm: HTMLFormElement;
+
+    constructor(props: StatusBarProps) {
+        super(props);
+
+        this.state = {
+        }
+    }
+
+    async componentWillMount() {
+        const user = await AuthService.Instance.getUser();
+        this.setState({
+            username: user ? user.name : undefined,
+            useremail: user ? user.email : undefined
+        })
+    }
 
     handleLoginClick = () => {
         this.loginForm.submit();
@@ -26,14 +46,14 @@ export class StatusBar extends Component<StatusBarProps> {
 
     render() {
         const backgroundColor = '#5D1F6F';
-        const user = AuthService.Instance.getUser();
+        const { username, useremail } = this.state;
 
         return (
             <div className='part statusbar' style={{ backgroundColor: backgroundColor, position: 'absolute', color: 'rgb(255, 255, 255)', bottom: '0px' }}>
-                {user ?
+                {username ?
                     <div className='statusbar-item left statusbar-entry' statusbar-entry-priority='4' statusbar-entry-alignment='0'>
-                        <div title={`Signed in to Visual Studio Web as ${user.name} <samelh@microsoft.com>`}>
-                            <span className='octicon octicon-person '></span> {user.name}
+                        <div title={`Signed in to Visual Studio Online as ${username} <${useremail}>`}>
+                            <span className='octicon octicon-person '></span> {username}
                         </div>
                     </div>
                     :
@@ -45,7 +65,7 @@ export class StatusBar extends Component<StatusBarProps> {
                             </a>
                         </form>
                     </div>}
-                {user ?
+                {username ?
                     <div role='button' className="statusbar-item right statusbar-entry" statusbar-entry-priority="-100" statusbar-entry-alignment="1" onClick={this.handleLogoutClick}>
                         <a title='Login'>
                             <span className='octicon octicon-link-external '></span>

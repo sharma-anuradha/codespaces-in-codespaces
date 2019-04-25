@@ -1,6 +1,6 @@
 {
-  "short_name": "VS Web",
-  "name": "Visual Studio Web",
+  "short_name": "VS Online",
+  "name": "Visual Studio Online",
   "icons": [
     {
       "src": "favicon.ico",

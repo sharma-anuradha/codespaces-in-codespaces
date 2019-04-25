@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
+using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 {
@@ -8,7 +7,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
     {
         public string Id { get; set; }
 
-        public string OwnerId { get; set; }
+        public string Type { get; set; }
 
         public string FriendlyName { get; set; }
 
@@ -16,6 +15,17 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 
         public DateTime Updated { get; set; }
 
+        public string OwnerId { get; set; }
+
+        public string State { get; set; }
+
+        public string ContainerImage { get; set; }
+
+        public SeedInfo Seed { get; set; }
+
+        public ConnectionInfo Connection { get; set; }
+
         public DateTime Active { get; set; }
+
     }
 }

@@ -22,11 +22,13 @@ export class Welcome extends Component<WelcomeProps, WelcomeState> {
         super(props);
         this.state = {
         }
-    }
 
-    componentDidMount() {
-        envRegService.fetchEnvironments().then((environments) => {
-            this.setState({ environments });
+        AuthService.Instance.getUser().then((user) => {
+            if (user) {
+                envRegService.fetchEnvironments().then((environments) => {
+                    this.setState({ environments });
+                });
+            }
         });
     }
 
@@ -37,7 +39,6 @@ export class Welcome extends Component<WelcomeProps, WelcomeState> {
 
     render() {
         const { environments } = this.state;
-        const user = AuthService.Instance.getUser();
 
         const MAX_RECENT = 5; // max number of environments to show in the recent list
 
@@ -45,10 +46,10 @@ export class Welcome extends Component<WelcomeProps, WelcomeState> {
             <div className='welcomePageContainer'>
                 <div className='welcomePage'>
                     <div className='title'>
-                        <h1 className='caption'>Visual Studio Web</h1>
+                        <h1 className='caption'>Visual Studio Online</h1>
                         <p className='subtitle detail'>Editing reimagined</p>
                     </div>
-                    {user ?
+                    {environments ?
                         <div className='row'>
                             <div className='splash'>
                                 <div className='section start'>
