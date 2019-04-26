@@ -38,6 +38,7 @@ ingress:
 appSettings:
 - ASPNETCORE_ENVIRONMENT
 - PORTAL_AppSettings__KeyVaultName
+- PORTAL_AppSettings__AuthRedirectUrl
 - PORTAL_AppSettings__VsClkRedisConnectionString
 - PORTAL_AppSettings__MicrosoftAppClientId
 - PORTAL_AppSettings__MicrosoftAppClientSecret
@@ -51,4 +52,5 @@ azure-secrets:
 # See src\Deployment\ValuesFiles\values.{env}.yaml in IntelliCode
 config:
   aspNetEnv: Development
+  authRedirectUrl: /
   keyVaultName: vsclk-core-svc-dev-kv
