@@ -57,7 +57,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             Logger = Requires.NotNull(logger, nameof(logger));
             ServiceId = Guid.NewGuid().ToString();
 
-            logger.LogDebug($"Service created with id:{ServiceId}");
+            logger.LogInformation($"Service created with id:{ServiceId}");
         }
 
         public string ServiceId { get; }
@@ -77,7 +77,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             Requires.NotNull(backplaneProvider, nameof(backplaneProvider));
 
-            Logger.LogDebug($"AddBackplaneProvider type:{ServiceId}");
+            Logger.LogInformation($"AddBackplaneProvider type:{backplaneProvider.GetType().FullName}");
             this.backplaneProviders.Add(backplaneProvider);
             backplaneProvider.ContactChangedAsync = OnContactChangedAsync;
             backplaneProvider.MessageReceivedAsync = OnMessageReceivedAsync;
@@ -92,7 +92,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task RegisterSelfContactAsync(string connectionId, string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"RegisterSelfContactAsync -> connectionId:{connectionId} contactId:{contactId} initialProperties:{initialProperties.ConvertToString()}");
+            Logger.LogInformation($"RegisterSelfContactAsync -> connectionId:{connectionId} contactId:{contactId} initialProperties:{initialProperties.ConvertToString()}");
 
             var registeredSelfContact = GetOrCreateContact(contactId);
             await registeredSelfContact.RegisterSelfAsync(connectionId, initialProperties, cancellationToken);

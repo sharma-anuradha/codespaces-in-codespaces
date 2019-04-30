@@ -251,12 +251,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task InitializeAsync()
         {
-            this.logger.LogDebug($"DatabaseProvider.InitializeAsync");
+            this.logger.LogInformation($"Creating database:{DatabaseId} if not exists");
 
             // Create the database
             await Client.CreateDatabaseIfNotExistsAsync(new Database { Id = DatabaseId });
 
             // Create 'contacts'
+            this.logger.LogInformation($"Creating Collection:{ContactCollectionId}");
             await Client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(DatabaseId),
                 CreateDocumentCollectionDefinition(ContactCollectionId),
@@ -266,6 +267,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 });
 
             // Create 'message'
+            this.logger.LogInformation($"Creating Collection:{MessageCollectionId}");
             await Client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(DatabaseId),
                 CreateDocumentCollectionDefinition(MessageCollectionId),
@@ -275,6 +277,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 });
 
             // Create 'leases'
+            this.logger.LogInformation($"Creating Collection:{LeaseCollectionId}");
             await Client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(DatabaseId),
                 CreateDocumentCollectionDefinition(LeaseCollectionId),

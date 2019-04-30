@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalService.Client", "..\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalService.Client.CLI", "..\..\..\client\VsClk.SignalService\Client.CLI\SignalService.Client.CLI.csproj", "{F8212461-6FB4-4BE5-8710-92684BF49560}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "client", "client", "{599F8573-A645-41B9-BA78-B2878041842F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +50,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9335C95F-6501-4A12-9069-6CB6A79583EE} = {599F8573-A645-41B9-BA78-B2878041842F}
+		{F8212461-6FB4-4BE5-8710-92684BF49560} = {599F8573-A645-41B9-BA78-B2878041842F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2E7F43C5-21DA-4025-BD03-6CEE8EB2EB2F}

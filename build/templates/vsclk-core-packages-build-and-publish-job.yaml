@@ -13,7 +13,7 @@ parameters:
   artifactsStagingDirectory:
 
 jobs:
-- job: BuildAndPublshPackages
+- job: BuildAndPublishPackages
   displayName: 'Build and Publish Packages'
 
   pool:
@@ -96,7 +96,7 @@ jobs:
     inputs:
       allowPackageConflicts: true
       command: push
-      packagesToPush: ${{ parameters.artifactsStagingDirectory}}/**/Microsoft.VsSaaS.*.nupkg;!${{ parameters.artifactsStagingDirectory }}/**/*.symbols.nupkg'
+      packagesToPush: ${{ parameters.artifactsStagingDirectory}}/**/Microsoft.VsCloudKernel.*.nupkg;!${{ parameters.artifactsStagingDirectory }}/**/*.symbols.nupkg'
       publishVstsFeed: ${{ parameters.publishVstsFeed }}
       verbosityPush: Normal
     condition: eq(True, ${{ parameters.publishEnabled }})

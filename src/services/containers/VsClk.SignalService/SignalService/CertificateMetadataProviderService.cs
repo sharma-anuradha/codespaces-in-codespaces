@@ -5,6 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
@@ -17,11 +18,15 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class CertificateMetadataProviderService : BackgroundService, ITokenValidationProvider
     {
         private readonly string certificateMetadataServiceUri;
+        private readonly ILogger logger;
 
-        public CertificateMetadataProviderService(string certificateMetadataServiceUri)
+        public CertificateMetadataProviderService(
+            string certificateMetadataServiceUri,
+            ILogger logger)
         {
             Requires.NotNullOrEmpty(certificateMetadataServiceUri, nameof(certificateMetadataServiceUri));
             this.certificateMetadataServiceUri = certificateMetadataServiceUri;
+            this.logger = logger;
             SecurityKeys = Array.Empty<SecurityKey>();
         }
 
@@ -33,10 +38,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         #endregion
 
-        #region IStartupTask
+        #region BackgroundService Override
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
+            this.logger.LogInformation($"Retrieving auth metadata from Url:'{this.certificateMetadataServiceUri}'");
+
             var client = new HttpClient();
             var response = await client.GetAsync(this.certificateMetadataServiceUri);
             response.EnsureSuccessStatusCode();
@@ -45,6 +52,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             Audience = metadata.audience;
             Issuer = metadata.issuer;
 
+            this.logger.LogInformation($"Succesfully receive auth metadata audience:{metadata.audience} issuer:{metadata.issuer} keys count:{metadata.jwtPublicKeys.Length}");
             var securityKeys = new List<SecurityKey>();
             foreach(var item in metadata.jwtPublicKeys)
             {

@@ -1,0 +1,12 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ template "vsclk-signalservice.fullname" . }}
+spec:
+  minReplicas: {{ .Values.pods.replicaCount }}
+  maxReplicas: {{ .Values.pods.maxReplicaCount }}
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: {{ template "vsclk-signalservice.fullname" . }}
+  targetCPUUtilizationPercentage: {{ .Values.pods.targetCpuUtilizationPercentage }}

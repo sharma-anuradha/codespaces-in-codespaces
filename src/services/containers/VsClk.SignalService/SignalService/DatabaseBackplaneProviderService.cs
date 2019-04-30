@@ -29,23 +29,35 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             if (!string.IsNullOrEmpty(AppSettings.AzureCosmosDbEndpointUrl) && !string.IsNullOrEmpty(AppSettings.AzureCosmosDbAuthKey))
             {
-                this.logger.LogDebug($"Creating DatabaseProviderFactory with Url:${AppSettings.AzureCosmosDbEndpointUrl}");
+                var endpointUrl = NormalizeSetting(AppSettings.AzureCosmosDbEndpointUrl);
+                var authorizationKey = NormalizeSetting(AppSettings.AzureCosmosDbAuthKey);
+
+                this.logger.LogInformation($"Creating DatabaseProviderFactory with Url:'{endpointUrl}'");
                 try
                 {
                     var databaseBackplaneProvider = await DatabaseBackplaneProvider.CreateAsync(
                         new DatabaseSettings()
                         {
-                            EndpointUrl = AppSettings.AzureCosmosDbEndpointUrl,
-                            AuthorizationKey = AppSettings.AzureCosmosDbAuthKey
+                            EndpointUrl = endpointUrl,
+                            AuthorizationKey = authorizationKey
                         },
                         this.logger);
                     this.service.AddBackplaneProvider(databaseBackplaneProvider);
                 }
                 catch (Exception error)
                 {
-                    this.logger.LogError($"Failed to create database with Url:{AppSettings.AzureCosmosDbEndpointUrl}. Error:{error}");
+                    this.logger.LogError($"Failed to create database with Url:'{endpointUrl}'. Error:{error}");
                 }
             }
+            else
+            {
+                this.logger.LogWarning($"Azure Cosmos not configured");
+            }
+        }
+
+        private static string NormalizeSetting(string s)
+        {
+            return System.Text.RegularExpressions.Regex.Replace(s, @"\r\n?|\n", string.Empty);
         }
     }
 }

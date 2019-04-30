@@ -44,7 +44,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             dynamic versionObj = new
             {
                 this.presenceService.ServiceId,
-                Name = "Livshare Presence Service",
+                Name = "vsclk-core-signalservice",
                 ContactsStatistics = this.presenceService.GetContactStatistics(),
                 this.appSettings.BuildVersion,
                 this.appSettings.GitCommit,

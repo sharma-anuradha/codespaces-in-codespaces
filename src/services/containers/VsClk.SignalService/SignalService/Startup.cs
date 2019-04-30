@@ -43,7 +43,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public Startup(ILogger<Startup> logger,IHostingEnvironment env)
         {
             this.logger = logger;
-            this.logger.LogDebug("Startup");
+            this.logger.LogInformation("Startup");
 
             this._hostEnvironment = env;
 
@@ -67,7 +67,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            this.logger.LogDebug("ConfigureServices");
+            this.logger.LogInformation("ConfigureServices");
 
             // register our logger instance
             services.AddTransient<ILogger>((srvcPrvoer) => this.logger);
@@ -86,9 +86,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 var authenticateMetadataServiceUri = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.AuthenticateMetadataServiceUri));
                 if (!string.IsNullOrEmpty(authenticateMetadataServiceUri))
                 {
-                    this.logger.LogDebug("Using CertificateMetadataProvider...");
+                    this.logger.LogInformation($"Using CertificateMetadataProvider:{authenticateMetadataServiceUri}");
 
-                    TokenValidationProvider = new CertificateMetadataProviderService(authenticateMetadataServiceUri);
+                    TokenValidationProvider = new CertificateMetadataProviderService(authenticateMetadataServiceUri, this.logger);
                     services.AddSingleton((srvcProvider) => TokenValidationProvider as IHostedService);
                 }
             }
@@ -96,7 +96,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             // Add Jwt authentication only if we have a token validator
             if (TokenValidationProvider != null)
             {
-                this.logger.LogDebug("AddAuthenticationServices");
+                this.logger.LogInformation("AddAuthenticationServices");
                 services.AddAuthenticationServices(TokenValidationProvider, this.logger);
             }
 
@@ -109,7 +109,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var signalRService = services.AddSignalR();
             if (AzureSignalREnabled && Configuration.HasAzureSignalRConnections())
             {
-                this.logger.LogDebug($"Add Azure SignalR");
+                this.logger.LogInformation($"Add Azure SignalR");
                 UseAzureSignalR = true;
                 signalRService.AddAzureSignalR();
             }
@@ -134,7 +134,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             // SignalR configure
             if (UseAzureSignalR)
             {
-                this.logger.LogDebug($"Using Azure SignalR");
+                this.logger.LogInformation($"Using Azure SignalR");
 
                 // configure Azure SignalR service
                 app.UseAzureSignalR(routes =>

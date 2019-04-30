@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "vsclk-signalservice.fullname" . }}
+  {{ template "labels" . }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.externalPort }}
+      targetPort: {{ .Values.service.internalPort }}
+      protocol: TCP
+      name: {{ template "vsclk-signalservice.name" . }}
+  selector:
+    app: {{ template "vsclk-signalservice.name" . }}
+    release: {{ .Release.Name }}
