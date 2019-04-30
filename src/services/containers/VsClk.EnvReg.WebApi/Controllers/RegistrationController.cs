@@ -76,19 +76,21 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
             return Ok(Mapper.Map<EnvironmentRegistrationResult[]>(modelsRaw));
         }
+        public async Task<IActionResult> CreateStaticEnvironment(EnvironmentRegistration modelRaw)
+        {
+            var logger = HttpContext.GetLogger();
+
+            modelRaw.State = StateInfo.Available.ToString();
+            modelRaw = await EnvironmentRegistrationRepository.CreateAsync(modelRaw, logger);
+            return Ok(Mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(modelRaw));
+        }
 
         // POST api/environment/registration
         [HttpPost]
         public async Task<IActionResult> CreateEnvironment(
             [FromBody]EnvironmentRegistrationInput modelInput)
         {
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<EnvironmentRegistrationInput, EnvironmentRegistration>();
-                cfg.CreateMap<EnvironmentRegistration, EnvironmentRegistrationResult>();
-            });
             var client = new HttpClient();
-            var mapper = config.CreateMapper();
             var logger = HttpContext.GetLogger();
             var currentUserId = GetCurrentUserId();
             string accessToken = Util.Auth.GetAccessToken(Request);
@@ -103,7 +105,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
             string apiUrl = Request.Scheme + "://" + Request.Host + Request.Path + "/";
 
-            if (modelInput == null || !EnvironmentRegistrationInput.IsCreateInputValid(modelInput))
+            if (modelInput == null || !Util.Utils.IsCreateInputValid(modelInput))
             {
                 return BadRequest();
             }
@@ -114,15 +116,22 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 return BadRequest("Environment with that friendlyName already exists");
             }
 
-            var modelRaw = mapper.Map<EnvironmentRegistrationInput, EnvironmentRegistration>(modelInput);
+            var modelRaw = Mapper.Map<EnvironmentRegistrationInput, EnvironmentRegistration>(modelInput);
             modelRaw.Created = DateTime.UtcNow;
             modelRaw.Updated = DateTime.UtcNow;
             modelRaw.OwnerId = currentUserId;
             modelRaw.Id = Guid.NewGuid().ToString();
             var arguments = new List<KeyValuePair<string, string>>();
 
+            if (modelRaw.Type == EnvType.staticEnvironment.ToString())
+            {
+                return await CreateStaticEnvironment(modelRaw);
+            }
+
             /* Construct the arguments needed for the compute service */
-            if (modelRaw.Seed != null && modelRaw.Seed.SeedType == "git" && EnvironmentRegistrationInput.IsValidGitUrl(modelRaw.Seed.SeedMoniker))
+            if (   modelRaw.Seed != null
+                && modelRaw.Seed.SeedType == "git"
+                && Util.Utils.IsValidGitUrl(modelRaw.Seed.SeedMoniker))
             {
                 var moniker = modelRaw.Seed.SeedMoniker;
 
@@ -163,7 +172,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 modelRaw.Connection.ConnectionComputeTargetId = computeTargetId;
                 modelRaw.State = StateInfo.Provisioning.ToString();
                 modelRaw = await EnvironmentRegistrationRepository.CreateAsync(modelRaw, logger);
-                return Ok(mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(modelRaw));
+                return Ok(Mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(modelRaw));
 
             }
             else
@@ -199,9 +208,13 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             {
                 return Unauthorized();
             }
-            var response = await client.DeleteAsync(AppSettings.ComputeServiceUrl + "/computeTargets/" + modelRaw.Connection.ConnectionComputeTargetId + "/compute/" + modelRaw.Connection.ConnectionComputeId);
-            var deleted = await EnvironmentRegistrationRepository.DeleteAsync(id, logger);
 
+            if (modelRaw.Type == EnvType.cloudEnvironment.ToString())
+            {
+                await client.DeleteAsync(AppSettings.ComputeServiceUrl + "/computeTargets/" + modelRaw.Connection.ConnectionComputeTargetId + "/compute/" + modelRaw.Connection.ConnectionComputeId);
+            }
+
+            await EnvironmentRegistrationRepository.DeleteAsync(id, logger);
             return NoContent();
         }
 

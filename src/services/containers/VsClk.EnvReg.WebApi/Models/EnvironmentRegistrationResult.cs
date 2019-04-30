@@ -27,5 +27,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 
         public DateTime Active { get; set; }
 
+        public string Platform { get; set; }
+
     }
 }

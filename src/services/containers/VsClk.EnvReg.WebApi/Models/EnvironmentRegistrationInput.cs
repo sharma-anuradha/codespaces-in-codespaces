@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 {
@@ -9,20 +10,23 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 
         public string FriendlyName { get; set; }
 
-        public SeedInfo Seed { get; set; }
-
+        public SeedInfoInput Seed { get; set; }
         public string ContainerImage { get; set; }
-
-        public static bool IsCreateInputValid(EnvironmentRegistrationInput input)
-        {
-            return !(string.IsNullOrEmpty(input.FriendlyName) || string.IsNullOrEmpty(input.Type));
-        }
-
-        public static bool IsValidGitUrl(string url)
-        {
-            string regex = "(?:https?):\\/\\/(github\\.com)\\/(\\w+(-\\w+)*)\\/(\\w+(-\\w+)*)((\\/$|\\/(tree|pull|commit|releases\\/tag)\\/\\d+($|\\/))|$)";
-            return Regex.IsMatch(url, regex);
-        }
-
+        public ConnectionInfoInput Connection { get; set; }
+        public string Platform { get; set; }
+    }
+    public class SeedInfoInput
+    {
+        [JsonProperty(Required = Required.Default, PropertyName = "type")]
+        public string SeedType { get; set; }
+        [JsonProperty(Required = Required.Default, PropertyName = "moniker")]
+        public string SeedMoniker { get; set; }
+    }
+    public class ConnectionInfoInput
+    {
+        [JsonProperty(Required = Required.Default, PropertyName = "sessionId")]
+        public string ConnectionSessionId { get; set; }
+        [JsonProperty(Required = Required.Default, PropertyName = "sessionPath")]
+        public string ConnectionSessionPath { get; set; }
     }
 }

@@ -30,12 +30,14 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         [JsonProperty(Required = Required.Default, PropertyName = "seed")]
         public SeedInfo Seed { get; set; }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "connection")]
+        [JsonProperty(Required = Required.Default, PropertyName = "connection")]
         public ConnectionInfo Connection { get; set; }
 
-        /* What is this used for? */
         [JsonProperty(Required = Required.Always, PropertyName = "active")]
         public DateTime Active { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "platform")]
+        public string Platform { get; set; }
     }
 
     public class SeedInfo
@@ -70,5 +72,11 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         Unavailable,
         Hibernating,
         WakingUp
+    };
+
+    public enum EnvType
+    {
+        cloudEnvironment,
+        staticEnvironment
     };
 }

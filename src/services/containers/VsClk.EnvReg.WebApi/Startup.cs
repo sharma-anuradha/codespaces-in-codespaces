@@ -48,6 +48,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             var config = new MapperConfiguration(cfg => {
                 cfg.CreateMap<EnvironmentRegistration, EnvironmentRegistrationResult>();
                 cfg.CreateMap<EnvironmentRegistrationInput, EnvironmentRegistration>();
+                cfg.CreateMap<ConnectionInfoInput, ConnectionInfo>();
+                cfg.CreateMap<SeedInfoInput, SeedInfo>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);
