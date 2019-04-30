@@ -60,7 +60,13 @@ export class AuthService {
 
     private authorize(): Promise<AuthServiceResponse> {
         return fetch('/api/authorize')
-            .then(response => response.text())
+            .then(response => {
+                if (response.status != 200) {
+                    throw new Error(response.statusText);
+                } else {
+                    return response.text();
+                }
+            })
             .then(response => {
                 try {
                     return JSON.parse(response);
@@ -77,6 +83,8 @@ export class AuthService {
                     };
                 }
                 return data;
+            }).catch((e) => {
+                this.user = undefined;
             });
     }
 }

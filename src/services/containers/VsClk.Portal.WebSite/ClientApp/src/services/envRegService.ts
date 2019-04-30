@@ -3,8 +3,8 @@ import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 
 export default class EnvRegService {
 
-    //private static servicePath = '/api/environment'; // For production
-    private static servicePath = '/api'; // Comment out for local development
+    private static servicePath = '/api/environment'; // For production
+    //private static servicePath = '/api'; // Comment out for local development
 
     private static async getToken(): Promise<string> {
         return await AuthService.Instance.getToken();
@@ -15,10 +15,18 @@ export default class EnvRegService {
         if (token) {
             return fetch(url, {
                 method: 'GET',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json' 
-                },
-                credentials: 'include'
+                    'Content-Type': 'application/json'
+                }
+            }).then((response) => {
+                if (!response) {
+                    throw new Error(`GET to ${url} with returned an empty response`);
+                }
+                if (response.status !== 200) {
+                    throw new Error(response.statusText);
+                }
+                return response;
             });
         }
         return undefined;
@@ -31,9 +39,17 @@ export default class EnvRegService {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json' 
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
+            }).then((response) => {
+                if (!response) {
+                    throw new Error(`POST to ${url} with data ${JSON.stringify(data)} returned an empty response`);
+                }
+                if (response.status !== 200) {
+                    throw new Error(response.statusText);
+                }
+                return response;
             });
         }
         return undefined;
@@ -45,13 +61,9 @@ export default class EnvRegService {
         if (!isAuthenticated) return [];
         return this.get(`${EnvRegService.servicePath}/registration`)
             .then(response => {
-                if (response && response.status === 200) {
-                    return response.text().then((data) => {
-                        return JSON.parse(data);
-                    })
-                } else {
-                    throw new Error(response ? response.statusText : 'Error fetching environments');
-                }
+                return response.text().then((data) => {
+                    return JSON.parse(data);
+                })
             })
             .then((environments: ICloudEnvironment[]) => {
                 if (environments) {
@@ -70,6 +82,8 @@ export default class EnvRegService {
                     }
                 }
                 return env;
+            }).catch(() => {
+                throw 'Error fetching environments';
             })
     }
 
@@ -79,11 +93,9 @@ export default class EnvRegService {
             friendlyName: name
         })
             .then(response => {
-                if (response && response.status === 200) {
-                    return response.json();
-                } else {
-                    throw 'Error creating new environment';
-                }
+                return response.json();
+            }).catch((e) => {
+                throw 'Error creating new environment';
             });
     }
 

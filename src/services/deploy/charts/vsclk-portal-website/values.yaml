@@ -52,5 +52,5 @@ azure-secrets:
 # See src\Deployment\ValuesFiles\values.{env}.yaml in IntelliCode
 config:
   aspNetEnv: Development
-  authRedirectUrl: /
+  authRedirectUrl: https://ci.dev.core.vsengsaas.visualstudio.com
   keyVaultName: vsclk-core-svc-dev-kv

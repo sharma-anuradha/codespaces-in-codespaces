@@ -92,6 +92,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 options.AccessDeniedPath = "/accessdenied";
                 options.Cookie.Name = ".AspNet.SharedCookie";
                 options.Cookie.HttpOnly = true; // Not accessible to JavaScript
+                options.Events.OnRedirectToLogin = ctx =>
+                {
+                    ctx.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                };
             })
 
             .AddMicrosoftAccount(options =>
@@ -137,6 +142,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                         "FullyQualifiedUserId",
                         fullyQualifiedUserId
                     ));
+
+                    // Form the redirect url if it's set in app settings
+                    if (!string.IsNullOrEmpty(appSettings.AuthRedirectUrl)) {
+                        ctx.Properties.RedirectUri = appSettings.AuthRedirectUrl + options.CallbackPath;
+                    }
 
                     return Task.CompletedTask;
                 };

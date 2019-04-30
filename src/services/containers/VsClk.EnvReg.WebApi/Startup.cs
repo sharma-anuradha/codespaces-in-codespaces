@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -142,6 +143,11 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             {
                 options.LoginPath = "/login";
                 options.Cookie.Name = ".AspNet.SharedCookie";
+                options.Events.OnRedirectToLogin = ctx =>
+                {
+                    ctx.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                };
             })
             ;
         }
