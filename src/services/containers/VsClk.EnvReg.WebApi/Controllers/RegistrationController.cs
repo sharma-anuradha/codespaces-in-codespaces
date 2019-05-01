@@ -110,10 +110,16 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 return BadRequest();
             }
 
-            var duplicatedEnv = await EnvironmentRegistrationRepository.GetWhereAsync((model) => (model.FriendlyName == modelInput.FriendlyName & model.OwnerId == currentUserId), logger);
-            if (duplicatedEnv.Any())
+            var environments = await EnvironmentRegistrationRepository.GetWhereAsync((model) => model.OwnerId == currentUserId, logger);
+
+            if (environments.Where((model) => (model.FriendlyName == modelInput.FriendlyName)).Any())
             {
                 return BadRequest("Environment with that friendlyName already exists");
+            }
+
+            if (environments.Count() >= 10)
+            {
+                return BadRequest("You already exceeded the quota of environments");
             }
 
             var modelRaw = Mapper.Map<EnvironmentRegistrationInput, EnvironmentRegistration>(modelInput);
