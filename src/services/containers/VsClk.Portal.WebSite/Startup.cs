@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -61,6 +62,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             AppSettings = appSettings;
 
             ConfigureAuthentication(services, appSettings);
+
+            // Forwarded headers
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
         }
 
         private void ConfigureAuthentication(IServiceCollection services, AppSettings appSettings)
@@ -143,11 +151,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                         fullyQualifiedUserId
                     ));
 
-                    // Form the redirect url if it's set in app settings
-                    if (!string.IsNullOrEmpty(appSettings.AuthRedirectUrl)) {
-                        ctx.Properties.RedirectUri = appSettings.AuthRedirectUrl + options.CallbackPath;
-                    }
-
                     return Task.CompletedTask;
                 };
             })
@@ -158,6 +161,20 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             app.UseResponseCompression();
+
+            app.UseForwardedHeaders();
+            // TODO: the following is temporary until we get forwarded headers properly configured in nginx
+            // For the short term this is safe as we know all public traffic is https
+            // https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-2.2
+            if (!HostEnvironment.IsDevelopment() || !AppSettings.IsLocal)
+            {
+                app.Use((context, next) =>
+                {
+                    context.Request.Scheme = "https";
+                    return next();
+                });
+            }
+
 
             if (env.IsDevelopment())
             {
