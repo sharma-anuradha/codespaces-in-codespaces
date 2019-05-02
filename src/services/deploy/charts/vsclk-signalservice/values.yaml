@@ -12,7 +12,7 @@ pods:
   targetCpuUtilizationPercentage: 60
 
 image:
-  tag: 
+  tag:
   repositoryUrl:
   repositoryName: vsclk.signalservice
   pullPolicy: IfNotPresent
@@ -28,7 +28,7 @@ ingress:
   enabled: true
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /api/$1
-  path: /api/sgnlr/?(.*)
+  path: /api/signalr/?(.*)
 
 appSettings:
 - ASPNETCORE_ENVIRONMENT
