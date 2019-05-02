@@ -4,7 +4,12 @@ const proxy = require('http-proxy-middleware');
 module.exports = function (app) {
     
     // Environment registration service
-    app.use(proxy('/api/registration', { target: 'http://localhost:6000/' }));
+    app.use(proxy('/api/environment', {
+        target: 'http://localhost:6000', // target host
+        pathRewrite: {
+            '^/api/environment/registration': '/api/registration' // rewrite path
+        }
+    }));
 
     // Portal service
     app.use(proxy('/api/authorize', { target: 'http://localhost:5000/' }));

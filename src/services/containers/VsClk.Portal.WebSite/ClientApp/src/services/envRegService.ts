@@ -3,8 +3,7 @@ import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 
 export default class EnvRegService {
 
-    private static servicePath = '/api/environment'; // For production
-    //private static servicePath = '/api'; // Comment out for local development
+    private static servicePath = '/api/environment';
 
     private static async getToken(): Promise<string> {
         return await AuthService.Instance.getToken();
