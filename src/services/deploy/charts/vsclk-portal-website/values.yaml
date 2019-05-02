@@ -1,6 +1,4 @@
-# Default values for vsclk-portal-website.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+# Default values for char vsclk-portal-website.
 
 pods:
   replicaCount: 2
@@ -28,12 +26,6 @@ ingress:
   enabled: true
   annotations: {}
   path: /
-  hosts:
-    - ci.dev.core.vsengsaas.visualstudio.com
-  tls:
-    - secretName: ssl-cert
-      hosts:
-        - ci.dev.core.vsengsaas.visualstudio.com
 
 appSettings:
 - ASPNETCORE_ENVIRONMENT
@@ -45,12 +37,12 @@ appSettings:
 
 azure-secrets:
   # vsclk-core-dev
-  subscriptionId-dev: 86642df6-843e-4610-a956-fdd497102261
-  keyVaultName-dev: vsclk-core-svc-dev-kv
-
-# TODO: these would need to be generated/overriden per environment
-# See src\Deployment\ValuesFiles\values.{env}.yaml in IntelliCode
-config:
-  aspNetEnv: Development
-  authRedirectUrl: https://ci.dev.core.vsengsaas.visualstudio.com
-  keyVaultName: vsclk-core-svc-dev-kv
+  subscriptionId-dev: "86642df6-843e-4610-a956-fdd497102261"
+  # vsclk-core-ppe
+  subscriptionId-ppe: "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24"
+  # vsclk-core-prod
+  subscriptionId-prod: "979523fb-a19c-4bb0-a8ee-cef29597b0a4"
+  keyVaultName-dev: vsclk-online-dev-kv
+  keyVaultName-ppe: vsclk-online-ppe-kv
+  keyVaultName-prod: vsclk-online-prod-kv
+  

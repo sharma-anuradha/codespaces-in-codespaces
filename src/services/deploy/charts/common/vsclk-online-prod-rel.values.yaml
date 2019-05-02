@@ -1,0 +1,26 @@
+# Common override values for charts deployed to vsclk-online-dev-ci
+
+image:
+  repositoryUrl: vsclkonlineprod.azurecr.io
+
+ingress:
+  hosts:
+    - online.core.vsengsaas.visualstudio.com
+    - online.visualstudio.com
+    - vsclk-online-prod-rel-asse-tm.trafficmanager.net
+    - vsclk-online-prod-rel-euw-tm.trafficmanager.net
+    - vsclk-online-prod-rel-tm.trafficmanager.net
+    - vsclk-online-prod-rel-use-tm.trafficmanager.net
+    - vsclk-online-prod-rel-usw2-tm.trafficmanager.net
+    - webeditor.visualstudio.com
+  tls:
+    - hosts:
+        - online.core.vsengsaas.visualstudio.com
+        - online.visualstudio.com
+        - webeditor.visualstudio.com
+      secretName: ssl-cert 
+
+config:
+  aspNetEnv: Production
+  authRedirectUrl: https://online.visualstudio.com
+  keyVaultName: vsclk-online-ppe-kv

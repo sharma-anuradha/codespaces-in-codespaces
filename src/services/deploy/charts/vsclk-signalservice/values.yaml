@@ -1,4 +1,4 @@
-# Default values for vsclk-enverg-webapi
+# Default values for char vsclk-signalservice
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -13,7 +13,7 @@ pods:
 
 image:
   tag: 
-  repositoryUrl: 
+  repositoryUrl:
   repositoryName: vsclk.signalservice
   pullPolicy: IfNotPresent
   imagePullSecret:
@@ -29,15 +29,15 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /api/$1
   path: /api/sgnlr/?(.*)
-  hosts:
-    - signlr.dev.core.vsengsaas.visualstudio.com
-  tls:
-    - secretName: ssl-cert
-      hosts:
-        - signlr.dev.core.vsengsaas.visualstudio.com
 
 appSettings:
 - ASPNETCORE_ENVIRONMENT
+- SIGNALR_AppSettings__AuthenticateMetadataServiceUri
+- SIGNALR_AppSettings__AzureCosmosDbAuthKey
+- SIGNALR_AppSettings__AzureCosmosDbEndpointUrl
+- SIGNALR_AppSettings__AzureSignalRConnectionString
+- SIGNALR_AppSettings__BuildVersion
+- SIGNALR_AppSettings__GitCommit
 - AppSettings__BuildVersion
 - AppSettings__GitCommit
 - AppSettings__AuthenticateMetadataServiceUri
@@ -45,22 +45,22 @@ appSettings:
 - AppSettings__AzureCosmosDbAuthKey
 - Azure__SignalR__ConnectionString
 
+azure-secrets:
+  # vsclk-core-dev
+  subscriptionId-dev: "86642df6-843e-4610-a956-fdd497102261"
+  # vsclk-core-ppe
+  subscriptionId-ppe: "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24"
+  # vsclk-core-prod
+  subscriptionId-prod: "979523fb-a19c-4bb0-a8ee-cef29597b0a4"
+  keyVaultName-dev: vsclk-online-dev-kv
+  keyVaultName-ppe: vsclk-online-ppe-kv
+  keyVaultName-prod: vsclk-online-prod-kv
+
 authentication:
   authority: https://login.windows.net/common
   # Note that 9db1d849-f699-4cfb-8160-64bed3335c72 is the DEV appid
   # the others are temporary, client appids
   audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
-
-azure-secrets:
-  # vsclk-core-dev
-  subscriptionId-dev: 86642df6-843e-4610-a956-fdd497102261
-  keyVaultName-dev: vsclk-sgnlr-svc-dev-kv
-
-# TODO: these would need to be generated/overriden per environment
-# See src\Deployment\ValuesFiles\values.{env}.yaml in IntelliCode
-config:
-  aspNetEnv: Development
-  keyVaultName: vsclk-sgnlr-svc-dev-kv
 
 authentication:
  # this is the default auth Uri the container will use for auth 
@@ -68,4 +68,4 @@ authentication:
 
 status:
   buildVersion: '1.0'
-  gitComit: unknown
+  gitCommit: unknown

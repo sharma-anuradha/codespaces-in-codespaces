@@ -32,16 +32,16 @@ cluster_scripts_dir="$( cd "${vsclk_cluster_dir}/src/scripts/bash" >/dev/null 2>
 # Set up deployment parameters and defaults for vsclk-core
 default_subscription="vsclk-core-dev"
 default_prefix="vsclk"
-default_name="core-svc"
+default_name=""         ## NO DEFAULT
 default_env="dev"
 default_instance="ci"
 default_location="eastus"
 default_stamp="use"
 default_stamp_location="${default_location}"
 default_team_group_name="vsclk-core-contributors-3a5d"
-default_ssl_kv="vsclk-core-dev-kv"
-default_ssl_secret="dev-core-vsengsaas-visualstudio-com-ssl"
-default_dns_name="ci.dev.core.vsengsaas.visualstudio.com"
+default_ssl_kv=""       ## NO DEFAULT 
+default_ssl_secret=""   ## NO DEFAULT
+default_dns_name=""     ## NO DEFAULT
 
 subscription=$(set +u; [ ! -z $SERVICE_SUBSCRIPTION ] && echo $SERVICE_SUBSCRIPTION || echo "${default_subscription}")
 prefix=$(set +u; [ ! -z $SERVICE_PREFIX ] && echo $SERVICE_PREFIX || echo "${default_prefix}")
