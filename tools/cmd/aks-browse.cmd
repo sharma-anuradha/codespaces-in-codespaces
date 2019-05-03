@@ -1,21 +1,16 @@
 @echo off
-setlocal
 
-set "prefix=vsclk"
-set "service=core-svc"
-set "env=dev"
-set "instance=ci"
-set "env_name=%prefix%-%service%-%env%"
-set "stamp=%1"
-if not defined stamp set "stamp=use"
-REM set "stamp=usw2"
-REM set "stamp=euw"
-REM set "stamp=asse"
+:main
+    setlocal
+    set "stamp=%1"
+    set "service_instance=%2"
+    set "subscription=%3"
+    if "%stamp%" equ "" set "stamp=usw2"
+    if "%service_instance%" equ "" set "service_instance=vsclk-online-dev-ci"
+    if "%subscription%" equ "" set "subscription=vsclk-core-dev"
+    set "cluster_group=%service_instance%-%stamp%"
+    set "cluster_name=%cluster_group%-cluster"
 
-set "instance_name=%env_name%-%instance%"
-set "cluster_group=%instance_name%-%stamp%"
-set "cluster_name=%cluster_group%-cluster"
-
-call az aks browse -g %cluster_group% --name %cluster_name%
-exit /b
-
+    echo az aks browse -g %cluster_group% --name %cluster_name% --subscription %subscription%
+    call az aks browse -g %cluster_group% --name %cluster_name% --subscription %subscription%
+    exit /b
