@@ -11,8 +11,8 @@ services:
     build:
       context: ../../VsClk.EnvReg.WebApi
       dockerfile: Dockerfile
-  vsclk.signalrservice:
-    image: vsclk.signalrservice
+  vsclk.signalservice:
+    image: vsclk.signalservice
     build:
       context: ../../SignalService
       dockerfile: Dockerfile
