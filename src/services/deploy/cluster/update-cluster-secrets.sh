@@ -29,8 +29,14 @@ function update_secret() {
     az_command keyvault secret set --vault-name $vault_name --name $secret_name --value $secret_value
 }
 
+function get_compute_db_connection_string() {
+    local cosmosdb = "$1"
+    local connection_string="$(az_command cosmosdb list-connection-strings -g $env_rg -n $computedb_id --query "connectionStrings[?description=='Primary Table Connection String'].connectionString" -o tsv)" || return $?
+    echo $connection_string
+}
+
 function get_db_auth_key() {
-    local connection_string="$(az_command cosmosdb list-connection-strings -g $env_rg -n $cosmosdb_id --query "connectionStrings[0].connectionString" -o tsv)" || return $?
+    local connection_string="$(az_command cosmosdb list-connection-strings -g $env_rg -n $cosmosdb_id --query "connectionStrings[?description=='Primary SQL Connection String'].connectionString" -o tsv)" || return $?
     local accountkey="$(echo $connection_string | cut -d';' -f2)"
     local auth_key="$(echo $accountkey | cut -d'=' -f2)"
     echo $auth_key
@@ -46,6 +52,7 @@ function get_signalr_connection_string {
     az_command signalr key list -g $stamp_rg -n $signalr_id --query "primaryConnectionString" -o tsv || return $?
 }
 
+# Config-AzureComputeCosmosDbConnectionString
 # Config-AzureCosmosDbAuthKey
 # Config-AzureCosmosDbHost
 # Config-MicrosoftAppClientSecret
@@ -59,10 +66,12 @@ function main() {
     echo "${redis_id}"
     echo "${signalr_id}"
 
+    local compute_db_connection_string="$(get_compute_db_connection_string)" || return $?
     local db_auth_key="$(get_db_auth_key)" || return $?
     local redis_connection_string="$(get_redis_connection_string)" || return $?
     local signalr_connection_string="$(get_signalr_connection_string)" || return $?
 
+    update_secret "Config-AzureComputeCosmosDbConnectionString" $compute_db_connection_string || return $?
     update_secret "Config-AzureCosmosDbAuthKey" $db_auth_key || return $?
     update_secret "Config-RedisConnectionString" $redis_connection_string || return $?
     update_secret "Config-SignalRConnectionString" $signalr_connection_string || return $?
@@ -79,6 +88,7 @@ prefix="vsclk"
 env_rg="${prefix}-${service_name}-${env}"
 vault_name="${env_rg}-kv"
 cosmosdb_id="${env_rg}-db"
+computedb_id="${env_rg}-compute-db"
 redis_id="${env_rg}-redis"
 stamp="use"
 stamp_rg="${env_rg}-${instance}-${stamp}"
