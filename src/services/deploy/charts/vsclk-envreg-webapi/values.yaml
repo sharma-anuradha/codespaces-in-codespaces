@@ -38,6 +38,7 @@ appSettings:
 - ENVREG_AppSettings__VsClkEnvRegDbId
 - ENVREG_AppSettings__KeyVaultName
 - ENVREG_AppSettings__VsClkRedisConnectionString
+- ENVREG_AppSettings__ComputeServiceUrl
 
 azure-secrets:
   # vsclk-core-dev
@@ -59,3 +60,4 @@ authentication:
 config:
   databaseId: environment-registration
   dbPreferredLocation: eastus
+  computeServiceUrl: http://computeprovisioning
