@@ -103,7 +103,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 return StatusCode(401);
             }
 
-            string apiUrl = AppSettings.PreferredSchema + "://" + AppSettings.DefaultHost + AppSettings.DefaultPath + "/";
+            string apiUrl = AppSettings.PreferredSchema + "://" + AppSettings.DefaultHost + AppSettings.DefaultPath + "/registration/";
 
             if (modelInput == null || !Util.Utils.IsCreateInputValid(modelInput))
             {

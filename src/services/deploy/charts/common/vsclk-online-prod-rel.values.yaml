@@ -23,5 +23,5 @@ ingress:
 config:
   aspNetEnv: Production
   authRedirectUrl: https://online.visualstudio.com
-  keyVaultName: vsclk-online-ppe-kv
+  keyVaultName: vsclk-online-prod-kv
   clusterDefaultHost: online.visualstudio.com
