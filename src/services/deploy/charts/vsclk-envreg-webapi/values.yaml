@@ -39,6 +39,9 @@ appSettings:
 - ENVREG_AppSettings__KeyVaultName
 - ENVREG_AppSettings__VsClkRedisConnectionString
 - ENVREG_AppSettings__ComputeServiceUrl
+- ENVREG_AppSettings__PreferredSchema
+- ENVREG_AppSettings__DefaultHost
+- ENVREG_AppSettings__DefaultPath
 
 azure-secrets:
   # vsclk-core-dev
