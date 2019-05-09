@@ -20,3 +20,4 @@ config:
   aspNetEnv: Development
   authRedirectUrl: https://online.dev.core.vsengsaas.visualstudio.com
   keyVaultName: vsclk-online-dev-kv
+  clusterDefaultHost: online.dev.core.vsengsaas.visualstudio.com

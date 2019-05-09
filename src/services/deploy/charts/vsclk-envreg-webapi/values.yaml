@@ -61,3 +61,5 @@ config:
   databaseId: environment-registration
   dbPreferredLocation: eastus
   computeServiceUrl: http://computeprovisioning
+  clusterPreferredSchema: https
+  clusterDefaultPath: /api/environment

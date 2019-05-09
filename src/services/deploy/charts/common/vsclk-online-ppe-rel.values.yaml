@@ -20,3 +20,4 @@ config:
   aspNetEnv: Staging
   authRedirectUrl: https://online-ppe.core.vsengsaas.visualstudio.com
   keyVaultName: vsclk-online-ppe-kv
+  clusterDefaultHost: online-ppe.core.vsengsaas.visualstudio.com
