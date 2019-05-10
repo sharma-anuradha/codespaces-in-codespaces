@@ -24,9 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="3.0.0-preview5-19227-01" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="1.1.0" />
+    <!--
+    Note: add this package if moving to version 3>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="3.0.0-preview5-19227-01" />
-    
+    -->
+
     <PackageReference Include="Microsoft.VisualStudio.Threading" Version="15.6.56" />
   </ItemGroup>
 

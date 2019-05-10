@@ -3,7 +3,9 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+#if SignalR_Client_Version3
 using Microsoft.Extensions.DependencyInjection;
+#endif
 using Microsoft.VsCloudKernel.SignalService.Common;
 using Microsoft.VisualStudio.Threading;
 
@@ -80,7 +82,12 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         public static IHubConnectionBuilder FromUrl(string url)
         {
             Requires.NotNullOrEmpty(url, nameof(url));
-            return new HubConnectionBuilder().WithUrl(url).AddNewtonsoftJsonProtocol();
+            return new HubConnectionBuilder().WithUrl(url)
+#if SignalR_Client_Version3
+                .AddNewtonsoftJsonProtocol();
+#else
+                ;
+#endif
         }
 
         public static IHubConnectionBuilder FromUrlAndAccessToken(string url, string accessToken)
@@ -99,7 +106,12 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 {
                     return Task.FromResult(accessTokenCallback());
                 };
-            }).AddNewtonsoftJsonProtocol();
+            })
+#if SignalR_Client_Version3
+                .AddNewtonsoftJsonProtocol();
+#else
+                ;
+#endif
         }
 
         private async Task OnClosedAsync(Exception exception)

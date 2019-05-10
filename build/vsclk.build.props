@@ -25,6 +25,12 @@
     <NetStandardTargetFramework>netstandard2.0</NetStandardTargetFramework>
   </PropertyGroup>
 
+  <!-- Package Reference Definitions -->
+  <ItemGroup>
+    <!-- Design-time packages -->
+    <MicroBuildCorePackageReference Include="MicroBuild.Core" Version="0.3.0" PrivateAssets="All" ExcludeAssets="Runtime" />
+  </ItemGroup>
+  
   <!-- NuGet Package Versions -->
   <PropertyGroup>
     <AdalVersion>4.5.1</AdalVersion>
@@ -62,6 +68,11 @@
     </When>
   </Choose>
 
+  <!-- Microbuild & Signing Support -->
+  <ItemGroup>
+    <PackageReference Include="@(MicroBuildCorePackageReference)" />
+  </ItemGroup>
+  
   <!-- Signing Options-->
   <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
     <SkipSigning>true</SkipSigning>
