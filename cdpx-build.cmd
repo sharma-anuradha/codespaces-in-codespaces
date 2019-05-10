@@ -17,7 +17,7 @@ set DOTNET_ARGS=/m /v:m /p:RestorePackages=false
 :: Dotnet Build
 echo.
 echo dotnet build dirs.proj
-call dotnet build --no-restore dirs.proj %DOTNET_ARGS%
+call dotnet build --no-restore --configuration Release dirs.proj %DOTNET_ARGS%
 set EX=%ERRORLEVEL%
 if "%EX%" neq "0" (
     popd
@@ -28,7 +28,7 @@ if "%EX%" neq "0" (
 :: Dotnet Publish
 echo.
 echo dotnet publish dirs.proj
-call dotnet publish --no-restore --no-build dirs.proj %DOTNET_ARGS%
+call dotnet publish --no-restore --configuration Release --no-build dirs.proj %DOTNET_ARGS%
 set EX=%ERRORLEVEL%
 if "%EX%" neq "0" (
     popd

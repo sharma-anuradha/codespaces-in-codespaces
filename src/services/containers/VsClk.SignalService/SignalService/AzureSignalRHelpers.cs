@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
@@ -29,14 +30,31 @@ namespace Microsoft.VsCloudKernel.SignalService
                 HasAzureSignalRConnections(configuration, ConnectionStringSecondaryKey, ConnectionStringSecondaryKeyPrefix);
         }
 
-        private static bool HasAzureSignalRConnections(IConfiguration configuration, string defaultKey, string keyPrefix)
+        /// <summary>
+        /// Return all Azure SignalR connections that were configured
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
+        public static IEnumerable<KeyValuePair<string, string>> GetAllAzureSignalRConnections(IConfiguration configuration)
         {
-            return configuration.AsEnumerable().Any(pair =>
+            return
+                GetAzureSignalRConnections(configuration, ConnectionStringDefaultKey, ConnectionStringKeyPrefix).Union
+                (GetAzureSignalRConnections(configuration, ConnectionStringSecondaryKey, ConnectionStringSecondaryKeyPrefix)).Distinct();
+        }
+
+        private static IEnumerable<KeyValuePair<string,string>> GetAzureSignalRConnections(IConfiguration configuration, string defaultKey, string keyPrefix)
+        {
+            return configuration.AsEnumerable().Where(pair =>
             {
                 var key = pair.Key;
                 return ((key == defaultKey && !string.IsNullOrEmpty(pair.Value)) ||
                     (key.StartsWith(keyPrefix) && !string.IsNullOrEmpty(pair.Value)));
             });
+        }
+
+        private static bool HasAzureSignalRConnections(IConfiguration configuration, string defaultKey, string keyPrefix)
+        {
+            return GetAzureSignalRConnections(configuration, defaultKey, keyPrefix).Any();
         }
     }
 }

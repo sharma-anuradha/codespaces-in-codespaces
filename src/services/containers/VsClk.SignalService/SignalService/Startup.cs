@@ -3,12 +3,14 @@
 #define Azure_SignalR
 #endif
 
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsSaaS.AspNetCore.TelemetryProvider;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -16,6 +18,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         bool UseAzureSignalR { get; }
         ITokenValidationProvider TokenValidationProvider { get; }
+        IConfigurationRoot Configuration { get; }
     }
 
     public class Startup : IStartup
@@ -116,6 +119,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             // IStartup
             services.AddSingleton<IStartup>(this);
+
+            // If telemetry console provider is wanted
+            if (appSettingsConfiguration.GetValue<bool>(nameof(AppSettings.UseTelemetryProvider)))
+            {
+                // inject the Telemetry logger provider
+                services.ReplaceConsoleTelemetry();
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -166,12 +176,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // Frameworks
-            app.UseMvc();
-
-            app.Run((context) =>
+            app.UseMvc(routes =>
             {
-                context.Response.Redirect("/status");
-                return Task.CompletedTask;
+                routes.MapRoute(
+                name: "default",
+                template: "{controller=Status}/{action=Get}");
             });
         }
     }

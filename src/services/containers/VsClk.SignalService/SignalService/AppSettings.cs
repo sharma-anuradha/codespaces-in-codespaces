@@ -9,6 +9,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public string GitBranch { get; set; }
 
+        public bool UseTelemetryProvider { get; set; }
+
         public string AuthenticateMetadataServiceUri { get; set; }
 
         public string AzureCosmosDbEndpointUrl { get; set; }

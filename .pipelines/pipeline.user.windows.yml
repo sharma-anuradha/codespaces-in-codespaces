@@ -37,7 +37,7 @@ build:
       name: 'cdpx-build'
       command: 'cdpx-build.cmd'
       artifacts:
-        - from: 'bin\debug'
+        - from: 'bin\release'
           to: 'binaries'          
           include:
             - '**/*'

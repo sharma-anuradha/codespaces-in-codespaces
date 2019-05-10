@@ -29,7 +29,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 UpdateProperties?.Invoke(this, new UpdatePropertiesEventArgs(contactdId, properties));
             });
 
-            connection.On<string, string, string, JToken>(Methods.ReceiveMessage, (contactdId, fromContactId, messageType,  body) =>
+            connection.On<string, string, string, JToken>(Methods.ReceiveMessage, (contactdId, fromContactId, messageType, body) =>
             {
                 trace.Verbose($"MessageReceived-> contactdId:{contactdId} fromContactId:{fromContactId} messageType:{messageType} body:{body}");
                 MessageReceived?.Invoke(this, new ReceiveMessageEventArgs(contactdId, fromContactId, messageType, body));

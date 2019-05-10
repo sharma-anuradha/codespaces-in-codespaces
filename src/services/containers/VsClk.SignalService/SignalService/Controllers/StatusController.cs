@@ -5,9 +5,10 @@ using System.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
-    [Route("[controller]")]
-    public class StatusController : Controller
+    public class StatusController : ControllerBase
     {
+        private const string EndpointPrefix = "Endpoint=";
+
         private readonly AppSettings appSettings;
         private readonly PresenceService presenceService;
         private readonly IStartup startup;
@@ -45,20 +46,40 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             {
                 this.presenceService.ServiceId,
                 Name = "vsclk-core-signalservice",
-                ContactsStatistics = this.presenceService.GetContactStatistics(),
-                this.appSettings.BuildVersion,
-                this.appSettings.GitCommit,
-                this.appSettings.AuthenticateMetadataServiceUri,
+                AppSettings = new
+                {
+                    this.appSettings.BuildVersion,
+                    this.appSettings.GitCommit,
+                    this.appSettings.AuthenticateMetadataServiceUri,
+                    this.appSettings.UseTelemetryProvider
+                },
                 Startup.AzureSignalREnabled,
                 this.startup.UseAzureSignalR,
+                AzureSignalRConnections = GetAllAzureSignalRConnections(),
                 TokenValidatorType = TokenValidationProvider?.GetType().Name,
                 TokenValidationProvider?.Audience,
                 TokenValidationProvider?.Issuer,
                 BackplaneProviderTypes = this.presenceService.BackplaneProviders.Select(f => f.GetType().Name).ToArray(),
-                SecurityKeys = securityKeys
+                SecurityKeys = securityKeys,
+                ContactsStatistics = this.presenceService.GetContactStatistics(),
             };
 
             return versionObj;
+        }
+
+        private object[] GetAllAzureSignalRConnections()
+        {
+            return AzureSignalRHelpers.GetAllAzureSignalRConnections(this.startup.Configuration)
+                .Select(pair => new
+                {
+                    Name = pair.Key,
+                    Endpoint = GetUriFromAzureConnectionString(pair.Value)
+                }).ToArray();
+        }
+
+        private static string GetUriFromAzureConnectionString(string azureConnectionString)
+        {
+            return azureConnectionString.Split(';')[0].Substring(EndpointPrefix.Length);
         }
     }
 }

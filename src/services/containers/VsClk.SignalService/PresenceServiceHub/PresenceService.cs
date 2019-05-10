@@ -92,7 +92,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task RegisterSelfContactAsync(string connectionId, string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
         {
-            Logger.LogInformation($"RegisterSelfContactAsync -> connectionId:{connectionId} contactId:{contactId} initialProperties:{initialProperties.ConvertToString()}");
+            Logger.LogInformation("Register Contact");
+
+            // Note: avoid telemetry for contact id's
+            using (Logger.BeginScope("NoTelemetry"))
+            {
+                Logger.LogInformation($"RegisterSelfContactAsync -> connectionId:{connectionId} contactId:{contactId} initialProperties:{initialProperties.ConvertToString()}");
+            }
 
             var registeredSelfContact = GetOrCreateContact(contactId);
             await registeredSelfContact.RegisterSelfAsync(connectionId, initialProperties, cancellationToken);
@@ -516,7 +522,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError($"Failed to update contact properties using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}. Error:{error}");
+                    Logger.LogError(error, $"Failed to update contact properties using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}");
                 }
             }
         }
@@ -532,7 +538,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError($"Failed to send message using backplane provider:{backplaneProvider.GetType().Name}. Error:{error}");
+                    Logger.LogError(error, $"Failed to send message using backplane provider:{backplaneProvider.GetType().Name}");
                 }
             }
         }
@@ -551,7 +557,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError($"Failed to get contact properties using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}. Error:{error}");
+                    Logger.LogError(error, $"Failed to get contact properties using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}");
                 }
             }
 

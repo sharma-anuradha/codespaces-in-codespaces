@@ -69,3 +69,6 @@ authentication:
 status:
   buildVersion: '1.0'
   gitCommit: unknown
+
+#define the stamp
+stamp: use

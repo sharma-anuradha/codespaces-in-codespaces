@@ -46,7 +46,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    this.logger.LogError($"Failed to create database with Url:'{endpointUrl}'. Error:{error}");
+                    this.logger.LogError(error, $"Failed to create database with Url:'{endpointUrl}'");
                 }
             }
             else
