@@ -58,9 +58,6 @@ azure-secrets:
 
 authentication:
   authority: https://login.windows.net/common
-  # Note that 9db1d849-f699-4cfb-8160-64bed3335c72 is the DEV appid
-  # the others are temporary, client appids
-  audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
 
 authentication:
  # this is the default auth Uri the container will use for auth 
