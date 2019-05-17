@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
+using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Newtonsoft.Json;
@@ -28,17 +29,20 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         private IEnvironmentRegistrationRepository EnvironmentRegistrationRepository { get; }
         private IMapper Mapper { get; }
         private IConfiguration Configuration { get; }
+        private IStorageManager  FileShareManager { get; }
         private AppSettings AppSettings { get; }
 
         public RegistrationController(
             IEnvironmentRegistrationRepository environmentRegistrationRepository,
             IMapper mapper,
             IConfiguration configuration,
+            IStorageManager  fileShareManager,
             AppSettings appSettings)
         {
             EnvironmentRegistrationRepository = environmentRegistrationRepository;
             Mapper = mapper;
             Configuration = configuration;
+            FileShareManager = fileShareManager;
             AppSettings = appSettings;
         }
 
@@ -76,6 +80,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
             return Ok(Mapper.Map<EnvironmentRegistrationResult[]>(modelsRaw));
         }
+
         public async Task<IActionResult> CreateStaticEnvironment(EnvironmentRegistration modelRaw)
         {
             var logger = HttpContext.GetLogger();
@@ -103,8 +108,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 return StatusCode(401);
             }
 
-            string apiUrl = AppSettings.PreferredSchema + "://" + AppSettings.DefaultHost + AppSettings.DefaultPath + "/registration/";
-
             if (modelInput == null || !Util.Utils.IsCreateInputValid(modelInput))
             {
                 return BadRequest();
@@ -127,7 +130,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             modelRaw.Updated = DateTime.UtcNow;
             modelRaw.OwnerId = currentUserId;
             modelRaw.Id = Guid.NewGuid().ToString();
-            var arguments = new List<KeyValuePair<string, string>>();
+            var environmentVariables = new List<EnvironmentVariable>();
 
             if (modelRaw.Type == EnvType.staticEnvironment.ToString())
             {
@@ -135,7 +138,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             }
 
             /* Construct the arguments needed for the compute service */
-            if (   modelRaw.Seed != null
+            if (modelRaw.Seed != null
                 && modelRaw.Seed.SeedType == "git"
                 && Util.Utils.IsValidGitUrl(modelRaw.Seed.SeedMoniker))
             {
@@ -145,32 +148,50 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 if (moniker.Contains("/pull/"))
                 {
                     var repoUrl = moniker.Split("/pull/");
-                    arguments.Add(new KeyValuePair<string, string>("GIT_REPO_URL", repoUrl[0]));
-                    arguments.Add(new KeyValuePair<string, string>("GIT_PR_NUM", Regex.Match(repoUrl[1], "(\\d+)").ToString()));
+                    environmentVariables.Add(new EnvironmentVariable("GIT_REPO_URL", repoUrl[0]));
+                    environmentVariables.Add(new EnvironmentVariable("GIT_PR_NUM", Regex.Match(repoUrl[1], "(\\d+)").ToString()));
                 }
                 else
                 {
-                    arguments.Add(new KeyValuePair<string, string>("GIT_REPO_URL", moniker));
+                    environmentVariables.Add(new EnvironmentVariable("GIT_REPO_URL", moniker));
                 }
             }
 
-            arguments.Add(new KeyValuePair<string, string>("SESSION_CALLBACK", apiUrl + modelRaw.Id + "/_callback"));
-            arguments.Add(new KeyValuePair<string, string>("SESSION_TOKEN", accessToken));
-            var json = new Dictionary<string, List<KeyValuePair<string, string>>>()
+            string apiUrl = AppSettings.PreferredSchema + "://" + AppSettings.DefaultHost + AppSettings.DefaultPath + "/registration/";
+            environmentVariables.Add(new EnvironmentVariable("SESSION_CALLBACK", apiUrl + modelRaw.Id + "/_callback"));
+            environmentVariables.Add(new EnvironmentVariable("SESSION_TOKEN", accessToken));
+            
+            var computeServiceInput = new ComputeServiceInput
             {
-                { "environmentVariables", arguments }
+                EnvironmentVariables = environmentVariables
             };
-            var requestContent = new StringContent(JsonConvert.SerializeObject(json), Encoding.UTF8, "application/json");
 
+            var fileShare = await FileShareManager.CreateFileShareForEnvironmentAsync(new FileShareEnvironmentInfo { FriendlyName = modelRaw.FriendlyName, OwnerId = modelRaw.OwnerId }, logger);
+            if (fileShare != null)
+            {
+                computeServiceInput.Storage = new StorageSpecification
+                {
+                    // ComputeService doesn't know about environment file shares. It's able to mount them by name.
+                    FileShareName = fileShare.Name
+                };
+
+                modelRaw.Storage = new StorageInfo { FileShareId = fileShare.Id };
+            }
+
+            var requestContent = new StringContent(JsonConvert.SerializeObject(computeServiceInput), Encoding.UTF8, "application/json");
+
+            var computeTargetsUri = new Uri(AppSettings.ComputeServiceUri, "/computeTargets");
             /* Call the compute service */
-            var poolInfo = await client.GetAsync(AppSettings.ComputeServiceUrl + "/computeTargets");
-            var computeTargetId = JArray.Parse(await poolInfo.Content.ReadAsStringAsync()).First["id"].ToString();
+            var poolInfo = await client.GetAsync(computeTargetsUri);
+            var content = await poolInfo.Content.ReadAsStringAsync();
+            var computeTargetId = JArray.Parse(content).First["id"].ToString();
             if (!string.IsNullOrEmpty(computeTargetId))
             {
                 /* This assumes that the compute service and this service are in the same host, is that not the case we should
                  * add the url to the App Settings
                  */
-                var response = await client.PostAsync(AppSettings.ComputeServiceUrl + "/computeTargets/" + computeTargetId + "/compute", requestContent);
+                var computeCreationUri = new Uri(AppSettings.ComputeServiceUri, string.Format("/computeTargets/{0}/compute", computeTargetId));
+                var response = await client.PostAsync(computeCreationUri, requestContent);
                 var contents = await response.Content.ReadAsStringAsync();
                 string containerId = JObject.Parse(contents)["id"].ToString();
                 modelRaw.Connection = new ConnectionInfo();
@@ -179,14 +200,11 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 modelRaw.State = StateInfo.Provisioning.ToString();
                 modelRaw = await EnvironmentRegistrationRepository.CreateAsync(modelRaw, logger);
                 return Ok(Mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(modelRaw));
-
             }
             else
             {
                 return StatusCode(409);
             }
-
-
         }
 
         // PUT api/environment/registration/<id>

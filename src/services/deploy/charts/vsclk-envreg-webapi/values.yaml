@@ -42,6 +42,8 @@ appSettings:
 - ENVREG_AppSettings__PreferredSchema
 - ENVREG_AppSettings__DefaultHost
 - ENVREG_AppSettings__DefaultPath
+- ENVREG_AppSettings__StorageAccountName
+- ENVREG_AppSettings__StorageAccountKey
 
 authentication:
   authority: https://login.windows.net/common

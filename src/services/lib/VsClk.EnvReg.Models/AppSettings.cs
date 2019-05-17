@@ -1,3 +1,5 @@
+using System;
+
 namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 {
     public class AppSettings
@@ -40,11 +42,16 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
         public string VsClkEnvRegPreferredLocation { get; set; }
 
         public string ComputeServiceUrl { get; set; }
+        public Uri ComputeServiceUri { get { return new Uri(this.ComputeServiceUrl); } }
 
         public string PreferredSchema { get; set; }
 
         public string DefaultHost { get; set; }
 
         public string DefaultPath { get; set; }
+
+        public string StorageAccountName { get; set; }
+
+        public string StorageAccountKey { get; set; }
     }
 }

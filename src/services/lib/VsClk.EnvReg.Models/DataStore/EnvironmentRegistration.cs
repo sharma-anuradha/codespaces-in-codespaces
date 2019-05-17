@@ -33,6 +33,9 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         [JsonProperty(Required = Required.Default, PropertyName = "connection")]
         public ConnectionInfo Connection { get; set; }
 
+        [JsonProperty(Required = Required.Default, PropertyName = "storage")]
+        public StorageInfo Storage { get; set; }
+
         [JsonProperty(Required = Required.Always, PropertyName = "active")]
         public DateTime Active { get; set; }
 
@@ -62,6 +65,18 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
 
         [JsonProperty(Required = Required.Default, PropertyName = "computeTargetId")]
         public string ConnectionComputeTargetId { get; set; }
+    }
+
+    public class StorageInfo
+    {
+        [JsonProperty(Required = Required.Default, PropertyName = "storageId")]
+        public string StorageId { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "storageKind")]
+        public string StorageKind { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "fileShareName")]
+        public string FileShareId { get; set; }
     }
 
     public enum StateInfo

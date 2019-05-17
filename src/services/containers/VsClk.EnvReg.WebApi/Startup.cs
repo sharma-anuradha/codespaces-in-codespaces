@@ -13,6 +13,7 @@ using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories.DocumentDb;
+using Microsoft.VsSaaS.Azure.Storage.FileShare;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
@@ -46,7 +47,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             services.AddSingleton(appSettings);
 
             // Mappers
-            var config = new MapperConfiguration(cfg => {
+            var config = new MapperConfiguration(cfg =>
+            {
                 cfg.CreateMap<EnvironmentRegistration, EnvironmentRegistrationResult>();
                 cfg.CreateMap<EnvironmentRegistrationInput, EnvironmentRegistration>();
                 cfg.CreateMap<ConnectionInfoInput, ConnectionInfo>();
@@ -79,6 +81,13 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 });
 
             ConfigureAuthentication(services, appSettings);
+
+            services.AddFileShareProvider(options =>
+            {
+                options.AccountName = appSettings.StorageAccountName;
+                options.AccountKey = appSettings.StorageAccountKey;
+            });
+            services.AddTransient<IStorageManager , StorageManager >();
         }
 
         private void ConfigureDbServices(IServiceCollection services, AppSettings appSettings)
@@ -95,6 +104,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 });
                 services.AddDocumentDbCollection<EnvironmentRegistration, IEnvironmentRegistrationRepository, DocumentDbEnvironmentRegistrationRepository>(
                     DocumentDbEnvironmentRegistrationRepository.ConfigureOptions);
+                services.AddDocumentDbCollection<FileShare, IStorageRegistrationRepository, DocumentDbSotrageRegistrationRepository>(DocumentDbSotrageRegistrationRepository.ConfigureOptions);
             }
             else
             {

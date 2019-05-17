@@ -38,8 +38,9 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories.DocumentDb
                 IOptions<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IHealthProvider healthProvider,
+                IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
-            : base(options.PromoteToOptionSnapshot(), clientProvider, healthProvider, defaultLogValues)
+            : base(options.PromoteToOptionSnapshot(), clientProvider, healthProvider, loggerFactory, defaultLogValues)
         {
         }
 
