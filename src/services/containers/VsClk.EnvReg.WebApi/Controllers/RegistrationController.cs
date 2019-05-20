@@ -166,7 +166,10 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 EnvironmentVariables = environmentVariables
             };
 
-            var fileShare = await FileShareManager.CreateFileShareForEnvironmentAsync(new FileShareEnvironmentInfo { FriendlyName = modelRaw.FriendlyName, OwnerId = modelRaw.OwnerId }, logger);
+            EnvReg.Models.DataStore.FileShare fileShare = null;
+            if (modelInput.CreateFileShare) {
+                fileShare = await FileShareManager.CreateFileShareForEnvironmentAsync(new FileShareEnvironmentInfo { FriendlyName = modelRaw.FriendlyName, OwnerId = modelRaw.OwnerId }, logger);
+            }
             if (fileShare != null)
             {
                 computeServiceInput.Storage = new StorageSpecification

@@ -10,6 +10,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 
         public string FriendlyName { get; set; }
 
+        public bool CreateFileShare { get; set; }
+
         public SeedInfoInput Seed { get; set; }
         public string ContainerImage { get; set; }
         public ConnectionInfoInput Connection { get; set; }
