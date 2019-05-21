@@ -206,7 +206,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         }
 
         [Fact]
-        public async Task SensMessageToConnection()
+        public async Task SendMessageToConnection()
         {
             (string, object[]) conn2Proxy = default;
             this.clientProxies2.Add("conn2", MockUtils.CreateClientProxy((m, args) =>

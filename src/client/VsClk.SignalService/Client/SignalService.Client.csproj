@@ -13,12 +13,12 @@
 
     <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="$(ServiceRoot)\PresenceServiceHub.Contracts\PresenceServiceHub.Contracts.csproj" />
-  </ItemGroup>
   
   <ItemGroup>
+    <Compile Include="$(ServiceRoot)\PresenceServiceHub.Contracts\*.cs">
+      <Link>Contracts\%(Filename)%(Extension)</Link>
+    </Compile>
+
     <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
     <Compile Include="$(ServiceRoot)\Shared\TraceSourceExtensions.cs" Link="Shared\TraceSourceExtensions.cs" />
   </ItemGroup>

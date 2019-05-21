@@ -75,7 +75,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <returns></returns>
         public async Task RegisterSelfAsync(string connectionId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
         {
-            // notify connection removed
+            // notify connection added
             await NotifyConnectionChangedAsync(connectionId, ConnectionChangeType.Added, cancellationToken);
 
             this.selfConnections.Add(connectionId);
