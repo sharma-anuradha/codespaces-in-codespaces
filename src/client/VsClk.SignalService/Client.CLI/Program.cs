@@ -128,12 +128,17 @@ namespace LivesharePresenceClientTest
 
             client.Proxy.UpdateProperties += (s, e) =>
             {
-                Console.WriteLine($"->UpdateProperties from:{e.ContactId} props:{e.Properties.ConvertToString()}");
+                Console.WriteLine($"->UpdateProperties from:{e.Contact} props:{e.Properties.ConvertToString()}");
             };
 
             client.Proxy.MessageReceived += (s, e) =>
             {
-                Console.WriteLine($"->MessageReceived: from:{e.FromContactId} type:{e.Type} body:{e.Body}");
+                Console.WriteLine($"->MessageReceived: from:{e.FromContact} type:{e.Type} body:{e.Body}");
+            };
+
+            client.Proxy.ConnectionChanged += (s, e) =>
+            {
+                Console.WriteLine($"->ConnectionChanged: from:{e.Contact} changeType:{e.ChangeType}");
             };
 
             client.ConnectionStateChanged += async (s, e) =>
@@ -151,7 +156,8 @@ namespace LivesharePresenceClientTest
                         publishedProperties.Add("name", this.nameOption.Value());
                     }
 
-                    await client.Proxy.RegisterSelfContactAsync(contactId, publishedProperties, CancellationToken.None);
+                    var contactRef = await client.Proxy.RegisterSelfContactAsync(contactId, publishedProperties, CancellationToken.None);
+                    Console.WriteLine($"registered contact->{contactRef}");
                 }
             };
 
@@ -185,13 +191,32 @@ namespace LivesharePresenceClientTest
 
                     await client.Proxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
                 }
+                else if (key.KeyChar == 'c')
+                {
+                    Console.WriteLine();
+                    Console.Write("Enter contact id:");
+                    var selfContactId = Console.ReadLine();
+
+                    var selfConnections = await client.Proxy.GetSelfConnectionsAsync(selfContactId, CancellationToken.None);
+                    if (selfConnections.Count == 0)
+                    {
+                        Console.WriteLine($"No self connections available");
+                    }
+                    else
+                    {
+                        foreach (var kvp in selfConnections)
+                        {
+                            Console.WriteLine($"connection id:{kvp.Key} => {kvp.Value.ConvertToString()}");
+                        }
+                    }
+                }
                 else if (key.KeyChar == 's')
                 {
                     Console.WriteLine();
                     Console.Write("Enter subscription contact id:");
                     var subscribeContactId = Console.ReadLine();
 
-                    var properties = await client.Proxy.AddSubcriptionsAsync(new string[] { subscribeContactId }, new string[] { "status", "email" }, CancellationToken.None);
+                    var properties = await client.Proxy.AddSubcriptionsAsync(new ContactReference[] { new ContactReference(subscribeContactId, null) }, new string[] { "status", "email" }, CancellationToken.None);
                     Console.WriteLine($"properties => {properties[subscribeContactId].ConvertToString()}");
                 }
                 else if (key.KeyChar == 'u')
@@ -200,7 +225,7 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter subscription contact id:");
                     var targetContactId = Console.ReadLine();
 
-                    await client.Proxy.RemoveSubcriptionPropertiesAsync(new string[] { targetContactId }, new string[] { "status", "email" }, CancellationToken.None);
+                    await client.Proxy.RemoveSubscriptionAsync(new ContactReference[] { new ContactReference(targetContactId, null) }, CancellationToken.None);
                 }
                 else if (key.KeyChar == 'm')
                 {
@@ -227,7 +252,7 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter target contact id:");
                     var targetContactId = Console.ReadLine();
 
-                    await client.Proxy.SendMessageAsync(targetContactId, "typeTest", JToken.FromObject("Hi !"), default);
+                    await client.Proxy.SendMessageAsync(new ContactReference(targetContactId, null), "typeTest", JToken.FromObject("Hi !"), default);
                 }
                 else if (key.KeyChar == 'f')
                 {

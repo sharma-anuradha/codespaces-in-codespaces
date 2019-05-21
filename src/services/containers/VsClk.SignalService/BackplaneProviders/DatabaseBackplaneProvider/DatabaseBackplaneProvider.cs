@@ -102,35 +102,35 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public int Priority => 0;
 
-        public async Task<Dictionary<string, object>[]> GetContactsAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        public async Task<ContactData[]> GetContactsAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
         {
             var emailPropertyValue = matchProperties.TryGetProperty<string>(Properties.Email)?.ToLowerInvariant();
             if (string.IsNullOrEmpty(emailPropertyValue))
             {
-                return Array.Empty<Dictionary<string, object>>();
+                return Array.Empty<ContactData>();
             }
 
-            var queryable = Client.CreateDocumentQuery<Contact>(
+            var queryable = Client.CreateDocumentQuery<ContactDocument>(
                 UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId))
                 .Where(c => c.Email == emailPropertyValue);
 
             var matchContacts = await ToListAsync(queryable);
             return matchContacts.Select(c =>
             {
-                var properties = ToProperties((JObject)c.Properties);
-                properties[Properties.IdReserved] = c.Id;
-                return properties;
+                var contactData = ToContactData(c);
+                contactData.Properties[Properties.IdReserved] = c.Id;
+                return contactData;
             }).ToArray();
         }
 
-        public async Task<Dictionary<string, object>> GetContactPropertiesAsync(string contactId, CancellationToken cancellationToken)
+        public async Task<ContactData> GetContactPropertiesAsync(string contactId, CancellationToken cancellationToken)
         {
             try
             {
-                var response = await Client.ReadDocumentAsync<Contact>(
+                var response = await Client.ReadDocumentAsync<ContactDocument>(
                     UriFactory.CreateDocumentUri(DatabaseId, ContactCollectionId, contactId),
                     cancellationToken: cancellationToken);
-                return ToProperties((JObject)response.Document.Properties);
+                return ToContactData(response.Document);
             }
             catch (DocumentClientException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
@@ -138,32 +138,40 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        public async Task SendMessageAsync(string sourceId,string contactId, string targetContactId, string messageType, JToken body, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
         {
-            this.logger.LogDebug($"DatabaseProvider.SendMessageAsync -> contactId:{contactId} targetContactId:{targetContactId}");
+            this.logger.LogDebug($"DatabaseProvider.SendMessageAsync -> contactId:{messageData.FromContact.Id} targetContactId:{messageData.TargetContact.Id}");
 
             var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, MessageCollectionId);
-            await Client.CreateDocumentAsync(documentCollectionUri, new Message()
+            await Client.CreateDocumentAsync(documentCollectionUri, new MessageDocument()
             {
-                ContactId = contactId,
-                TargetContactId = targetContactId,
-                Type = messageType,
-                Body = body,
+                ContactId = messageData.FromContact.Id,
+                TargetContactId = messageData.TargetContact.Id,
+                TargetConnectionId = messageData.TargetContact.ConnectionId,
+                Type = messageData.Type,
+                Body = messageData.Body,
                 SourceId = sourceId,
                 LastUpdate = DateTime.UtcNow
             }, cancellationToken: cancellationToken);
         }
 
-        public async Task UpdateContactAsync(string sourceId, string contactId, Dictionary<string, object> properties, ContactUpdateType updateContactType, CancellationToken cancellationToken)
+        public async Task UpdateContactAsync(
+            string sourceId,
+            string connectionId,
+            ContactData contactData,
+            ContactUpdateType updateContactType,
+            CancellationToken cancellationToken)
         {
-            this.logger.LogDebug($"DatabaseProvider.UpdateContactAsync -> contactId:{contactId}");
+            this.logger.LogDebug($"DatabaseProvider.UpdateContactAsync -> contactId:{contactData.Id}");
 
             var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId);
-            await Client.UpsertDocumentAsync(documentCollectionUri, new Contact()
+            await Client.UpsertDocumentAsync(documentCollectionUri, new ContactDocument()
             {
-                Id = contactId,
-                Email = properties.TryGetProperty<string>(Properties.Email)?.ToLowerInvariant(),
-                Properties = properties,
+                Id = contactData.Id,
+                ConnectionId = connectionId,
+                Email = contactData.Properties.TryGetProperty<string>(Properties.Email)?.ToLowerInvariant(),
+                Properties = contactData.Properties,
+                Connections = contactData.Connections,
                 UpdateType = updateContactType,
                 SourceId = sourceId,
                 LastUpdate = DateTime.UtcNow
@@ -182,11 +190,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 foreach (var doc in docs)
                 {
-                    var contact = await ReadAsAsync<Contact>(doc);
+                    var contact = await ReadAsAsync<ContactDocument>(doc);
                     await ContactChangedAsync(
                         contact.SourceId,
-                        contact.Id,
-                        ToProperties((JObject)contact.Properties),
+                        contact.ConnectionId,
+                        ToContactData(contact),
                         contact.UpdateType,
                         default(CancellationToken));
                 }
@@ -201,8 +209,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 foreach (var doc in docs)
                 {
-                    var message = await ReadAsAsync<Message>(doc);
-                    await MessageReceivedAsync(message.SourceId, message.ContactId, message.TargetContactId, message.Type, JToken.FromObject(message.Body), default(CancellationToken));
+                    var message = await ReadAsAsync<MessageDocument>(doc);
+                    await MessageReceivedAsync(
+                        message.SourceId,
+                        new MessageData(
+                            new ContactReference(message.ContactId, null),
+                            new ContactReference(message.TargetContactId, message.TargetConnectionId),
+                            message.Type,
+                            JToken.FromObject(message.Body)),
+                            default(CancellationToken));
                 }
             }
         }
@@ -323,6 +338,14 @@ namespace Microsoft.VsCloudKernel.SignalService
             return ((IDictionary<string, JToken>)jObject).ToDictionary(kvp => kvp.Key, kvp => ToObject(kvp.Value));
         }
 
+        private static ContactData ToContactData(ContactDocument contact)
+        {
+            return new ContactData(
+                contact.Id,
+                ToProperties((JObject)contact.Properties),
+                ((IDictionary<string, JToken>)contact.Connections).ToDictionary(kvp => kvp.Key, kvp => ToProperties((JObject)kvp.Value)));
+        }
+
         private static object ToObject(JToken jToken)
         {
             return jToken?.Type != JTokenType.Object ? jToken?.ToObject<object>() : jToken;
@@ -349,16 +372,22 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Contact document model
     /// </summary>
-    public class Contact
+    public class ContactDocument
     {
         [JsonProperty("id")]
         public string Id { get; set; }
+
+        [JsonProperty("connectionId")]
+        public string ConnectionId { get; set; }
 
         [JsonProperty("email")]
         public string Email { get; set; }
 
         [JsonProperty("properties")]
         public object Properties { get; set; }
+
+        [JsonProperty("connections")]
+        public object Connections { get; set; }
 
         [JsonProperty("updateType")]
         public ContactUpdateType UpdateType { get; set; }
@@ -373,7 +402,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Message docuemnt model
     /// </summary>
-    public class Message
+    public class MessageDocument
     {
         [JsonProperty("id")]
         public string Id { get; set; }
@@ -383,6 +412,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         [JsonProperty("targetContactId")]
         public string TargetContactId { get; set; }
+
+        [JsonProperty("targetConnectionId")]
+        public string TargetConnectionId { get; set; }
 
         [JsonProperty("type")]
         public string Type { get; set; }

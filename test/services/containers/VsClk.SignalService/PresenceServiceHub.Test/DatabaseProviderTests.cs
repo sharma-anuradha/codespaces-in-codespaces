@@ -45,18 +45,20 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         {
             var callbackCompleted = new VisualStudio.Threading.AsyncManualResetEvent();
             string callbackContactId = null;
+            string callbackConnectionId = null;
             Dictionary<string, object> callbackProperties = null;
             ContactUpdateType callbackUpdateContactType = ContactUpdateType.None;
 
             OnContactChangedAsync onContactsChanged = (
                     sourceId,
-                    contactId,
-                    properties,
+                    connectionId,
+                    contactData,
                     updateContactType,
                     cancellationToken) =>
             {
-                callbackContactId = contactId;
-                callbackProperties = properties;
+                callbackConnectionId = connectionId;
+                callbackContactId = contactData.Id;
+                callbackProperties = contactData.Properties;
                 callbackUpdateContactType = updateContactType;
 
                 callbackCompleted.Set();
@@ -64,22 +66,38 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             };
             this.databaseBackplaneProvider.ContactChangedAsync = onContactsChanged;
 
-            await this.databaseBackplaneProvider.UpdateContactAsync("sourceId", "contact1", new Dictionary<string, object>()
+            var properties = new Dictionary<string, object>()
             {
                 { "email", "contact1@microsoft.com" },
                 { "status", "available" },
-            }, ContactUpdateType.Registration, CancellationToken.None);
+            };
+            var connections = new Dictionary<string, Dictionary<string, object>>()
+            {
+                { "conn1", properties },
+            };
+
+            await this.databaseBackplaneProvider.UpdateContactAsync(
+                "sourceId",
+                "conn1",
+                new ContactData("contact1", properties, connections),
+                ContactUpdateType.Registration,
+                CancellationToken.None);
             await callbackCompleted.WaitAsync();
 
+            Assert.Equal("conn1", callbackConnectionId);
             Assert.Equal("contact1", callbackContactId);
             Assert.Equal(ContactUpdateType.Registration, callbackUpdateContactType);
             Assert.Equal("available", callbackProperties["status"]);
 
             callbackCompleted.Reset();
-            await this.databaseBackplaneProvider.UpdateContactAsync("sourceId", "contact1", new Dictionary<string, object>()
-            {
-                { "status", "busy" },
-            }, ContactUpdateType.UpdateProperties, CancellationToken.None);
+
+            properties["status"] = "busy";
+            await this.databaseBackplaneProvider.UpdateContactAsync(
+                "sourceId",
+                "conn1",
+                new ContactData("contact1", properties, connections),
+                ContactUpdateType.UpdateProperties,
+                CancellationToken.None);
             await callbackCompleted.WaitAsync();
             Assert.Equal("contact1", callbackContactId);
             Assert.Equal(ContactUpdateType.UpdateProperties, callbackUpdateContactType);
@@ -93,23 +111,46 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 #endif
         public async Task GetContactsTest()
         {
-            await this.databaseBackplaneProvider.UpdateContactAsync("sourceId", "contact1", new Dictionary<string, object>()
+            var properties1 = new Dictionary<string, object>()
             {
                 { "email", "contact1@microsoft.com" },
                 { "status", "available" },
-            }, ContactUpdateType.Registration, CancellationToken.None);
-            await this.databaseBackplaneProvider.UpdateContactAsync("sourceId", "contact2", new Dictionary<string, object>()
+            };
+            var connections1 = new Dictionary<string, Dictionary<string, object>>()
+            {
+                { "conn1", properties1 },
+            };
+
+            await this.databaseBackplaneProvider.UpdateContactAsync(
+                "sourceId",
+                "conn1",
+                new ContactData("contact1", properties1, connections1),
+                ContactUpdateType.Registration,
+                CancellationToken.None);
+
+            var properties2 = new Dictionary<string, object>()
             {
                 { "email", "contact2@microsoft.com" },
                 { "status", "available" },
-            }, ContactUpdateType.Registration, CancellationToken.None);
+            };
+            var connections2 = new Dictionary<string, Dictionary<string, object>>()
+            {
+                { "conn2", properties2 },
+            };
+
+            await this.databaseBackplaneProvider.UpdateContactAsync(
+                "sourceId",
+                "conn1",
+                new ContactData("contact2", properties2, connections2),
+                ContactUpdateType.Registration,
+                CancellationToken.None);
 
             var results = await this.databaseBackplaneProvider.GetContactsAsync(new Dictionary<string, object>()
             {
                 { "email", "contact2@microsoft.com" },
             }, CancellationToken.None);
             Assert.Single(results);
-            Assert.Equal("contact2", results[0][Properties.IdReserved]);
+            Assert.Equal("contact2", results[0].Properties[Properties.IdReserved]);
 
             results = await this.databaseBackplaneProvider.GetContactsAsync(new Dictionary<string, object>()
             {

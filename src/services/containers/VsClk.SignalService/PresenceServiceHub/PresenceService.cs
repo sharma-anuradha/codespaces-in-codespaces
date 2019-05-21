@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Common;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -89,33 +88,50 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         internal ConcurrentDictionary<string, Contact> Contacts { get; } = new ConcurrentDictionary<string, Contact>();
 
+        public async Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken)
+        {
+            var targetSelfContact = GetOrCreateContact(contactId);
+            ContactData contactData;
+            if (targetSelfContact.IsSelfEmpty)
+            {
+                contactData = await GetContactBackplaneProvidersPropertiesAsync(contactId, cancellationToken);
+            }
+            else
+            {
+                contactData = targetSelfContact.ToContactData();
+            }
 
-        public async Task RegisterSelfContactAsync(string connectionId, string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
+            return contactData?.Connections ?? new Dictionary<string, Dictionary<string, object>>();
+        }
+
+        public async Task RegisterSelfContactAsync(ContactReference contactRef, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
         {
             Logger.LogInformation("Register Contact");
 
             // Note: avoid telemetry for contact id's
             using (Logger.BeginScope("NoTelemetry"))
             {
-                Logger.LogInformation($"RegisterSelfContactAsync -> connectionId:{connectionId} contactId:{contactId} initialProperties:{initialProperties.ConvertToString()}");
+                Logger.LogInformation($"RegisterSelfContactAsync -> contact:{contactRef} initialProperties:{initialProperties?.ConvertToString()}");
             }
 
-            var registeredSelfContact = GetOrCreateContact(contactId);
-            await registeredSelfContact.RegisterSelfAsync(connectionId, initialProperties, cancellationToken);
+            var registeredSelfContact = GetOrCreateContact(contactRef.Id);
+            await registeredSelfContact.RegisterSelfAsync(contactRef.ConnectionId, initialProperties, cancellationToken);
 
             // resolve contacts
-            await ResolveStubContacts(initialProperties, () => registeredSelfContact, cancellationToken);
+            if (initialProperties != null)
+            {
+                await ResolveStubContacts(contactRef.ConnectionId, initialProperties, () => registeredSelfContact, cancellationToken);
+            }
         }
 
         public async Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(
-            string connectionId,
-            string contactId,
+            ContactReference contactRef,
             Dictionary<string, object>[] targetContactProperties,
             string[] propertyNames,
             bool useStubContact,
             CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"RequestSubcriptionsAsync -> connectionId:{connectionId} contactId:{contactId} targetContactIds:{string.Join(",", targetContactProperties.Select(d => d.ConvertToString()))} propertyNames:{string.Join(",", propertyNames)}");
+            Logger.LogDebug($"RequestSubcriptionsAsync -> contact:{contactRef} targetContactIds:{string.Join(",", targetContactProperties.Select(d => d.ConvertToString()))} propertyNames:{string.Join(",", propertyNames)}");
 
             // placeholder for all our results that by default are null
             var requestResult = new Dictionary<string, object>[targetContactProperties.Length];
@@ -128,7 +144,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 if (item.TryGetValue(Properties.IdReserved, out var targetContactId))
                 {
                     // target contact is known so we can add a subscription right away
-                    requestResult[index] = await AddSubcriptionAsync(connectionId, contactId, targetContactId.ToString(), propertyNames, cancellationToken);
+                    requestResult[index] = await AddSubcriptionAsync(contactRef, targetContactId.ToString(), propertyNames, cancellationToken);
                 }
                 else
                 {
@@ -140,7 +156,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             if (matchingProperties.Count > 0)
             {
                 // we may need the registered contact instance
-                var registeredSelfContact = GetRegisteredContact(contactId);
+                var registeredSelfContact = GetRegisteredContact(contactRef.Id);
 
                 var allMatchingProperties = matchingProperties.Select(i => i.Item2).ToArray();
                 var matchContactsResults = await MatchContactsAsync(allMatchingProperties, cancellationToken);
@@ -151,7 +167,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     if (itemResult?.Count > 0)
                     {
                         // only if found fill bucket placeholder
-                        requestResult[resultIndex] = await AddSubcriptionAsync(connectionId, contactId, itemResult.First().Key.ToString(), propertyNames, cancellationToken);
+                        requestResult[resultIndex] = await AddSubcriptionAsync(contactRef, itemResult.First().Key.ToString(), propertyNames, cancellationToken);
                     }
                     else
                     {
@@ -162,16 +178,18 @@ namespace Microsoft.VsCloudKernel.SignalService
                         var backplaneContacts = await GetContactsBackplaneProvidersAsync(matchProperties, cancellationToken);
                         if (backplaneContacts.Length > 0)
                         {
+                            var backplaneProperties = backplaneContacts[0].Properties;
+
                             // return matched properties of first contact
-                            requestResult[resultIndex] = backplaneContacts[0];
+                            requestResult[resultIndex] = backplaneProperties;
 
                             // ensure the contact is created
-                            var targetContactId = backplaneContacts[0][Properties.IdReserved].ToString();
+                            var targetContactId = backplaneProperties[Properties.IdReserved]?.ToString();
                             var targetContact = GetOrCreateContact(targetContactId);
 
                             // add target/subscription
-                            registeredSelfContact.AddTargetContacts(connectionId, new string[] { targetContactId });
-                            targetContact.AddSubcription(connectionId, propertyNames);
+                            registeredSelfContact.AddTargetContacts(contactRef.ConnectionId, new string[] { targetContactId });
+                            targetContact.AddSubcriptionProperties(contactRef.ConnectionId, null, propertyNames);
                         }
                         else if(useStubContact)
                         {
@@ -186,10 +204,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                             }
 
                             // add target contact to current registered contact
-                            registeredSelfContact.AddTargetContacts(connectionId, new string[] { stubContact.ContactId });
+                            registeredSelfContact.AddTargetContacts(contactRef.ConnectionId, new string[] { stubContact.ContactId });
 
                             // add a connection subscription
-                            stubContact.AddSubcription(connectionId, propertyNames);
+                            stubContact.AddSubcriptionProperties(contactRef.ConnectionId, null, propertyNames);
 
                             // return the stub by providing the temporary stub contact id
                             requestResult[resultIndex] = new Dictionary<string, object>()
@@ -204,30 +222,48 @@ namespace Microsoft.VsCloudKernel.SignalService
             return requestResult;
         }
 
-        public async Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(string connectionId, string contactId, string[] targetContactIds, string[] propertyNames, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(
+            ContactReference contactReference,
+            ContactReference[] targetContacts,
+            string[] propertyNames,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            Logger.LogDebug($"AddSubcriptionsAsync -> connectionId:{connectionId} contactId:{contactId} targetContactIds:{string.Join(",", targetContactIds)} propertyNames:{string.Join(",", propertyNames)}");
+            Logger.LogDebug($"AddSubcriptionsAsync -> contact:{contactReference} targetContactIds:{string.Join(",", targetContacts.Select(c => c.Id))} propertyNames:{string.Join(",", propertyNames)}");
 
             var result = new Dictionary<string, Dictionary<string, object>>();
 
-            var registeredSelfContact = GetRegisteredContact(contactId);
-            registeredSelfContact.AddTargetContacts(connectionId, targetContactIds);
-            foreach (var targetContactId in targetContactIds)
+            var registeredSelfContact = GetRegisteredContact(contactReference.Id);
+            registeredSelfContact.AddTargetContacts(contactReference.ConnectionId, targetContacts.Select(c => c.Id).ToArray());
+            foreach (var targetContact in targetContacts)
             {
-                var targetSelfContact = GetOrCreateContact(targetContactId);
-                var targetContactProperties = targetSelfContact.CreateSubcription(connectionId, propertyNames);
-                result[targetContactId] = targetContactProperties;
+                var targetSelfContact = GetOrCreateContact(targetContact.Id);
+                var targetContactProperties = targetSelfContact.CreateSubcription(contactReference.ConnectionId, targetContact.ConnectionId, propertyNames);
+                result[targetContact.Id] = targetContactProperties;
 
                 if (targetSelfContact.IsSelfEmpty)
                 {
-                    var properties = await GetContactBackplaneProvidersPropertiesAsync(targetContactId, cancellationToken);
-                    if (properties != null)
+                    var contactData = await GetContactBackplaneProvidersPropertiesAsync(targetContact.Id, cancellationToken);
+                    if (contactData != null)
                     {
-                        foreach (var kvp in properties)
+                        Dictionary<string, object> properties = null;
+
+                        if (!string.IsNullOrEmpty(targetContact.ConnectionId))
                         {
-                            if (targetContactProperties.ContainsKey(kvp.Key))
+                            contactData.Connections.TryGetValue(targetContact.ConnectionId, out properties);
+                        }
+                        else
+                        {
+                            properties = contactData.Properties;
+                        }
+
+                        if (properties != null)
+                        {
+                            foreach (var kvp in properties)
                             {
-                                targetContactProperties[kvp.Key] = kvp.Value;
+                                if (targetContactProperties.ContainsKey(kvp.Key))
+                                {
+                                    targetContactProperties[kvp.Key] = kvp.Value;
+                                }
                             }
                         }
                     }
@@ -237,34 +273,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             return result;
         }
 
-        public void RemoveSubcriptionProperties(string connectionId, string contactId, string[] targetContactIds, string[] propertyNames, CancellationToken cancellationToken = default(CancellationToken))
+        public void RemoveSubscription(ContactReference contactReference, ContactReference[] targetContacts, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Logger.LogDebug($"RemoveSubcriptionProperties -> connectionId:{connectionId} contactId:{contactId} targetContactIds:{string.Join(",", targetContactIds)} propertyNames:{string.Join(",", propertyNames)}");
-            foreach (var targetContactId in targetContactIds)
-            {
-                if (this.stubContacts.TryGetValue(targetContactId, out var stubContact))
-                {
-                    stubContact.RemoveSubcriptionProperties(connectionId, propertyNames);
-                }
-                else
-                {
-                    var targetSelfContact = GetOrCreateContact(targetContactId);
-                    targetSelfContact.RemoveSubcriptionProperties(connectionId, propertyNames);
-                }
-            }
-        }
+            Logger.LogDebug($"RemoveSubscription -> contact:{contactReference} targetContacts:{string.Join(",", targetContacts)}");
 
-        public void RemoveSubscription(string connectionId, string contactId, string[] targetContactIds, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            Logger.LogDebug($"RemoveSubscription -> connectionId:{connectionId} contactId:{contactId} targetContactIds:{string.Join(",", targetContactIds)}");
-
-            var registeredSelfContact = GetRegisteredContact(contactId);
-            registeredSelfContact.RemovedTargetContacts(connectionId, targetContactIds);
-            foreach (var targetContactId in targetContactIds)
+            var registeredSelfContact = GetRegisteredContact(contactReference.Id);
+            registeredSelfContact.RemovedTargetContacts(contactReference.ConnectionId, targetContacts.Select(c => c.Id).ToArray());
+            foreach (var targetContact in targetContacts)
             {
-                if (this.stubContacts.TryGetValue(targetContactId, out var stubContact))
+                if (this.stubContacts.TryGetValue(targetContact.Id, out var stubContact))
                 {
-                    stubContact.RemoveSubscription(connectionId);
+                    stubContact.RemoveSubscription(contactReference.ConnectionId, targetContact.ConnectionId);
                     if (!stubContact.HasSubscriptions)
                     {
                         RemoveStubContact(stubContact);
@@ -272,62 +291,71 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 else
                 {
-                    var targetSelfContact = GetOrCreateContact(targetContactId);
-                    targetSelfContact.RemoveSubscription(connectionId);
+                    var targetSelfContact = GetOrCreateContact(targetContact.Id);
+                    targetSelfContact.RemoveSubscription(contactReference.ConnectionId, targetContact.ConnectionId);
                 }
             }
         }
 
-        public async Task UpdatePropertiesAsync(string connectionId, string contactId, Dictionary<string, object> updateProperties, CancellationToken cancellationToken)
+        public async Task UpdatePropertiesAsync(ContactReference contactReference, Dictionary<string, object> updateProperties, CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"UpdatePropertiesAsync -> connectionId:{connectionId} contactId:{contactId} updateProperties:{updateProperties.ConvertToString()}");
-            var registeredSelfContact = GetRegisteredContact(contactId);
-            await registeredSelfContact.UpdatePropertiesAsync(connectionId, updateProperties, cancellationToken);
+            Logger.LogDebug($"UpdatePropertiesAsync -> contact:{contactReference} updateProperties:{updateProperties.ConvertToString()}");
+
+            var registeredSelfContact = GetRegisteredContact(contactReference.Id);
+            await registeredSelfContact.UpdatePropertiesAsync(contactReference.ConnectionId, updateProperties, cancellationToken);
 
             // stub contacts
             var aggregatedProperties = new Lazy<Dictionary<string, object>>(() => registeredSelfContact.GetAggregatedProperties());
-            foreach (var stubContact in GetStubContacts(contactId))
+            foreach (var stubContact in GetStubContacts(contactReference.Id))
             {
-                await stubContact.SendUpdatePropertiesAsync(aggregatedProperties.Value, cancellationToken);
+                await stubContact.SendUpdatePropertiesAsync(
+                    contactReference.ConnectionId,
+                    new ContactData(contactReference.Id, aggregatedProperties.Value),
+                    cancellationToken);
             }
         }
 
-        public async Task SendMessageAsync(string contactId, string targetContactId, string messageType, JToken body, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(ContactReference contactReference, ContactReference targetContactReference, string messageType, object body, CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"SendMessageAsync -> contactId:{contactId} targetContactId:{targetContactId} messageType:{messageType} body:{body}");
+            Logger.LogDebug($"SendMessageAsync -> contact:{contactReference} targetContact:{targetContactReference} messageType:{messageType} body:{body}");
 
             // Note: next line will enforce the contact who attempt to send the message to be already registered
             // otherwise an exception will happen
-            GetRegisteredContact(contactId);
+            GetRegisteredContact(contactReference.Id);
 
-            if (this.stubContacts.TryGetValue(targetContactId, out var stubContact) && stubContact.ResolvedContact != null)
+            if (this.stubContacts.TryGetValue(targetContactReference.Id, out var stubContact) && stubContact.ResolvedContact != null)
             {
                 var resolvedContactId = stubContact.ResolvedContact.ContactId;
-                Logger.LogDebug($"ResolvedContact -> targetContactId:{targetContactId} resolvedContactId:{resolvedContactId}");
-                targetContactId = resolvedContactId;
+                Logger.LogDebug($"ResolvedContact -> targetContactId:{targetContactReference.Id} resolvedContactId:{resolvedContactId}");
+                targetContactReference = new ContactReference(resolvedContactId, targetContactReference.ConnectionId);
             }
 
-            var targetContact = GetRegisteredContact(targetContactId, throwIfNotFound: false);
+            var targetContact = GetRegisteredContact(targetContactReference.Id, throwIfNotFound: false);
             if (targetContact?.IsSelfEmpty == false)
             {
-                await targetContact.SendReceiveMessageAsync(contactId, messageType, body, cancellationToken);
+                await targetContact.SendReceiveMessageAsync(contactReference, messageType, body, targetContactReference.ConnectionId, cancellationToken);
             }
             else
             {
-                await SendBackplaneProvidersMessagesAsync(contactId, targetContactId, messageType, body, cancellationToken);
+                var messageData = new MessageData(
+                    contactReference,
+                    targetContactReference,
+                    messageType,
+                    body);
+                await SendBackplaneProvidersMessagesAsync(messageData, cancellationToken);
             }
         }
 
-        public async Task UnregisterSelfContactAsync(string connectionId, string contactId, Func<IEnumerable<string>, Task> affectedPropertiesTask, CancellationToken cancellationToken)
+        public async Task UnregisterSelfContactAsync(ContactReference contactReference, Func<IEnumerable<string>, Task> affectedPropertiesTask, CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"UnregisterSelfContactAsync -> connectionId:{connectionId} contactId:{contactId}");
+            Logger.LogDebug($"UnregisterSelfContactAsync -> contact:{contactReference}");
 
-            var registeredSelfContact = GetRegisteredContact(contactId);
-            foreach (var targetContactId in registeredSelfContact.GetTargetContacts(connectionId))
+            var registeredSelfContact = GetRegisteredContact(contactReference.Id);
+            foreach (var targetContactId in registeredSelfContact.GetTargetContacts(contactReference.ConnectionId))
             {
                 if (this.stubContacts.TryGetValue(targetContactId, out var stubContact))
                 {
-                    stubContact.RemoveSubscription(connectionId);
+                    stubContact.RemoveAllSubscriptions(contactReference.ConnectionId);
                     if (!stubContact.HasSubscriptions)
                     {
                         RemoveStubContact(stubContact);
@@ -335,11 +363,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 else
                 {
-                    GetRegisteredContact(targetContactId, false)?.RemoveSubscription(connectionId);
+                    GetRegisteredContact(targetContactId, false)?.RemoveAllSubscriptions(contactReference.ConnectionId);
                 }
             }
 
-            await registeredSelfContact.RemoveSelfConnectionAsync(connectionId, affectedPropertiesTask, cancellationToken);
+            await registeredSelfContact.RemoveSelfConnectionAsync(contactReference.ConnectionId, affectedPropertiesTask, cancellationToken);
         }
 
         public virtual Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingPropertes, CancellationToken cancellationToken = default(CancellationToken))
@@ -471,6 +499,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         private async Task ResolveStubContacts(
+            string connectionId,
             Dictionary<string, object> initialProperties,
             Func<Contact> selfContactFactory,
             CancellationToken cancellationToken)
@@ -492,25 +521,25 @@ namespace Microsoft.VsCloudKernel.SignalService
                         value.Add(stubContact);
                         return value;
                     });
-                    await stubContact.SendUpdatePropertiesAsync(initialProperties, cancellationToken);
+
+                    await stubContact.SendUpdatePropertiesAsync(connectionId, new ContactData(selfContact.ContactId, initialProperties), cancellationToken);
                 }
             }
         }
-
 
         private Task OnContactChangedAsync(object sender, ContactChangedEventArgs e)
         {
             var contact = (Contact)sender;
             return UpdateBackplaneProvidersPropertiesAsync(
-                contact.ContactId,
-                contact.GetAggregatedProperties(),
-                e.Property == ContactChangedType.InitialProperties ? ContactUpdateType.Registration : ContactUpdateType.UpdateProperties,
+                e.ConectionId,
+                contact,
+                e.ChangeType,
                 CancellationToken.None);
         }
 
         private async Task UpdateBackplaneProvidersPropertiesAsync(
-            string contactId,
-            Dictionary<string, object> properties,
+            string connectionId,
+            Contact contact,
             ContactUpdateType updateContactType,
             CancellationToken cancellationToken)
         {
@@ -518,22 +547,24 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 try
                 {
-                    await backplaneProvider.UpdateContactAsync(ServiceId, contactId, properties, updateContactType, cancellationToken);
+                    await backplaneProvider.UpdateContactAsync(ServiceId, connectionId, contact.ToContactData(), updateContactType, cancellationToken);
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError(error, $"Failed to update contact properties using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}");
+                    Logger.LogError(error, $"Failed to update contact properties using backplane provider:{backplaneProvider.GetType().Name} contactId:{contact.ContactId}");
                 }
             }
         }
 
-        private async Task SendBackplaneProvidersMessagesAsync(string contactId, string targetContactId, string messageType, JToken body, CancellationToken cancellationToken)
+        private async Task SendBackplaneProvidersMessagesAsync(
+            MessageData messageData,
+            CancellationToken cancellationToken)
         {
             foreach (var backplaneProvider in this.backplaneProviders.OrderByDescending(p => p.Priority))
             {
                 try
                 {
-                    await backplaneProvider.SendMessageAsync(ServiceId, contactId, targetContactId, messageType, body, cancellationToken);
+                    await backplaneProvider.SendMessageAsync(ServiceId, messageData, cancellationToken);
                     break;
                 }
                 catch (Exception error)
@@ -543,28 +574,28 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        private async Task<Dictionary<string, object>> GetContactBackplaneProvidersPropertiesAsync(string contactId, CancellationToken cancellationToken)
+        private async Task<ContactData> GetContactBackplaneProvidersPropertiesAsync(string contactId, CancellationToken cancellationToken)
         {
             foreach (var backplaneProvider in this.backplaneProviders.OrderByDescending(p => p.Priority))
             {
                 try
                 {
-                    var properties = await backplaneProvider.GetContactPropertiesAsync(contactId, cancellationToken);
-                    if (properties != null)
+                    var contactData = await backplaneProvider.GetContactPropertiesAsync(contactId, cancellationToken);
+                    if (contactData != null)
                     {
-                        return properties;
+                        return contactData;
                     }
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError(error, $"Failed to get contact properties using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}");
+                    Logger.LogError(error, $"Failed to get contact data entity using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}");
                 }
             }
 
             return null;
         }
 
-        private async Task<Dictionary<string, object>[]> GetContactsBackplaneProvidersAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        private async Task<ContactData[]> GetContactsBackplaneProvidersAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
         {
             foreach (var backplaneProvider in this.backplaneProviders.OrderByDescending(p => p.Priority))
             {
@@ -582,12 +613,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
 
-            return Array.Empty<Dictionary<string, object>>();
+            return Array.Empty<ContactData>();
         }
 
-        private async Task<Dictionary<string, object>> AddSubcriptionAsync(string connectionId, string contactId, string targetContactId, string[] propertyNames, CancellationToken cancellationToken)
+        private async Task<Dictionary<string, object>> AddSubcriptionAsync(ContactReference contactReference, string targetContactId, string[] propertyNames, CancellationToken cancellationToken)
         {
-            var subscriptionResult = (await AddSubcriptionsAsync(connectionId, contactId, new string[] { targetContactId }, propertyNames, cancellationToken)).First().Value;
+            var subscriptionResult = (await AddSubcriptionsAsync(contactReference, new ContactReference[] { new ContactReference(targetContactId, null) }, propertyNames, cancellationToken)).First().Value;
             subscriptionResult[Properties.IdReserved] = targetContactId;
             return subscriptionResult;
         }
@@ -595,40 +626,62 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task OnContactChangedAsync(
             string sourceId,
-            string contactId,
-            Dictionary<string, object> properties,
+            string connectionId,
+            ContactData contactData,
             ContactUpdateType updateContactType,
             CancellationToken cancellationToken)
         {
+            // ignore self notifications
+            if (sourceId == ServiceId)
+            {
+                return;
+            }
+
             if (updateContactType == ContactUpdateType.Registration)
             {
-                await ResolveStubContacts(properties, () => GetOrCreateContact(contactId), cancellationToken);
+                await ResolveStubContacts(connectionId, contactData.Properties, () => GetOrCreateContact(contactData.Id), cancellationToken);
             }
             else
             {
-                foreach (var stubContact in GetStubContacts(contactId))
+                foreach (var stubContact in GetStubContacts(contactData.Id))
                 {
-                    await stubContact.SendUpdatePropertiesAsync(properties, cancellationToken);
+                    await stubContact.SendUpdatePropertiesAsync(connectionId, contactData, cancellationToken);
                 }
             }
 
-            if (Contacts.TryGetValue(contactId, out var contact) && contact.IsSelfEmpty)
+            if (Contacts.TryGetValue(contactData.Id, out var contact) && contact.IsSelfEmpty)
             {
-                await contact.SendUpdatePropertiesAsync(properties, cancellationToken);
+                if (updateContactType == ContactUpdateType.Registration || updateContactType == ContactUpdateType.Unregister)
+                {
+                    await contact.SendConnectionChangedAsync(
+                        connectionId,
+                        updateContactType == ContactUpdateType.Registration ? ConnectionChangeType.Added : ConnectionChangeType.Removed,
+                        cancellationToken);
+                }
+
+                await contact.SendUpdatePropertiesAsync(connectionId, contactData, cancellationToken);
             }
         }
 
         private async Task OnMessageReceivedAsync(
             string sourceId,
-            string contactId,
-            string targetContactId,
-            string type,
-            JToken body,
+            MessageData messageData,
             CancellationToken cancellationToken)
         {
-            if (Contacts.TryGetValue(targetContactId, out var targetContact) && !targetContact.IsSelfEmpty)
+            // ignore self notifications
+            if (sourceId == ServiceId)
             {
-                await targetContact.SendReceiveMessageAsync(contactId, type, body, cancellationToken);
+                return;
+            }
+
+            if (Contacts.TryGetValue(messageData.TargetContact.Id, out var targetContact) && !targetContact.IsSelfEmpty)
+            {
+                await targetContact.SendReceiveMessageAsync(
+                    messageData.FromContact,
+                    messageData.Type,
+                    messageData.Body,
+                    messageData.TargetContact.ConnectionId,
+                    cancellationToken);
             }
         }
 

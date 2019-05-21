@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
@@ -11,38 +10,55 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// </summary>
     public class UpdatePropertiesEventArgs : EventArgs
     {
-        internal UpdatePropertiesEventArgs(string contactdId, Dictionary<string, object> properties)
+        internal UpdatePropertiesEventArgs(ContactReference contact, Dictionary<string, object> properties, string targetConnectionId)
         {
-            ContactId = contactdId;
+            Contact = contact;
             Properties = properties;
+            TargetConnectionId = targetConnectionId;
         }
 
-        public string ContactId { get; }
+        public ContactReference Contact { get; }
         public Dictionary<string, object> Properties { get; }
+        public string TargetConnectionId { get; }
     }
 
     /// <summary>
-    /// EventArgs to notif when receiving a message form the signalR hub
+    /// EventArgs to notify when receiving a message from the signalR hub
     /// </summary>
     public class ReceiveMessageEventArgs : EventArgs
     {
         internal ReceiveMessageEventArgs(
-            string contactdId,
-            string fromContactId,
+            ContactReference targetContact,
+            ContactReference fromContact,
             string messageType,
-            JToken body)
+            object body)
         {
-            ContactId = contactdId;
-            FromContactId = fromContactId;
+            TargetContact = targetContact;
+            FromContact = fromContact;
             Type = messageType;
             Body = body;
         }
 
-        public string ContactId { get; }
-        public string FromContactId { get; }
+        public ContactReference TargetContact { get; }
+        public ContactReference FromContact { get; }
 
         public string Type { get; }
-        public JToken Body { get; }
+        public object Body { get; }
+    }
+
+    /// <summary>
+    /// Event to notify when a connection is beign added or removed on a contact
+    /// </summary>
+    public class ConnectionChangedEventArgs : EventArgs
+    {
+        internal ConnectionChangedEventArgs(ContactReference contact, ConnectionChangeType changeType)
+        {
+            Contact = contact;
+            ChangeType = changeType;
+        }
+
+        public ContactReference Contact { get; }
+        public ConnectionChangeType ChangeType { get; }
     }
 
     /// <summary>
@@ -52,20 +68,21 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     {
         event EventHandler<UpdatePropertiesEventArgs> UpdateProperties;
         event EventHandler<ReceiveMessageEventArgs> MessageReceived;
+        event EventHandler<ConnectionChangedEventArgs> ConnectionChanged;
 
-        Task RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken);
+        Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken);
+
+        Task<ContactReference> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken);
 
         Task PublishPropertiesAsync(Dictionary<string, object> updateProperties, CancellationToken cancellationToken);
 
-        Task SendMessageAsync(string targetContactId, string messageType, JToken body, CancellationToken cancellationToken);
+        Task SendMessageAsync(ContactReference targetContact, string messageType, object body, CancellationToken cancellationToken);
 
-        Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(string[] targetContactIds, string[] propertyNames, CancellationToken cancellationToken);
+        Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(ContactReference[] targetContacts, string[] propertyNames, CancellationToken cancellationToken);
 
         Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(Dictionary<string, object>[] targetContactProperties, string[] propertyNames, bool useStubContact, CancellationToken cancellationToken);
 
-        Task RemoveSubcriptionPropertiesAsync(string[] targetContactIds, string[] propertyNames, CancellationToken cancellationToken);
-
-        Task RemoveSubscriptionAsync(string[] targetContactIds, CancellationToken cancellationToken);
+        Task RemoveSubscriptionAsync(ContactReference[] targetContacts, CancellationToken cancellationToken);
 
         Task UnregisterSelfContactAsync(CancellationToken cancellationToken);
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28729.149
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.527
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PresenceServiceHub", "PresenceServiceHub\PresenceServiceHub.csproj", "{C8C29D33-75B1-4C14-B5BC-4347BDB1CF34}"
 EndProject
@@ -16,6 +16,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalService.Client.CLI", "..\..\..\client\VsClk.SignalService\Client.CLI\SignalService.Client.CLI.csproj", "{F8212461-6FB4-4BE5-8710-92684BF49560}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "client", "client", "{599F8573-A645-41B9-BA78-B2878041842F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PresenceServiceHub.Contracts", "PresenceServiceHub.Contracts\PresenceServiceHub.Contracts.csproj", "{95320F7F-1472-4243-A657-E15F0116C515}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,10 @@ Global
 		{F8212461-6FB4-4BE5-8710-92684BF49560}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8212461-6FB4-4BE5-8710-92684BF49560}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8212461-6FB4-4BE5-8710-92684BF49560}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95320F7F-1472-4243-A657-E15F0116C515}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95320F7F-1472-4243-A657-E15F0116C515}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95320F7F-1472-4243-A657-E15F0116C515}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95320F7F-1472-4243-A657-E15F0116C515}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

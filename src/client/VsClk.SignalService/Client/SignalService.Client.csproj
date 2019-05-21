@@ -15,10 +15,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(ServiceRoot)\Contracts\IPresenceServiceClientHub.cs" Link="Contracts\IPresenceServiceClientHub.cs" />
-    <Compile Include="$(ServiceRoot)\Contracts\IPresenceServiceHub.cs" Link="Contracts\IPresenceServiceHub.cs" />
-    <Compile Include="$(ServiceRoot)\Contracts\Methods.cs" Link="Contracts\Methods.cs" />
-    <Compile Include="$(ServiceRoot)\Contracts\Properties.cs" Link="Contracts\Properties.cs" />
+    <ProjectReference Include="$(ServiceRoot)\PresenceServiceHub.Contracts\PresenceServiceHub.Contracts.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
     <Compile Include="$(ServiceRoot)\Shared\TraceSourceExtensions.cs" Link="Shared\TraceSourceExtensions.cs" />
   </ItemGroup>

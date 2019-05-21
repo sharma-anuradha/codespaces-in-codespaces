@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -10,12 +9,19 @@ namespace Microsoft.VsCloudKernel.SignalService
     public interface IPresenceServiceHub
     {
         /// <summary>
+        /// Get all the self connections associated with a contact id
+        /// </summary>
+        /// <param name="contactId"></param>
+        /// <returns></returns>
+        Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId);
+
+        /// <summary>
         /// Register a self contact for later subscription
         /// </summary>
         /// <param name="contactId">Unique contact identifier</param>
         /// <param name="initialProperties">The  optional initial properties to populate</param>
         /// <returns></returns>
-        Task RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties);
+        Task<ContactReference> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties);
 
         /// <summary>
         /// Publish modified properties into the registered contact
@@ -30,7 +36,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="targetContactIds">List of target contacts where to start a subscription</param>
         /// <param name="propertyNames">Name of the properties to subscribe</param>
         /// <returns></returns>
-        Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(string[] targetContactIds, string[] propertyNames);
+        Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(ContactReference[] targetContacts, string[] propertyNames);
 
         /// <summary>
         /// Request multiple subscriptions based on matching properties
@@ -42,27 +48,20 @@ namespace Microsoft.VsCloudKernel.SignalService
         Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(Dictionary<string, object>[] targetContactProperties, string[] propertyNames, bool useStubContact);
 
         /// <summary>
-        /// Remove multiple subscriptions from a registered contact
-        /// </summary>
-        /// <param name="targetContactIds">List of target contacts where to remove a subscription</param>
-        /// <param name="propertyNames">The list of properties to remove</param>
-        void RemoveSubcriptionProperties(string[] targetContactIds, string[] propertyNames);
-
-        /// <summary>
         /// Remove a subscription
         /// </summary>
         /// <param name="targetContactIds">List of target contacts where to remove a subscription</param>
-        void RemoveSubscription(string[] targetContactIds);
+        void RemoveSubscription(ContactReference[] targetContacts);
 
         /// <summary>
         /// Send a message to registered contact
         /// </summary>
-        /// <param name="targetContactId">The target contact to send the message</param>
+        /// <param name="targetContact">The target contact to send the message</param>
         /// <param name="messageType">The type of message</param>
         /// <param name="body">Body of the message</param>
         /// <returns></returns>
         /// 
-        Task SendMessageAsync(string targetContactId, string messageType, JToken body);
+        Task SendMessageAsync(ContactReference targetContact, string messageType, object body);
 
         /// <summary>
         /// Remove a registration on this hub

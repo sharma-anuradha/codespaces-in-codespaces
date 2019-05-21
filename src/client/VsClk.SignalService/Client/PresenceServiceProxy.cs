@@ -10,7 +10,6 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
-
     /// <summary>
     /// The presence service proxy client that connects to the remote presence Hub
     /// </summary>
@@ -23,25 +22,39 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             this.connection = Requires.NotNull(connection, nameof(trace));
             Requires.NotNull(trace, nameof(trace));
 
-            connection.On<string, Dictionary<string, object>>(Methods.UpdateValues, (contactdId, properties) =>
+            connection.On<ContactReference, Dictionary<string, object>, string>(Methods.UpdateValues, (contact, properties, targetConnectionId) =>
             {
-                trace.Verbose($"UpdateProperties-> contactdId:{contactdId} properties:{properties.ConvertToString()}");
-                UpdateProperties?.Invoke(this, new UpdatePropertiesEventArgs(contactdId, properties));
+                trace.Verbose($"UpdateProperties-> contact:{contact} properties:{properties.ConvertToString()}");
+                UpdateProperties?.Invoke(this, new UpdatePropertiesEventArgs(contact, properties, targetConnectionId));
             });
 
-            connection.On<string, string, string, JToken>(Methods.ReceiveMessage, (contactdId, fromContactId, messageType, body) =>
+            connection.On<ContactReference, ContactReference, string, JToken>(Methods.ReceiveMessage, (targetContact, fromContact, messageType, body) =>
             {
-                trace.Verbose($"MessageReceived-> contactdId:{contactdId} fromContactId:{fromContactId} messageType:{messageType} body:{body}");
-                MessageReceived?.Invoke(this, new ReceiveMessageEventArgs(contactdId, fromContactId, messageType, body));
+                trace.Verbose($"MessageReceived-> targetContact:{targetContact} fromContact:{fromContact} messageType:{messageType} body:{body}");
+                MessageReceived?.Invoke(this, new ReceiveMessageEventArgs(targetContact, fromContact, messageType, body));
+            });
+
+            connection.On<ContactReference, ConnectionChangeType>(Methods.ConnectionChanged, (contact, changeType) =>
+            {
+                trace.Verbose($"ConnectionChanged-> contact:{contact} changeType:{changeType}");
+                ConnectionChanged?.Invoke(this, new ConnectionChangedEventArgs(contact, changeType));
             });
         }
 
         public event EventHandler<UpdatePropertiesEventArgs> UpdateProperties;
         public event EventHandler<ReceiveMessageEventArgs> MessageReceived;
+        public event EventHandler<ConnectionChangedEventArgs> ConnectionChanged;
 
-        public Task RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken)
         {
-            return this.connection.InvokeAsync(nameof(IPresenceServiceHub.RegisterSelfContactAsync), contactId, initialProperties, cancellationToken);
+            var result = await this.connection.InvokeAsync<JObject>(nameof(IPresenceServiceHub.GetSelfConnectionsAsync), contactId, cancellationToken);
+            return ToPropertyDictionary(result);
+        }
+
+        public async Task<ContactReference> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
+        {
+            var contactRef = await this.connection.InvokeAsync<ContactReference>(nameof(IPresenceServiceHub.RegisterSelfContactAsync), contactId, initialProperties, cancellationToken);
+            return contactRef;
         }
 
         public Task PublishPropertiesAsync(Dictionary<string, object> updateProperties, CancellationToken cancellationToken)
@@ -49,14 +62,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             return this.connection.InvokeAsync(nameof(IPresenceServiceHub.PublishPropertiesAsync), updateProperties, cancellationToken);
         }
 
-        public Task SendMessageAsync(string targetContactId, string messageType, JToken body, CancellationToken cancellationToken)
+        public Task SendMessageAsync(ContactReference targetContact, string messageType, object body, CancellationToken cancellationToken)
         {
-            return this.connection.InvokeAsync(nameof(IPresenceServiceHub.SendMessageAsync), targetContactId, messageType, body, cancellationToken);
+            return this.connection.InvokeAsync(nameof(IPresenceServiceHub.SendMessageAsync), targetContact, messageType, body, cancellationToken);
         }
 
-        public async Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(string[] targetContactIds, string[] propertyNames, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(ContactReference[] targetContacts, string[] propertyNames, CancellationToken cancellationToken)
         {
-            var result = await this.connection.InvokeAsync<JObject>(nameof(IPresenceServiceHub.AddSubcriptionsAsync), targetContactIds, propertyNames, cancellationToken);
+            var result = await this.connection.InvokeAsync<JObject>(nameof(IPresenceServiceHub.AddSubcriptionsAsync), targetContacts, propertyNames, cancellationToken);
             return ToPropertyDictionary(result);
         }
         public async Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(Dictionary<string, object>[] targetContactProperties, string[] propertyNames, bool useStubContact, CancellationToken cancellationToken)
@@ -73,14 +86,9 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }).ToArray();
         }
 
-        public Task RemoveSubcriptionPropertiesAsync(string[] targetContactIds, string[] propertyNames, CancellationToken cancellationToken)
+        public Task RemoveSubscriptionAsync(ContactReference[] targetContacts, CancellationToken cancellationToken)
         {
-            return this.connection.InvokeAsync(nameof(IPresenceServiceHub.RemoveSubcriptionProperties), targetContactIds, propertyNames, cancellationToken);
-        }
-
-        public Task RemoveSubscriptionAsync(string[] targetContactIds, CancellationToken cancellationToken)
-        {
-            return this.connection.InvokeAsync(nameof(IPresenceServiceHub.RemoveSubscription), targetContactIds, cancellationToken);
+            return this.connection.InvokeAsync(nameof(IPresenceServiceHub.RemoveSubscription), targetContacts, cancellationToken);
         }
 
         public Task UnregisterSelfContactAsync(CancellationToken cancellationToken)

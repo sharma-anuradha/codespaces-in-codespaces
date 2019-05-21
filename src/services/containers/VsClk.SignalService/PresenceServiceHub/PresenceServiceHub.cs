@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -28,61 +27,66 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.logger = logger;
         }
 
-        public Task RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties)
+        public Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId)
+        {
+            return this.presenceService.GetSelfConnectionsAsync(contactId, Context.ConnectionAborted);
+        }
+
+        public async Task<ContactReference> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties)
         {
             contactId = GetContactIdentity(contactId);
             Requires.NotNullOrEmpty(contactId, nameof(contactId));
             Context.Items[ContactIdKey] = contactId;
 
-            return this.presenceService.RegisterSelfContactAsync(Context.ConnectionId, contactId, initialProperties, Context.ConnectionAborted);
+            var contactReference = new ContactReference(contactId, Context.ConnectionId);
+            await this.presenceService.RegisterSelfContactAsync(
+                contactReference,
+                initialProperties, 
+                Context.ConnectionAborted);
+            return contactReference;
         }
 
         public Task PublishPropertiesAsync(Dictionary<string, object> updateProperties)
         {
-            return this.presenceService.UpdatePropertiesAsync(Context.ConnectionId, GetContextRegisteredContactId(), updateProperties, Context.ConnectionAborted);
+            return this.presenceService.UpdatePropertiesAsync(GetContextContactReference(), updateProperties, Context.ConnectionAborted);
         }
      
         public Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(Dictionary<string, object>[] targetContactProperties, string[] propertyNames, bool useStubContact)
         {
-            return this.presenceService.RequestSubcriptionsAsync(Context.ConnectionId, GetContextRegisteredContactId(), targetContactProperties, propertyNames, useStubContact, Context.ConnectionAborted);
+            return this.presenceService.RequestSubcriptionsAsync(GetContextContactReference(), targetContactProperties, propertyNames, useStubContact, Context.ConnectionAborted);
         }
 
-        public Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(string[] targetContactIds, string[] propertyNames)
+        public Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(ContactReference[] targetContacts, string[] propertyNames)
         {
-            return this.presenceService.AddSubcriptionsAsync(Context.ConnectionId, GetContextRegisteredContactId(), targetContactIds, propertyNames, Context.ConnectionAborted);
+            return this.presenceService.AddSubcriptionsAsync(GetContextContactReference(), targetContacts, propertyNames, Context.ConnectionAborted);
         }
 
-        public void RemoveSubcriptionProperties(string[] targetContactIds, string[] propertyNames)
+        public void RemoveSubscription(ContactReference[] targetContacts)
         {
-            string contextRegisteredContactId = GetContextRegisteredContactId(throwIfNotFound: false);
-            if (!string.IsNullOrEmpty(contextRegisteredContactId))
+            var contextRegisteredContactRef = GetContextContactReference(throwIfNotFound: false);
+            if (!string.IsNullOrEmpty(contextRegisteredContactRef.Id))
             {
-                this.presenceService.RemoveSubcriptionProperties(Context.ConnectionId, contextRegisteredContactId, targetContactIds, propertyNames);
+                this.presenceService.RemoveSubscription(contextRegisteredContactRef, targetContacts);
             }
         }
 
-        public void RemoveSubscription(string[] targetContactIds)
+        public Task SendMessageAsync(ContactReference targetContact, string messageType, object body)
         {
-            string contextRegisteredContactId = GetContextRegisteredContactId(throwIfNotFound: false);
-            if (!string.IsNullOrEmpty(contextRegisteredContactId))
-            {
-                this.presenceService.RemoveSubscription(Context.ConnectionId, contextRegisteredContactId, targetContactIds);
-            }
-        }
-
-        public Task SendMessageAsync(string targetContactId, string messageType, JToken body)
-        {
-            return this.presenceService.SendMessageAsync(GetContextRegisteredContactId(), targetContactId, messageType, body, Context.ConnectionAborted);
+            return this.presenceService.SendMessageAsync(
+                GetContextContactReference(),
+                targetContact,
+                messageType,
+                body,
+                Context.ConnectionAborted);
         }
 
         public async Task UnregisterSelfContactAsync()
         {
-            string contextRegisteredContactId = GetContextRegisteredContactId(throwIfNotFound: false);
-            if (!string.IsNullOrEmpty(contextRegisteredContactId))
+            var contextRegisteredContactRef = GetContextContactReference(throwIfNotFound: false);
+            if (!string.IsNullOrEmpty(contextRegisteredContactRef.Id))
             {
                 await this.presenceService.UnregisterSelfContactAsync(
-                    Context.ConnectionId,
-                    contextRegisteredContactId,
+                    contextRegisteredContactRef,
                     null,
                     Context.ConnectionAborted);
             }
@@ -100,13 +104,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            string contextRegisteredContactId = GetContextRegisteredContactId(throwIfNotFound: false);
-            if (!string.IsNullOrEmpty(contextRegisteredContactId))
+            var contextRegisteredContactRef = GetContextContactReference(throwIfNotFound: false);
+            if (!string.IsNullOrEmpty(contextRegisteredContactRef.Id))
             {
-                this.logger.LogDebug($"OnDisconnectedAsync contextRegisteredContactId:{contextRegisteredContactId}");
+                this.logger.LogDebug($"OnDisconnectedAsync contextRegisteredContactRef:{contextRegisteredContactRef}");
                 await this.presenceService.UnregisterSelfContactAsync(
-                    Context.ConnectionId,
-                    contextRegisteredContactId,
+                    contextRegisteredContactRef,
                     (properties) => Task.Delay(TimeSpan.FromSeconds(DisconnectSubscriptionDelaySecs)),
                     Context.ConnectionAborted);
             }
@@ -124,36 +127,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             return contactId;
         }
 
-        // Note: next methods will prevent errors (method not found) when old presence clients connect to this service
-        #region Deprecated Methods
-
-        public Task<Dictionary<string, Dictionary<string, object>>[]> MatchMultipleContacts(Dictionary<string, object>[] matchingProperties)
-        {
-            return MatchContactsAsync(matchingProperties);
-        }
-
-        public Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptions(string[] targetContactIds, string[] propertyNames)
-        {
-            return AddSubcriptionsAsync(targetContactIds, propertyNames);
-        }
-
-        public void RemoveSubcriptions(string[] targetContactIds, string[] propertyNames)
-        {
-            RemoveSubcriptionProperties(targetContactIds, propertyNames);
-        }
-
-        public void RemoveAllSubcriptions(string[] targetContactIds)
-        {
-            RemoveSubscription(targetContactIds);
-        }
-
-        public Task<Dictionary<string, Dictionary<string, object>>> SearchContacts(Dictionary<string, SearchProperty> searchProperties, int? maxCount)
-        {
-            return SearchContactsAsync(searchProperties, maxCount);
-        }
-
-        #endregion
-
         private string GetContextRegisteredContactId(bool throwIfNotFound = true)
         {
             object registeredContactId;
@@ -165,5 +138,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             return registeredContactId?.ToString();
         }
 
+        private ContactReference GetContextContactReference(bool throwIfNotFound = true)
+        {
+            return new ContactReference(GetContextRegisteredContactId(throwIfNotFound), Context.ConnectionId);
+        }
     }
 }

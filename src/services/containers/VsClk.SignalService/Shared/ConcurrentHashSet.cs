@@ -16,6 +16,12 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             this.dictionary = new ConcurrentDictionary<T, byte>();
         }
 
+        public ConcurrentHashSet(IEnumerable<T> values)
+            : this()
+        {
+            AddValues(values);
+        }
+
         public ConcurrentHashSet(IEqualityComparer<T> comparer)
         {
             this.dictionary = new ConcurrentDictionary<T, byte>(comparer);

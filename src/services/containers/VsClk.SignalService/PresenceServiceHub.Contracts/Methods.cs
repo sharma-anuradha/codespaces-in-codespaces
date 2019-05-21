@@ -11,6 +11,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public static string UpdateValues = ToHubName(nameof(IPresenceServiceClientHub.UpdateValuesAsync));
         public static string ReceiveMessage = ToHubName(nameof(IPresenceServiceClientHub.ReceiveMessageAsync));
+        public static string ConnectionChanged = ToHubName(nameof(IPresenceServiceClientHub.ConnectionChangedAsync));
 
         private static string ToHubName(string name)
         {

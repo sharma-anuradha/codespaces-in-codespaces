@@ -52,40 +52,40 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 return Task.CompletedTask;
             }));
 
-            await this.presenceService1.RegisterSelfContactAsync("conn1", "contact1", new Dictionary<string, object>()
+            await this.presenceService1.RegisterSelfContactAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>()
             {
                 { "status", "available" },
             }, CancellationToken.None);
 
-            var contactProperties = await this.presenceService1.AddSubcriptionsAsync("conn1", "contact1", new string[] { "contact2" }, new string[] { "status" });
+            var contactProperties = await this.presenceService1.AddSubcriptionsAsync(AsContactRef("conn1", "contact1"), new ContactReference[] { AsContactRef(null, "contact2") }, new string[] { "status" });
             Assert.Null(contactProperties["contact2"]["status"]);
 
             conn1Proxy = default;
-            await this.presenceService2.RegisterSelfContactAsync("conn1", "contact2", new Dictionary<string, object>()
+            await this.presenceService2.RegisterSelfContactAsync(AsContactRef("conn1", "contact2"), new Dictionary<string, object>()
             {
                 { "status", "available" },
             }, CancellationToken.None);
 
-            Assert.Equal("contact2", conn1Proxy.Item2[0]);
+            AssertContactRef("conn1", "contact2", conn1Proxy.Item2[0]);
             var notifyProperties = conn1Proxy.Item2[1] as Dictionary<string, object>;
             Assert.Equal("available", notifyProperties["status"]);
 
-            contactProperties = await this.presenceService2.AddSubcriptionsAsync("conn1", "contact2", new string[] { "contact1" }, new string[] { "status" });
+            contactProperties = await this.presenceService2.AddSubcriptionsAsync(AsContactRef("conn1", "contact2"), new ContactReference[] { AsContactRef(null, "contact1") }, new string[] { "status" });
             Assert.Equal("available", contactProperties["contact1"]["status"]);
 
             conn2Proxy = default;
-            await this.presenceService1.UpdatePropertiesAsync("conn1", "contact1", new Dictionary<string, object>()
+            await this.presenceService1.UpdatePropertiesAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>()
             {
                 { "status", "busy" },
             }, CancellationToken.None);
-            Assert.Equal("contact1", conn2Proxy.Item2[0]);
+            AssertContactRef("conn1", "contact1", conn2Proxy.Item2[0]);
             notifyProperties = conn2Proxy.Item2[1] as Dictionary<string, object>;
             Assert.Equal("busy", notifyProperties["status"]);
 
             conn2Proxy = default;
-            await this.presenceService1.SendMessageAsync("contact1", "contact2", "type1", JToken.FromObject(100), default);
-            Assert.Equal("contact2", conn2Proxy.Item2[0]);
-            Assert.Equal("contact1", conn2Proxy.Item2[1]);
+            await this.presenceService1.SendMessageAsync(AsContactRef("conn1", "contact1"), AsContactRef(null, "contact2"), "type1", JToken.FromObject(100), default);
+            AssertContactRef("conn1", "contact2", conn2Proxy.Item2[0]);
+            AssertContactRef("conn1", "contact1", conn2Proxy.Item2[1]);
             Assert.Equal("type1", conn2Proxy.Item2[2]);
         }
 
@@ -99,13 +99,13 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 return Task.CompletedTask;
             }));
 
-            await this.presenceService1.RegisterSelfContactAsync("conn1", "contact1", new Dictionary<string, object>()
+            await this.presenceService1.RegisterSelfContactAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>()
             {
                { "email", "contact1@microsoft.com" },
                { "status", "available" },
             }, CancellationToken.None);
 
-            var results = await this.presenceService1.RequestSubcriptionsAsync("conn1", "contact1", new Dictionary<string, object>[] {
+            var results = await this.presenceService1.RequestSubcriptionsAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>[] {
                 new Dictionary<string, object>()
                 {
                     { "email", "contact2@microsoft.com" },
@@ -113,28 +113,28 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 new string[] { "status" }, useStubContact: true, CancellationToken.None);
 
             conn1Proxy = default;
-            await this.presenceService2.RegisterSelfContactAsync("conn1", "contact2", new Dictionary<string, object>()
+            await this.presenceService2.RegisterSelfContactAsync(AsContactRef("conn1", "contact2"), new Dictionary<string, object>()
             {
                 { "email", "contact2@microsoft.com" },
                 { "status", "available" },
             }, CancellationToken.None);
 
-            Assert.Equal(results[0][Properties.IdReserved], conn1Proxy.Item2[0]);
+            AssertContactRef("conn1", results[0][Properties.IdReserved].ToString(), conn1Proxy.Item2[0]);
             var notifyProperties = conn1Proxy.Item2[1] as Dictionary<string, object>;
             Assert.Equal("available", notifyProperties["status"]);
 
             conn1Proxy = default;
-            await this.presenceService2.UpdatePropertiesAsync("conn1", "contact2", new Dictionary<string, object>()
+            await this.presenceService2.UpdatePropertiesAsync(AsContactRef("conn1", "contact2"), new Dictionary<string, object>()
             {
                 { "status", "busy" },
             }, CancellationToken.None);
-            Assert.Equal(results[0][Properties.IdReserved], conn1Proxy.Item2[0]);
+            AssertContactRef("conn1", results[0][Properties.IdReserved].ToString(), conn1Proxy.Item2[0]);
             notifyProperties = conn1Proxy.Item2[1] as Dictionary<string, object>;
             Assert.Equal("busy", notifyProperties["status"]);
 
             // this should remove the stub contact 
-            this.presenceService1.RemoveSubscription("conn1", "contact1", new string[] { results[0][Properties.IdReserved].ToString() });
-            results = await this.presenceService1.RequestSubcriptionsAsync("conn1", "contact1", new Dictionary<string, object>[] {
+            this.presenceService1.RemoveSubscription(AsContactRef("conn1", "contact1"), new ContactReference[] { AsContactRef(null, results[0][Properties.IdReserved].ToString()) });
+            results = await this.presenceService1.RequestSubcriptionsAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>[] {
                 new Dictionary<string, object>()
                 {
                     { "email", "contact2@microsoft.com" },
@@ -146,24 +146,132 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.Equal("busy", results[0]["status"]);
 
             conn1Proxy = default;
-            await this.presenceService2.UpdatePropertiesAsync("conn1", "contact2", new Dictionary<string, object>()
+            await this.presenceService2.UpdatePropertiesAsync(AsContactRef("conn1", "contact2"), new Dictionary<string, object>()
             {
                 { "status", "available" },
             }, CancellationToken.None);
-            Assert.Equal("contact2", conn1Proxy.Item2[0]);
+            AssertContactRef("conn1", "contact2", conn1Proxy.Item2[0]);
             notifyProperties = conn1Proxy.Item2[1] as Dictionary<string, object>;
             Assert.Equal("available", notifyProperties["status"]);
         }
 
+        [Fact]
+        public async Task AddConnectionSubscription()
+        {
+            (string, object[]) connProxy = default;
+            this.clientProxies1.Add("conn1", MockUtils.CreateClientProxy((m, args) =>
+            {
+                connProxy = (m, args);
+                return Task.CompletedTask;
+            }));
+
+            await this.presenceService1.RegisterSelfContactAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>()
+            {
+                { "status", "available" },
+            }, CancellationToken.None);
+
+            await this.presenceService2.RegisterSelfContactAsync(AsContactRef("conn2", "contact2"), new Dictionary<string, object>()
+            {
+                { "status", "available" },
+            }, CancellationToken.None);
+
+            await this.presenceService2.RegisterSelfContactAsync(AsContactRef("conn3", "contact2"), new Dictionary<string, object>()
+            {
+                { "status", "busy" },
+            }, CancellationToken.None);
+
+            var contactProperties = await this.presenceService1.AddSubcriptionsAsync(
+                AsContactRef("conn1", "contact1"),
+                new ContactReference[] { AsContactRef("conn2", "contact2") }, new string[] { "status" });
+            Assert.NotNull(contactProperties);
+            Assert.Single(contactProperties);
+            Assert.Equal("available", contactProperties["contact2"]["status"]);
+
+            connProxy = default;
+            await this.presenceService2.UpdatePropertiesAsync(AsContactRef("conn2", "contact2"), new Dictionary<string, object>()
+            {
+                { "status", "dnd" },
+            }, CancellationToken.None);
+            Assert.NotNull(connProxy.Item1);
+            Assert.Equal(connProxy.Item1, Methods.UpdateValues);
+            var notifyProperties = connProxy.Item2[1] as Dictionary<string, object>;
+            Assert.Equal("dnd", notifyProperties["status"]);
+
+            connProxy = default;
+            await this.presenceService2.UpdatePropertiesAsync(AsContactRef("conn3", "contact2"), new Dictionary<string, object>()
+            {
+                { "status", "away" },
+            }, CancellationToken.None);
+            Assert.Null(connProxy.Item1);
+        }
+
+        [Fact]
+        public async Task SensMessageToConnection()
+        {
+            (string, object[]) conn2Proxy = default;
+            this.clientProxies2.Add("conn2", MockUtils.CreateClientProxy((m, args) =>
+            {
+                conn2Proxy = (m, args);
+                return Task.CompletedTask;
+            }));
+
+            (string, object[]) conn3Proxy = default;
+            this.clientProxies2.Add("conn3", MockUtils.CreateClientProxy((m, args) =>
+            {
+                conn3Proxy = (m, args);
+                return Task.CompletedTask;
+            }));
+
+            await this.presenceService1.RegisterSelfContactAsync(AsContactRef("conn1", "contact1"), null, CancellationToken.None);
+            await this.presenceService2.RegisterSelfContactAsync(AsContactRef("conn2", "contact2"), null, CancellationToken.None);
+            await this.presenceService2.RegisterSelfContactAsync(AsContactRef("conn3", "contact2"), null, CancellationToken.None);
+
+            conn2Proxy = default;
+            conn3Proxy = default;
+
+            await this.presenceService1.SendMessageAsync(
+                AsContactRef("conn1", "contact1"),
+                AsContactRef("conn2", "contact2"),
+                "raw",
+                100,
+                CancellationToken.None);
+            Assert.NotNull(conn2Proxy.Item1);
+            Assert.Null(conn3Proxy.Item1);
+
+            conn2Proxy = default;
+            conn3Proxy = default;
+
+            await this.presenceService1.SendMessageAsync(
+                AsContactRef("conn1", "contact1"),
+                AsContactRef("conn3", "contact2"),
+                "raw",
+                100,
+                CancellationToken.None);
+            Assert.Null(conn2Proxy.Item1);
+            Assert.NotNull(conn3Proxy.Item1);
+        }
+
+        private static ContactReference AsContactRef(string connectionId, string id) => new ContactReference(id, connectionId);
+        private static void AssertContactRef(string connectionId, string id, ContactReference contactReference)
+        {
+            Assert.Equal(AsContactRef(connectionId, id), contactReference);
+        }
+
+        private static void AssertContactRef(string connectionId, string id, object contactReference)
+        {
+            Assert.IsType<ContactReference>(contactReference);
+            AssertContactRef(connectionId, id, (ContactReference)contactReference);
+        }
+
         private class MockBackplaneProvider : IBackplaneProvider
         {
-            private readonly Dictionary<string, Dictionary<string, object>> contactProperties;
+            private readonly Dictionary<string, ContactData> contactDataMap;
             private readonly List<OnContactChangedAsync> contactChangedAsyncs = new List<OnContactChangedAsync>();
             private readonly List<OnMessageReceivedAsync> messageReceivedAsyncs = new List<OnMessageReceivedAsync>();
 
             internal MockBackplaneProvider()
             {
-                this.contactProperties = new Dictionary<string, Dictionary<string, object>>();
+                this.contactDataMap = new Dictionary<string, ContactData>();
             }
 
             public OnContactChangedAsync ContactChangedAsync
@@ -192,37 +300,36 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
             public int Priority => 0;
 
-            public Task<Dictionary<string, object>> GetContactPropertiesAsync(string contactId, CancellationToken cancellationToken)
+            public Task<ContactData> GetContactPropertiesAsync(string contactId, CancellationToken cancellationToken)
             {
-                if (this.contactProperties.TryGetValue(contactId, out var properties))
+                if (this.contactDataMap.TryGetValue(contactId, out var properties))
                 {
                     return Task.FromResult(properties);
                 }
 
-                return Task.FromResult<Dictionary<string, object>>(null);
+                return Task.FromResult<ContactData>(null);
             }
 
-            public async Task SendMessageAsync(string sourceId, string contactId, string targetContactId, string messageType, JToken body, CancellationToken cancellationToken)
+            public async Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
             {
-                await Task.WhenAll(this.messageReceivedAsyncs.Select(c => c.Invoke(sourceId, contactId, targetContactId, messageType, body, cancellationToken)));
+                await Task.WhenAll(this.messageReceivedAsyncs.Select(c => c.Invoke(sourceId, messageData, cancellationToken)));
             }
 
-            public async Task UpdateContactAsync(string sourceId, string contactId,Dictionary<string, object> properties, ContactUpdateType updateContactType, CancellationToken cancellationToken)
+            public async Task UpdateContactAsync(string sourceId, string connectionId, ContactData contactData, ContactUpdateType updateContactType, CancellationToken cancellationToken)
             {
-                this.contactProperties[contactId] = properties;
+                this.contactDataMap[contactData.Id] = contactData;
 
-                await Task.WhenAll(this.contactChangedAsyncs.Select(c => c.Invoke(sourceId, contactId, properties, updateContactType, cancellationToken)));
+                await Task.WhenAll(this.contactChangedAsyncs.Select(c => c.Invoke(sourceId, connectionId, contactData, updateContactType, cancellationToken)));
             }
 
-            public Task<Dictionary<string, object>[]> GetContactsAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+            public Task<ContactData[]> GetContactsAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
             {
-                var matchContacts = this.contactProperties
-                    .Where(kvp => matchProperties.MatchProperties(kvp.Value))
+                var matchContacts = this.contactDataMap
+                    .Where(kvp => matchProperties.MatchProperties(kvp.Value.Properties))
                     .Select(kvp =>
                     {
-                        var properties = kvp.Value.ToDictionary(entry => entry.Key, entry => entry.Value);
-                        properties[Properties.IdReserved] = kvp.Key;
-                        return properties;
+                        kvp.Value.Properties[Properties.IdReserved] = kvp.Key;
+                        return kvp.Value;
                     }).ToArray();
 
                 return Task.FromResult(matchContacts);
