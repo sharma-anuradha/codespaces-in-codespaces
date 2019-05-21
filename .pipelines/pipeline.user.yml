@@ -7,3 +7,13 @@ version:
   minor: 1
   tag: 'alpha'
   system: 'buildrevision'
+
+static_analysis_options:
+  moderncop_options:
+    files_to_scan:
+    - from: 'src\services\containers\VsClk.Portal.WebSite\ClientApp\'
+      exclude:
+      - 'vscode-web\scripts\postupdate.js'
+      - 'scripts\npm\postinstall.js'
+      - 'vscode-web\scripts\preupdate.js'
+      - 'src\setupProxy.js'
