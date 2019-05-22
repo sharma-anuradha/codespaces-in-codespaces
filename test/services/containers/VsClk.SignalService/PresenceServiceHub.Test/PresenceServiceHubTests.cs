@@ -598,6 +598,35 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.Equal("away", notifyProperties["status"]);
         }
 
+        [Fact]
+        public async Task SelfSubscription()
+        {
+            var connProxies = new List<(string, object[])>();
+            this.clientProxies.Add("conn1", MockUtils.CreateClientProxy((m, args) =>
+            {
+                connProxies.Add((m, args));
+                return Task.CompletedTask;
+            }));
+
+            var contact1Ref = AsContactRef("conn1", "contact1");
+            await this.presenceService.RegisterSelfContactAsync(contact1Ref, new Dictionary<string, object>()
+            {
+                { "status", "available" },
+            }, CancellationToken.None);
+
+
+            await this.presenceService.AddSubcriptionsAsync(
+                contact1Ref,
+                new ContactReference[] { AsContactRef(null, "contact1") }, new string[] { "status" });
+
+            connProxies.Clear();
+            await this.presenceService.UpdatePropertiesAsync(contact1Ref, new Dictionary<string, object>()
+            {
+                { "status", "busy" },
+            }, CancellationToken.None);
+            Assert.Single(connProxies);
+        }
+
         private static ContactReference AsContactRef(string connectionId, string id ) => new ContactReference(id, connectionId);
         private static void AssertContactRef(string connectionId, string id, ContactReference contactReference)
         {

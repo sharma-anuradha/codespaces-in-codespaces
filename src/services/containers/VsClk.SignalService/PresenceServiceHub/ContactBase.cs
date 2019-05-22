@@ -134,7 +134,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 connectionId,
                 contactData.Properties.Keys,
                 (selfConnectionId, propertyName) => GetPropertyValue(contactData, propertyName, selfConnectionId),
-                (selfConnectionId) => selfConnectionId == null || selfConnectionId == connectionId,
+                (notifyConnectionId, selfConnectionId) => selfConnectionId == null || selfConnectionId == connectionId,
                 cancellationToken);
         }
 
@@ -214,7 +214,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             string selfConnectionId,
             IEnumerable<string> affectedProperties,
             Func<string, string, object> resolvePropertyValue,
-            Func<string, bool> filterSubscription,
+            Func<string, string, bool> filterSubscription,
             CancellationToken cancellationToken)
         {
             return GetSubscriptionsNotityProperties(
@@ -228,12 +228,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected Dictionary<Tuple<string, string>, Dictionary<string, object>> GetSubscriptionsNotityProperties(
             IEnumerable<string> affectedProperties,
             Func<string, string, object> resolvePropertyValue,
-            Func<string, bool> filterSubscription)
+            Func<string, string, bool> filterSubscription)
         {
             var result = new Dictionary<Tuple<string, string>, Dictionary<string, object>>();
             foreach (var subscription in this.connectionSubscriptions)
             {
-                if (filterSubscription?.Invoke(subscription.Key.Item2) == false)
+                if (filterSubscription?.Invoke(subscription.Key.Item1, subscription.Key.Item2) == false)
                 {
                     continue;
                 }

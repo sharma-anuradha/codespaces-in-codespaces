@@ -307,7 +307,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 connectionId,
                 updateProperties.Keys,
                 (selfConnectionId, propertyName) => GetPropertyValue(selfConnectionId, propertyName),
-                (selfConnectionId) => selfConnectionId == null || selfConnectionId == connectionId,
+                (notifyConnectionId, selfConnectionId) => (!this.selfConnections.Contains(notifyConnectionId) && selfConnectionId == null)  || selfConnectionId == connectionId,
                 cancellationToken));
 
             // Notify self
