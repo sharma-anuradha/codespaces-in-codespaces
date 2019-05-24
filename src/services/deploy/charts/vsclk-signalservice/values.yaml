@@ -43,6 +43,7 @@ appSettings:
 - AppSettings__AuthenticateMetadataServiceUri
 - AppSettings__AzureCosmosDbEndpointUrl
 - AppSettings__AzureCosmosDbAuthKey
+- AppSettings__UseTelemetryProvider
 - Azure__SignalR__ConnectionString
 
 authentication:
@@ -55,6 +56,9 @@ authentication:
 status:
   buildVersion: '1.0'
   gitCommit: unknown
+
+#if use telemetry support
+enableTelemetrySupport: true
 
 #define the stamp
 stamp: use
