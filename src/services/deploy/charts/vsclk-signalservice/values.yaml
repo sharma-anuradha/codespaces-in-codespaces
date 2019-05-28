@@ -58,7 +58,7 @@ status:
   gitCommit: unknown
 
 #if use telemetry support
-enableTelemetrySupport: true
+enableTelemetrySupport: "true"
 
 #define the stamp
 stamp: use
