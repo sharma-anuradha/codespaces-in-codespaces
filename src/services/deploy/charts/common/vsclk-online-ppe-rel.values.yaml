@@ -6,9 +6,9 @@ image:
 ingress:
   hosts:
     - online-ppe.core.vsengsaas.visualstudio.com
+    - vsclk-online-ppe-rel-tm.trafficmanager.net
     - vsclk-online-ppe-rel-asse-tm.trafficmanager.net
     - vsclk-online-ppe-rel-euw-tm.trafficmanager.net
-    - vsclk-online-ppe-rel-tm.trafficmanager.net
     - vsclk-online-ppe-rel-use-tm.trafficmanager.net
     - vsclk-online-ppe-rel-usw2-tm.trafficmanager.net
   tls:
@@ -24,3 +24,14 @@ config:
   authRedirectUrl: https://online-ppe.core.vsengsaas.visualstudio.com
   keyVaultName: vsclk-online-ppe-kv
   clusterDefaultHost: online-ppe.core.vsengsaas.visualstudio.com
+
+azure-secrets:
+  # vsclk-core-dev
+  subscriptionId-dev: "86642df6-843e-4610-a956-fdd497102261"
+  # vsclk-core-ppe
+  subscriptionId-ppe: "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24"
+  # vsclk-core-prod
+  subscriptionId-prod: "979523fb-a19c-4bb0-a8ee-cef29597b0a4"
+  keyVaultName-dev: vsclk-online-dev-kv
+  keyVaultName-ppe: vsclk-online-ppe-kv
+  keyVaultName-prod: vsclk-online-prod-kv

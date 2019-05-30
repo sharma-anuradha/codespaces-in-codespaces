@@ -1,0 +1,35 @@
+# Common override values for charts deployed to vsclk-signlr-prod-rel
+
+image:
+  repositoryUrl: vsclksignlrprod.azurecr.io
+
+ingress:
+  hosts:
+    - signlr-prod.core.vsengsaas.visualstudio.com
+    - vsclk-signlr-prod-rel-tm.trafficmanager.net
+    - vsclk-signlr-prod-rel-asse-tm.trafficmanager.net
+    - vsclk-signlr-prod-rel-euw-tm.trafficmanager.net
+    - vsclk-signlr-prod-rel-use-tm.trafficmanager.net
+    - vsclk-signlr-prod-rel-usw2-tm.trafficmanager.net
+  tls:
+    - hosts:
+      - signlr-prod.core.vsengsaas.visualstudio.com
+      secretName: ssl-cert
+
+config:
+  aspNetEnv: Development
+  authRedirectUrl: https://signlr-prod.core.vsengsaas.visualstudio.com
+  keyVaultName: vsclk-signlr-prod-kv
+  clusterDefaultHost: signlr-prod.core.vsengsaas.visualstudio.com
+
+azure-secrets:
+  # vsclk-core-dev
+  subscriptionId-dev: "86642df6-843e-4610-a956-fdd497102261"
+  # vsclk-core-ppe
+  subscriptionId-ppe: "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24"
+  # vsclk-core-prod
+  subscriptionId-prod: "979523fb-a19c-4bb0-a8ee-cef29597b0a4"
+  keyVaultName-dev: vsclk-signlr-dev-kv
+  keyVaultName-ppe: vsclk-signlr-ppe-kv
+  keyVaultName-prod: vsclk-signlr-prod-kv
+
