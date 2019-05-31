@@ -25,6 +25,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
     [ApiController]
     public class RegistrationController : ControllerBase
     {
+        private const int ENV_REG_QUOTA = 5;
         private IEnvironmentRegistrationRepository EnvironmentRegistrationRepository { get; }
         private IMapper Mapper { get; }
         private IConfiguration Configuration { get; }
@@ -119,7 +120,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 return BadRequest("Environment with that friendlyName already exists");
             }
 
-            if (environments.Count() >= 10)
+            if (environments.Count() >= ENV_REG_QUOTA)
             {
                 return BadRequest("You already exceeded the quota of environments");
             }
