@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +6,17 @@ using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
 using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Models;
+using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Util;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 {
@@ -130,7 +129,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             modelRaw.Updated = DateTime.UtcNow;
             modelRaw.OwnerId = currentUserId;
             modelRaw.Id = Guid.NewGuid().ToString();
-            var environmentVariables = new List<EnvironmentVariable>();
+            
 
             if (modelRaw.Type == EnvType.staticEnvironment.ToString())
             {
@@ -138,33 +137,10 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             }
 
             /* Construct the arguments needed for the compute service */
-            if (modelRaw.Seed != null
-                && modelRaw.Seed.SeedType == "git"
-                && Util.Utils.IsValidGitUrl(modelRaw.Seed.SeedMoniker))
-            {
-                var moniker = modelRaw.Seed.SeedMoniker;
-
-                /* Just supporting /pull/ case for now */
-                if (moniker.Contains("/pull/"))
-                {
-                    var repoUrl = moniker.Split("/pull/");
-                    environmentVariables.Add(new EnvironmentVariable("GIT_REPO_URL", repoUrl[0]));
-                    environmentVariables.Add(new EnvironmentVariable("GIT_PR_NUM", Regex.Match(repoUrl[1], "(\\d+)").ToString()));
-                }
-                else
-                {
-                    environmentVariables.Add(new EnvironmentVariable("GIT_REPO_URL", moniker));
-                }
-            }
-
-            string apiUrl = AppSettings.PreferredSchema + "://" + AppSettings.DefaultHost + AppSettings.DefaultPath + "/registration/";
-            environmentVariables.Add(new EnvironmentVariable("SESSION_CALLBACK", apiUrl + modelRaw.Id + "/_callback"));
-            environmentVariables.Add(new EnvironmentVariable("SESSION_TOKEN", accessToken));
-            
             var computeServiceInput = new ComputeServiceInput
             {
-                EnvironmentVariables = environmentVariables
-            };
+                EnvironmentVariables = EnvironmentVariableGenerator.Generate(modelRaw, AppSettings, accessToken)
+        };
 
             EnvReg.Models.DataStore.FileShare fileShare = null;
             if (modelInput.CreateFileShare) {
@@ -197,9 +173,11 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 var response = await client.PostAsync(computeCreationUri, requestContent);
                 var contents = await response.Content.ReadAsStringAsync();
                 string containerId = JObject.Parse(contents)["id"].ToString();
-                modelRaw.Connection = new ConnectionInfo();
-                modelRaw.Connection.ConnectionComputeId = containerId;
-                modelRaw.Connection.ConnectionComputeTargetId = computeTargetId;
+                modelRaw.Connection = new ConnectionInfo
+                {
+                    ConnectionComputeId = containerId,
+                    ConnectionComputeTargetId = computeTargetId
+                };
                 modelRaw.State = StateInfo.Provisioning.ToString();
                 modelRaw = await EnvironmentRegistrationRepository.CreateAsync(modelRaw, logger);
                 return Ok(Mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(modelRaw));

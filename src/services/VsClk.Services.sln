@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "docker-compose", "container
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Storage.FileShare", "lib\Azure.Storage.FileShare\Azure.Storage.FileShare.csproj", "{A454B522-4034-4100-9E96-25F75F6A6186}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VsClk.EnvReg.WebApi.Tests", "VsClk.EnvReg.WebApi.Tests\VsClk.EnvReg.WebApi.Tests.csproj", "{53FE49DC-353A-4729-B67E-9A39485CE972}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -117,6 +119,18 @@ Global
 		{A454B522-4034-4100-9E96-25F75F6A6186}.Release|x64.Build.0 = Release|Any CPU
 		{A454B522-4034-4100-9E96-25F75F6A6186}.Release|x86.ActiveCfg = Release|Any CPU
 		{A454B522-4034-4100-9E96-25F75F6A6186}.Release|x86.Build.0 = Release|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Debug|x64.Build.0 = Debug|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Debug|x86.Build.0 = Debug|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Release|x64.ActiveCfg = Release|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Release|x64.Build.0 = Release|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Release|x86.ActiveCfg = Release|Any CPU
+		{53FE49DC-353A-4729-B67E-9A39485CE972}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -130,7 +144,6 @@ Global
 		{E4DD874F-B3CB-42D1-A729-DE0AB998CC78} = {9AD968C8-040B-418F-85FE-F9B2AE6F5AF6}
 		{1EBC13FA-42A7-4B3B-BA01-602687C7DD9F} = {E4DD874F-B3CB-42D1-A729-DE0AB998CC78}
 		{A454B522-4034-4100-9E96-25F75F6A6186} = {A552D106-1315-40EE-A4C2-8AD6097545C1}
-		{AC07A7F0-C34E-443B-8297-E09D080C034B} = {A552D106-1315-40EE-A4C2-8AD6097545C1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {660D76EF-BC71-4B4A-A467-3A1026696963}

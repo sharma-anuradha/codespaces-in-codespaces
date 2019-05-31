@@ -53,6 +53,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 cfg.CreateMap<EnvironmentRegistrationInput, EnvironmentRegistration>();
                 cfg.CreateMap<ConnectionInfoInput, ConnectionInfo>();
                 cfg.CreateMap<SeedInfoInput, SeedInfo>();
+                cfg.CreateMap<GitConfigInput, GitConfig>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);

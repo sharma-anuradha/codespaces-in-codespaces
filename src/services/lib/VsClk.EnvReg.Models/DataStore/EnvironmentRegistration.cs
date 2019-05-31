@@ -50,6 +50,9 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
 
         [JsonProperty(Required = Required.Default, PropertyName = "moniker")]
         public string SeedMoniker { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "gitConfig")]
+        public GitConfig GitConfig { get; set; }
     }
 
     public class ConnectionInfo
@@ -77,6 +80,15 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
 
         [JsonProperty(Required = Required.Default, PropertyName = "fileShareName")]
         public string FileShareId { get; set; }
+    }
+
+    public class GitConfig
+    {
+        [JsonProperty(Required = Required.Default, PropertyName = "userName")]
+        public string UserName { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "userEmail")]
+        public string UserEmail { get; set; }
     }
 
     public enum StateInfo
