@@ -12,7 +12,7 @@
 
         public static T GetProgramsItem<T>(this Profile profile, string key)
         {
-            if (!profile.Programs.TryGetValue(key, out var value))
+            if (profile.Programs == null || !profile.Programs.TryGetValue(key, out var value))
             {
                 return default;
             }
