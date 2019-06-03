@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
@@ -6,11 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\VsClk.EnvReg.Models\VsClk.EnvReg.Models.csproj" />
+    <ProjectReference Include="..\Azure.Storage.FileShare\Azure.Storage.FileShare.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.All" />
     <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.2.2" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
-    <ProjectReference Include="..\VsClk.EnvReg.Models\VsClk.EnvReg.Models.csproj" />
-    <ProjectReference Include="..\Azure.Storage.FileShare\Azure.Storage.FileShare.csproj" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Caching" Version="$(VsclkSdkVersion)" />

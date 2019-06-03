@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 {
@@ -54,5 +55,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
         public string StorageAccountName { get; set; }
 
         public string StorageAccountKey { get; set; }
+
+        // Live Share Services
+        public string VSLiveShareApiEndpoint { get; set; }
     }
 }

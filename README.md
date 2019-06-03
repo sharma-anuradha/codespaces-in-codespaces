@@ -7,15 +7,15 @@ Core Service
 
     Networking
         + ------------------------------------------------ +
-        |      dev.core.vsengsaas.visualstudio.com       |
+        |      dev.core.vsengsaas.visualstudio.com         |
         |              (Azure DNS Zone)                    |
         + ------------------------------------------------ +
-        |                vsclk-core-tm                   |
+        |                vsclk-core-tm                     |
         |           (Azure Traffic Manager)                |
         + ------------------------------------------------ +
         |            (Azure Load Balancer)                 |
         + ------------------------------------------------ +
-        |            vsclk-core-cluster-vnet             |
+        |            vsclk-core-cluster-vnet               |
         |            (Azure Virtual Network)               |
         + ------------------------------------------------ +
                   |

@@ -18,6 +18,11 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using StackExchange.Redis;
+using VsClk.EnvReg.Repositories;
+using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Provider;
+using VsClk.EnvReg.Repositories.Support.HttpClient;
+using VsClk.EnvReg.Repositories.HttpClient;
+using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
 {
@@ -60,28 +65,23 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
 
             ConfigureDbServices(services, appSettings);
 
-            // VS SaaS services
-            services.AddVsSaaSHostingWithJwtBearerAuthentication(HostEnvironment,
-                new LoggingBaseValues
-                {
-                    CommitId = appSettings.GitCommit,
-                    ServiceName = "envreg",
-                },
-                authConfigOptions =>
-                {
-                    authConfigOptions.Authority = appSettings.AuthJwtAuthority;
-                    if (!string.IsNullOrEmpty(appSettings.AuthJwtAudience))
-                    {
-                        authConfigOptions.AudienceAppId = appSettings.AuthJwtAudience;
-                    }
-                    else
-                    {
-                        authConfigOptions.AudienceAppIds = appSettings.AuthJwtAudiences?.Split(',');
-                    }
-                    authConfigOptions.IsEmailClaimRequired = false;
-                });
+            // Providers
+            services.AddSingleton<ICurrentUserProvider, HttpContextCurrentUserProvider>();
+            services.AddSingleton<IProfileCache, HttpContextProfileCache>();
+            services.AddSingleton<IHttpClientProvider, HttpClientProvider>();
 
-            ConfigureAuthentication(services, appSettings);
+            // Repositories
+            services.AddSingleton<IProfileRepository, HttpClientProfileRepository>();
+
+            // Authentication
+            services.AddVsClkCoreAuthenticationServices(HostEnvironment, appSettings);
+
+            // VS SaaS services
+            services.AddVsSaaSHosting(HostEnvironment, new LoggingBaseValues
+            {
+                CommitId = appSettings.GitCommit,
+                ServiceName = "envreg",
+            });
 
             services.AddFileShareProvider(options =>
             {
@@ -112,55 +112,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 // Use the mock db if we're developing locally
                 services.AddSingleton<IEnvironmentRegistrationRepository, MockEnvironmentRegistrationRepository>();
             }
-        }
-
-        private void ConfigureAuthentication(IServiceCollection services, AppSettings appSettings)
-        {
-            // Add Data protection
-            if (!HostEnvironment.IsDevelopment() || !appSettings.IsLocal)
-            {
-                var redis = ConnectionMultiplexer.Connect(appSettings.VsClkRedisConnectionString);
-                services.AddDataProtection()
-                    .SetApplicationName("VS Sass")
-                    .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
-            }
-            else
-            {
-                services.AddDataProtection()
-                    .SetApplicationName("VS Sass");
-            }
-
-            // Authentication
-            services.AddAuthentication(options =>
-            {
-                options.DefaultScheme = "proxy";
-                options.DefaultChallengeScheme = "proxy";
-            })
-
-            .AddPolicyScheme("proxy", "Authorization Bearer or Cookie", options =>
-            {
-                options.ForwardDefaultSelector = context =>
-                {
-                    var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-                    if (authHeader?.StartsWith("Bearer ") == true)
-                    {
-                        return JwtBearerDefaults.AuthenticationScheme;
-                    }
-                    return CookieAuthenticationDefaults.AuthenticationScheme;
-                };
-            })
-
-            .AddCookie(options =>
-            {
-                options.LoginPath = "/login";
-                options.Cookie.Name = ".AspNet.SharedCookie";
-                options.Events.OnRedirectToLogin = ctx =>
-                {
-                    ctx.Response.StatusCode = 401;
-                    return Task.CompletedTask;
-                };
-            })
-            ;
         }
 
 

@@ -44,6 +44,7 @@ appSettings:
 - ENVREG_AppSettings__DefaultPath
 - ENVREG_AppSettings__StorageAccountName
 - ENVREG_AppSettings__StorageAccountKey
+- ENVREG_AppSettings__VsLiveShareApiEndpoint
 
 authentication:
   authority: https://login.windows.net/common
@@ -54,3 +55,4 @@ config:
   computeServiceUrl: http://computeprovisioning
   clusterPreferredSchema: https
   clusterDefaultPath: /api/environment
+  vsLiveShareApiEndpoint: https://insiders-stg.liveshare.vsengsaas.visualstudio.com/api/v1.2/

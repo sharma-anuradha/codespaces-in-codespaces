@@ -1,3 +1,9 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,12 +17,7 @@ using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+using VsClk.EnvReg.Repositories;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 {
@@ -27,6 +28,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
     {
         private const int ENV_REG_QUOTA = 5;
         private IEnvironmentRegistrationRepository EnvironmentRegistrationRepository { get; }
+        private ICurrentUserProvider CurrentUserProvider { get; }
         private IMapper Mapper { get; }
         private IConfiguration Configuration { get; }
         private IStorageManager  FileShareManager { get; }
@@ -34,12 +36,14 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
         public RegistrationController(
             IEnvironmentRegistrationRepository environmentRegistrationRepository,
+            ICurrentUserProvider currentUserProvider,
             IMapper mapper,
             IConfiguration configuration,
             IStorageManager  fileShareManager,
             AppSettings appSettings)
         {
             EnvironmentRegistrationRepository = environmentRegistrationRepository;
+            CurrentUserProvider = currentUserProvider;
             Mapper = mapper;
             Configuration = configuration;
             FileShareManager = fileShareManager;
@@ -268,15 +272,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
         private string GetCurrentUserId()
         {
-            // Authenticated via AAD token
-            var tokenUserId = HttpContext.GetCurrentUserId();
-            if (tokenUserId != null) return tokenUserId;
-
-            // Authenticated via cookie
-            var idClaimType = "FullyQualifiedUserId";
-            var ident = User.Identity as System.Security.Claims.ClaimsIdentity;
-            var userID = ident.Claims.FirstOrDefault(c => c.Type == idClaimType)?.Value;
-            return userID;
+            return CurrentUserProvider.GetProfileId();
         }
     }
 }
