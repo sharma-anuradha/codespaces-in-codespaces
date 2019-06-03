@@ -3,14 +3,15 @@
 #define Azure_SignalR
 #endif
 
-using System.Linq;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.VsSaaS.AspNetCore.TelemetryProvider;
+using Microsoft.VsSaaS.Common.Warmup;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -29,6 +30,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Map to the presence hub signalR
         /// </summary>
         private const string PresenceHubMap = "/presencehub";
+
+        /// <summary>
+        /// Map to the health hub signalR
+        /// </summary>
+        internal const string HealthHubMap = "/healthhub";
 
         public static bool AzureSignalREnabled =>
 #if Azure_SignalR
@@ -57,6 +63,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 .AddJsonFile($"appsettings.secrets.json", optional: true)
 #if DEBUG
                 .AddJsonFile("appsettings.Development.json", optional: true)
+                .AddJsonFile("appsettings.Debug.json", optional: true)
 #else
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
 #endif
@@ -82,6 +89,14 @@ namespace Microsoft.VsCloudKernel.SignalService
             var appSettingsConfiguration = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsConfiguration);
 
+            // define list of IAsyncWarmup implementation available
+            var warmupServices = new List<IAsyncWarmup>();
+            services.AddSingleton<IList<IAsyncWarmup>>((srvcProvider) => warmupServices);
+
+            // define list of IAsyncWarmup implementation available
+            var healthStatusProviders = new List<IHealthStatusProvider>();
+            services.AddSingleton<IList<IHealthStatusProvider>>((srvcProvider) => healthStatusProviders);
+
             TokenValidationProvider = LocalTokenValidationProvider.Create(appSettingsConfiguration);
             if (TokenValidationProvider == null )
             {
@@ -91,7 +106,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     this.logger.LogInformation($"Using CertificateMetadataProvider:{authenticateMetadataServiceUri}");
 
-                    TokenValidationProvider = new CertificateMetadataProviderService(authenticateMetadataServiceUri, this.logger);
+                    TokenValidationProvider = new CertificateMetadataProviderService(warmupServices, healthStatusProviders, authenticateMetadataServiceUri, this.logger);
                     services.AddSingleton((srvcProvider) => TokenValidationProvider as IHostedService);
                 }
             }
@@ -104,18 +119,25 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // Create the Azure Cosmos backplane provider service
-            services.AddSingleton<IHostedService, DatabaseBackplaneProviderService>();
+            services.AddHostedService<DatabaseBackplaneProviderService>();
 
             // SignalR support
             services.AddSingleton<PresenceService>();
 
-            var signalRService = services.AddSignalR();
+            var signalRService = services.AddSignalR().AddJsonProtocol(options => {
+                // ensure we disable the camel case contract
+                options.PayloadSerializerSettings.ContractResolver =
+                new Newtonsoft.Json.Serialization.DefaultContractResolver();
+            });
+
             if (AzureSignalREnabled && Configuration.HasAzureSignalRConnections())
             {
                 this.logger.LogInformation($"Add Azure SignalR");
                 UseAzureSignalR = true;
                 signalRService.AddAzureSignalR();
             }
+
+            services.AddHostedService<SignalRHealthStatusProvider>();
 
             // IStartup
             services.AddSingleton<IStartup>(this);
@@ -157,6 +179,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         routes.MapHub<PresenceServiceHub>(PresenceHubMap);
                     }
+
+                    routes.MapHub<HealthServiceHub>(HealthHubMap);
                 });
             }
             else
@@ -172,6 +196,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         routes.MapHub<PresenceServiceHub>(PresenceHubMap);
                     }
+
+                    routes.MapHub<HealthServiceHub>(HealthHubMap);
                 });
             }
 

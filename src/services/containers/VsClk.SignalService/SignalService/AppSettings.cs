@@ -3,11 +3,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 {
     public class AppSettings
     {
-        public string BuildVersion { get; set; }
+        public string Stamp { get; set; }
 
-        public string GitCommit { get; set; }
+        public string BaseUri { get; set; }
 
-        public string GitBranch { get; set; }
+        public string ImageTag { get; set; }
 
         public bool UseTelemetryProvider { get; set; }
 

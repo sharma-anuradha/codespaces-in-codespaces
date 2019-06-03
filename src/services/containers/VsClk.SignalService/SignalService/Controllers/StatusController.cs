@@ -48,8 +48,9 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                 Name = "vsclk-core-signalservice",
                 AppSettings = new
                 {
-                    this.appSettings.BuildVersion,
-                    this.appSettings.GitCommit,
+                    this.appSettings.Stamp,
+                    this.appSettings.BaseUri,
+                    this.appSettings.ImageTag,
                     this.appSettings.AuthenticateMetadataServiceUri,
                     this.appSettings.UseTelemetryProvider
                 },

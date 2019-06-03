@@ -1,22 +1,26 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VsSaaS.Common.Warmup;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    public class DatabaseBackplaneProviderService : BackgroundService
+    public class DatabaseBackplaneProviderService : WarmedUpService
     {
         private readonly IOptions<AppSettings> appSettingsProvider;
         private readonly PresenceService service;
         private readonly ILogger<DatabaseBackplaneProvider> logger;
 
         public DatabaseBackplaneProviderService(
+            IList<IAsyncWarmup> warmupServices,
+            IList<IHealthStatusProvider> healthStatusProviders,
             IOptions<AppSettings> appSettingsProvider,
             PresenceService service,
             ILogger<DatabaseBackplaneProvider> logger)
+            : base(warmupServices, healthStatusProviders)
         {
             this.appSettingsProvider = appSettingsProvider;
             this.service = service;
@@ -46,14 +50,18 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
+                    CompleteWarmup(false);
                     this.logger.LogError(error, $"Failed to create database with Url:'{endpointUrl}'");
+                    throw;
                 }
             }
             else
             {
                 this.logger.LogWarning($"Azure Cosmos not configured");
             }
-        }
+
+            CompleteWarmup(true);
+       }
 
         private static string NormalizeSetting(string s)
         {

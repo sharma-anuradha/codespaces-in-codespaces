@@ -4,9 +4,9 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VsSaaS.Common.Warmup;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsCloudKernel.SignalService
@@ -15,14 +15,17 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// Implements ITokenValidationProvider by using a service Uri which will provide the
     /// authenticate metadata
     /// </summary>
-    public class CertificateMetadataProviderService : BackgroundService, ITokenValidationProvider
+    public class CertificateMetadataProviderService : WarmedUpService, ITokenValidationProvider
     {
         private readonly string certificateMetadataServiceUri;
         private readonly ILogger logger;
 
         public CertificateMetadataProviderService(
+            IList<IAsyncWarmup> warmupServices,
+            IList<IHealthStatusProvider> healthStatusProviders,
             string certificateMetadataServiceUri,
             ILogger logger)
+            : base(warmupServices, healthStatusProviders)
         {
             Requires.NotNullOrEmpty(certificateMetadataServiceUri, nameof(certificateMetadataServiceUri));
             this.certificateMetadataServiceUri = certificateMetadataServiceUri;
@@ -42,27 +45,48 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            this.logger.LogInformation($"Retrieving auth metadata from Url:'{this.certificateMetadataServiceUri}'");
+            CompleteWarmup(await UpdateTokenValidationProvider());
 
-            var client = new HttpClient();
-            var response = await client.GetAsync(this.certificateMetadataServiceUri);
-            response.EnsureSuccessStatusCode();
-            string json = await response.Content.ReadAsStringAsync();
-            var metadata = JsonConvert.DeserializeObject<AuthenticateMetadata>(json);
-            Audience = metadata.audience;
-            Issuer = metadata.issuer;
-
-            this.logger.LogInformation($"Succesfully receive auth metadata audience:{metadata.audience} issuer:{metadata.issuer} keys count:{metadata.jwtPublicKeys.Length}");
-            var securityKeys = new List<SecurityKey>();
-            foreach(var item in metadata.jwtPublicKeys)
+            while(true)
             {
-                securityKeys.Add(ToSecurityKey(item));
+                // Every 30 days update the token validation provider
+                await Task.Delay(TimeSpan.FromDays(30), cancellationToken);
+                await UpdateTokenValidationProvider();
             }
-
-            SecurityKeys = securityKeys.ToArray();
         }
 
         #endregion
+
+        private async Task<bool> UpdateTokenValidationProvider()
+        {
+            this.logger.LogInformation($"Retrieving auth metadata from Url:'{this.certificateMetadataServiceUri}'");
+
+            try
+            {
+                var client = new HttpClient();
+                var response = await client.GetAsync(this.certificateMetadataServiceUri);
+                response.EnsureSuccessStatusCode();
+                string json = await response.Content.ReadAsStringAsync();
+                var metadata = JsonConvert.DeserializeObject<AuthenticateMetadata>(json);
+                Audience = metadata.audience;
+                Issuer = metadata.issuer;
+
+                this.logger.LogInformation($"Succesfully receive auth metadata audience:{metadata.audience} issuer:{metadata.issuer} keys count:{metadata.jwtPublicKeys.Length}");
+                var securityKeys = new List<SecurityKey>();
+                foreach (var item in metadata.jwtPublicKeys)
+                {
+                    securityKeys.Add(ToSecurityKey(item));
+                }
+
+                SecurityKeys = securityKeys.ToArray();
+                return true;
+            }
+            catch (Exception error)
+            {
+                this.logger.LogError(error, $"Failed to retrieve auth metadata with Url:'{this.certificateMetadataServiceUri}'");
+                return false;
+            }
+        }
 
         private static SecurityKey ToSecurityKey(string base64Data)
         {

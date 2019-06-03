@@ -32,33 +32,21 @@ ingress:
 
 appSettings:
 - ASPNETCORE_ENVIRONMENT
-- SIGNALR_AppSettings__AuthenticateMetadataServiceUri
-- SIGNALR_AppSettings__AzureCosmosDbAuthKey
-- SIGNALR_AppSettings__AzureCosmosDbEndpointUrl
-- SIGNALR_AppSettings__AzureSignalRConnectionString
-- SIGNALR_AppSettings__BuildVersion
-- SIGNALR_AppSettings__GitCommit
-- AppSettings__BuildVersion
-- AppSettings__GitCommit
+- AppSettings__Stamp
+- AppSettings__BaseUri
+- AppSettings__ImageTag
 - AppSettings__AuthenticateMetadataServiceUri
 - AppSettings__AzureCosmosDbEndpointUrl
 - AppSettings__AzureCosmosDbAuthKey
-- AppSettings__UseTelemetryProvider
 - Azure__SignalR__ConnectionString
+
+# override this value when another base Uri is used to connect to this app
+baseUri: https://signlr.dev.core.vsengsaas.visualstudio.com/api/signalr
 
 authentication:
   authority: https://login.windows.net/common
-
-authentication:
- # this is the default auth Uri the container will use for auth 
+# this is the default auth Uri the container will use for auth 
   authenticateMetadataServiceUri: https://prod.liveshare.vsengsaas.visualstudio.com/api/authenticatemetadata
-
-status:
-  buildVersion: '1.0'
-  gitCommit: unknown
-
-#if use telemetry support
-enableTelemetrySupport: "true"
 
 #define the stamp
 stamp: use
