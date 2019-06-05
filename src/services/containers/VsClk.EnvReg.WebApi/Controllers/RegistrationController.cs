@@ -15,9 +15,11 @@ using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Util;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
+using Microsoft.VsSaaS.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VsClk.EnvReg.Repositories;
+using VsClk.EnvReg.Repositories.Support.HttpClient;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 {
@@ -29,6 +31,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         private const int ENV_REG_QUOTA = 5;
         private IEnvironmentRegistrationRepository EnvironmentRegistrationRepository { get; }
         private ICurrentUserProvider CurrentUserProvider { get; }
+        private IHttpClientProvider HttpClientProvider { get; }
         private IMapper Mapper { get; }
         private IConfiguration Configuration { get; }
         private IStorageManager  FileShareManager { get; }
@@ -37,6 +40,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         public RegistrationController(
             IEnvironmentRegistrationRepository environmentRegistrationRepository,
             ICurrentUserProvider currentUserProvider,
+            IHttpClientProvider httpClientProvider,
             IMapper mapper,
             IConfiguration configuration,
             IStorageManager  fileShareManager,
@@ -44,6 +48,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         {
             EnvironmentRegistrationRepository = environmentRegistrationRepository;
             CurrentUserProvider = currentUserProvider;
+            HttpClientProvider = httpClientProvider;
             Mapper = mapper;
             Configuration = configuration;
             FileShareManager = fileShareManager;
@@ -85,28 +90,16 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             return Ok(Mapper.Map<EnvironmentRegistrationResult[]>(modelsRaw));
         }
 
-        public async Task<IActionResult> CreateStaticEnvironment(EnvironmentRegistration modelRaw)
-        {
-            var logger = HttpContext.GetLogger();
-
-            modelRaw.State = StateInfo.Available.ToString();
-            modelRaw = await EnvironmentRegistrationRepository.CreateAsync(modelRaw, logger);
-            return Ok(Mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(modelRaw));
-        }
-
         // POST api/environment/registration
         [HttpPost]
         public async Task<IActionResult> CreateEnvironment(
             [FromBody]EnvironmentRegistrationInput modelInput)
         {
-            var client = new HttpClient();
             var logger = HttpContext.GetLogger();
             var currentUserId = CurrentUserProvider.GetProfileId();
             var accessToken = CurrentUserProvider.GetBearerToken();
 
-            /* This should never happen when supporting getting the token from both the cookie and from jwt
-             * Throwing 401 Unauthorized for now
-             */
+            // Validation
             if (string.IsNullOrEmpty(accessToken))
             {
                 return StatusCode(401);
@@ -118,7 +111,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             }
 
             var environments = await EnvironmentRegistrationRepository.GetWhereAsync((model) => model.OwnerId == currentUserId, logger);
-
             if (environments.Where((model) => (model.FriendlyName == modelInput.FriendlyName)).Any())
             {
                 return BadRequest("Environment with that friendlyName already exists");
@@ -129,23 +121,27 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 return BadRequest("You already exceeded the quota of environments");
             }
 
+            // Model setup
             var modelRaw = Mapper.Map<EnvironmentRegistrationInput, EnvironmentRegistration>(modelInput);
             modelRaw.Created = DateTime.UtcNow;
             modelRaw.Updated = DateTime.UtcNow;
             modelRaw.OwnerId = currentUserId;
             modelRaw.Id = Guid.NewGuid().ToString();
             
-
+            // Action
             if (modelRaw.Type == EnvType.staticEnvironment.ToString())
             {
-                return await CreateStaticEnvironment(modelRaw);
+                modelRaw.State = StateInfo.Available.ToString();
+                modelRaw = await EnvironmentRegistrationRepository.CreateAsync(modelRaw, logger);
+
+                return Ok(Mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(modelRaw));
             }
 
             /* Construct the arguments needed for the compute service */
             var computeServiceInput = new ComputeServiceInput
             {
                 EnvironmentVariables = EnvironmentVariableGenerator.Generate(modelRaw, AppSettings, accessToken)
-        };
+            };
 
             EnvReg.Models.DataStore.FileShare fileShare = null;
             if (modelInput.CreateFileShare) {
@@ -164,9 +160,9 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
             var requestContent = new StringContent(JsonConvert.SerializeObject(computeServiceInput), Encoding.UTF8, "application/json");
 
-            var computeTargetsUri = new Uri(AppSettings.ComputeServiceUri, "/computeTargets");
             /* Call the compute service */
-            var poolInfo = await client.GetAsync(computeTargetsUri);
+            
+            var poolInfo = await HttpClientProvider.ComputeServiceClient.GetAsync("/computeTargets");
             var content = await poolInfo.Content.ReadAsStringAsync();
             var computeTargetId = JArray.Parse(content).First["id"].ToString();
             if (!string.IsNullOrEmpty(computeTargetId))
@@ -174,8 +170,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 /* This assumes that the compute service and this service are in the same host, is that not the case we should
                  * add the url to the App Settings
                  */
-                var computeCreationUri = new Uri(AppSettings.ComputeServiceUri, string.Format("/computeTargets/{0}/compute", computeTargetId));
-                var response = await client.PostAsync(computeCreationUri, requestContent);
+                var response = await HttpClientProvider.ComputeServiceClient.PostAsync($"/computeTargets/{computeTargetId}/compute", requestContent);
                 var contents = await response.Content.ReadAsStringAsync();
                 string containerId = JObject.Parse(contents)["id"].ToString();
                 modelRaw.Connection = new ConnectionInfo
@@ -205,7 +200,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
-            var client = new HttpClient();
             var logger = HttpContext.GetLogger();
             var currentUserId = CurrentUserProvider.GetProfileId();
 
@@ -221,7 +215,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
             if (modelRaw.Type == EnvType.cloudEnvironment.ToString())
             {
-                await client.DeleteAsync(AppSettings.ComputeServiceUrl + "/computeTargets/" + modelRaw.Connection.ConnectionComputeTargetId + "/compute/" + modelRaw.Connection.ConnectionComputeId);
+                await HttpClientProvider.ComputeServiceClient.DeleteAsync($"/computeTargets/{modelRaw.Connection.ConnectionComputeTargetId}/compute/{modelRaw.Connection.ConnectionComputeId}");
             }
 
             await EnvironmentRegistrationRepository.DeleteAsync(id, logger);

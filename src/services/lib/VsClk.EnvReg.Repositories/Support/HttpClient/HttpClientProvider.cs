@@ -10,19 +10,24 @@ namespace VsClk.EnvReg.Repositories.Support.HttpClient
             ICurrentUserProvider currentUserProvider,
             AppSettings appSettings)
         {
-            var serviceBaseVersionAddress = new Uri(appSettings.VSLiveShareApiEndpoint);
-
             HttpMessageHandler httpHandlerChain = new HttpClientHandler();
             httpHandlerChain = new ForwardingBearerAuthMessageHandler(httpHandlerChain, currentUserProvider);
 
             var liveShareHttpClient = new System.Net.Http.HttpClient(httpHandlerChain)
             {
-                BaseAddress = serviceBaseVersionAddress
+                BaseAddress = new Uri(appSettings.VSLiveShareApiEndpoint)
+            };
+            var computeHttpClient = new System.Net.Http.HttpClient()
+            {
+                BaseAddress = appSettings.ComputeServiceUri
             };
 
             ProfileServiceClient = liveShareHttpClient;
+            ComputeServiceClient = computeHttpClient;
         }
 
         public System.Net.Http.HttpClient ProfileServiceClient { get; }
+
+        public System.Net.Http.HttpClient ComputeServiceClient { get; }
     }
 }
