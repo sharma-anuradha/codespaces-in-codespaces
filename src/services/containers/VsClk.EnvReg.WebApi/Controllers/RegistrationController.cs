@@ -74,7 +74,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         public async Task<IActionResult> GetList()
         {
             var logger = HttpContext.GetLogger();
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = CurrentUserProvider.GetProfileId();
 
             var modelsRaw = await EnvironmentRegistrationRepository.GetWhereAsync((model) => model.OwnerId == currentUserId, logger);
             if (modelsRaw == null)
@@ -101,8 +101,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         {
             var client = new HttpClient();
             var logger = HttpContext.GetLogger();
-            var currentUserId = GetCurrentUserId();
-            string accessToken = Util.Auth.GetAccessToken(Request);
+            var currentUserId = CurrentUserProvider.GetProfileId();
+            var accessToken = CurrentUserProvider.GetBearerToken();
 
             /* This should never happen when supporting getting the token from both the cookie and from jwt
              * Throwing 401 Unauthorized for now
@@ -207,7 +207,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         {
             var client = new HttpClient();
             var logger = HttpContext.GetLogger();
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = CurrentUserProvider.GetProfileId();
 
             var modelRaw = await EnvironmentRegistrationRepository.GetAsync(id, logger);
             if (modelRaw == null)
@@ -249,7 +249,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         {
             string rawJson;
             var logger = HttpContext.GetLogger();
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = CurrentUserProvider.GetProfileId();
             using (var reader = new StreamReader(Request.Body))
             {
                 rawJson = reader.ReadToEnd();
@@ -268,11 +268,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             modelRaw.State = StateInfo.Available.ToString();
             modelRaw = await EnvironmentRegistrationRepository.UpdateAsync(modelRaw, logger);
             return Ok(Mapper.Map<EnvironmentRegistrationResult>(modelRaw));
-        }
-
-        private string GetCurrentUserId()
-        {
-            return CurrentUserProvider.GetProfileId();
         }
     }
 }
