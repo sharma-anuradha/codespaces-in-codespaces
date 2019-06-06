@@ -32,7 +32,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return this.presenceService.GetSelfConnectionsAsync(contactId, Context.ConnectionAborted);
         }
 
-        public async Task<ContactReference> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties)
+        public async Task<Dictionary<string, object>> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties)
         {
             contactId = GetContactIdentity(contactId);
             Requires.NotNullOrEmpty(contactId, nameof(contactId));
@@ -43,7 +43,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                 contactReference,
                 initialProperties, 
                 Context.ConnectionAborted);
-            return contactReference;
+            return new Dictionary<string, object>
+            {
+                { Properties.ContactId, contactReference.Id },
+                { Properties.ConnectionId, contactReference.ConnectionId },
+                { Properties.ServiceId, presenceService.ServiceId },
+            };
         }
 
         public Task PublishPropertiesAsync(Dictionary<string, object> updateProperties)

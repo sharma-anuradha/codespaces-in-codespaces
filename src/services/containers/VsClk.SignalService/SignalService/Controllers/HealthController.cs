@@ -1,8 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
@@ -10,12 +7,12 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
     public class HealthController : ControllerBase
     {
 
-        private readonly IList<IHealthStatusProvider> healthStatusProviders;
+        private readonly HealthService healthService;
 
         public HealthController(
-            IList<IHealthStatusProvider> healthStatusProviders)
+            HealthService healthService)
         {
-            this.healthStatusProviders = healthStatusProviders;
+            this.healthService = healthService;
         }
 
         [HttpGet]
@@ -23,7 +20,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult GetAsync()
         {
-            if (this.healthStatusProviders.FirstOrDefault(ws => !ws.State) != null)
+            if (!this.healthService.State)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }

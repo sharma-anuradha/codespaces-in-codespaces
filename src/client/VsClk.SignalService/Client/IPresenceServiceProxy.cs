@@ -72,7 +72,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken);
 
-        Task<ContactReference> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken);
+        Task<Dictionary<string, object>> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken);
 
         Task PublishPropertiesAsync(Dictionary<string, object> updateProperties, CancellationToken cancellationToken);
 

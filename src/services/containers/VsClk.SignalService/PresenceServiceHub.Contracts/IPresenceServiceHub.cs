@@ -21,7 +21,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="contactId">Unique contact identifier</param>
         /// <param name="initialProperties">The  optional initial properties to populate</param>
         /// <returns></returns>
-        Task<ContactReference> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties);
+        Task<Dictionary<string, object>> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties);
 
         /// <summary>
         /// Publish modified properties into the registered contact

@@ -51,10 +51,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             return ToPropertyDictionary(result);
         }
 
-        public async Task<ContactReference> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, object>> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
         {
-            var contactRef = await this.connection.InvokeAsync<ContactReference>(nameof(IPresenceServiceHub.RegisterSelfContactAsync), contactId, initialProperties, cancellationToken);
-            return contactRef;
+            var registerProperties = await this.connection.InvokeAsync<Dictionary<string, object>>(nameof(IPresenceServiceHub.RegisterSelfContactAsync), contactId, initialProperties, cancellationToken);
+            return registerProperties;
         }
 
         public Task PublishPropertiesAsync(Dictionary<string, object> updateProperties, CancellationToken cancellationToken)

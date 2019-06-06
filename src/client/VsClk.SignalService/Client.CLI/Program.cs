@@ -156,8 +156,8 @@ namespace LivesharePresenceClientTest
                         publishedProperties.Add("name", this.nameOption.Value());
                     }
 
-                    var contactRef = await client.Proxy.RegisterSelfContactAsync(contactId, publishedProperties, CancellationToken.None);
-                    Console.WriteLine($"registered contact->{contactRef}");
+                    var registerInfo = await client.Proxy.RegisterSelfContactAsync(contactId, publishedProperties, CancellationToken.None);
+                    Console.WriteLine($"register info->{registerInfo.ConvertToString()}");
                 }
             };
 

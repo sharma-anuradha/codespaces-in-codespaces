@@ -17,5 +17,19 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// </summary>
         public const string Email = "email";
 
+        /// <summary>
+        /// The contact id property
+        /// </summary>
+        public const string ContactId = "contactId";
+
+        /// <summary>
+        /// The connection Id property
+        /// </summary>
+        public const string ConnectionId = "connectiondId";
+
+        /// <summary>
+        /// The service id property
+        /// </summary>
+        public const string ServiceId = "serviceId";
     }
 }

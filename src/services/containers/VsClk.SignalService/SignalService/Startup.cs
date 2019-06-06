@@ -80,7 +80,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.logger.LogInformation("ConfigureServices");
 
             // register our logger instance
-            services.AddTransient<ILogger>((srvcPrvoer) => this.logger);
+            services.AddTransient<ILogger>((srvcProvider) => this.logger);
 
             // Frameworks
             services.AddMvc();
@@ -93,9 +93,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             var warmupServices = new List<IAsyncWarmup>();
             services.AddSingleton<IList<IAsyncWarmup>>((srvcProvider) => warmupServices);
 
-            // define list of IAsyncWarmup implementation available
+            // define list of IHealthStatusProvider implementation available
             var healthStatusProviders = new List<IHealthStatusProvider>();
             services.AddSingleton<IList<IHealthStatusProvider>>((srvcProvider) => healthStatusProviders);
+
+            // define our overall health service
+            services.AddSingleton<HealthService>();
 
             TokenValidationProvider = LocalTokenValidationProvider.Create(appSettingsConfiguration);
             if (TokenValidationProvider == null )

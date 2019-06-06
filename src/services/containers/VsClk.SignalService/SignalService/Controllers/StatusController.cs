@@ -1,25 +1,32 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
+    /// <summary>
+    /// A controller to return overall status of the app
+    /// </summary>
     public class StatusController : ControllerBase
     {
         private const string EndpointPrefix = "Endpoint=";
 
         private readonly AppSettings appSettings;
         private readonly PresenceService presenceService;
+        private readonly HealthService healthService;
         private readonly IStartup startup;
 
         public StatusController(
             IOptions<AppSettings> appSettingsProvider,
             PresenceService presenceService,
+            HealthService healthService,
             IStartup startup)
         {
             this.appSettings = appSettingsProvider.Value;
             this.presenceService = presenceService;
+            this.healthService = healthService;
             this.startup = startup;
         }
 
@@ -46,6 +53,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             {
                 this.presenceService.ServiceId,
                 Name = "vsclk-core-signalservice",
+                Health = new
+                {
+                    this.healthService.State,
+                    Providers = GetProvidersStatus()
+                },
                 AppSettings = new
                 {
                     this.appSettings.Stamp,
@@ -66,6 +78,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             };
 
             return versionObj;
+        }
+
+        private dynamic GetProvidersStatus()
+        {
+            var dynObject = new System.Dynamic.ExpandoObject();           
+            foreach (var item in this.healthService.GetProvidersStatus())
+            {
+                dynObject.TryAdd(item.Item1.Name, item.Item2);
+            }
+
+            return dynObject;
         }
 
         private object[] GetAllAzureSignalRConnections()

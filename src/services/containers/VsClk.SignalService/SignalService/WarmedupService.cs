@@ -12,7 +12,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         private readonly TaskCompletionSource<bool> warmedUpResult = new TaskCompletionSource<bool>();
 
-        public bool State => this.warmedUpResult.Task.IsCompleted && this.warmedUpResult.Task.Result;
+        public virtual bool State => this.warmedUpResult.Task.IsCompleted && this.warmedUpResult.Task.Result;
 
         protected WarmedUpService(
             IList<IAsyncWarmup> warmupServices, 
