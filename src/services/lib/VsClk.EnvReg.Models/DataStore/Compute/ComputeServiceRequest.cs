@@ -2,10 +2,10 @@
 using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
 
-namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Models
+namespace VsClk.EnvReg.Models.DataStore.Compute
 {
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class ComputeServiceInput
+    public class ComputeServiceRequest
     {
         public IList<EnvironmentVariable> EnvironmentVariables { get; set; }
 
@@ -22,6 +22,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Models
         }
 
         public string Key { get; }
+
         public string Value { get; }
     }
 

@@ -72,6 +72,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
 
             // Repositories
             services.AddSingleton<IProfileRepository, HttpClientProfileRepository>();
+            services.AddSingleton<IComputeRepository, HttpClientComputeRepository>();
 
             // Authentication
             services.AddVsClkCoreAuthenticationServices(HostEnvironment, appSettings);

@@ -1,8 +1,8 @@
 ﻿using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
-using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Models;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using VsClk.EnvReg.Models.DataStore.Compute;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Util
 {
