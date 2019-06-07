@@ -23,7 +23,10 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             var serviceLogger = new Mock<ILogger<PresenceService>>();
 
             var trace = new TraceSource("PresenceServiceHubTests");
-            this.presenceService = new PresenceService(MockUtils.CreateHubContextMock(this.clientProxies), serviceLogger.Object);
+            this.presenceService = new PresenceService(
+                new PresenceServiceOptions() { Id = "mock" },
+                MockUtils.CreateHubContextMock(this.clientProxies),
+                serviceLogger.Object);
         }
 
         [Fact]
@@ -642,7 +645,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         private class CustomMatchService : PresenceService
         {
             public CustomMatchService(IHubContext<PresenceServiceHub> hub, ILogger<PresenceService> logger)
-                : base(hub, logger)
+                : base(new PresenceServiceOptions(), hub, logger)
             {
             }
 

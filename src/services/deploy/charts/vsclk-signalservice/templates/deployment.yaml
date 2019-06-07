@@ -46,14 +46,16 @@ spec:
           httpGet:
             path: {{ .Values.pods.livenessProbePath }}
             port: {{ .Values.service.internalPort }}
-          initialDelaySeconds: 15
+          initialDelaySeconds: 75
+          periodSeconds: 60
 {{ end -}}
 {{- if .Values.pods.readinessProbePath }}
         readinessProbe:
           httpGet:
             path: {{ .Values.pods.readinessProbePath }}
             port: {{ .Values.service.internalPort }}
-          initialDelaySeconds: 15
+          initialDelaySeconds: 30
+          periodSeconds: 45
           timeoutSeconds: 60
 {{ end -}}
 {{- if .Values.image.imagePullSecret }}

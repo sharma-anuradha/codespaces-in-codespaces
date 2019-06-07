@@ -1,3 +1,4 @@
+{{- if .Values.pods.autoscaling }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
@@ -10,3 +11,4 @@ spec:
     kind: Deployment
     name: {{ template "vsclk-signalservice.fullname" . }}
   targetCPUUtilizationPercentage: {{ .Values.pods.targetCpuUtilizationPercentage }}
+{{- end }}

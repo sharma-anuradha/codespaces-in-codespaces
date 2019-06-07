@@ -7,9 +7,10 @@ pods:
   maxReplicaCount: 5
   minReadySeconds: 1
   progressDeadlineSeconds: 300
-  livenessProbePath:
-  readinessProbePath:
-  targetCpuUtilizationPercentage: 60
+  livenessProbePath: /health
+  readinessProbePath: /warmup
+  targetCpuUtilizationPercentage: 80
+  autoscaling: false
 
 image:
   tag:

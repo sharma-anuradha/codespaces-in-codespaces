@@ -1,20 +1,20 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VsSaaS.Common.Warmup;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
     [Route("[controller]")]
     public class WarmupController : ControllerBase
     {
-        private readonly IList<IAsyncWarmup> warmupServices;
+        private readonly WarmupService warmupService;
+        private readonly ILogger logger;
 
-        public WarmupController(IList<IAsyncWarmup> warmupServices)
+        public WarmupController(WarmupService warmupService, ILogger<WarmupController> logger)
         {
-            this.warmupServices = warmupServices;
+            this.warmupService = warmupService;
+            this.logger = logger;
         }
 
         [HttpGet]
@@ -22,8 +22,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAsync()
         {
-            await WarmupUtility.WhenAllWarmupCompletedAsync(this.warmupServices);
-            if (this.warmupServices.OfType<IHealthStatusProvider>().FirstOrDefault(ws => !ws.State) != null)
+            bool completedValue = await this.warmupService.CompletedValueAsync();
+            this.logger.LogDebug($"CompletedValue:{completedValue}");
+
+            if (!completedValue)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }

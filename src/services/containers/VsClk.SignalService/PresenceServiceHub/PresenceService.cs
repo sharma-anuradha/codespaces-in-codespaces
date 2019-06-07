@@ -50,11 +50,16 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// </summary>
         private readonly ConcurrentDictionary<string, ConcurrentHashSet<StubContact>> resolvedContacts = new ConcurrentDictionary<string, ConcurrentHashSet<StubContact>>();
 
-        public PresenceService(IHubContext<PresenceServiceHub> hub, ILogger<PresenceService> logger)
+        public PresenceService(
+            PresenceServiceOptions options,
+            IHubContext<PresenceServiceHub> hub,
+            ILogger<PresenceService> logger)
         {
+            Requires.NotNull(options, nameof(options));
+
             Hub = Requires.NotNull(hub, nameof(hub));
             Logger = Requires.NotNull(logger, nameof(logger));
-            ServiceId = Guid.NewGuid().ToString();
+            ServiceId = options.Id;
 
             logger.LogInformation($"Service created with id:{ServiceId}");
         }

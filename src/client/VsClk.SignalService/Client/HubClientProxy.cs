@@ -8,17 +8,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         where T : class
     {
         public HubClientProxy(string url, TraceSource trace)
-            : this(FromUrl(url).Build(), trace)
+            : this(HubConnectionHelpers.FromUrl(url).Build(), trace)
         {
         }
 
         public HubClientProxy(string url, string accessToken, TraceSource trace)
-            : this(FromUrlAndAccessToken(url, accessToken).Build(), trace)
+            : this(HubConnectionHelpers.FromUrlAndAccessToken(url, accessToken).Build(), trace)
         {
         }
 
         public HubClientProxy(string url, Func<string> accessTokenCallback, TraceSource trace)
-            : this(FromUrlAndAccessToken(url, accessTokenCallback).Build(), trace)
+            : this(HubConnectionHelpers.FromUrlAndAccessToken(url, accessTokenCallback).Build(), trace)
         {
         }
 

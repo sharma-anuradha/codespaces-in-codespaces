@@ -8,7 +8,7 @@ using Microsoft.VsSaaS.Common.Warmup;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    public class DatabaseBackplaneProviderService : WarmedUpService
+    public class DatabaseBackplaneProviderService : WarmupServiceBase
     {
         private readonly IOptions<AppSettings> appSettingsProvider;
         private readonly PresenceService service;

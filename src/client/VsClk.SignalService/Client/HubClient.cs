@@ -3,9 +3,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
-#if SignalR_Client_Version3
-using Microsoft.Extensions.DependencyInjection;
-#endif
 using Microsoft.VsCloudKernel.SignalService.Common;
 using Microsoft.VisualStudio.Threading;
 
@@ -20,17 +17,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         private readonly CancellationTokenSource disposeCts = new CancellationTokenSource();
 
         public HubClient(string url, TraceSource trace)
-            : this(FromUrl(url).Build(), trace)
+            : this(HubConnectionHelpers.FromUrl(url).Build(), trace)
         {
         }
 
         public HubClient(string url, string accessToken, TraceSource trace)
-            : this(FromUrlAndAccessToken(url, accessToken).Build(), trace)
+            : this(HubConnectionHelpers.FromUrlAndAccessToken(url, accessToken).Build(), trace)
         {
         }
 
         public HubClient(string url, Func<string> accessTokenCallback, TraceSource trace)
-            : this(FromUrlAndAccessToken(url, accessTokenCallback).Build(), trace)
+            : this(HubConnectionHelpers.FromUrlAndAccessToken(url, accessTokenCallback).Build(), trace)
         {
         }
 
@@ -79,41 +76,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private CancellationToken DisposeToken => this.disposeCts.Token;
 
-        public static IHubConnectionBuilder FromUrl(string url)
-        {
-            Requires.NotNullOrEmpty(url, nameof(url));
-            return new HubConnectionBuilder().WithUrl(url)
-#if SignalR_Client_Version3
-                .AddNewtonsoftJsonProtocol();
-#else
-                ;
-#endif
-        }
-
-        public static IHubConnectionBuilder FromUrlAndAccessToken(string url, string accessToken)
-        {
-            Requires.NotNullOrEmpty(accessToken, nameof(accessToken));
-            return FromUrlAndAccessToken(url, () => accessToken);
-        }
-
-        public static IHubConnectionBuilder FromUrlAndAccessToken(string url, Func<string> accessTokenCallback)
-        {
-            Requires.NotNullOrEmpty(url, nameof(url));
-            Requires.NotNull(accessTokenCallback, nameof(accessTokenCallback));
-            return new HubConnectionBuilder().WithUrl(url, options =>
-            {
-                options.AccessTokenProvider = () =>
-                {
-                    return Task.FromResult(accessTokenCallback());
-                };
-            })
-#if SignalR_Client_Version3
-                .AddNewtonsoftJsonProtocol();
-#else
-                ;
-#endif
-        }
-
         private async Task OnClosedAsync(Exception exception)
         {
             this.traceSource.Verbose($"OnClosedAsync exception:{exception?.Message}");
@@ -123,23 +85,13 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
-            while (true)
-            {
-                try
-                {
-                    this.traceSource.Verbose($"AttemptConnectAsync.StartAsync");
-                    await Connection.StartAsync(cancellationToken);
-                    this.traceSource.Verbose($"Succesfully connected...");
-                    await ConnectionStateChanged?.InvokeAsync(this, EventArgs.Empty);
-                    break;
-                }
-                catch(Exception err)
-                {
-                    this.traceSource.Error($"Failed to connect->err:{err.Message}");
-                }
-
-                await Task.Delay(5000, cancellationToken);
-            }
+            await Connection.ConnectAsync(
+                -1,
+                5000,
+                60000,
+                this.traceSource,
+                cancellationToken);
+            await ConnectionStateChanged?.InvokeAsync(this, EventArgs.Empty);
         }
     }
 }

@@ -15,7 +15,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// Implements ITokenValidationProvider by using a service Uri which will provide the
     /// authenticate metadata
     /// </summary>
-    public class CertificateMetadataProviderService : WarmedUpService, ITokenValidationProvider
+    public class CertificateMetadataProviderService : WarmupServiceBase, ITokenValidationProvider
     {
         private readonly string certificateMetadataServiceUri;
         private readonly ILogger logger;
@@ -51,7 +51,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 // Every 30 days update the token validation provider
                 await Task.Delay(TimeSpan.FromDays(30), cancellationToken);
-                await UpdateTokenValidationProvider();
+                HealthState = await UpdateTokenValidationProvider();
             }
         }
 

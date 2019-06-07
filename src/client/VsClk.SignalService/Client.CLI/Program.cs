@@ -105,11 +105,11 @@ namespace LivesharePresenceClientTest
             IHubConnectionBuilder hubConnectionBuilder;
             if (this.accessTokenOption.HasValue())
             {
-                hubConnectionBuilder = HubClient.FromUrlAndAccessToken(serviceEndpoint, this.accessTokenOption.Value());
+                hubConnectionBuilder = HubConnectionHelpers.FromUrlAndAccessToken(serviceEndpoint, this.accessTokenOption.Value());
             }
             else
             {
-                hubConnectionBuilder = HubClient.FromUrl(serviceEndpoint);
+                hubConnectionBuilder = HubConnectionHelpers.FromUrl(serviceEndpoint);
             }
 
             if (this.debugSignalROption.HasValue())

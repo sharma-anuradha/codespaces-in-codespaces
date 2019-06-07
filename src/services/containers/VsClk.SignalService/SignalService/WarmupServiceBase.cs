@@ -8,13 +8,15 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Base class for all our background services
     /// </summary>
-    public abstract class WarmedUpService : BackgroundService, IAsyncWarmup, IHealthStatusProvider
+    public abstract class WarmupServiceBase : BackgroundService, IAsyncWarmup, IHealthStatusProvider
     {
         private readonly TaskCompletionSource<bool> warmedUpResult = new TaskCompletionSource<bool>();
 
-        public virtual bool State => this.warmedUpResult.Task.IsCompleted && this.warmedUpResult.Task.Result;
+        public virtual bool State => this.warmedUpResult.Task.IsCompleted && HealthState;
 
-        protected WarmedUpService(
+        protected bool HealthState { get; set; }
+
+        protected WarmupServiceBase(
             IList<IAsyncWarmup> warmupServices, 
             IList<IHealthStatusProvider> healthStatusProviders)
         {
@@ -24,6 +26,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected void CompleteWarmup(bool result)
         {
+            HealthState = result;
             this.warmedUpResult.TrySetResult(result);
         }
 

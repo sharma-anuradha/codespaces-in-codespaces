@@ -3,6 +3,7 @@
 #define Azure_SignalR
 #endif
 
+using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -97,6 +98,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             var healthStatusProviders = new List<IHealthStatusProvider>();
             services.AddSingleton<IList<IHealthStatusProvider>>((srvcProvider) => healthStatusProviders);
 
+            // define our overall warmup service
+            services.AddSingleton<WarmupService>();
+
             // define our overall health service
             services.AddSingleton<HealthService>();
 
@@ -124,6 +128,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             // Create the Azure Cosmos backplane provider service
             services.AddHostedService<DatabaseBackplaneProviderService>();
 
+            var serviceId = Guid.NewGuid().ToString();
+
+            // Presence Service options
+            services.AddSingleton((srvcProvider) => new PresenceServiceOptions() { Id = serviceId });
+
             // SignalR support
             services.AddSingleton<PresenceService>();
 
@@ -140,6 +149,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 signalRService.AddAzureSignalR();
             }
 
+            // define long running health echo provider
             services.AddHostedService<SignalRHealthStatusProvider>();
 
             // IStartup
@@ -149,7 +159,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             if (appSettingsConfiguration.GetValue<bool>(nameof(AppSettings.UseTelemetryProvider)))
             {
                 // inject the Telemetry logger provider
-                services.ReplaceConsoleTelemetry();
+                services.ReplaceConsoleTelemetry((opts) =>
+                {
+                    opts.FactoryOptions = new Dictionary<string, object>()
+                    {
+                        { "Service", "signlr" },
+                        { "ServiceId", serviceId },
+                        { "Stamp", appSettingsConfiguration.GetValue<string>(nameof(AppSettings.Stamp))}
+                    };
+                });
             }
         }
 
