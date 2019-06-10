@@ -47,7 +47,9 @@ spec:
             path: {{ .Values.pods.livenessProbePath }}
             port: {{ .Values.service.internalPort }}
           initialDelaySeconds: 75
-          periodSeconds: 60
+          periodSeconds: 120
+          timeoutSeconds: 5
+          failureThreshold: 4
 {{ end -}}
 {{- if .Values.pods.readinessProbePath }}
         readinessProbe:

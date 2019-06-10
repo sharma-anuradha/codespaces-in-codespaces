@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Client;
 using Microsoft.VsCloudKernel.SignalService.Common;
+using Microsoft.VisualStudio.Threading;
 using Newtonsoft.Json.Linq;
 
 namespace LivesharePresenceClientTest
@@ -23,6 +24,7 @@ namespace LivesharePresenceClientTest
         private CommandOption serviceEndpointOption;
         private CommandOption accessTokenOption;
         private CommandOption debugSignalROption;
+        private CommandOption echoOption;
 
         private const string DefaultServiceEndpoint = "https://localhost:5001/presencehub";
 
@@ -53,6 +55,11 @@ namespace LivesharePresenceClientTest
             cli.accessTokenOption = cli.Option(
                 "--accessToken",
                 "Access token for authentication",
+                CommandOptionType.SingleValue);
+
+            cli.echoOption = cli.Option(
+                "--echo",
+                "Perfom echo every (n) secs on the endpoint",
                 CommandOptionType.SingleValue);
 
             cli.debugSignalROption = cli.Option(
@@ -92,15 +99,12 @@ namespace LivesharePresenceClientTest
                 serviceEndpoint = DefaultServiceEndpoint;
             }
 
-            string contactId = this.contactIdOption.Value();
-            string email = this.emailOption.Value();
+            string contactId = this.contactIdOption.HasValue() ? this.contactIdOption.Value() : null;
+            string email = this.emailOption.HasValue() ? this.emailOption.Value() : null;
+            int echoSecs = this.echoOption.HasValue() ? int.Parse(this.echoOption.Value()) : -1;
 
-            var traceSource = new TraceSource("PresenceServiceClient");
-            var consoleTraceListener = new ConsoleTraceListener();
-            traceSource.Listeners.Add(consoleTraceListener);
-            traceSource.Switch.Level = SourceLevels.All;
-
-            traceSource.Verbose($"Started serviceEndpoint:{serviceEndpoint} contactId:{contactId}");
+            var presenceClientTraceSource = CreateTraceSource("PresenceServiceClient");
+            presenceClientTraceSource.Verbose($"Started serviceEndpoint:{serviceEndpoint} contactId:{contactId}");
 
             IHubConnectionBuilder hubConnectionBuilder;
             if (this.accessTokenOption.HasValue())
@@ -124,52 +128,109 @@ namespace LivesharePresenceClientTest
                 });
             }
 
-            var client = new HubClientProxy<PresenceServiceProxy>(hubConnectionBuilder.Build(), traceSource);
+            var presenceClient = new HubClientProxy<PresenceServiceProxy>(hubConnectionBuilder.Build(), presenceClientTraceSource);
 
-            client.Proxy.UpdateProperties += (s, e) =>
+            presenceClient.Proxy.UpdateProperties += (s, e) =>
             {
                 Console.WriteLine($"->UpdateProperties from:{e.Contact} props:{e.Properties.ConvertToString()}");
             };
 
-            client.Proxy.MessageReceived += (s, e) =>
+            presenceClient.Proxy.MessageReceived += (s, e) =>
             {
                 Console.WriteLine($"->MessageReceived: from:{e.FromContact} type:{e.Type} body:{e.Body}");
             };
 
-            client.Proxy.ConnectionChanged += (s, e) =>
+            presenceClient.Proxy.ConnectionChanged += (s, e) =>
             {
                 Console.WriteLine($"->ConnectionChanged: from:{e.Contact} changeType:{e.ChangeType}");
             };
 
-            client.ConnectionStateChanged += async (s, e) =>
+            presenceClient.ConnectionStateChanged += async (s, e) =>
             {
-                if (client.State == HubConnectionState.Connected && !string.IsNullOrEmpty(contactId))
+                if (presenceClient.State == HubConnectionState.Connected)
                 {
                     var publishedProperties = new Dictionary<string, object>()
                     {
-                        { "email", email },
                         { "status", "available" }
                     };
+
+                    if (!string.IsNullOrEmpty(email))
+                    {
+                        publishedProperties["email"] = email;
+                    }
 
                     if (this.nameOption.HasValue())
                     {
                         publishedProperties.Add("name", this.nameOption.Value());
                     }
 
-                    var registerInfo = await client.Proxy.RegisterSelfContactAsync(contactId, publishedProperties, CancellationToken.None);
+                    var registerInfo = await presenceClient.Proxy.RegisterSelfContactAsync(contactId, publishedProperties, CancellationToken.None);
                     Console.WriteLine($"register info->{registerInfo.ConvertToString()}");
                 }
             };
 
-            await client.StartAsync(CancellationToken.None);
+            var disposeCts = new CancellationTokenSource();
+            HubClient echoClient = null;
+            if (echoSecs != -1)
+            {
+                var echoHealthEndpoint = serviceEndpoint.Substring(0, serviceEndpoint.LastIndexOf('/')) + "/healthhub";
+                echoClient = new HubClient(echoHealthEndpoint, CreateTraceSource("EchoHubClient"));
+                echoClient.StartAsync(disposeCts.Token).Forget();
+                Task.Run(async () =>
+                {
+                    while(true)
+                    {
+                        if (echoClient.IsConnected)
+                        {
+                            try
+                            {
+                                var result = await echoClient.Connection.InvokeAsync<JObject>("Echo", "Hello from CLI", disposeCts.Token);
+                                Console.WriteLine($"Succesfully received echo -> result:{result.ToString()}");
+                            }
+                            catch (Exception err)
+                            {
+                                Console.WriteLine($"Failed to echo -> err:{err}");
+                            }
+                        }
+
+                        await Task.Delay(TimeSpan.FromSeconds(echoSecs), disposeCts.Token);
+                    }
+                }).Forget();
+            }
+
+            if (echoSecs == -1 && string.IsNullOrEmpty(contactId))
+            {
+                Console.WriteLine("No hub client connection to start, quitting...(specify --id or --echo [secs])");
+                return -1;
+            }
+
+            if (!string.IsNullOrEmpty(contactId) || this.accessTokenOption.HasValue())
+            {
+                await presenceClient.StartAsync(CancellationToken.None);
+            }
+
             Console.WriteLine("Accepting key options...");
             while (true)
             {
                 var key = Console.ReadKey();
                 Console.WriteLine($"Option:{key.KeyChar} selected");
-                if (!client.IsConnected)
+                if (key.KeyChar == 'q')
+                {
+                    disposeCts.Cancel();
+                    await presenceClient.StopAsync(CancellationToken.None);
+                    if (echoClient != null)
+                    {
+                        await echoClient.StopAsync(CancellationToken.None);
+                    }
+                    break;
+                }
+                else if (!presenceClient.IsConnected)
                 {
                     Console.WriteLine("Waiting for Connection...");
+                }
+                else if(string.IsNullOrEmpty(contactId))
+                {
+                    Console.WriteLine("Presence Client not register -> specify '--id' opion");
                 }
                 else if (key.KeyChar == 'b')
                 {
@@ -179,7 +240,7 @@ namespace LivesharePresenceClientTest
                             {"status", "busy" }
                         };
 
-                    await client.Proxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
+                    await presenceClient.Proxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
                 }
                 else if (key.KeyChar == 'a')
                 {
@@ -189,7 +250,7 @@ namespace LivesharePresenceClientTest
                             {"status", "available" }
                         };
 
-                    await client.Proxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
+                    await presenceClient.Proxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
                 }
                 else if (key.KeyChar == 'c')
                 {
@@ -197,7 +258,7 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter contact id:");
                     var selfContactId = Console.ReadLine();
 
-                    var selfConnections = await client.Proxy.GetSelfConnectionsAsync(selfContactId, CancellationToken.None);
+                    var selfConnections = await presenceClient.Proxy.GetSelfConnectionsAsync(selfContactId, CancellationToken.None);
                     if (selfConnections.Count == 0)
                     {
                         Console.WriteLine($"No self connections available");
@@ -216,7 +277,7 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter subscription contact id:");
                     var subscribeContactId = Console.ReadLine();
 
-                    var properties = await client.Proxy.AddSubcriptionsAsync(new ContactReference[] { new ContactReference(subscribeContactId, null) }, new string[] { "status", "email" }, CancellationToken.None);
+                    var properties = await presenceClient.Proxy.AddSubcriptionsAsync(new ContactReference[] { new ContactReference(subscribeContactId, null) }, new string[] { "status", "email" }, CancellationToken.None);
                     Console.WriteLine($"properties => {properties[subscribeContactId].ConvertToString()}");
                 }
                 else if (key.KeyChar == 'u')
@@ -225,7 +286,7 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter subscription contact id:");
                     var targetContactId = Console.ReadLine();
 
-                    await client.Proxy.RemoveSubscriptionAsync(new ContactReference[] { new ContactReference(targetContactId, null) }, CancellationToken.None);
+                    await presenceClient.Proxy.RemoveSubscriptionAsync(new ContactReference[] { new ContactReference(targetContactId, null) }, CancellationToken.None);
                 }
                 else if (key.KeyChar == 'm')
                 {
@@ -233,7 +294,7 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter email to match:");
                     var emailMatch = Console.ReadLine();
 
-                    var matchingContacts = await client.Proxy.MatchContactsAsync(new Dictionary<string, object>[] { new Dictionary<string, object>() { { "email", emailMatch } } }, CancellationToken.None);
+                    var matchingContacts = await presenceClient.Proxy.MatchContactsAsync(new Dictionary<string, object>[] { new Dictionary<string, object>() { { "email", emailMatch } } }, CancellationToken.None);
                     if(matchingContacts[0].Count == 0)
                     {
                         Console.WriteLine("No match found");
@@ -252,7 +313,7 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter target contact id:");
                     var targetContactId = Console.ReadLine();
 
-                    await client.Proxy.SendMessageAsync(new ContactReference(targetContactId, null), "typeTest", JToken.FromObject("Hi !"), default);
+                    await presenceClient.Proxy.SendMessageAsync(new ContactReference(targetContactId, null), "typeTest", JToken.FromObject("Hi !"), default);
                 }
                 else if (key.KeyChar == 'f')
                 {
@@ -260,7 +321,7 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter Name to search:");
                     var nameMatch = Console.ReadLine();
 
-                    var searchResult = await client.Proxy.SearchContactsAsync(new Dictionary<string, SearchProperty>
+                    var searchResult = await presenceClient.Proxy.SearchContactsAsync(new Dictionary<string, SearchProperty>
                     {
                         {
                             "name", new SearchProperty()
@@ -284,7 +345,19 @@ namespace LivesharePresenceClientTest
                     }
                 }
             }
+
+            return 0;
         }
+
+        private TraceSource CreateTraceSource(string name)
+        {
+            var traceSource = new TraceSource(name);
+            var consoleTraceListener = new ConsoleTraceListener();
+            traceSource.Listeners.Add(consoleTraceListener);
+            traceSource.Switch.Level = SourceLevels.All;
+            return traceSource;
+        }
+
         private class ConsoleTraceListener : TraceListener
         {
             public override void Write(string message)

@@ -12,7 +12,20 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class SignalRHealthStatusProvider : BackgroundService, IHealthStatusProvider
     {
         private const string EchoMessage = "signalr";
-        private const int EchoMinutes = 5;
+
+        /// <summary>
+        /// Time in minutes to perform an echo when the state is 'healthy'
+        /// </summary>
+        private const int EchoMinutesSucceed = 5;
+
+        /// <summary>
+        /// Time in secs to perform the echo when the state is 'unhealthy'
+        /// </summary>
+        private const int EchoSecsFailure = 45;
+
+        /// <summary>
+        /// Initial delay in secs after we can start perform our helthy tests
+        /// </summary>
         private const int InitialDelayMinutes = 2;
 
         private readonly WarmupService warmupService;
@@ -70,8 +83,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                     State = false;
                     this.logger.LogError(error, $"Failed to connect to health hub with url:{HealthHubUrl}");
                 }
-                // Every 5 min
-                await Task.Delay(TimeSpan.FromMinutes(EchoMinutes), cancellationToken);
+
+                // delay depending on the State
+                await Task.Delay(State ? TimeSpan.FromMinutes(EchoMinutesSucceed) : TimeSpan.FromSeconds(EchoSecsFailure), cancellationToken);
             }
         }
 
