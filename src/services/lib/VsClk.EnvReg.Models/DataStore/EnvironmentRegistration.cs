@@ -103,7 +103,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
 
     public enum EnvType
     {
-        cloudEnvironment,
-        staticEnvironment
+        CloudEnvironment,
+        StaticEnvironment
     };
 }

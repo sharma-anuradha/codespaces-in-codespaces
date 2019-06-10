@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using VsClk.EnvReg.Models.DataStore.Compute;
 
-namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Util
+namespace VsClk.EnvReg.Repositories
 {
     public static class EnvironmentVariableConstants
     {
@@ -71,6 +71,12 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Util
         }
 
         public abstract EnvironmentVariable GetEnvironmentVariable();
+
+        protected static bool IsValidGitUrl(string url)
+        {
+            string regex = "(?:https?):\\/\\/(github\\.com)\\/(\\w+(-\\w+)*)\\/(\\w+(-\\w+)*)((\\/$|\\/(tree|pull|commit|releases\\/tag)\\/\\d+($|\\/))|$)";
+            return Regex.IsMatch(url, regex);
+        }
     }
 
     public class EnvVarGitRepoUrl : EnvironmentVariableStrategy
@@ -82,7 +88,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Util
         {
             if (EnvironmentRegistration.Seed != null
                 && EnvironmentRegistration.Seed.SeedType == "git"
-                && Util.Utils.IsValidGitUrl(EnvironmentRegistration.Seed.SeedMoniker))
+                && IsValidGitUrl(EnvironmentRegistration.Seed.SeedMoniker))
             {
                 var moniker = EnvironmentRegistration.Seed.SeedMoniker;
 
@@ -111,7 +117,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Util
         {
             if (EnvironmentRegistration.Seed != null
                 && EnvironmentRegistration.Seed.SeedType == "git"
-                && Util.Utils.IsValidGitUrl(EnvironmentRegistration.Seed.SeedMoniker))
+                && IsValidGitUrl(EnvironmentRegistration.Seed.SeedMoniker))
             {
                 var moniker = EnvironmentRegistration.Seed.SeedMoniker;
 

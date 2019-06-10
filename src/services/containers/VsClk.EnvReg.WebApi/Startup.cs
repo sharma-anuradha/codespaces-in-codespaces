@@ -59,6 +59,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 cfg.CreateMap<ConnectionInfoInput, ConnectionInfo>();
                 cfg.CreateMap<SeedInfoInput, SeedInfo>();
                 cfg.CreateMap<GitConfigInput, GitConfig>();
+                cfg.CreateMap<EnvironmentRegistrationCallbackInput, EnvironmentRegistrationCallbackOptions>();
+                cfg.CreateMap<EnvironmentRegistrationCallbackPayloadInput, EnvironmentRegistrationCallbackPayloadOptions>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);
@@ -71,6 +73,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             services.AddSingleton<IHttpClientProvider, HttpClientProvider>();
 
             // Repositories
+            services.AddSingleton<IRegistrationManager, RegistrationManager>();
             services.AddSingleton<IProfileRepository, HttpClientProfileRepository>();
             services.AddSingleton<IComputeRepository, HttpClientComputeRepository>();
 

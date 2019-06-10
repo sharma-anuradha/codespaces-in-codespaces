@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Newtonsoft.Json;
@@ -6,8 +7,10 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 {
     public class EnvironmentRegistrationInput
     {
+        [Required]
         public string Type { get; set; }
 
+        [Required]
         public string FriendlyName { get; set; }
 
         public bool CreateFileShare { get; set; }
