@@ -147,7 +147,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             var client = Client(connectionSubscription.Item1);
             if (client != null)
             {
-                Logger.LogDebug($"Notify->{Methods.UpdateValues} connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{ContactId} notifyProperties:{notifyProperties.ConvertToString()}");
+                using (Logger.BeginScope(
+                    (PresenceServiceScopes.MethodScope, Methods.UpdateValues)))
+                {
+                    Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{ContactId} notifyProperties:{notifyProperties.ConvertToString()}");
+                }
+
                 return client.SendAsync(
                     Methods.UpdateValues,
                     new ContactReference(ContactId, selfConnectionId),
@@ -169,7 +174,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             var client = Client(contactReference.ConnectionId);
             if (client != null)
             {
-                Logger.LogDebug($"Notify->{Methods.ReceiveMessage} contact:{contactReference} fromContact:{fromContactReference} messageType:{messageType} body:{body}");
+                using (Logger.BeginScope(
+                    (PresenceServiceScopes.MethodScope, Methods.ReceiveMessage),
+                    (PresenceServiceScopes.ContactScope, contactReference)))
+                {
+                    Logger.LogDebug($"Notify-> fromContact:{fromContactReference} messageType:{messageType} body:{body}");
+                }
+
                 return client.SendAsync(Methods.ReceiveMessage, contactReference, fromContactReference, messageType, body, cancellationToken);
             }
 
@@ -185,7 +196,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             var client = Client(connectionId);
             if (client != null)
             {
-                Logger.LogDebug($"Notify->{Methods.ConnectionChanged} selfConnectionId:{selfConnectionId} changeType:{changeType}");
+                using (Logger.BeginScope(
+                    (PresenceServiceScopes.MethodScope, Methods.ConnectionChanged)))
+                {
+                    Logger.LogDebug($"Notify-> selfConnectionId:{selfConnectionId} changeType:{changeType}");
+                }
+
                 return client.SendAsync(
                     Methods.ConnectionChanged,
                     new ContactReference(ContactId, selfConnectionId),

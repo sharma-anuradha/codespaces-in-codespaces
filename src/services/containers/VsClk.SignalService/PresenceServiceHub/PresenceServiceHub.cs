@@ -145,7 +145,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private ContactReference GetContextContactReference(bool throwIfNotFound = true)
         {
-            return new ContactReference(GetContextRegisteredContactId(throwIfNotFound), Context.ConnectionId);
+            var registeredContactId = GetContextRegisteredContactId(throwIfNotFound);
+            return string.IsNullOrEmpty(registeredContactId) ? default : new ContactReference(registeredContactId, Context.ConnectionId);
         }
     }
 }

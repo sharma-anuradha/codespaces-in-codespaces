@@ -111,12 +111,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task RegisterSelfContactAsync(ContactReference contactRef, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Register Contact");
-
             // Note: avoid telemetry for contact id's
-            using (Logger.BeginScope("NoTelemetry"))
+            using (Logger.BeginScope(
+                (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodRegisterSelfContact),
+                (PresenceServiceScopes.ContactScope, contactRef)))
             {
-                Logger.LogInformation($"RegisterSelfContactAsync -> contact:{contactRef} initialProperties:{initialProperties?.ConvertToString()}");
+                Logger.LogInformation($"initialProperties:{initialProperties?.ConvertToString()}");
             }
 
             var registeredSelfContact = GetOrCreateContact(contactRef.Id);
@@ -136,7 +136,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             bool useStubContact,
             CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"RequestSubcriptionsAsync -> contact:{contactRef} targetContactIds:{string.Join(",", targetContactProperties.Select(d => d.ConvertToString()))} propertyNames:{string.Join(",", propertyNames)}");
+            using (Logger.BeginScope(
+                (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodRequestSubcriptions),
+                (PresenceServiceScopes.ContactScope, contactRef)))
+            {
+                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContactProperties.Select(d => d.ConvertToString()))} propertyNames:{string.Join(",", propertyNames)}");
+            }
+
 
             // placeholder for all our results that by default are null
             var requestResult = new Dictionary<string, object>[targetContactProperties.Length];
@@ -233,7 +239,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             string[] propertyNames,
             CancellationToken cancellationToken = default(CancellationToken))
         {
-            Logger.LogDebug($"AddSubcriptionsAsync -> contact:{contactReference} targetContactIds:{string.Join(",", targetContacts.Select(c => c.Id))} propertyNames:{string.Join(",", propertyNames)}");
+            using (Logger.BeginScope(
+                (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodAddSubcriptions),
+                (PresenceServiceScopes.ContactScope, contactReference)))
+            {
+                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContacts.Select(c => c.Id))} propertyNames:{string.Join(",", propertyNames)}");
+            }
 
             var result = new Dictionary<string, Dictionary<string, object>>();
 
@@ -280,7 +291,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public void RemoveSubscription(ContactReference contactReference, ContactReference[] targetContacts, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Logger.LogDebug($"RemoveSubscription -> contact:{contactReference} targetContacts:{string.Join(",", targetContacts)}");
+            using (Logger.BeginScope(
+                (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodRemoveSubscription),
+                (PresenceServiceScopes.ContactScope, contactReference)))
+            {
+                Logger.LogDebug($"targetContacts:{string.Join(",", targetContacts)}");
+            }
+
 
             var registeredSelfContact = GetRegisteredContact(contactReference.Id);
             registeredSelfContact.RemovedTargetContacts(contactReference.ConnectionId, targetContacts.Select(c => c.Id).ToArray());
@@ -304,7 +321,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdatePropertiesAsync(ContactReference contactReference, Dictionary<string, object> updateProperties, CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"UpdatePropertiesAsync -> contact:{contactReference} updateProperties:{updateProperties.ConvertToString()}");
+            using (Logger.BeginScope(
+                (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodUpdateProperties),
+                (PresenceServiceScopes.ContactScope, contactReference)))
+            {
+                Logger.LogDebug($"updateProperties:{updateProperties.ConvertToString()}");
+            }
 
             var registeredSelfContact = GetRegisteredContact(contactReference.Id);
             await registeredSelfContact.UpdatePropertiesAsync(contactReference.ConnectionId, updateProperties, cancellationToken);
@@ -322,7 +344,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task SendMessageAsync(ContactReference contactReference, ContactReference targetContactReference, string messageType, object body, CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"SendMessageAsync -> contact:{contactReference} targetContact:{targetContactReference} messageType:{messageType} body:{body}");
+            using (Logger.BeginScope(
+                (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodSendMessage),
+                (PresenceServiceScopes.ContactScope, contactReference)))
+            {
+                Logger.LogDebug($"targetContact:{targetContactReference} messageType:{messageType} body:{body}");
+            }
 
             // Note: next line will enforce the contact who attempt to send the message to be already registered
             // otherwise an exception will happen
@@ -353,7 +380,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UnregisterSelfContactAsync(ContactReference contactReference, Func<IEnumerable<string>, Task> affectedPropertiesTask, CancellationToken cancellationToken)
         {
-            Logger.LogDebug($"UnregisterSelfContactAsync -> contact:{contactReference}");
+            using (Logger.BeginScope(
+                (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodUnregisterSelfContact),
+                (PresenceServiceScopes.ContactScope, contactReference)))
+            {
+                Logger.LogDebug($"UnregisterSelfContactAsync");
+            }
 
             var registeredSelfContact = GetRegisteredContact(contactReference.Id);
             foreach (var targetContactId in registeredSelfContact.GetTargetContacts(contactReference.ConnectionId))
@@ -377,7 +409,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public virtual Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingPropertes, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Logger.LogDebug($"MatchContactsAsync -> matchingPropertes:[{string.Join(",", matchingPropertes.Select(a => a.ConvertToString()))}]");
+            using (Logger.BeginScope(
+                 (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodMatchContacts)))
+            {
+                Logger.LogDebug($"matchingPropertes:[{string.Join(",", matchingPropertes.Select(a => a.ConvertToString()))}]");
+            }
 
             var results = new Dictionary<string, Dictionary<string, object>>[matchingPropertes.Length];
             foreach (var contactKvp in Contacts)

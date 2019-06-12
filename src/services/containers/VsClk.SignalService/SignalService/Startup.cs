@@ -53,7 +53,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public Startup(ILogger<Startup> logger,IHostingEnvironment env)
         {
             this.logger = logger;
-            this.logger.LogInformation("Startup");
+            this.logger.LogInformation($"Startup -> env:{env.EnvironmentName}");
 
             this._hostEnvironment = env;
 
@@ -61,7 +61,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.secrets.json", optional: true)
 #if DEBUG
                 .AddJsonFile("appsettings.Development.json", optional: true)
                 .AddJsonFile("appsettings.Debug.json", optional: true)
