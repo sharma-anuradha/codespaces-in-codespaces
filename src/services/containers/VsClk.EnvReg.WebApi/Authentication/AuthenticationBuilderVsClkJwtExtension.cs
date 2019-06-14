@@ -42,7 +42,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true
                     };
-                    options.Authority = "https://login.windows.net/common";
+                    options.Authority = "https://login.microsoftonline.com/common/v2.0";
                     options.Events = new JwtBearerEvents
                     {
                         OnAuthenticationFailed = AuthenticationFailedAsync,

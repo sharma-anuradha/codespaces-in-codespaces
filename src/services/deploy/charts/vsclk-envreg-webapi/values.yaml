@@ -55,4 +55,4 @@ config:
   computeServiceUrl: http://computeprovisioning
   clusterPreferredSchema: https
   clusterDefaultPath: /api/environment
-  vsLiveShareApiEndpoint: https://insiders-stg.liveshare.vsengsaas.visualstudio.com/api/v1.2/
+  vsLiveShareApiEndpoint: https://insiders.liveshare.vsengsaas.visualstudio.com/api/v1.2/
