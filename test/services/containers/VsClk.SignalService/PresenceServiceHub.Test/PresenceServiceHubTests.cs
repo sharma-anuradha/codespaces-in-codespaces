@@ -32,16 +32,16 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         [Fact]
         public async Task RegisterTest()
         {
-            (string, object[]) conn1Proxy = default;
+            var conn1Proxy = new Dictionary<string, object[]>();
             this.clientProxies.Add("conn1", MockUtils.CreateClientProxy((m, args) =>
             {
-                conn1Proxy = (m, args);
+                conn1Proxy[m] = args;
                 return Task.CompletedTask;
             }));
-            (string, object[]) conn2Proxy = default;
+            var conn2Proxy = new Dictionary<string, object[]>();
             this.clientProxies.Add("conn2", MockUtils.CreateClientProxy((m, args) =>
             {
-                conn2Proxy = (m, args);
+                conn2Proxy[m] = args;
                 return Task.CompletedTask;
             }));
 
@@ -77,39 +77,38 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "status", "busy" },
             }, CancellationToken.None);
 
-            Assert.Equal(conn1Proxy.Item1, Methods.UpdateValues);
-            Assert.Equal(conn2Proxy.Item1, Methods.UpdateValues);
-            Assert.Equal(3, conn2Proxy.Item2.Length);
-            AssertContactRef("conn1", "contact1", conn2Proxy.Item2[0]);
-            var notifyProperties = conn2Proxy.Item2[1] as Dictionary<string, object>;
+            Assert.True(conn1Proxy.ContainsKey(Methods.UpdateValues));
+            Assert.Equal(3, conn2Proxy[Methods.UpdateValues].Length);
+            AssertContactRef("conn1", "contact1", conn2Proxy[Methods.UpdateValues][0]);
+            var notifyProperties = conn2Proxy[Methods.UpdateValues][1] as Dictionary<string, object>;
 
             await this.presenceService.AddSubcriptionsAsync(
                 AsContactRef("conn2", "contact2"),
                 new ContactReference[] { AsContactRef(null, "contact1") }, new string[] { "other" });
 
-            conn2Proxy = default;
+            conn2Proxy.Clear();
             await this.presenceService.UpdatePropertiesAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>()
             {
                 { "status", "busy" },
             }, CancellationToken.None);
 
-            Assert.Null(conn2Proxy.Item1);
+            Assert.Empty(conn2Proxy);
             await this.presenceService.UpdatePropertiesAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>()
             {
                 { "other", 200 },
             }, CancellationToken.None);
-            Assert.Equal(conn2Proxy.Item1, Methods.UpdateValues);
+            Assert.True(conn2Proxy.ContainsKey(Methods.UpdateValues));
 
             this.presenceService.RemoveSubscription(AsContactRef("conn2", "contact2"), new ContactReference[] { AsContactRef(null, "contact1") });
-            conn2Proxy = default;
+            conn2Proxy.Clear();
             await this.presenceService.UpdatePropertiesAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>()
             {
                 { "status", "busy" },
                 { "other", 300 },
             }, CancellationToken.None);
-            Assert.Null(conn2Proxy.Item1);
+            Assert.Empty(conn2Proxy);
 
-            conn2Proxy = default;
+            conn2Proxy.Clear();
             await this.presenceService.AddSubcriptionsAsync(AsContactRef("conn2", "contact2"), new ContactReference[] { AsContactRef(null, "contact1") }, new string[] { "status", "other" });
 
             // unregister with reconnection should not affect "conn2"
@@ -122,10 +121,11 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                     { "status", "busy" },
                     { "other", 300 },
                 }, CancellationToken.None);
-                conn2Proxy = default;
+                conn2Proxy.Clear();
             }, CancellationToken.None);
+
             await this.presenceService.UnregisterSelfContactAsync(AsContactRef("conn1", "contact1"), null, CancellationToken.None);
-            Assert.Equal(Methods.ConnectionChanged, conn2Proxy.Item1);
+            Assert.True(conn2Proxy.ContainsKey(Methods.ConnectionChanged));
 
             // clear 'conn3'
             await this.presenceService.UnregisterSelfContactAsync(AsContactRef("conn3", "contact1"), null, CancellationToken.None);
@@ -136,13 +136,13 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "status", "available" },
                 { "other", 100 },
             }, CancellationToken.None);
-            conn2Proxy = default;
+            conn2Proxy.Clear();
 
             await this.presenceService.UnregisterSelfContactAsync(AsContactRef("conn1", "contact1"), null, CancellationToken.None);
-            Assert.Equal(conn2Proxy.Item1, Methods.UpdateValues);
-            Assert.Equal(3, conn2Proxy.Item2.Length);
-            AssertContactRef("conn1", "contact1", conn2Proxy.Item2[0]);
-            notifyProperties = (Dictionary<string, object>)conn2Proxy.Item2[1];
+            Assert.True(conn2Proxy.ContainsKey(Methods.UpdateValues));
+            Assert.Equal(3, conn2Proxy[Methods.UpdateValues].Length);
+            AssertContactRef("conn1", "contact1", conn2Proxy[Methods.UpdateValues][0]);
+            notifyProperties = (Dictionary<string, object>)conn2Proxy[Methods.UpdateValues][1];
             Assert.Null(notifyProperties["other"]);
             Assert.Null(notifyProperties["status"]);
         }

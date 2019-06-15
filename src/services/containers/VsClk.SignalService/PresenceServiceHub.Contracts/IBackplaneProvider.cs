@@ -4,43 +4,33 @@ using System.Threading.Tasks;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+    using ConnectionProperties = IDictionary<string, PropertyValue>;
+    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
+
     /// <summary>
-    /// The contact data entity
+    /// Class to describe a contact change
     /// </summary>
-    public class ContactData
+    /// <typeparam name="T"></typeparam>
+    public sealed class ContactDataChanged<T>
     {
-        public ContactData(
-            string id,
-            Dictionary<string, object>  properties,
-            Dictionary<string, Dictionary<string, object>> connections)
+        public ContactDataChanged(string serviceId, string connectionId, string contactId, ContactUpdateType updateContactType, T data)
         {
-            Requires.NotNullOrEmpty(id, nameof(id));
-            Id = id;
-            Properties = Requires.NotNull(properties, nameof(properties));
-            Connections = Requires.NotNull(connections, nameof(connections));
+            Requires.NotNullOrEmpty(serviceId, nameof(serviceId));
+            Requires.NotNullOrEmpty(connectionId, nameof(connectionId));
+            Requires.NotNullOrEmpty(contactId, nameof(contactId));
+
+            ServiceId = serviceId;
+            ConnectionId = connectionId;
+            ContactId = contactId;
+            Type = updateContactType;
+            Data = data;
         }
 
-        public ContactData(
-            string id,
-            Dictionary<string, object> properties)
-            : this(id, properties, new Dictionary<string, Dictionary<string, object>>())
-        {
-        }
-
-        /// <summary>
-        /// The contact id
-        /// </summary>
-        public string Id { get; }
-
-        /// <summary>
-        /// The aggregated properties from all possible connections
-        /// </summary>
-        public Dictionary<string, object> Properties { get; }
-
-        /// <summary>
-        /// Properties set by every live self connection
-        /// </summary>
-        public Dictionary<string, Dictionary<string, object>> Connections { get; }
+        public string ServiceId { get; }
+        public string ConnectionId { get; }
+        public string ContactId { get; }
+        public ContactUpdateType Type { get; }
+        public T Data { get; }
     }
 
     /// <summary>
@@ -85,17 +75,11 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Invoked when a remote contact has changed
     /// </summary>
-    /// <param name="sourceId">Id of the source who generated</param>
-    /// <param name="connectionId">Id of the connection who generate the change</param>
-    /// <param name="contactData">The contact data entity that changed</param>
-    /// <param name="updateContactType">Type of contact update</param>
+    /// <param name="contactDataChanged">The contact data info that changed</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public delegate Task OnContactChangedAsync(
-            string sourceId,
-            string connectionId,
-            ContactData contactData,
-            ContactUpdateType updateContactType,
+            ContactDataChanged<ContactDataInfo> contactDataChanged,
             CancellationToken cancellationToken);
 
     /// <summary>
@@ -129,26 +113,23 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="matchProperties">The match properties to look for</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Array of contact data entities that match the criteria</returns>
-        Task<ContactData[]> GetContactsAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken);
+        Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Get the contact properties
+        /// Get the contact data info
         /// </summary>
         /// <param name="contactId">The contact id to query</param>
         /// <param name="cancellationToken"></param>
         /// <returns>The contact data entity if it exists, null otherwise</returns>
-        Task<ContactData> GetContactPropertiesAsync(string contactId, CancellationToken cancellationToken);
+        Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken);
 
         /// <summary>
         /// Update the contact properties
         /// </summary>
-        /// <param name="sourceId">Id of the source who generated</param>
-        /// <param name="connectionId">Id of the connection who generate the change</param>
-        /// <param name="contactData">The contact data that changed</param>
-        /// <param name="updateContactType">Type of contact update</param>
+        /// <param name="contactDataChanged">The contact data info that changed</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task UpdateContactAsync(string sourceId, string connectionId, ContactData contactData, ContactUpdateType updateContactType, CancellationToken cancellationToken);
+        Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken);
 
         /// <summary>
         /// Send a message using the backplane provider

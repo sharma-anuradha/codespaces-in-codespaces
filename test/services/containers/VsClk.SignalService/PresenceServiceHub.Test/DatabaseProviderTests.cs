@@ -4,14 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
 namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 {
+    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
+    using ConnectionProperties = IDictionary<string, PropertyValue>;
+
     public class DatabaseProviderTests : IAsyncLifetime
     {
         private const string Uri = "https://localhost:8081";
@@ -44,64 +45,78 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         public async Task TestUpdateContacts()
         {
             var callbackCompleted = new VisualStudio.Threading.AsyncManualResetEvent();
-            string callbackContactId = null;
-            string callbackConnectionId = null;
-            Dictionary<string, object> callbackProperties = null;
-            ContactUpdateType callbackUpdateContactType = ContactUpdateType.None;
+            ContactDataChanged<ContactDataInfo> callbackContactDataChanged = null;
 
-            OnContactChangedAsync onContactsChanged = (
-                    sourceId,
-                    connectionId,
-                    contactData,
-                    updateContactType,
+            OnContactChangedAsync onContactsChanged = (contactDataChanged,
                     cancellationToken) =>
             {
-                callbackConnectionId = connectionId;
-                callbackContactId = contactData.Id;
-                callbackProperties = contactData.Properties;
-                callbackUpdateContactType = updateContactType;
-
+                callbackContactDataChanged = contactDataChanged;
                 callbackCompleted.Set();
                 return Task.CompletedTask;
             };
             this.databaseBackplaneProvider.ContactChangedAsync = onContactsChanged;
 
-            var properties = new Dictionary<string, object>()
+            var utcNow = DateTime.UtcNow;
+            var properties = new Dictionary<string, PropertyValue>()
             {
-                { "email", "contact1@microsoft.com" },
-                { "status", "available" },
-            };
-            var connections = new Dictionary<string, Dictionary<string, object>>()
-            {
-                { "conn1", properties },
+                { "email", new PropertyValue("contact1@microsoft.com", utcNow) },
+                { "status", new PropertyValue("available", utcNow) },
             };
 
             await this.databaseBackplaneProvider.UpdateContactAsync(
-                "sourceId",
+                new ContactDataChanged<ConnectionProperties >(
+                "serviceId",
                 "conn1",
-                new ContactData("contact1", properties, connections),
+                "contact1",
                 ContactUpdateType.Registration,
+                properties),
                 CancellationToken.None);
             await callbackCompleted.WaitAsync();
 
-            Assert.Equal("conn1", callbackConnectionId);
-            Assert.Equal("contact1", callbackContactId);
-            Assert.Equal(ContactUpdateType.Registration, callbackUpdateContactType);
-            Assert.Equal("available", callbackProperties["status"]);
+            Assert.Equal("serviceId", callbackContactDataChanged.ServiceId);
+            Assert.Equal("conn1", callbackContactDataChanged.ConnectionId);
+            Assert.Equal("contact1", callbackContactDataChanged.ContactId);
+            Assert.Equal(ContactUpdateType.Registration, callbackContactDataChanged.Type);
+            Assert.Equal("available", callbackContactDataChanged.Data.GetAggregatedProperties()["status"]);
 
             callbackCompleted.Reset();
 
-            properties["status"] = "busy";
+            properties["status"] = new PropertyValue("busy", DateTime.UtcNow);
             await this.databaseBackplaneProvider.UpdateContactAsync(
-                "sourceId",
+                new ContactDataChanged<ConnectionProperties>(
+                "serviceId",
                 "conn1",
-                new ContactData("contact1", properties, connections),
+                "contact1",
                 ContactUpdateType.UpdateProperties,
+                properties),
                 CancellationToken.None);
+
             await callbackCompleted.WaitAsync();
-            Assert.Equal("contact1", callbackContactId);
-            Assert.Equal(ContactUpdateType.UpdateProperties, callbackUpdateContactType);
-            Assert.Equal("busy", callbackProperties["status"]);
+            Assert.Equal("serviceId", callbackContactDataChanged.ServiceId);
+            Assert.Equal("conn1", callbackContactDataChanged.ConnectionId);
+            Assert.Equal("contact1", callbackContactDataChanged.ContactId);
+            Assert.Equal(ContactUpdateType.UpdateProperties, callbackContactDataChanged.Type);
+            Assert.Equal("busy", callbackContactDataChanged.Data.GetAggregatedProperties()["status"]);
+
+            await this.databaseBackplaneProvider.UpdateContactAsync(
+                new ContactDataChanged<ConnectionProperties>(
+                "serviceId",
+                "conn2",
+                "contact1",
+                ContactUpdateType.Registration,
+                new Dictionary<string, PropertyValue>()
+                {
+                    { "other", new PropertyValue(100, DateTime.UtcNow) },
+                }),
+                CancellationToken.None);
+
+            var contactData = await this.databaseBackplaneProvider.GetContactDataAsync("contact1", CancellationToken.None);
+            Assert.NotNull(contactData);
+            Assert.True(contactData.ContainsKey("serviceId"));
+            Assert.Equal(2, contactData["serviceId"].Count);
+            Assert.True(contactData["serviceId"].ContainsKey("conn1"));
+            Assert.True(contactData["serviceId"].ContainsKey("conn2"));
+            Assert.True(contactData["serviceId"]["conn2"].ContainsKey("other"));
         }
 
 #if _HAS_AZURE_COSMOS_EMULATOR
@@ -111,48 +126,46 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 #endif
         public async Task GetContactsTest()
         {
-            var properties1 = new Dictionary<string, object>()
+            var utcNow = DateTime.UtcNow;
+            var properties1 = new Dictionary<string, PropertyValue>()
             {
-                { "email", "contact1@microsoft.com" },
-                { "status", "available" },
-            };
-            var connections1 = new Dictionary<string, Dictionary<string, object>>()
-            {
-                { "conn1", properties1 },
+                { "email", new PropertyValue("contact1@microsoft.com", utcNow) },
+                { "status", new PropertyValue("available", utcNow) },
             };
 
             await this.databaseBackplaneProvider.UpdateContactAsync(
-                "sourceId",
+                new ContactDataChanged<ConnectionProperties>(
+                "serviceId",
                 "conn1",
-                new ContactData("contact1", properties1, connections1),
+                "contact1",
                 ContactUpdateType.Registration,
+                properties1),
                 CancellationToken.None);
 
-            var properties2 = new Dictionary<string, object>()
+            utcNow = DateTime.UtcNow;
+            var properties2 = new Dictionary<string, PropertyValue>()
             {
-                { "email", "contact2@microsoft.com" },
-                { "status", "available" },
-            };
-            var connections2 = new Dictionary<string, Dictionary<string, object>>()
-            {
-                { "conn2", properties2 },
+                { "email", new PropertyValue("contact2@microsoft.com", utcNow) },
+                { "status", new PropertyValue("available", utcNow) },
             };
 
             await this.databaseBackplaneProvider.UpdateContactAsync(
-                "sourceId",
-                "conn1",
-                new ContactData("contact2", properties2, connections2),
+                new ContactDataChanged<ConnectionProperties>(
+                "serviceId",
+                "conn2",
+                "contact2",
                 ContactUpdateType.Registration,
+                properties2),
                 CancellationToken.None);
 
-            var results = await this.databaseBackplaneProvider.GetContactsAsync(new Dictionary<string, object>()
+            var results = await this.databaseBackplaneProvider.GetContactsDataAsync(new Dictionary<string, object>()
             {
                 { "email", "contact2@microsoft.com" },
             }, CancellationToken.None);
             Assert.Single(results);
-            Assert.Equal("contact2", results[0].Properties[Properties.IdReserved]);
+            Assert.True(results.ContainsKey("contact2"));
 
-            results = await this.databaseBackplaneProvider.GetContactsAsync(new Dictionary<string, object>()
+            results = await this.databaseBackplaneProvider.GetContactsDataAsync(new Dictionary<string, object>()
             {
                 { "email", "unknown@microsoft.com" },
             }, CancellationToken.None);
@@ -160,3 +173,4 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         }
     }
 }
+

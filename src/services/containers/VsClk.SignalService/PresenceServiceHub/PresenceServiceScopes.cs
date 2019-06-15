@@ -1,9 +1,13 @@
+using System;
+using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
+
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
     /// Definition of our scopes for the presence service
     /// </summary>
-    internal class PresenceServiceScopes
+    internal static class PresenceServiceScopes
     {
         public const string MethodScope = "Method";
 
@@ -17,5 +21,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string MethodMatchContacts = "MatchContacts";
 
         public const string ContactScope = "Contact";
+        public const string ConnectionScope = "ConnectionScope";
+
+        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, ContactReference contactReference)
+        {
+            return logger.BeginScope(
+                    (MethodScope, method),
+                    (ContactScope, contactReference.Id),
+                    (ConnectionScope, contactReference.ConnectionId));
+        }
     }
 }

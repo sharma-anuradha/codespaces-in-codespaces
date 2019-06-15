@@ -10,6 +10,8 @@ using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
+
     /// <summary>
     /// Contact base class 
     /// </summary>
@@ -81,23 +83,15 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Notify updated properties for this contact
         /// </summary>
         /// <param name="selfConnectionId">The self connection who caused the update</param>
-        /// <param name="contactData">The contact data entity</param>
+        /// <param name="contactDataProvider">The contact data provider</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task SendUpdatePropertiesAsync(
             string selfConnectionId,
-            ContactData contactData,
+            ContactDataProvider contactDataProvider,
             CancellationToken cancellationToken)
         {
-            await Task.WhenAll(GetSendUpdateProperties(selfConnectionId, contactData, cancellationToken));
-        }
-
-        public Task SendConnectionChangedAsync(
-                string connectionId,
-                ConnectionChangeType changeType,
-                CancellationToken cancellationToken)
-        {
-            return NotifyConnectionChangedAsync(Array.Empty<string>(), connectionId, changeType, cancellationToken);
+            await Task.WhenAll(GetSendUpdateProperties(selfConnectionId, contactDataProvider, cancellationToken));
         }
 
         protected ILogger<PresenceService> Logger => this.service.Logger;
@@ -123,19 +117,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                 connectionId,
                 changeType,
                 cancellationToken));
-        }
-
-        protected IEnumerable<Task> GetSendUpdateProperties(
-            string connectionId,
-            ContactData contactData,
-            CancellationToken cancellationToken)
-        {
-            return GetSendUpdateValues(
-                connectionId,
-                contactData.Properties.Keys,
-                (selfConnectionId, propertyName) => GetPropertyValue(contactData, propertyName, selfConnectionId),
-                (notifyConnectionId, selfConnectionId) => selfConnectionId == null || selfConnectionId == connectionId,
-                cancellationToken);
         }
 
         protected Task NotifyUpdateValuesAsync(
@@ -174,9 +155,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var client = Client(contactReference.ConnectionId);
             if (client != null)
             {
-                using (Logger.BeginScope(
-                    (PresenceServiceScopes.MethodScope, Methods.ReceiveMessage),
-                    (PresenceServiceScopes.ContactScope, contactReference)))
+                using (Logger.BeginContactReferenceScope(Methods.ReceiveMessage, contactReference))
                 {
                     Logger.LogDebug($"Notify-> fromContact:{fromContactReference} messageType:{messageType} body:{body}");
                 }
@@ -270,19 +249,30 @@ namespace Microsoft.VsCloudKernel.SignalService
             return result;
         }
 
-        private static object GetPropertyValue(ContactData contactData, string propertyName, string connectionId)
+        private IEnumerable<Task> GetSendUpdateProperties(
+            string connectionId,
+            ContactDataProvider contactDataProvider,
+            CancellationToken cancellationToken)
         {
-            object value = null;
-            if (string.IsNullOrEmpty(connectionId))
-            {
-                contactData.Properties.TryGetValue(propertyName, out value);
-            }
-            else if (contactData.Connections.TryGetValue(connectionId, out var properties))
-            {
-                properties.TryGetValue(propertyName, out value);
-            }
+            return GetSendUpdateValues(
+                connectionId,
+                contactDataProvider.Properties.Keys,
+                (selfConnectionId, propertyName) =>
+                {
+                    object value = null;
+                    if (string.IsNullOrEmpty(selfConnectionId))
+                    {
+                        contactDataProvider.Properties.TryGetValue(propertyName, out value);
+                    }
+                    else
+                    {
+                        value = contactDataProvider.GetConnectionPropertyValue(propertyName, selfConnectionId);
+                    }
 
-            return value;
+                    return value;
+                },
+                (notifyConnectionId, selfConnectionId) => selfConnectionId == null || selfConnectionId == connectionId,
+                cancellationToken);
         }
     }
 }

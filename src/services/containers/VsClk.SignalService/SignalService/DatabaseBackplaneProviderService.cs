@@ -11,8 +11,10 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class DatabaseBackplaneProviderService : WarmupServiceBase
     {
         private readonly IOptions<AppSettings> appSettingsProvider;
-        private readonly PresenceService service;
+        private readonly PresenceService presenceService;
         private readonly ILogger<DatabaseBackplaneProvider> logger;
+
+        private const int TimespanUpdateServiceSecs = 45;
 
         public DatabaseBackplaneProviderService(
             IList<IAsyncWarmup> warmupServices,
@@ -23,7 +25,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             : base(warmupServices, healthStatusProviders)
         {
             this.appSettingsProvider = appSettingsProvider;
-            this.service = service;
+            this.presenceService = service;
             this.logger = logger;
         }
 
@@ -31,6 +33,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            DatabaseBackplaneProvider databaseBackplaneProvider = null;
+            Func<Task> updateServiceCallback = () => databaseBackplaneProvider.UpdateService(this.presenceService.ServiceId, this.appSettingsProvider.Value.Stamp, stoppingToken);
             if (!string.IsNullOrEmpty(AppSettings.AzureCosmosDbEndpointUrl) && !string.IsNullOrEmpty(AppSettings.AzureCosmosDbAuthKey))
             {
                 var endpointUrl = NormalizeSetting(AppSettings.AzureCosmosDbEndpointUrl);
@@ -39,14 +43,15 @@ namespace Microsoft.VsCloudKernel.SignalService
                 this.logger.LogInformation($"Creating DatabaseProviderFactory with Url:'{endpointUrl}'");
                 try
                 {
-                    var databaseBackplaneProvider = await DatabaseBackplaneProvider.CreateAsync(
+                    databaseBackplaneProvider = await DatabaseBackplaneProvider.CreateAsync(
                         new DatabaseSettings()
                         {
                             EndpointUrl = endpointUrl,
                             AuthorizationKey = authorizationKey
                         },
                         this.logger);
-                    this.service.AddBackplaneProvider(databaseBackplaneProvider);
+                    await updateServiceCallback();
+                    this.presenceService.AddBackplaneProvider(databaseBackplaneProvider);
                 }
                 catch (Exception error)
                 {
@@ -61,7 +66,23 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             CompleteWarmup(true);
-       }
+
+            // we will periodically refresh the service to avoid stale entries on the db data
+            while (true)
+            {
+                try
+                {
+                    await updateServiceCallback();
+                }
+                catch (Exception error)
+                {
+                    this.logger.LogError(error, $"Failed to update service on the db backplae provider");
+                }
+
+                // delay depending on the State
+                await Task.Delay(TimeSpan.FromSeconds(TimespanUpdateServiceSecs), stoppingToken);
+            }
+        }
 
         private static string NormalizeSetting(string s)
         {

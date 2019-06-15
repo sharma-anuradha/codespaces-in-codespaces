@@ -18,6 +18,9 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+    using ConnectionProperties = IDictionary<string, PropertyValue>;
+    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
+
     /// <summary>
     /// Implements IScaleServiceProvider based on an Azure Cosmos database
     /// </summary>
@@ -25,17 +28,23 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         public static readonly string DatabaseId = "presenceService";
 
-        private static readonly string ContactCollectionId = "contacts";
+        private static readonly string ServiceCollectionId = "services";
+        private static readonly string ContactDataCollectionId = "contactsData";
         private static readonly string MessageCollectionId = "messages";
         private static readonly string LeaseCollectionId = "leases";
 
-        private const int ContactsRequestPerUnitThroughput = 2500;
+        private const int StaleServiceSeconds = 120;
+
+        private const int ServicesRequestPerUnitThroughput = 10000;
+        private const int ContactsRequestPerUnitThroughput = 10000;
         private const int MessageRequestPerUnitThroughput = 2500;
         private const int LeasesRequestPerUnitThroughput = 2500;
 
         private readonly DatabaseSettings databaseSettings;
         private readonly List<IChangeFeedProcessor> feedProcessors = new List<IChangeFeedProcessor>();
         private ILogger<DatabaseBackplaneProvider> logger;
+
+        private HashSet<string> activeServices;
 
         private DatabaseBackplaneProvider(
             DatabaseSettings databaseSettings,
@@ -102,34 +111,28 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public int Priority => 0;
 
-        public async Task<ContactData[]> GetContactsAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
         {
             var emailPropertyValue = matchProperties.TryGetProperty<string>(Properties.Email)?.ToLowerInvariant();
             if (string.IsNullOrEmpty(emailPropertyValue))
             {
-                return Array.Empty<ContactData>();
+                return new Dictionary<string, ContactDataInfo>();
             }
 
-            var queryable = Client.CreateDocumentQuery<ContactDocument>(
-                UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId))
+            var queryable = Client.CreateDocumentQuery<ContactDataDocument>(
+                UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactDataCollectionId))
                 .Where(c => c.Email == emailPropertyValue);
 
-            var matchContacts = await ToListAsync(queryable);
-            return matchContacts.Select(c =>
-            {
-                var contactData = ToContactData(c);
-                contactData.Properties[Properties.IdReserved] = c.Id;
-                return contactData;
-            }).ToArray();
+            var matchContacts = await ToListAsync(queryable, cancellationToken);
+            return matchContacts.ToDictionary(d => d.Id, d => ToContactData(d));
         }
 
-        public async Task<ContactData> GetContactPropertiesAsync(string contactId, CancellationToken cancellationToken)
+        public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
             try
             {
-                var response = await Client.ReadDocumentAsync<ContactDocument>(
-                    UriFactory.CreateDocumentUri(DatabaseId, ContactCollectionId, contactId),
-                    cancellationToken: cancellationToken);
+                var documentUri = UriFactory.CreateDocumentUri(DatabaseId, ContactDataCollectionId, contactId);
+                var response = await Client.ReadDocumentAsync<ContactDataDocument>(documentUri, cancellationToken: cancellationToken);
                 return ToContactData(response.Document);
             }
             catch (DocumentClientException e) when (e.StatusCode == HttpStatusCode.NotFound)
@@ -155,25 +158,27 @@ namespace Microsoft.VsCloudKernel.SignalService
             }, cancellationToken: cancellationToken);
         }
 
-        public async Task UpdateContactAsync(
-            string sourceId,
-            string connectionId,
-            ContactData contactData,
-            ContactUpdateType updateContactType,
-            CancellationToken cancellationToken)
+        public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
-            this.logger.LogDebug($"DatabaseProvider.UpdateContactAsync -> contactId:{contactData.Id}");
+            this.logger.LogDebug($"DatabaseProvider.UpdateContactAsync -> contactId:{contactDataChanged.ContactId}");
 
-            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId);
-            await Client.UpsertDocumentAsync(documentCollectionUri, new ContactDocument()
+            var contactDataInfo = await GetContactDataAsync(contactDataChanged.ContactId, cancellationToken);
+            if (contactDataInfo == null)
             {
-                Id = contactData.Id,
-                ConnectionId = connectionId,
-                Email = contactData.Properties.TryGetProperty<string>(Properties.Email)?.ToLowerInvariant(),
-                Properties = contactData.Properties,
-                Connections = contactData.Connections,
-                UpdateType = updateContactType,
-                SourceId = sourceId,
+                contactDataInfo = new Dictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>();
+            }
+
+            contactDataInfo.UpdateConnectionProperties(contactDataChanged);
+
+            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactDataCollectionId);
+            await Client.UpsertDocumentAsync(documentCollectionUri, new ContactDataDocument()
+            {
+                Id = contactDataChanged.ContactId,
+                ServiceId = contactDataChanged.ServiceId,
+                ConnectionId = contactDataChanged.ConnectionId,
+                UpdateType = contactDataChanged.Type,
+                Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(Properties.Email)?.ToLowerInvariant(),
+                ServiceConnections = JObject.FromObject(contactDataInfo),
                 LastUpdate = DateTime.UtcNow
             }, cancellationToken: cancellationToken);
         }
@@ -181,6 +186,13 @@ namespace Microsoft.VsCloudKernel.SignalService
         #endregion
 
         #region Callback from the Feed processor
+
+        private async Task OnServiceDocumentsChangedAsync(IReadOnlyList<Document> docs)
+        {
+            this.logger.LogDebug($"DatabaseProvider.OnServiceDocumentsChangedAsync -> servicesIds:{string.Join(",", docs.Select(d => d.Id))}");
+
+            await LoadActiveServicesAsync(default(CancellationToken));
+        }
 
         private async Task OnContactDocumentsChangedAsync(IReadOnlyList<Document> docs)
         {
@@ -190,13 +202,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 foreach (var doc in docs)
                 {
-                    var contact = await ReadAsAsync<ContactDocument>(doc);
-                    await ContactChangedAsync(
-                        contact.SourceId,
+                    var contact = await ReadAsAsync<ContactDataDocument>(doc);
+                    var contactDataInfoChanged = new ContactDataChanged<ContactDataInfo>(
+                        contact.ServiceId,
                         contact.ConnectionId,
-                        ToContactData(contact),
+                        contact.Id,
                         contact.UpdateType,
-                        default(CancellationToken));
+                        ToContactData(contact));
+
+                    await ContactChangedAsync(contactDataInfoChanged, default(CancellationToken));
                 }
             }
         }
@@ -223,6 +237,27 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         #endregion
+
+        public async Task UpdateService(string id, string region, CancellationToken cancellationToken)
+        {
+            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ServiceCollectionId);
+            await Client.UpsertDocumentAsync(documentCollectionUri, new ServiceDocument()
+            {
+                Id = id,
+                Region = region,
+                LastUpdate = DateTime.UtcNow
+            }, cancellationToken: cancellationToken);
+        }
+
+        private async Task LoadActiveServicesAsync(CancellationToken cancellationToken)
+        {
+            var queryable = Client.CreateDocumentQuery<ServiceDocument>(
+                UriFactory.CreateDocumentCollectionUri(DatabaseId, ServiceCollectionId));
+
+            var allServices = await ToListAsync(queryable, cancellationToken);
+            var utcNow = DateTime.UtcNow;
+            this.activeServices = new HashSet<string>(allServices.Where(i => (utcNow - i.LastUpdate).TotalSeconds < StaleServiceSeconds).Select(d => d.Id));
+        }
 
         /// <summary>
         /// Create a change feed processor based on a collection id
@@ -271,11 +306,21 @@ namespace Microsoft.VsCloudKernel.SignalService
             // Create the database
             await Client.CreateDatabaseIfNotExistsAsync(new Database { Id = DatabaseId });
 
-            // Create 'contacts'
-            this.logger.LogInformation($"Creating Collection:{ContactCollectionId}");
+            // Create 'services'
+            this.logger.LogInformation($"Creating Collection:{ServiceCollectionId}");
             await Client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(DatabaseId),
-                CreateDocumentCollectionDefinition(ContactCollectionId),
+                CreateDocumentCollectionDefinition(ServiceCollectionId),
+                new RequestOptions
+                {
+                    OfferThroughput = ServicesRequestPerUnitThroughput
+                });
+
+            // Create 'contacts'
+            this.logger.LogInformation($"Creating Collection:{ContactDataCollectionId}");
+            await Client.CreateDocumentCollectionIfNotExistsAsync(
+                UriFactory.CreateDatabaseUri(DatabaseId),
+                CreateDocumentCollectionDefinition(ContactDataCollectionId),
                 new RequestOptions
                 {
                     OfferThroughput = ContactsRequestPerUnitThroughput
@@ -301,9 +346,15 @@ namespace Microsoft.VsCloudKernel.SignalService
                     OfferThroughput = LeasesRequestPerUnitThroughput
                 });
 
+            // Create 'services' processor
+            this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
+                ServiceCollectionId,
+                "PresenceServiceR-Services",
+                OnServiceDocumentsChangedAsync));
+
             // Create 'contacts' processor
             this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
-                ContactCollectionId,
+                ContactDataCollectionId,
                 "PresenceServiceR-Contacts",
                 OnContactDocumentsChangedAsync));
 
@@ -312,6 +363,22 @@ namespace Microsoft.VsCloudKernel.SignalService
                 MessageCollectionId,
                 "PresenceServiceR-Messages",
                 OnMessageDocumentsChangedAsync));
+
+            // load initial services
+            await LoadActiveServicesAsync(default);
+        }
+
+        private ContactDataInfo ToContactData(ContactDataDocument contactDataDocument)
+        {
+            var contactDataInfo = ((JObject)contactDataDocument.ServiceConnections).ToObject<ContactDataInfo>();
+
+            // Note: next block will remove 'stale' service entries
+            foreach(var serviceId in contactDataInfo.Keys.Where(serviceId => !this.activeServices.Contains(serviceId)).ToArray())
+            {
+                contactDataInfo.Remove(serviceId);
+            }
+
+            return contactDataInfo;
         }
 
         private static DocumentCollection CreateDocumentCollectionDefinition(string resourceId)
@@ -338,62 +405,65 @@ namespace Microsoft.VsCloudKernel.SignalService
             return ((IDictionary<string, JToken>)jObject).ToDictionary(kvp => kvp.Key, kvp => ToObject(kvp.Value));
         }
 
-        private static ContactData ToContactData(ContactDocument contact)
-        {
-            return new ContactData(
-                contact.Id,
-                ToProperties((JObject)contact.Properties),
-                ((IDictionary<string, JToken>)contact.Connections).ToDictionary(kvp => kvp.Key, kvp => ToProperties((JObject)kvp.Value)));
-        }
-
         private static object ToObject(JToken jToken)
         {
             return jToken?.Type != JTokenType.Object ? jToken?.ToObject<object>() : jToken;
         }
 
-        private static async Task<List<T>> ToListAsync<T>(IDocumentQuery<T> queryable)
+        private static async Task<List<T>> ToListAsync<T>(IDocumentQuery<T> queryable, CancellationToken token)
         {
             var list = new List<T>();
             while (queryable.HasMoreResults)
             {   //Note that ExecuteNextAsync can return many records in each call
-                var response = await queryable.ExecuteNextAsync<T>();
+                var response = await queryable.ExecuteNextAsync<T>(token);
                 list.AddRange(response);
             }
 
             return list;
         }
 
-        private static Task<List<T>> ToListAsync<T>(IQueryable<T> query)
+        private static Task<List<T>> ToListAsync<T>(IQueryable<T> query, CancellationToken token)
         {
-            return ToListAsync(query.AsDocumentQuery());
+            return ToListAsync(query.AsDocumentQuery(), token);
         }
+    }
+    /// <summary>
+    /// Service document model
+    /// </summary>
+    public class ServiceDocument
+    {
+        [JsonProperty("id")]
+        public string Id { get; set; }
+
+        [JsonProperty("region")]
+        public string Region { get; set; }
+
+        [JsonProperty("lastUpdate")]
+        public DateTime LastUpdate { get; set; }
     }
 
     /// <summary>
     /// Contact document model
     /// </summary>
-    public class ContactDocument
+    public class ContactDataDocument
     {
         [JsonProperty("id")]
         public string Id { get; set; }
 
+        [JsonProperty("serviceId")]
+        public string ServiceId { get; set; }
+
         [JsonProperty("connectionId")]
         public string ConnectionId { get; set; }
-
-        [JsonProperty("email")]
-        public string Email { get; set; }
-
-        [JsonProperty("properties")]
-        public object Properties { get; set; }
-
-        [JsonProperty("connections")]
-        public object Connections { get; set; }
 
         [JsonProperty("updateType")]
         public ContactUpdateType UpdateType { get; set; }
 
-        [JsonProperty("sourceId")]
-        public string SourceId { get; set; }
+        [JsonProperty("email")]
+        public string Email { get; set; }
+
+        [JsonProperty("serviceConnections")]
+        public object ServiceConnections { get; set; }
 
         [JsonProperty("lastUpdate")]
         public DateTime LastUpdate { get; set; }
