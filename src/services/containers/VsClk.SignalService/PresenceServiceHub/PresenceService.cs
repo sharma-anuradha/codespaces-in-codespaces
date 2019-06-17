@@ -170,7 +170,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                     else
                     {
-                        // define the matching properties intented for this bucket
+                        // define the matching properties intended for this bucket
                         var matchProperties = allMatchingProperties[index];
 
                         // look on our backplane providers
@@ -294,6 +294,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 await stubContact.SendUpdatePropertiesAsync(
                     contactReference.ConnectionId,
                     ContactDataProvider.CreateContactDataProvider(() => registeredSelfContact.GetAggregatedProperties()),
+                    properties.Keys,
                     cancellationToken);
             }
         }
@@ -542,7 +543,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                         return value;
                     });
 
-                    await stubContact.SendUpdatePropertiesAsync(connectionId, ContactDataProvider.CreateContactDataProvider(initialProperties), cancellationToken);
+                    await stubContact.SendUpdatePropertiesAsync(connectionId,
+                        ContactDataProvider.CreateContactDataProvider(initialProperties),
+                        initialProperties.Keys,
+                        cancellationToken);
                 }
             }
         }
@@ -561,7 +565,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                             e.ConectionId,
                             contact.ContactId,
                             e.ChangeType,
-                            contact.GetConnectionProperties(e.ConectionId)),
+                            e.Properties),
                             CancellationToken.None);
                 }
                 catch (Exception error)
@@ -640,6 +644,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task OnContactChangedAsync(
             ContactDataChanged<ContactDataInfo> contactDataChanged,
+            string[] affectedProperties,
             CancellationToken cancellationToken)
         {
             // ignore self notifications
@@ -672,13 +677,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 foreach (var stubContact in GetStubContacts(contactDataChanged.ContactId))
                 {
-                    await stubContact.SendUpdatePropertiesAsync(contactDataChanged.ConnectionId, contactDataProvider, cancellationToken);
+                    await stubContact.SendUpdatePropertiesAsync(
+                        contactDataChanged.ConnectionId,
+                        contactDataProvider,
+                        affectedProperties,
+                        cancellationToken);
                 }
             }
 
             if (Contacts.TryGetValue(contactDataChanged.ContactId, out var contact))
             {
-                await contact.OnContactChangedAsync(contactDataChanged, cancellationToken);
+                await contact.OnContactChangedAsync(contactDataChanged, affectedProperties, cancellationToken);
             }
         }
 

@@ -34,7 +34,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             DatabaseBackplaneProvider databaseBackplaneProvider = null;
-            Func<Task> updateServiceCallback = () => databaseBackplaneProvider.UpdateService(this.presenceService.ServiceId, this.appSettingsProvider.Value.Stamp, stoppingToken);
+            Func<Task> updateServiceCallback = () => databaseBackplaneProvider.UpdateService(
+                this.presenceService.ServiceId,
+                this.appSettingsProvider.Value.Stamp,
+                this.presenceService.GetContactStatistics().TotalSelfCount,
+                stoppingToken);
             if (!string.IsNullOrEmpty(AppSettings.AzureCosmosDbEndpointUrl) && !string.IsNullOrEmpty(AppSettings.AzureCosmosDbAuthKey))
             {
                 var endpointUrl = NormalizeSetting(AppSettings.AzureCosmosDbEndpointUrl);

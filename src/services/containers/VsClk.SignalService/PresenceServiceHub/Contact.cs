@@ -19,14 +19,19 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     internal class ContactChangedEventArgs : EventArgs
     {
-        internal ContactChangedEventArgs(string connectionId, ContactUpdateType changeType)
+        internal ContactChangedEventArgs(
+            string connectionId,
+            ConnectionProperties properties,
+            ContactUpdateType changeType)
         {
             ConectionId = connectionId;
+            Properties = properties;
             ChangeType = changeType;
         }
 
         public string ConectionId { get; }
 
+        public ConnectionProperties Properties { get; }
         public ContactUpdateType ChangeType { get; }
     }
 
@@ -46,11 +51,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Value: A dictionary property info structure with the value and the timestamp when it was updated
         /// </summary>
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, PropertyValue>> selfConnectionProperties = new ConcurrentDictionary<string, ConcurrentDictionary<string, PropertyValue>>();
-
-        /// <summary>
-        /// Collection of properties that were referenced at some point
-        /// </summary>
-        private readonly ConcurrentHashSet<string> referencedProperties = new ConcurrentHashSet<string>();
 
         /// <summary>
         /// Other connection properties maintained outside this contact
@@ -224,6 +224,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             Func<IEnumerable<string>, Task> affectedPropertiesTask,
             CancellationToken cancellationToken)
         {
+            // If the connection was dropped before stop now
+            if (!this.selfConnectionProperties.ContainsKey(connectionId))
+            {
+                return;
+            }
+
             this.targetContactsByConnection.TryRemove(connectionId, out var removed);
 
             // notify connection removed
@@ -272,7 +278,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // fire RemoveSelf change type
-            await FireChangeAsync(connectionId, ContactUpdateType.Unregister);
+            await FireChangeAsync(
+                connectionId,
+                affectedProperties.ToDictionary(p => p, p => new PropertyValue(null, default)),
+                ContactUpdateType.Unregister);
         }
 
         /// <summary>
@@ -281,27 +290,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <returns>The aggregated properties</returns>
         public Dictionary<string, object> GetAggregatedProperties()
         {
-            var nullProperties = this.referencedProperties.Values.ToDictionary(p => p, p => new PropertyValue(null, DateTime.MinValue));
-            var connectionProperties = this.selfConnectionProperties.Values.Cast<ConnectionProperties>()
-                .Union(this.otherConnectionProperties.Values)
-                .Union(new ConnectionProperties[] { nullProperties } );
-
-            return ContactDataHelpers.GetAggregatedProperties(connectionProperties);
-        }
-
-        /// <summary>
-        /// Return the connection properties for a single connection
-        /// </summary>
-        /// <param name="connectionId">The connection id</param>
-        /// <returns></returns>
-        internal ConnectionProperties GetConnectionProperties(string connectionId)
-        {
-            if (this.selfConnectionProperties.TryGetValue(connectionId, out var properties))
-            {
-                return properties;
-            }
-
-            return null;
+            return GetAggregatedProperties(null);
         }
 
         /// <summary>
@@ -321,7 +310,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             var propertyKeys = contactDataInfo.Values
                 .SelectMany(i => i.Values).SelectMany(p => p.Keys);
-            this.referencedProperties.AddValues(propertyKeys);
 
             this.otherConnectionProperties = contactDataInfo.Values
                 .SelectMany(i => i)
@@ -333,10 +321,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Process aggregated coming from a backplane provider
         /// </summary>
         /// <param name="contactDataChanged">The backplane data that changed</param>
+        /// <param name="affectedProperties">Affected properties</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         internal async Task OnContactChangedAsync(
             ContactDataChanged<ContactDataInfo> contactDataChanged,
+            IEnumerable<string> affectedProperties,
             CancellationToken cancellationToken)
         {
             // merge the contact data
@@ -351,10 +341,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // notify the changes to our subscribers and self
-            var aggregatedProperties = this.GetAggregatedProperties();
             await UpdatePropertiesAsync(
                 contactDataChanged.ConnectionId,
-                aggregatedProperties,
+                this.GetAggregatedProperties(affectedProperties),
                 ContactUpdateType.None,
                 mergeProperties: false,
                 cancellationToken);
@@ -381,6 +370,20 @@ namespace Microsoft.VsCloudKernel.SignalService
             return NotifyConnectionChangedAsync(SelfConnectionIds, connectionId, changeType, cancellationToken);
         }
 
+        private Dictionary<string, object> GetAggregatedProperties(IEnumerable<string> affectedProperties)
+        {
+            var connectionProperties = this.selfConnectionProperties.Values.Cast<ConnectionProperties>()
+                .Union(this.otherConnectionProperties.Values);
+
+            if (affectedProperties != null)
+            {
+                var nullProperties = affectedProperties.ToDictionary(p => p, p => new PropertyValue(null, DateTime.MinValue));
+                connectionProperties = connectionProperties.Union(new ConnectionProperties[] { nullProperties });
+            }
+
+            return ContactDataHelpers.GetAggregatedProperties(connectionProperties);
+        }
+
         private async Task UpdatePropertiesAsync(
             string connectionId,
             Dictionary<string, object> updateProperties,
@@ -388,12 +391,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             bool mergeProperties,
             CancellationToken cancellationToken)
         {
+            var lastUpdated = DateTime.UtcNow;
             if (mergeProperties)
             {
                 // merge properties
                 foreach (var item in updateProperties)
                 {
-                    MergeProperty(connectionId, item.Key, item.Value, DateTime.UtcNow);
+                    MergeProperty(connectionId, item.Key, item.Value, lastUpdated);
                 }
             }
 
@@ -414,7 +418,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             if (changedType != ContactUpdateType.None)
             {
                 // fire 
-                await FireChangeAsync(connectionId, changedType);
+                await FireChangeAsync(
+                    connectionId,
+                    updateProperties.ToDictionary(kvp => kvp.Key, kvp => new PropertyValue(kvp.Value, lastUpdated)),
+                    changedType);
             }
         }
 
@@ -427,14 +434,16 @@ namespace Microsoft.VsCloudKernel.SignalService
                 null);
         }
 
-        private async Task FireChangeAsync(string connectionId, ContactUpdateType changeType)
+        private async Task FireChangeAsync(
+            string connectionId,
+            ConnectionProperties properties,
+            ContactUpdateType changeType)
         {
-            await Changed?.InvokeAsync(this, new ContactChangedEventArgs(connectionId, changeType));
+            await Changed?.InvokeAsync(this, new ContactChangedEventArgs(connectionId, properties, changeType));
         }
 
         private void MergeProperty(string connectionId, string propertyName, object value, DateTime updated)
         {
-            this.referencedProperties.Add(propertyName);
             var propertyValue = new PropertyValue(value, updated);
             this.selfConnectionProperties.AddOrUpdate(
                 connectionId,

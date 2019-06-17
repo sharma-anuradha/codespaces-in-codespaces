@@ -30,6 +30,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 },
                 new Mock<ILogger<DatabaseBackplaneProvider>>().Object,
                 true);
+
+            await this.databaseBackplaneProvider.UpdateService("serviceId", "myRegion", default);
         }
 
         public Task DisposeAsync()
@@ -46,11 +48,13 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         {
             var callbackCompleted = new VisualStudio.Threading.AsyncManualResetEvent();
             ContactDataChanged<ContactDataInfo> callbackContactDataChanged = null;
-
+            string[] callbackAffectedProperties = null;
             OnContactChangedAsync onContactsChanged = (contactDataChanged,
-                    cancellationToken) =>
+                affectedProperties,
+                cancellationToken) =>
             {
                 callbackContactDataChanged = contactDataChanged;
+                callbackAffectedProperties = affectedProperties;
                 callbackCompleted.Set();
                 return Task.CompletedTask;
             };
@@ -78,6 +82,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.Equal("contact1", callbackContactDataChanged.ContactId);
             Assert.Equal(ContactUpdateType.Registration, callbackContactDataChanged.Type);
             Assert.Equal("available", callbackContactDataChanged.Data.GetAggregatedProperties()["status"]);
+            Assert.Contains("email", callbackAffectedProperties);
+            Assert.Contains("status", callbackAffectedProperties);
 
             callbackCompleted.Reset();
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,21 +78,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 this.connectionSubscriptions.TryRemove(key, out var properties);
             }
-        }
-
-        /// <summary>
-        /// Notify updated properties for this contact
-        /// </summary>
-        /// <param name="selfConnectionId">The self connection who caused the update</param>
-        /// <param name="contactDataProvider">The contact data provider</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task SendUpdatePropertiesAsync(
-            string selfConnectionId,
-            ContactDataProvider contactDataProvider,
-            CancellationToken cancellationToken)
-        {
-            await Task.WhenAll(GetSendUpdateProperties(selfConnectionId, contactDataProvider, cancellationToken));
         }
 
         protected ILogger<PresenceService> Logger => this.service.Logger;
@@ -249,14 +235,23 @@ namespace Microsoft.VsCloudKernel.SignalService
             return result;
         }
 
-        private IEnumerable<Task> GetSendUpdateProperties(
+        protected IEnumerable<Task> GetSendUpdateProperties(
             string connectionId,
+            ContactDataProvider contactDataProvider,
+            CancellationToken cancellationToken)
+        {
+            return GetSendUpdateProperties(connectionId, contactDataProvider.Properties.Keys, contactDataProvider, cancellationToken);
+        }
+
+        protected IEnumerable<Task> GetSendUpdateProperties(
+            string connectionId,
+            IEnumerable<string> affectedProperties,
             ContactDataProvider contactDataProvider,
             CancellationToken cancellationToken)
         {
             return GetSendUpdateValues(
                 connectionId,
-                contactDataProvider.Properties.Keys,
+                affectedProperties,
                 (selfConnectionId, propertyName) =>
                 {
                     object value = null;

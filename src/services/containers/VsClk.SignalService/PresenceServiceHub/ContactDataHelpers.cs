@@ -53,13 +53,23 @@ namespace Microsoft.VsCloudKernel.SignalService
                 contactDataInfo[contactDataChanged.ServiceId] = connectionsProperties;
             }
 
-            if (contactDataChanged.Data == null)
+            if (contactDataChanged.Type == ContactUpdateType.Unregister)
             {
                 connectionsProperties.Remove(contactDataChanged.ConnectionId);
             }
             else
             {
-                connectionsProperties[contactDataChanged.ConnectionId] = contactDataChanged.Data;
+                if (connectionsProperties.TryGetValue(contactDataChanged.ConnectionId, out var connectionProperties))
+                {
+                    foreach (var kvp in contactDataChanged.Data)
+                    {
+                        connectionProperties[kvp.Key] = kvp.Value;
+                    }
+                }
+                else
+                {
+                    connectionsProperties[contactDataChanged.ConnectionId] = contactDataChanged.Data;
+                }
             }
 
             // Note: next block will eliminate the empty buckets for a service that no connections

@@ -12,6 +12,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public sealed class ContactDataChanged<T>
+        where T : class
     {
         public ContactDataChanged(string serviceId, string connectionId, string contactId, ContactUpdateType updateContactType, T data)
         {
@@ -23,7 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             ConnectionId = connectionId;
             ContactId = contactId;
             Type = updateContactType;
-            Data = data;
+            Data = Requires.NotNull(data, nameof(data));
         }
 
         public string ServiceId { get; }
@@ -76,10 +77,12 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// Invoked when a remote contact has changed
     /// </summary>
     /// <param name="contactDataChanged">The contact data info that changed</param>
+    /// <param name="affectedProperties">Affected properties that impact this change</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public delegate Task OnContactChangedAsync(
             ContactDataChanged<ContactDataInfo> contactDataChanged,
+            string[] affectedProperties,
             CancellationToken cancellationToken);
 
     /// <summary>
