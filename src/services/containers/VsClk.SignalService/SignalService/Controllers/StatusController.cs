@@ -74,7 +74,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                 TokenValidationProvider?.Issuer,
                 BackplaneProviderTypes = this.presenceService.BackplaneProviders.Select(f => f.GetType().Name).ToArray(),
                 SecurityKeys = securityKeys,
-                ContactsStatistics = this.presenceService.GetContactStatistics(),
+                Metrics = this.presenceService.GetMetrics(),
             };
 
             return versionObj;

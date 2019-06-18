@@ -500,6 +500,11 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
                 return Task.FromResult(matchContacts);
             }
+
+            public Task UpdateMetricsAsync(string serviceId, object serviceInfo, PresenceServiceMetrics metrics, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

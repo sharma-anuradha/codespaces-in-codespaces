@@ -21,7 +21,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string MethodMatchContacts = "MatchContacts";
 
         public const string ContactScope = "Contact";
-        public const string ConnectionScope = "ConnectionScope";
+        public const string ConnectionScope = "Connection";
 
         public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, ContactReference contactReference)
         {

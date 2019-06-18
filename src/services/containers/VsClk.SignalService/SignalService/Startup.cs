@@ -148,6 +148,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 signalRService.AddAzureSignalR();
             }
 
+            // update our service metrics
+            services.AddHostedService<UpdateMetricsService>();
+
             // define long running health echo provider
             services.AddHostedService<SignalRHealthStatusProvider>();
 

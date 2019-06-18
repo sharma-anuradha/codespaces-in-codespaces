@@ -111,6 +111,16 @@ namespace Microsoft.VsCloudKernel.SignalService
         int Priority { get; }
 
         /// <summary>
+        /// Update the metrics of a service instance
+        /// </summary>
+        /// <param name="serviceId">The service id instance</param>
+        /// <param name="serviceInfo">Service Info</param>
+        /// <param name="metrics">Metrics instance </param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task UpdateMetricsAsync(string serviceId, object serviceInfo, PresenceServiceMetrics metrics, CancellationToken cancellationToken);
+
+        /// <summary>
         /// Return matching contacts
         /// </summary>
         /// <param name="matchProperties">The match properties to look for</param>

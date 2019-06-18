@@ -89,18 +89,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public DocumentClient Client { get; }
 
-        public async Task UpdateService(string id, string region, int totalConnections, CancellationToken cancellationToken)
-        {
-            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ServiceCollectionId);
-            await Client.UpsertDocumentAsync(documentCollectionUri, new ServiceDocument()
-            {
-                Id = id,
-                Region = region,
-                TotalConnections = totalConnections,
-                LastUpdate = DateTime.UtcNow
-            }, cancellationToken: cancellationToken);
-        }
-
         #region IAsyncDisposable
 
         public async Task DisposeAsync()
@@ -122,6 +110,18 @@ namespace Microsoft.VsCloudKernel.SignalService
         public OnMessageReceivedAsync MessageReceivedAsync { get; set; }
 
         public int Priority => 0;
+
+        public async Task UpdateMetricsAsync(string serviceId, object serviceInfo, PresenceServiceMetrics metrics, CancellationToken cancellationToken)
+        {
+            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ServiceCollectionId);
+            await Client.UpsertDocumentAsync(documentCollectionUri, new ServiceDocument()
+            {
+                Id = serviceId,
+                ServiceInfo = serviceInfo,
+                Metrics = metrics,
+                LastUpdate = DateTime.UtcNow
+            }, cancellationToken: cancellationToken);
+        }
 
         public async Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
         {
@@ -269,7 +269,24 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             var allServices = await ToListAsync(queryable, cancellationToken);
             var utcNow = DateTime.UtcNow;
-            this.activeServices = new HashSet<string>(allServices.Where(i => (utcNow - i.LastUpdate).TotalSeconds < StaleServiceSeconds).Select(d => d.Id));
+            var nonStaleServices = new HashSet<string>(allServices.Where(i => (utcNow - i.LastUpdate).TotalSeconds < StaleServiceSeconds).Select(d => d.Id));
+
+            // next block will delete stale documents
+            foreach(var doc in allServices)
+            {
+                if (!nonStaleServices.Contains(doc.Id))
+                {
+                    var documentUri = UriFactory.CreateDocumentUri(DatabaseId, ServiceCollectionId, doc.Id);
+                    try
+                    {
+                        await Client.DeleteDocumentAsync(documentUri, cancellationToken: cancellationToken);
+                    }
+                    catch { }
+                }
+            }
+
+            // update
+            this.activeServices = nonStaleServices;
         }
 
         /// <summary>
@@ -448,11 +465,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         [JsonProperty("id")]
         public string Id { get; set; }
 
-        [JsonProperty("region")]
-        public string Region { get; set; }
+        [JsonProperty("serviceInfo")]
+        public object ServiceInfo { get; set; }
 
-        [JsonProperty("totalConnections")]
-        public int TotalConnections { get; set; }
+        [JsonProperty("metrics")]
+        public PresenceServiceMetrics Metrics { get; set; }
 
         [JsonProperty("lastUpdate")]
         public DateTime LastUpdate { get; set; }

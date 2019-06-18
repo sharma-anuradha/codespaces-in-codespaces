@@ -68,7 +68,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                         },
                         OnAuthenticationFailed = (afctx) =>
                         {
-                            logger.LogError(afctx.Exception, "Authentication failed");
+                            if (!(afctx.Exception is SecurityTokenExpiredException))
+                            {
+                                logger.LogError(afctx.Exception, "Authentication failed");
+                            }
+
                             return Task.CompletedTask;
                         },
                         OnTokenValidated = (tctx) =>

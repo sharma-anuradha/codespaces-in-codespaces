@@ -164,7 +164,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 using (Logger.BeginScope(
                     (PresenceServiceScopes.MethodScope, Methods.ConnectionChanged)))
                 {
-                    Logger.LogDebug($"Notify-> selfConnectionId:{selfConnectionId} changeType:{changeType}");
+                    Logger.LogDebug($"Notify-> connectionId:{connectionId} selfConnectionId:{selfConnectionId} changeType:{changeType}");
                 }
 
                 return client.SendAsync(

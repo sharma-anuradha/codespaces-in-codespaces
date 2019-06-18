@@ -31,7 +31,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 new Mock<ILogger<DatabaseBackplaneProvider>>().Object,
                 true);
 
-            await this.databaseBackplaneProvider.UpdateService("serviceId", "myRegion", default);
+            await this.databaseBackplaneProvider.UpdateMetricsAsync("serviceId", null, default, default);
         }
 
         public Task DisposeAsync()

@@ -16,30 +16,6 @@ namespace Microsoft.VsCloudKernel.SignalService
     using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
 
     /// <summary>
-    /// Return Contacts statistics
-    /// </summary>
-    public class ContactsStatistics
-    {
-        internal ContactsStatistics(
-            int count,
-            int selfCount,
-            int totalSelfCount,
-            int stubCount)
-        {
-            Count = count;
-            SelfCount = selfCount;
-            TotalSelfCount = totalSelfCount;
-            StubCount = stubCount;
-        }
-
-        public int Count { get; }
-        public int SelfCount { get; }
-        public int TotalSelfCount { get; }
-
-        public int StubCount { get; }
-    }
-
-    /// <summary>
     /// The non Hub Service class instance that manage all the registered contacts
     /// </summary>
     public class PresenceService
@@ -71,9 +47,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public IReadOnlyCollection<IBackplaneProvider> BackplaneProviders => this.backplaneProviders.ToList();
 
-        public ContactsStatistics GetContactStatistics()
+        public PresenceServiceMetrics GetMetrics()
         {
-            return new ContactsStatistics(
+            return new PresenceServiceMetrics(
                 Contacts.Count,
                 Contacts.Count(kvp => !kvp.Value.IsSelfEmpty),
                 Contacts.Sum(kvp => kvp.Value.SelfConnectionsCount),
@@ -88,6 +64,21 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.backplaneProviders.Add(backplaneProvider);
             backplaneProvider.ContactChangedAsync = OnContactChangedAsync;
             backplaneProvider.MessageReceivedAsync = OnMessageReceivedAsync;
+        }
+
+        public async Task UpdateBackplaneMetrics(object serviceInfo, CancellationToken cancellationToken)
+        {
+            foreach (var backplaneProvider in this.backplaneProviders)
+            {
+                try
+                {
+                    await backplaneProvider.UpdateMetricsAsync(ServiceId, serviceInfo, GetMetrics(), cancellationToken);
+                }
+                catch (Exception error)
+                {
+                    Logger.LogError(error, $"Failed to update metrics using backplane provider:{backplaneProvider.GetType().Name}");
+                }
+            }
         }
 
         public ILogger<PresenceService> Logger { get; }
