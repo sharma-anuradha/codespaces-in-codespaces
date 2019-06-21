@@ -27,7 +27,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.logger = logger;
         }
 
-        public Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId)
+        public Task<Dictionary<string, IDictionary<string, PropertyValue>>> GetSelfConnectionsAsync(string contactId)
         {
             return this.presenceService.GetSelfConnectionsAsync(contactId, Context.ConnectionAborted);
         }
@@ -116,7 +116,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 await this.presenceService.UnregisterSelfContactAsync(
                     contextRegisteredContactRef,
                     (properties) => Task.Delay(TimeSpan.FromSeconds(DisconnectSubscriptionDelaySecs)),
-                    Context.ConnectionAborted);
+                    default);
             }
 
             await base.OnDisconnectedAsync(exception);

@@ -70,7 +70,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         event EventHandler<ReceiveMessageEventArgs> MessageReceived;
         event EventHandler<ConnectionChangedEventArgs> ConnectionChanged;
 
-        Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken);
+        Task<Dictionary<string, Dictionary<string, PropertyValue>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken);
 
         Task<Dictionary<string, object>> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken);
 

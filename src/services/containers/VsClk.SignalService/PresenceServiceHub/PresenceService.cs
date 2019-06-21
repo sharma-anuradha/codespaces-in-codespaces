@@ -87,10 +87,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         internal ConcurrentDictionary<string, Contact> Contacts { get; } = new ConcurrentDictionary<string, Contact>();
 
-        public async Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, ConnectionProperties>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken)
         {
             var targetSelfContact = await GetOrCreateContactAsync(contactId, cancellationToken);
-            return targetSelfContact.GetSelfConnections().GetProperties();
+            return targetSelfContact.GetSelfConnections();
         }
 
         public async Task RegisterSelfContactAsync(ContactReference contactRef, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
@@ -327,7 +327,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodUnregisterSelfContact, contactReference))
             {
-                Logger.LogDebug($"UnregisterSelfContactAsync");
+                Logger.LogDebug($"Unregister self contact...");
             }
 
             var registeredSelfContact = GetRegisteredContact(contactReference.Id);
@@ -352,8 +352,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public virtual Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingPropertes, CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (Logger.BeginScope(
-                 (PresenceServiceScopes.MethodScope, PresenceServiceScopes.MethodMatchContacts)))
+            using (Logger.BeginSingleScope(
+                 (LoggerScopeHelpers.MethodScope, PresenceServiceScopes.MethodMatchContacts)))
             {
                 Logger.LogDebug($"matchingPropertes:[{string.Join(",", matchingPropertes.Select(a => a.ConvertToString()))}]");
             }

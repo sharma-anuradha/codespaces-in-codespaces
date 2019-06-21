@@ -13,6 +13,7 @@ using Microsoft.VsCloudKernel.SignalService.Client;
 using Microsoft.VsCloudKernel.SignalService.Common;
 using Microsoft.VisualStudio.Threading;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace LivesharePresenceClientTest
 {
@@ -267,7 +268,7 @@ namespace LivesharePresenceClientTest
                     {
                         foreach (var kvp in selfConnections)
                         {
-                            Console.WriteLine($"connection id:{kvp.Key} => {kvp.Value.ConvertToString()}");
+                            Console.WriteLine($"connection id:{kvp.Key} => {JsonConvert.SerializeObject(kvp.Value, Formatting.None)}");
                         }
                     }
                 }

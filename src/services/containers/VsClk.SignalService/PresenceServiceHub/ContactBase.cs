@@ -114,8 +114,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             var client = Client(connectionSubscription.Item1);
             if (client != null)
             {
-                using (Logger.BeginScope(
-                    (PresenceServiceScopes.MethodScope, Methods.UpdateValues)))
+                using (Logger.BeginSingleScope(
+                    (LoggerScopeHelpers.MethodScope, Methods.UpdateValues)))
                 {
                     Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{ContactId} notifyProperties:{notifyProperties.ConvertToString()}");
                 }
@@ -161,8 +161,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             var client = Client(connectionId);
             if (client != null)
             {
-                using (Logger.BeginScope(
-                    (PresenceServiceScopes.MethodScope, Methods.ConnectionChanged)))
+                using (Logger.BeginSingleScope(
+                    (LoggerScopeHelpers.MethodScope, Methods.ConnectionChanged)))
                 {
                     Logger.LogDebug($"Notify-> connectionId:{connectionId} selfConnectionId:{selfConnectionId} changeType:{changeType}");
                 }

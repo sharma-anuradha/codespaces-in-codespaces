@@ -232,9 +232,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             this.targetContactsByConnection.TryRemove(connectionId, out var removed);
 
-            // notify connection removed
-            await NotifyConnectionChangedAsync(connectionId, ConnectionChangeType.Removed, cancellationToken);
-
             IEnumerable<Task> sendTasks = null;
             IEnumerable<string> affectedProperties;
             if (affectedPropertiesTask == null)
@@ -282,6 +279,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 connectionId,
                 affectedProperties.ToDictionary(p => p, p => new PropertyValue(null, default)),
                 ContactUpdateType.Unregister);
+
+            // notify connection removed
+            await NotifyConnectionChangedAsync(connectionId, ConnectionChangeType.Removed, cancellationToken);
         }
 
         /// <summary>
@@ -308,9 +308,6 @@ namespace Microsoft.VsCloudKernel.SignalService
          */
         internal void SetOtherContactData(ContactDataInfo contactDataInfo)
         {
-            var propertyKeys = contactDataInfo.Values
-                .SelectMany(i => i.Values).SelectMany(p => p.Keys);
-
             this.otherConnectionProperties = contactDataInfo.Values
                 .SelectMany(i => i)
                 .Where(p => !this.selfConnectionProperties.ContainsKey(p.Key))
@@ -329,6 +326,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             IEnumerable<string> affectedProperties,
             CancellationToken cancellationToken)
         {
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodContactOnContactChanged, contactDataChanged.ContactId, contactDataChanged.ConnectionId))
+            {
+                Logger.LogDebug($"serviceId:{contactDataChanged.ServiceId} type:{contactDataChanged.Type}");
+            }
+
             // merge the contact data
             SetOtherContactData(contactDataChanged.Data);
 

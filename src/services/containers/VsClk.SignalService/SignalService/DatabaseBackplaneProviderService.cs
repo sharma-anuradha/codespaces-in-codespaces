@@ -40,6 +40,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 try
                 {
                     var databaseBackplaneProvider = await DatabaseBackplaneProvider.CreateAsync(
+                        this.presenceService.ServiceId,
                         new DatabaseSettings()
                         {
                             EndpointUrl = endpointUrl,

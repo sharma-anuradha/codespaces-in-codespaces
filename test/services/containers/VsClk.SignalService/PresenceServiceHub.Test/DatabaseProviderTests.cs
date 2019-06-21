@@ -23,6 +23,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         public async Task InitializeAsync()
         {
             this.databaseBackplaneProvider = await DatabaseBackplaneProvider.CreateAsync(
+                Guid.NewGuid().ToString(),
                 new DatabaseSettings()
                 {
                     EndpointUrl = Uri,

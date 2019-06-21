@@ -31,7 +31,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         private static readonly string ServiceCollectionId = "services";
         private static readonly string ContactDataCollectionId = "contactsData";
         private static readonly string MessageCollectionId = "messages";
-        private static readonly string LeaseCollectionId = "leases";
+        private static readonly string LeaseCollectionBaseId = "leases";
+
+        // Logger method scopes
+        private const string MethodSendMessage = "DatabaseProvider.SendMessageAsync";
+        private const string MethodUpdateContact = "DatabaseProvider.UpdateContact";
+        private const string MethodOnServiceDocumentsChanged = "DatabaseProvider.OnServiceDocumentsChanged";
+        private const string MethodOnContactDocumentsChanged = "DatabaseProvider.OnContactDocumentsChanged";
+        private const string MethodOnMessageDocumentsChanged = "DatabaseProvider.OnMessageDocumentsChanged";
 
         private const int StaleServiceSeconds = 120;
 
@@ -65,6 +72,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         public static async Task<DatabaseBackplaneProvider> CreateAsync(
+            string serviceId,
             DatabaseSettings databaseSettings,
             ILogger<DatabaseBackplaneProvider> logger,
             bool deleteDabatase = false)
@@ -83,7 +91,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
 
-            await databaseBackplaneProvider.InitializeAsync();
+            await databaseBackplaneProvider.InitializeAsync(serviceId);
             return databaseBackplaneProvider;
         }
 
@@ -147,7 +155,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
         {
-            this.logger.LogDebug($"DatabaseProvider.SendMessageAsync -> contactId:{messageData.FromContact.Id} targetContactId:{messageData.TargetContact.Id}");
+            using (this.logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, MethodSendMessage)))
+            {
+                this.logger.LogDebug($"contactId:{messageData.FromContact.Id} targetContactId:{messageData.TargetContact.Id}");
+            }
 
             var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, MessageCollectionId);
             await Client.CreateDocumentAsync(documentCollectionUri, new MessageDocument()
@@ -164,7 +176,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
-            this.logger.LogDebug($"DatabaseProvider.UpdateContactAsync -> contactId:{contactDataChanged.ContactId}");
+            using (this.logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, MethodUpdateContact)))
+            {
+                this.logger.LogDebug($"contactId:{contactDataChanged.ContactId}");
+            }
 
             ContactDataInfo contactDataInfo;
             var contactDataDocument = await GetContactDataDocumentAsync(contactDataChanged.ContactId, cancellationToken);
@@ -199,49 +215,77 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task OnServiceDocumentsChangedAsync(IReadOnlyList<Document> docs)
         {
-            this.logger.LogDebug($"DatabaseProvider.OnServiceDocumentsChangedAsync -> servicesIds:{string.Join(",", docs.Select(d => d.Id))}");
+            using (this.logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, MethodOnServiceDocumentsChanged)))
+            {
+                this.logger.LogDebug($"servicesIds:{string.Join(",", docs.Select(d => d.Id))}");
+            }
 
             await LoadActiveServicesAsync(default(CancellationToken));
         }
 
         private async Task OnContactDocumentsChangedAsync(IReadOnlyList<Document> docs)
         {
-            this.logger.LogDebug($"DatabaseProvider.OnContactDocumentsChanged -> contactIds:{string.Join(",", docs.Select(d => d.Id))}");
+            using (this.logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, MethodOnContactDocumentsChanged)))
+            {
+                this.logger.LogDebug($"contactIds:{string.Join(",", docs.Select(d => d.Id))}");
+            }
 
             if (ContactChangedAsync != null)
             {
                 foreach (var doc in docs)
                 {
-                    var contact = await ReadAsAsync<ContactDataDocument>(doc);
-                    var contactDataInfoChanged = new ContactDataChanged<ContactDataInfo>(
-                        contact.ServiceId,
-                        contact.ConnectionId,
-                        contact.Id,
-                        contact.UpdateType,
-                        ToContactData(contact));
+                    try
+                    {
+                        var contact = await ReadAsAsync<ContactDataDocument>(doc);
+                        var contactDataInfoChanged = new ContactDataChanged<ContactDataInfo>(
+                            contact.ServiceId,
+                            contact.ConnectionId,
+                            contact.Id,
+                            contact.UpdateType,
+                            ToContactData(contact));
 
-                    await ContactChangedAsync(contactDataInfoChanged, contact.Properties ?? Array.Empty<string>(), default(CancellationToken));
+                        await ContactChangedAsync(contactDataInfoChanged, contact.Properties ?? Array.Empty<string>(), default(CancellationToken));
+                    }
+                    catch (Exception error)
+                    {
+                        this.logger.LogError(error, $"Failed when processing contact document:{doc.Id}");
+
+                    }
                 }
             }
         }
 
         private async Task OnMessageDocumentsChangedAsync(IReadOnlyList<Document> docs)
         {
-            this.logger.LogDebug($"DatabaseProvider.OnMessageDocumentsChangedAsync -> messageIds:{string.Join(",", docs.Select(d => d.Id))}");
+            using (this.logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, MethodOnMessageDocumentsChanged)))
+            {
+                this.logger.LogDebug($"messageIds:{string.Join(",", docs.Select(d => d.Id))}");
+            }
 
             if (MessageReceivedAsync != null)
             {
                 foreach (var doc in docs)
                 {
-                    var message = await ReadAsAsync<MessageDocument>(doc);
-                    await MessageReceivedAsync(
-                        message.SourceId,
-                        new MessageData(
-                            new ContactReference(message.ContactId, null),
-                            new ContactReference(message.TargetContactId, message.TargetConnectionId),
-                            message.Type,
-                            JToken.FromObject(message.Body)),
-                            default(CancellationToken));
+                    try
+                    {
+                        var message = await ReadAsAsync<MessageDocument>(doc);
+                        await MessageReceivedAsync(
+                            message.SourceId,
+                            new MessageData(
+                                new ContactReference(message.ContactId, null),
+                                new ContactReference(message.TargetContactId, message.TargetConnectionId),
+                                message.Type,
+                                JToken.FromObject(message.Body)),
+                                default(CancellationToken));
+                    }
+                    catch (Exception error)
+                    {
+                        this.logger.LogError(error, $"Failed when processing message document:{doc.Id}");
+
+                    }
                 }
             }
         }
@@ -272,7 +316,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var nonStaleServices = new HashSet<string>(allServices.Where(i => (utcNow - i.LastUpdate).TotalSeconds < StaleServiceSeconds).Select(d => d.Id));
 
             // next block will delete stale documents
-            foreach(var doc in allServices)
+            foreach (var doc in allServices)
             {
                 if (!nonStaleServices.Contains(doc.Id))
                 {
@@ -293,14 +337,18 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Create a change feed processor based on a collection id
         /// </summary>
         /// <param name="collectionId">The target collection id</param>
+        /// <param name="leaseCollectionId">The lease collection id to use</param>
         /// <param name="hostName">Reference host name</param>
         /// <param name="onDocumentsChanged">Callback</param>
         /// <returns></returns>
         private async Task<IChangeFeedProcessor> CreateChangeFeedProcessorAsync(
             string collectionId,
+            string leaseCollectionId,
             string hostName,
             Func<IReadOnlyList<Document>, Task> onDocumentsChanged)
         {
+            this.logger.LogInformation($"CreateChangeFeedProcessorAsync collectionId:{collectionId} hostName:{hostName}");
+
             var feedCollectionInfo = new DocumentCollectionInfo()
             {
                 DatabaseName = DatabaseId,
@@ -312,7 +360,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var leaseCollectionInfo = new DocumentCollectionInfo()
             {
                 DatabaseName = DatabaseId,
-                CollectionName = LeaseCollectionId,
+                CollectionName = leaseCollectionId,
                 Uri = new Uri(this.databaseSettings.EndpointUrl),
                 MasterKey = this.databaseSettings.AuthorizationKey
             };
@@ -329,7 +377,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return feedProcessor;
         }
 
-        private async Task InitializeAsync()
+        private async Task InitializeAsync(string serviceId)
         {
             this.logger.LogInformation($"Creating database:{DatabaseId} if not exists");
 
@@ -366,11 +414,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                     OfferThroughput = MessageRequestPerUnitThroughput
                 });
 
+            var leaseCollectionId = $"{LeaseCollectionBaseId}-{serviceId}";
             // Create 'leases'
-            this.logger.LogInformation($"Creating Collection:{LeaseCollectionId}");
+            this.logger.LogInformation($"Creating Collection:{leaseCollectionId}");
             await Client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(DatabaseId),
-                CreateDocumentCollectionDefinition(LeaseCollectionId),
+                CreateDocumentCollectionDefinition(leaseCollectionId),
                 new RequestOptions
                 {
                     OfferThroughput = LeasesRequestPerUnitThroughput
@@ -379,18 +428,21 @@ namespace Microsoft.VsCloudKernel.SignalService
             // Create 'services' processor
             this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
                 ServiceCollectionId,
+                leaseCollectionId,
                 "PresenceServiceR-Services",
                 OnServiceDocumentsChangedAsync));
 
             // Create 'contacts' processor
             this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
                 ContactDataCollectionId,
+                leaseCollectionId,
                 "PresenceServiceR-Contacts",
                 OnContactDocumentsChangedAsync));
 
             // Create 'message' processor
             this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
                 MessageCollectionId,
+                leaseCollectionId,
                 "PresenceServiceR-Messages",
                 OnMessageDocumentsChangedAsync));
 
@@ -403,7 +455,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var contactDataInfo = ((JObject)contactDataDocument.ServiceConnections).ToObject<ContactDataInfo>();
 
             // Note: next block will remove 'stale' service entries
-            foreach(var serviceId in contactDataInfo.Keys.Where(serviceId => !this.activeServices.Contains(serviceId)).ToArray())
+            foreach (var serviceId in contactDataInfo.Keys.Where(serviceId => !this.activeServices.Contains(serviceId)).ToArray())
             {
                 contactDataInfo.Remove(serviceId);
             }

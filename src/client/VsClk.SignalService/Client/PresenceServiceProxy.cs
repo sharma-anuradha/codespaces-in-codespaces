@@ -45,10 +45,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         public event EventHandler<ReceiveMessageEventArgs> MessageReceived;
         public event EventHandler<ConnectionChangedEventArgs> ConnectionChanged;
 
-        public async Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, Dictionary<string, PropertyValue>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken)
         {
             var result = await this.connection.InvokeAsync<JObject>(nameof(IPresenceServiceHub.GetSelfConnectionsAsync), contactId, cancellationToken);
-            return ToPropertyDictionary(result);
+            return ToConnectionsProperties(result);
         }
 
         public async Task<Dictionary<string, object>> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
@@ -111,6 +111,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         private static Dictionary<string, Dictionary<string, object>> ToPropertyDictionary(JObject jObject)
         {
             return ((IDictionary<string, JToken>)jObject).ToDictionary(kvp => kvp.Key, kvp => ((IDictionary<string, JToken>)kvp.Value).ToDictionary(kvp2 => kvp2.Key, kvp2 => ToObject(kvp2.Value)));
+        }
+
+        private static Dictionary<string, Dictionary<string, PropertyValue>> ToConnectionsProperties(JObject jObject)
+        {
+            return ((IDictionary<string, JToken>)jObject).ToDictionary(kvp => kvp.Key, kvp => ((IDictionary<string, JToken>)kvp.Value).ToDictionary(kvp2 => kvp2.Key, kvp2 => kvp2.Value.ToObject<PropertyValue>()));
         }
 
         private static object ToObject(object value)

@@ -9,6 +9,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
     /// </summary>
     internal static class LoggerScopeHelpers
     {
+        public const string MethodScope = "Method";
+
         public static IDisposable BeginScope(this ILogger logger, params (string, object)[] scopes )
         {
             var loggerScope = new JObject();
@@ -18,6 +20,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             }
 
             return logger.BeginScope(loggerScope);
+        }
+
+        public static IDisposable BeginSingleScope(this ILogger logger, (string, object) scope)
+        {
+            return BeginScope(logger, new (string, object)[] { scope });
         }
     }
 }

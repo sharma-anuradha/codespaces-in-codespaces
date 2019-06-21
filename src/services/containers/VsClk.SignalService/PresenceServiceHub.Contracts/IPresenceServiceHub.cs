@@ -13,7 +13,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// </summary>
         /// <param name="contactId"></param>
         /// <returns></returns>
-        Task<Dictionary<string, Dictionary<string, object>>> GetSelfConnectionsAsync(string contactId);
+        Task<Dictionary<string, IDictionary<string, PropertyValue>>> GetSelfConnectionsAsync(string contactId);
 
         /// <summary>
         /// Register a self contact for later subscription

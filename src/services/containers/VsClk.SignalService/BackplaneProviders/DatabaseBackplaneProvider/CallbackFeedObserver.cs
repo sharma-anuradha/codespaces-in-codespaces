@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -39,6 +40,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly Func<IReadOnlyList<Document>, Task> onDocumentsChanged;
         private readonly ILogger logger;
 
+        // Logger method scopes
+        private const string MethodClose = "CallbackFeedObserver.Close";
+        private const string MethodOpen = "CallbackFeedObserver.Open";
+
         public CallbackFeedObserver(string feedName,Func<IReadOnlyList<Document>, Task> onDcoumentsChanged, ILogger logger)
         {
             this.feedName = feedName;
@@ -48,13 +53,23 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public Task CloseAsync(IChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason)
         {
-            this.logger.LogDebug($"CallbackFeedObserver.CloseAsync -> feed:{this.feedName}");
+            using (this.logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, MethodClose)))
+            {
+                this.logger.LogDebug($"feed:{this.feedName} reason:{reason}");
+            }
+
             return Task.CompletedTask;
         }
 
         public Task OpenAsync(IChangeFeedObserverContext context)
         {
-            this.logger.LogDebug($"CallbackFeedObserver.OpenAsync -> feed:{this.feedName}");
+            using (this.logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, MethodOpen)))
+            {
+                this.logger.LogDebug($"feed:{this.feedName}");
+            }
+
             return Task.CompletedTask;
         }
 
