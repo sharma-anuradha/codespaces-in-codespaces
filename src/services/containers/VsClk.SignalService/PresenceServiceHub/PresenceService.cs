@@ -18,7 +18,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// The non Hub Service class instance that manage all the registered contacts
     /// </summary>
-    public class PresenceService
+    public class PresenceService : IAsyncDisposable
     {
         private readonly List<IBackplaneProvider> backplaneProviders = new List<IBackplaneProvider>();
 
@@ -43,6 +43,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             logger.LogInformation($"Service created with id:{ServiceId}");
         }
 
+        #region IAsyncDisposable
+
+        public async Task DisposeAsync()
+        {
+            Logger.LogDebug($"Dispose");
+
+            foreach (var disposable in this.backplaneProviders.Cast<IAsyncDisposable>())
+            {
+                await disposable.DisposeAsync();
+            }
+        }
+
+        #endregion
         public string ServiceId { get; }
 
         public IReadOnlyCollection<IBackplaneProvider> BackplaneProviders => this.backplaneProviders.ToList();

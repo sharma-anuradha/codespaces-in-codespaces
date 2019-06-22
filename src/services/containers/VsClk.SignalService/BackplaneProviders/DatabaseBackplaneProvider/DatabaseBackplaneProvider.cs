@@ -50,6 +50,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly DatabaseSettings databaseSettings;
         private readonly List<IChangeFeedProcessor> feedProcessors = new List<IChangeFeedProcessor>();
         private ILogger<DatabaseBackplaneProvider> logger;
+        private DocumentCollection providerLeaseColletion;
 
         private HashSet<string> activeServices;
 
@@ -101,10 +102,14 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task DisposeAsync()
         {
+            this.logger.LogDebug($"DatabaseProvider.Dispose");
+
             foreach (var feedProcessor in this.feedProcessors)
             {
                 await feedProcessor.StopAsync();
             }
+
+            await Client.DeleteDocumentCollectionAsync(this.providerLeaseColletion.SelfLink);
 
             Client.Dispose();
         }
@@ -149,7 +154,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
-            var contactDataCoument = await GetContactDataDocumentAsync(contactId, cancellationToken);
+            var contactDataCoument = (await GetContactDataDocumentAsync(contactId, cancellationToken)).Item1;
             return contactDataCoument != null ? ToContactData(contactDataCoument) : null;
         }
 
@@ -176,37 +181,38 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
-            using (this.logger.BeginSingleScope(
-                (LoggerScopeHelpers.MethodScope, MethodUpdateContact)))
-            {
-                this.logger.LogDebug($"contactId:{contactDataChanged.ContactId}");
-            }
-
             ContactDataInfo contactDataInfo;
-            var contactDataDocument = await GetContactDataDocumentAsync(contactDataChanged.ContactId, cancellationToken);
-            if (contactDataDocument == null)
+            var contactDataDocumentInfo = await GetContactDataDocumentAsync(contactDataChanged.ContactId, cancellationToken);
+            if (contactDataDocumentInfo.Item1 == null)
             {
                 contactDataInfo = new Dictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>();
             }
             else
             {
-                contactDataInfo = ToContactData(contactDataDocument);
+                contactDataInfo = ToContactData(contactDataDocumentInfo.Item1);
             }
 
             contactDataInfo.UpdateConnectionProperties(contactDataChanged);
 
             var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactDataCollectionId);
-            await Client.UpsertDocumentAsync(documentCollectionUri, new ContactDataDocument()
+            var resonse = await Client.UpsertDocumentAsync(documentCollectionUri, new ContactDataDocument()
             {
                 Id = contactDataChanged.ContactId,
                 ServiceId = contactDataChanged.ServiceId,
                 ConnectionId = contactDataChanged.ConnectionId,
                 UpdateType = contactDataChanged.Type,
                 Properties = contactDataChanged.Data.Keys.ToArray(),
-                Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(Properties.Email)?.ToLowerInvariant() ?? contactDataDocument?.Email,
+                Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(Properties.Email)?.ToLowerInvariant() ?? contactDataDocumentInfo.Item1?.Email,
                 ServiceConnections = JObject.FromObject(contactDataInfo),
                 LastUpdate = DateTime.UtcNow
             }, cancellationToken: cancellationToken);
+
+            using (this.logger.BeginScope(
+                (LoggerScopeHelpers.MethodScope, MethodUpdateContact),
+                (LoggerScopeHelpers.MethodPerfScope, (resonse.RequestLatency + contactDataDocumentInfo.Item2).Milliseconds)))
+            {
+                this.logger.LogDebug($"contactId:{contactDataChanged.ContactId}");
+            }
         }
 
         #endregion
@@ -226,11 +232,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task OnContactDocumentsChangedAsync(IReadOnlyList<Document> docs)
         {
-            using (this.logger.BeginSingleScope(
-                (LoggerScopeHelpers.MethodScope, MethodOnContactDocumentsChanged)))
-            {
-                this.logger.LogDebug($"contactIds:{string.Join(",", docs.Select(d => d.Id))}");
-            }
+            var sw = new System.Diagnostics.Stopwatch();
 
             if (ContactChangedAsync != null)
             {
@@ -255,6 +257,14 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                 }
             }
+
+            using (this.logger.BeginScope(
+                (LoggerScopeHelpers.MethodScope, MethodOnContactDocumentsChanged),
+                (LoggerScopeHelpers.MethodPerfScope, sw.ElapsedMilliseconds)))
+            {
+                this.logger.LogDebug($"contactIds:{string.Join(",", docs.Select(d => d.Id))}");
+            }
+
         }
 
         private async Task OnMessageDocumentsChangedAsync(IReadOnlyList<Document> docs)
@@ -292,17 +302,17 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         #endregion
 
-        private async Task<ContactDataDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
+        private async Task<(ContactDataDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
         {
             try
             {
                 var documentUri = UriFactory.CreateDocumentUri(DatabaseId, ContactDataCollectionId, contactId);
                 var response = await Client.ReadDocumentAsync<ContactDataDocument>(documentUri, cancellationToken: cancellationToken);
-                return response.Document;
+                return (response.Document, response.RequestLatency);
             }
             catch (DocumentClientException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
-                return null;
+                return (null, TimeSpan.FromMilliseconds(0));
             }
         }
 
@@ -417,13 +427,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             var leaseCollectionId = $"{LeaseCollectionBaseId}-{serviceId}";
             // Create 'leases'
             this.logger.LogInformation($"Creating Collection:{leaseCollectionId}");
-            await Client.CreateDocumentCollectionIfNotExistsAsync(
+            this.providerLeaseColletion = (await Client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(DatabaseId),
                 CreateDocumentCollectionDefinition(leaseCollectionId),
                 new RequestOptions
                 {
                     OfferThroughput = LeasesRequestPerUnitThroughput
-                });
+                })).Resource;
 
             // Create 'services' processor
             this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(

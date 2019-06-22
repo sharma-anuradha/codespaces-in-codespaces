@@ -7,9 +7,9 @@ using Microsoft.Extensions.Options;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Update the metrics of the presence service
+    /// Background service attached to the presence service lifetime
     /// </summary>
-    public class UpdateMetricsService : BackgroundService
+    public class PresenceBackgroundService : BackgroundService
     {
         private readonly WarmupService warmupService;
         private readonly IOptions<AppSettings> appSettingsProvider;
@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private const int TimespanUpdateServiceSecs = 45;
 
-        public UpdateMetricsService(
+        public PresenceBackgroundService(
             WarmupService warmupService,
             IOptions<AppSettings> appSettingsProvider,
             PresenceService service)
@@ -32,6 +32,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await this.warmupService.CompletedValueAsync();
+
+            // next block will update the backplane metrics
             while (true)
             {
                 await this.presenceService.UpdateBackplaneMetrics(new
@@ -41,6 +43,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                 await Task.Delay(TimeSpan.FromSeconds(TimespanUpdateServiceSecs), stoppingToken);
             }
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            // shutdown of the presence service
+            await this.presenceService.DisposeAsync();
+            await base.StopAsync(cancellationToken);
         }
     }
 }

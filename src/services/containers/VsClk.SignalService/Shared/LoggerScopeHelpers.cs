@@ -10,6 +10,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
     internal static class LoggerScopeHelpers
     {
         public const string MethodScope = "Method";
+        public const string MethodPerfScope = "MethodPerf";
 
         public static IDisposable BeginScope(this ILogger logger, params (string, object)[] scopes )
         {
