@@ -1,8 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
@@ -30,25 +29,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             this.startup = startup;
         }
 
-        private ITokenValidationProvider TokenValidationProvider => this.startup.TokenValidationProvider;
-
         // GET: version
         [HttpGet]
         public object Get()
         {
-            var securityKeys = TokenValidationProvider?.SecurityKeys.Select(k =>
-            {
-                if (k is X509SecurityKey securityKey)
-                {
-                    return new
-                    {
-                        securityKey.Certificate.Version,
-                        IssuerName = securityKey.Certificate.IssuerName.Name
-                    };
-                }
-                return null;
-            }).ToArray();
-
             dynamic versionObj = new
             {
                 this.presenceService.ServiceId,
@@ -63,17 +47,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                     this.appSettings.Stamp,
                     this.appSettings.BaseUri,
                     this.appSettings.ImageTag,
-                    this.appSettings.AuthenticateMetadataServiceUri,
+                    this.appSettings.AuthenticateProfileServiceUri,
                     this.appSettings.UseTelemetryProvider
                 },
+                this.startup.EnableAuthentication,
                 Startup.AzureSignalREnabled,
                 this.startup.UseAzureSignalR,
                 AzureSignalRConnections = GetAllAzureSignalRConnections(),
-                TokenValidatorType = TokenValidationProvider?.GetType().Name,
-                TokenValidationProvider?.Audience,
-                TokenValidationProvider?.Issuer,
                 BackplaneProviderTypes = this.presenceService.BackplaneProviders.Select(f => f.GetType().Name).ToArray(),
-                SecurityKeys = securityKeys,
                 Metrics = this.presenceService.GetMetrics(),
             };
 

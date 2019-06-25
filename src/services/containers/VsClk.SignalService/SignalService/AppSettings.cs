@@ -11,7 +11,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public bool UseTelemetryProvider { get; set; }
 
-        public string AuthenticateMetadataServiceUri { get; set; }
+        public string AuthenticateProfileServiceUri { get; set; }
 
         public string AzureCosmosDbEndpointUrl { get; set; }
 

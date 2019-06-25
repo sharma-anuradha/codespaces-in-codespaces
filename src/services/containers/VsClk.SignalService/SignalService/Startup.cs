@@ -6,7 +6,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,7 +18,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     public interface IStartup
     {
         bool UseAzureSignalR { get; }
-        ITokenValidationProvider TokenValidationProvider { get; }
+        bool EnableAuthentication { get; }
         IConfigurationRoot Configuration { get; }
     }
 
@@ -45,8 +44,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 #endif
 
         public bool UseAzureSignalR { get; private set; }
-
-        public ITokenValidationProvider TokenValidationProvider { get; private set; }
+        public bool EnableAuthentication { get; private set; }
 
         private readonly IHostingEnvironment _hostEnvironment;
 
@@ -103,25 +101,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             // define our overall health service
             services.AddSingleton<HealthService>();
 
-            TokenValidationProvider = LocalTokenValidationProvider.Create(appSettingsConfiguration);
-            if (TokenValidationProvider == null )
+            // Next block will enable authentication based on a Profile service Uri
+            var authenticateProfileServiceUri = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.AuthenticateProfileServiceUri));
+            if (!string.IsNullOrEmpty(authenticateProfileServiceUri))
             {
-                // no local certificates were deployed so attempt to look on auth metadata Uri
-                var authenticateMetadataServiceUri = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.AuthenticateMetadataServiceUri));
-                if (!string.IsNullOrEmpty(authenticateMetadataServiceUri))
-                {
-                    this.logger.LogInformation($"Using CertificateMetadataProvider:{authenticateMetadataServiceUri}");
-
-                    TokenValidationProvider = new CertificateMetadataProviderService(warmupServices, healthStatusProviders, authenticateMetadataServiceUri, this.logger);
-                    services.AddSingleton((srvcProvider) => TokenValidationProvider as IHostedService);
-                }
-            }
-
-            // Add Jwt authentication only if we have a token validator
-            if (TokenValidationProvider != null)
-            {
-                this.logger.LogInformation("AddAuthenticationServices");
-                services.AddAuthenticationServices(TokenValidationProvider, this.logger);
+                this.logger.LogInformation("Authentication enabled...");
+                EnableAuthentication = true;
+                services.AddProfileServiceJwtBearer(authenticateProfileServiceUri, this.logger);
             }
 
             // Create the Azure Cosmos backplane provider service
@@ -194,7 +180,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 // configure Azure SignalR service
                 app.UseAzureSignalR(routes =>
                 {
-                    if (TokenValidationProvider != null)
+                    if (EnableAuthentication)
                     {
                         routes.MapHub<AuthorizedPresenceServiceHub>(PresenceHubMap);
                     }
@@ -211,7 +197,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 // configure standalone SignalR service
                 app.UseSignalR(routes =>
                 {
-                    if (TokenValidationProvider != null)
+                    if (EnableAuthentication)
                     {
                         routes.MapHub<AuthorizedPresenceServiceHub>(PresenceHubMap);
                     }

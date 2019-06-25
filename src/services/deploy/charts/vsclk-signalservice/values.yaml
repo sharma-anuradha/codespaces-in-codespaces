@@ -36,7 +36,7 @@ appSettings:
 - AppSettings__Stamp
 - AppSettings__BaseUri
 - AppSettings__ImageTag
-- AppSettings__AuthenticateMetadataServiceUri
+- AppSettings__AuthenticateProfileServiceUri
 - AppSettings__AzureCosmosDbEndpointUrl
 - AppSettings__AzureCosmosDbAuthKey
 - Azure__SignalR__ConnectionString
@@ -45,9 +45,8 @@ appSettings:
 baseUri: https://signlr.dev.core.vsengsaas.visualstudio.com/api/signalr
 
 authentication:
-  authority: https://login.windows.net/common
-# this is the default auth Uri the container will use for auth 
-  authenticateMetadataServiceUri: https://prod.liveshare.vsengsaas.visualstudio.com/api/authenticatemetadata
+# this is the default auth Profile service Uri the container will use for auth 
+  authenticateProfileServiceUri: https://insiders.liveshare.vsengsaas.visualstudio.com/api/v1.2/profile
 
 #define the stamp
 stamp: use
