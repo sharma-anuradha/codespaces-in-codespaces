@@ -39,7 +39,7 @@
     <IdentityClient>3.0.0-preview</IdentityClient>
     <IdentityModelS2SVersion>3.0.0-preview-60213030153</IdentityModelS2SVersion>
     <IdentiyModelVersion>6.0.0-preview-60212030309</IdentiyModelVersion>
-    <NerdBankGitVersioningVersion>2.2.13</NerdBankGitVersioningVersion>
+    <NerdBankGitVersioningVersion>2.3.38</NerdBankGitVersioningVersion>
     <OctokitVersion>0.32.0</OctokitVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
     <VsclkSdkVersion>0.1.16</VsclkSdkVersion>

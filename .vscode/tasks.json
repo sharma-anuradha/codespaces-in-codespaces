@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-envserviceapi",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/services/containers/VsClk.EnvReg.WebApi/VsClk.EnvReg.WebApi.csproj"
+            ],
+            "problemMatcher": "$tsc"
+        }
+    ]
+}

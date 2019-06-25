@@ -38,6 +38,7 @@ appSettings:
 - ENVREG_AppSettings__VsClkEnvRegDbId
 - ENVREG_AppSettings__KeyVaultName
 - ENVREG_AppSettings__VsClkRedisConnectionString
+- ENVREG_AppSettings__StampLocation
 - ENVREG_AppSettings__ComputeServiceUrl
 - ENVREG_AppSettings__PreferredSchema
 - ENVREG_AppSettings__DefaultHost
@@ -56,3 +57,6 @@ config:
   clusterPreferredSchema: https
   clusterDefaultPath: /api/environment
   vsLiveShareApiEndpoint: https://insiders.liveshare.vsengsaas.visualstudio.com/api/v1.2/
+
+# define the default stamp (this will be overridden by the release definition for each stamp/location)
+stamp: westus2

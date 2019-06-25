@@ -42,6 +42,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 
         public string VsClkEnvRegPreferredLocation { get; set; }
 
+        public string StampLocation { get; set; }
         public string ComputeServiceUrl { get; set; }
         public Uri ComputeServiceUri { get { return new Uri(this.ComputeServiceUrl); } }
 

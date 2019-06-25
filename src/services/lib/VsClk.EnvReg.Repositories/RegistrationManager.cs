@@ -111,7 +111,19 @@ namespace VsClk.EnvReg.Repositories
 
             // Action - Compute Service
             var computeTargets = await ComputeRepository.GetTargets();
-            var computeTargetId = computeTargets.FirstOrDefault()?.Id;
+
+            // Choose the right compute target to use based on availablity and region
+            var serviceRegion = RegistrationUtils.StampToRegion(AppSettings.StampLocation);
+
+            var computeTargetId = computeTargets
+                .Where(c => {
+                    var isAvailable = c.State == "Available";
+                    // Compute target region is okay if we haven't specified a region or the region matches the serviceRegion
+                    var regionOk = serviceRegion == null || c.Properties.GetValueOrDefault("region") == serviceRegion;
+                    return isAvailable && regionOk;
+                })
+                .FirstOrDefault()?.Id;
+            
             if (!string.IsNullOrEmpty(computeTargetId))
             {
                 // Create - Compute Resource
