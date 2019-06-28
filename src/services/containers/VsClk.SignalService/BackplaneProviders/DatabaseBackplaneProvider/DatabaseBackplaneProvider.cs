@@ -31,7 +31,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private static readonly string ServiceCollectionId = "services";
         private static readonly string ContactDataCollectionId = "contactsData";
         private static readonly string MessageCollectionId = "messages";
-        private static readonly string LeaseCollectionBaseId = "leases";
+        private static readonly string LeaseCollectionBaseId = "leases-";
 
         // Logger method scopes
         private const string MethodSendMessage = "DatabaseProvider.SendMessageAsync";
@@ -316,12 +316,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        private async Task LoadActiveServicesAsync(CancellationToken cancellationToken)
+        private async Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken)
         {
             var queryable = Client.CreateDocumentQuery<ServiceDocument>(
                 UriFactory.CreateDocumentCollectionUri(DatabaseId, ServiceCollectionId));
 
-            var allServices = await ToListAsync(queryable, cancellationToken);
+            return await ToListAsync(queryable, cancellationToken);
+        }
+
+        private async Task LoadActiveServicesAsync(CancellationToken cancellationToken)
+        {
+            var allServices = await GetServiceDocuments(cancellationToken);
             var utcNow = DateTime.UtcNow;
             var nonStaleServices = new HashSet<string>(allServices.Where(i => (utcNow - i.LastUpdate).TotalSeconds < StaleServiceSeconds).Select(d => d.Id));
 
@@ -392,7 +397,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.logger.LogInformation($"Creating database:{DatabaseId} if not exists");
 
             // Create the database
-            await Client.CreateDatabaseIfNotExistsAsync(new Database { Id = DatabaseId });
+            var databaseResponse = await Client.CreateDatabaseIfNotExistsAsync(new Database { Id = DatabaseId });
 
             // Create 'services'
             this.logger.LogInformation($"Creating Collection:{ServiceCollectionId}");
@@ -403,6 +408,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     OfferThroughput = ServicesRequestPerUnitThroughput
                 });
+
+            // Ensure we create an entry that backup our leases collection
+            await UpdateMetricsAsync(serviceId, null, default, CancellationToken.None);
 
             // Create 'contacts'
             this.logger.LogInformation($"Creating Collection:{ContactDataCollectionId}");
@@ -424,7 +432,26 @@ namespace Microsoft.VsCloudKernel.SignalService
                     OfferThroughput = MessageRequestPerUnitThroughput
                 });
 
-            var leaseCollectionId = $"{LeaseCollectionBaseId}-{serviceId}";
+            // cleanup all 'stale' leases collections
+            var servicesIds = (await GetServiceDocuments(CancellationToken.None)).Select(d => d.Id);
+            var staleLeaseCollections = Client.CreateDocumentCollectionQuery(databaseResponse.Resource.SelfLink)
+                .ToList()
+                .Where(d => d.Id.StartsWith(LeaseCollectionBaseId) && !servicesIds.Contains(d.Id.Substring(LeaseCollectionBaseId.Length)));
+
+            foreach(var docCollection in staleLeaseCollections)
+            {
+                try
+                {
+                    this.logger.LogInformation($"Delete stale lease collection:{docCollection.Id}");
+                    await Client.DeleteDocumentCollectionAsync(docCollection.SelfLink);
+                }
+                catch(Exception error)
+                {
+                    this.logger.LogError(error, $"Failed to delete stale lease collection:{docCollection.Id}");
+                }
+            }
+
+            var leaseCollectionId = $"{LeaseCollectionBaseId}{serviceId}";
             // Create 'leases'
             this.logger.LogInformation($"Creating Collection:{leaseCollectionId}");
             this.providerLeaseColletion = (await Client.CreateDocumentCollectionIfNotExistsAsync(
