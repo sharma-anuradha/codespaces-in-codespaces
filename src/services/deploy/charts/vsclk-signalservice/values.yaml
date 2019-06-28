@@ -40,6 +40,7 @@ appSettings:
 - AppSettings__AzureCosmosDbEndpointUrl
 - AppSettings__AzureCosmosDbAuthKey
 - Azure__SignalR__ConnectionString
+- Azure__SignalR__ConnectionString__Secondary
 
 # override this value when another base Uri is used to connect to this app
 baseUri: https://signlr.dev.core.vsengsaas.visualstudio.com/api/signalr
