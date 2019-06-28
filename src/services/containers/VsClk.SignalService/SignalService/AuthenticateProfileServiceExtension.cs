@@ -63,11 +63,14 @@ namespace Microsoft.VsCloudKernel.SignalService
                     return;
                 }
             }
+
             try
             {
+                var httpClientFactory = context.HttpContext.RequestServices.GetService<IHttpClientFactory>();
 
                 // Next block will retrieve a profile from the configured Uri service
-                var httpClient = new HttpClient();
+                var httpClient = httpClientFactory.CreateClient("auth");
+
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", token);
 
@@ -77,6 +80,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                 var profile = JObject.Parse(json);
                 var userId = profile["id"].ToString();
                 var email = profile["email"].ToString();
+
+                logger.LogDebug($"Successfully authorized userId:{userId} email:{email}");
 
                 var claims = new Claim[] {
                     new Claim("userId", userId, ClaimValueTypes.String),

@@ -24,7 +24,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
     public class Startup : IStartup
     {
-        private readonly ILogger<Startup> logger;
+        private readonly ILoggerFactory loggerFactory;
+        private readonly ILogger logger;
 
         /// <summary>
         /// Map to the presence hub signalR
@@ -48,9 +49,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private readonly IHostingEnvironment _hostEnvironment;
 
-        public Startup(ILogger<Startup> logger,IHostingEnvironment env)
+        public Startup(ILoggerFactory loggerFactory,IHostingEnvironment env)
         {
-            this.logger = logger;
+            this.loggerFactory = loggerFactory;
+            this.logger = loggerFactory.CreateLogger(typeof(Startup).FullName);
             this.logger.LogInformation($"Startup -> env:{env.EnvironmentName}");
 
             this._hostEnvironment = env;
@@ -77,15 +79,15 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             this.logger.LogInformation("ConfigureServices");
 
-            // register our logger instance
-            services.AddTransient<ILogger>((srvcProvider) => this.logger);
-
             // Frameworks
             services.AddMvc();
 
             // Configuration
             var appSettingsConfiguration = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsConfiguration);
+
+            // provide IHttpClientFactory
+            services.AddHttpClient();
 
             // define list of IAsyncWarmup implementation available
             var warmupServices = new List<IAsyncWarmup>();
@@ -107,7 +109,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 this.logger.LogInformation("Authentication enabled...");
                 EnableAuthentication = true;
-                services.AddProfileServiceJwtBearer(authenticateProfileServiceUri, this.logger);
+                services.AddProfileServiceJwtBearer(authenticateProfileServiceUri, this.loggerFactory.CreateLogger(typeof(AuthenticateProfileServiceExtension).FullName));
             }
 
             // Create the Azure Cosmos backplane provider service
