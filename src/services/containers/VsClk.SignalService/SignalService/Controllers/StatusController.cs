@@ -37,6 +37,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             {
                 this.presenceService.ServiceId,
                 Name = "vsclk-core-signalservice",
+                this.startup.Environment,
                 Health = new
                 {
                     this.healthService.State,

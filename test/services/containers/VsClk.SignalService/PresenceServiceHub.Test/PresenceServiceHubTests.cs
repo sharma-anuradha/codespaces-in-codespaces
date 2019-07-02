@@ -630,6 +630,55 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.Single(connProxies);
         }
 
+        [Fact]
+        public async Task AllProperties()
+        {
+            var conn1Proxy = new Dictionary<string, object[]>();
+            this.clientProxies.Add("conn1", MockUtils.CreateClientProxy((m, args) =>
+            {
+                conn1Proxy[m] = args;
+                return Task.CompletedTask;
+            }));
+
+            var contact1Ref = AsContactRef("conn1", "contact1");
+            var contact2Ref = AsContactRef("conn2", "contact2");
+            await this.presenceService.RegisterSelfContactAsync(contact1Ref, null, CancellationToken.None);
+            await this.presenceService.RegisterSelfContactAsync(contact2Ref, new Dictionary<string, object>()
+            {
+                { "property0", 10 },
+            }, CancellationToken.None);
+
+            var result = await this.presenceService.AddSubcriptionsAsync(
+                contact1Ref,
+                new ContactReference[] { contact2Ref }, new string[] { "*" });
+
+            var resultProperties = result[contact2Ref.Id];
+            Assert.Equal(10, resultProperties["property0"]);
+
+            conn1Proxy.Clear();
+            await this.presenceService.UpdatePropertiesAsync(contact2Ref, new Dictionary<string, object>()
+            {
+                { "property1", 100 },
+                { "property2", "hello" },
+            }, CancellationToken.None);
+
+            Assert.True(conn1Proxy.ContainsKey(Methods.UpdateValues));
+            var notifyProperties = conn1Proxy[Methods.UpdateValues][1] as Dictionary<string, object>;
+            Assert.Equal(2, notifyProperties.Count);
+            Assert.Equal(100, notifyProperties["property1"]);
+            Assert.Equal("hello", notifyProperties["property2"]);
+
+            conn1Proxy.Clear();
+            await this.presenceService.UpdatePropertiesAsync(contact2Ref, new Dictionary<string, object>()
+            {
+                { "property3", true },
+            }, CancellationToken.None);
+            notifyProperties = conn1Proxy[Methods.UpdateValues][1] as Dictionary<string, object>;
+            Assert.Single(notifyProperties);
+            Assert.Equal(true, notifyProperties["property3"]);
+        }
+
+
         private static ContactReference AsContactRef(string connectionId, string id ) => new ContactReference(id, connectionId);
         private static void AssertContactRef(string connectionId, string id, ContactReference contactReference)
         {

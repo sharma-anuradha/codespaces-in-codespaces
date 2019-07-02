@@ -219,7 +219,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     continue;
                 }
 
-                var subscriptionProperties = subscription.Value.Count > 0 ? affectedProperties.Intersect(subscription.Value.Values) : affectedProperties;
+                var subscriptionProperties = subscription.Value.Count > 0 && !subscription.Value.Contains("*") ? affectedProperties.Intersect(subscription.Value.Values) : affectedProperties;
                 if (subscriptionProperties.Any())
                 {
                     var notifyProperties = new Dictionary<string, object>();

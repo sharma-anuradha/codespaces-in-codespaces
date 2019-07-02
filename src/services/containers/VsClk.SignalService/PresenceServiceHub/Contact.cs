@@ -154,13 +154,20 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             AddSubcriptionProperties(connectionId, selfConnectionId, propertyNames);
 
-            var currentValues = new Dictionary<string, object>();
-            foreach (var propertyName in propertyNames)
+            if (propertyNames.Contains("*"))
             {
-                currentValues[propertyName] = GetPropertyValue(selfConnectionId, propertyName);
+                return GetAllProperties(selfConnectionId);
             }
+            else
+            {
+                var currentValues = new Dictionary<string, object>();
+                foreach (var propertyName in propertyNames)
+                {
+                    currentValues[propertyName] = GetPropertyValue(selfConnectionId, propertyName);
+                }
 
-            return currentValues;
+                return currentValues;
+            }
         }
 
         /// <summary>
@@ -383,7 +390,14 @@ namespace Microsoft.VsCloudKernel.SignalService
                 connectionProperties = connectionProperties.Union(new ConnectionProperties[] { nullProperties });
             }
 
-            return ContactDataHelpers.GetAggregatedProperties(connectionProperties);
+            var properties = ContactDataHelpers.GetAggregatedProperties(connectionProperties);
+            if (affectedProperties != null)
+            {
+                // restrict to only the affected properties
+                properties = properties.Where(kvp => affectedProperties.Contains(kvp.Key)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            }
+
+            return properties;
         }
 
         private async Task UpdatePropertiesAsync(
@@ -483,6 +497,29 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             return null;
+        }
+
+        private Dictionary<string, object> GetAllProperties(string connectionId)
+        {
+            if (!string.IsNullOrEmpty(connectionId))
+            {
+                if (this.selfConnectionProperties.TryGetValue(connectionId, out var properties))
+                {
+                    return properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
+                }
+                else if(this.otherConnectionProperties.TryGetValue(connectionId, out var connProperties))
+                {
+                    return connProperties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
+                }
+                else
+                {
+                    return new Dictionary<string, object>();
+                }
+            }
+            else
+            {
+                return ContactDataHelpers.GetAggregatedProperties(this.selfConnectionProperties.Values.Union(this.otherConnectionProperties.Values));
+            }
         }
 
         private IEnumerable<string> RemoveConnectionProperties(string connectionId)

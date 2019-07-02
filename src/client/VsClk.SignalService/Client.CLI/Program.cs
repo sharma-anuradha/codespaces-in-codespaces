@@ -210,6 +210,9 @@ namespace LivesharePresenceClientTest
                 await presenceClient.StartAsync(CancellationToken.None);
             }
 
+            var subscribeProperties = new string[] { "status", "email" };
+            var publishProperty = "status";
+
             Console.WriteLine("Accepting key options...");
             while (true)
             {
@@ -242,6 +245,36 @@ namespace LivesharePresenceClientTest
                         };
 
                     await presenceClient.Proxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
+                }
+                else if (key.KeyChar == 'p')
+                {
+                    Console.WriteLine();
+                    Console.Write($"Enter property name({publishProperty}):");
+                    var line = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        publishProperty = line;
+                    }
+
+                    Console.Write($"Enter property value:");
+                    line = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        try
+                        {
+                            var jTokenValue = JToken.Parse(line);
+                            var updateValues = new Dictionary<string, object>()
+                        {
+                            { publishProperty, jTokenValue }
+                        };
+
+                            await presenceClient.Proxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
+                        }
+                        catch(JsonException jsonExcp)
+                        {
+                            Console.Write($"Failed to parse value err:{jsonExcp.Message}");
+                        }
+                    }
                 }
                 else if (key.KeyChar == 'a')
                 {
@@ -277,9 +310,19 @@ namespace LivesharePresenceClientTest
                     Console.WriteLine();
                     Console.Write("Enter subscription contact id:");
                     var subscribeContactId = Console.ReadLine();
+                    Console.WriteLine();
+                    Console.Write($"Enter properties ({string.Join(',', subscribeProperties)}):");
+                    var line = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        subscribeProperties = line.Split(',');
+                    }
 
-                    var properties = await presenceClient.Proxy.AddSubcriptionsAsync(new ContactReference[] { new ContactReference(subscribeContactId, null) }, new string[] { "status", "email" }, CancellationToken.None);
-                    Console.WriteLine($"properties => {properties[subscribeContactId].ConvertToString()}");
+                    var properties = await presenceClient.Proxy.AddSubcriptionsAsync(
+                        new ContactReference[] { new ContactReference(subscribeContactId, null) },
+                        subscribeProperties,
+                        CancellationToken.None);
+                    Console.WriteLine($"Add subscription for id:{subscribeContactId} properties:{string.Join(',', subscribeProperties)} result:{properties[subscribeContactId].ConvertToString()}");
                 }
                 else if (key.KeyChar == 'u')
                 {
@@ -287,7 +330,9 @@ namespace LivesharePresenceClientTest
                     Console.Write("Enter subscription contact id:");
                     var targetContactId = Console.ReadLine();
 
-                    await presenceClient.Proxy.RemoveSubscriptionAsync(new ContactReference[] { new ContactReference(targetContactId, null) }, CancellationToken.None);
+                    await presenceClient.Proxy.RemoveSubscriptionAsync(
+                        new ContactReference[] { new ContactReference(targetContactId, null) },
+                        CancellationToken.None);
                 }
                 else if (key.KeyChar == 'm')
                 {

@@ -19,6 +19,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         bool UseAzureSignalR { get; }
         bool EnableAuthentication { get; }
+        string Environment { get; }
         IConfigurationRoot Configuration { get; }
     }
 
@@ -31,6 +32,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Map to the presence hub signalR
         /// </summary>
         private const string PresenceHubMap = "/presencehub";
+
+        /// <summary>
+        /// Map to dev presence service space hub
+        /// </summary>
+        private const string PresenceHubDevMap = "/presencehub-dev";
 
         /// <summary>
         /// Map to the health hub signalR
@@ -46,8 +52,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public bool UseAzureSignalR { get; private set; }
         public bool EnableAuthentication { get; private set; }
+        public string Environment => this._hostEnvironment.EnvironmentName;
 
         private readonly IHostingEnvironment _hostEnvironment;
+
+        private bool IsDevelopmentEnv => this._hostEnvironment.EnvironmentName.Equals("Development");
 
         public Startup(ILoggerFactory loggerFactory,IHostingEnvironment env)
         {
@@ -185,11 +194,16 @@ namespace Microsoft.VsCloudKernel.SignalService
                     if (EnableAuthentication)
                     {
                         routes.MapHub<AuthorizedPresenceServiceHub>(PresenceHubMap);
+                        if (IsDevelopmentEnv)
+                        {
+                            routes.MapHub<PresenceServiceHub>(PresenceHubDevMap);
+                        }
                     }
                     else
                     {
                         routes.MapHub<PresenceServiceHub>(PresenceHubMap);
                     }
+
 
                     routes.MapHub<HealthServiceHub>(HealthHubMap);
                 });
@@ -202,6 +216,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                     if (EnableAuthentication)
                     {
                         routes.MapHub<AuthorizedPresenceServiceHub>(PresenceHubMap);
+                        if (IsDevelopmentEnv)
+                        {
+                            routes.MapHub<PresenceServiceHub>(PresenceHubDevMap);
+                        }
                     }
                     else
                     {
