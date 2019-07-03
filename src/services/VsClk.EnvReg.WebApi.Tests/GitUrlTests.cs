@@ -20,6 +20,7 @@ namespace VsClk.EnvReg.WebApi.Tests
         public void GitUrlTest()
         {
             var gitURL = "https://github.com/microsoft/vscode";
+            var gitRepoWithDotURL = "https://github.com/microsoft/vs.code";
             var dotGitURL = "https://github.com/sathishMicrosoft/test.git";
             var treeGitURL = "https://github.com/sathishMicrosoft/test/tree/807d81eb112ccd2277baea1ff09aacc1fd704c72";
             var pullGitURL = "https://github.com/sathishMicrosoft/test/pull/1/commits/807d81eb112ccd2277baea1ff09aacc1fd704c72";
@@ -31,6 +32,7 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validSymbolsInGitURL = "https://github.com/sathish-Microsoft/_test.git";
             var invalidSymbolsInGitURL = "https://github.com/sathish@Microsoft/%test.git";
             Assert.IsTrue(IsValidGitUrl(gitURL));
+            Assert.IsTrue(IsValidGitUrl(gitRepoWithDotURL));
             Assert.IsTrue(IsValidGitUrl(dotGitURL));
             Assert.IsTrue(IsValidGitUrl(treeGitURL));
             Assert.IsTrue(IsValidGitUrl(pullGitURL));

@@ -74,7 +74,7 @@ namespace VsClk.EnvReg.Repositories
 
         protected static bool IsValidGitUrl(string url)
         {
-            string regex = @"(^https://github.com)(((/)+(~)*([a-zA-Z0-9-_])+(.git)*)+|((/tree|/pull|/commit|/releases/tag)((/)+(([a-zA-Z0-9])+(\.){0,1})+)))$";
+            string regex = @"((^https:\/\/github.com\/([a-zA-Z0-9-_~.\/])+)((.git)*|((tree|pull|commit|releases\/tag)([a-zA-Z0-9-_~.]+)+)))$";
             return Regex.IsMatch(url, regex);
         }
     }
