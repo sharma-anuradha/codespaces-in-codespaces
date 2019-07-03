@@ -14,7 +14,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     public class HubClient : IHubClient
     {
         private readonly TraceSource traceSource;
-        private readonly CancellationTokenSource disposeCts = new CancellationTokenSource();
+        private readonly CancellationTokenSource stopCts = new CancellationTokenSource();
 
         public HubClient(string url, TraceSource trace)
             : this(HubConnectionHelpers.FromUrl(url).Build(), trace)
@@ -43,55 +43,73 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         public bool IsConnected => State == HubConnectionState.Connected;
         public bool IsRunning { get; private set; }
 
-        public async Task DisposeAsync()
+        public Task DisposeAsync()
         {
-            if (IsConnected)
-            {
-                await StopAsync(CancellationToken.None);
-            }
-            else
-            {
-                this.disposeCts.Cancel();
-            }
+            return StopAsync(CancellationToken.None);
         }
 
         public event AsyncEventHandler ConnectionStateChanged;
+        public event AsyncEventHandler<AttemptConnectionEventArgs> AttemptConnection;
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             this.traceSource.Verbose($"StartAsync");
             IsRunning = true;
             Connection.Closed += OnClosedAsync;
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, DisposeToken);
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, StopToken);
             return AttemptConnectAsync(cts.Token);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            this.traceSource.Verbose($"StopAsync");
-            IsRunning = false;
-            Connection.Closed -= OnClosedAsync;
-            return Connection.StopAsync(cancellationToken);
+            if (IsRunning)
+            {
+                this.traceSource.Verbose($"StopAsync");
+                IsRunning = false;
+                this.stopCts.Cancel();
+                Connection.Closed -= OnClosedAsync;
+                return Connection.StopAsync(cancellationToken);
+            }
+            else
+            {
+                return Task.CompletedTask;
+            }
         }
 
-        private CancellationToken DisposeToken => this.disposeCts.Token;
+        private CancellationToken StopToken => this.stopCts.Token;
 
         private async Task OnClosedAsync(Exception exception)
         {
             this.traceSource.Verbose($"OnClosedAsync exception:{exception?.Message}");
-            await ConnectionStateChanged?.InvokeAsync(this, EventArgs.Empty);
-            await AttemptConnectAsync(DisposeToken);
+            if (ConnectionStateChanged != null)
+            {
+                await ConnectionStateChanged?.InvokeAsync(this, EventArgs.Empty);
+            }
+
+            AttemptConnectAsync(StopToken).Forget();
         }
 
         private async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
             await Connection.ConnectAsync(
+                async (retries, backoffTime, error) =>
+                {
+                    var e = new AttemptConnectionEventArgs(retries, backoffTime, error);
+                    if (AttemptConnection != null)
+                    {
+                        await AttemptConnection?.InvokeAsync(this, e);
+                    }
+                    return e.BackoffTimeMillisecs;
+                },
                 -1,
                 5000,
                 60000,
                 this.traceSource,
                 cancellationToken);
-            await ConnectionStateChanged?.InvokeAsync(this, EventArgs.Empty);
+            if (ConnectionStateChanged != null)
+            {
+                await ConnectionStateChanged?.InvokeAsync(this, EventArgs.Empty);
+            }
         }
     }
 }

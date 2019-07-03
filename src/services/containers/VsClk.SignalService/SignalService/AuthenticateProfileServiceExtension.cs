@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -24,6 +26,9 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     public static class AuthenticateProfileServiceExtension
     {
+        private const int MaxTokenExpired = 2000;
+        private static int tokenExpiredCounter = 0;
+
         public static void AddProfileServiceJwtBearer(
             this IServiceCollection services,
             string authenticateProfileServiceUri,
@@ -74,6 +79,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
 
+            var isTokenExpired = false;
             try
             {
                 var httpClientFactory = context.HttpContext.RequestServices.GetService<IHttpClientFactory>();
@@ -89,6 +95,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                 httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(new ProductHeaderValue(agentId)));
 
                 var response = await httpClient.GetAsync(authenticateProfileServiceUri);
+
+                // update if token is expired to avoid noise on telemetry
+                isTokenExpired = response.StatusCode == System.Net.HttpStatusCode.Unauthorized &&
+                    IsTokenExpired(response);
+
                 response.EnsureSuccessStatusCode();
                 string json = await response.Content.ReadAsStringAsync();
                 var profile = JObject.Parse(json);
@@ -113,9 +124,32 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
             catch (Exception error)
             {
-                logger.LogError(error, $"Error when retrieving profile from Url:'{authenticateProfileServiceUri}'");
+                if (!isTokenExpired)
+                {
+                    using (logger.BeginSingleScope(
+                        (LoggerScopeHelpers.MethodScope, "AuthenticateFailed")))
+                    {
+                        logger.LogError(error, $"Error when retrieving profile from Url:'{authenticateProfileServiceUri}'");
+                    }
+                }
+                else if ((System.Threading.Interlocked.Increment(ref tokenExpiredCounter) % MaxTokenExpired) == 0)
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
+                    using (logger.BeginSingleScope(
+                       (LoggerScopeHelpers.MethodScope, "AuthenticateExpired")))
+                    {
+                        logger.LogWarning($"Token expired -> id:{jwtToken.Id} issuer:{jwtToken.Issuer} from:{jwtToken.ValidFrom} to:{jwtToken.ValidTo}");
+                    }
+                }
                 context.Fail(error);
             }
+        }
+
+        private static bool IsTokenExpired(HttpResponseMessage response)
+        {
+            const string ExpiredParameter = "The token is expired";
+            return response.Headers.WwwAuthenticate.Any(h => h.Scheme == "Bearer" && h.Parameter?.Contains(ExpiredParameter) == true);
         }
     }
 }

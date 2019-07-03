@@ -52,6 +52,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         public static async Task ConnectAsync(
             this HubConnection hubConnection,
+            Func<int, int, Exception, Task<int>> onConnectCallback,
             int maxRetries,
             int delayMilliseconds,
             int maxDelayMilliseconds,
@@ -68,13 +69,20 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 {
                     traceSource.Verbose($"hubConnection.StartAsync -> retries:{exponentialBackoff.Retries}");
                     await hubConnection.StartAsync(cancellationToken);
+                    await onConnectCallback(exponentialBackoff.Retries, 0, null);
                     traceSource.Verbose($"Succesfully connected...");
                     break;
                 }
                 catch (Exception err)
                 {
+                    if (err is OperationCanceledException || err is TaskCanceledException)
+                    {
+                        throw;
+                    }
+
                     int delay = exponentialBackoff.NextDelayMilliseconds();
                     traceSource.Error($"Failed to connect-> delay:{delay} err:{err.Message}");
+                    delay = await onConnectCallback(exponentialBackoff.Retries, delay, err);
                     await Task.Delay(delay, cancellationToken);
                 }
             }
