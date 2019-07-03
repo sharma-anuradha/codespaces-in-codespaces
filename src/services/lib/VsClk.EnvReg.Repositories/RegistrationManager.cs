@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VsClk.EnvReg.Models.DataStore.Compute;
 using VsClk.EnvReg.Models.Errors;
+using VsClk.EnvReg.Telemetry;
 
 namespace VsClk.EnvReg.Repositories
 {
@@ -123,28 +124,33 @@ namespace VsClk.EnvReg.Repositories
                     return isAvailable && regionOk;
                 })
                 .FirstOrDefault()?.Id;
-            
-            if (!string.IsNullOrEmpty(computeTargetId))
+
+            if (string.IsNullOrEmpty(computeTargetId))
             {
-                // Create - Compute Resource
-                var computeResource = await ComputeRepository.AddResource(computeTargetId, computeServiceRequest);
-                var containerId = computeResource.Id;
+                logger
+                    .AddSessionId(model.Connection.ConnectionSessionId)
+                    .AddOwnerId(model.OwnerId)
+                    .LogError("Could not provision compute resource");
 
-                // Setup
-                model.Connection = new ConnectionInfo
-                {
-                    ConnectionComputeId = containerId,
-                    ConnectionComputeTargetId = computeTargetId
-                };
-                model.State = StateInfo.Provisioning.ToString();
-
-                // Create - Environment Registration
-                model = await EnvironmentRegistrationRepository.CreateAsync(model, logger);
-                
-                return model;
+                return null;
             }
 
-            return null;
+            // Create - Compute Resource
+            var computeResource = await ComputeRepository.AddResource(computeTargetId, computeServiceRequest);
+            var containerId = computeResource.Id;
+
+            // Setup
+            model.Connection = new ConnectionInfo
+            {
+                ConnectionComputeId = containerId,
+                ConnectionComputeTargetId = computeTargetId
+            };
+            model.State = StateInfo.Provisioning.ToString();
+
+            // Create - Environment Registration
+            model = await EnvironmentRegistrationRepository.CreateAsync(model, logger);
+
+            return model;
         }
 
         public async Task<bool> DeleteAsync(

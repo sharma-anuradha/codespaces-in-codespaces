@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\lib\VsClk.EnvReg.Models\VsClk.EnvReg.Models.csproj" />
     <ProjectReference Include="..\..\lib\VsClk.EnvReg.Repositories\VsClk.EnvReg.Repositories.csproj" />
+    <ProjectReference Include="..\..\lib\VsClk.EnvReg.Telemetry\VsClk.EnvReg.Telemetry.csproj" />
     <ProjectReference Include="..\..\lib\VsClk.Hosting\VsClk.Hosting.csproj" />
     <ProjectReference Include="..\..\lib\Azure.Storage.FileShare\Azure.Storage.FileShare.csproj" />
   </ItemGroup>

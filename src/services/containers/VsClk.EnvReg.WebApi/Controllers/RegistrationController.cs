@@ -1,14 +1,16 @@
-using System;
-using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Middleware;
+using Microsoft.VsCloudKernel.Services.Logging;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using System;
+using System.Threading.Tasks;
 using VsClk.EnvReg.Models.Errors;
 using VsClk.EnvReg.Repositories;
+using VsClk.EnvReg.Telemetry;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 {
@@ -45,6 +47,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 return NotFound();
             }
 
+            logger.AddRegistrationInfoToResponseLog(result);
             return Ok(Mapper.Map<EnvironmentRegistrationResult>(result));
         }
 
@@ -88,8 +91,10 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
             if (model != null)
             {
+                logger.AddRegistrationInfoToResponseLog(model);
                 return Ok(Mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(model));
             }
+
             return StatusCode(409);
         }
 
@@ -108,6 +113,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         {
             var logger = HttpContext.GetLogger();
             var currentUserId = CurrentUserProvider.GetProfileId();
+
+            logger.AddEnvironmentId(id);
 
             var result = await RegistrationManager.DeleteAsync(
                 id,
@@ -157,6 +164,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             {
                 return NotFound();
             }
+
+            logger.AddRegistrationInfoToResponseLog(result);
             return Ok(Mapper.Map<EnvironmentRegistrationResult>(result));
         }
     }

@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\VsClk.EnvReg.Models\VsClk.EnvReg.Models.csproj" />
     <ProjectReference Include="..\Azure.Storage.FileShare\Azure.Storage.FileShare.csproj" />
+    <ProjectReference Include="..\VsClk.EnvReg.Telemetry\VsClk.EnvReg.Telemetry.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.All" />
     <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.2.2" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
