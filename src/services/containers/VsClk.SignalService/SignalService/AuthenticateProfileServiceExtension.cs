@@ -6,10 +6,18 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+    /// <summary>
+    /// Authenticate tag class used for ILogger<T>
+    /// </summary>
+    internal class Authenticate
+    {
+    }
+
     /// <summary>
     /// Helper class to enable authentication based on an external profile service Uri
     /// The service Uri will reject non authroized token but also return the proper normalized userId
@@ -19,7 +27,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         public static void AddProfileServiceJwtBearer(
             this IServiceCollection services,
             string authenticateProfileServiceUri,
-            ILogger logger)
+            ILogger logger,
+            string agentId)
         {
             services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -27,7 +36,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     options.Events = new JwtBearerEvents
                     {
-                        OnMessageReceived = (msgCtxt) => OnMessageReceivedAsync(msgCtxt, authenticateProfileServiceUri, logger)
+                        OnMessageReceived = (msgCtxt) => OnMessageReceivedAsync(msgCtxt, authenticateProfileServiceUri, logger, agentId)
                     };
                 });
         }
@@ -35,7 +44,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         private static async Task OnMessageReceivedAsync(
             MessageReceivedContext context,
             string authenticateProfileServiceUri,
-            ILogger logger)
+            ILogger logger,
+            string agentId)
         {
             // If application retrieved token from somewhere else, use that.
             var token = context.Token;
@@ -71,8 +81,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                 // Next block will retrieve a profile from the configured Uri service
                 var httpClient = httpClientFactory.CreateClient("auth");
 
+                // define Authorization
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", token);
+
+                // define UserAgent
+                httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(new ProductHeaderValue(agentId)));
 
                 var response = await httpClient.GetAsync(authenticateProfileServiceUri);
                 response.EnsureSuccessStatusCode();
@@ -81,7 +95,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                 var userId = profile["id"].ToString();
                 var email = profile["email"].ToString();
 
-                logger.LogDebug($"Successfully authorized userId:{userId} email:{email}");
+                using (logger.BeginSingleScope(
+                    (LoggerScopeHelpers.MethodScope, "AuthenticateProfile")))
+                {
+                    logger.LogDebug($"Successfully authorized userId:{userId} email:{email}");
+                }
 
                 var claims = new Claim[] {
                     new Claim("userId", userId, ClaimValueTypes.String),

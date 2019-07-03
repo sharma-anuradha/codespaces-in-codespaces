@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Shared\LoggerScopeHelpers.cs" Link="Shared\LoggerScopeHelpers.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Azure.SignalR" Version="1.0.*" />
     <PackageReference Include="@(MicrosoftVisualStudioValidationPackageReference)" />

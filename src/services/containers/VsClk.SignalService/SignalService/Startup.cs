@@ -25,8 +25,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
     public class Startup : IStartup
     {
-        private readonly ILoggerFactory loggerFactory;
-        private readonly ILogger logger;
+        Func<Type, ILogger> loggerFactory;
+        private ILogger logger;
 
         /// <summary>
         /// Map to the presence hub signalR
@@ -60,9 +60,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public Startup(ILoggerFactory loggerFactory,IHostingEnvironment env)
         {
-            this.loggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger(typeof(Startup).FullName);
-            this.logger.LogInformation($"Startup -> env:{env.EnvironmentName}");
+            this.loggerFactory = (t) => loggerFactory.CreateLogger(t.FullName);
 
             this._hostEnvironment = env;
 
@@ -86,14 +84,39 @@ namespace Microsoft.VsCloudKernel.SignalService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            this.logger.LogInformation("ConfigureServices");
-
-            // Frameworks
-            services.AddMvc();
-
             // Configuration
             var appSettingsConfiguration = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsConfiguration);
+
+            // create a unique service Id
+            var serviceId = Guid.NewGuid().ToString();
+
+            // define the stamp
+            var stamp = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.Stamp));
+
+            // If telemetry console provider is wanted
+            if (appSettingsConfiguration.GetValue<bool>(nameof(AppSettings.UseTelemetryProvider)))
+            {
+                // inject the Telemetry logger provider
+                services.ReplaceConsoleTelemetry((opts) =>
+                {
+                    opts.FactoryOptions = new Dictionary<string, object>()
+                    {
+                        { "Service", "signlr" },
+                        { "ServiceId", serviceId },
+                        { "Stamp", stamp }
+                    };
+                });
+
+                var serviceProvider = services.BuildServiceProvider();
+                this.loggerFactory = (t) => serviceProvider.GetService(t) as ILogger;
+            }
+
+            this.logger = this.loggerFactory(typeof(ILogger<Startup>));
+            this.logger.LogInformation($"ConfigureServices -> env:{this._hostEnvironment.EnvironmentName}");
+
+            // Frameworks
+            services.AddMvc();
 
             // provide IHttpClientFactory
             services.AddHttpClient();
@@ -115,16 +138,18 @@ namespace Microsoft.VsCloudKernel.SignalService
             // Next block will enable authentication based on a Profile service Uri
             var authenticateProfileServiceUri = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.AuthenticateProfileServiceUri));
             if (!string.IsNullOrEmpty(authenticateProfileServiceUri))
-            {
+            {            
                 this.logger.LogInformation("Authentication enabled...");
+
                 EnableAuthentication = true;
-                services.AddProfileServiceJwtBearer(authenticateProfileServiceUri, this.loggerFactory.CreateLogger(typeof(AuthenticateProfileServiceExtension).FullName));
+                services.AddProfileServiceJwtBearer(
+                    authenticateProfileServiceUri,
+                    this.loggerFactory(typeof(ILogger<Authenticate>)),
+                    $"signlr-{serviceId}-{stamp}");
             }
 
             // Create the Azure Cosmos backplane provider service
             services.AddHostedService<DatabaseBackplaneProviderService>();
-
-            var serviceId = Guid.NewGuid().ToString();
 
             // Presence Service options
             services.AddSingleton((srvcProvider) => new PresenceServiceOptions() { Id = serviceId });
@@ -153,21 +178,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             // IStartup
             services.AddSingleton<IStartup>(this);
-
-            // If telemetry console provider is wanted
-            if (appSettingsConfiguration.GetValue<bool>(nameof(AppSettings.UseTelemetryProvider)))
-            {
-                // inject the Telemetry logger provider
-                services.ReplaceConsoleTelemetry((opts) =>
-                {
-                    opts.FactoryOptions = new Dictionary<string, object>()
-                    {
-                        { "Service", "signlr" },
-                        { "ServiceId", serviceId },
-                        { "Stamp", appSettingsConfiguration.GetValue<string>(nameof(AppSettings.Stamp))}
-                    };
-                });
-            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
