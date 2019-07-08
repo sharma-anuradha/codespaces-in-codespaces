@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
@@ -35,13 +36,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             ILogger logger,
             string agentId)
         {
+            // Create a token cache
+            var tokenCache = new ConcurrentDictionary<string, (DateTime, ClaimsPrincipal)>();
+
             services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.Events = new JwtBearerEvents
                     {
-                        OnMessageReceived = (msgCtxt) => OnMessageReceivedAsync(msgCtxt, authenticateProfileServiceUri, logger, agentId)
+                        OnMessageReceived = (msgCtxt) => OnMessageReceivedAsync(msgCtxt, authenticateProfileServiceUri, logger, agentId, tokenCache)
                     };
                 });
         }
@@ -50,7 +54,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             MessageReceivedContext context,
             string authenticateProfileServiceUri,
             ILogger logger,
-            string agentId)
+            string agentId,
+            ConcurrentDictionary<string, (DateTime, ClaimsPrincipal)> tokenCache)
         {
             // If application retrieved token from somewhere else, use that.
             var token = context.Token;
@@ -76,6 +81,24 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     context.NoResult();
                     return;
+                }
+            }
+
+            // check if our token cache has what we need
+            if (tokenCache.TryGetValue(token, out var item))
+            {
+                context.Principal = item.Item2;
+                context.Success();
+                return;
+            }
+            else
+            {
+                // purge old tokens
+                var expiredThreshold = DateTime.Now.Subtract(TimeSpan.FromSeconds(30));
+                var expiredCacheItemsKeys = tokenCache.Where(kvp => kvp.Value.Item1 < expiredThreshold).Select(kvp => kvp.Key).ToArray();
+                foreach(var key in expiredCacheItemsKeys)
+                {
+                    tokenCache.TryRemove(key, out var itemRemoved);
                 }
             }
 
@@ -119,8 +142,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                 var userIdentity = new ClaimsIdentity(claims, "Passport");
                 context.Principal = new ClaimsPrincipal(userIdentity);
-
                 context.Success();
+
+                // cache our token
+                tokenCache.TryAdd(token, (DateTime.Now, context.Principal));
             }
             catch (Exception error)
             {
