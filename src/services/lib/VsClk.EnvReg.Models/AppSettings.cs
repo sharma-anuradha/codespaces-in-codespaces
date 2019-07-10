@@ -18,7 +18,14 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 
         public string AzureLocation { get; set; }
 
-        public bool IsLocal { get; set; }
+#if DEBUG
+        // This option is only available on Debug Builds, just to make a clear distinction between IsDevelopment.
+        public bool UseMocksForLocalDevelopment { get; set; }
+
+        public bool UseLocalDockerForComputeProvisioning { get; set; }
+
+        public string DockerImage { get; set; }
+#endif // DEBUG
 
         // Authentication configuration
         public string AuthJwtAudience { get; set; }

@@ -5,11 +5,11 @@ namespace VsClk.EnvReg.Telemetry
 {
     public static class DiagnosticsLoggerExtensions
     {
-        const string LogValueOwnerId = "ownerid";
-        const string LogValueSessionId = "sessionid";
-        const string LogValueEnvironmentId = "environmentid";
-        const string LogValueComputeId = "computeid";
-        const string LogValueComputeTargetId = "computetragetid";
+        const string LogValueOwnerId = "OwnerId";
+        const string LogValueSessionId = "SessionId";
+        const string LogValueEnvironmentId = "EnvironmentRegistrationId";
+        const string LogValueComputeId = "ComputeId";
+        const string LogValueComputeTargetId = "ComputeTargetId";
 
         public static IDiagnosticsLogger AddEnvironmentId(this IDiagnosticsLogger logger, string environmentId)
         {

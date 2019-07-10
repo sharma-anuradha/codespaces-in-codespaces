@@ -11,9 +11,9 @@ namespace Microsoft.VsCloudKernel.Services.Logging
             logger
                 .AddEnvironmentId(environmentRegistration.Id)
                 .AddOwnerId(environmentRegistration.OwnerId)
-                .AddSessionId(environmentRegistration.Connection.ConnectionSessionId)
-                .AddComputeId(environmentRegistration.Connection.ConnectionComputeId)
-                .AddComputeTargetId(environmentRegistration.Connection.ConnectionComputeTargetId);
+                .AddSessionId(environmentRegistration.Connection?.ConnectionSessionId)
+                .AddComputeId(environmentRegistration.Connection?.ConnectionComputeId)
+                .AddComputeTargetId(environmentRegistration.Connection?.ConnectionComputeTargetId);
         }
     }
 }

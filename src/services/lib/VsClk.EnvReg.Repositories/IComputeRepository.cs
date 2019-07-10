@@ -6,10 +6,10 @@ namespace VsClk.EnvReg.Repositories
 {
     public interface IComputeRepository
     {
-        Task<List<ComputeTargetResponse>> GetTargets();
+        Task<List<ComputeTargetResponse>> GetTargetsAsync();
 
-        Task<ComputeResourceResponse> AddResource(string computeTargetId, ComputeServiceRequest computeServiceRequest);
+        Task<ComputeResourceResponse> AddResourceAsync(string computeTargetId, ComputeServiceRequest computeServiceRequest);
 
-        Task DeleteResource(string connectionComputeTargetId, string connectionComputeId);
+        Task DeleteResourceAsync(string connectionComputeTargetId, string connectionComputeId);
     }
 }

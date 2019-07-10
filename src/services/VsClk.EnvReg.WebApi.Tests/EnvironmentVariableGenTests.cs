@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
+using System;
 using VsClk.EnvReg.Repositories;
 
 namespace VsClk.EnvReg.WebApi.Tests
@@ -172,11 +173,21 @@ namespace VsClk.EnvReg.WebApi.Tests
         [TestMethod]
         public void EnvVarSessionTokenTest()
         {
-            string accessToken = "someAccessToken";
+            var accessToken = Guid.NewGuid().ToString();
             var sessionToken = new EnvVarSessionToken(accessToken);
             var result = sessionToken.GetEnvironmentVariable();
             Assert.AreEqual(result.Key, EnvironmentVariableConstants.SessionToken);
             Assert.AreEqual(result.Value, accessToken);
+        }
+
+        [TestMethod]
+        public void EnvVarSessionIdTest()
+        {
+            var sessionId = Guid.NewGuid().ToString();
+            var target = new EnvVarSessionId(sessionId);
+            var result = target.GetEnvironmentVariable();
+            Assert.AreEqual(result.Key, EnvironmentVariableConstants.SessionId);
+            Assert.AreEqual(sessionId, result.Value);
         }
     }
 }

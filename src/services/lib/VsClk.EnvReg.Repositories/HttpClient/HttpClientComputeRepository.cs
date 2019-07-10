@@ -16,7 +16,7 @@ namespace VsClk.EnvReg.Repositories.HttpClient
 
         private IHttpClientProvider HttpClientProvider { get; }
 
-        public async Task<List<ComputeTargetResponse>> GetTargets()
+        public async Task<List<ComputeTargetResponse>> GetTargetsAsync()
         {
             var response = await HttpClientProvider.ComputeServiceClient.GetAsync("/computeTargets");
 
@@ -27,7 +27,7 @@ namespace VsClk.EnvReg.Repositories.HttpClient
             return targets;
         }
 
-        public async Task<ComputeResourceResponse> AddResource(string computeTargetId, ComputeServiceRequest computeServiceRequest)
+        public async Task<ComputeResourceResponse> AddResourceAsync(string computeTargetId, ComputeServiceRequest computeServiceRequest)
         {
             var response = await HttpClientProvider.ComputeServiceClient.PostAsync(
                 $"/computeTargets/{computeTargetId}/compute",
@@ -41,7 +41,7 @@ namespace VsClk.EnvReg.Repositories.HttpClient
             return targets;
         }
 
-        public async Task DeleteResource(string connectionComputeTargetId, string connectionComputeId)
+        public async Task DeleteResourceAsync(string connectionComputeTargetId, string connectionComputeId)
         {
             var response = await HttpClientProvider.ComputeServiceClient.DeleteAsync(
                 $"/computeTargets/{connectionComputeTargetId}/compute/{connectionComputeId}");

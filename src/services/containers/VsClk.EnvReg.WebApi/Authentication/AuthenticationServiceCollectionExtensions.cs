@@ -50,7 +50,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication
                 .AddDataProtection()
                 .SetApplicationName(DataProtectionName);
 
-            if (!hostEnvironment.IsDevelopment() || !appSettings.IsLocal)
+            if (!hostEnvironment.IsDevelopment())
             {
                 // TODO: Need to make sure that keys are persisted, etc
                 var redis = ConnectionMultiplexer.Connect(appSettings.VsClkRedisConnectionString);

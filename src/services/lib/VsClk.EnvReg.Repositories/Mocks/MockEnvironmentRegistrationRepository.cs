@@ -9,15 +9,17 @@ using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
 {
+#if DEBUG
+
     public class MockEnvironmentRegistrationRepository : IEnvironmentRegistrationRepository
     {
         private IList<EnvironmentRegistration> _store = new List<EnvironmentRegistration>();
 
-        public async Task<EnvironmentRegistration> CreateAsync(EnvironmentRegistration document, IDiagnosticsLogger logger)
+        public Task<EnvironmentRegistration> CreateAsync(EnvironmentRegistration document, IDiagnosticsLogger logger)
         {
             document.Id = Guid.NewGuid().ToString();
             this._store.Add(document);
-            return document;
+            return Task.FromResult<EnvironmentRegistration>(document);
         }
 
         public async Task<EnvironmentRegistration> CreateOrUpdateAsync(EnvironmentRegistration document, IDiagnosticsLogger logger)
@@ -37,14 +39,14 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
             return false;
         }
 
-        public async Task<EnvironmentRegistration> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)
+        public Task<EnvironmentRegistration> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)
         {
-            return this._store.Where(x => x.Id == key.Id).FirstOrDefault();
+            return Task.FromResult<EnvironmentRegistration>(this._store.Where(x => x.Id == key.Id).FirstOrDefault());
         }
 
-        public async Task<IEnumerable<EnvironmentRegistration>> GetWhereAsync(Expression<Func<EnvironmentRegistration, bool>> where, IDiagnosticsLogger logger, Func<IEnumerable<EnvironmentRegistration>, IDiagnosticsLogger, Task> pageResultsCallback = null)
+        public Task<IEnumerable<EnvironmentRegistration>> GetWhereAsync(Expression<Func<EnvironmentRegistration, bool>> where, IDiagnosticsLogger logger, Func<IEnumerable<EnvironmentRegistration>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
-            return this._store.Where(where.Compile());
+            return Task.FromResult<IEnumerable<EnvironmentRegistration>>(this._store.Where(where.Compile()));
         }
 
         public async Task<EnvironmentRegistration> UpdateAsync(EnvironmentRegistration document, IDiagnosticsLogger logger)
@@ -54,4 +56,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
             return document;
         }
     }
+
+#endif // DEBUG
 }

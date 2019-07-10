@@ -14,11 +14,12 @@ namespace VsClk.EnvReg.Repositories
         public const string GitConfigUserEmail = "GIT_CONFIG_USER_EMAIL";
         public const string SessionCallback = "SESSION_CALLBACK";
         public const string SessionToken = "SESSION_TOKEN";
+        public const string SessionId = "SESSION_ID";
     }
 
     public class EnvironmentVariableGenerator
     {
-        public static List<EnvironmentVariable> Generate(EnvironmentRegistration environmentRegistration, AppSettings appSettings, string accessToken)
+        public static List<EnvironmentVariable> Generate(EnvironmentRegistration environmentRegistration, AppSettings appSettings, string accessToken, string sessionId)
         {
             List<EnvironmentVariable> result = new List<EnvironmentVariable>();
 
@@ -29,7 +30,8 @@ namespace VsClk.EnvReg.Repositories
                 new EnvVarGitConfigUserName(environmentRegistration),
                 new EnvVarGitConfigUserEmail(environmentRegistration),
                 new EnvVarSessionCallback(environmentRegistration, appSettings),
-                new EnvVarSessionToken(accessToken)
+                new EnvVarSessionToken(accessToken),
+                new EnvVarSessionId(sessionId)
             };
 
             foreach (var envStrategy in list)
@@ -199,6 +201,21 @@ namespace VsClk.EnvReg.Repositories
         public override EnvironmentVariable GetEnvironmentVariable()
         {
             return new EnvironmentVariable(EnvironmentVariableConstants.SessionToken, this.accessToken);
+        }
+    }
+
+    public class EnvVarSessionId : EnvironmentVariableStrategy
+    {
+        private readonly string sessionId;
+
+        public EnvVarSessionId(string sessionId) : base(null)
+        {
+            this.sessionId = sessionId;
+        }
+
+        public override EnvironmentVariable GetEnvironmentVariable()
+        {
+            return new EnvironmentVariable(EnvironmentVariableConstants.SessionId, this.sessionId);
         }
     }
 }

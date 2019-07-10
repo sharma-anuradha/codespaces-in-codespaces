@@ -1,10 +1,5 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -13,16 +8,15 @@ using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories.DocumentDb;
-using Microsoft.VsSaaS.Azure.Storage.FileShare;
+using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication;
+using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Provider;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Azure.Storage.FileShare;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using StackExchange.Redis;
 using VsClk.EnvReg.Repositories;
-using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Provider;
-using VsClk.EnvReg.Repositories.Support.HttpClient;
 using VsClk.EnvReg.Repositories.HttpClient;
-using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication;
+using VsClk.EnvReg.Repositories.Support.HttpClient;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
 {
@@ -75,7 +69,9 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             // Repositories
             services.AddSingleton<IRegistrationManager, RegistrationManager>();
             services.AddSingleton<IProfileRepository, HttpClientProfileRepository>();
-            services.AddSingleton<IComputeRepository, HttpClientComputeRepository>();
+            services.AddSingleton<IWorkspaceRepository, HttpClientWorkspaceRepository>();
+            ConfigureComputeService(services, appSettings);
+
 
             // Authentication
             services.AddVsClkCoreAuthenticationServices(HostEnvironment, appSettings);
@@ -92,30 +88,46 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 options.AccountName = appSettings.StorageAccountName;
                 options.AccountKey = appSettings.StorageAccountKey;
             });
-            services.AddTransient<IStorageManager , StorageManager >();
+            services.AddTransient<IStorageManager, StorageManager>();
         }
 
         private void ConfigureDbServices(IServiceCollection services, AppSettings appSettings)
         {
             // Document DB Repositories
-            if (!HostEnvironment.IsDevelopment() || !appSettings.IsLocal)
-            {
-                services.AddDocumentDbClientProvider(options =>
-                {
-                    options.HostUrl = appSettings.VsClkEnvRegDbHost;
-                    options.AuthKey = appSettings.VsClkEnvRegDbKey;
-                    options.DatabaseId = appSettings.VsClkEnvRegDbId;
-                    options.PreferredLocation = appSettings.VsClkEnvRegPreferredLocation;
-                });
-                services.AddDocumentDbCollection<EnvironmentRegistration, IEnvironmentRegistrationRepository, DocumentDbEnvironmentRegistrationRepository>(
-                    DocumentDbEnvironmentRegistrationRepository.ConfigureOptions);
-                services.AddDocumentDbCollection<FileShare, IStorageRegistrationRepository, DocumentDbSotrageRegistrationRepository>(DocumentDbSotrageRegistrationRepository.ConfigureOptions);
-            }
-            else
+#if DEBUG
+            if (appSettings.UseMocksForLocalDevelopment)
             {
                 // Use the mock db if we're developing locally
                 services.AddSingleton<IEnvironmentRegistrationRepository, MockEnvironmentRegistrationRepository>();
+                services.AddSingleton<IStorageRegistrationRepository, MockStorageRegistrationRepository>();
+                return;
             }
+#endif
+
+            services.AddDocumentDbClientProvider(options =>
+            {
+                options.HostUrl = appSettings.VsClkEnvRegDbHost;
+                options.AuthKey = appSettings.VsClkEnvRegDbKey;
+                options.DatabaseId = appSettings.VsClkEnvRegDbId;
+                options.PreferredLocation = appSettings.VsClkEnvRegPreferredLocation;
+            });
+            services.AddDocumentDbCollection<EnvironmentRegistration, IEnvironmentRegistrationRepository, DocumentDbEnvironmentRegistrationRepository>(
+                DocumentDbEnvironmentRegistrationRepository.ConfigureOptions);
+            services.AddDocumentDbCollection<FileShare, IStorageRegistrationRepository, DocumentDbSotrageRegistrationRepository>(DocumentDbSotrageRegistrationRepository.ConfigureOptions);
+        }
+
+        private void ConfigureComputeService(IServiceCollection services, AppSettings appSettings)
+        {
+#if DEBUG
+            if (appSettings.UseMocksForLocalDevelopment)
+            {
+                services.AddSingleton<IComputeRepository, MockComputeRepository>();
+                return;
+            }
+#endif // DEBUG
+
+            services.AddSingleton<IComputeRepository, HttpClientComputeRepository>();
+            
         }
 
 

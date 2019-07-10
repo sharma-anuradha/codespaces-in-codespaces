@@ -29,15 +29,17 @@
     <ProjectReference Include="..\..\lib\VsClk.EnvReg.Models\VsClk.EnvReg.Models.csproj" />
     <ProjectReference Include="..\..\lib\VsClk.EnvReg.Repositories\VsClk.EnvReg.Repositories.csproj" />
     <ProjectReference Include="..\..\lib\VsClk.EnvReg.Telemetry\VsClk.EnvReg.Telemetry.csproj" />
-    <ProjectReference Include="..\..\lib\VsClk.Hosting\VsClk.Hosting.csproj" />
     <ProjectReference Include="..\..\lib\Azure.Storage.FileShare\Azure.Storage.FileShare.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Update="appsettings.secrets.json">
+  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <Content Update="appsettings.Development.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Update="appsettings.Development.json">
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Update="appsettings.secrets.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Update="appsettings.json">

@@ -100,10 +100,10 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
         // PUT api/environment/registration/<id>
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(
+        public Task<IActionResult> Put(
             [FromRoute]string id, [FromBody]EnvironmentRegistrationInput modelInput)
         {
-            return StatusCode(501);
+            return Task.FromResult<IActionResult>(StatusCode(501));
         }
 
         // DELETE api/environment/registration/<id>
@@ -123,25 +123,27 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
             if (!result)
             {
+                logger.LogWarning("env_not_found");
                 return NotFound();
             }
+
             return NoContent();
         }
 
         // PATCH api/environment/registration/<id>
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Patch(
+        public Task<IActionResult> Patch(
             [FromRoute]string id)
         {
-            return StatusCode(501);
+            return Task.FromResult<IActionResult>(StatusCode(501));
         }
 
         // GET api/environment/registration/<id>/tasks/<taskId>
         [HttpGet("{id}/tasks/{taskId}")]
-        public async Task<IActionResult> GetTask(
+        public Task<IActionResult> GetTask(
             [FromRoute]string id, [FromRoute]string taskId)
         {
-            return StatusCode(501);
+            return Task.FromResult<IActionResult>(StatusCode(501));
         }
 
         // POST  api/environment/registration/<id>/_callback
@@ -162,6 +164,10 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
             if (result == null)
             {
+                logger
+                    .AddEnvironmentId(id)
+                    .AddSessionId(modelInput.Payload.SessionId)
+                    .LogError("env_not_found_on_callback");
                 return NotFound();
             }
 

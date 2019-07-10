@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VsClk.EnvReg.Models.DataStore.Compute;
+using VsClk.EnvReg.Models.DataStore.Workspace;
 using VsClk.EnvReg.Models.Errors;
 using VsClk.EnvReg.Telemetry;
 
@@ -20,16 +21,19 @@ namespace VsClk.EnvReg.Repositories
         private IEnvironmentRegistrationRepository EnvironmentRegistrationRepository { get; }
         private IComputeRepository ComputeRepository { get; }
         private IStorageManager FileShareManager { get; }
+        private IWorkspaceRepository WorkspaceRepository { get; }
 
         public RegistrationManager(
             IEnvironmentRegistrationRepository environmentRegistrationRepository,
             IComputeRepository computeRepository,
             IStorageManager fileShareManager,
+            IWorkspaceRepository workspaceRepository,
             AppSettings appSettings)
         {
             EnvironmentRegistrationRepository = environmentRegistrationRepository;
             ComputeRepository = computeRepository;
             FileShareManager = fileShareManager;
+            WorkspaceRepository = workspaceRepository;
             AppSettings = appSettings;
         }
 
@@ -52,7 +56,7 @@ namespace VsClk.EnvReg.Repositories
 
             return await EnvironmentRegistrationRepository.GetWhereAsync((model) => model.OwnerId == ownerId, logger);
         }
-
+        
         public async Task<EnvironmentRegistration> RegisterAsync(
             EnvironmentRegistration model,
             EnvironmentRegistrationOptions options,
@@ -77,7 +81,14 @@ namespace VsClk.EnvReg.Repositories
             ValidationUtil.IsTrue(
                 environments.Count() <= ENV_REG_QUOTA,
                 "You already exceeded the quota of environments");
-            
+
+            // Action - Create Workspace
+            var sessionId = await CreateWorkspace(model.Id, logger);
+            if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                return null;
+            }
+
             // Action - If Static Environment
             if (model.Type == EnvType.StaticEnvironment.ToString())
             {
@@ -90,7 +101,7 @@ namespace VsClk.EnvReg.Repositories
             // Setup - Compute input
             var computeServiceRequest = new ComputeServiceRequest
             {
-                EnvironmentVariables = EnvironmentVariableGenerator.Generate(model, AppSettings, accessToken)
+                EnvironmentVariables = EnvironmentVariableGenerator.Generate(model, AppSettings, accessToken, sessionId)
             };
 
             // Action - File Share
@@ -111,7 +122,7 @@ namespace VsClk.EnvReg.Repositories
             }
 
             // Action - Compute Service
-            var computeTargets = await ComputeRepository.GetTargets();
+            var computeTargets = await ComputeRepository.GetTargetsAsync();
 
             // Choose the right compute target to use based on availablity and region
             var serviceRegion = RegistrationUtils.StampToRegion(AppSettings.StampLocation);
@@ -128,20 +139,22 @@ namespace VsClk.EnvReg.Repositories
             if (string.IsNullOrEmpty(computeTargetId))
             {
                 logger
-                    .AddSessionId(model.Connection.ConnectionSessionId)
+                    .AddEnvironmentId(model.Id)
+                    .AddSessionId(sessionId)
                     .AddOwnerId(model.OwnerId)
-                    .LogError("Could not provision compute resource");
+                    .LogError("provision_compute_resource_failed");
 
                 return null;
             }
 
             // Create - Compute Resource
-            var computeResource = await ComputeRepository.AddResource(computeTargetId, computeServiceRequest);
+            var computeResource = await ComputeRepository.AddResourceAsync(computeTargetId, computeServiceRequest);
             var containerId = computeResource.Id;
 
             // Setup
-            model.Connection = new ConnectionInfo
+            model.Connection = new ConnectionInfo()
             {
+                ConnectionSessionId = sessionId,
                 ConnectionComputeId = containerId,
                 ConnectionComputeTargetId = computeTargetId
             };
@@ -167,9 +180,10 @@ namespace VsClk.EnvReg.Repositories
 
             if (model.Type == EnvType.CloudEnvironment.ToString())
             {
-                await ComputeRepository.DeleteResource(model.Connection.ConnectionComputeTargetId, model.Connection.ConnectionComputeId);
+                await ComputeRepository.DeleteResourceAsync(model.Connection.ConnectionComputeTargetId, model.Connection.ConnectionComputeId);
             }
 
+            await WorkspaceRepository.DeleteAsync(model.Connection.ConnectionSessionId);
             await EnvironmentRegistrationRepository.DeleteAsync(id, logger);
 
             return true;
@@ -186,13 +200,38 @@ namespace VsClk.EnvReg.Repositories
             {
                 return null;
             }
-            UnauthorizedUtil.IsTrue(model.OwnerId == ownerId);
 
-            model.Connection.ConnectionSessionId = options.Payload.SessionId;
+            UnauthorizedUtil.IsTrue(model.OwnerId == ownerId);
+            ValidationUtil.IsTrue(model.Connection.ConnectionSessionId == options.Payload.SessionId);
+            
             model.Connection.ConnectionSessionPath = options.Payload.SessionPath;
             model.State = StateInfo.Available.ToString();
 
             return await EnvironmentRegistrationRepository.UpdateAsync(model, logger);
+        }
+
+        private async Task<string> CreateWorkspace(
+            string id,
+            IDiagnosticsLogger logger)
+        {
+            ValidationUtil.IsRequired(id, nameof(id));
+            var workspaceRequest = new WorkspaceRequest()
+            {
+                Name = id,
+                ConnectionMode = ConnectionMode.Auto,
+                AreAnonymousGuestsAllowed = false
+            };
+
+            var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest);
+            if (string.IsNullOrWhiteSpace(workspaceResponse.Id))
+            {
+                logger
+                    .AddEnvironmentId(id)
+                    .LogError("workspace_creation_failed");
+                return null;
+            }
+
+            return workspaceResponse.Id;
         }
     }
 }

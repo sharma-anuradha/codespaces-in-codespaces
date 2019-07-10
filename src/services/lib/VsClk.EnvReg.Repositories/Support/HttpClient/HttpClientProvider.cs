@@ -17,6 +17,7 @@ namespace VsClk.EnvReg.Repositories.Support.HttpClient
             {
                 BaseAddress = new Uri(appSettings.VSLiveShareApiEndpoint)
             };
+
             var computeHttpClient = new System.Net.Http.HttpClient()
             {
                 BaseAddress = appSettings.ComputeServiceUri
@@ -24,10 +25,13 @@ namespace VsClk.EnvReg.Repositories.Support.HttpClient
 
             ProfileServiceClient = liveShareHttpClient;
             ComputeServiceClient = computeHttpClient;
+            WorkspaceServiceClient = liveShareHttpClient;
         }
 
         public System.Net.Http.HttpClient ProfileServiceClient { get; }
 
         public System.Net.Http.HttpClient ComputeServiceClient { get; }
+
+        public System.Net.Http.HttpClient WorkspaceServiceClient { get; }
     }
 }
