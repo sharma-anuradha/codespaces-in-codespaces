@@ -28,7 +28,11 @@ namespace VsClk.EnvReg.Repositories.HttpClient
         public async Task DeleteAsync(string workspaceId)
         {
             var response = await HttpClientProvider.WorkspaceServiceClient.DeleteAsync($"{Path}/{workspaceId}");
-            await response.ThrowIfFailedAsync();
+            if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
+            {
+                // The call may fail, as the workspace may already been cleaned up. Ignore failure response.
+                await response.ThrowIfFailedAsync();
+            }
         }
     }
 }
