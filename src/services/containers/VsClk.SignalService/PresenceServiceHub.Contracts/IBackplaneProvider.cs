@@ -27,6 +27,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             Data = Requires.NotNull(data, nameof(data));
         }
 
+        public ContactDataChanged<U> Clone<U>(U data)
+            where U : class
+        {
+            return new ContactDataChanged<U>(ServiceId, ConnectionId, ContactId, Type, data);
+        }
+
         public string ServiceId { get; }
         public string ConnectionId { get; }
         public string ContactId { get; }

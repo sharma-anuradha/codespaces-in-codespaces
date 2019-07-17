@@ -457,6 +457,41 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.Equal(true, notifyProperties["property3"]);
         }
 
+        [Fact]
+        public async Task SelfConnectionsWithException()
+        {
+            bool throwIf = false;
+            this.clientProxies1.Add("conn2", MockUtils.CreateClientProxy((m, args) =>
+            {
+                if (throwIf)
+                {
+                    throw new Exception("failed");
+                }
+
+                return Task.CompletedTask;
+            }));
+
+            var contact1Ref = AsContactRef("conn1", "contact1");
+            var contact2Ref = AsContactRef("conn2", "contact2");
+            await this.presenceService1.RegisterSelfContactAsync(contact1Ref, new Dictionary<string, object>()
+            {
+                { "property1", 10 },
+            }, CancellationToken.None);
+            await this.presenceService1.RegisterSelfContactAsync(contact2Ref, null, CancellationToken.None);
+            await this.presenceService1.AddSubcriptionsAsync(contact2Ref, new ContactReference[] { contact1Ref }, new string[] { "*" }, CancellationToken.None);
+
+            throwIf = true;
+            await Assert.ThrowsAnyAsync<Exception>(() => this.presenceService1.UnregisterSelfContactAsync(contact1Ref, null, CancellationToken.None));
+            throwIf = false;
+
+            var contact1_2Ref = AsContactRef("conn3", "contact1");
+            await this.presenceService2.RegisterSelfContactAsync(contact1_2Ref, null, CancellationToken.None);
+            await this.presenceService2.UnregisterSelfContactAsync(contact1_2Ref, null, CancellationToken.None);
+
+            var selfConnections = await this.presenceService1.GetSelfConnectionsAsync("contact1", CancellationToken.None);
+            Assert.Empty(selfConnections);
+        }
+
         private static ContactReference AsContactRef(string connectionId, string id) => new ContactReference(id, connectionId);
         private static void AssertContactRef(string connectionId, string id, ContactReference contactReference)
         {

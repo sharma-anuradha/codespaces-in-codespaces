@@ -276,16 +276,19 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
 
-            if (sendTasks?.Any() == true)
-            {
-                await Task.WhenAll(sendTasks);
-            }
-
+            // Note: notice we are firing the contact event to trigger our backplane provider mechanism
+            // that will eventuall catch any exception error and so we will mosty past the 'await' statement
             // fire RemoveSelf change type
             await FireChangeAsync(
                 connectionId,
                 affectedProperties.ToDictionary(p => p, p => new PropertyValue(null, default)),
                 ContactUpdateType.Unregister);
+
+            // Both next notiifications could eventuall trigger exceptions that may interrupt the call to this method
+            if (sendTasks?.Any() == true)
+            {
+                await Task.WhenAll(sendTasks);
+            }
 
             // notify connection removed
             await NotifyConnectionChangedAsync(connectionId, ConnectionChangeType.Removed, cancellationToken);
@@ -310,15 +313,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                 .Union(otherConnectionProperties).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        /**
-         * Extract the connections that are not 'self'
-         */
-        internal void SetOtherContactData(ContactDataInfo contactDataInfo)
+
+        internal void SetOtherConnectionProperties(Dictionary<string, ConnectionProperties> otherConnectionProperties)
         {
-            this.otherConnectionProperties = contactDataInfo.Values
-                .SelectMany(i => i)
-                .Where(p => !this.selfConnectionProperties.ContainsKey(p.Key))
-                .ToDictionary(p => p.Key, p => p.Value);
+            this.otherConnectionProperties = otherConnectionProperties;
         }
 
         /// <summary>
@@ -329,7 +327,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         internal async Task OnContactChangedAsync(
-            ContactDataChanged<ContactDataInfo> contactDataChanged,
+            ContactDataChanged<Dictionary<string, ConnectionProperties>> contactDataChanged,
             IEnumerable<string> affectedProperties,
             CancellationToken cancellationToken)
         {
@@ -339,7 +337,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // merge the contact data
-            SetOtherContactData(contactDataChanged.Data);
+            SetOtherConnectionProperties(contactDataChanged.Data);
 
             if (contactDataChanged.Type == ContactUpdateType.Registration || contactDataChanged.Type == ContactUpdateType.Unregister)
             {

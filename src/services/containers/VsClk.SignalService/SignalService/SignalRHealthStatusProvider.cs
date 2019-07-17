@@ -6,12 +6,15 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
     public class SignalRHealthStatusProvider : BackgroundService, IHealthStatusProvider
     {
         private const string EchoMessage = "signalr";
+        private const string MethodEchoHealthHubFailedScope = "EchoHealthHubFailed";
+        private const string MethodEchoHealthHubReconnectScope = "EchoHealthHubReconnect";
 
         /// <summary>
         /// Time in minutes to perform an echo when the state is 'healthy'
@@ -32,6 +35,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly IHostingEnvironment hostingEnvironment;
         private readonly AppSettings appSettings;
         private readonly ILogger logger;
+        private int errorCount;
 
         public SignalRHealthStatusProvider(
             WarmupService warmupService,
@@ -71,17 +75,25 @@ namespace Microsoft.VsCloudKernel.SignalService
                         var result = await EchoHealthHub(cancellationToken);
                         if (State == false)
                         {
-                            this.logger.LogInformation($"Succesfully reconnect to signalr resources");
+                            using (logger.BeginMethodScope(MethodEchoHealthHubReconnectScope))
+                            {
+                                this.logger.LogInformation($"Succesfully reconnect to signalr resources, errorCount:{this.errorCount}");
+                            }
                         }
 
-                        this.logger.LogDebug($"Succesfully received echo -> message:{result.Message} stamp:{result.Stamp} serviceId:{result.ServiceId}");
+                        this.errorCount = 0;
+                        this.logger.LogDebug($"Succesfully received echo -> message:{result.Message}");
                         State = true;
                     }
                 }
                 catch (Exception error)
                 {
                     State = false;
-                    this.logger.LogError(error, $"Failed to connect to health hub with url:{HealthHubUrl}");
+                    using (logger.BeginMethodScope(MethodEchoHealthHubFailedScope))
+                    {
+                        ++this.errorCount;
+                        this.logger.LogError(error, $"Failed to connect to health hub with url:{HealthHubUrl} errorCount:{this.errorCount}");
+                    }
                 }
 
                 // delay depending on the State

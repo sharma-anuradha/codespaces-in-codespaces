@@ -27,5 +27,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         {
             return BeginScope(logger, new (string, object)[] { scope });
         }
+
+        public static IDisposable BeginMethodScope(this ILogger logger, string methodScope)
+        {
+            return logger.BeginSingleScope((MethodScope, methodScope));
+        }
     }
 }

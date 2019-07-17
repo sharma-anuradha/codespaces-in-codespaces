@@ -28,6 +28,11 @@ namespace Microsoft.VsCloudKernel.SignalService
     public static class AuthenticateProfileServiceExtension
     {
         private const int MaxTokenExpired = 2000;
+
+        private const string MethodAuthenticateProfileScope = "AuthenticateProfile";
+        private const string MethodAuthenticateFailedScope = "AuthenticateFailed";
+        private const string MethodAuthenticateExpiredScope = "AuthenticateExpired";
+
         private static int tokenExpiredCounter = 0;
 
         public static void AddProfileServiceJwtBearer(
@@ -121,7 +126,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                 // update if token is expired to avoid noise on telemetry
                 isTokenExpired = response.StatusCode == System.Net.HttpStatusCode.Unauthorized &&
-                    IsTokenExpired(response);
+                    (IsTokenExpired(response) || IsTokenExpired(token));
 
                 response.EnsureSuccessStatusCode();
                 string json = await response.Content.ReadAsStringAsync();
@@ -129,8 +134,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 var userId = profile["id"].ToString();
                 var email = profile["email"].ToString();
 
-                using (logger.BeginSingleScope(
-                    (LoggerScopeHelpers.MethodScope, "AuthenticateProfile")))
+                using (logger.BeginMethodScope(MethodAuthenticateProfileScope))
                 {
                     logger.LogDebug($"Successfully authorized userId:{userId} email:{email}");
                 }
@@ -151,8 +155,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 if (!isTokenExpired)
                 {
-                    using (logger.BeginSingleScope(
-                        (LoggerScopeHelpers.MethodScope, "AuthenticateFailed")))
+                    using (logger.BeginMethodScope(MethodAuthenticateFailedScope))
                     {
                         logger.LogError(error, $"Error when retrieving profile from Url:'{authenticateProfileServiceUri}'");
                     }
@@ -161,8 +164,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     var handler = new JwtSecurityTokenHandler();
                     var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
-                    using (logger.BeginSingleScope(
-                       (LoggerScopeHelpers.MethodScope, "AuthenticateExpired")))
+                    using (logger.BeginMethodScope(MethodAuthenticateExpiredScope))
                     {
                         logger.LogWarning($"Token expired -> id:{jwtToken.Id} issuer:{jwtToken.Issuer} from:{jwtToken.ValidFrom} to:{jwtToken.ValidTo}");
                     }
@@ -175,6 +177,20 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             const string ExpiredParameter = "The token is expired";
             return response.Headers.WwwAuthenticate.Any(h => h.Scheme == "Bearer" && h.Parameter?.Contains(ExpiredParameter) == true);
+        }
+
+        private static bool IsTokenExpired(string token)
+        {
+            try
+            {
+                var tokenDecoder = new JwtSecurityTokenHandler();
+                var jwtSecurityToken = (JwtSecurityToken)tokenDecoder.ReadToken(token);
+                return jwtSecurityToken.ValidTo <= DateTime.UtcNow;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -190,7 +191,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                             // ensure the contact is created
                             var targetContactId = matchContactPair.Key;
                             var targetContact = GetOrCreateContact(targetContactId);
-                            targetContact.SetOtherContactData(matchContactPair.Value);
+                            SetOtherContactData(targetContact, matchContactPair.Value);
 
                             // inject property 'IdReserved'
                             backplaneProperties[Properties.IdReserved] = targetContactId;
@@ -480,7 +481,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 var contactDataInfo = await GetContactBackplaneContactDataAsync(contactId, cancellationToken);
                 if (contactDataInfo != null)
                 {
-                    contact.SetOtherContactData(contactDataInfo);
+                    SetOtherContactData(contact, contactDataInfo);
                 }
             }
 
@@ -666,7 +667,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     var selfContact = GetOrCreateContact(contactDataChanged.ContactId);
                     if (contactDataChanged.Data != null)
                     {
-                        selfContact.SetOtherContactData(contactDataChanged.Data);
+                        SetOtherContactData(selfContact, contactDataChanged.Data);
                     }
 
                     return selfContact;
@@ -691,7 +692,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (Contacts.TryGetValue(contactDataChanged.ContactId, out var contact))
             {
-                await contact.OnContactChangedAsync(contactDataChanged, affectedProperties, cancellationToken);
+                await contact.OnContactChangedAsync(contactDataChanged.Clone(GetServiceConnectionProperties(contactDataChanged.Data)), affectedProperties, cancellationToken);
             }
         }
 
@@ -715,6 +716,27 @@ namespace Microsoft.VsCloudKernel.SignalService
                     messageData.TargetContact.ConnectionId,
                     cancellationToken);
             }
+        }
+
+        /**
+         * Return the service connection properties by removing our self service instance
+         * Note: the 'ContactDataInfo' structure has all the connections per service and so the need
+         * to remove the 'self' connections to avoid duplications
+         */
+        private Dictionary<string, ConnectionProperties> GetServiceConnectionProperties(ContactDataInfo contactDataInfo)
+        {
+            return contactDataInfo.Where(kvp => kvp.Key != ServiceId)
+                .Select(kvp => kvp.Value)
+                .SelectMany(i => i)
+                .ToDictionary(p => p.Key, p => p.Value);
+        }
+
+        private void SetOtherContactData(Contact contact, ContactDataInfo contactDataInfo)
+        {
+            Debug.Assert(contact != null, "contact == null");
+            Debug.Assert(contactDataInfo != null, "contactDataInfo == null");
+
+            contact.SetOtherConnectionProperties(GetServiceConnectionProperties(contactDataInfo));
         }
 
         private class StubContactComparer : IEqualityComparer<StubContact>
