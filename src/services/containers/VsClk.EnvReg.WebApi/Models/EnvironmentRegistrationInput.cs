@@ -17,6 +17,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 
         public SeedInfoInput Seed { get; set; }
 
+        public PersonalizationInfo Personalization { get; set; }
+
         public string ContainerImage { get; set; }
 
         public ConnectionInfoInput Connection { get; set; }
@@ -34,7 +36,12 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
 
         [JsonProperty(Required = Required.Default, PropertyName = "gitConfig")]
         public GitConfigInput GitConfig { get; set; }
+    }
 
+    public class PersonalizationInfo
+    {
+        [JsonProperty(Required = Required.Default, PropertyName = "dotfilesRepository")]
+        public string DotfilesRepository { get; set; }
     }
 
     public class ConnectionInfoInput

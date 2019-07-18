@@ -30,6 +30,9 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         [JsonProperty(Required = Required.Default, PropertyName = "seed")]
         public SeedInfo Seed { get; set; }
 
+        [JsonProperty(Required = Required.Default, PropertyName = "personalization")]
+        public PersonalizationInfo Personalization { get; set; }
+
         [JsonProperty(Required = Required.Default, PropertyName = "connection")]
         public ConnectionInfo Connection { get; set; }
 
@@ -53,6 +56,21 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
 
         [JsonProperty(Required = Required.Default, PropertyName = "gitConfig")]
         public GitConfig GitConfig { get; set; }
+    }
+
+    public class PersonalizationInfo
+    {
+        [JsonProperty(Required = Required.Default, PropertyName = "dotfilesRepository")]
+        public string DotfilesRepository { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "dotfilesTargetPath")]
+        public string DotfilesTargetPath { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "dotfilesInstallCommand")]
+        public string DotfilesInstallCommand { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "defaultShell")]
+        public string DefaultShell { get; set; }
     }
 
     public class ConnectionInfo

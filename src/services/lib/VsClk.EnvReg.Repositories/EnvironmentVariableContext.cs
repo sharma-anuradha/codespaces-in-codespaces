@@ -2,6 +2,7 @@
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Linq;
 using VsClk.EnvReg.Models.DataStore.Compute;
 
 namespace VsClk.EnvReg.Repositories
@@ -15,6 +16,10 @@ namespace VsClk.EnvReg.Repositories
         public const string SessionCallback = "SESSION_CALLBACK";
         public const string SessionToken = "SESSION_TOKEN";
         public const string SessionId = "SESSION_ID";
+        public const string DotfilesRepository = "DOTFILES_REPOSITORY";
+        public const string DotfilesTargetPath = "DOTFILES_REPOSITORY_TARGET";
+        public const string DotfilesInstallCommand = "DOTFILES_INSTALL_COMMAND";
+        public const string DefaultShell = "SHELL";
     }
 
     public class EnvironmentVariableGenerator
@@ -31,7 +36,11 @@ namespace VsClk.EnvReg.Repositories
                 new EnvVarGitConfigUserEmail(environmentRegistration),
                 new EnvVarSessionCallback(environmentRegistration, appSettings),
                 new EnvVarSessionToken(accessToken),
-                new EnvVarSessionId(sessionId)
+                new EnvVarSessionId(sessionId),
+                new EnvDotfilesRepoUrl(environmentRegistration),
+                new EnvDotfilesTargetPath(environmentRegistration),
+                new EnvDotfilesInstallCommand(environmentRegistration),
+                new EnvDefaultShell(environmentRegistration)
             };
 
             foreach (var envStrategy in list)
@@ -197,7 +206,7 @@ namespace VsClk.EnvReg.Repositories
         {
             this.accessToken = accessToken;
         }
-        
+
         public override EnvironmentVariable GetEnvironmentVariable()
         {
             return new EnvironmentVariable(EnvironmentVariableConstants.SessionToken, this.accessToken);
@@ -216,6 +225,96 @@ namespace VsClk.EnvReg.Repositories
         public override EnvironmentVariable GetEnvironmentVariable()
         {
             return new EnvironmentVariable(EnvironmentVariableConstants.SessionId, this.sessionId);
+        }
+    }
+
+    public class EnvDotfilesRepoUrl : EnvironmentVariableStrategy
+    {
+        public EnvDotfilesRepoUrl(EnvironmentRegistration environmentRegistration) : base(environmentRegistration)
+        { }
+
+        public override EnvironmentVariable GetEnvironmentVariable()
+        {
+            if (EnvironmentRegistration.Personalization != null
+                && !string.IsNullOrWhiteSpace(EnvironmentRegistration.Personalization.DotfilesRepository)
+                && IsValidGitUrl(EnvironmentRegistration.Personalization.DotfilesRepository))
+            {
+                return new EnvironmentVariable(
+                    EnvironmentVariableConstants.DotfilesRepository,
+                    EnvironmentRegistration.Personalization.DotfilesRepository);
+            }
+
+            return null;
+        }
+    }
+
+    public class EnvDotfilesTargetPath : EnvironmentVariableStrategy
+    {
+        public EnvDotfilesTargetPath(EnvironmentRegistration environmentRegistration) : base(environmentRegistration)
+        { }
+
+        public override EnvironmentVariable GetEnvironmentVariable()
+        {
+            if (EnvironmentRegistration.Personalization != null
+                && !string.IsNullOrWhiteSpace(EnvironmentRegistration.Personalization.DotfilesTargetPath))
+            {
+                return new EnvironmentVariable(
+                    EnvironmentVariableConstants.DotfilesTargetPath,
+                    EnvironmentRegistration.Personalization.DotfilesTargetPath);
+            }
+
+            return null;
+        }
+    }
+
+    public class EnvDotfilesInstallCommand : EnvironmentVariableStrategy
+    {
+        public EnvDotfilesInstallCommand(EnvironmentRegistration environmentRegistration) : base(environmentRegistration)
+        { }
+
+        public override EnvironmentVariable GetEnvironmentVariable()
+        {
+            if (EnvironmentRegistration.Personalization != null
+                && !string.IsNullOrWhiteSpace(EnvironmentRegistration.Personalization.DotfilesInstallCommand))
+            {
+                return new EnvironmentVariable(
+                    EnvironmentVariableConstants.DotfilesInstallCommand,
+                    EnvironmentRegistration.Personalization.DotfilesInstallCommand);
+            }
+
+            return null;
+        }
+    }
+
+    public class EnvDefaultShell : EnvironmentVariableStrategy
+    {
+        public EnvDefaultShell(EnvironmentRegistration environmentRegistration) : base(environmentRegistration)
+        { }
+
+        public override EnvironmentVariable GetEnvironmentVariable()
+        {
+            if (EnvironmentRegistration.Personalization != null
+                && !string.IsNullOrWhiteSpace(EnvironmentRegistration.Personalization.DefaultShell)
+                && IsSupportedShell(EnvironmentRegistration.Personalization.DefaultShell))
+            {
+                return new EnvironmentVariable(
+                    EnvironmentVariableConstants.DefaultShell,
+                    EnvironmentRegistration.Personalization.DefaultShell);
+            }
+
+            return null;
+        }
+
+        private bool IsSupportedShell(string shell)
+        {
+            var availableShells = new string[] {
+                "/bin/bash",
+                "/usr/bin/fish",
+                "/usr/bin/zsh",
+            };
+
+            // The value for this is programatically filled so doesn't need normalization.
+            return availableShells.Contains(shell);
         }
     }
 }

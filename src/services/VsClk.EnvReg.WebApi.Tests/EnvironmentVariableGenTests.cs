@@ -53,6 +53,17 @@ namespace VsClk.EnvReg.WebApi.Tests
             return new EnvironmentRegistration() { Seed = new SeedInfo() { GitConfig = new GitConfig() { } } };
         }
 
+        private EnvironmentRegistration GetEmptyPersonalizationConfig()
+        {
+            return new EnvironmentRegistration
+            {
+                Personalization = new Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore.PersonalizationInfo
+                {
+
+                }
+            };
+        }
+
         [TestMethod]
         public void EnvVarGitRepoUrlTest()
         {
@@ -110,7 +121,7 @@ namespace VsClk.EnvReg.WebApi.Tests
             Assert.AreEqual(gitRepoUrl.Key, EnvironmentVariableConstants.GitRepoUrl);
             Assert.AreEqual(gitRepoUrl.Value, "https://github.com/octocat/Hello-World");
         }
-        
+
 
 
         [TestMethod]
@@ -188,6 +199,132 @@ namespace VsClk.EnvReg.WebApi.Tests
             var result = target.GetEnvironmentVariable();
             Assert.AreEqual(result.Key, EnvironmentVariableConstants.SessionId);
             Assert.AreEqual(sessionId, result.Value);
+        }
+
+        [TestMethod]
+        public void EnvDotfilesRepoUrlEmptyTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+
+            var validator = new EnvDotfilesRepoUrl(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.IsNull(envVar);
+        }
+
+        [TestMethod]
+        public void EnvDotfilesRepoUrlTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+            var repository = "https://github.com/microsoft/vscode.git";
+            registration.Personalization.DotfilesRepository = repository;
+
+            var validator = new EnvDotfilesRepoUrl(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.AreEqual(envVar.Key, EnvironmentVariableConstants.DotfilesRepository);
+            Assert.AreEqual(envVar.Value, repository);
+        }
+
+        [TestMethod]
+        public void EnvDotfilesRepoUrlInvalidRepositoryTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+            var repository = "badurl/microsoft/vscode";
+            registration.Personalization.DotfilesRepository = repository;
+
+            var validator = new EnvDotfilesRepoUrl(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.IsNull(envVar);
+        }
+
+        [TestMethod]
+        public void EnvDotfilesTargetPathEmptyTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+
+            var validator = new EnvDotfilesTargetPath(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.IsNull(envVar);
+        }
+
+        [TestMethod]
+        public void EnvDotfilesTargetPathTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+            var path = "~/dotfiles";
+            registration.Personalization.DotfilesTargetPath = path;
+
+            var validator = new EnvDotfilesTargetPath(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.AreEqual(envVar.Key, EnvironmentVariableConstants.DotfilesTargetPath);
+            Assert.AreEqual(envVar.Value, path);
+        }
+
+        [TestMethod]
+        public void EnvDotfilesInstallCommandEmptyTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+
+            var validator = new EnvDotfilesInstallCommand(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.IsNull(envVar);
+        }
+
+        [TestMethod]
+        public void EnvDotfilesInstallCommandTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+            var script = "echo Hello!";
+            registration.Personalization.DotfilesInstallCommand = script;
+
+            var validator = new EnvDotfilesInstallCommand(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.AreEqual(envVar.Key, EnvironmentVariableConstants.DotfilesInstallCommand);
+            Assert.AreEqual(envVar.Value, script);
+        }
+
+        [TestMethod]
+        public void EnvDefaultShellEmptyTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+
+            var validator = new EnvDefaultShell(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.IsNull(envVar);
+        }
+
+        [TestMethod]
+        public void EnvDefaultShellInvalidShellTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+            var shell = "/bin/sh";
+            registration.Personalization.DotfilesInstallCommand = shell;
+
+            var validator = new EnvDefaultShell(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.IsNull(envVar);
+        }
+
+        [TestMethod]
+        public void EnvDefaultShellTest()
+        {
+            var registration = GetEmptyPersonalizationConfig();
+            var shell = "/usr/bin/zsh";
+            registration.Personalization.DefaultShell = shell;
+
+            var validator = new EnvDefaultShell(registration);
+            var envVar = validator.GetEnvironmentVariable();
+
+            Assert.AreEqual(envVar.Key, EnvironmentVariableConstants.DefaultShell);
+            Assert.AreEqual(envVar.Value, shell);
         }
     }
 }

@@ -4,6 +4,7 @@
     <ProjectReference Include="containers/dirs.proj" />
     <ProjectReference Include="deploy/service-deploy.csproj" />
     <ProjectReference Include="lib/dirs.proj" />
+    <ProjectReference Include="VsClk.EnvReg.WebApi.Tests/VsClk.EnvReg.WebApi.Tests.csproj" />
   </ItemGroup>
 
 </Project>
