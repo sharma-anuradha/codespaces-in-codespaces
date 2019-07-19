@@ -178,7 +178,7 @@ namespace VsClk.EnvReg.Repositories
             }
             UnauthorizedUtil.IsTrue(model.OwnerId == ownerId);
 
-            if (model.Type == EnvType.CloudEnvironment.ToString())
+            if (model.Type.Equals(EnvType.CloudEnvironment.ToString(), StringComparison.OrdinalIgnoreCase))
             {
                 await ComputeRepository.DeleteResourceAsync(model.Connection.ConnectionComputeTargetId, model.Connection.ConnectionComputeId);
             }

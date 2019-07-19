@@ -13,12 +13,11 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
 
     public class MockEnvironmentRegistrationRepository : IEnvironmentRegistrationRepository
     {
-        private IList<EnvironmentRegistration> _store = new List<EnvironmentRegistration>();
+        private IDictionary<string, EnvironmentRegistration> _store = new Dictionary<string, EnvironmentRegistration>();
 
         public Task<EnvironmentRegistration> CreateAsync(EnvironmentRegistration document, IDiagnosticsLogger logger)
         {
-            document.Id = Guid.NewGuid().ToString();
-            this._store.Add(document);
+            this._store.Add(document.Id, document);
             return Task.FromResult<EnvironmentRegistration>(document);
         }
 
@@ -33,7 +32,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
             var item = await GetAsync(key, logger);
             if (item != null)
             {
-                this._store.Remove(item);
+                this._store.Remove(item.Id);
                 return true;
             }
             return false;
@@ -41,12 +40,12 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
 
         public Task<EnvironmentRegistration> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)
         {
-            return Task.FromResult<EnvironmentRegistration>(this._store.Where(x => x.Id == key.Id).FirstOrDefault());
+            return Task.FromResult<EnvironmentRegistration>(this._store[key.Id]);
         }
 
         public Task<IEnumerable<EnvironmentRegistration>> GetWhereAsync(Expression<Func<EnvironmentRegistration, bool>> where, IDiagnosticsLogger logger, Func<IEnumerable<EnvironmentRegistration>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
-            return Task.FromResult<IEnumerable<EnvironmentRegistration>>(this._store.Where(where.Compile()));
+            return Task.FromResult<IEnumerable<EnvironmentRegistration>>(this._store.Select(x => x.Value).Where(where.Compile()));
         }
 
         public async Task<EnvironmentRegistration> UpdateAsync(EnvironmentRegistration document, IDiagnosticsLogger logger)

@@ -121,7 +121,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
 #if DEBUG
             if (appSettings.UseMocksForLocalDevelopment)
             {
-                services.AddSingleton<IComputeRepository, MockComputeRepository>();
+                services.AddSingleton<IComputeRepository, MockComputeRepository>((x) => new MockComputeRepository(appSettings));
                 return;
             }
 #endif // DEBUG

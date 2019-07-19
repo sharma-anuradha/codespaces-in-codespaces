@@ -25,6 +25,10 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
         public bool UseLocalDockerForComputeProvisioning { get; set; }
 
         public string DockerImage { get; set; }
+
+        public string PublishedCLIPath { get; set; }
+
+        public string LocalEnvironmentServiceUrl { get; set; }
 #endif // DEBUG
 
         // Authentication configuration
