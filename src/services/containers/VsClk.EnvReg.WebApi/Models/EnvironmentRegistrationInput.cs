@@ -42,6 +42,15 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
     {
         [JsonProperty(Required = Required.Default, PropertyName = "dotfilesRepository")]
         public string DotfilesRepository { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "dotfilesTargetPath")]
+        public string DotfilesTargetPath { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "dotfilesInstallCommand")]
+        public string DotfilesInstallCommand { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "defaultShell")]
+        public string DefaultShell { get; set; }
     }
 
     public class ConnectionInfoInput
