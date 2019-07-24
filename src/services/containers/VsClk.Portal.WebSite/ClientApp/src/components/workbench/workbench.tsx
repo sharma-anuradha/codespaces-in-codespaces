@@ -40,6 +40,9 @@ export class Workbench extends Component<WorkbenchProps, WorkbenchState> {
             right: '0'
         } as React.CSSProperties;
 
+        const port = parseInt(localStorage.getItem('vsonline.port'), 10);
+        const appUrl = `https://localhost:${port || '8000'}`;
+
         return (
             <div>
                 {
@@ -48,7 +51,8 @@ export class Workbench extends Component<WorkbenchProps, WorkbenchState> {
                         : null
                 }
                 <iframe
-                    style={iframeStyles} src="https://localhost:9888/"
+                    style={iframeStyles}
+                    src={appUrl}
                     onLoad={this.finishLoading} />
             </div>
         );

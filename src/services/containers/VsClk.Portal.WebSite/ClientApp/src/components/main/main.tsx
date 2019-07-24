@@ -47,10 +47,13 @@ export class Main extends Component<MainProps, MainState> {
             zIndex: -1
         } as any;
 
+        const port = parseInt(localStorage.getItem('vsonline.port'), 10);
+        const appUrl = `https://localhost:${port || '8000'}`;
+
         return (
             <iframe
                 style={hiddenIframeStyles}
-                src="https://localhost:9888/"
+                src={appUrl}
             />
         );
     }
