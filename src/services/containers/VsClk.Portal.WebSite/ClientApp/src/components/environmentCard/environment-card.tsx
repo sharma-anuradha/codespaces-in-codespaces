@@ -103,7 +103,7 @@ export class EnvironmentCard extends Component<EnvironmentCardProps> {
                         <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg9'>
                             <IconLabel
                                 label={environment.friendlyName}
-                                iconName='WindowsLogo' />
+                                iconName='VisualStudioLogo' />
                         </div>
                         <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg3'>
                             <Link
@@ -113,9 +113,9 @@ export class EnvironmentCard extends Component<EnvironmentCardProps> {
                             </Link>
                         </div>
                     </div>
-                    <div className='ms-Grid-row environment-card__environment-description'>
+                    {/* <div className='ms-Grid-row environment-card__environment-description'>
                         { envMock.description }
-                    </div>
+                    </div> */}
                     <div className='ms-Grid-row environment-card__date'>
                         { envMock.date }
                     </div>
