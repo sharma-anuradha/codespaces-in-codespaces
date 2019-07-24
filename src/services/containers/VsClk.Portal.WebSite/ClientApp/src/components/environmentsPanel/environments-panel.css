@@ -1,0 +1,26 @@
+
+.environments-panel {
+    max-width: 98rem;
+    margin: 0 auto;
+    position: relative;
+    background: white;
+    min-height: 80rem;
+}
+
+.environments-panel__create-button {
+    margin: 6rem 0 4rem 0;
+}
+
+.environments-panel__environments {
+    padding-bottom: 2rem;
+}
+
+.environments-panel__environments-spinner {
+    position: relative;
+    top: 8rem;
+}
+
+.environments-panel__no-environments {
+    margin-top: 6rem;
+    text-align: center;
+}

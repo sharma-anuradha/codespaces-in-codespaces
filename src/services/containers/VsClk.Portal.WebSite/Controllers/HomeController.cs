@@ -5,7 +5,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
     public class HomeController : Controller
     {
-        [Authorize]
+        //[Authorize]
         [HttpGet("~/info")]
         public ActionResult Index() => View();
     }

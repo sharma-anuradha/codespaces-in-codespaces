@@ -1,0 +1,19 @@
+.icon-label {
+    display: grid;
+    grid-template-columns: 4rem auto;
+}
+
+.icon-label__icon {
+    font-size: 3.6rem;
+    color: #999;
+}
+
+.icon-label__label {
+    font-size: 1.2rem;
+    padding-left: .8rem;
+    font-weight: bold;
+    color: #555555;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}

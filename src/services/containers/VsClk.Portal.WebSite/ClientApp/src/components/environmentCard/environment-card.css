@@ -1,0 +1,71 @@
+
+.environment-card {
+    padding: 1.6rem 2rem 1.2rem;
+    display: block;
+    text-decoration: none;
+}
+
+.environment-card:hover {
+    opacity: .9;
+    cursor: pointer;
+    box-shadow: 0 6.4px 14.4px 0 rgba(0, 0, 0, 0.132), 0 1.2px 3.6px 0 rgba(0, 0, 0, 0.108) !important;
+}
+
+.environment-card__tag {
+    padding: .2rem .8rem;
+    border-radius: .2rem;
+    float: right;
+}
+
+.environments-panel__show-all-environments,
+.environments-panel__create-button {
+    display: inline;
+}
+
+.environments-panel__show-all-environments {
+    font-size: 1.2rem;
+}
+
+
+.environments-panel__tar {
+    text-align: right;
+}
+
+.environment-card__environment-description {
+    margin-top: 1.2rem;
+    font-size: 1.2rem;
+    line-height: 1.6rem;
+    font-weight: 600;
+    color: #333333;
+}
+
+.environment-card__date {
+    color: #666666;
+    margin-top: .8rem;
+}
+
+.environment-card__environment-description,
+.environment-card__date {
+    margin-left: 0;
+}
+
+.environment-card__icon {
+    font-size: 1.6rem;
+    margin-left: .4rem;
+}
+
+.environment-card__icon:hover {
+    cursor: pointer;
+    opacity: .75;
+}
+
+.environment-card__users {
+    margin-top: 1.6rem;
+    margin-left: .2rem;
+}
+
+.environment-card__user {
+    float: left;
+    margin-right: .8rem;
+    width: 2.4rem;
+}

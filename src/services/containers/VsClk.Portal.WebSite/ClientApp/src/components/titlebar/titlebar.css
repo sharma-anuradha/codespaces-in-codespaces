@@ -1,5 +1,32 @@
+.titlebar {
+    background-color: #141414;
+    min-height: 4rem;
+    position: relative;
+}
 
+.titlebar__main-avatar {
+    float: right;
+    /* (4 - 2.8) / 2 */
+    margin-top: .6rem;
+}
 
-.menubar > .menubar-menu-button.disabled {
-    opacity: 0.3;
+.titlebar__caption {
+    color: white;
+    font-size: 14px;
+    letter-spacing: .025rem;
+    margin-top: .8rem;
+    margin-left: 1.2rem;
+    float: left;
+    white-space: nowrap;
+}
+
+.titlebar__caption-text {
+    padding-top: .4rem;
+}
+
+.titlebar__caption-icon {
+    color: white;
+    font-size: 2.4rem;
+    margin-right: .8rem;
+    float: left;
 }

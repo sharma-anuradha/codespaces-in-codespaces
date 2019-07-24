@@ -1,44 +1,47 @@
-import { AuthService } from './authService';
+import { authService, IToken } from './authService';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 
 export default class EnvRegService {
 
     private static servicePath = '/api/environment';
 
-    private static async getToken(): Promise<string> {
-        return await AuthService.Instance.getToken();
-    }
-
     private static async get(url: string): Promise<Response> {
-        const token = await EnvRegService.getToken();
+        const token = await authService.getCachedToken();
+
         if (token) {
-            return fetch(url, {
+            const response = await fetch(url, {
                 method: 'GET',
-                credentials: 'include',
+                redirect: 'follow',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token.accessToken}`,
                 }
-            }).then((response) => {
-                if (!response) {
-                    throw new Error(`GET to ${url} with returned an empty response`);
-                }
-                if (response.status !== 200) {
-                    throw new Error(response.statusText);
-                }
-                return response;
             });
+
+            if (!response) {
+                throw new Error(`GET to ${url} with returned an empty response`);
+            }
+            if (response.status !== 200) {
+                const error = new Error(response.statusText);
+                (error as any).code = response.status;
+                throw error;
+            }
+            return response;
+
         }
         return undefined;
     }
 
     private static async post(url: string, data: any): Promise<Response> {
-        const token = await EnvRegService.getToken();
+        const token = await authService.getCachedToken();
         if (token) {
             return fetch(url, {
                 method: 'POST',
                 credentials: 'include',
+                redirect: 'follow',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token.accessToken}`
                 },
                 body: JSON.stringify(data)
             }).then((response) => {
@@ -54,10 +57,17 @@ export default class EnvRegService {
         return undefined;
     }
 
-    static async fetchEnvironments(): Promise<ICloudEnvironment[]> {
+    static async fetchEnvironments(token?: IToken): Promise<ICloudEnvironment[]> {
         let env: ICloudEnvironment[] = [];
-        const isAuthenticated = await AuthService.Instance.isAuthenticated();
-        if (!isAuthenticated) return [];
+
+        if (!token) {
+            token = await authService.getCachedToken();
+        
+            if (!token) {
+                return [];
+            }
+        }
+
         return this.get(`${EnvRegService.servicePath}/registration`)
             .then(response => {
                 return response.text().then((data) => {
@@ -81,8 +91,9 @@ export default class EnvRegService {
                     }
                 }
                 return env;
-            }).catch(() => {
-                throw 'Error fetching environments';
+            }).catch((e) => {
+                console.error(e);
+                throw e;
             })
     }
 

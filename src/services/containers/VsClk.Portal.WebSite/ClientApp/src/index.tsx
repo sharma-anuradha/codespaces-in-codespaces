@@ -6,6 +6,9 @@ import './index.css';
 import { App } from './app';
 import * as serviceWorker from './serviceWorker';
 
+import { initializeIcons } from '@uifabric/icons';
+initializeIcons();
+
 const baseUrl = (document.getElementById('public_url') as HTMLBaseElement).getAttribute('href');
 const rootElement = document.getElementById('root');
 
@@ -13,8 +16,9 @@ Modal.setAppElement('body');
 
 ReactDOM.render(
     <BrowserRouter basename={baseUrl || ''}>
-        <App />
-    </BrowserRouter>, rootElement);
+        <App key='main-app' />
+    </BrowserRouter>, rootElement
+);
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

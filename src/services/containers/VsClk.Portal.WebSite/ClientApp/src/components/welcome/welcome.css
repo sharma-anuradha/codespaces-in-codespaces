@@ -1,37 +1,22 @@
-/* Theming */
+.welcome-page {}
 
-.monaco-workbench .part.editor>.content .welcomePage .detail {
-	color: rgba(204, 204, 204, 0.7);
+.welcome-page__sign-in-buttons {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
 }
 
-.monaco-workbench .part.editor>.content .welcomePage .caption {
-	color: #cccccc;
+.welcome-page__sign-in-label {
+	margin: 1.6rem 0;
+	display: block;
+	text-align: center;
 }
 
-.monaco-workbench .part.editor>.content .welcomePage .commands .item button {
-	background: rgba(0, 0, 0, .2);
+.welcome-page__sign-in-button {
+	margin-right: 1rem;
 }
 
-.monaco-workbench .part.editor>.content .welcomePage .commands .item button:hover {
-	background: rgba(200, 235, 255, .072);
-}
-
-.monaco-workbench .part.editor>.content .welcomePage a {
-	color: #3794ff;
-}
-
-.monaco-workbench .part.editor>.content .welcomePage a:hover, .monaco-workbench .part.editor>.content .welcomePage a:active {
-	color: #3794ff;
-}
-
-.monaco-workbench .part.editor > .content .welcomePage a:focus {
-	outline-color: rgba(14, 99, 156, 0.8);
-}
-
-.monaco-workbench .part.editor > .content .welcomePage .commands .item button {
-	border-color: none;
-}
-
-.monaco-workbench .part.editor>.content .welcomePage .row .commands, .monaco-workbench .part.editor>.content .welcomePage .row .commands .list, .monaco-workbench .part.editor>.content .welcomePage .row .section, .monaco-workbench .part.editor>.content .welcomePage .row .splash {
-	overflow: hidden;
+.welcome-page__sign-in-button:last-child {
+	margin-right: 0;
 }

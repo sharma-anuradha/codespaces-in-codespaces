@@ -61,7 +61,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.AddSingleton(appSettings);
             AppSettings = appSettings;
 
-            ConfigureAuthentication(services, appSettings);
+            //ConfigureAuthentication(services, appSettings);
 
             // Forwarded headers
             services.Configure<ForwardedHeadersOptions>(options =>
@@ -86,7 +86,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                     .SetApplicationName("VS Sass");
             }
 
-            // Authentication
+            // AuthenticationConfigureAuthentication
             services.AddAuthentication(options =>
             {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
