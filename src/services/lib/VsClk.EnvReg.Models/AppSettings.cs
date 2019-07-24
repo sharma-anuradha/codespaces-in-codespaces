@@ -22,7 +22,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models
         // This option is only available on Debug Builds, just to make a clear distinction between IsDevelopment.
         public bool UseMocksForLocalDevelopment { get; set; }
 
-        public bool UseLocalDockerForComputeProvisioning { get; set; }
+        public string UseLocalDockerForComputeProvisioning { get; set; }
 
         public string DockerImage { get; set; }
 

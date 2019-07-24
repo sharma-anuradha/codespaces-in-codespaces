@@ -33,11 +33,19 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
         }
     }
 
+    public enum LocalDockerOptions
+    {
+        None,
+        BindMountCLI,
+        CopyCLI
+    }
+
     public class MockComputeRepository : IComputeRepository
     {
         // Map of computeId to request and response.
         private readonly Dictionary<string, MockACI> store = new Dictionary<string, MockACI>();
         private AppSettings appSettings;
+        private const string DockerCLI = "docker";
 
         public MockComputeRepository(AppSettings appSettings)
         {
@@ -46,14 +54,20 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
 
         public Task<ComputeResourceResponse> AddResourceAsync(string computeTargetId, ComputeServiceRequest computeServiceRequest)
         {
-            string containerInstance;
-            if (appSettings.UseLocalDockerForComputeProvisioning)
+            string containerInstance = Guid.NewGuid().ToString();
+
+            Enum.TryParse<LocalDockerOptions>(appSettings.UseLocalDockerForComputeProvisioning, true, out LocalDockerOptions options);
+            switch (options)
             {
-                containerInstance = CreateDockerContainer(appSettings.DockerImage, appSettings.PublishedCLIPath, computeServiceRequest);
-            }
-            else
-            {
-                containerInstance = Guid.NewGuid().ToString();
+                case LocalDockerOptions.BindMountCLI:
+                    containerInstance = CreateDockerContainerWithBindMount(appSettings.DockerImage, appSettings.PublishedCLIPath, computeServiceRequest);
+                    break;
+                case LocalDockerOptions.CopyCLI:
+                    containerInstance = CreateDockerContainerWithCopiedCLI(appSettings.DockerImage, appSettings.PublishedCLIPath, computeServiceRequest);
+                    break;
+                case LocalDockerOptions.None:
+                default:
+                    break;
             }
 
             var computeResource = new ComputeResourceResponse()
@@ -75,7 +89,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
 
         public Task DeleteResourceAsync(string connectionComputeTargetId, string connectionComputeId)
         {
-            if (appSettings.UseLocalDockerForComputeProvisioning)
+            Enum.TryParse<LocalDockerOptions>(appSettings.UseLocalDockerForComputeProvisioning, true, out LocalDockerOptions options);
+            if (options == LocalDockerOptions.CopyCLI || options == LocalDockerOptions.BindMountCLI)
             {
                 var stopDockerContainerProcess = Process.Start("docker", $"stop {connectionComputeId}");
                 stopDockerContainerProcess.WaitForExit();
@@ -101,12 +116,42 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
             return Task.FromResult(result);
         }
 
-        private string CreateDockerContainer(string image, string cliPublishedpath, ComputeServiceRequest computeServiceRequest)
+        private string CreateDockerContainerWithBindMount(string image, string cliPublishedpath, ComputeServiceRequest computeServiceRequest)
         {
             var containerName = Guid.NewGuid().ToString();
             var commandLine = new StringBuilder();
             commandLine.Append("run ");
             commandLine.Append($"-v {cliPublishedpath}:/.cloudenv/bin ");
+            commandLine.Append($"{GetCreateOrRunArguments(image, containerName, computeServiceRequest)} ");
+            Process.Start(DockerCLI, commandLine.ToString());
+
+            return containerName;
+        }
+
+        private string CreateDockerContainerWithCopiedCLI(string image, string cliPublishedpath, ComputeServiceRequest computeServiceRequest)
+        {
+            var containerName = Guid.NewGuid().ToString();
+            var createCommandLine = new StringBuilder();
+            createCommandLine.Append("create ");
+            createCommandLine.Append($"{GetCreateOrRunArguments(image, containerName, computeServiceRequest)} ");
+            Process.Start(DockerCLI, createCommandLine.ToString()).WaitForExit();
+
+            var dockerCopyCommandLine = new StringBuilder();
+            dockerCopyCommandLine.Append("cp ");
+            dockerCopyCommandLine.Append($"{cliPublishedpath}/. "); // Added /. to copy the contents of the directory
+            dockerCopyCommandLine.Append($"{containerName}:/.cloudenv/bin ");
+            Process.Start(DockerCLI, dockerCopyCommandLine.ToString()).WaitForExit();
+
+            var dockerStartCommandLine = new StringBuilder();
+            dockerStartCommandLine.Append($"start {containerName}");
+            Process.Start(DockerCLI, dockerStartCommandLine.ToString());
+
+            return containerName;
+        }
+
+        private string GetCreateOrRunArguments(string image, string containerName, ComputeServiceRequest computeServiceRequest)
+        {
+            var createCommandLine = new StringBuilder();
             foreach (var env in computeServiceRequest.EnvironmentVariables)
             {
                 if (env.Key == "SESSION_CALLBACK")
@@ -115,30 +160,17 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
                     // do callback to local http://localhost:62055/api/registration/{id}/_callback
 
                     var callback = env.Value.Replace("https://online.dev.core.vsengsaas.visualstudio.com/api/environment/registration/", this.appSettings.LocalEnvironmentServiceUrl);
-                    commandLine.Append($"-e{env.Key}=\"{callback}\" ");
+                    createCommandLine.Append($"-e{env.Key}=\"{callback}\" ");
                 }
                 else
                 {
-                    commandLine.Append($"-e{env.Key}=\"{env.Value}\" ");
+                    createCommandLine.Append($"-e{env.Key}=\"{env.Value}\" ");
                 }
             }
 
-            commandLine.Append($"--name {containerName} ");
-            commandLine.Append($"{image} /.cloudenv/bin/vscloudenv bootstrap");
-
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo("docker", commandLine.ToString())
-            };
-
-            process.Exited += (s,e) =>
-            {
-                process.Dispose();
-                process = null;
-            };
-
-            process.Start();
-            return containerName;
+            createCommandLine.Append($"--name {containerName} ");
+            createCommandLine.Append($"{image} /.cloudenv/bin/vscloudenv bootstrap");
+            return createCommandLine.ToString();
         }
     }
 
