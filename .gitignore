@@ -331,3 +331,5 @@ ASALocalRun/
 
 # ASP.NET Core secrets
 appsettings.secrets.json
+
+.DS_Store

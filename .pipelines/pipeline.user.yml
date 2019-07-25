@@ -16,4 +16,3 @@ static_analysis_options:
       - 'vscode-web\scripts\postupdate.js'
       - 'scripts\npm\postinstall.js'
       - 'vscode-web\scripts\preupdate.js'
-      - 'src\setupProxy.js'
