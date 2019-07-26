@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using System;
 
 namespace VsClk.EnvReg.Models.DataStore.Workspace
 {
@@ -59,5 +60,8 @@ namespace VsClk.EnvReg.Models.DataStore.Workspace
 
         [JsonProperty(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
         public bool AreAnonymousGuestsAllowed { get; set; }
+
+        [JsonProperty(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+        public DateTime ExpiresAt { get; set; }
     }
 }

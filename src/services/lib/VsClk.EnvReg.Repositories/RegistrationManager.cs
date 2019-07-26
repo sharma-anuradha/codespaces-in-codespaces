@@ -16,6 +16,7 @@ namespace VsClk.EnvReg.Repositories
     public class RegistrationManager : IRegistrationManager
     {
         private const int ENV_REG_QUOTA = 5;
+        private const int PERSISTANT_SESSION_EXPIRES_IN_DAYS = 30;
 
         private AppSettings AppSettings { get; }
         private IEnvironmentRegistrationRepository EnvironmentRegistrationRepository { get; }
@@ -219,7 +220,8 @@ namespace VsClk.EnvReg.Repositories
             {
                 Name = id,
                 ConnectionMode = ConnectionMode.Auto,
-                AreAnonymousGuestsAllowed = false
+                AreAnonymousGuestsAllowed = false,
+                ExpiresAt = DateTime.UtcNow.AddDays(PERSISTANT_SESSION_EXPIRES_IN_DAYS)
             };
 
             var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest);
