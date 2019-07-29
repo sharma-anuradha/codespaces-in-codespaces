@@ -42,10 +42,17 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private const int StaleServiceSeconds = 120;
 
-        private const int ServicesRequestPerUnitThroughput = 10000;
-        private const int ContactsRequestPerUnitThroughput = 10000;
-        private const int MessageRequestPerUnitThroughput = 2500;
-        private const int LeasesRequestPerUnitThroughput = 2500;
+        // RU values for production
+        private const int ServicesRUThroughput = 400;
+        private const int ContactsRUThroughput = 5000;
+        private const int MessageRUThroughput = 400;
+        private const int LeasesRUThroughput = 1000;
+
+        // RU values for Development
+        private const int ServicesRUThroughput_Dev = 400;
+        private const int ContactsRUThroughput_Dev = 400;
+        private const int MessageRUThroughput_Dev = 400;
+        private const int LeasesRUThroughput_Dev = 400;
 
         private readonly DatabaseSettings databaseSettings;
         private readonly List<IChangeFeedProcessor> feedProcessors = new List<IChangeFeedProcessor>();
@@ -92,7 +99,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
 
-            await databaseBackplaneProvider.InitializeAsync(serviceId);
+            await databaseBackplaneProvider.InitializeAsync(serviceId, databaseSettings.IsProduction);
             return databaseBackplaneProvider;
         }
 
@@ -392,7 +399,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return feedProcessor;
         }
 
-        private async Task InitializeAsync(string serviceId)
+        private async Task InitializeAsync(string serviceId, bool isProduction)
         {
             this.logger.LogInformation($"Creating database:{DatabaseId} if not exists");
 
@@ -406,7 +413,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 CreateDocumentCollectionDefinition(ServiceCollectionId),
                 new RequestOptions
                 {
-                    OfferThroughput = ServicesRequestPerUnitThroughput
+                    OfferThroughput = isProduction ? ServicesRUThroughput : ServicesRUThroughput_Dev
                 });
 
             // Ensure we create an entry that backup our leases collection
@@ -419,7 +426,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 CreateDocumentCollectionDefinition(ContactDataCollectionId),
                 new RequestOptions
                 {
-                    OfferThroughput = ContactsRequestPerUnitThroughput
+                    OfferThroughput = isProduction ? ContactsRUThroughput : ContactsRUThroughput_Dev
                 });
 
             // Create 'message'
@@ -429,7 +436,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 CreateDocumentCollectionDefinition(MessageCollectionId),
                 new RequestOptions
                 {
-                    OfferThroughput = MessageRequestPerUnitThroughput
+                    OfferThroughput = isProduction ? MessageRUThroughput: MessageRUThroughput_Dev
                 });
 
             // cleanup all 'stale' leases collections
@@ -459,7 +466,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 CreateDocumentCollectionDefinition(leaseCollectionId),
                 new RequestOptions
                 {
-                    OfferThroughput = LeasesRequestPerUnitThroughput
+                    OfferThroughput = isProduction ? LeasesRUThroughput : LeasesRUThroughput_Dev
                 })).Resource;
 
             // Create 'services' processor

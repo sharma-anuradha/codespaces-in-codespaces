@@ -8,5 +8,6 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         public string EndpointUrl { get; set; }
         public string AuthorizationKey { get; set; }
+        public bool IsProduction { get; set; }
     }
 }

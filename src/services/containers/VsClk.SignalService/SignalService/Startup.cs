@@ -21,6 +21,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         bool EnableAuthentication { get; }
         string Environment { get; }
         IConfigurationRoot Configuration { get; }
+        bool IsDevelopmentEnv { get; }
     }
 
     public class Startup : IStartup
@@ -50,13 +51,17 @@ namespace Microsoft.VsCloudKernel.SignalService
            false;
 #endif
 
+        #region IStartup
+
         public bool UseAzureSignalR { get; private set; }
         public bool EnableAuthentication { get; private set; }
         public string Environment => this._hostEnvironment.EnvironmentName;
+        public bool IsDevelopmentEnv => this._hostEnvironment.EnvironmentName.Equals("Development");
+
+        #endregion
 
         private readonly IHostingEnvironment _hostEnvironment;
 
-        private bool IsDevelopmentEnv => this._hostEnvironment.EnvironmentName.Equals("Development");
 
         public Startup(ILoggerFactory loggerFactory,IHostingEnvironment env)
         {

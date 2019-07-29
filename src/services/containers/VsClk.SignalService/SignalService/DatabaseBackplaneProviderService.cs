@@ -12,6 +12,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         private readonly IOptions<AppSettings> appSettingsProvider;
         private readonly PresenceService presenceService;
+        private readonly IStartup startup;
         private readonly ILogger<DatabaseBackplaneProvider> logger;
 
         public DatabaseBackplaneProviderService(
@@ -19,11 +20,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             IList<IHealthStatusProvider> healthStatusProviders,
             IOptions<AppSettings> appSettingsProvider,
             PresenceService service,
+            IStartup startup,
             ILogger<DatabaseBackplaneProvider> logger)
             : base(warmupServices, healthStatusProviders)
         {
             this.appSettingsProvider = appSettingsProvider;
             this.presenceService = service;
+            this.startup = startup;
             this.logger = logger;
         }
 
@@ -44,7 +47,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                         new DatabaseSettings()
                         {
                             EndpointUrl = endpointUrl,
-                            AuthorizationKey = authorizationKey
+                            AuthorizationKey = authorizationKey,
+                            IsProduction = !this.startup.IsDevelopmentEnv
                         },
                         this.logger);
                     this.presenceService.AddBackplaneProvider(databaseBackplaneProvider);
