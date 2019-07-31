@@ -6,8 +6,6 @@ import { Label } from 'office-ui-fabric-react/lib/Label';
 import { authService } from '../../services/authService';
 
 import './welcome.css';
-import EnvRegService from '../../services/envRegService';
-
 
 interface WelcomeProps {}
 
@@ -20,7 +18,7 @@ export class Welcome extends Component<WelcomeProps, WelcomeState> {
         super(props);
 
         this.state = {
-            isAuthenticated: false
+            isAuthenticated: false,
         };
     }
     private onSignIn = async () => {
@@ -29,41 +27,37 @@ export class Welcome extends Component<WelcomeProps, WelcomeState> {
         if (token) {
             this.setState({ isAuthenticated: true });
         }
-    }
-
-    private renderButtons() {
-        return (
-            <div className='welcome-page__sign-in-buttons'>
-                <Label className='welcome-page__sign-in-label'>Something exciting</Label>
-                <Button
-                    className='welcome-page__sign-in-button'
-                    text='Sign up'
-                    primary={true}
-                    onClick={this.onSignIn} />
-                <Button
-                    className='welcome-page__sign-in-button'
-                    text='Sign in'
-                    onClick={this.onSignIn} />
-            </div>
-        );
-    }
+    };
 
     async componentWillMount() {
         const token = await authService.getCachedToken();
 
         this.setState({
-            isAuthenticated: !!token
+            isAuthenticated: !!token,
         });
     }
 
     render() {
+        if (this.state.isAuthenticated) {
+            return <Redirect to='/' />;
+        }
+
         return (
             <div className='welcome-page'>
-                {
-                    (this.state.isAuthenticated)
-                        ? <Redirect to='/' />
-                        : this.renderButtons()
-                }
+                <div className='welcome-page__sign-in-buttons'>
+                    <Label className='welcome-page__sign-in-label'>Something exciting</Label>
+                    <Button
+                        className='welcome-page__sign-in-button'
+                        text='Sign up'
+                        primary={true}
+                        onClick={this.onSignIn}
+                    />
+                    <Button
+                        className='welcome-page__sign-in-button'
+                        text='Sign in'
+                        onClick={this.onSignIn}
+                    />
+                </div>
             </div>
         );
     }

@@ -4,7 +4,6 @@
     ],
     "rules": {
         "prefer-type-cast": false,
-        "no-relative-imports": false,
-        "quotemark": [ true, "single" ]
+        "no-relative-imports": false
     }
 }

@@ -20,5 +20,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public string GithubAppClientId { get; set; }
 
         public string GithubAppClientSecret { get; set; }
+
+        public string EnvironmentRegistrationEndpoint { get; set; }
     }
 }

@@ -1,10 +1,8 @@
 import { authService, IToken } from './authService';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
+import { getServiceConfiguration } from './configurationService';
 
 export default class EnvRegService {
-
-    private static servicePath = '/api/environment';
-
     private static async get(url: string): Promise<Response> {
         const token = await authService.getCachedToken();
 
@@ -14,8 +12,8 @@ export default class EnvRegService {
                 redirect: 'follow',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token.accessToken}`,
-                }
+                    Authorization: `Bearer ${token.accessToken}`,
+                },
             });
 
             if (!response) {
@@ -27,7 +25,6 @@ export default class EnvRegService {
                 throw error;
             }
             return response;
-
         }
         return undefined;
     }
@@ -41,12 +38,16 @@ export default class EnvRegService {
                 redirect: 'follow',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token.accessToken}`
+                    Authorization: `Bearer ${token.accessToken}`,
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
             }).then((response) => {
                 if (!response) {
-                    throw new Error(`POST to ${url} with data ${JSON.stringify(data)} returned an empty response`);
+                    throw new Error(
+                        `POST to ${url} with data ${JSON.stringify(
+                            data
+                        )} returned an empty response`
+                    );
                 }
                 if (response.status !== 200) {
                     throw new Error(response.statusText);
@@ -62,23 +63,25 @@ export default class EnvRegService {
 
         if (!token) {
             token = await authService.getCachedToken();
-        
+
             if (!token) {
                 return [];
             }
         }
 
-        return this.get(`${EnvRegService.servicePath}/registration`)
-            .then(response => {
+        const config = await getServiceConfiguration();
+
+        return this.get(config.environmentRegistrationEndpoint)
+            .then((response) => {
                 return response.text().then((data) => {
                     return JSON.parse(data);
-                })
+                });
             })
             .then((environments: ICloudEnvironment[]) => {
                 if (environments) {
                     if (Array.isArray(environments)) {
-                        // Convert dates. 
-                        environments.forEach(environment => {
+                        // Convert dates.
+                        environments.forEach((environment) => {
                             environment.active = new Date(environment.active);
                             environment.created = new Date(environment.created);
                             environment.updated = new Date(environment.updated);
@@ -87,30 +90,36 @@ export default class EnvRegService {
                         // Order them by updated time DESC
                         environments.sort((a: ICloudEnvironment, b: ICloudEnvironment) => {
                             return b.updated.getTime() - a.updated.getTime();
-                        })
+                        });
                     }
                 }
                 return env;
-            }).catch((e) => {
+            })
+            .catch((e) => {
                 console.error(e);
                 throw e;
-            })
+            });
     }
 
+    static async newEnvironment(name: string): Promise<ICloudEnvironment> {
+        const config = await getServiceConfiguration();
 
-    static newEnvironment(name: string): Promise<ICloudEnvironment> {
-        return this.post(`${EnvRegService.servicePath}/registration`, {
-            friendlyName: name
+        return this.post(config.environmentRegistrationEndpoint, {
+            friendlyName: name,
         })
-            .then(response => {
+            .then((response) => {
                 return response.json();
-            }).catch((e) => {
+            })
+            .catch((e) => {
                 throw 'Error creating new environment';
             });
     }
 
-    static getEnvironment(id: string): Promise<ICloudEnvironment> {
-        return this.get(`${EnvRegService.servicePath}/registration/${id}`)
-            .then(response => response.json())
+    static async getEnvironment(id: string): Promise<ICloudEnvironment> {
+        const config = await getServiceConfiguration();
+
+        return this.get(`${config.environmentRegistrationEndpoint}/${id}`).then((response) =>
+            response.json()
+        );
     }
 }

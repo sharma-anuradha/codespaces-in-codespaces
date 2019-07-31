@@ -35,6 +35,18 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy((builder) =>
+                {
+                    builder.WithOrigins(
+                        // Localhost for Portal development
+                        "https://localhost:3000")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
+
             // Frameworks
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
@@ -127,7 +139,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
 #endif // DEBUG
 
             services.AddSingleton<IComputeRepository, HttpClientComputeRepository>();
-            
         }
 
 
@@ -143,6 +154,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 //app.UseHsts();
             }
+
+            app.UseCors();
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(env.IsDevelopment());

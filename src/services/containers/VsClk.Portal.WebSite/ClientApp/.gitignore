@@ -26,3 +26,5 @@ yarn-error.log*
 /public/static/vscode
 /vscode-web/vscode-remote
 /vscode-web/vscode.zip
+
+/public/static/web-standalone/

@@ -11,6 +11,10 @@ pushd "%~dp0"
 set DOTNET_VERSION=2.2.203
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
+:: Install node
+set NODE_VERSION=v10.15.3
+call ".pipelines\install-node.cmd" %NODE_VERSION%
+
 set DOTNET_ARGS=/m /v:m
 
 :: Dotnet Restore
@@ -31,15 +35,6 @@ echo npm install and build
 pushd ".\src\services\containers\VsClk.Portal.WebSite\ClientApp"
 call robocopy . %tmp%\portalspabuild\ /s 
 pushd %tmp%\portalspabuild\
-echo.
-echo npm-build-npm
-call npm install -g npm
-set EX=%ERRORLEVEL%
-if "%EX%" neq "0" (
-    popd
-    echo Failed to npm-build-npm correctly.
-	exit /b %EX%
-)
 echo.
 echo npm-install-project
 call npm install

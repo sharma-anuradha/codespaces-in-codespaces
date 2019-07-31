@@ -1,0 +1,72 @@
+{
+    "version": "2.0.0",
+    "tasks": [{
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/VsClk.Portal.WebSite.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "build"
+        },
+        {
+            "label": "build SPA",
+            "command": "yarn",
+            "type": "process",
+            "args": [
+                "build"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/ClientApp"
+            },
+            "group": "build",
+            "problemMatcher": [
+                "$ts-webpack"
+            ]
+        },
+        {
+            "label": "Start dev server SPA",
+            "command": "yarn",
+            "type": "process",
+            "args": ["start"],
+            "options": {
+                "cwd": "${workspaceFolder}/ClientApp"
+            },
+            "group": "build",
+            "problemMatcher": [
+                "$ts-webpack"
+            ],
+            "isBackground": true
+        },
+        {
+            "label": "publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/VsClk.Portal.WebSite.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "build"
+        },
+        {
+            "label": "watch",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "${workspaceFolder}/VsClk.Portal.WebSite.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

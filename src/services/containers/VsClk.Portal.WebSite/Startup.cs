@@ -1,23 +1,15 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.Extensions.FileProviders;
-using System.IO;
 using System.Linq;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using StackExchange.Redis;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -73,7 +65,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         private void ConfigureAuthentication(IServiceCollection services, AppSettings appSettings)
         {
-
             // Add Data protection
             if (!HostEnvironment.IsDevelopment() || !appSettings.IsLocal)
             {
@@ -81,7 +72,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 services.AddDataProtection()
                     .SetApplicationName("VS Sass")
                     .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
-            } else {
+            }
+            else
+            {
                 services.AddDataProtection()
                     .SetApplicationName("VS Sass");
             }
@@ -190,7 +183,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseSpaStaticFiles();
+            app.UseSpaStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = (ctx) =>
+                {
+                    ctx.Context.Response.Headers.Add("Service-Worker-Allowed", "/");
+                }
+            });
 
             app.UseAuthentication();
 
@@ -204,12 +203,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
-
                 if (env.IsDevelopment() && AppSettings.IsLocal)
                 {
                     // For development purposes, uncomment out if you want dotnet to load your react dev server, otherwise run 'yarn start' inside ClientApp
                     // spa.UseReactDevelopmentServer(npmScript: "start");
-                    spa.UseProxyToSpaDevelopmentServer("http://localhost:3000");
+                    spa.UseProxyToSpaDevelopmentServer("http://localhost:3030");
                 }
             });
         }

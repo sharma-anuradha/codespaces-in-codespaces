@@ -8,12 +8,17 @@
   <meta name="theme-color" content="#000000" />
   <base id="public_url" href="%PUBLIC_URL%/" />
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/10.0.0/css/fabric.min.css" />
+  <link rel="stylesheet"
+    href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/10.0.0/css/fabric.min.css" />
   <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+  <!-- Temporary way to get VSCode server to talk to me. -->
+  <meta id="vscode-remote-connection-token" data-settings="%CONNECTION_TOKEN%" />
+
   <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
@@ -24,6 +29,11 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
   <title>Visual Studio Online</title>
+  <style>
+    #workbench {
+      height: 100%;
+    }
+  </style>
   <!-- <style>
     .vssass-loader {
       position: absolute;
@@ -53,6 +63,7 @@
     <img class="image" src="./static/vscode/vs/workbench/browser/parts/editor/media/letterpress-dark.svg" />
   </div> -->
   <div id="root"></div>
+  <div id="workbench" />
   <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
@@ -63,6 +74,9 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+
+  <script async src="%PUBLIC_URL%/static/web-standalone/out/vs/loader.js"></script>
+
 </body>
 
 </html>

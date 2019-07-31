@@ -12,7 +12,6 @@ import { ICloudEnvironment } from '../../interfaces/cloudenvironment';
 
 import './environments-panel.css';
 
-
 export interface EnvironmentsPanelProps {}
 export interface EnvironmentsPanelState {
     environments: ICloudEnvironment[];
@@ -27,19 +26,21 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
         this.state = {
             environments: [],
             isLoading: true,
-            isAuthenticated: true
+            isAuthenticated: true,
         };
 
         authService.getCachedToken().then((token) => {
             if (token) {
-                envRegService.fetchEnvironments()
+                envRegService
+                    .fetchEnvironments()
                     .then((environments) => {
                         this.setState({
                             environments,
-                            isLoading: false
+                            isLoading: false,
                         });
-                    }).catch((e) => {
-                        if ((e.message.indexOf('401') !== -1) || (e.code === 401)) {
+                    })
+                    .catch((e) => {
+                        if (e.message.indexOf('401') !== -1 || e.code === 401) {
                             authService.signOut();
                             console.error('Please sign up!');
 
@@ -54,19 +55,19 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
         const { isLoading, isAuthenticated, environments } = this.state;
 
         if (!isAuthenticated) {
-            return (<Redirect to='/welcome' />);
+            return <Redirect to='/welcome' />;
         }
 
         if (isLoading) {
             return (
                 <Spinner
                     className='environments-panel__environments-spinner'
-                    label="Fetching your environments..."
-                    ariaLive="assertive"
-                    labelPosition="right" />
-                );
+                    label='Fetching your environments...'
+                    ariaLive='assertive'
+                    labelPosition='right'
+                />
+            );
         }
-
 
         const envs = [];
         let i = 0;
@@ -75,33 +76,23 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
                 <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg4' key={i++}>
                     <EnvironmentCard environment={env} id={i} />
                 </div>
-            );   
+            );
         }
 
         return (
             <div className='ms-Grid-row'>
                 <div className='ms-Grid-row environments-panel__environments'>
-                    {
-                        (envs.length)
-                            ? envs
-                            : this.renderNoEnvironments()
-                    }
+                    {envs.length ? envs : this.renderNoEnvironments()}
                 </div>
-                {
-                    (envs.length)
-                        ? this.renderViewAll()
-                        : null
-                }
+                {envs.length ? this.renderViewAll() : null}
             </div>
         );
     }
 
     private renderNoEnvironments() {
         return (
-            <div
-                className='environments-panel__no-environments'
-                key='no-envs'>
-                    No enviroments so far. <Link>Create one!</Link>
+            <div className='environments-panel__no-environments' key='no-envs'>
+                No enviroments so far. <Link>Create one!</Link>
             </div>
         );
     }
@@ -110,7 +101,7 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
         return (
             <div className='ms-Grid' dir='ltr'>
                 <div className='ms-Grid-row'>
-                    <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg10'></div>
+                    <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg10' />
                     <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg2 environments-panel__tar'>
                         <Link className='environments-panel__show-all-environments'>
                             View all my environments
@@ -126,12 +117,12 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
             <div className='environments-panel'>
                 <div className='ms-Grid' dir='ltr'>
                     <div className='ms-Grid-row'>
-                        <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg9'></div>
+                        <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg9' />
                         <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg3 environments-panel__tar'>
                             <PrimaryButton
                                 text='Create environment'
                                 className='environments-panel__create-button'
-                                />
+                            />
                         </div>
                     </div>
                     {this.renderEnvironments()}

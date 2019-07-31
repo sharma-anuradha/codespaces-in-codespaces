@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { Redirect, RouteComponentProps } from 'react-router';
 
 import './main.css';
@@ -6,7 +6,7 @@ import './main.css';
 import { TitleBar } from '../titlebar/titlebar';
 import { Loader } from '../loader/loader';
 
-import { EnvironmentsPanel } from '../environmentsPanel/environments-panel'
+import { EnvironmentsPanel } from '../environmentsPanel/environments-panel';
 import { authService } from '../../services/authService';
 
 interface MainProps extends RouteComponentProps {}
@@ -18,13 +18,12 @@ interface MainState {
 }
 
 export class Main extends Component<MainProps, MainState> {
-
     constructor(props: any) {
         super(props);
 
         this.state = {
             loading: false,
-            isAuthenticated: true
+            isAuthenticated: true,
         };
     }
 
@@ -32,49 +31,26 @@ export class Main extends Component<MainProps, MainState> {
         const token = await authService.getCachedToken();
 
         this.setState({
-            isAuthenticated: !!token
+            isAuthenticated: !!token,
         });
-    }
-
-    private renderIframe() {
-        const hiddenIframeStyles = {
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            opacity: 0,
-            top: '-100%',
-            left: '-100%',
-            zIndex: -1
-        } as any;
-
-        const port = parseInt(localStorage.getItem('vsonline.port'), 10);
-        const appUrl = `https://localhost:${port || '8000'}`;
-
-        return (
-            <iframe
-                style={hiddenIframeStyles}
-                src={appUrl}
-            />
-        );
     }
 
     render() {
         const { loading, isAuthenticated } = this.state;
 
         if (!isAuthenticated) {
-            return (<Redirect to='/welcome' />);
+            return <Redirect to='/welcome' />;
         }
 
         if (loading) {
-            return (<Loader message='Loading...'/>);
+            return <Loader message='Loading...' />;
         }
 
         return (
-            <div>
+            <Fragment>
                 <TitleBar />
                 <EnvironmentsPanel />
-                { this.renderIframe() }
-            </div>
+            </Fragment>
         );
     }
 }

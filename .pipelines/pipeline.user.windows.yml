@@ -20,7 +20,6 @@ package_sources:
         - 'src\\**\\*.npmrc'
     feeds:                                     # Feeds to inject with credentials in generated .npmrc. Use this if you don't have .npmrc checked in and use a global or team wide configuration.
       registry: https://registry.npmjs.org/    # This is the main registry.
-      "@environments:registry": https://devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/registry/      
 
 restore:
   commands:
@@ -38,6 +37,6 @@ build:
       command: 'cdpx-build.cmd'
       artifacts:
         - from: 'bin\release'
-          to: 'binaries'          
+          to: 'binaries'
           include:
             - '**/*'

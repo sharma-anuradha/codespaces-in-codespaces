@@ -333,3 +333,5 @@ ASALocalRun/
 appsettings.secrets.json
 
 .DS_Store
+
+/.pipelines/node
