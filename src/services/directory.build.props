@@ -1,0 +1,4 @@
+<Project>
+  <!-- Intentionally skip src/directory.build.props for backwards compatibility -->
+  <Import Project="$(ThisFileDirectory)../../directory.build.props" />
+</Project>

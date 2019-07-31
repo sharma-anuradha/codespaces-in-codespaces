@@ -1,0 +1,24 @@
+<Project>
+
+  <!-- Overrides and switches for vsclk.build.props -->
+  <PropertyGroup>
+    <UseStyleCop>true</UseStyleCop>
+    <UseCodeAnalysis>true</UseCodeAnalysis>
+    <RootName>Microsoft.VsSaaS.Services.CloudEnvironments</RootName>    
+  </PropertyGroup>
+
+  <Import Project="$(ThisFileDirectory)../directory.build.props" />
+
+  <!-- Product Properties -->
+  <PropertyGroup>
+    <Authors>Microsoft</Authors>
+    <Copyright>Copyright (c) Microsoft Corporation. All rights reserved.</Copyright>
+    <Owners>Microsoft</Owners>
+    <Product>Microsoft Visual Studio SaaS Cloud Environments</Product>
+    <RepositoryType>Git</RepositoryType>
+    <RepositoryUrl>https://devdiv.visualstudio.com/DefaultCollection/OnlineServices/_git/vsclk-core</RepositoryUrl>
+    <Tags>Microsoft;vssaas;cloudenvironments</Tags>
+    <Title>VS SaaS Cloud Environments</Title>
+  </PropertyGroup>
+
+</Project>

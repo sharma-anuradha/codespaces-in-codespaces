@@ -11,7 +11,9 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <BaseIntermediateOutputPath>$(GitRoot)bin\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
     <IsTraversal Condition="'$(MSBuildProjectFile)'=='dirs.proj'">true</IsTraversal>
-    <AssemblyName>Microsoft.VsCloudKernel.Services.$(MSBuildProjectName)</AssemblyName>
+    <RootName Condition="'$(RootName)'==''">Microsoft.VsCloudKernel.Services</RootName>
+    <AssemblyName Condition="'$(AssemblyName)'==''">$(RootName).$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace Condition="'$(RootNamespace)'==''">$(RootName).$(MSBuildProjectName)</RootNamespace>
   </PropertyGroup>
   
   <!-- Compiler options -->
@@ -36,16 +38,42 @@
     <AdalVersion>4.5.1</AdalVersion>
     <AspNetCoreAppVersion>2.2.3</AspNetCoreAppVersion>
     <AspNetCoreDllVersions>2.2.0</AspNetCoreDllVersions>
+    <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
     <IdentityClient>3.0.0-preview</IdentityClient>
     <IdentityModelS2SVersion>3.0.0-preview-60213030153</IdentityModelS2SVersion>
     <IdentiyModelVersion>6.0.0-preview-60212030309</IdentiyModelVersion>
     <NerdBankGitVersioningVersion>2.3.38</NerdBankGitVersioningVersion>
-    <OctokitVersion>0.32.0</OctokitVersion>
-    <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
-    <VsclkSdkVersion>0.1.16</VsclkSdkVersion>
-    <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
     <NewtonsoftJsonVersion>12.0.1</NewtonsoftJsonVersion>
+    <OctokitVersion>0.32.0</OctokitVersion>
+    <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
+    <SwashbuckleAspNetCorePackageVersion>4.0.1</SwashbuckleAspNetCorePackageVersion>
+    <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
+    <VsclkSdkVersion>0.1.16</VsclkSdkVersion> <!-- used under src/services-->
+    <VsSaaSPackageVersion>0.1.28</VsSaaSPackageVersion> <!-- preferred for new projects-->
   </PropertyGroup>
+
+  <!-- StyleCop -->
+  <Choose>
+    <When Condition="'$(UseStyleCop)'=='true'">
+      <ItemGroup>
+        <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" />
+        <Content Remove="$(MSBuildThisFileDirectory)stylecop.json" />
+        <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopAnalyzersPackageVersion)">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+      </ItemGroup>
+    </When>
+  </Choose>
+
+  <!-- Code Analysis -->
+  <Choose>
+    <When Condition="'$(UseCodeAnalysis)'=='true'">
+      <PropertyGroup>
+        <CodeAnalysisRuleSet Condition="'$(CodeAnalysisRuleSet)'==''">$(MSBuildThisFileDirectory)CodeAnalysis.ruleset</CodeAnalysisRuleSet>
+      </PropertyGroup>
+    </When>
+  </Choose>
 
   <Choose>
     <When Condition="'$(IsTraversal)'!='true'">

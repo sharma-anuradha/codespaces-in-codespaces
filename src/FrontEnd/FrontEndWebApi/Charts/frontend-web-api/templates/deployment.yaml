@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "frontend-web-api.fullname" . }}
+  labels:
+{{ include "frontend-web-api.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.minReplicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "frontend-web-api.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  minReadySeconds: {{ .Values.pods.minReadySeconds }}
+  progressDeadlineSeconds: {{ .Values.pods.progressDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "frontend-web-api.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- if .Values.image.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.image.imagePullSecret }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.repositoryName not specified" .Values.image.repositoryName }}:{{ required "Value image.tag not specified" .Values.image.tag }}'
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.containerPort }}
+              protocol: TCP
+          env:
+          {{- range .Values.appSettings }}
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "frontend-web-api.fullname" . }}-settings
+                  key: {{ . }}
+          {{- end }}
+          {{- if .Values.pods.livenessProbePath }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.pods.livenessProbePath }}
+              port: http
+          {{- end }}
+          {{- if .Values.pods.readinessProbePath }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.pods.readinessProbePath }}
+              port: http
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

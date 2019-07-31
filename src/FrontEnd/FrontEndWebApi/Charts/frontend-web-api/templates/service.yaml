@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "frontend-web-api.fullname" . }}
+  labels:
+{{ include "frontend-web-api.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "frontend-web-api.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

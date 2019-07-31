@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="AzureCapacity/dirs.proj" />
+    <ProjectReference Include="AzureResourceBroker/dirs.proj" />
+    <ProjectReference Include="AzureStorage/dirs.proj" />
+    <ProjectReference Include="AzureVirtualMachines/dirs.proj" />
+    <ProjectReference Include="BackendWebApi/BackendWebApi.csproj" />
+  </ItemGroup>
+
+</Project>

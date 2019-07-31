@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
-    <ProjectReference Include="services/dirs.proj" />
+    <ProjectReference Include="BackEnd/dirs.proj" />
+    <ProjectReference Include="FrontEnd/dirs.proj" />
+    <ProjectReference Include="Portal/dirs.proj" />
+    <ProjectReference Include="services/dirs.proj" Condition="'$(NOSERVICES)'==''" />
   </ItemGroup>
 
 </Project>
