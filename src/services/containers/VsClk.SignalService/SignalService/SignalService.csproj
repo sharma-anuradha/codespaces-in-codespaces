@@ -51,18 +51,9 @@
   <Target Name="GenerateTags" AfterTargets="build">
     <Message Text="GitCommitId: $(GitCommitId) version:$(Version) buildtag:$(Timestamp)" />
 
-    <WriteLinesToFile
-            File="$(Outdir)buildtag.txt"
-            Lines="$(Timestamp)"
-            Overwrite="true"/>
-    <WriteLinesToFile
-            File="$(Outdir)version.txt"
-            Lines="$(Version)"
-            Overwrite="true"/>
-    <WriteLinesToFile
-            File="$(Outdir)gitcommitid.txt"
-            Lines="$(GitCommitId)"
-            Overwrite="true"/>
+    <WriteLinesToFile File="$(Outdir)buildtag.txt" Lines="$(Timestamp)" Overwrite="true" />
+    <WriteLinesToFile File="$(Outdir)version.txt" Lines="$(Version)" Overwrite="true" />
+    <WriteLinesToFile File="$(Outdir)gitcommitid.txt" Lines="$(GitCommitId)" Overwrite="true" />
   </Target>
   
   <Target Name="CopyDeploymentFiles" AfterTargets="Publish">

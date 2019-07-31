@@ -13,7 +13,7 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ],
-            "args": ["--id", "rodrigov"],
+            "args": ["--id", "rodrigov", "--useSignalRHub"],
             "console": "integratedTerminal"
         }
     ]

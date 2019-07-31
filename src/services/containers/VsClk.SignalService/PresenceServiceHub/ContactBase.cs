@@ -78,16 +78,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        protected ILogger<PresenceService> Logger => this.service.Logger;
+        protected ILogger Logger => this.service.Logger;
 
         /// <summary>
-        /// Return a client proxy from a connection id
+        /// Return all client proxies from a connection id
         /// </summary>
         /// <param name="connectionId"></param>
         /// <returns></returns>
-        protected IClientProxy Client(string connectionId)
+        protected IEnumerable<IClientProxy> Clients(string connectionId)
         {
-            return this.service.Hub.Clients.Client(connectionId);
+            return this.service.Clients(connectionId);
         }
 
         protected Task NotifyConnectionChangedAsync(
@@ -109,24 +109,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             string selfConnectionId,
             CancellationToken cancellationToken)
         {
-            var client = Client(connectionSubscription.Item1);
-            if (client != null)
-            {
-                using (Logger.BeginSingleScope(
-                    (LoggerScopeHelpers.MethodScope, Methods.UpdateValues)))
-                {
-                    Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{ContactId} notifyProperties:{notifyProperties.ConvertToString()}");
-                }
 
-                return client.SendAsync(
-                    Methods.UpdateValues,
-                    new ContactReference(ContactId, selfConnectionId),
-                    notifyProperties,
-                    connectionSubscription.Item2,
-                    cancellationToken);
+            using (Logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, Methods.UpdateValues)))
+            {
+                Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{ContactId} notifyProperties:{notifyProperties.ConvertToString()}");
             }
 
-            return Task.CompletedTask;
+            return Task.WhenAll(Clients(connectionSubscription.Item1).Select(client => client.SendAsync(
+                Methods.UpdateValues,
+                new ContactReference(ContactId, selfConnectionId),
+                notifyProperties,
+                connectionSubscription.Item2,
+                cancellationToken)));
         }
 
         protected Task NotifyReceiveMessageAsync(
@@ -136,18 +131,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             object body,
             CancellationToken cancellationToken)
         {
-            var client = Client(contactReference.ConnectionId);
-            if (client != null)
+            using (Logger.BeginContactReferenceScope(Methods.ReceiveMessage, contactReference))
             {
-                using (Logger.BeginContactReferenceScope(Methods.ReceiveMessage, contactReference))
-                {
-                    Logger.LogDebug($"Notify-> fromContact:{fromContactReference} messageType:{messageType} body:{body}");
-                }
-
-                return client.SendAsync(Methods.ReceiveMessage, contactReference, fromContactReference, messageType, body, cancellationToken);
+                Logger.LogDebug($"Notify-> fromContact:{fromContactReference} messageType:{messageType} body:{body}");
             }
 
-            return Task.CompletedTask;
+            return Task.WhenAll(Clients(contactReference.ConnectionId).Select(client => client.SendAsync(Methods.ReceiveMessage, contactReference, fromContactReference, messageType, body, cancellationToken)));
         }
 
         protected Task NotifyConnectionChangedAsync(
@@ -156,23 +145,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             ConnectionChangeType changeType,
             CancellationToken cancellationToken)
         {
-            var client = Client(connectionId);
-            if (client != null)
+            using (Logger.BeginSingleScope(
+                (LoggerScopeHelpers.MethodScope, Methods.ConnectionChanged)))
             {
-                using (Logger.BeginSingleScope(
-                    (LoggerScopeHelpers.MethodScope, Methods.ConnectionChanged)))
-                {
-                    Logger.LogDebug($"Notify-> connectionId:{connectionId} selfConnectionId:{selfConnectionId} changeType:{changeType}");
-                }
-
-                return client.SendAsync(
-                    Methods.ConnectionChanged,
-                    new ContactReference(ContactId, selfConnectionId),
-                    changeType,
-                    cancellationToken);
+                Logger.LogDebug($"Notify-> connectionId:{connectionId} selfConnectionId:{selfConnectionId} changeType:{changeType}");
             }
 
-            return Task.CompletedTask;
+            return Task.WhenAll(Clients(connectionId).Select(client => client.SendAsync(
+                Methods.ConnectionChanged,
+                new ContactReference(ContactId, selfConnectionId),
+                changeType,
+                cancellationToken)));
         }
 
         protected IEnumerable<string> GetConnectionSubscriptions()

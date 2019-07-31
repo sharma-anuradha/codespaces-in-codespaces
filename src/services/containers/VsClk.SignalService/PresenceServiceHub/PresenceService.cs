@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,7 +7,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Common;
@@ -19,7 +19,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// The non Hub Service class instance that manage all the registered contacts
     /// </summary>
-    public class PresenceService : IAsyncDisposable
+    public class PresenceService : HubService<PresenceServiceHub>, IAsyncDisposable
     {
         private readonly List<IBackplaneProvider> backplaneProviders = new List<IBackplaneProvider>();
 
@@ -32,16 +32,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public PresenceService(
             PresenceServiceOptions options,
-            IHubContext<PresenceServiceHub> hub,
+            IEnumerable<IHubContextHost> hubContextHosts,
             ILogger<PresenceService> logger)
+            : base(options.Id, hubContextHosts, logger)
         {
-            Requires.NotNull(options, nameof(options));
-
-            Hub = Requires.NotNull(hub, nameof(hub));
-            Logger = Requires.NotNull(logger, nameof(logger));
-            ServiceId = options.Id;
-
-            logger.LogInformation($"Service created with id:{ServiceId}");
         }
 
         #region IAsyncDisposable
@@ -57,7 +51,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         #endregion
-        public string ServiceId { get; }
+
 
         public IReadOnlyCollection<IBackplaneProvider> BackplaneProviders => this.backplaneProviders.ToList();
 
@@ -94,10 +88,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
         }
-
-        public ILogger<PresenceService> Logger { get; }
-
-        public IHubContext<PresenceServiceHub> Hub { get; }
 
         internal ConcurrentDictionary<string, Contact> Contacts { get; } = new ConcurrentDictionary<string, Contact>();
 

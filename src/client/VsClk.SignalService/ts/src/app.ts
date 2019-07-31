@@ -21,6 +21,11 @@ const argv = yargs
         description: 'Service Uri',
         type: 'string',
     })
+    .option('useSignalRHub', {
+        alias: 'u',
+        description: 'If using universal signalR hub',
+        type: 'boolean',
+    })
     .demandOption('id')
     .help()
     .alias('help', 'h')
@@ -28,14 +33,14 @@ const argv = yargs
 
 async function main() {
 
-    const serviceUri = argv.service || 'http://localhost:5000/presencehub';
+    const serviceUri = argv.service || argv.useSignalRHub ? 'http://localhost:5000/signalrhub' : 'http://localhost:5000/presencehub';
 
     const logger: signalR.ILogger = {
         log: (level: signalR.LogLevel, msg: string) => console.log(msg)
     };
 
     const hubClient = argv.token ? HubClient.createWithUrlAndToken(serviceUri, () => argv.token!, logger) : HubClient.createWithUrl(serviceUri, logger);
-    const presenceServiceProxy = new PresenceServiceProxy(hubClient.hubConnection, logger);
+    const presenceServiceProxy = new PresenceServiceProxy(hubClient.hubConnection, logger, argv.useSignalRHub );
 
     presenceServiceProxy.onUpdateProperties((contact, properties, targetConnectionId) => {
         // our ILogger will already send this to the console
@@ -61,9 +66,17 @@ async function main() {
     readline.emitKeypressEvents(process.stdin);
     process.stdin.setRawMode!(true);
 
-    process.stdin.on('keypress', (str: string, key: any) => {
+    process.stdin.on('keypress', async (str: string, key: any) => {
         if (key.name === 'q') {
             process.exit();
+        } else if (key.name === 'a') {
+            await presenceServiceProxy.publishProperties({
+                'status': 'available'
+            });
+        } else if (key.name === 'b') {
+            await presenceServiceProxy.publishProperties({
+                'status': 'busy'
+            });
         }
     });
 }

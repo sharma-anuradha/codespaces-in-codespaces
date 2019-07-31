@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -11,6 +12,8 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     public class PresenceServiceHub : Hub<IPresenceServiceClientHub>, IPresenceServiceHub
     {
+        public static string Name = nameof(PresenceServiceHub).ToCamelCase();
+
         private const int ContactIdKey = 1;
         /// <summary>
         /// Note: this is the delay we used to avoid glitches when a disconnection happen but

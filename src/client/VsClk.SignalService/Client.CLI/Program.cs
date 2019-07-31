@@ -26,8 +26,10 @@ namespace LivesharePresenceClientTest
         private CommandOption accessTokenOption;
         private CommandOption debugSignalROption;
         private CommandOption echoOption;
+        private CommandOption useSignalRHub;
 
-        private const string DefaultServiceEndpoint = "https://localhost:5001/presencehub";
+        private const string DefaultPresenceServiceEndpoint = "https://localhost:5001/presencehub";
+        private const string DefaultServiceEndpoint = "https://localhost:5001/signalrhub";
 
         static int Main(string[] args)
         {
@@ -68,6 +70,11 @@ namespace LivesharePresenceClientTest
                 "If SignalR tracing is enabled",
                 CommandOptionType.NoValue);
 
+            cli.useSignalRHub = cli.Option(
+                "--useSignalRHub",
+                "If SignalR universal hub will be used",
+                CommandOptionType.NoValue);
+
             cli.OnExecute(() => cli.ExecuteAsync());
 
             try
@@ -97,7 +104,7 @@ namespace LivesharePresenceClientTest
             string serviceEndpoint = this.serviceEndpointOption.Value();
             if (string.IsNullOrEmpty(serviceEndpoint))
             {
-                serviceEndpoint = DefaultServiceEndpoint;
+                serviceEndpoint = this.useSignalRHub.HasValue() ? DefaultServiceEndpoint : DefaultPresenceServiceEndpoint;
             }
 
             string contactId = this.contactIdOption.HasValue() ? this.contactIdOption.Value() : null;
@@ -129,7 +136,7 @@ namespace LivesharePresenceClientTest
                 });
             }
 
-            var presenceClient = new HubClientProxy<PresenceServiceProxy>(hubConnectionBuilder.Build(), presenceClientTraceSource);
+            var presenceClient = new HubClientProxy<PresenceServiceProxy>(hubConnectionBuilder.Build(), presenceClientTraceSource, this.useSignalRHub.HasValue());
 
             presenceClient.Proxy.UpdateProperties += (s, e) =>
             {

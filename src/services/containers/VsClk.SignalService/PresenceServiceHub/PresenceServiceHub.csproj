@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PresenceServiceHub.Contracts\PresenceServiceHub.Contracts.csproj" />
+    <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
   
   <ItemGroup>

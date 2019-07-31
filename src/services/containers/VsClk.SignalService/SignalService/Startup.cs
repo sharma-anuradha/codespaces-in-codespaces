@@ -30,6 +30,16 @@ namespace Microsoft.VsCloudKernel.SignalService
         private ILogger logger;
 
         /// <summary>
+        /// Map to the universal hub signalR
+        /// </summary>
+        private const string SignalRHubMap = "/signalrhub";
+
+        /// <summary>
+        /// Map to the universal hub signalR
+        /// </summary>
+        private const string SignalRHubDevMap = "/signalrhub-dev";
+
+        /// <summary>
         /// Map to the presence hub signalR
         /// </summary>
         private const string PresenceHubMap = "/presencehub";
@@ -175,6 +185,13 @@ namespace Microsoft.VsCloudKernel.SignalService
                 signalRService.AddAzureSignalR();
             }
 
+            // support for universal signalR hub
+            services.AddSingleton(new HubDispatcher(PresenceServiceHub.Name, typeof(PresenceServiceHub)));
+
+            // hub context hosts definition
+            services.AddSingleton<IHubContextHost, HubContextHost<PresenceServiceHub>>();
+            services.AddSingleton<IHubContextHost, SignalRHubContextHost<PresenceServiceHub>>();
+
             // a background service to control lifetime of the  presence service
             services.AddHostedService<PresenceBackgroundService>();
 
@@ -208,17 +225,19 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     if (EnableAuthentication)
                     {
+                        routes.MapHub<AuthorizedSignalRHub>(SignalRHubMap);
                         routes.MapHub<AuthorizedPresenceServiceHub>(PresenceHubMap);
                         if (IsDevelopmentEnv)
                         {
                             routes.MapHub<PresenceServiceHub>(PresenceHubDevMap);
+                            routes.MapHub<SignalRHub>(SignalRHubDevMap);
                         }
                     }
                     else
                     {
+                        routes.MapHub<SignalRHub>(SignalRHubMap);
                         routes.MapHub<PresenceServiceHub>(PresenceHubMap);
                     }
-
 
                     routes.MapHub<HealthServiceHub>(HealthHubMap);
                 });
@@ -230,14 +249,17 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     if (EnableAuthentication)
                     {
+                        routes.MapHub<AuthorizedSignalRHub>(SignalRHubMap);
                         routes.MapHub<AuthorizedPresenceServiceHub>(PresenceHubMap);
                         if (IsDevelopmentEnv)
                         {
                             routes.MapHub<PresenceServiceHub>(PresenceHubDevMap);
+                            routes.MapHub<SignalRHub>(SignalRHubDevMap);
                         }
                     }
                     else
                     {
+                        routes.MapHub<SignalRHub>(SignalRHubMap);
                         routes.MapHub<PresenceServiceHub>(PresenceHubMap);
                     }
 

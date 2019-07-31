@@ -33,11 +33,11 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
             this.presenceService1 = new PresenceService(
                 new PresenceServiceOptions() { Id = "mock1" },
-                MockUtils.CreateHubContextMock(this.clientProxies1),
+                MockUtils.CreateSingleHubContextHostMock<PresenceServiceHub>(this.clientProxies1),
                 serviceLogger.Object);
             this.presenceService2 = new PresenceService(
                 new PresenceServiceOptions() { Id = "mock2" },
-                MockUtils.CreateHubContextMock(this.clientProxies2),
+                MockUtils.CreateSingleHubContextHostMock<PresenceServiceHub>(this.clientProxies2),
                 serviceLogger.Object);
             var mockBackplaneProvider = new MockBackplaneProvider();
 

@@ -16,17 +16,18 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
     {
         private readonly Dictionary<string, IClientProxy> clientProxies;
         private readonly PresenceService presenceService;
+        private readonly ILogger<PresenceService> presenceServiceLogger;
 
         public PresenceServiceHubTests()
         {
             this.clientProxies = new Dictionary<string, IClientProxy>();
-            var serviceLogger = new Mock<ILogger<PresenceService>>();
+            this.presenceServiceLogger = new Mock<ILogger<PresenceService>>().Object;
 
             var trace = new TraceSource("PresenceServiceHubTests");
             this.presenceService = new PresenceService(
                 new PresenceServiceOptions() { Id = "mock" },
-                MockUtils.CreateHubContextMock(this.clientProxies),
-                serviceLogger.Object);
+                MockUtils.CreateSingleHubContextHostMock<PresenceServiceHub>(this.clientProxies),
+                this.presenceServiceLogger);
         }
 
         [Fact]
@@ -328,7 +329,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         [Fact]
         public async Task CustomRequestSubcriptionsTest()
         {
-            var customMatchService = new CustomMatchService(this.presenceService.Hub, this.presenceService.Logger);
+            var customMatchService = new CustomMatchService(this.presenceService.HubContextHosts, this.presenceServiceLogger);
 
             await customMatchService.RegisterSelfContactAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>()
             {
@@ -693,8 +694,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
         private class CustomMatchService : PresenceService
         {
-            public CustomMatchService(IHubContext<PresenceServiceHub> hub, ILogger<PresenceService> logger)
-                : base(new PresenceServiceOptions(), hub, logger)
+            public CustomMatchService(IEnumerable<IHubContextHost> hubContextHosts, ILogger<PresenceService> logger)
+                : base(new PresenceServiceOptions(), hubContextHosts, logger)
             {
             }
 

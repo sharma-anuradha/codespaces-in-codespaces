@@ -1,19 +1,21 @@
 import * as signalR from '@aspnet/signalr';
 import { IPresenceServiceProxy, ConnectionChangeType, IContactReference }  from './IPresenceServiceProxy';
+import { HubProxyBase } from './HubProxyBase';
 
-
-export class PresenceServiceProxy implements IPresenceServiceProxy {
+export class PresenceServiceProxy extends HubProxyBase implements IPresenceServiceProxy {
     private updatePropertiesCallbacks: Array<(contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void>;
     private receiveMessageCallbacks: Array<(targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void>;
     private connectionChangedCallbacks: Array<(contact: IContactReference, changeType: ConnectionChangeType) => void>;
 
     constructor(
-        public readonly hubConnection: signalR.HubConnection,
-        private readonly logger?: signalR.ILogger) {
+        hubConnection: signalR.HubConnection,
+        logger?: signalR.ILogger,
+        useSignalRHub?: boolean) {
+        super(hubConnection, logger, useSignalRHub ? 'presenceServiceHub' : undefined)
 
-        hubConnection.on('updateValues', (contact, properties, targetConnectionId) => this.updateValues(contact, properties, targetConnectionId));
-        hubConnection.on('receiveMessage', (targetContact, fromContact, messageType, body) => this.receiveMessage(targetContact, fromContact, messageType, body));
-        hubConnection.on('connectionChanged', (contact, changeType) => this.connectionChanged(contact, changeType));
+        hubConnection.on(this.toHubMethodName('updateValues'), (contact, properties, targetConnectionId) => this.updateValues(contact, properties, targetConnectionId));
+        hubConnection.on(this.toHubMethodName('receiveMessage'), (targetContact, fromContact, messageType, body) => this.receiveMessage(targetContact, fromContact, messageType, body));
+        hubConnection.on(this.toHubMethodName('connectionChanged'), (contact, changeType) => this.connectionChanged(contact, changeType));
 
         this.updatePropertiesCallbacks = [];
         this.receiveMessageCallbacks = [];
@@ -39,32 +41,32 @@ export class PresenceServiceProxy implements IPresenceServiceProxy {
     }
 
     public async registerSelfContact(contactId: string, initialProperties: { [key: string]: any; }): Promise<{ [key: string]: any; }> {
-        const registerProperties = await this.hubConnection.invoke<{ [key: string]: any; }>('RegisterSelfContactAsync', contactId, initialProperties);
+        const registerProperties = await this.invoke<{ [key: string]: any; }>('RegisterSelfContactAsync', contactId, initialProperties);
         return registerProperties;
     }
 
     public publishProperties(updateProperties: { [key: string]: any; }): Promise<void> {
-        return this.hubConnection.send('PublishPropertiesAsync', updateProperties);
+        return this.send('PublishPropertiesAsync', updateProperties);
     }
 
     public sendMessage(targetContact: IContactReference, messageType: string, body: any): Promise<void> {
-        return this.hubConnection.send('SendMessageAsync', targetContact, messageType, body);
+        return this.send('SendMessageAsync', targetContact, messageType, body);
     }
 
     public async addSubcriptions(targetContacts: IContactReference[] , propertyNames: string[]): Promise<{ [key: string]: { [key: string]: any; }; }> {
-        return this.hubConnection.invoke<{ [key: string]: { [key: string]: any; }; }>('AddSubcriptionsAsync', targetContacts, propertyNames);
+        return this.invoke<{ [key: string]: { [key: string]: any; }; }>('AddSubcriptionsAsync', targetContacts, propertyNames);
     }
 
     public requestSubcriptions(targetContactProperties: { [key: string]: any; }[], propertyNames: string[], useStubContact: boolean): Promise<{ [key: string]: any; }[]> {
-        return this.hubConnection.invoke<{ [key: string]: any; }[]>('RequestSubcriptionsAsync)', targetContactProperties, propertyNames, useStubContact);
+        return this.invoke<{ [key: string]: any; }[]>('RequestSubcriptionsAsync)', targetContactProperties, propertyNames, useStubContact);
     }
 
     public removeSubscription(targetContacts: IContactReference[]): Promise<void> {
-        return this.hubConnection.send('RemoveSubscription', targetContacts);
+        return this.send('RemoveSubscription', targetContacts);
     }
 
     public unregisterSelfContact(): Promise<void> {
-        return this.hubConnection.send('UnregisterSelfContactAsync');
+        return this.send('UnregisterSelfContactAsync');
     }
 
     private updateValues(contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string): void {
