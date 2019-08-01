@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace CapacityManagement.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.CapacityManagement.Models
 {
     public class Class1
     {

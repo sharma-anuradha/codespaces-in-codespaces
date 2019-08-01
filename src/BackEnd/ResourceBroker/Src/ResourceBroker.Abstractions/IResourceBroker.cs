@@ -3,16 +3,34 @@
 // </copyright>
 
 using System.Threading.Tasks;
-using ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 
-namespace ResourceBroker.Abstractions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public interface IResourceBroker
     {
-        // AllocateStorage
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="continuationToken"></param>
+        /// <returns></returns>
         Task<AllocateStorageResult> AllocateStorageAsync(AllocateStorageInput input, string continuationToken = null);
 
-        // AllocateCompute
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inout"></param>
+        /// <param name="continuationToken"></param>
+        /// <returns></returns>
         Task<AllocateComputeResult> AllocateComputeAsync(AllocateComputeInput inout, string continuationToken = null);
+
+
+        // number of items in the pool at any one time and unassigned
+
+        // partion = region and resource type
     }
 }

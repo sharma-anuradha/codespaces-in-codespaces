@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace StorageFileShareProvider
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 {
     public class Class1
     {

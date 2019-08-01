@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace SystemCatalog.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Models
 {
     public class Class1
     {

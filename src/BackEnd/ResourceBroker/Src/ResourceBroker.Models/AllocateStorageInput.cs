@@ -1,8 +1,8 @@
-﻿// <copyright file="IResourceBroker.cs" company="Microsoft">
+﻿// <copyright file="AllocateStorageInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace ResourceBroker.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
     public class AllocateStorageInput
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CapacityManagement
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.CapacityManagement
 {
     public class Class1
     {

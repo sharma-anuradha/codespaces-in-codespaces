@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace SystemCatalog.Abstractions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions
 {
     public class Class1
     {

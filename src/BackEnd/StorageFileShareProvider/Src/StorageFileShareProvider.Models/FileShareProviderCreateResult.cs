@@ -1,4 +1,8 @@
-﻿namespace StorageFileShareProvider.Models
+﻿// <copyright file="FileShareProviderCreateResult.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
 {
     /// <summary>
     /// 

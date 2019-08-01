@@ -1,7 +1,11 @@
-﻿using StorageFileShareProvider.Models;
-using System.Threading.Tasks;
+﻿// <copyright file="Class1.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
 
-namespace StorageFileShareProvider.Abstractions
+using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions
 {
     public interface IStorageProvider
     {

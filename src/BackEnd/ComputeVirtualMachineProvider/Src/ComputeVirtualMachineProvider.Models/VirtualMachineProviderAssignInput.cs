@@ -1,4 +1,8 @@
-﻿namespace ComputeVirtualMachineProvider.Models
+﻿// <copyright file="VirtualMachineProviderAssignInput.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     /// <summary>
     /// 
@@ -12,29 +16,3 @@
     }
 }
 
-
-/*
-
-SKU CATALOG DEFINITION EXAMPLE
-
-'CE_Small_Linux_1' ->
-    Storage - Premium, 8GB
-    Compute Family - F Series
-    Compute Sku - FS4_v3
-    CEUnits - 10
-    OS - Linux
-'CE_Medium_Linux_1' ->
-    Storage - Premium, 32GB
-    Compute Family - F Series
-    Compute Sku - FS16_v3
-    CEUnits - 20
-    OS - Linux
-'CE_Large_Linux_1' ->
-    Storage - Premium, 64GB
-    Compute Family - F Series
-    Compute Sku - FS32_v3
-    CEUnits - 30
-    OS - Linux
-
-
-*/

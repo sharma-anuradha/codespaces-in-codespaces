@@ -1,4 +1,8 @@
-﻿namespace Common.Models
+﻿// <copyright file="BaseContinuationResult.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
     /// <summary>
     /// 

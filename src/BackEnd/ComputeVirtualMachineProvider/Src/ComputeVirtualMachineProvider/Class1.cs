@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace ComputeVirtualMachineProvider
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider
 {
     public class Class1
     {
