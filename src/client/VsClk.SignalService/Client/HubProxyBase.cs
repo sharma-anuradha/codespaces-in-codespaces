@@ -25,7 +25,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             return string.IsNullOrEmpty(this.hubName) ? methodName : $"{this.hubName}.{methodName}";
         }
 
-        protected async Task<T> InvokeAsync<T>(string methodName, object[] args, CancellationToken cancellationToken = default)
+        protected async Task<T> InvokeAsync<T>(string methodName, object[] args, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrEmpty(this.hubName))
             {
@@ -37,7 +37,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }
         }
 
-        protected Task InvokeAsync(string methodName, object[] args, CancellationToken cancellationToken = default)
+        protected Task InvokeAsync(string methodName, object[] args, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrEmpty(this.hubName))
             {
