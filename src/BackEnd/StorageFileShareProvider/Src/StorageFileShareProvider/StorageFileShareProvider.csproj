@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+  </ItemGroup>
+
+</Project>

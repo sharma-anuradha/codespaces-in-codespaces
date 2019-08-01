@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+  </ItemGroup>
+
+</Project>

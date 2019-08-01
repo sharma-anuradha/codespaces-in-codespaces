@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="ResourceBroker\ResourceBroker.csproj" />
+    <ProjectReference Include="ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
+    <ProjectReference Include="ResourceBroker.Models\ResourceBroker.Models.csproj" />
+  </ItemGroup>
+
+</Project>

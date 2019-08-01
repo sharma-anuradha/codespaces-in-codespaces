@@ -8,7 +8,7 @@ echo Running %~nx0
 pushd "%~dp0"
 
 :: Install dotnet
-set DOTNET_VERSION=2.2.203
+set DOTNET_VERSION=2.2.401
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
 :: Install node

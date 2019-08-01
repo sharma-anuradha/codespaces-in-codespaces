@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="StorageFileShareProvider\StorageFileShareProvider.csproj" />
+    <ProjectReference Include="StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj" />
+    <ProjectReference Include="StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
+  </ItemGroup>
+
+</Project>

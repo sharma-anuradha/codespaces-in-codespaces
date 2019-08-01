@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
+    <ProjectReference Include="ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
+    <ProjectReference Include="ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
+    <ProjectReference Include="..\ResourceBroker.Models\ResourceBroker.Models.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+  </ItemGroup>
+
+</Project>

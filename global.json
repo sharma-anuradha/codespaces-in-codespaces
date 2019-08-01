@@ -1,11 +1,11 @@
 {
     "sdk": {
-        "version": "2.2.203"
+        "version": "2.2.401"
     },
     "msbuild-sdks": {
         "Microsoft.Build.NoTargets": "1.0.40",
         "Microsoft.Build.Traversal": "1.0.45",
-        "Microsoft.NET.Sdk": "2.2.203",
-        "Microsoft.NET.Sdk.Web": "2.2.203"
+        "Microsoft.NET.Sdk": "2.2.401",
+        "Microsoft.NET.Sdk.Web": "2.2.401"
     }
 }

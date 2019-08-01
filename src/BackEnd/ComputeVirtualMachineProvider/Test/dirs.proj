@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="ComputeVirtualMachineProvider.Test\ComputeVirtualMachineProvider.Test.csproj" />
+  </ItemGroup>
+
+</Project>
