@@ -83,20 +83,30 @@ namespace VsClk.EnvReg.Repositories
                 environments.Count() <= ENV_REG_QUOTA,
                 "You already exceeded the quota of environments");
 
+            // Action - If Static Environment
+            if (model.Type.Equals(EnvType.StaticEnvironment.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                if (model.Connection == null)
+                {
+                    model.Connection = new ConnectionInfo();
+                }
+
+                if (string.IsNullOrWhiteSpace(model.Connection.ConnectionSessionId))
+                {
+                    model.Connection.ConnectionSessionId = await CreateWorkspace(model.Id, logger);
+                }
+
+                model.State = StateInfo.Available.ToString();
+                model = await EnvironmentRegistrationRepository.CreateAsync(model, logger);
+
+                return model;
+            }
+
             // Action - Create Workspace
             var sessionId = await CreateWorkspace(model.Id, logger);
             if (string.IsNullOrWhiteSpace(sessionId))
             {
                 return null;
-            }
-
-            // Action - If Static Environment
-            if (model.Type == EnvType.StaticEnvironment.ToString())
-            {
-                model.State = StateInfo.Available.ToString();
-                model = await EnvironmentRegistrationRepository.CreateAsync(model, logger);
-
-                return model;
             }
 
             // Setup - Compute input
