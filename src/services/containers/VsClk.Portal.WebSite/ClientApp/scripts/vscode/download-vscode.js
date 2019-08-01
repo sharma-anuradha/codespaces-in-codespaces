@@ -5,6 +5,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { promisify } = require('util');
+const tar = require('tar');
 
 const { ensureDir } = require('./fileUtils');
 
@@ -39,7 +40,7 @@ async function downloadVSCode(
         console.log('Downloading from url:', downloadUrl);
         await download(downloadUrl, archivePath);
         console.log(`tar -xf ${archivePath} --strip-components 1`);
-        untarSync(archivePath);
+        await untar(archivePath);
         console.log('Removing downloaded archive.');
         await unlink(archivePath);
 
@@ -155,6 +156,34 @@ function untarSync(source) {
 
     cp.spawnSync('tar', ['-xf', source, '-C', destination, '--strip-components', '1']);
 }
+
+/**
+ * @param {string} source
+ */
+async function untar(source) {
+    const destination = path.dirname(source);
+
+    return new Promise((resolve, reject) => {
+        const tarball = fs.createReadStream(source);
+        tarball
+            .pipe(
+                tar.x({
+                    strip: 1,
+                    C: destination,
+                })
+            )
+            .on('close', () => {
+                resolve();
+            })
+            .on('finish', () => {
+                console.log('finished');
+            })
+            .on('error', (err) => {
+                reject(err);
+            });
+    });
+}
+
 module.exports = {
     downloadVSCode,
     getUpdateDetails,
