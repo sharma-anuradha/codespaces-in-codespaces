@@ -18,5 +18,6 @@ static_analysis_options:
       - 'scripts\npm\update-vscode.js'
       - 'scripts\npm\utils.js'
       - 'scripts\vscode\download-vscode.js'
+      - 'scripts\vscode\fileUtils.js'
       - 'scripts\vscode\get-current-vscode-assets-version.js'
       - 'src\setupProxy.js'

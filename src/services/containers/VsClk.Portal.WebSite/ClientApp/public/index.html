@@ -30,40 +30,18 @@
     -->
   <title>Visual Studio Online</title>
   <style>
-    #workbench {
+    .workbench {
       height: 100%;
     }
   </style>
-  <!-- <style>
-    .vssass-loader {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: white;
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      text-align: center;
-      color: white;
-    }
-
-    .vssass-loader .image {
-      width: 200px;
-      height: 200px;
-    }
-  </style> -->
 </head>
 
 <body class="monaco-shell vs-dark" aria-label="">
   <noscript>You need to enable JavaScript to run this app.</noscript>
-  <!-- <div class="vssass-loader">
-    <img class="image" src="./static/vscode/vs/workbench/browser/parts/editor/media/letterpress-dark.svg" />
-  </div> -->
+
   <div id="root"></div>
-  <div id="workbench" />
+  <div id="workbench" class="workbench" />
+
   <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
