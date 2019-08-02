@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
+    <ProjectReference Include="BackEndWebApi\dirs.proj" />
     <ProjectReference Include="CapacityManagement\dirs.proj" />
     <ProjectReference Include="Common\dirs.proj" />
     <ProjectReference Include="ComputeVirtualMachineProvider\dirs.proj" />
