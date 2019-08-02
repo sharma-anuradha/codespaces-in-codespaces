@@ -1,4 +1,0 @@
-config:
-  aspNetEnv: Staging
-  validJwtAudiences:
-  databaseId:

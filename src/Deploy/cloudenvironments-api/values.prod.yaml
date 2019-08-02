@@ -1,0 +1,12 @@
+# Config that applies to all charts
+global:
+  config:
+    aspNetEnv: Production
+
+# Config for frontend
+frontend-web-api:    
+  validJwtAudiences:
+  databaseId:
+
+# Config for backend
+backend-web-api:

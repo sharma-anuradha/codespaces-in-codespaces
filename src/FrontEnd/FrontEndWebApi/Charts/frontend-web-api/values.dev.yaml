@@ -1,4 +1,0 @@
-config:
-  aspNetEnv: Development
-  validJwtAudiences:
-  databaseId:
