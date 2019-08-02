@@ -34,5 +34,20 @@ namespace VsClk.EnvReg.Repositories.HttpClient
                 await response.ThrowIfFailedAsync();
             }
         }
+
+        public async Task<WorkspaceResponse> GetStatusAsync(string workspaceId)
+        {
+            var response = await HttpClientProvider.WorkspaceServiceClient.GetAsync($"{Path}/{workspaceId}");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // If deleted or missing, handle it.
+                return null;
+            }
+
+            await response.ThrowIfFailedAsync();
+            var workspaceResponse = await response.Content.ReadAsAsync<WorkspaceResponse>();
+            return workspaceResponse;
+        }
     }
 }

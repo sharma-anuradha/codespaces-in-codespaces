@@ -9,5 +9,7 @@ namespace VsClk.EnvReg.Repositories
         Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace);
 
         Task DeleteAsync(string workspaceId);
+
+        Task<WorkspaceResponse> GetStatusAsync(string workspaceId);
     }
 }

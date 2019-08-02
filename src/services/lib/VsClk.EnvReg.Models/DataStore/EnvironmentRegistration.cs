@@ -111,12 +111,25 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
 
     public enum StateInfo
     {
+        /// <summary>
+        /// Readying the environment.
+        /// </summary>
         Provisioning,
-        Deleted,
+
+        /// <summary>
+        /// Environment is ready and available to connect.
+        /// </summary>
         Available,
+
+        /// <summary>
+        /// Environment is ready but waiting for the host to connect.
+        /// </summary>
+        Awaiting,
+
+        /// <summary>
+        /// Environment is unavailable connect. There is no recovery path.
+        /// </summary>
         Unavailable,
-        Hibernating,
-        WakingUp
     };
 
     public enum EnvType

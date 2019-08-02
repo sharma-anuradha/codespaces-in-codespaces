@@ -48,6 +48,20 @@ namespace VsClk.EnvReg.Repositories
             }
             UnauthorizedUtil.IsTrue(model.OwnerId == ownerId);
 
+            // Note: We do not do this in the case of GetListByOwnerAsync, because
+            // Will require multiple calls to workspace service, causing un-necessary slowness and
+            // No API as of now to pass multiple workspaceIds
+            var workspace = await WorkspaceRepository.GetStatusAsync(model.Connection.ConnectionSessionId);
+            if (workspace == null)
+            {
+                // In this case the workspace is deleted. There is no way of getting to an environment without it.
+                model.State = StateInfo.Unavailable.ToString();
+            }
+            else
+            {
+                model.State = workspace.IsHostConnected ? StateInfo.Available.ToString() : StateInfo.Awaiting.ToString();
+            }
+
             return model;
         }
 
@@ -96,7 +110,7 @@ namespace VsClk.EnvReg.Repositories
                     model.Connection.ConnectionSessionId = await CreateWorkspace(model.Id, logger);
                 }
 
-                model.State = StateInfo.Available.ToString();
+                model.State = StateInfo.Provisioning.ToString();
                 model = await EnvironmentRegistrationRepository.CreateAsync(model, logger);
 
                 return model;
