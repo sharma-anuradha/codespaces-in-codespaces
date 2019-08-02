@@ -27,36 +27,98 @@
     <NetStandardTargetFramework>netstandard2.0</NetStandardTargetFramework>
   </PropertyGroup>
 
-  <!-- Package Reference Definitions -->
-  <ItemGroup>
-    <!-- Design-time packages -->
-    <MicroBuildCorePackageReference Include="MicroBuild.Core" Version="0.3.0" PrivateAssets="All" ExcludeAssets="Runtime" />
-  </ItemGroup>
-  
   <!-- NuGet Package Versions -->
   <PropertyGroup>
     <AdalVersion>4.5.1</AdalVersion>
+    <AltcoverVersion>3.5.587</AltcoverVersion>
     <AspNetCoreAppVersion>2.2.3</AspNetCoreAppVersion>
     <AspNetCoreDllVersions>2.2.0</AspNetCoreDllVersions>
     <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
+    <FluentAssertionsVersion>5.4.1</FluentAssertionsVersion>
     <IdentityClient>3.0.0-preview</IdentityClient>
     <IdentityModelS2SVersion>3.0.0-preview-60213030153</IdentityModelS2SVersion>
     <IdentiyModelVersion>6.0.0-preview-60212030309</IdentiyModelVersion>
+    <MicroBuildCoreVersion>0.3.0</MicroBuildCoreVersion>
+    <MicrosoftNETTestSdkVersion>15.8.0</MicrosoftNETTestSdkVersion>
+    <MoqVersion>4.9.0</MoqVersion>
     <NerdBankGitVersioningVersion>2.3.38</NerdBankGitVersioningVersion>
     <NewtonsoftJsonVersion>12.0.1</NewtonsoftJsonVersion>
     <OctokitVersion>0.32.0</OctokitVersion>
+    <ReportGeneratorVersion>3.1.2</ReportGeneratorVersion>
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
     <SwashbuckleAspNetCorePackageVersion>4.0.1</SwashbuckleAspNetCorePackageVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
-    <VsclkSdkVersion>0.1.16</VsclkSdkVersion> <!-- used under src/services-->
-    <VsSaaSPackageVersion>0.1.28</VsSaaSPackageVersion> <!-- preferred for new projects-->
+    <VsclkSdkVersion>0.1.28</VsclkSdkVersion> <!-- used under src/services-->
+    <VsSaaSPackageVersion>$(VsclkSdkVersion)</VsSaaSPackageVersion> <!-- preferred for new projects-->
+    <XunitRunnerVisualStudioVersion>2.4.0</XunitRunnerVisualStudioVersion>
+    <XunitStaFactVersion>0.2.17</XunitStaFactVersion>
+    <XunitVersion>2.4.0</XunitVersion>
   </PropertyGroup>
+
+  <!-- Common project settings (except dirs.proj) -->
+  <Choose>
+    <When Condition="'$(IsTraversal)'!='true'">
+      <!-- Common Package Refs -->
+      <ItemGroup>
+        <PackageReference Include="MicroBuild.Core" Version="$(MicroBuildCoreVersion)" PrivateAssets="All" ExcludeAssets="Runtime" />
+        <PackageReference Include="Microsoft.VisualStudio.Validation" Version="$(VisualStudioValidationVersion)" />
+        <PackageReference Include="Nerdbank.GitVersioning" Version="$(NerdBankGitVersioningVersion)" PrivateAssets="All" />
+        <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
+      </ItemGroup>
+      <ItemGroup Condition="false">
+        <!-- All projects need to be rebuilt if the version changes. -->
+        <Content Include="$(MSBuildThisFileDirectory)version.json" Link="version.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <Visible>false</Visible> <!-- Hide from VS solution explorer -->
+          <Pack>false</Pack> <!--Exclude from NuGet Packages -->
+        </Content>
+      </ItemGroup>
+    </When>
+  </Choose>
+
+  <!-- Test project settings -->
+  <PropertyGroup Condition="'$(IsTestProject)'==''">
+    <IsTestProject Condition="$(MSBuildProjectName.EndsWith('.Test'))">true</IsTestProject>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(IsTestProject)'=='true'">
+      <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <SkipSigning>true</SkipSigning>
+        <UseStyleCop>false</UseStyleCop>
+        <UseCodeAnalysis>false</UseCodeAnalysis>
+        <TestResultsDirectory Condition=" '$(TestResultsDirectory)'==''">$(BaseOutputPath)testresults</TestResultsDirectory>
+        <!-- Test methods don't need to end with Async suffix. -->
+        <NoWarn>$(NoWarn);VSTHRD200</NoWarn>
+      </PropertyGroup>
+      <!-- AltCover properties -->
+      <PropertyGroup Condition=" '$(CodeCoverage)' == 'true' ">
+        <AltCover>true</AltCover>
+        <AltCoverXmlReport>$(TestResultsDirectory)/$(MSBuildProjectName)-coverage.xml</AltCoverXmlReport>
+        <AltCoverAssemblyExcludeFilter>Interop|Test|xunit|AltCover</AltCoverAssemblyExcludeFilter>
+        <AltCoverTypeFilter>ThisAssembly</AltCoverTypeFilter>
+      </PropertyGroup>
+      <!-- Test packages -->
+      <ItemGroup>
+        <PackageReference Include="altcover" Version="$(AltcoverVersion)" />
+        <PackageReference Include="FluentAssertions" Version="$(FluentAssertionsVersion)" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
+        <PackageReference Include="Moq" Version="$(MoqVersion)" />
+        <PackageReference Include="ReportGenerator" Version="$(ReportGeneratorVersion)" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitRunnerVisualStudioVersion)" />
+        <PackageReference Include="Xunit.StaFact" Version="$(XunitStaFactVersion)" />
+        <PackageReference Include="xunit" Version="$(XunitVersion)" />
+      </ItemGroup>
+    </When>
+  </Choose>
 
   <!-- StyleCop -->
   <Choose>
     <When Condition="'$(UseStyleCop)'=='true'">
       <ItemGroup>
-        <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" />
+        <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" >
+          <Visible>false</Visible> <!-- Hide from VS solution explorer -->
+        </AdditionalFiles>
         <Content Remove="$(MSBuildThisFileDirectory)stylecop.json" />
         <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopAnalyzersPackageVersion)">
           <PrivateAssets>all</PrivateAssets>
@@ -75,36 +137,7 @@
     </When>
   </Choose>
 
-  <Choose>
-    <When Condition="'$(IsTraversal)'!='true'">
-      <!-- Common Package Refs -->
-      <ItemGroup>
-        <PackageReference Include="Microsoft.VisualStudio.Validation" Version="$(VisualStudioValidationVersion)" />
-      </ItemGroup>
-      <!-- Versioning Support -->
-      <ItemGroup Condition="'$(IsTraversal)'!='true'">
-        <PackageReference Include="Nerdbank.GitVersioning" Version="$(NerdBankGitVersioningVersion)" PrivateAssets="All" />
-      </ItemGroup>
-      <ItemGroup>
-        <!-- All projects need to be rebuilt if the version changes. -->
-        <Content Include="$(MSBuildThisFileDirectory)version.json" Link="version.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-          <Visible>false</Visible> <!-- Hide from VS solution explorer -->
-          <Pack>false</Pack> <!--Exclude from NuGet Packages -->
-        </Content>
-      </ItemGroup>
-    </When>
-  </Choose>
-
-  <!-- Microbuild & Signing Support -->
-  <ItemGroup>
-    <PackageReference Include="@(MicroBuildCorePackageReference)" />
-  </ItemGroup>
-  
   <!-- Signing Options-->
-  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
-    <SkipSigning>true</SkipSigning>
-  </PropertyGroup>
   <Choose>
     <When Condition="'$(SkipSigning)' != 'true'">
       <!-- Common signing props-->

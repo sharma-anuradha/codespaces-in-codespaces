@@ -10,7 +10,7 @@
     <ProjectReference Include="..\Azure.Storage.FileShare\Azure.Storage.FileShare.csproj" />
     <ProjectReference Include="..\VsClk.EnvReg.Telemetry\VsClk.EnvReg.Telemetry.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.All" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.2.2" />
+    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.4.1" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsclkSdkVersion)" />

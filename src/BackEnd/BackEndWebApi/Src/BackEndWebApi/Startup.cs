@@ -1,6 +1,8 @@
 // <copyright file="Startup.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
+
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +10,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -56,6 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                     x.AllowInputFormatterExceptionMessages = HostingEnvironment.IsDevelopment();
                 });
 
+            // AppSettings configuration
             var appSettingsConfiguration = Configuration.GetSection("AppSettings");
             var appSettings = appSettingsConfiguration.Get<AppSettings>();
             services.Configure<AppSettings>(appSettingsConfiguration);
@@ -68,6 +74,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // TODO: Add other managers, repositories, and providers here
             // services.AddSingleton<IWidgetManager, WidgetManager>();
+
+            // Configure and add ISystemCatalog, IAzureSubscriptionCatalog, and ISkuCatalog
+            services.AddSystemCatalog(
+                options =>
+                {
+                    options.Settings = Configuration.GetSection("AzureSubscriptionCatalogSettings").Get<AzureSubscriptionCatalogSettings>();
+                },
+                options =>
+                {
+                    options.Settings = Configuration.GetSection("SkuCatalogSettings").Get<SkuCatalogSettings>();
+                });
 
             // VS SaaS services
             services.AddVsSaaSHosting(
@@ -96,6 +113,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             var isDevelopment = env.IsDevelopment();
+
+            // Initialize and validate the system catalog. This can throw if the catalog is invalid.
+            app.UseSystemCatalog();
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(isDevelopment);

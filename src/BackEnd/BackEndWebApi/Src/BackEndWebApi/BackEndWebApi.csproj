@@ -16,4 +16,11 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
+    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Extensions\SystemCatalog.Extensions.csproj" />
+    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog\SystemCatalog.csproj" />
+  </ItemGroup>
+
 </Project>

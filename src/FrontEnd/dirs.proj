@@ -6,7 +6,6 @@
     <ProjectReference Include="EnvironmentManagement/dirs.proj" />
     <ProjectReference Include="Accounts/dirs.proj" />
     <ProjectReference Include="FrontEndWebApi/FrontEndWebApi.csproj" />
-    <ProjectReference Include="SkuCatalog/dirs.proj" />
   </ItemGroup>
 
 </Project>

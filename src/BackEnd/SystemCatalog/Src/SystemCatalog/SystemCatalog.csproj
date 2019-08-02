@@ -5,9 +5,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
-    <ProjectReference Include="..\SystemCatalog.Models\SystemCatalog.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
+    <ProjectReference Include="..\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
   </ItemGroup>
 
 </Project>

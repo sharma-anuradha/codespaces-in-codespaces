@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
-    <ProjectReference Include="SystemCatalog\SystemCatalog.csproj" />
     <ProjectReference Include="SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
-    <ProjectReference Include="SystemCatalog.Models\SystemCatalog.Models.csproj" />
+    <ProjectReference Include="SystemCatalog.Extensions\SystemCatalog.Extensions.csproj" />
+    <ProjectReference Include="SystemCatalog\SystemCatalog.csproj" />
   </ItemGroup>
 
 </Project>
