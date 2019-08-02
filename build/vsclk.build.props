@@ -125,7 +125,7 @@
       <!-- Target to sign -->
       <ItemGroup>
         <FilesToSign Include="$(TargetPath)" Condition=" '$(TargetPath)' != '' " >
-          <Authenticode>Microsoft</Authenticode>
+          <Authenticode>Microsoft400</Authenticode>
           <StrongName>StrongName</StrongName>
         </FilesToSign>
       </ItemGroup>
