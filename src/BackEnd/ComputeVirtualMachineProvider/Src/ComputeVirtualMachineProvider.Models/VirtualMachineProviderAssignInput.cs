@@ -5,14 +5,13 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class VirtualMachineProviderAssignInput
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string TrackingId { get; set; }
     }
 }
-

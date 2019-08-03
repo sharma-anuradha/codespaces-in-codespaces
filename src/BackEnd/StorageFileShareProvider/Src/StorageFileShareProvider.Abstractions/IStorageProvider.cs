@@ -1,4 +1,4 @@
-﻿// <copyright file="Class1.cs" company="Microsoft">
+﻿// <copyright file="IStorageProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

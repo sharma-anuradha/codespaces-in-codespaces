@@ -8,12 +8,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IResourceBroker
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="input"></param>
         /// <param name="continuationToken"></param>
@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         Task<AllocateStorageResult> AllocateStorageAsync(AllocateStorageInput input, string continuationToken = null);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="inout"></param>
         /// <param name="continuationToken"></param>

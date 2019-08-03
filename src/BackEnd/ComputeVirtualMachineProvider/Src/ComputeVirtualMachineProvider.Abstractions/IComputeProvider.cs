@@ -1,4 +1,4 @@
-﻿// <copyright file="AllocateComputeInput.cs" company="Microsoft">
+﻿// <copyright file="IComputeProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,7 +8,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IComputeProvider
     {

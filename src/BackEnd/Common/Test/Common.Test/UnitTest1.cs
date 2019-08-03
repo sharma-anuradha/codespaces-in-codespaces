@@ -1,3 +1,7 @@
+// <copyright file="UnitTest1.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using Xunit;
 
@@ -8,7 +12,6 @@ namespace CapacityManagement.Test
         [Fact]
         public void Test1()
         {
-
         }
     }
 }

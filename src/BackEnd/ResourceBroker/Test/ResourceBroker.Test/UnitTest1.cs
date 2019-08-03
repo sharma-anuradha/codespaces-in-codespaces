@@ -11,7 +11,6 @@ namespace ResourceBroker.Test
         [Fact]
         public void Test1()
         {
-
         }
     }
 }

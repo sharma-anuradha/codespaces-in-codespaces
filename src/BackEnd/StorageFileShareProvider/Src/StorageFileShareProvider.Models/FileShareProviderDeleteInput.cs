@@ -5,12 +5,12 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class FileShareProviderDeleteInput
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string ResourceId { get; set; }
     }

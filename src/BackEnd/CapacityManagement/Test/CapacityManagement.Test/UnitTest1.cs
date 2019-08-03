@@ -11,7 +11,6 @@ namespace CapacityManagement.Test
         [Fact]
         public void Test1()
         {
-
         }
     }
 }

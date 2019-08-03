@@ -7,12 +7,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     // PROVIDER - DELETE - INPUT
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class VirtualMachineProviderDeleteInput
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string ResourceId { get; set; }
     }
