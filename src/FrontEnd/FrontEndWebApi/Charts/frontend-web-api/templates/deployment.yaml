@@ -1,3 +1,4 @@
+{{- $fullName := include "frontend-web-api.fullname" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -39,7 +40,7 @@ spec:
             - name: {{ . }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "frontend-web-api.fullname" . }}-settings
+                  name: {{ $fullName }}-settings
                   key: {{ . }}
           {{- end }}
           {{- if .Values.pods.livenessProbePath }}

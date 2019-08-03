@@ -1,12 +1,11 @@
-# Config that applies to all charts
-global:
+# Config for frontend
+frontend-web-api:
   config:
     aspNetEnv: Production
-
-# Config for frontend
-frontend-web-api:    
-  validJwtAudiences:
-  databaseId:
+    validJwtAudiences: TODO
+    databaseId: TODO
 
 # Config for backend
 backend-web-api:
+  config:
+    aspNetEnv: Production
