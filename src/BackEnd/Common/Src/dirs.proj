@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
-    <ProjectReference Include="CapacityManagement.Abstractions\CapacityManagement.Abstractions.csproj" />
-    <ProjectReference Include="CapacityManagement.Models\CapacityManagement.Models.csproj" />
-    <ProjectReference Include="CapacityManagement\CapacityManagement.csproj" />
+    <ProjectReference Include="Common\Common.csproj" />
+    <ProjectReference Include="Common.Abstractions\Common.Abstractions.csproj" />
+    <ProjectReference Include="Common.Models\Common.Models.csproj" />
   </ItemGroup>
 
 </Project>
