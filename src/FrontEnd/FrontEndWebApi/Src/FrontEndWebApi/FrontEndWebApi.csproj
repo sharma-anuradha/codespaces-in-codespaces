@@ -17,4 +17,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj" />
+    <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager.Abstractions\EnvironmentManager.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager.Models\EnvironmentManager.Models.csproj" />
+  </ItemGroup>
+
 </Project>

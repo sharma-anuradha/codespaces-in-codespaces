@@ -18,18 +18,18 @@ echo (done)
 
 :: Dev tools
 echo.
-echo %ENVIRONMENT_NAME% tools:
-call :which_tool "az             " "https://dotnet.microsoft.com/download/linux-package-manager/ubuntu14-04/sdk-current" 
-call :which_tool "code           "
-call :which_tool "devenv         "
-call :which_tool "docker         "
-call :which_tool "docker-compose "
-call :which_tool "dotnet         " "https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt?view=azure-cli-latest"
-call :which_tool "git            " "https://git-scm.com/download/linux"
-call :which_tool "helm           " "https://github.com/helm/helm/blob/master/docs/install.md"
-call :which_tool "istioctl       " "https://istio.io/docs/setup/kubernetes/quick-start/"
-call :which_tool "kubectl        " "https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-binary-using-curl"
-call :which_tool "msbuild        "
+REM echo %ENVIRONMENT_NAME% tools:
+REM call :which_tool "az             " "https://dotnet.microsoft.com/download/linux-package-manager/ubuntu14-04/sdk-current" 
+REM call :which_tool "code           "
+REM call :which_tool "devenv         "
+REM call :which_tool "docker         "
+REM call :which_tool "docker-compose "
+REM call :which_tool "dotnet         " "https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt?view=azure-cli-latest"
+REM call :which_tool "git            " "https://git-scm.com/download/linux"
+REM call :which_tool "helm           " "https://github.com/helm/helm/blob/master/docs/install.md"
+REM call :which_tool "istioctl       " "https://istio.io/docs/setup/kubernetes/quick-start/"
+REM call :which_tool "kubectl        " "https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-binary-using-curl"
+REM call :which_tool "msbuild        "
 
 :: Macros
 doskey /macrofile="%~dp0aliases.macros"

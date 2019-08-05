@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\EnvironmentManager\EnvironmentManager.csproj" />
+    <ProjectReference Include="..\..\Src\EnvironmentManager.Abstractions\EnvironmentManager.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Src\EnvironmentManager.Models\EnvironmentManager.Models.csproj" />
+  </ItemGroup>
+
+</Project>
