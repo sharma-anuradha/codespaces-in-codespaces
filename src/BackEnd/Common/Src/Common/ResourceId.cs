@@ -14,9 +14,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     public struct ResourceId : IEquatable<ResourceId>
     {
         /// <summary>
-        /// The empty/blank/null/default resource id.
+        /// The empty/blank/default resource id.
         /// </summary>
         public static readonly ResourceId Empty = default;
+
+        /// <summary>
+        /// The resource id token string, which is valid for serialization and storage. Is null for empty resource ids.
+        /// </summary>
+        private readonly string idToken;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceId"/> struct.
@@ -41,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 ResourceType = default;
                 InstanceId = default;
                 Location = default;
-                Id = null;
+                idToken = null;
             }
             else
             {
@@ -52,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 InstanceId = instanceId;
                 SubscriptionId = subscriptionId;
                 Location = RequiresEnumIsDefined(location, nameof(location));
-                Id = Parser.FormatId(ResourceType, InstanceId, SubscriptionId, Location);
+                idToken = Parser.FormatId(ResourceType, InstanceId, SubscriptionId, Location);
             }
         }
 
@@ -77,55 +82,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public AzureLocation Location { get; }
 
         /// <summary>
-        /// Gets the fully-qualified resource Id, which is valid for serialization and storage.
-        /// </summary>
-        public string Id { get; }
-
-        /// <summary>
-        /// Returns <see cref="Id"/>.
+        /// Returns the resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
         /// </summary>
         /// <param name="id">The resource id.</param>
-        public static implicit operator string(ResourceId id) => id.Id;
-
-        /// <summary>
-        /// Returns <see cref="ResourceType"/>.
-        /// </summary>
-        /// <param name="id">The resource id.</param>
-        public static implicit operator ResourceType(ResourceId id) => id.ResourceType;
-
-        /// <summary>
-        /// Returns <see cref="InstanceId"/>.
-        /// </summary>
-        /// <param name="id">The resource id.</param>
-        public static implicit operator Guid(ResourceId id) => id.InstanceId;
-
-        /// <summary>
-        /// Returns <see cref="Location"/>.
-        /// </summary>
-        /// <param name="id">The resource id.</param>
-        public static implicit operator AzureLocation(ResourceId id) => id.Location;
+        public static implicit operator string(ResourceId id) => id.ToString();
 
         public static bool operator ==(ResourceId first, ResourceId second) => first.Equals(second);
 
         public static bool operator !=(ResourceId first, ResourceId second) => !first.Equals(second);
 
         /// <summary>
-        /// Parse a Cloud Environment resource id into a <see cref="ResourceId"/>.
+        /// Parse a Cloud Environment resource token id into a <see cref="ResourceId"/>.
+        /// The expected token format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
+        /// where resourceType is <see cref="ResourceType"/>
+        /// where instanceId is <see cref="Guid"/>
+        /// where subscriptionId is <see cref="Guid"/>
+        /// where location is <see cref="AzureLocation"/>.
         /// </summary>
-        /// <param name="id">The resource id string.</param>
+        /// <param name="idToken">The resource id token string.</param>
         /// <param name="value">The output value.</param>
         /// <returns>True if the value was valid, otherwise false.</returns>
-        public static bool TryParse(string id, out ResourceId value) => Parser.TryParse(id, out value, out _);
+        public static bool TryParse(string idToken, out ResourceId value) => Parser.TryParse(idToken, out value, out _);
 
         /// <summary>
-        /// Parse a Cloud Environment resoruce id into a <see cref="ResourceId"/>.
+        /// Parse a Cloud Environment resource id token into a <see cref="ResourceId"/>.
+        /// The expected format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
+        /// where resourceType is <see cref="ResourceType"/>
+        /// where instanceId is <see cref="Guid"/>
+        /// where subscriptionId is <see cref="Guid"/>
+        /// where location is <see cref="AzureLocation"/>.
         /// </summary>
-        /// <param name="id">The resource id string.</param>
+        /// <param name="idToken">The resource id token string.</param>
         /// <returns>The resource id structure.</returns>
-        public static ResourceId Parse(string id)
+        public static ResourceId Parse(string idToken)
         {
             // Note: null and empty are valid inputs, resulting in ResourceId.Empty.
-            if (!Parser.TryParse(id, out var value, out var reason))
+            if (!Parser.TryParse(idToken, out var value, out var reason))
             {
                 throw new FormatException(reason);
             }
@@ -134,10 +126,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public override string ToString() => Id;
+        /// <summary>
+        /// Returns resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
+        /// </summary>
+        /// <remarks>
+        /// <see cref="object.ToString"/> should not return null.
+        /// </remarks>
+        public override string ToString() => idToken ?? string.Empty;
 
         /// <inheritdoc/>
-        public bool Equals(ResourceId other) => string.Equals(Id, other.Id, StringComparison.OrdinalIgnoreCase);
+        public bool Equals(ResourceId other) => string.Equals(idToken, other.idToken, StringComparison.OrdinalIgnoreCase);
 
         /// <inheritdoc/>
         public override bool Equals(object obj)
@@ -151,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public override int GetHashCode() => (Id?.GetHashCode()).GetValueOrDefault();
+        public override int GetHashCode() => (idToken?.GetHashCode()).GetValueOrDefault();
 
         private static T RequiresEnumIsDefined<T>(T value, string paramName)
             where T : struct
@@ -195,21 +193,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     location.ToString().ToLowerInvariant());
             }
 
-            public static bool TryParse(string id, out ResourceId value, out string reason)
+            public static bool TryParse(string idToken, out ResourceId resourceId, out string reason)
             {
                 reason = null;
-                value = default;
+                resourceId = default;
 
-                if (string.IsNullOrEmpty(id))
+                if (string.IsNullOrEmpty(idToken))
                 {
-                    value = Empty;
+                    resourceId = Empty;
                     return true;
                 }
 
-                var match = ResourceIdRegEx.Match(id);
+                var match = ResourceIdRegEx.Match(idToken);
                 if (!match.Success)
                 {
-                    reason = $"The id format is invalid: '{id}'. The expected format is {IdFormat}";
+                    reason = $"The id token format is invalid: '{idToken}'. The expected format is {IdFormat}";
                     return false;
                 }
 
@@ -246,7 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 }
 
                 // Construct and return a valid ResourceId
-                value = new ResourceId(resourceType, instanceId, subscriptionId, location);
+                resourceId = new ResourceId(resourceType, instanceId, subscriptionId, location);
                 return true;
             }
         }

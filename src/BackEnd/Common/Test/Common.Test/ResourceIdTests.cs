@@ -21,7 +21,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal(Guid.Empty, empty.SubscriptionId);
             Assert.Equal(default, empty.ResourceType);
             Assert.Equal(default, empty.Location);
-            Assert.Null(empty.Id);
 
             // Empty from static field
             empty = ResourceId.Empty;
@@ -29,7 +28,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal(Guid.Empty, empty.SubscriptionId);
             Assert.Equal(default, empty.ResourceType);
             Assert.Equal(default, empty.Location);
-            Assert.Null(empty.Id);
 
             // Empty from constructor
             empty = new ResourceId(default, default, default, default);
@@ -37,7 +35,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal(Guid.Empty, empty.SubscriptionId);
             Assert.Equal(default, empty.ResourceType);
             Assert.Equal(default, empty.Location);
-            Assert.Null(empty.Id);
 
             // Empty from Parse
             empty = ResourceId.Parse(null);
@@ -45,7 +42,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal(Guid.Empty, empty.SubscriptionId);
             Assert.Equal(default, empty.ResourceType);
             Assert.Equal(default, empty.Location);
-            Assert.Null(empty.Id);
 
             // Empty from Parse
             empty = ResourceId.Parse(string.Empty);
@@ -53,7 +49,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal(Guid.Empty, empty.SubscriptionId);
             Assert.Equal(default, empty.ResourceType);
             Assert.Equal(default, empty.Location);
-            Assert.Null(empty.Id);
         }
 
         [Fact]
@@ -67,11 +62,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal(instanceId, id.InstanceId);
             Assert.Equal(subscriptionId, id.SubscriptionId);
             Assert.Equal(location, id.Location);
-            Assert.Equal($"vssaas/resourcetypes/computevm/instances/{instanceId}/subscriptions/{subscriptionId}/locations/australiacentral", id.Id);
         }
 
         [Fact]
-        public void Ctor_throws()
+        public void Ctor_Empty()
+        {
+            var empty = new ResourceId(default, default, default, default);
+            Assert.Equal(default, empty.ResourceType);
+            Assert.Equal(default, empty.InstanceId);
+            Assert.Equal(default, empty.SubscriptionId);
+            Assert.Equal(default, empty.Location);
+        }
+
+        [Fact]
+        public void Ctor_Throws()
         {
             var resourceType = ResourceType.ComputeVM;
             var instanceId = Guid.NewGuid();
@@ -156,32 +160,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         }
 
         [Fact]
-        public void ToString_and_ID_OK()
+        public void ToString_Format()
         {
-            Assert.Null(ResourceId.Empty.ToString());
-            Assert.Null(ResourceId.Empty.Id);
             var id = NewTestResourceId();
-            var idProp = id.Id;
-            var toString = id.ToString();
-            Assert.Equal(idProp, toString);
+            var idToken = id.ToString();
             // Specific format
             var expectedLocation = id.Location.ToString().ToLowerInvariant();
-            Assert.Equal($"vssaas/resourcetypes/computevm/instances/{id.InstanceId}/subscriptions/{id.SubscriptionId}/locations/{expectedLocation}", toString);
+            Assert.Equal($"vssaas/resourcetypes/computevm/instances/{id.InstanceId}/subscriptions/{id.SubscriptionId}/locations/{expectedLocation}", idToken);
+        }
+
+        [Fact]
+        public void ToString_Is_Empty()
+        {
+            Assert.Equal(string.Empty, ResourceId.Empty.ToString());
+            Assert.Equal(string.Empty, (string)ResourceId.Empty);
         }
 
         [Fact]
         public void Parse_RoundTrip_OK()
         {
             var id1 = NewTestResourceId();
-            var id2 = ResourceId.Parse(id1.Id);
+            var id2 = ResourceId.Parse(id1);
             Assert.Equal(id1, id2);
-            Assert.True(ResourceId.TryParse(id1.Id, out id2));
+            Assert.True(ResourceId.TryParse(id1, out id2));
             Assert.Equal(id1, id2);
         }
 
         private const string InstanceId = "ebeea9c1-6898-4abb-b76f-ad087add2bda";
         private const string SubscriptionId = "34da0f9b-78b3-4158-b1e9-0823f728fcf3";
-        public static TheoryData ParseFailsData =>
+        public static TheoryData ParseData =>
             new TheoryData<int, string,bool>
             {
                 // The first columun is a test id number for identifying test failures
@@ -209,8 +216,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             };
 
         [Theory]
-        [MemberData(nameof(ParseFailsData))]
-        public void Parse_Theory(int num, string id, bool ok)
+        [MemberData(nameof(ParseData))]
+        public void Parse(int num, string id, bool ok)
         {
             _ = num;
 
@@ -227,41 +234,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         }
 
         [Fact]
-        public void AzureLocation_UniqueValues()
+        public void ImplicitOperatorString()
         {
-            // Ensure that no two AzureLocation entries have the same value
-            var values = Enum.GetValues(typeof(AzureLocation));
-            var valuesSet = new HashSet<int>();
-            foreach (var value in values)
-            {
-                var intValue = (int)value;
-                Assert.DoesNotContain(intValue, valuesSet);
-                valuesSet.Add(intValue);
-            }
+            var resourceId = NewTestResourceId();
+            var idToken = resourceId.ToString();
+            string implicitConversion = resourceId;
+            Assert.Equal(idToken, implicitConversion);
         }
 
         [Fact]
-        public void ResourceId_ImplicitOperatorString()
+        public void ExplicitOperatorString()
         {
             var resourceId = NewTestResourceId();
-            string id = resourceId;
-            Assert.Equal(resourceId.Id, id);
-        }
-
-        [Fact]
-        public void ResourceId_ImplicitOperatorResourceType()
-        {
-            var resourceId = NewTestResourceId();
-            ResourceType type = resourceId;
-            Assert.Equal(resourceId.ResourceType, type);
-        }
-
-        [Fact]
-        public void ResourceId_ImplicitOperatorAzureLocation()
-        {
-            var resourceId = NewTestResourceId();
-            AzureLocation location = resourceId;
-            Assert.Equal(resourceId.Location, location);
+            var idToken = resourceId.ToString();
+            var explicitConversion = (string)resourceId;
+            Assert.Equal(idToken, explicitConversion);
         }
 
         private static ResourceId NewTestResourceId()
