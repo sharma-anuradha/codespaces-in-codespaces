@@ -1,9 +1,11 @@
-﻿using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
+﻿using Microsoft.Azure.Documents.Linq;
+using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -34,6 +36,11 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
         }
 
         public Task<IEnumerable<FileShare>> GetWhereAsync(Expression<Func<FileShare, bool>> where, IDiagnosticsLogger logger, Func<IEnumerable<FileShare>, IDiagnosticsLogger, Task> pageResultsCallback = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<FileShare>> QueryAsync(Func<IOrderedQueryable<FileShare>, IDocumentQuery<FileShare>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<FileShare>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             throw new NotImplementedException();
         }

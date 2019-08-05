@@ -3,21 +3,43 @@
 // </copyright>
 
 using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class ResourceBroker : IResourceBroker
     {
-        public Task<AllocateComputeResult> AllocateComputeAsync(AllocateComputeInput inout, string continuationToken = null)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResourceBroker"/> class.
+        /// </summary>
+        /// <param name="resourcePool"></param>
+        /// <param name="mapper"></param>
+        public ResourceBroker(IResourcePool resourcePool, IMapper mapper)
         {
-            throw new System.NotImplementedException();
+            ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
+            Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
 
-        public Task<AllocateStorageResult> AllocateStorageAsync(AllocateStorageInput input, string continuationToken = null)
+        private IResourcePool ResourcePool { get; }
+
+        private IMapper Mapper { get; }
+
+        /// <inheritdoc/>
+        public async Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
         {
-            throw new System.NotImplementedException();
+            var item = await ResourcePool.TryGetAsync(input, logger);
+            if (item == null)
+            {
+                throw new OutOfCapacityException(input.SkuName, input.Type, input.Location);
+            }
+
+            return Mapper.Map<AllocateResult>(item);
         }
     }
 }

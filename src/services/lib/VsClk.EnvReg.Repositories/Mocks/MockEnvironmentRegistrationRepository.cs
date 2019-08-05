@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents.Linq;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
@@ -46,6 +47,11 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
         public Task<IEnumerable<EnvironmentRegistration>> GetWhereAsync(Expression<Func<EnvironmentRegistration, bool>> where, IDiagnosticsLogger logger, Func<IEnumerable<EnvironmentRegistration>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             return Task.FromResult<IEnumerable<EnvironmentRegistration>>(this._store.Select(x => x.Value).Where(where.Compile()));
+        }
+
+        public Task<IEnumerable<EnvironmentRegistration>> QueryAsync(Func<IOrderedQueryable<EnvironmentRegistration>, IDocumentQuery<EnvironmentRegistration>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<EnvironmentRegistration>, IDiagnosticsLogger, Task> pageResultsCallback = null)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<EnvironmentRegistration> UpdateAsync(EnvironmentRegistration document, IDiagnosticsLogger logger)

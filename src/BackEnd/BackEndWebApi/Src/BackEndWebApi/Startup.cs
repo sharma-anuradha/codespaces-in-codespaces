@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 using Newtonsoft.Json;
@@ -85,6 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 {
                     options.Settings = Configuration.GetSection("SkuCatalogSettings").Get<SkuCatalogSettings>();
                 });
+            services.AddResourceBroker(appSettings);
 
             // VS SaaS services
             services.AddVsSaaSHosting(
@@ -116,6 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // Initialize and validate the system catalog. This can throw if the catalog is invalid.
             app.UseSystemCatalog();
+            app.UseResourceBroker();
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(isDevelopment);
