@@ -1,22 +1,26 @@
+// <copyright file="IPresenceServiceHub.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Service exposed by the presence hub
+    /// Service exposed by the presence hub.
     /// </summary>
     public interface IPresenceServiceHub
     {
         /// <summary>
-        /// Get all the self connections associated with a contact id
+        /// Get all the self connections associated with a contact id.
         /// </summary>
-        /// <param name="contactId"></param>
+        /// <param name="contactId">The contact id</param>
         /// <returns></returns>
         Task<Dictionary<string, IDictionary<string, PropertyValue>>> GetSelfConnectionsAsync(string contactId);
 
         /// <summary>
-        /// Register a self contact for later subscription
+        /// Register a self contact for later subscription.
         /// </summary>
         /// <param name="contactId">Unique contact identifier</param>
         /// <param name="initialProperties">The  optional initial properties to populate</param>
@@ -24,7 +28,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         Task<Dictionary<string, object>> RegisterSelfContactAsync(string contactId, Dictionary<string, object> initialProperties);
 
         /// <summary>
-        /// Publish modified properties into the registered contact
+        /// Publish modified properties into the registered contact.
         /// </summary>
         /// <param name="updateProperties">New updated values to publish</param>
         /// <returns></returns>
@@ -39,7 +43,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(ContactReference[] targetContacts, string[] propertyNames);
 
         /// <summary>
-        /// Request multiple subscriptions based on matching properties
+        /// Request multiple subscriptions based on matching properties.
         /// </summary>
         /// <param name="targetContactProperties">The target contacts defined by multiple matching properties</param>
         /// <param name="propertyNames">Name of the properties to subscribe</param>
@@ -48,23 +52,22 @@ namespace Microsoft.VsCloudKernel.SignalService
         Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(Dictionary<string, object>[] targetContactProperties, string[] propertyNames, bool useStubContact);
 
         /// <summary>
-        /// Remove a subscription
+        /// Remove a subscription.
         /// </summary>
         /// <param name="targetContactIds">List of target contacts where to remove a subscription</param>
         void RemoveSubscription(ContactReference[] targetContacts);
 
         /// <summary>
-        /// Send a message to registered contact
+        /// Send a message to registered contact.
         /// </summary>
         /// <param name="targetContact">The target contact to send the message</param>
         /// <param name="messageType">The type of message</param>
         /// <param name="body">Body of the message</param>
         /// <returns></returns>
-        /// 
         Task SendMessageAsync(ContactReference targetContact, string messageType, object body);
 
         /// <summary>
-        /// Remove a registration on this hub
+        /// Remove a registration on this hub.
         /// </summary>
         /// <returns></returns>
         Task UnregisterSelfContactAsync();
@@ -76,29 +79,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <returns></returns>
         Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingProperties);
 
-
         /// <summary>
-        /// Search on all the published contacts
+        /// Search on all the published contacts.
         /// </summary>
         /// <param name="searchProperties"></param>
         /// <param name="maxCount"></param>
         /// <returns></returns>
         Task<Dictionary<string, Dictionary<string, object>>> SearchContactsAsync(Dictionary<string, SearchProperty> searchProperties, int? maxCount);
-    }
-
-    /// <summary>
-    /// The property search entity
-    /// </summary>
-    public class SearchProperty
-    {
-        /// <summary>
-        /// Represent a regular expression to apply into a property
-        /// </summary>
-        public string Expression { get; set; }
-
-        /// <summary>
-        /// Options to the regular expression
-        /// </summary>
-        public int? Options { get; set; }
     }
 }

@@ -14,7 +14,7 @@ export class HubProxyBase
         return this.hubName ? `${this.hubName}.${methodName}` : methodName;
     }
 
-    protected invoke<T = any>(methodName: string, ...args: any[]): Promise<T> {
+    public invoke<T = any>(methodName: string, ...args: any[]): Promise<T> {
         if (this.hubName) {
             return this.hubConnection.invoke<T>(HubProxyBase.InvokeHubMethodAsync,this.toHubMethodName(methodName), args );
         } else {
@@ -22,7 +22,7 @@ export class HubProxyBase
         }
     }
 
-    protected send(methodName: string, ...args: any[]): Promise<void> {
+    public send(methodName: string, ...args: any[]): Promise<void> {
         if (this.hubName) {
             return this.hubConnection.send(HubProxyBase.InvokeHubMethodAsync,this.toHubMethodName(methodName), args );
         } else {

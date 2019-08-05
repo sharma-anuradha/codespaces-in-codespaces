@@ -1,13 +1,17 @@
+// <copyright file="DictionaryHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService.Common
 {
     /// <summary>
     /// IDictionary<string, object> helpers
     /// </summary>
-    internal static class PresenceServiceHelpers
+    internal static class DictionaryHelpers
     {
         public static string ConvertToString(this IDictionary<string, object> properties)
         {

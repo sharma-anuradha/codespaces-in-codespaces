@@ -4,13 +4,6 @@ using System.Threading.Tasks;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    public enum ConnectionChangeType
-    {
-        None,
-        Added,
-        Removed,
-    }
-
     /// <summary>
     /// Contract for Hub presence client notifications
     /// </summary>

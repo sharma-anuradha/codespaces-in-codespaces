@@ -111,13 +111,13 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
 
             using (Logger.BeginSingleScope(
-                (LoggerScopeHelpers.MethodScope, Methods.UpdateValues)))
+                (LoggerScopeHelpers.MethodScope, PresenceHubMethods.UpdateValues)))
             {
                 Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{ContactId} notifyProperties:{notifyProperties.ConvertToString()}");
             }
 
             return Task.WhenAll(Clients(connectionSubscription.Item1).Select(client => client.SendAsync(
-                Methods.UpdateValues,
+                PresenceHubMethods.UpdateValues,
                 new ContactReference(ContactId, selfConnectionId),
                 notifyProperties,
                 connectionSubscription.Item2,
@@ -131,12 +131,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             object body,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(Methods.ReceiveMessage, contactReference))
+            using (Logger.BeginContactReferenceScope(PresenceHubMethods.ReceiveMessage, contactReference))
             {
                 Logger.LogDebug($"Notify-> fromContact:{fromContactReference} messageType:{messageType} body:{body}");
             }
 
-            return Task.WhenAll(Clients(contactReference.ConnectionId).Select(client => client.SendAsync(Methods.ReceiveMessage, contactReference, fromContactReference, messageType, body, cancellationToken)));
+            return Task.WhenAll(Clients(contactReference.ConnectionId).Select(client => client.SendAsync(PresenceHubMethods.ReceiveMessage, contactReference, fromContactReference, messageType, body, cancellationToken)));
         }
 
         protected Task NotifyConnectionChangedAsync(
@@ -146,13 +146,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             CancellationToken cancellationToken)
         {
             using (Logger.BeginSingleScope(
-                (LoggerScopeHelpers.MethodScope, Methods.ConnectionChanged)))
+                (LoggerScopeHelpers.MethodScope, PresenceHubMethods.ConnectionChanged)))
             {
                 Logger.LogDebug($"Notify-> connectionId:{connectionId} selfConnectionId:{selfConnectionId} changeType:{changeType}");
             }
 
             return Task.WhenAll(Clients(connectionId).Select(client => client.SendAsync(
-                Methods.ConnectionChanged,
+                PresenceHubMethods.ConnectionChanged,
                 new ContactReference(ContactId, selfConnectionId),
                 changeType,
                 cancellationToken)));

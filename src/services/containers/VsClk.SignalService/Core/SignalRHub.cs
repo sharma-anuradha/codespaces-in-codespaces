@@ -55,7 +55,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var s = hubAndMethod.Split('.');
             if (s.Length != 2)
             {
-                throw new ArgumentException($"Invalid value:{hubAndMethod} for paremeter:{nameof(hubAndMethod)}");
+                throw new HubException($"Invalid value:{hubAndMethod} for paremeter:{nameof(hubAndMethod)}");
             }
 
             var hubName = s[0];
@@ -64,14 +64,14 @@ namespace Microsoft.VsCloudKernel.SignalService
             HubDispatcher hubDispatcher;
             if (!this.hubDispatchers.TryGetValue(hubName, out hubDispatcher))
             {
-                throw new ArgumentException($"Hub:{hubName} not registered");
+                throw new HubException($"Hub:{hubName} not registered");
             }
 
             if (hubDispatcher.TryGetMethod(hubMethodName, out var methodInfo))
             {
                 if (arguments.Length != methodInfo.GetParameters().Length)
                 {
-                    throw new ArgumentException($"Wrong number of arguments, expected:{methodInfo.GetParameters().Length} actual:{arguments.Length}");
+                    throw new HubException($"Wrong number of arguments, expected:{methodInfo.GetParameters().Length} actual:{arguments.Length}");
                 }
 
                 // convert argument types
@@ -124,6 +124,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
 
                 return array;
+            }
+            else if (argumentType == typeof(byte[]) && value is string)
+            {
+                return Convert.FromBase64String((string)value);
             }
 
             return value;

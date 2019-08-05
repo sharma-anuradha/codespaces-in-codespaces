@@ -140,7 +140,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             object registeredContactId;
             if (!Context.Items.TryGetValue(ContactIdKey, out registeredContactId) && throwIfNotFound)
             {
-                throw new InvalidOperationException($"No context contact id found for connection id:{Context.ConnectionId}");
+                throw new HubException($"No context contact id found for connection id:{Context.ConnectionId}");
             }
 
             return registeredContactId?.ToString();

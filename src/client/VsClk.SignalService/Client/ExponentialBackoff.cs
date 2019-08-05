@@ -5,7 +5,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// <summary>
     /// Helper class to calculate a backoff delay
     /// </summary>
-    public struct ExponentialBackoff
+    internal struct ExponentialBackoff
     {
         private readonly int maxRetries, delayMilliseconds, maxDelayMilliseconds;
         private int retries, pow;
@@ -30,6 +30,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             {
                 throw new TimeoutException("Max retry attempts exceeded.");
             }
+
             ++this.retries;
             if (this.retries < 31)
             {

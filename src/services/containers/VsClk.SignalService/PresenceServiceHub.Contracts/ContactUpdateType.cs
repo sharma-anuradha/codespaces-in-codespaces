@@ -1,4 +1,8 @@
-﻿namespace Microsoft.VsCloudKernel.SignalService
+﻿// <copyright file="ContactUpdateType.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
     /// Type of change when updating a contact

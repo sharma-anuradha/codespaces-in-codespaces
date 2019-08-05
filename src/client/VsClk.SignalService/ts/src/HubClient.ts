@@ -3,13 +3,13 @@ import { connect } from './HubConnectionHelpers';
 
 export class HubClient {
     private isRunningFlag = false;
-    private attemtConnectionCallbacks: Array<(retries: number, backoffTime?: number, error?: Error) => Promise<number>>;
+    private attemptConnectionCallbacks: Array<(retries: number, backoffTime?: number, error?: Error) => Promise<number>>;
     private connectionStateCallbacks: Array<() => Promise<void>>;
 
     constructor(
         public readonly hubConnection: signalR.HubConnection,
         private readonly logger?: signalR.ILogger) {
-        this.attemtConnectionCallbacks = [];
+        this.attemptConnectionCallbacks = [];
         this.connectionStateCallbacks = [];
 
         hubConnection.onclose((error?: Error) => this.onClosed(error));
@@ -60,7 +60,7 @@ export class HubClient {
 
     public onAttemtConnection(callback: (retries: number, backoffTime?: number, error?: Error) => Promise<number>) {
         if (callback) {
-            this.attemtConnectionCallbacks.push(callback);
+            this.attemptConnectionCallbacks.push(callback);
         }
     }
 
@@ -83,7 +83,7 @@ export class HubClient {
                     result = backoffTime; 
                 }
                 
-                for (const callback of this.attemtConnectionCallbacks) {
+                for (const callback of this.attemptConnectionCallbacks) {
                     result = await callback(retries, backoffTime, error);
                 }
 

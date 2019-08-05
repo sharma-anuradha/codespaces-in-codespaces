@@ -166,11 +166,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             // Create the Azure Cosmos backplane provider service
             services.AddHostedService<DatabaseBackplaneProviderService>();
 
-            // Presence Service options
+            // Service options
             services.AddSingleton((srvcProvider) => new PresenceServiceOptions() { Id = serviceId });
+            services.AddSingleton((srvcProvider) => new RelayServiceOptions() { Id = serviceId });
 
-            // SignalR support
+            // SignalR support services
             services.AddSingleton<PresenceService>();
+            services.AddSingleton<RelayService>();
 
             var signalRService = services.AddSignalR().AddJsonProtocol(options => {
                 // ensure we disable the camel case contract
@@ -187,12 +189,14 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             // support for universal signalR hub
             services.AddSingleton(new HubDispatcher(PresenceServiceHub.Name, typeof(PresenceServiceHub)));
+            services.AddSingleton(new HubDispatcher(RelayServiceHub.Name, typeof(RelayServiceHub)));
 
             // hub context hosts definition
             services.AddSingleton<IHubContextHost, HubContextHost<PresenceServiceHub>>();
             services.AddSingleton<IHubContextHost, SignalRHubContextHost<PresenceServiceHub>>();
+            services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub>>();
 
-            // a background service to control lifetime of the  presence service
+            // a background service to control lifetime of the presence service
             services.AddHostedService<PresenceBackgroundService>();
 
             // define long running health echo provider

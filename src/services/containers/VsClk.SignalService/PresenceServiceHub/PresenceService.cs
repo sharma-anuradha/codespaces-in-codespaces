@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Common;
@@ -487,7 +488,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (throwIfNotFound)
             {
-                throw new InvalidOperationException($"No registration self contact found for:{contactId}");
+                throw new HubException($"No registration self contact found for:{contactId}");
             }
 
             return null;

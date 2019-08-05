@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.Client.Proxy</AssemblyName>
+    <RootNamespace>Microsoft.VsCloudKernel.SignalService.Client</RootNamespace>
+
+    <IsPackable>true</IsPackable>
+    <Description>VS Cloud Kernel Signal Service Client Proxy</Description>
+    <!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
+    <PackageTags>Visual Studio Cloud Kernel</PackageTags>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+
+    <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
+  </PropertyGroup>
+  
+  <ItemGroup>
+
+    <Compile Include="$(ServiceRoot)\PresenceServiceHub.Contracts\*.cs" Exclude="**\IBackplaneProvider.cs;**\PresenceServiceMetrics.cs;**\IPresenceServiceClientHub.cs">
+      <Link>PresenceServiceHub.Contracts\%(Filename)%(Extension)</Link>
+    </Compile>
+    
+    <Compile Include="$(ServiceRoot)\RelayServiceHub\Contracts\*.cs" Exclude="**\IRelayServiceClientHub.cs;**\RelayServiceMetrics.cs">
+      <Link>RelayServiceHub.Contracts\%(Filename)%(Extension)</Link>
+    </Compile>
+
+    <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
+    <Compile Include="..\..\Shared\TraceSourceExtensions.cs" Link="Shared\TraceSourceExtensions.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="15.6.56" />
+  </ItemGroup>
+  </Project>

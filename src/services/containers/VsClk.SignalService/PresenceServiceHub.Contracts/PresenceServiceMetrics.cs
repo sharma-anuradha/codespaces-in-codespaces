@@ -1,7 +1,7 @@
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Define the service metrics
+    /// Define the service metrics.
     /// </summary>
     public struct PresenceServiceMetrics
     {
@@ -18,7 +18,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         public int Count { get; }
+
         public int SelfCount { get; }
+
         public int TotalSelfCount { get; }
 
         public int StubCount { get; }

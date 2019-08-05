@@ -1,3 +1,7 @@
+// <copyright file="PropertyValue.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 
 namespace Microsoft.VsCloudKernel.SignalService

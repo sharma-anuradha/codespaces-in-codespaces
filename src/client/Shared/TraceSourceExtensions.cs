@@ -1,6 +1,7 @@
-//
-//  Copyright (c) Microsoft Corporation. All rights reserved.
-//
+// <copyright file="TraceSourceExtensions.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,7 +33,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         }
 
         /// <summary>
-        /// Return a new TraceSource by appending a name 
+        /// Return a new TraceSource by appending a name
         /// </summary>
         public static TraceSource WithAppendName(this TraceSource trace, string name)
         {
@@ -51,12 +52,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
                 {
                     continue;
                 }
+
                 if (listener.Filter == null || listener.Filter.ShouldTrace(
                     null, trace.Name, eventType, 0, null, null, null, null))
                 {
                     return true;
                 }
             }
+
             return false;
         }
 

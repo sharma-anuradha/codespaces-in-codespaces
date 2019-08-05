@@ -18,7 +18,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             Requires.NullOrNotNullElements(hubContextHosts, nameof(hubContextHosts));
 
-            HubContextHosts = hubContextHosts;
+            HubContextHosts = hubContextHosts.Where(hCtxt => hCtxt.HubType == typeof(THub)).ToArray();
             Logger = Requires.NotNull(logger, nameof(logger));
             ServiceId = serviceId;
 
@@ -29,7 +29,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public ILogger Logger { get; }
 
-        public IEnumerable<IHubContextHost> HubContextHosts { get; }
+        public IHubContextHost[] HubContextHosts { get; }
 
         /// <summary>
         /// Return all client proxies from a connection id
@@ -44,7 +44,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         public IEnumerable<IClientProxy> HubClients(Func<IHubClients<IClientProxy>, IClientProxy> hubClientsCallback)
         {
             return HubContextHosts
-                .Where(hCtxt => hCtxt.HubType == typeof(THub))
                 .Select(hCtxt => hubClientsCallback(hCtxt.Clients))
                 .Where(clientProxy => clientProxy != null);
         }

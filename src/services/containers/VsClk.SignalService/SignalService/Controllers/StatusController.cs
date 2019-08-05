@@ -14,17 +14,20 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
 
         private readonly AppSettings appSettings;
         private readonly PresenceService presenceService;
+        private readonly RelayService relayService;
         private readonly HealthService healthService;
         private readonly IStartup startup;
 
         public StatusController(
             IOptions<AppSettings> appSettingsProvider,
             PresenceService presenceService,
+            RelayService relayService,
             HealthService healthService,
             IStartup startup)
         {
             this.appSettings = appSettingsProvider.Value;
             this.presenceService = presenceService;
+            this.relayService = relayService;
             this.healthService = healthService;
             this.startup = startup;
         }
@@ -56,7 +59,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                 this.startup.UseAzureSignalR,
                 AzureSignalRConnections = GetAllAzureSignalRConnections(),
                 BackplaneProviderTypes = this.presenceService.BackplaneProviders.Select(f => f.GetType().Name).ToArray(),
-                Metrics = this.presenceService.GetMetrics(),
+                PresenceMetrics = this.presenceService.GetMetrics(),
+                RelayMetrics = this.relayService.GetMetrics(),
             };
 
             return versionObj;

@@ -3,13 +3,13 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.VsCloudKernel.SignalService.Common;
 using Microsoft.VisualStudio.Threading;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
     /// <summary>
-    /// Implements the IHubClient interface
+    /// Implements the IHubClient interface.
     /// </summary>
     public class HubClient : IHubClient
     {
@@ -37,20 +37,35 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             this.traceSource = Requires.NotNull(trace, nameof(trace));
         }
 
+        /// <inheritdoc/>
+        public event AsyncEventHandler ConnectionStateChanged;
+
+        /// <inheritdoc/>
+        public event AsyncEventHandler<AttemptConnectionEventArgs> AttemptConnection;
+
+        /// <summary>
+        /// Gets underlying hub connection.
+        /// </summary>
         public HubConnection Connection { get; }
 
+        /// <inheritdoc/>
         public HubConnectionState State => Connection.State;
+
+        /// <inheritdoc/>
         public bool IsConnected => State == HubConnectionState.Connected;
+
+        /// <inheritdoc/>
         public bool IsRunning { get; private set; }
 
+        private CancellationToken StopToken => this.stopCts.Token;
+
+        /// <inheritdoc/>
         public Task DisposeAsync()
         {
             return StopAsync(CancellationToken.None);
         }
 
-        public event AsyncEventHandler ConnectionStateChanged;
-        public event AsyncEventHandler<AttemptConnectionEventArgs> AttemptConnection;
-
+        /// <inheritdoc/>
         public Task StartAsync(CancellationToken cancellationToken)
         {
             this.traceSource.Verbose($"StartAsync");
@@ -60,6 +75,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             return AttemptConnectAsync(cts.Token);
         }
 
+        /// <inheritdoc/>
         public Task StopAsync(CancellationToken cancellationToken)
         {
             if (IsRunning)
@@ -75,8 +91,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 return Task.CompletedTask;
             }
         }
-
-        private CancellationToken StopToken => this.stopCts.Token;
 
         private async Task OnClosedAsync(Exception exception)
         {

@@ -131,8 +131,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "status", "available" },
             }, CancellationToken.None);
 
-            Assert.True(conn1Proxy.ContainsKey(Methods.UpdateValues));
-            var items = conn1Proxy[Methods.UpdateValues];
+            Assert.True(conn1Proxy.ContainsKey(PresenceHubMethods.UpdateValues));
+            var items = conn1Proxy[PresenceHubMethods.UpdateValues];
 
             AssertContactRef("conn1-2", results[0][Properties.IdReserved].ToString(), items[0]);
             var notifyProperties = items[1] as Dictionary<string, object>;
@@ -141,8 +141,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
             conn1Proxy.Clear();
             await this.presenceService2.UnregisterSelfContactAsync(contact2_2_Ref, null, default);
-            Assert.True(conn1Proxy.ContainsKey(Methods.UpdateValues));
-            items = conn1Proxy[Methods.UpdateValues];
+            Assert.True(conn1Proxy.ContainsKey(PresenceHubMethods.UpdateValues));
+            items = conn1Proxy[PresenceHubMethods.UpdateValues];
             notifyProperties = items[1] as Dictionary<string, object>;
             Assert.Null(notifyProperties["status"]);
 
@@ -158,8 +158,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "status", "busy" },
             }, CancellationToken.None);
 
-            Assert.True(conn1Proxy.ContainsKey(Methods.UpdateValues));
-            items = conn1Proxy[Methods.UpdateValues];
+            Assert.True(conn1Proxy.ContainsKey(PresenceHubMethods.UpdateValues));
+            items = conn1Proxy[PresenceHubMethods.UpdateValues];
             AssertContactRef("conn1-2", results[0][Properties.IdReserved].ToString(), items[0]);
             notifyProperties = items[1] as Dictionary<string, object>;
             Assert.Equal("busy", notifyProperties["status"]);
@@ -183,8 +183,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "status", "available" },
             }, CancellationToken.None);
 
-            Assert.True(conn1Proxy.ContainsKey(Methods.UpdateValues));
-            items = conn1Proxy[Methods.UpdateValues];
+            Assert.True(conn1Proxy.ContainsKey(PresenceHubMethods.UpdateValues));
+            items = conn1Proxy[PresenceHubMethods.UpdateValues];
 
             Assert.Equal(contact2_2_Ref, items[0]);
             notifyProperties = items[1] as Dictionary<string, object>;
@@ -229,7 +229,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "status", "dnd" },
             }, CancellationToken.None);
             Assert.NotNull(connProxy.Item1);
-            Assert.Equal(connProxy.Item1, Methods.UpdateValues);
+            Assert.Equal(connProxy.Item1, PresenceHubMethods.UpdateValues);
             var notifyProperties = connProxy.Item2[1] as Dictionary<string, object>;
             Assert.Equal("dnd", notifyProperties["status"]);
 
@@ -316,8 +316,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "status", "busy" },
             }, CancellationToken.None);
 
-            Assert.True(conn1Callback.ContainsKey(Methods.UpdateValues));
-            var notifyProperties = conn1Callback[Methods.UpdateValues][1] as Dictionary<string, object>;
+            Assert.True(conn1Callback.ContainsKey(PresenceHubMethods.UpdateValues));
+            var notifyProperties = conn1Callback[PresenceHubMethods.UpdateValues][1] as Dictionary<string, object>;
             Assert.Equal("busy", notifyProperties["status"]);
 
             conn2Callback.Clear();
@@ -326,20 +326,20 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "other", 100 },
             }, CancellationToken.None);
 
-            Assert.True(conn2Callback.ContainsKey(Methods.UpdateValues));
-            Assert.Equal(contact1_1_Ref, conn2Callback[Methods.UpdateValues][0]);
-            notifyProperties = (Dictionary<string, object>)conn2Callback[Methods.UpdateValues][1];
+            Assert.True(conn2Callback.ContainsKey(PresenceHubMethods.UpdateValues));
+            Assert.Equal(contact1_1_Ref, conn2Callback[PresenceHubMethods.UpdateValues][0]);
+            notifyProperties = (Dictionary<string, object>)conn2Callback[PresenceHubMethods.UpdateValues][1];
             Assert.True(notifyProperties.ContainsKey("other"));
             Assert.Equal(100, notifyProperties["other"]);
 
             conn2Callback.Clear();
             await this.presenceService1.SendMessageAsync(contact1_1_Ref, contact1_2_Ref, "type1", "hi", CancellationToken.None);
-            Assert.True(conn2Callback.ContainsKey(Methods.ReceiveMessage));
+            Assert.True(conn2Callback.ContainsKey(PresenceHubMethods.ReceiveMessage));
 
-            Assert.Equal(contact1_2_Ref, conn2Callback[Methods.ReceiveMessage][0]);
-            Assert.Equal(contact1_1_Ref, conn2Callback[Methods.ReceiveMessage][1]);
-            Assert.Equal("type1", conn2Callback[Methods.ReceiveMessage][2]);
-            Assert.Equal("hi", conn2Callback[Methods.ReceiveMessage][3]);
+            Assert.Equal(contact1_2_Ref, conn2Callback[PresenceHubMethods.ReceiveMessage][0]);
+            Assert.Equal(contact1_1_Ref, conn2Callback[PresenceHubMethods.ReceiveMessage][1]);
+            Assert.Equal("type1", conn2Callback[PresenceHubMethods.ReceiveMessage][2]);
+            Assert.Equal("hi", conn2Callback[PresenceHubMethods.ReceiveMessage][3]);
         }
 
         [Fact]
@@ -378,8 +378,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             conn2Callback.Clear();
             await this.presenceService2.UnregisterSelfContactAsync(contact2_2_Ref, null, CancellationToken.None);
 
-            Assert.True(conn1Callback.ContainsKey(Methods.UpdateValues));
-            var notifyProperties = conn1Callback[Methods.UpdateValues][1] as Dictionary<string, object>;
+            Assert.True(conn1Callback.ContainsKey(PresenceHubMethods.UpdateValues));
+            var notifyProperties = conn1Callback[PresenceHubMethods.UpdateValues][1] as Dictionary<string, object>;
             Assert.Null(notifyProperties["status"]);
         }
 
@@ -441,8 +441,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 { "property2", "hello" },
             }, CancellationToken.None);
 
-            Assert.True(conn1Proxy.ContainsKey(Methods.UpdateValues));
-            var notifyProperties = conn1Proxy[Methods.UpdateValues][1] as Dictionary<string, object>;
+            Assert.True(conn1Proxy.ContainsKey(PresenceHubMethods.UpdateValues));
+            var notifyProperties = conn1Proxy[PresenceHubMethods.UpdateValues][1] as Dictionary<string, object>;
             Assert.Equal(2, notifyProperties.Count);
             Assert.Equal(100, notifyProperties["property1"]);
             Assert.Equal("hello", notifyProperties["property2"]);
@@ -452,7 +452,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             {
                 { "property3", true },
             }, CancellationToken.None);
-            notifyProperties = conn1Proxy[Methods.UpdateValues][1] as Dictionary<string, object>;
+            notifyProperties = conn1Proxy[PresenceHubMethods.UpdateValues][1] as Dictionary<string, object>;
             Assert.Single(notifyProperties);
             Assert.Equal(true, notifyProperties["property3"]);
         }

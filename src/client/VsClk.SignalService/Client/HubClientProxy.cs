@@ -25,9 +25,12 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         public HubClientProxy(HubConnection hubConnection, TraceSource trace, bool useSignalRHub = false)
             : base(hubConnection, trace)
         {
-            Proxy = (T)Activator.CreateInstance(typeof(T), hubConnection, trace, useSignalRHub);
+            Proxy = HubProxy.CreateHubProxy<T>(hubConnection, trace, useSignalRHub);
         }
 
+        /// <summary>
+        /// Gets the proxy instance of this hub connection.
+        /// </summary>
         public T Proxy { get; }
     }
 }

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\Shared\DictionaryHelpers.cs" Link="DictionaryHelpers.cs" />
+    <Compile Include="..\Shared\MockUtils.cs" Link="MockUtils.cs" />
   </ItemGroup>
 
   <ItemGroup>

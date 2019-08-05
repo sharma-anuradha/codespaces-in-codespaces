@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="DictionaryHelpers.cs" />
-    <Compile Include="$(ServiceRoot)\Shared\TraceSourceExtensions.cs" Link="TraceSourceExtensions.cs" />
+    <Compile Include="..\..\Shared\TraceSourceExtensions.cs" Link="TraceSourceExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
