@@ -16,7 +16,7 @@
     <Content Include="$(MSBuildThisFileDirectory)\..\BackEnd\BackEndWebApi\Src\BackEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)\..\FrontEnd\FrontEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
+    <Content Include="$(MSBuildThisFileDirectory)\..\FrontEnd\FrontEndWebApi\Src\FrontEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
