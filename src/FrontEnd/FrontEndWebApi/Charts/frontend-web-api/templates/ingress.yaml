@@ -23,10 +23,10 @@ spec:
 {{- end }}
   rules:
   {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ . }}
       http:
         paths:
-        {{- range .paths }}
+        {{- range $.Values.ingress.paths }}
           - path: {{ . }}
             backend:
               serviceName: {{ $fullName }}

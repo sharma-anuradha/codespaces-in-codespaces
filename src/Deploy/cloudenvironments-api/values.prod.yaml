@@ -4,6 +4,20 @@ frontend-web-api:
     aspNetEnv: Production
     validJwtAudiences: TODO
     databaseId: TODO
+  ingress:
+    hosts:
+      - online.visualstudio.com
+      - online.core.vsengsaas.visualstudio.com
+      - vsclk-online-prod-rel-tm.trafficmanager.net
+      - vsclk-online-prod-rel-asse-tm.trafficmanager.net
+      - vsclk-online-prod-rel-euw-tm.trafficmanager.net
+      - vsclk-online-prod-rel-use-tm.trafficmanager.net
+      - vsclk-online-prod-rel-usw2-tm.trafficmanager.net
+    tls:
+      - hosts:
+        - online.visualstudio.com
+        - online.core.vsengsaas.visualstudio.com
+        secretName: ssl-cert
 
 # Config for backend
 backend-web-api:

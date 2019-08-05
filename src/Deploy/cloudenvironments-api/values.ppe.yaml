@@ -4,6 +4,18 @@ frontend-web-api:
     aspNetEnv: Staging
     validJwtAudiences: TODO
     databaseId: TODO
+  ingress:
+    hosts:
+      - online-ppe.core.vsengsaas.visualstudio.com
+      - vsclk-online-ppe-rel-tm.trafficmanager.net
+      - vsclk-online-ppe-rel-asse-tm.trafficmanager.net
+      - vsclk-online-ppe-rel-euw-tm.trafficmanager.net
+      - vsclk-online-ppe-rel-use-tm.trafficmanager.net
+      - vsclk-online-ppe-rel-usw2-tm.trafficmanager.net
+    tls:
+      - hosts:
+        - online-ppe.core.vsengsaas.visualstudio.com
+        secretName: ssl-cert
 
 # Config for backend
 backend-web-api:
