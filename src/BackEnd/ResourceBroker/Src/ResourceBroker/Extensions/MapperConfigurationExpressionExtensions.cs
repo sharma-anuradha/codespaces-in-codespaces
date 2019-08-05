@@ -1,0 +1,25 @@
+﻿// <copyright file="MapperConfigurationExpressionExtensions.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using AutoMapper;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
+{
+    /// <summary>
+    /// 
+    /// </summary>
+    public static class MapperConfigurationExpressionExtensions
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cfg"></param>
+        public static void AddResourceBroker(this IMapperConfigurationExpression cfg)
+        {
+            cfg.CreateMap<ResourceRecord, AllocateResult>();
+        }
+    }
+}

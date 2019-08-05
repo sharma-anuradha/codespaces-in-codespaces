@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -52,6 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         /// <param name="services">The services collection that should be configured.</param>
         public void ConfigureServices(IServiceCollection services)
         {
+            // Frameworks
             services
                 .AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
@@ -61,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                     x.AllowInputFormatterExceptionMessages = HostingEnvironment.IsDevelopment();
                 });
 
-            // AppSettings configuration
+            // Configuration setup
             var appSettingsConfiguration = Configuration.GetSection("AppSettings");
             var appSettings = appSettingsConfiguration.Get<AppSettings>();
             services.Configure<AppSettings>(appSettingsConfiguration);
@@ -72,10 +74,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 CommitId = appSettings.GitCommit,
             };
 
-            // TODO: Add other managers, repositories, and providers here
-            // services.AddSingleton<IWidgetManager, WidgetManager>();
+            // Mappers services
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddResourceBroker();
+            });
+            var mapper = config.CreateMapper();
+            services.AddSingleton(mapper);
 
-            // Configure and add ISystemCatalog, IAzureSubscriptionCatalog, and ISkuCatalog
+            // System Components services
             services.AddSystemCatalog(
                 options =>
                 {
@@ -87,12 +94,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 });
             services.AddResourceBroker(appSettings);
 
-            // VS SaaS services
+            // VsSaaS services
             services.AddVsSaaSHosting(
                 HostingEnvironment,
                 loggingBaseValues);
 
-            // OpenAPI/swagger
+            // OpenAPI/swagger services
             services.AddSwaggerGen(x =>
             {
                 x.SwaggerDoc("v1", new Info()
@@ -115,7 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         {
             var isDevelopment = env.IsDevelopment();
 
-            // Initialize and validate the system catalog. This can throw if the catalog is invalid.
+            // System Components
             app.UseSystemCatalog();
             app.UseResourceBroker();
 
