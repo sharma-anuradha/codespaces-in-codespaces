@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
-import { Route, Redirect } from 'react-router';
+import { Route } from 'react-router';
 import './app.css';
-
-import { authService } from './services/authService';
 
 import { AppContextInterface, AppContextProvider } from './appContext';
 
@@ -38,7 +36,6 @@ export class App extends Component<{}, AppState> {
       <AppContextProvider value={appContext}>
         <Route exact path='/' component={Main} />
         <Route exact path='/welcome' component={Welcome} />
-        <Route path='/environment' component={Workbench} />
         <Route path='/environment/:id' component={Workbench} />
       </AppContextProvider>
       );

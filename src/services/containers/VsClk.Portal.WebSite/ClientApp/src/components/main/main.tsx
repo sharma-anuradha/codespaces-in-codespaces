@@ -8,6 +8,10 @@ import { Loader } from '../loader/loader';
 
 import { EnvironmentsPanel } from '../environmentsPanel/environments-panel';
 import { authService } from '../../services/authService';
+import { configAMD } from '../../amd/amdConfig';
+import EnvRegService from '../../services/envRegService';
+
+declare var AMDLoader: any;
 
 interface MainProps extends RouteComponentProps {}
 
@@ -27,12 +31,33 @@ export class Main extends Component<MainProps, MainState> {
         };
     }
 
+    private initializeWokrbechFetching() {
+        configAMD();
+        AMDLoader.global.require(['vs/workbench/workbench.web.api'], (_: any) => {});
+    }
+
+    private async ensurePrivatePreviewUser() {
+        let isAuthenticated = false;
+        try {
+            await EnvRegService.fetchEnvironments();
+            isAuthenticated = true;
+        } catch (e) {
+            if (e.code === 401) {
+                isAuthenticated = false;
+            }
+        }
+
+        this.setState({
+            isAuthenticated,
+        });
+    }
+
     async componentWillMount() {
         const token = await authService.getCachedToken();
 
-        this.setState({
-            isAuthenticated: !!token,
-        });
+        if (token) {
+            this.ensurePrivatePreviewUser()
+        }
     }
 
     render() {
@@ -45,6 +70,8 @@ export class Main extends Component<MainProps, MainState> {
         if (loading) {
             return <Loader message='Loading...' />;
         }
+
+        this.initializeWokrbechFetching();
 
         return (
             <Fragment>

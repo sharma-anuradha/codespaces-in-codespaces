@@ -15,8 +15,8 @@ import './environments-panel.css';
 export interface EnvironmentsPanelProps {}
 export interface EnvironmentsPanelState {
     environments: ICloudEnvironment[];
-    isLoading: boolean;
-    isAuthenticated: boolean;
+    isLoading?: boolean;
+    isAuthenticated?: boolean;
 }
 
 export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, EnvironmentsPanelState> {
@@ -30,25 +30,31 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
         };
 
         authService.getCachedToken().then((token) => {
-            if (token) {
-                envRegService
-                    .fetchEnvironments()
-                    .then((environments) => {
-                        this.setState({
-                            environments,
-                            isLoading: false,
-                        });
-                    })
-                    .catch((e) => {
-                        if (e.message.indexOf('401') !== -1 || e.code === 401) {
-                            authService.signOut();
-                            console.error('Please sign up!');
-
-                            this.setState({ isAuthenticated: false });
-                        }
-                    });
+            if (!token) {
+                return this.logOut();
             }
+            
+            envRegService
+                .fetchEnvironments()
+                .then((environments) => {
+                    this.setState({
+                        environments,
+                        isLoading: false,
+                    });
+                })
+                .catch((e) => {
+                    if ((e.message.indexOf('401') !== -1) || (e.code === 401)) {
+                        return this.logOut();
+                    }
+
+                    throw e;
+                });
         });
+    }
+
+    private logOut() {
+        authService.signOut();
+        this.setState({ isAuthenticated: false });
     }
 
     private renderEnvironments() {

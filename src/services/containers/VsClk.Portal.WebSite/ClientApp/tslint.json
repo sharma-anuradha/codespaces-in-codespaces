@@ -4,6 +4,18 @@
     ],
     "rules": {
         "prefer-type-cast": false,
-        "no-relative-imports": false
+        "no-relative-imports": false,
+        "no-console": {
+            "severity": "warning",
+            "options": [
+                "log",
+                "error",
+                "debug",
+                "info",
+                "time",
+                "timeEnd",
+                "trace"
+            ]
+        }
     }
 }

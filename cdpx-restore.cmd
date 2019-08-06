@@ -50,7 +50,7 @@ if "%EX%" neq "0" (
 )
 echo.
 echo npm-build-project
-call node_modules\.bin\react-scripts build
+call npm build
 set EX=%ERRORLEVEL%
 if "%EX%" neq "0" (
     popd

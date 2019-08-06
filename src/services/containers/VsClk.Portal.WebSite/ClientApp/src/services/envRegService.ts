@@ -1,6 +1,7 @@
 import { authService, IToken } from './authService';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { getServiceConfiguration } from './configurationService';
+import { trace } from '../utils/trace';
 
 export default class EnvRegService {
     private static async get(url: string): Promise<Response> {
@@ -96,7 +97,7 @@ export default class EnvRegService {
                 return env;
             })
             .catch((e) => {
-                console.error(e);
+                trace(e);
                 throw e;
             });
     }

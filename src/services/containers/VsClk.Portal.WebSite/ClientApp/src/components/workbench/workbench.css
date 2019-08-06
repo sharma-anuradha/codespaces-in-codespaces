@@ -1,0 +1,30 @@
+.vsonline-workbench {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #1E1E1E;
+}
+
+.vsonline-workbench__splash-screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: black;
+    opacity: .85;
+    z-index: 1;
+}
+
+.vsonline-workbench__splash-screen-caption {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.4rem;
+    z-index: 2;
+    font-weight: bold;
+}

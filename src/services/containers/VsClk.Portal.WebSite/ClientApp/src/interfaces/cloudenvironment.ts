@@ -6,4 +6,8 @@ export interface ICloudEnvironment {
     created: Date;
     updated: Date;
     active: Date;
+    connection: {
+        sessionId: string;
+        sessionPath: string;
+    }
 }
