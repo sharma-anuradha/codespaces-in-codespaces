@@ -4,8 +4,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Xml.Schema;
+using System.Collections.ObjectModel;
+using System.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
@@ -35,6 +35,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
         {
             Requires.NotNull(skuCatalogSettings, nameof(skuCatalogSettings));
 
+            // Create the ordered, immutable list, same for all configured subscriptions.
+            var defaultLocations = new ReadOnlyCollection<AzureLocation>(skuCatalogSettings.DefaultLocations
+                .Distinct()
+                .OrderBy(l => Enum.GetName(typeof(AzureLocation), l))
+                .ToList());
+
             foreach (var cloudEnvironmentSettings in skuCatalogSettings.CloudEnvironmentSkuSettings)
             {
                 var key = cloudEnvironmentSettings.ComputeSkuName;
@@ -49,9 +55,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
                     throw new InvalidOperationException($"A {nameof(skuCatalogSettings.DefaultVMImages)} entry is required for OS '{computeOS}'.");
                 }
 
+                var skuLocations = defaultLocations;
+                if (cloudEnvironmentSettings.OverrideLocations.Any())
+                {
+                    skuLocations = new ReadOnlyCollection<AzureLocation>(cloudEnvironmentSettings.OverrideLocations
+                        .Distinct()
+                        .OrderBy(l => Enum.GetName(typeof(AzureLocation), l))
+                        .ToList());
+                }
+
                 var cloudEnvironment = new CloudEnvironmentSku(
                     cloudEnvironmentSettings.SkuName,
                     cloudEnvironmentSettings.SkuDisplayName,
+                    skuLocations,
                     cloudEnvironmentSettings.ComputeSkuFamily,
                     cloudEnvironmentSettings.ComputeSkuName,
                     cloudEnvironmentSettings.ComputeSkuSize,

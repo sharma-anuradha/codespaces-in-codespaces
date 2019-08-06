@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -25,6 +26,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string SkuDisplayName { get; set; }
+
+        /// <summary>
+        /// Gets the list of Azure locations, overriding <see cref="SkuCatalogSettings.DefaultLocations"/>.
+        /// </summary>
+        [JsonProperty]
+        public List<AzureLocation> OverrideLocations { get; } = new List<AzureLocation>();
 
         /// <summary>
         /// Gets or sets the Azure compute SKU family, e.g., "standardFSv2Family".

@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
@@ -17,6 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
         /// </summary>
         /// <param name="skuName">The cloud environment sku name.</param>
         /// <param name="skuDisplayName">The cloud environment sku display name.</param>
+        /// <param name="skuLocations">The locations in which this sku is available.</param>
         /// <param name="computeSkuFamily">The azure compute sku family.</param>
         /// <param name="computeSkuName">The azure compute sku name.</param>
         /// <param name="computeSkuSize">The azure compute sku size.</param>
@@ -29,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
         public CloudEnvironmentSku(
             string skuName,
             string skuDisplayName,
+            IReadOnlyCollection<AzureLocation> skuLocations,
             string computeSkuFamily,
             string computeSkuName,
             string computeSkuSize,
@@ -42,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
             Requires.NotNullOrEmpty(skuName, nameof(skuName));
             Requires.NotNullOrEmpty(skuDisplayName, nameof(skuDisplayName));
             Requires.NotNullOrEmpty(computeSkuFamily, nameof(computeSkuFamily));
+            Requires.NullOrNotNullElements(skuLocations, nameof(skuLocations));
             Requires.NotNullOrEmpty(computeSkuName, nameof(computeSkuName));
             Requires.NotNullOrEmpty(computeSkuSize, nameof(computeSkuSize));
             Requires.Argument(Enum.IsDefined(typeof(ComputeOS), computeOS), nameof(computeOS), $"The value '{computeOS}' is not a value {nameof(ComputeOS)}.");
@@ -53,6 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
 
             SkuName = skuName;
             SkuDisplayName = skuDisplayName;
+            SkuLocations = skuLocations;
             ComputeSkuFamily = computeSkuFamily;
             ComputeSkuName = computeSkuName;
             ComputeSkuSize = computeSkuSize;
@@ -69,6 +75,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
 
         /// <inheritdoc/>
         public string SkuDisplayName { get; }
+
+        /// <inheritdoc/>
+        public IEnumerable<AzureLocation> SkuLocations { get; }
 
         /// <inheritdoc/>
         public string ComputeSkuFamily { get; }

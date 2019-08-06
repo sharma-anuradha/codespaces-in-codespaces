@@ -56,10 +56,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
                     Assert.Equal("test-tenant-id-1", s.ServicePrincipal.TenantId);
                     Assert.Equal("11111111-1111-1111-1111-111111111111", s.SubscriptionId);
                     Assert.Collection(s.Locations,
-                        loc => { Assert.Equal("eastus", loc); },
-                        loc => { Assert.Equal("southeastasia", loc); },
-                        loc => { Assert.Equal("westus", loc); },
-                        loc => { Assert.Equal("westus2", loc); });
+                        loc => { Assert.Equal(AzureLocation.EastUs, loc); },
+                        loc => { Assert.Equal(AzureLocation.SouthEastAsia, loc); },
+                        loc => { Assert.Equal(AzureLocation.WestUs, loc); },
+                        loc => { Assert.Equal(AzureLocation.WestUs2, loc); });
                 },
                 s =>
                 {
@@ -69,10 +69,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
                     Assert.Equal("test-tenant-id-2", s.ServicePrincipal.TenantId);
                     Assert.Equal("22222222-2222-2222-2222-222222222222", s.SubscriptionId);
                     Assert.Collection(s.Locations,
-                        loc => { Assert.Equal("eastus", loc); },
-                        loc => { Assert.Equal("southeastasia", loc); },
-                        loc => { Assert.Equal("westus", loc); },
-                        loc => { Assert.Equal("westus2", loc); });
+                        loc => { Assert.Equal(AzureLocation.EastUs, loc); },
+                        loc => { Assert.Equal(AzureLocation.SouthEastAsia, loc); },
+                        loc => { Assert.Equal(AzureLocation.WestUs, loc); },
+                        loc => { Assert.Equal(AzureLocation.WestUs2, loc); });
                 }
             );
         }
@@ -103,6 +103,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
                     Assert.Equal("test-sku-name-1", sku.SkuName);
                     Assert.Equal(1, sku.StorageSizeInGB);
                     Assert.Equal("test-storage-sku-name-1", sku.StorageSkuName);
+                    // Check the default locations
+                    Assert.Collection(sku.SkuLocations,
+                        loc => Assert.Equal(AzureLocation.EastUs, loc),
+                        loc => Assert.Equal(AzureLocation.WestUs2, loc)
+                    );
                 },
                 sku =>
                 {
@@ -117,6 +122,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
                     Assert.Equal("test-sku-name-2", sku.SkuName);
                     Assert.Equal(2, sku.StorageSizeInGB);
                     Assert.Equal("test-storage-sku-name-2", sku.StorageSkuName);
+                    // Assert the override locations
+                    Assert.Collection(sku.SkuLocations,
+                        loc => Assert.Equal(AzureLocation.WestEurope, loc));
                 });
         }
 
@@ -220,6 +228,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
         {
             var skuCatalogSettings = new SkuCatalogSettings
             {
+                DefaultLocations =
+                {
+                    AzureLocation.EastUs,
+                    AzureLocation.WestUs2,
+                },
                 CloudEnvironmentSkuSettings =
                 {
                     new CloudEnvironmentSkuSettings
@@ -247,6 +260,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
                         SkuName = "test-sku-name-2",
                         StorageSizeInGB = 2,
                         StorageSkuName = "test-storage-sku-name-2",
+                        OverrideLocations =
+                        {
+                            AzureLocation.WestEurope
+                        }
                     }
                 },
             DefaultVMImages =
@@ -262,12 +279,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
         {
             var azureSubscriptionCatalogSettings = new AzureSubscriptionCatalogSettings
             {
-                SupportedLocations =
+                DefaultLocations =
                     {
-                        "westus2",
-                        "southeastasia",
-                        "eastus",
-                        "westus",
+                        AzureLocation.WestUs2,
+                        AzureLocation.SouthEastAsia,
+                        AzureLocation.EastUs,
+                        AzureLocation.WestUs,
                     },
                 AzureSubscriptions =
                     {

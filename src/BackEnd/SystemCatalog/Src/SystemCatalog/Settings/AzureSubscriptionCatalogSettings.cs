@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -15,11 +16,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings
     public class AzureSubscriptionCatalogSettings
     {
         /// <summary>
-        /// Gets the list of supported locations.
+        /// Gets the default list of supported locations.
         /// </summary>
         [JsonProperty]
 
-        public List<string> SupportedLocations { get; } = new List<string>();
+        public List<AzureLocation> DefaultLocations { get; } = new List<AzureLocation>();
 
         /// <summary>
         /// Gets the list of Azure subscriptions.

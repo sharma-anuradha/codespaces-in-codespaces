@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 
@@ -37,9 +38,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
             Requires.NotNull(azureSubscriptionCatalogSettings, nameof(azureSubscriptionCatalogSettings));
 
             // Create the ordered, immutable list, same for all configured subscriptions.
-            Locations = new ReadOnlyCollection<string>(azureSubscriptionCatalogSettings.SupportedLocations
+            var locations = new ReadOnlyCollection<AzureLocation>(azureSubscriptionCatalogSettings.DefaultLocations
                 .Distinct()
-                .OrderBy(l => l)
+                .OrderBy(l => Enum.GetName(typeof(AzureLocation), l))
                 .ToList());
 
             foreach (var azureSubscriptionSettings in azureSubscriptionCatalogSettings.AzureSubscriptions)
@@ -62,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
                     azureSubscriptionSettings.DisplayName,
                     servicePrincipal,
                     azureSubscriptionSettings.Enabled,
-                    Locations); // future--would be possible to override locations per subscription, but not needed now
+                    locations); // future--would be possible to override locations per subscription, but not needed now
 
                 Subscriptions.Add(id, azureSubscription);
             }
@@ -72,8 +73,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
         public IEnumerable<IAzureSubscription> AzureSubscriptions => Subscriptions.Values
             .OrderBy(item => item.SubscriptionId)
             .ToArray();
-
-        private IReadOnlyCollection<string> Locations { get; }
 
         private Dictionary<Guid, IAzureSubscription> Subscriptions { get; } = new Dictionary<Guid, IAzureSubscription>();
 

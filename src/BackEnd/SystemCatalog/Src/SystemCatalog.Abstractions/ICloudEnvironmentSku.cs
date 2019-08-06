@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections;
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions
@@ -20,6 +22,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions
         /// Gets the SKU display name.
         /// </summary>
         string SkuDisplayName { get; }
+
+        /// <summary>
+        /// Gets the list of locations supported for this subscription.
+        /// </summary>
+        IEnumerable<AzureLocation> SkuLocations { get; }
 
         /// <summary>
         /// Gets the Cloud Environment OS.

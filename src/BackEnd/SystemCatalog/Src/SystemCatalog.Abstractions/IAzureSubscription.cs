@@ -3,7 +3,8 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions
 {
@@ -35,6 +36,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions
         /// <summary>
         /// Gets the list of locations supported for this subscription.
         /// </summary>
-        IEnumerable<string> Locations { get; }
+        IEnumerable<AzureLocation> Locations { get; }
     }
 }

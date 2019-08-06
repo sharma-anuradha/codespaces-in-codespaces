@@ -22,6 +22,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings
         public List<CloudEnvironmentSkuSettings> CloudEnvironmentSkuSettings { get; } = new List<CloudEnvironmentSkuSettings>();
 
         /// <summary>
+        /// Gets the list of default Azure locations.
+        /// </summary>
+        [JsonProperty]
+        public List<AzureLocation> DefaultLocations { get; } = new List<AzureLocation>();
+
+        /// <summary>
         /// Gets a mapping of OS type to default VM image for that OS.
         /// </summary>
         [JsonProperty]

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 
@@ -27,12 +28,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
             string displayName,
             IServicePrincipal servicePrincipal,
             bool enabled,
-            IReadOnlyCollection<string> locations)
+            IReadOnlyCollection<AzureLocation> locations)
         {
             Requires.NotNullOrEmpty(subscriptionId, nameof(subscriptionId));
             Requires.NotNullOrEmpty(displayName, nameof(displayName));
             Requires.NotNull(servicePrincipal, nameof(servicePrincipal));
-            Requires.NotNullEmptyOrNullElements(locations, nameof(locations));
+            Requires.NotNullOrEmpty(locations, nameof(locations));
 
             SubscriptionId = subscriptionId;
             DisplayName = displayName;
@@ -54,6 +55,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
         public bool Enabled { get; }
 
         /// <inheritdoc/>
-        public IEnumerable<string> Locations { get; }
+        public IEnumerable<AzureLocation> Locations { get; }
     }
 }
