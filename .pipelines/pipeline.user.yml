@@ -21,3 +21,4 @@ static_analysis_options:
       - 'scripts\vscode\fileUtils.js'
       - 'scripts\vscode\get-current-vscode-assets-version.js'
       - 'src\setupProxy.js'
+      - 'config-overrides.js'
