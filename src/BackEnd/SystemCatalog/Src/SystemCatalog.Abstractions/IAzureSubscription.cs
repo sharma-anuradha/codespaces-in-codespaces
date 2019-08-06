@@ -3,8 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions
 {

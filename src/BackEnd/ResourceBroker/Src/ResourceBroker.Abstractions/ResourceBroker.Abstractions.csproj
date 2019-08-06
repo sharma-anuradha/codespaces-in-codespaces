@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsclkSdkVersion)" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\ResourceBroker.Models\ResourceBroker.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common.Abstractions\Common.Abstractions.csproj" />
   </ItemGroup>

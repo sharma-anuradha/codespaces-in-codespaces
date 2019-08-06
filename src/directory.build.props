@@ -21,4 +21,11 @@
     <Title>VS SaaS Cloud Environments</Title>
   </PropertyGroup>
 
+  <!-- Common SDK References -->
+  <ItemGroup Condition="'$(IsTraversal)'!='true'">
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics.Extensions" Version="$(VsclkSdkVersion)" />
+  </ItemGroup>
+
 </Project>

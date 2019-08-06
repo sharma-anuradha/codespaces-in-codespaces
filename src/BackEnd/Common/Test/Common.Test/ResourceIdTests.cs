@@ -2,10 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
+using Microsoft.VsSaaS.Common;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test

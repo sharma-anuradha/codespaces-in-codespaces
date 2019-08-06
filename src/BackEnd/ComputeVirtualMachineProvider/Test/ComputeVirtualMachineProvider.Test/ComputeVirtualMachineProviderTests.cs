@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;

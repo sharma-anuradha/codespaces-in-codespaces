@@ -9,7 +9,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Linq;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;

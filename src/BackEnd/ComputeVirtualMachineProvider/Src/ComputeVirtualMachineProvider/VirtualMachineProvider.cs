@@ -4,11 +4,9 @@
 
 using System;
 using System.Threading.Tasks;
-using Microsoft;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
-using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {

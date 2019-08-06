@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;

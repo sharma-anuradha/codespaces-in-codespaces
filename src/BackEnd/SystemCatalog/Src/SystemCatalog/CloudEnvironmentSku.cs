@@ -3,9 +3,8 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 

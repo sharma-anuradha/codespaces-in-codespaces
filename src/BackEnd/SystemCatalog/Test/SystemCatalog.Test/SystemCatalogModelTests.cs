@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Moq;
-using Microsoft.Extensions.Options;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;

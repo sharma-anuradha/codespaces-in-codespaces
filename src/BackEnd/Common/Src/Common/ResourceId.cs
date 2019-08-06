@@ -4,7 +4,7 @@
 
 using System;
 using System.Text.RegularExpressions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {

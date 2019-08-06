@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 

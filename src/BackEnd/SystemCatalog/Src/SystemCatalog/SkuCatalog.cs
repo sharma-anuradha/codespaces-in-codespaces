@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.Extensions.Options;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 

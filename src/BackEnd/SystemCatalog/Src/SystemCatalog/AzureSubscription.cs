@@ -3,12 +3,8 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
 {

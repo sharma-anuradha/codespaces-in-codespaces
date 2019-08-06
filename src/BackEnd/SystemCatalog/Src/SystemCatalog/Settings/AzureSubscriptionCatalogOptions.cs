@@ -2,10 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.Collections.Generic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings
 {
     /// <summary>
