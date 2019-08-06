@@ -2,4 +2,7 @@
 
   <Import Condition="'$(IsTestProject)'=='true'" Project="$(MSBuildThisFileDirectory)test.targets" />
 
+  <ItemGroup Condition=" '$(CollectSymbols)' == 'true' ">
+    <PackageReference Include="Cascade.Build.CollectSymbols" Version="1.1.0" PrivateAssets="All" />
+  </ItemGroup>
 </Project>

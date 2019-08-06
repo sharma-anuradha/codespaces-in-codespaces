@@ -96,7 +96,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             private readonly RelayServiceProxy relayServiceProxy;
             private bool isDisposed;
 
-            internal RelayHubProxy(RelayServiceProxy relayServiceProxy,string hubId, JoinHubInfo joinHubInfo)
+            internal RelayHubProxy(RelayServiceProxy relayServiceProxy, string hubId, JoinHubInfo joinHubInfo)
             {
                 this.relayServiceProxy = relayServiceProxy;
                 Id = hubId;

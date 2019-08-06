@@ -55,7 +55,7 @@ jobs:
       createLogFile: true
       logProjectEvents: true
       maximumCpuCount: true
-      msbuildArguments: '/t:Build;Pack'
+      msbuildArguments: '/t:Build;Pack /p:CollectSymbolsDirectory=$(Build.ArtifactStagingDirectory)\\symbols'
       platform: ${{ parameters.platform }}
       solution: ${{ parameters.solution }}
 
@@ -102,11 +102,14 @@ jobs:
     condition: eq(True, ${{ parameters.publishEnabled }})
 
   - task: PublishSymbols@2
-    displayName: 'Index Sources and Publish Symbols'
-    inputs:
-      SymbolServerType: TeamServices
-      DetailedLog: false
+    displayName: 'Publish Symbols to the Package Management symbol server in VSTS'
     condition: eq(True, ${{ parameters.publishEnabled }})
+    inputs:
+      SearchPattern: '**\*.*'
+      SymbolsFolder: "$(Build.ArtifactStagingDirectory)/symbols"
+      SymbolServerType: TeamServices
+      # Index the PDBs by inserting the commands to git-fetch sources associated to the PDB
+      IndexSources: true
 
   - task: ms-vseng.MicroBuildTasks.521a94ea-9e68-468a-8167-6dcf361ea776.MicroBuildCleanup@1
     displayName: 'Send Microbuild Telemetry'

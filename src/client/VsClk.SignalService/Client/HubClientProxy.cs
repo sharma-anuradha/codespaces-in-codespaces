@@ -1,9 +1,17 @@
-﻿using System;
+﻿// <copyright file="HubClientProxy.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Diagnostics;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
+    /// <summary>
+    /// A hub client proxy that holds a hub client.
+    /// </summary>
+    /// <typeparam name="T">Type of proxy.</typeparam>
     public class HubClientProxy<T> : HubClient
         where T : class
     {

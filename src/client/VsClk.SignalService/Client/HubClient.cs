@@ -1,3 +1,7 @@
+// <copyright file="HubClient.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -113,6 +117,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                     {
                         await AttemptConnection?.InvokeAsync(this, e);
                     }
+
                     return e.BackoffTimeMillisecs;
                 },
                 -1,

@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="HubConnectionHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;

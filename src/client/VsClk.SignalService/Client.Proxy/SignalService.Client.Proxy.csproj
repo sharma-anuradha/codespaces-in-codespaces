@@ -10,6 +10,7 @@
     <!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
     <PackageTags>Visual Studio Cloud Kernel</PackageTags>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <CollectSymbols>true</CollectSymbols>
 
     <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
   </PropertyGroup>

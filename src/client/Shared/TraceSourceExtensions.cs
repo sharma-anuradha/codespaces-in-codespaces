@@ -69,7 +69,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             return trace.Listeners.OfType<T>();
         }
 
-        public static T FindListener<T>(this TraceSource trace) where T : TraceListener
+        public static T FindListener<T>(this TraceSource trace)
+            where T : TraceListener
         {
             return trace.Listeners.OfType<T>().FirstOrDefault();
         }
@@ -210,10 +211,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         /// </remarks>
         public struct NonFormattableString
         {
-            private NonFormattableString(string s) { String = s; }
+            private NonFormattableString(string s)
+            {
+                String = s;
+            }
+
             public string String { get; }
+
             public static implicit operator string(NonFormattableString nfs) => nfs.String;
+
             public static implicit operator NonFormattableString(string s) => new NonFormattableString(s);
+
             public static implicit operator NonFormattableString(FormattableString s) =>
                 throw new InvalidOperationException("This conversion should not be selected by overload resolution.");
         }
