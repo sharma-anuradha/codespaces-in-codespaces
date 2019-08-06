@@ -34,7 +34,11 @@ export class App extends Component<{}, AppState> {
 
     return (
       <AppContextProvider value={appContext}>
-        <Route exact path='/' component={Main} />
+        <Route exact path='/' render={() => {
+          location.href = 'https://devblogs.microsoft.com/visualstudio/intelligent-productivity-and-collaboration-from-anywhere/';
+          return null;
+        }}  />
+        <Route exact path='/environments' component={Main} />
         <Route exact path='/welcome' component={Welcome} />
         <Route path='/environment/:id' component={Workbench} />
       </AppContextProvider>

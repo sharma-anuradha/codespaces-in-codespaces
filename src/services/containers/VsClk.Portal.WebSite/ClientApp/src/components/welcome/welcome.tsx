@@ -39,7 +39,7 @@ export class Welcome extends Component<WelcomeProps, WelcomeState> {
 
     render() {
         if (this.state.isAuthenticated) {
-            return <Redirect to='/' />;
+            return <Redirect to='/environments' />;
         }
 
         return (
