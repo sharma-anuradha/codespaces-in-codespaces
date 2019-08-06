@@ -566,7 +566,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError(error, $"Failed to update contact using backplane provider:{backplaneProvider.GetType().Name} contactId:{contact.ContactId}");
+                    if (ShouldLogException(error))
+                    {
+                        Logger.LogError(error, $"Failed to update contact using backplane provider:{backplaneProvider.GetType().Name} contactId:{contact.ContactId}");
+                    }
                 }
             }
         }
@@ -584,7 +587,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError(error, $"Failed to send message using backplane provider:{backplaneProvider.GetType().Name}");
+                    if (ShouldLogException(error))
+                    {
+                        Logger.LogError(error, $"Failed to send message using backplane provider:{backplaneProvider.GetType().Name}");
+                    }
                 }
             }
         }
@@ -603,7 +609,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError(error, $"Failed to get contact data entity using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}");
+                    if (ShouldLogException(error))
+                    {
+                        Logger.LogError(error, $"Failed to get contact data entity using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}");
+                    }
                 }
             }
 
@@ -624,7 +633,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError($"Failed to get contacts using backplane provider:{backplaneProvider.GetType().Name}. Error:{error}");
+                    if (ShouldLogException(error))
+                    {
+                        Logger.LogError($"Failed to get contacts using backplane provider:{backplaneProvider.GetType().Name}. Error:{error}");
+                    }
                 }
             }
 
@@ -741,6 +753,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 return obj.ContactId.GetHashCode();
             }
+        }
+    
+        /// <summary>
+        /// Return true when this type of exception should be logged as an error to report in our telemetry
+        /// </summary>
+        /// <param name="error">The error instance</param>
+        /// <returns></returns>
+        private static bool ShouldLogException(Exception error)
+        {
+            return ! (error is OperationCanceledException);
         }
     }
 }
