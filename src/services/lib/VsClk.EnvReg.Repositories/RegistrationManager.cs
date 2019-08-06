@@ -59,7 +59,11 @@ namespace VsClk.EnvReg.Repositories
             }
             else
             {
-                model.State = workspace.IsHostConnected ? StateInfo.Available.ToString() : StateInfo.Awaiting.ToString();
+                if (workspace.IsHostConnected.HasValue)
+                {
+                    model.State = workspace.IsHostConnected.Value ? StateInfo.Available.ToString() : StateInfo.Awaiting.ToString();
+                }
+                // else we don't change the model state.
             }
 
             return model;

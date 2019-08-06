@@ -62,7 +62,7 @@ namespace VsClk.EnvReg.Models.DataStore.Workspace
         public bool AreAnonymousGuestsAllowed { get; set; }
 
         [JsonProperty(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-        public bool IsHostConnected { get; set; }
+        public bool? IsHostConnected { get; set; }
 
         [JsonProperty(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
         public DateTime ExpiresAt { get; set; }
