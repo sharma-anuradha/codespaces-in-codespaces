@@ -88,7 +88,7 @@ export class VSLSWebSocket implements IWebSocket {
   
       channel.onDataReceived((data: Buffer) => {
           trace(`SSh channel [${VSLSWebSocket.socketCnt}] received: \n${data.toString()}\n`);
-          channel.attemptAdjustWindow(data.length);
+          channel.adjustWindow(data.length);
           this._onData.fire(bufferToArrayBuffer(data));
       });
       

@@ -135,7 +135,7 @@ export class EnvConnector {
 
             isOnce = true;
             callback(channel);
-            channel.attemptAdjustWindow(e.length);
+            channel.adjustWindow(e.length);
         });
 
         return channel;
