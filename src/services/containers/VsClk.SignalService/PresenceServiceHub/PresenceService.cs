@@ -762,7 +762,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <returns></returns>
         private static bool ShouldLogException(Exception error)
         {
-            return ! (error is OperationCanceledException);
+            return ! (
+                error is OperationCanceledException ||
+                error.GetType().Name == "ServiceUnavailableException");
         }
     }
 }

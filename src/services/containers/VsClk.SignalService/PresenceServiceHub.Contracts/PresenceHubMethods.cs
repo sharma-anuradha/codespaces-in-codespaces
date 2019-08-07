@@ -10,7 +10,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     public static class PresenceHubMethods
     {
         public const string UpdateValues = "updateValues";
-        public const string ReceiveMessage = "ReceiveMessage";
+        public const string ReceiveMessage = "receiveMessage";
         public const string ConnectionChanged = "connectionChanged";
     }
 }
