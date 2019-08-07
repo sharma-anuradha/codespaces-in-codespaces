@@ -23,6 +23,8 @@
     <PackageReference Include="Microsoft.VsSaaS.Caching.Redis" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsclkSdkVersion)" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
