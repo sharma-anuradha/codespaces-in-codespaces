@@ -54,6 +54,7 @@
     <XunitStaFactVersion>0.2.17</XunitStaFactVersion>
     <XunitVersion>2.4.0</XunitVersion>
     <AzureMgmtFluentPackageVersion>1.20.0</AzureMgmtFluentPackageVersion> <!-- preferred for new projects-->
+    <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
   </PropertyGroup>
 
   <!-- Common project settings (except dirs.proj) -->

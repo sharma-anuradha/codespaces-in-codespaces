@@ -7,30 +7,42 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions
 {
+    /// <summary>
+    /// An interface for Storage providers.
+    /// </summary>
     public interface IStorageProvider
     {
         /// <summary>
+        /// Create a storage resource.
         /// </summary>
         /// <param name="input">Provides input to Create Azure file share.</param>
-        /// <param name="continuationToken"></param>
+        /// <param name="continuationToken">Token to be passed in to continue the operation if needed.</param>
         /// <returns>
-        ///     Result of the Create operations which includes TrackingId which
-        ///     can be used to call the StatusCheckAsync to find out the status
-        ///     of the create request.
+        /// Result of the Create operations which includes continuationToken which
+        /// can be used to call this method again to continue the next step of operation.
         /// </returns>
         Task<FileShareProviderCreateResult> CreateAsync(FileShareProviderCreateInput input, string continuationToken = null);
 
         /// <summary>
+        /// Delete a storage resource.
         /// </summary>
         /// <param name="input">Provides input to Delete Azure file share.</param>
-        /// <param name="continuationToken"></param>
+        /// <param name="continuationToken">Token to be passed in to continue the operation if needed.</param>
         /// <returns>
-        ///     Result of the Delete operations which includes TrackingId which
-        ///     can be used to call the StatusCheckAsync to find out the status
-        ///     of the create request.
+        ///  Result of the Delete operations which includes continuationToken which
+        ///  can be used to call this method again to continue the next step of operation.
         /// </returns>
         Task<FileShareProviderDeleteResult> DeleteAsync(FileShareProviderDeleteInput input, string continuationToken = null);
 
-        //Task<FileShareProviderAssignResult> AssignAsync(FileShareProviderAssignInput input, string continuationToken = null);
+        /// <summary>
+        /// Get information on the storage resource during assignment time.
+        /// </summary>
+        /// <param name="input">Provides input to get the assignment information for the Azure file share.</param>
+        /// <param name="continuationToken">Token to be passed in to continue the operation if needed.</param>
+        /// <returns>
+        ///  Result of the Assign operation which includes continuationToken which
+        ///  can be used to call this method again to continue the next step of operation.
+        /// </returns>
+        Task<FileShareProviderAssignResult> AssignAsync(FileShareProviderAssignInput input, string continuationToken = null);
     }
 }

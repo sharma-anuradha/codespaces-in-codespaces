@@ -5,9 +5,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Storage.File" Version="$(AzureStoragePackageVersion)" />
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj" />
     <ProjectReference Include="..\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog\SystemCatalog.csproj" />
+    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

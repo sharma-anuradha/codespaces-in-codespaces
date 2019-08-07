@@ -1,13 +1,13 @@
-﻿// <copyright file="FileShareProviderDeleteInput.cs" company="Microsoft">
+﻿// <copyright file="FileShareProviderAssignInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
 {
     /// <summary>
-    /// Input for the provider delete operation.
+    /// Input for the provider assign operation.
     /// </summary>
-    public class FileShareProviderDeleteInput
+    public class FileShareProviderAssignInput
     {
         /// <summary>
         /// Gets or sets the resource id.

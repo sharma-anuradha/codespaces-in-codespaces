@@ -2,16 +2,18 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
 {
     /// <summary>
-    ///
+    /// Result of the provider create operation.
     /// </summary>
-    public class FileShareProviderCreateResult
+    public class FileShareProviderCreateResult : BaseContinuationResult
     {
-        // Provider generates what ever ID it wants... might be worth versioning this?
-        public string ResourceId { get; set; } // '/subscriptions/2fa47206-c4b5-40ff-a5e6-9160f9ee000c/storage/<uid>'
-
-        public string TrackingId { get; set; } // Under the covers maps to ARM Deployment id
+        /// <summary>
+        /// Gets or sets the resource id.
+        /// </summary>
+        public string ResourceId { get; set; }
     }
 }

@@ -2,16 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
 {
     /// <summary>
-    ///
+    /// Result of the provider delete operation.
     /// </summary>
-    public class FileShareProviderDeleteResult
+    public class FileShareProviderDeleteResult : BaseContinuationResult
     {
-        /// <summary>
-        ///
-        /// </summary>
-        public string TrackingId { get; set; }
     }
 }
