@@ -9,11 +9,11 @@ export interface TitleBarProps {}
 export class TitleBar extends Component<TitleBarProps> {
     render() {
         return (
-            <div className='titlebar part'>
-                <div className='titlebar__caption' aria-label='Visual Studio logo'>
-                    <div className='titlebar__logo' />
-                    <Separator vertical className='titlebar__separator' />
-                    <div className='titlebar__caption-text'>Visual Studio Online</div>
+            <div className='vsonline-titlebar part'>
+                <div className='vsonline-titlebar__caption' aria-label='Visual Studio logo'>
+                    <div className='vsonline-titlebar__logo' />
+                    <Separator vertical className='vsonline-titlebar__separator' />
+                    <div className='vsonline-titlebar__caption-text'>Visual Studio Online</div>
                 </div>
                 <Persona
                     className='titlebar__main-avatar'

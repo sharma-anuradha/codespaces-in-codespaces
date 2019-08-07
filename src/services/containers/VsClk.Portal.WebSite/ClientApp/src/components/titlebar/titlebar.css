@@ -1,4 +1,4 @@
-.titlebar {
+.vsonline-titlebar {
     background-color: #141414;
     min-height: 4.8rem;
     position: relative;
@@ -8,13 +8,13 @@
     justify-content: space-between;
 }
 
-.titlebar__main-avatar {
+.vsonline-titlebar__main-avatar {
     /* (4 - 2.8) / 2 */
     margin-top: .6rem;
     justify-self: flex-end;
 }
 
-.titlebar__caption {
+.vsonline-titlebar__caption {
     color: white;
     font-size: 14px;
     letter-spacing: .025rem;
@@ -25,18 +25,18 @@
     align-items: center;
 }
 
-.titlebar__logo {
+.vsonline-titlebar__logo {
     background-image: url('/ms-logo.svg');
     width: 11.3rem;
     height: 2.4rem;
     margin: 0 1.6rem;
 }
 
-.titlebar__separator {
+.vsonline-titlebar__separator {
     height: 2.6rem;
 }
 
-.titlebar__caption-text {
+.vsonline-titlebar__caption-text {
     margin: 0 1.6rem;
 
     font-size: 1.6rem;
