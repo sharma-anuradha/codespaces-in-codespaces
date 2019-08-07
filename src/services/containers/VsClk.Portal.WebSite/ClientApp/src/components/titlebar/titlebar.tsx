@@ -19,7 +19,7 @@ export class TitleBar extends Component<TitleBarProps> {
                     className='titlebar__main-avatar'
                     size={PersonaSize.size28}
                     presence={PersonaPresence.online}
-                    imageUrl='https://avatars0.githubusercontent.com/u/116461?s=460'
+                    imageUrl='https://avatars2.githubusercontent.com/u/199026?s=400&v=4'
                 />
             </div>
         );
