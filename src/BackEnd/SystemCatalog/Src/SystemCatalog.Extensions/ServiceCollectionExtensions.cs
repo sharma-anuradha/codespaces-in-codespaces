@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
@@ -18,24 +17,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Extensions
         /// Adds the system catalog to the service collection.
         /// </summary>
         /// <param name="serviceCollection">The service collection.</param>
-        /// <param name="configureAzureSubscriptionCatalogOptions">The configuration callback for the azure sbuscription catalog settings.</param>
-        /// <param name="configureSkuCatalogOptions">The configuration callback for the sku catalog settings.</param>
+        /// <param name="azureSubscriptionCatalogSettings">The azure sbuscription catalog settings.</param>
+        /// <param name="skuCatalogSettings">The sku catalog settings.</param>
         /// <returns>The service collection instance.</returns>
         public static IServiceCollection AddSystemCatalog(
             this IServiceCollection serviceCollection,
-            Action<AzureSubscriptionCatalogOptions> configureAzureSubscriptionCatalogOptions,
-            Action<SkuCatalogOptions> configureSkuCatalogOptions)
+            AzureSubscriptionCatalogSettings azureSubscriptionCatalogSettings,
+            SkuCatalogSettings skuCatalogSettings)
         {
             Requires.NotNull(serviceCollection, nameof(serviceCollection));
-            Requires.NotNull(configureAzureSubscriptionCatalogOptions, nameof(configureAzureSubscriptionCatalogOptions));
-            Requires.NotNull(configureSkuCatalogOptions, nameof(configureSkuCatalogOptions));
+            Requires.NotNull(azureSubscriptionCatalogSettings, nameof(azureSubscriptionCatalogSettings));
+            Requires.NotNull(skuCatalogSettings, nameof(skuCatalogSettings));
 
             // The Azure Subscription Catalog
-            serviceCollection.Configure(configureAzureSubscriptionCatalogOptions);
+            serviceCollection.Configure<AzureSubscriptionCatalogOptions>(x => x.Settings = azureSubscriptionCatalogSettings);
             serviceCollection.AddSingleton<IAzureSubscriptionCatalog, AzureSubscriptionCatalog>();
 
             // The SKU Catalog
-            serviceCollection.Configure(configureSkuCatalogOptions);
+            serviceCollection.Configure<SkuCatalogOptions>(x => x.Settings = skuCatalogSettings);
             serviceCollection.AddSingleton<ISkuCatalog, SkuCatalog>();
 
             // The composite System Catlog

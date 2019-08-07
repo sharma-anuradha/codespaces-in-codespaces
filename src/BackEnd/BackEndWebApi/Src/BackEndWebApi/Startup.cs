@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 using Newtonsoft.Json;
@@ -83,16 +84,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddSingleton(mapper);
 
             // System Components services
+            var azureSubscriptionCatalogSettings = Configuration.GetSection("AzureSubscriptionCatalogSettings").Get<AzureSubscriptionCatalogSettings>();
+            var skuCatalogSettings = Configuration.GetSection("SkuCatalogSettings").Get<SkuCatalogSettings>();
             services.AddSystemCatalog(
-                options =>
-                {
-                    options.Settings = Configuration.GetSection("AzureSubscriptionCatalogSettings").Get<AzureSubscriptionCatalogSettings>();
-                },
-                options =>
-                {
-                    options.Settings = Configuration.GetSection("SkuCatalogSettings").Get<SkuCatalogSettings>();
-                });
-            services.AddResourceBroker(appSettings);
+                azureSubscriptionCatalogSettings,
+                skuCatalogSettings);
+
+            var storageAccountSettings = Configuration.GetSection("StorageAccountSettings").Get<StorageAccountSettings>();
+            services.AddResourceBroker(
+                storageAccountSettings,
+                appSettings.UseMocksForLocalDevelopment);
 
             // VsSaaS services
             services.AddVsSaaSHosting(

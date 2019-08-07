@@ -4,6 +4,8 @@
 
 appSettings:
   - ASPNETCORE_ENVIRONMENT
+  - AppSettings__StorageAccountSettings__StorageAccountName
+  - AppSettings__StorageAccountSettings__StorageAccountKey
 
 pods:
   minReplicaCount: 3
