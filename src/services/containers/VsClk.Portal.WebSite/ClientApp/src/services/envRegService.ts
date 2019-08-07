@@ -1,10 +1,9 @@
-import { authService, IToken } from './authService';
+import { AuthenticationError, IAuthenticationProvider } from './authService';
 import {
     ICloudEnvironment,
     CreateEnvironmentParameters as CreateEnvironmentParametersBase,
 } from '../interfaces/cloudenvironment';
 import { getServiceConfiguration } from './configurationService';
-import { trace } from '../utils/trace';
 
 import { createUniqueId } from '../dependencies';
 
@@ -13,12 +12,15 @@ import { createUniqueId } from '../dependencies';
 export type CreateEnvironmentParameters = CreateEnvironmentParametersBase;
 
 export default class EnvRegService {
-    private static async get(url: string): Promise<Response | undefined> {
-        const token = await authService.getCachedToken();
+    private static async get(
+        url: string,
+        authenticationProvider: IAuthenticationProvider
+    ): Promise<Response | undefined> {
+        const token = await authenticationProvider.getToken();
 
         if (!token) {
-            await authService.signOut();
-            return undefined;
+            await authenticationProvider.signOut();
+            throw new AuthenticationError();
         }
 
         const response = await fetch(url, {
@@ -35,8 +37,8 @@ export default class EnvRegService {
         }
 
         if (response.status === 401) {
-            await authService.signOut();
-            return undefined;
+            await authenticationProvider.signOut();
+            throw new AuthenticationError();
         }
 
         if (response.status !== 200) {
@@ -48,12 +50,16 @@ export default class EnvRegService {
         return response;
     }
 
-    private static async post(url: string, data: any): Promise<Response | undefined> {
-        const token = await authService.getCachedToken();
+    private static async post(
+        url: string,
+        data: any,
+        authenticationProvider: IAuthenticationProvider
+    ): Promise<Response | undefined> {
+        const token = await authenticationProvider.getToken();
 
         if (!token) {
-            await authService.signOut();
-            return undefined;
+            await authenticationProvider.signOut();
+            throw new AuthenticationError();
         }
 
         const response = await fetch(url, {
@@ -73,8 +79,8 @@ export default class EnvRegService {
         }
 
         if (response.status === 401) {
-            await authService.signOut();
-            return undefined;
+            await authenticationProvider.signOut();
+            throw new AuthenticationError();
         }
 
         if (response.status !== 200) {
@@ -84,11 +90,14 @@ export default class EnvRegService {
         return response;
     }
 
-    private static async delete(url: string): Promise<Response | undefined> {
-        const token = await authService.getCachedToken();
+    private static async delete(
+        url: string,
+        authenticationProvider: IAuthenticationProvider
+    ): Promise<Response | undefined> {
+        const token = await authenticationProvider.getToken();
 
         if (!token) {
-            await authService.signOut();
+            await authenticationProvider.signOut();
             return undefined;
         }
 
@@ -105,7 +114,7 @@ export default class EnvRegService {
         }
 
         if (response.status === 401) {
-            await authService.signOut();
+            await authenticationProvider.signOut();
             return undefined;
         }
 
@@ -116,59 +125,39 @@ export default class EnvRegService {
         return response;
     }
 
-    static async fetchEnvironments(token?: IToken): Promise<ICloudEnvironment[]> {
-        let env: ICloudEnvironment[] = [];
+    static async fetchEnvironments(
+        authenticationProvider: IAuthenticationProvider
+    ): Promise<ICloudEnvironment[]> {
+        const emptyEnvironmentList: ICloudEnvironment[] = [];
+        const { environmentRegistrationEndpoint } = await getServiceConfiguration();
 
-        if (!token) {
-            token = await authService.getCachedToken();
-
-            if (!token) {
-                return [];
-            }
+        const response = await this.get(environmentRegistrationEndpoint, authenticationProvider);
+        if (!response) {
+            return emptyEnvironmentList;
+        }
+        const fetchedEnvironments = await response.json();
+        if (!Array.isArray(fetchedEnvironments)) {
+            return emptyEnvironmentList;
         }
 
-        const config = await getServiceConfiguration();
+        fetchedEnvironments.forEach((environment) => {
+            environment.active = new Date(environment.active);
+            environment.created = new Date(environment.created);
+            environment.updated = new Date(environment.updated);
+        });
 
-        return this.get(config.environmentRegistrationEndpoint)
-            .then((response) => {
-                if (!response) {
-                    return undefined;
-                }
-                return response.text().then((data) => {
-                    return JSON.parse(data);
-                });
-            })
-            .then((environments) => {
-                if (environments) {
-                    if (Array.isArray(environments)) {
-                        // Convert dates.
-                        environments.forEach((environment) => {
-                            environment.active = new Date(environment.active);
-                            environment.created = new Date(environment.created);
-                            environment.updated = new Date(environment.updated);
-                        });
-                        env = environments;
-                        // Order them by updated time DESC
-                        environments.sort((a: ICloudEnvironment, b: ICloudEnvironment) => {
-                            return b.updated.getTime() - a.updated.getTime();
-                        });
-                    }
-                }
-                return env;
-            })
-            .catch((e) => {
-                trace(e);
-                throw e;
-            });
+        return fetchedEnvironments.sort((a: ICloudEnvironment, b: ICloudEnvironment) => {
+            return b.updated.getTime() - a.updated.getTime();
+        });
     }
 
     static async createEnvironment(
-        environment: CreateEnvironmentParameters
+        environment: CreateEnvironmentParameters,
+        authenticationProvider: IAuthenticationProvider
     ): Promise<ICloudEnvironment> {
-        const config = await getServiceConfiguration();
+        const { environmentRegistrationEndpoint } = await getServiceConfiguration();
 
         const { friendlyName, gitRepositoryUrl, type = 'cloudEnvironment' } = environment;
-
         const body = {
             type,
             friendlyName,
@@ -183,33 +172,49 @@ export default class EnvRegService {
             },
         };
 
-        return this.post(config.environmentRegistrationEndpoint, body)
-            .then((response) => {
-                if (!response) {
-                    return undefined;
-                }
-                return response.json();
-            })
-            .catch((e) => {
-                throw 'Error creating new environment';
-            });
-    }
-
-    static async getEnvironment(id: string): Promise<ICloudEnvironment> {
-        const config = await getServiceConfiguration();
-
-        return this.get(`${config.environmentRegistrationEndpoint}/${id}`).then(
-            (response) => response && response.json()
+        const response = await this.post(
+            environmentRegistrationEndpoint,
+            body,
+            authenticationProvider
         );
+
+        if (!response) {
+            throw new Error('Service returned no data.');
+        }
+
+        return await response.json();
     }
 
-    static async deleteEnvironment(id: string): Promise<void> {
-        const config = await getServiceConfiguration();
+    static async getEnvironment(
+        id: string,
+        authenticationProvider: IAuthenticationProvider
+    ): Promise<ICloudEnvironment | undefined> {
+        const { environmentRegistrationEndpoint } = await getServiceConfiguration();
 
-        return this.delete(`${config.environmentRegistrationEndpoint}/${id}`).then((response) => {
-            if (!response || !response.ok === true || response.status !== 204) {
-                throw new Error(`Failed to delete environment ${id}. StatusCode: ${204}`);
-            }
-        });
+        const response = await this.get(
+            `${environmentRegistrationEndpoint}/${id}`,
+            authenticationProvider
+        );
+
+        if (!response) {
+            return undefined;
+        }
+
+        return await response.json();
+    }
+
+    static async deleteEnvironment(
+        id: string,
+        authenticationProvider: IAuthenticationProvider
+    ): Promise<void> {
+        const { environmentRegistrationEndpoint } = await getServiceConfiguration();
+
+        const response = await this.delete(
+            `${environmentRegistrationEndpoint}/${id}`,
+            authenticationProvider
+        );
+        if (!response || !response.ok === true || response.status !== 204) {
+            throw new Error(`Failed to delete environment ${id}. StatusCode: ${204}`);
+        }
     }
 }

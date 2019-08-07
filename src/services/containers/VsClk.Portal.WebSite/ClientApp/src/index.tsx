@@ -20,10 +20,12 @@ initializeIcons();
 
 const baseUrl = (document.getElementById('public_url') as HTMLBaseElement).getAttribute('href');
 const rootElement = document.getElementById('root');
-
-// localStorage.debug = 'vsa-portal-webapp,vsa-portal-webapp:*';
-// localStorage.debug = 'vs-ssh,vs-ssh:*';
-localStorage.debug = '';
+if (process.env.NODE_ENV === 'development') {
+    localStorage.debug = 'vsa-portal-webapp,vsa-portal-webapp:*';
+    // localStorage.debug = 'vs-ssh,vs-ssh:*';
+} else {
+    localStorage.debug = '';
+}
 
 Modal.setAppElement('body');
 

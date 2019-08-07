@@ -1,26 +1,14 @@
 import React, { Component, FormEvent, MouseEvent } from 'react';
-import { connect } from 'react-redux';
-import { Redirect } from 'react-router';
-import { Spinner } from 'office-ui-fabric-react/lib/Spinner';
 import {
     BaseButton,
     Button,
     PrimaryButton,
     DefaultButton,
 } from 'office-ui-fabric-react/lib/Button';
-import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
-
-import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
-import { ApplicationState } from '../../reducers/rootReducer';
-
-import { EnvironmentCard } from '../environmentCard/environment-card';
-
-import { createEnvironment } from '../../actions/createEnvironment';
-import { deleteEnvironment } from '../../actions/deleteEnvironment';
 
 enum EnvironmentType {
     Empty = 'empty',

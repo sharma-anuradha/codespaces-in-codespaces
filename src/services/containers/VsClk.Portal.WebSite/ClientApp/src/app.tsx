@@ -12,11 +12,9 @@ import { init } from './actions/init';
 import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ApplicationState } from './reducers/rootReducer';
-import { Loader } from './components/loader/loader';
+import { ProtectedRoute } from './ProtectedRoute';
 
-export interface AppState {
-    isLoading: boolean;
-}
+export interface AppState {}
 
 type StoreType = ReturnType<typeof configureStore>;
 interface AppProps {
@@ -25,19 +23,7 @@ interface AppProps {
 }
 
 class AppRoot extends Component<AppProps, AppState> {
-    constructor(props: AppProps) {
-        super(props);
-
-        this.state = {
-            isLoading: true,
-        };
-    }
-
     async componentDidMount() {
-        this.setState({
-            isLoading: false,
-        });
-
         this.props.dispatch(init);
     }
 
@@ -60,20 +46,18 @@ class AppRoot extends Component<AppProps, AppState> {
                                 }
                             }
                         />
-                        <Route exact path='/environments' component={Main} />
+                        <ProtectedRoute exact path='/environments' component={Main} />
                         <Route exact path='/welcome' component={Welcome} />
-                        <Route path='/environment/:id' component={Workbench} />
+                        <ProtectedRoute path='/environment/:id' component={Workbench} />
                     </div>
                 </Router>
             </Provider>
         );
     }
     render() {
-        const { isLoading } = this.state;
-
         return (
             <div className='vssass' key='main-app'>
-                {isLoading ? <Loader message='Signing in...' /> : this.renderMain()}
+                {this.renderMain()}
             </div>
         );
     }

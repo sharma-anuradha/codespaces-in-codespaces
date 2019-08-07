@@ -41,7 +41,7 @@ class AuthService {
 
     private tokens: ITokensMemoryCache = {};
 
-    public async defaultSilentSignIn() {
+    private async defaultSilentSignIn() {
         const token = await this.getCachedToken();
 
         return token;
@@ -100,7 +100,7 @@ class AuthService {
 
     private tokenAcquirePromise: Promise<IToken | undefined> | undefined;
 
-    public async acquireToken(): Promise<IToken | undefined> {
+    private async acquireToken(): Promise<IToken | undefined> {
         if (!this.tokenAcquirePromise) {
             this.tokenAcquirePromise = this.acquireTokenInternal();
         }
@@ -154,7 +154,9 @@ class AuthService {
     }
 
     public async signOut() {
+        const debugSetting = localStorage.debug;
         localStorage.clear();
+        localStorage.debug = debugSetting;
         this.tokens = {};
         // localStorage.removeItem(LOCAL_STORAGE_KEY);
         // this.clientApplication.logout();
@@ -162,3 +164,15 @@ class AuthService {
 }
 
 export const authService = new AuthService();
+
+export class AuthenticationError extends Error {
+    constructor() {
+        super('Authentication Failed.');
+        Error.captureStackTrace(this, AuthenticationError);
+    }
+}
+
+export interface IAuthenticationProvider {
+    getToken(): Promise<IToken | undefined>;
+    signOut(): Promise<void>;
+}

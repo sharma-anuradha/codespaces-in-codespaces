@@ -26,7 +26,10 @@ interface ErrorAction<
     failed: true;
 }
 
+type UnwrapDispatch<T> = T extends (dispatch: Dispatch) => Promise<infer U> ? Promise<U> : never;
+
 export interface Dispatch {
+    <T extends (dispatch: Dispatch) => Promise<any>>(param: T): UnwrapDispatch<T>;
     <T>(param: T): T;
 }
 
@@ -50,6 +53,13 @@ export function action(type: string, payload?: any, error?: any) {
             type,
             payload,
             failed: false,
+        };
+    } else if (error != null) {
+        return {
+            type,
+            payload,
+            error,
+            failed: true,
         };
     } else {
         return {

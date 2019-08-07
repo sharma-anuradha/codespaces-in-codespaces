@@ -1,44 +1,27 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router';
+import { connect } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 import { Button } from 'office-ui-fabric-react/lib/Button';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 
-import { authService } from '../../services/authService';
+import { signIn } from '../../actions/authentication';
 
 import './welcome.css';
+import { ApplicationState } from '../../reducers/rootReducer';
+import { Loader } from '../loader/loader';
 
-interface WelcomeProps {}
-
-interface WelcomeState {
+interface WelcomeProps {
     isAuthenticated: boolean;
+    isAuthenticating: boolean;
+    signIn: (...name: Parameters<typeof signIn>) => void;
 }
 
-export class Welcome extends Component<WelcomeProps, WelcomeState> {
-    constructor(props: WelcomeProps) {
-        super(props);
-
-        this.state = {
-            isAuthenticated: false,
-        };
-    }
-    private onSignIn = async () => {
-        const token = await authService.signIn();
-
-        if (token) {
-            this.setState({ isAuthenticated: true });
-        }
-    };
-
-    async componentWillMount() {
-        const token = await authService.getCachedToken();
-
-        this.setState({
-            isAuthenticated: !!token,
-        });
-    }
-
+class WelcomeView extends Component<WelcomeProps> {
     render() {
-        if (this.state.isAuthenticated) {
+        if (!this.props.isAuthenticated && this.props.isAuthenticating) {
+            return <Loader message='Signing in...' />;
+        }
+        if (this.props.isAuthenticated) {
             return <Redirect to='/environments' />;
         }
 
@@ -50,15 +33,34 @@ export class Welcome extends Component<WelcomeProps, WelcomeState> {
                         className='welcome-page__sign-in-button'
                         text='Sign up'
                         primary={true}
-                        onClick={this.onSignIn}
+                        onClick={this.props.signIn}
                     />
                     <Button
                         className='welcome-page__sign-in-button'
                         text='Sign in'
-                        onClick={this.onSignIn}
+                        onClick={this.props.signIn}
                     />
                 </div>
             </div>
         );
     }
+}
+
+const getAuthState = (state: ApplicationState) => ({
+    isAuthenticated: state.authentication.isAuthenticated,
+    isAuthenticating: state.authentication.isAuthenticating,
+});
+const actions = {
+    signIn,
+};
+
+export const WelcomeConnected = connect(
+    getAuthState,
+    actions
+)(WelcomeView);
+
+// Router cannot consume connected components properly so we wrap welcome
+
+export function Welcome() {
+    return <WelcomeConnected />;
 }

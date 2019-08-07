@@ -1,59 +1,61 @@
 import React, { Component } from 'react';
-import { RouteComponentProps, Redirect } from 'react-router';
+import { connect } from 'react-redux';
+import { RouteComponentProps } from 'react-router-dom';
 import './workbench.css';
 
 import { trace } from '../../utils/trace';
 import { WEB_EMBED_PRODUCT_JSON } from '../../constants';
 
 import { VSLSWebSocket, IWebSocketFactory } from '../../resolvers/vslsResolver';
-import { authService } from '../../services/authService';
+import { IToken } from '../../services/authService';
 import envRegService from '../../services/envRegService';
 
 import { amdConfig } from '../../amd/amdConfig';
+import { ReduxAuthenticationProvider } from '../../actions/reduxAuthenticationProvider';
+import { Dispatch } from '../../actions/actionUtils';
+import { ApplicationState } from '../../reducers/rootReducer';
 
 declare var AMDLoader: any;
 
-export interface WorkbenchProps extends RouteComponentProps {}
+export interface WorkbenchProps extends RouteComponentProps {
+    dispatch: Dispatch;
+    token: IToken | undefined;
+}
 
 export interface WorkbenchState {
     isLoading?: boolean;
-    isAuthenticated?: boolean;
 }
 
-export class Workbench extends Component<WorkbenchProps, WorkbenchState> {
+class WorkbenchView extends Component<WorkbenchProps, WorkbenchState> {
     constructor(props: WorkbenchProps) {
         super(props);
 
-        this.state = {
-            isAuthenticated: true,
-        };
+        this.state = {};
     }
 
     async componentDidMount() {
-        const aadToken = await authService.getCachedToken();
-
-        if (!aadToken) {
-            this.setState({
-                isAuthenticated: false,
-            });
-
-            return;
-        }
-
         amdConfig();
 
+        new ReduxAuthenticationProvider(this.props.dispatch);
         const environmentId = location.href.split('environment/')[1];
-        const environmentInfo = await envRegService.getEnvironment(environmentId);
+
+        const authProvider = new ReduxAuthenticationProvider(this.props.dispatch);
+
+        const environmentInfo = await envRegService.getEnvironment(environmentId, authProvider);
+        if (!environmentInfo) {
+            return;
+        }
 
         trace(`Environment info: `, environmentInfo);
 
         const { sessionPath } = environmentInfo.connection;
+        const { accessToken } = this.props.token!;
 
         AMDLoader.global.require(['vs/workbench/workbench.web.api'], (workbench: any) => {
             const VSLSWebSocketFactory: IWebSocketFactory = new (class
                 implements IWebSocketFactory {
                 create(url: string) {
-                    return new VSLSWebSocket(url, aadToken.accessToken, environmentInfo);
+                    return new VSLSWebSocket(url, accessToken, environmentInfo);
                 }
             })();
 
@@ -75,23 +77,9 @@ export class Workbench extends Component<WorkbenchProps, WorkbenchState> {
         });
     }
 
-    private renderSplashScreen() {
-        return (
-            <div className='vsonline-workbench__splash-screen'>
-                <p className='vsonline-workbench__splash-screen-caption'>Getting things ready..</p>
-            </div>
-        );
-    }
-
     private workbenchRef: HTMLDivElement | null = null;
 
     render() {
-        const { isAuthenticated } = this.state;
-
-        if (!isAuthenticated) {
-            return <Redirect to='/welcome' />;
-        }
-
         return (
             <div className='vsonline-workbench'>
                 <meta
@@ -110,3 +98,9 @@ export class Workbench extends Component<WorkbenchProps, WorkbenchState> {
         );
     }
 }
+
+const getAuthToken = ({ authentication: { token } }: ApplicationState) => ({
+    token,
+});
+
+export const Workbench = connect(getAuthToken)(WorkbenchView);

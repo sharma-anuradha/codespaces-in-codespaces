@@ -2,6 +2,7 @@ import envRegService from '../services/envRegService';
 import { action, Dispatch } from './actionUtils';
 import { wait } from '../dependencies';
 import { ICloudEnvironment, StateInfo } from '../interfaces/cloudenvironment';
+import { ReduxAuthenticationProvider } from './reduxAuthenticationProvider';
 
 export const pollEnvironmentActionType = 'async.environments.poll';
 export const pollEnvironmentWaitingActionType = 'async.environments.poll.waiting';
@@ -58,7 +59,10 @@ export const pollEnvironment = (id: string) => async (dispatch: Dispatch) => {
     }
 
     async function isEnvironmentValidYet() {
-        let environment = await envRegService.getEnvironment(id);
+        let environment = await envRegService.getEnvironment(
+            id,
+            new ReduxAuthenticationProvider(dispatch)
+        );
         if (!environment) {
             dispatch(pollEnvironmentWaitingAction(id));
             await wait(2000);

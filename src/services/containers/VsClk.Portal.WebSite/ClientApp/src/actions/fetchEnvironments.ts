@@ -2,6 +2,7 @@ import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import envRegService from '../services/envRegService';
 
 import { action, Dispatch } from './actionUtils';
+import { ReduxAuthenticationProvider } from './reduxAuthenticationProvider';
 
 export const fetchEnvironmentsActionType = 'async.environments.fetch';
 export const fetchEnvironmentsSuccessActionType = 'async.environments.fetch.success';
@@ -23,7 +24,9 @@ export type FetchEnvironmentsFailureAction = ReturnType<typeof fetchEnvironments
 export const fetchEnvironments = () => async (dispatch: Dispatch) => {
     try {
         dispatch(fetchEnvironmentsAction());
-        const environments = await envRegService.fetchEnvironments();
+        const environments = await envRegService.fetchEnvironments(
+            new ReduxAuthenticationProvider(dispatch)
+        );
         dispatch(fetchEnvironmentsSuccessAction(environments));
     } catch (err) {
         dispatch(fetchEnvironmentsFailureAction(err));

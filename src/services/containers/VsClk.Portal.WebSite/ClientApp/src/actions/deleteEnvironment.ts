@@ -1,5 +1,6 @@
 import envRegService from '../services/envRegService';
 import { action, Dispatch } from './actionUtils';
+import { ReduxAuthenticationProvider } from './reduxAuthenticationProvider';
 
 export const deleteEnvironmentActionType = 'async.environments.delete';
 export const deleteEnvironmentSuccessActionType = 'async.environments.delete.success';
@@ -22,7 +23,7 @@ export const deleteEnvironment = (id: string) => async (dispatch: Dispatch) => {
     // 1. Try to delete environment
     try {
         dispatch(deleteEnvironmentAction(id));
-        await envRegService.deleteEnvironment(id);
+        await envRegService.deleteEnvironment(id, new ReduxAuthenticationProvider(dispatch));
         dispatch(deleteEnvironmentSuccessAction(id));
     } catch (err) {
         dispatch(deleteEnvironmentFailureAction(id, err));

@@ -3,6 +3,7 @@ import { action, Dispatch } from './actionUtils';
 import { createUniqueId } from '../dependencies';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { pollEnvironment } from './pollEnvironment';
+import { ReduxAuthenticationProvider } from './reduxAuthenticationProvider';
 
 export const createEnvironmentActionType = 'async.environments.create';
 export const createEnvironmentSuccessActionType = 'async.environments.create.success';
@@ -31,7 +32,10 @@ export const createEnvironment = (parameters: CreateEnvironmentParameters) => as
     // 1. Try to create environment
     try {
         dispatch(createEnvironmentAction(lieId, parameters));
-        const environment = await envRegService.createEnvironment(parameters);
+        const environment = await envRegService.createEnvironment(
+            parameters,
+            new ReduxAuthenticationProvider(dispatch)
+        );
         dispatch(createEnvironmentSuccessAction(lieId, environment));
         try {
             dispatch(pollEnvironment(environment.id));

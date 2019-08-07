@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import moment from 'moment';
-import { withRouter, match } from 'react-router';
+import { withRouter, match } from 'react-router-dom';
 import { History, Location } from 'history';
 
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
