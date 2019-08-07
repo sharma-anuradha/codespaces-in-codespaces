@@ -1,71 +1,72 @@
-
 .environment-card {
-    padding: 1.6rem 2rem 1.2rem;
-    display: block;
-    text-decoration: none;
+    min-width: 37rem;
+    max-width: 40.4rem;
+    height: 24rem;
+    margin-left: 2rem;
+    margin-right: 2rem;
+    margin-bottom: 4rem;
+    border-radius: 2px;
+    padding: .4rem;
+    box-sizing: border-box;
 }
 
-.environment-card:hover {
-    opacity: .9;
-    cursor: pointer;
-    box-shadow: 0 6.4px 14.4px 0 rgba(0, 0, 0, 0.132), 0 1.2px 3.6px 0 rgba(0, 0, 0, 0.108) !important;
+.environment-card__environment-name {
+    flex-grow: 1;
 }
+
+.environment-card__environment-icon {
+    font-size: 2rem;
+    margin: 1.6rem;
+    margin-right: .8rem;
+}
+
 
 .environment-card__tag {
-    padding: .2rem .8rem;
-    border-radius: .2rem;
+    padding: .4rem .8rem;
+    border-radius: .4rem;
     float: right;
 }
 
-.environments-panel__show-all-environments,
 .environments-panel__create-button {
     display: inline;
 }
-
-.environments-panel__show-all-environments {
-    font-size: 1.2rem;
-}
-
 
 .environments-panel__tar {
     text-align: right;
 }
 
-.environment-card__environment-description {
-    margin-top: 1.2rem;
-    font-size: 1.2rem;
-    line-height: 1.6rem;
-    font-weight: 600;
-    color: #333333;
+.environment-card__thin-separator {
+    margin: .4rem 0;
+    height: 1px;
 }
 
-.environment-card__date {
-    color: #666666;
-    margin-top: .8rem;
+.environment-card__details-table {
+    display: table;
+    margin: 1.2rem;
+    width: calc(100% - 2.8rem);
+    table-layout: fixed;
+}
+.environment-card__details-table-row {
+    display: table-row;
+}
+.environment-card__details-table-cell {
+    display: table-cell;
+    padding-right: 1rem;
+    padding-bottom: 1rem;
 }
 
-.environment-card__environment-description,
-.environment-card__date {
-    margin-left: 0;
+.environment-card__details-label {
+    white-space: nowrap;
+    width: 7rem;
 }
 
-.environment-card__icon {
-    font-size: 1.6rem;
-    margin-left: .4rem;
+.environment-card__details-value {
+    overflow: hidden;
 }
 
-.environment-card__icon:hover {
-    cursor: pointer;
-    opacity: .75;
-}
-
-.environment-card__users {
-    margin-top: 1.6rem;
-    margin-left: .2rem;
-}
-
-.environment-card__user {
-    float: left;
-    margin-right: .8rem;
-    width: 2.4rem;
+.environment-card__status {
+    border-radius: 2px;
+    padding: .4rem .8rem;
+    margin: 1.2rem;
+    font-size: 1rem;
 }

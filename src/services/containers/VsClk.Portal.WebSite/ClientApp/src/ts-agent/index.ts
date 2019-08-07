@@ -1,4 +1,3 @@
-
 import { WebClient } from './webClient';
 import { WorkspaceClient } from './workspaceClient';
 
@@ -16,14 +15,13 @@ import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 
 export class EnvConnector {
     private isConnecting: boolean = false;
-    
+
     private initializeConnectionSignal: Signal<any> = new Signal();
 
     private async startVscodeServer(workspaceClient: WorkspaceClient): Promise<number> {
-
-        const vscodeServerHostClient = workspaceClient.getServiceProxy<
+        const vscodeServerHostClient = workspaceClient.getServiceProxy<VSCodeServerHostService>(
             VSCodeServerHostService
-        >(VSCodeServerHostService);
+        );
 
         const options: VSCodeServerOptions = {
             vsCodeCommit: WEB_EMBED_PRODUCT_JSON.commit,
@@ -39,12 +37,17 @@ export class EnvConnector {
         return remotePort;
     }
 
-    private async forwardVscodeServerPort(remotePort: number, workspaceClient: WorkspaceClient): Promise<vsls.SharedServer> {
-        const serverSharingService = workspaceClient.getServiceProxy<vsls.ServerSharingService>(vsls.ServerSharingService);
+    private async forwardVscodeServerPort(
+        remotePort: number,
+        workspaceClient: WorkspaceClient
+    ): Promise<vsls.SharedServer> {
+        const serverSharingService = workspaceClient.getServiceProxy<vsls.ServerSharingService>(
+            vsls.ServerSharingService
+        );
         const sharedServer = await serverSharingService.startSharingAsync(
             remotePort,
             'VSCodeServerInternal',
-            '',
+            ''
         );
 
         return sharedServer;
@@ -72,8 +75,9 @@ export class EnvConnector {
 
         trace(`Connected to VSLS.`);
 
-        const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(vsls.StreamManagerService);
-
+        const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
+            vsls.StreamManagerService
+        );
 
         const port = await this.startVscodeServer(workspaceClient);
 
@@ -93,7 +97,7 @@ export class EnvConnector {
 
         const result = {
             sessionPath,
-            port
+            port,
         };
 
         this.initializeConnectionSignal.complete(result);
@@ -101,15 +105,18 @@ export class EnvConnector {
         return result;
     }
 
-    private channelOpenner: SshChannelOpenner;
+    private channelOpenner!: SshChannelOpenner;
 
     public sendHandshakeRequest(requestStr: string): Promise<SshChannel> {
         return new Promise((resolve) => {
             this.sendRequestInternal(requestStr, resolve);
         });
     }
-    
-    private async sendRequestInternal(requestStr: string, callback: (channel: SshChannel) => any): Promise<SshChannel> {
+
+    private async sendRequestInternal(
+        requestStr: string,
+        callback: (channel: SshChannel) => any
+    ): Promise<SshChannel> {
         if (!this.channelOpenner) {
             throw new Error('Initialize connection first to create the port forwarder.');
         }
@@ -122,7 +129,7 @@ export class EnvConnector {
         trace(`Sending the request: \n${requestStr}\n`);
 
         await channel.send(buf);
-        
+
         let isOnce = false;
         channel.onDataReceived((e: Buffer) => {
             // the first request on this channel  is for the handshake,
@@ -153,7 +160,7 @@ export interface VSCodeServerOptions {
 export interface VSCodeServerHostService {
     startRemoteServerAsync(
         input: VSCodeServerOptions,
-        cancellationToken?: CancellationToken,
+        cancellationToken?: CancellationToken
     ): Promise<number>;
 
     exportLogsAsync(): Promise<string>;

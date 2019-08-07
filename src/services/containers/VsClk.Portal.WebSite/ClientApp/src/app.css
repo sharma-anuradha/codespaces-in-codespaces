@@ -2,12 +2,10 @@ body, html {
   margin: 0;
   padding: 0;
   font-size: 10px;
+  overflow: hidden;
 }
 
 .vssass {
   background: white;
-  /* position: absolute;
-  height: 100%;
-  width: 100%; */
-  /* background-color: #1B1B1B; */
+  overflow: hidden;
 }

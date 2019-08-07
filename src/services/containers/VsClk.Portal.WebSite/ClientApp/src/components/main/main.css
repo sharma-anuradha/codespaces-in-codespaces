@@ -3,17 +3,29 @@
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.monaco-workbench {
-    font-size: 13px;
-    line-height: 1.4em;
-    z-index: 1;
-    overflow: hidden;
+.main {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
 
-.vssass .monaco-workbench {
-    position: unset !important;
+.main__app-content {
+    height: calc(100% - 4rem);
+    display: flex;
 }
 
-.monaco-workbench .part.titlebar>.window-appicon {
-    background-image: url(logo.png) !important;
+.main__app-content-container,
+.main__app-navigation-container {
+    height: 100%;
+}
+
+.main__app-navigation-container {
+    width: 22rem;
+}
+
+.main__app-content-container {
+    flex-grow: 1;
+    overflow: auto;
 }

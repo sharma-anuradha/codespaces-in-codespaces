@@ -1,69 +1,44 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router';
+import { connect } from 'react-redux';
 import { Spinner } from 'office-ui-fabric-react/lib/Spinner';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Link } from 'office-ui-fabric-react/lib/Link';
+import { Stack } from 'office-ui-fabric-react/lib/Stack';
+
+import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
+import { ApplicationState } from '../../reducers/rootReducer';
 
 import { EnvironmentCard } from '../environmentCard/environment-card';
-import { authService } from '../../services/authService';
-import envRegService from '../../services/envRegService';
+import { CreateEnvironmentPanel } from './create-environment-panel';
 
-import { ICloudEnvironment } from '../../interfaces/cloudenvironment';
+import { createEnvironment } from '../../actions/createEnvironment';
+import { deleteEnvironment } from '../../actions/deleteEnvironment';
+
+import { clamp } from '../../utils/clamp';
 
 import './environments-panel.css';
 
-export interface EnvironmentsPanelProps {}
+type EnvironmentsPanelProps = {
+    createEnvironment: (...name: Parameters<typeof createEnvironment>) => void;
+    deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
+    environments: ILocalCloudEnvironment[];
+    isLoading: boolean;
+};
 export interface EnvironmentsPanelState {
-    environments: ICloudEnvironment[];
-    isLoading?: boolean;
-    isAuthenticated?: boolean;
+    showPanel: boolean;
 }
 
-export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, EnvironmentsPanelState> {
+class EnvironmentsPanelView extends Component<EnvironmentsPanelProps, EnvironmentsPanelState> {
     constructor(props: EnvironmentsPanelProps) {
         super(props);
 
         this.state = {
-            environments: [],
-            isLoading: true,
-            isAuthenticated: true,
+            showPanel: false,
         };
-
-        authService.getCachedToken().then((token) => {
-            if (!token) {
-                return this.logOut();
-            }
-            
-            envRegService
-                .fetchEnvironments()
-                .then((environments) => {
-                    this.setState({
-                        environments,
-                        isLoading: false,
-                    });
-                })
-                .catch((e) => {
-                    if ((e.message.indexOf('401') !== -1) || (e.code === 401)) {
-                        return this.logOut();
-                    }
-
-                    throw e;
-                });
-        });
-    }
-
-    private logOut() {
-        authService.signOut();
-        this.setState({ isAuthenticated: false });
     }
 
     private renderEnvironments() {
-        const { isLoading, isAuthenticated, environments } = this.state;
-
-        if (!isAuthenticated) {
-            return <Redirect to='/welcome' />;
-        }
-
+        const { isLoading, environments, deleteEnvironment } = this.props;
         if (isLoading) {
             return (
                 <Spinner
@@ -75,22 +50,24 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
             );
         }
 
-        const envs = [];
+        const cards = [];
         let i = 0;
-        for (let env of environments.slice(0, 3)) {
-            envs.push(
-                <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg4' key={i++}>
-                    <EnvironmentCard environment={env} id={i} />
-                </div>
+        for (const env of clamp(environments, 5)) {
+            const key = env.id || env.lieId || i++;
+            cards.push(
+                <EnvironmentCard
+                    environment={env}
+                    deleteEnvironment={deleteEnvironment}
+                    key={key}
+                />
             );
         }
 
         return (
             <div className='ms-Grid-row'>
-                <div className='ms-Grid-row environments-panel__environments'>
-                    {envs.length ? envs : this.renderNoEnvironments()}
-                </div>
-                {envs.length ? this.renderViewAll() : null}
+                <Stack horizontal wrap>
+                    {cards.length ? cards : this.renderNoEnvironments()}
+                </Stack>
             </div>
         );
     }
@@ -98,22 +75,7 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
     private renderNoEnvironments() {
         return (
             <div className='environments-panel__no-environments' key='no-envs'>
-                No enviroments so far. <Link>Create one!</Link>
-            </div>
-        );
-    }
-
-    private renderViewAll() {
-        return (
-            <div className='ms-Grid' dir='ltr'>
-                <div className='ms-Grid-row'>
-                    <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg10' />
-                    <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg2 environments-panel__tar'>
-                        <Link className='environments-panel__show-all-environments'>
-                            View all my environments
-                        </Link>
-                    </div>
-                </div>
+                No environments so far. <Link onClick={this.showPanel}>Create one!</Link>
             </div>
         );
     }
@@ -128,12 +90,49 @@ export class EnvironmentsPanel extends Component<EnvironmentsPanelProps, Environ
                             <PrimaryButton
                                 text='Create environment'
                                 className='environments-panel__create-button'
+                                onClick={this.showPanel}
                             />
                         </div>
                     </div>
                     {this.renderEnvironments()}
                 </div>
+                <CreateEnvironmentPanel
+                    onCreateEnvironment={this.onCreateEnvironment}
+                    showPanel={this.state.showPanel}
+                    hidePanel={this.hidePanel}
+                />
             </div>
         );
     }
+
+    private showPanel = () => {
+        this.setState({ showPanel: true });
+    };
+
+    private hidePanel = () => {
+        this.setState({ showPanel: false });
+    };
+
+    private onCreateEnvironment = (friendlyName: string, gitRepositoryUrl?: string) => {
+        this.props.createEnvironment({
+            friendlyName,
+            gitRepositoryUrl,
+        });
+        this.hidePanel();
+    };
 }
+
+const stateToProps = ({ environments: { environments, isLoading } }: ApplicationState) => ({
+    environments,
+    isLoading,
+});
+
+const mapDispatch = {
+    createEnvironment,
+    deleteEnvironment,
+};
+
+export const EnvironmentsPanel = connect(
+    stateToProps,
+    mapDispatch
+)(EnvironmentsPanelView);

@@ -20,7 +20,7 @@ export async function getServiceConfiguration(): Promise<IConfiguration> {
             return defaultConfig;
         }
 
-        configCache = await response.json();
+        configCache = (await response.json()) as IConfiguration;
 
         return configCache;
     } catch (err) {

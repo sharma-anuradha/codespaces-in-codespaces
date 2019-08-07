@@ -16,6 +16,9 @@
                 "timeEnd",
                 "trace"
             ]
-        }
+        },
+        "function-name": false,
+        // Developer says if it's necessary
+        "no-unnecessary-local-variable": false
     }
 }

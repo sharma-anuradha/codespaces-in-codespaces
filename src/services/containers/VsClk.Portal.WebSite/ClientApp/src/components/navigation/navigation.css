@@ -1,0 +1,23 @@
+.navigation {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.navigation__link-icon {
+    margin: .8rem 1.6rem;
+}
+
+.navigation__row, .navigation__row a {
+    width: 100%;
+}
+
+.navigation__row-active {
+    /* Gray30 */
+    background-color: #EDEBE9;
+}
+
+.navigation__settings-row {
+    position: absolute;
+    bottom: 0;
+}

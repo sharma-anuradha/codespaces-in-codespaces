@@ -1,14 +1,13 @@
 
 .environments-panel {
-    max-width: 98rem;
     margin: 0 auto;
     position: relative;
     background: white;
-    min-height: 80rem;
+    max-width: 133rem;
 }
 
 .environments-panel__create-button {
-    margin: 6rem 0 4rem 0;
+    margin: 6rem 2.5rem 4rem 0;
 }
 
 .environments-panel__environments {

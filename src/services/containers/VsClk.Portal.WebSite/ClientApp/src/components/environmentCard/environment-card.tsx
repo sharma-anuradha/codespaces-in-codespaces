@@ -1,129 +1,244 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
+import moment from 'moment';
+import { withRouter, match } from 'react-router';
+import { History, Location } from 'history';
 
-import { Link } from 'office-ui-fabric-react/lib/Link';
-import { Separator } from 'office-ui-fabric-react/lib/Separator';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
-import { users } from '../mocks/users';
-import { environments as envsMock } from '../mocks/environments';
+import { Text } from 'office-ui-fabric-react/lib/Text';
+import { getTheme } from 'office-ui-fabric-react/lib/Styling';
 
-import { Depths } from '@uifabric/fluent-theme/lib/fluent/FluentDepths';
 import './environment-card.css';
-import { SharedColors, NeutralColors, CommunicationColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
+import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
 
+import {
+    ILocalCloudEnvironment,
+    environmentIsALie,
+    StateInfo,
+} from '../../interfaces/cloudenvironment';
 
-import { IconLabel } from '../iconLabel/icon-label';
-import { ICloudEnvironment } from '../../interfaces/cloudenvironment';
+import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 
-import { Link as RouterLink } from 'react-router-dom';
+import { deleteEnvironment } from '../../actions/deleteEnvironment';
+import { Link } from 'office-ui-fabric-react/lib/Link';
+import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
+import { Stack } from 'office-ui-fabric-react/lib/Stack';
 
 export interface EnvironmentCardProps {
     className?: string;
-    environment: ICloudEnvironment;
-    id: number;
+    environment: ILocalCloudEnvironment;
+    deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
 }
 
-export class EnvironmentCard extends Component<EnvironmentCardProps> {
+function ThinSeparator() {
+    return (
+        <div
+            style={{ backgroundColor: NeutralColors.gray20 }}
+            className='environment-card__thin-separator'
+        />
+    );
+}
 
-    private getUsers() {
-        const { id } = this.props;
+function Details({ details }: { details: { key: string; value: string }[] }) {
+    const rows = details.map((d) => (
+        <div className='environment-card__details-table-row' key={`${d.key}${d.value}`}>
+            <div className='environment-card__details-table-cell environment-card__details-label'>
+                <Text nowrap block style={{ color: NeutralColors.gray160 }}>
+                    {d.key}
+                </Text>
+            </div>
+            <div className='environment-card__details-table-cell environment-card__details-value'>
+                <Text nowrap block style={{ color: NeutralColors.black }}>
+                    {d.value}
+                </Text>
+            </div>
+        </div>
+    ));
 
-        switch (id) {
-            case 1: {
-                return [users[0], users[1], users[2]];
-            }
-            case 2: {
-                return [users[3], users[4], users[5]];
-            }
-            case 3:
-            default: {
-                return [users[6], users[0], users[3]];
-            }
-        }
+    return <div className='environment-card__details-table'>{rows}</div>;
+}
+
+function Status({ environment }: { environment: ILocalCloudEnvironment }) {
+    let backgroundColor;
+    let color;
+
+    switch (environment.state) {
+        case StateInfo.Available:
+            backgroundColor = '#6BB700';
+            color = NeutralColors.gray160;
+            break;
+        case StateInfo.Deleted:
+        case StateInfo.Failed:
+            backgroundColor = SharedColors.red20;
+            color = NeutralColors.gray10;
+            break;
+        default:
+            backgroundColor = NeutralColors.gray20;
+            color = NeutralColors.gray160;
     }
 
-    private renderUsers() {
-        const users = this.getUsers();
+    return (
+        <Text
+            block
+            className='environment-card__status'
+            style={{
+                color,
+                backgroundColor,
+            }}
+        >
+            {environment.state}
+        </Text>
+    );
+}
 
-        const usersElements = [];
-        let i = 0;
-        for (let user of users) {
-            usersElements.push(
-                <Persona
-                    key={i++}
-                    className='environment-card__user'
-                    size={PersonaSize.size24}
-                    presence={user.presence}
-                    imageUrl={user.imageUrl}
+type ActionProps = {
+    history: History;
+    location: Location<{}>;
+    match: match<{}>;
+    environment: ILocalCloudEnvironment;
+    deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
+};
+
+const Actions = withRouter(({ environment, deleteEnvironment, history }: ActionProps) => {
+    const [deleteDialogHidden, setDeleteDialogHidden] = useState(true);
+    return (
+        <>
+            <IconButton
+                iconProps={{}}
+                title='More'
+                menuIconProps={{ iconName: 'MoreVertical', style: { fontSize: '1.6rem' } }}
+                menuProps={{
+                    isBeakVisible: false,
+                    items: [
+                        {
+                            key: 'open-vscode',
+                            iconProps: { iconName: 'OpenInNewWindow' },
+                            name: 'Open in VS Code',
+                            disabled: environmentIsALie(environment),
+                            onClick: () => {},
+                        },
+                        {
+                            key: 'open-web',
+                            iconProps: { iconName: 'PlugConnected' },
+                            name: 'Connect',
+                            disabled: environmentIsALie(environment),
+                            onClick: () => {
+                                if (environmentIsALie(environment)) {
+                                    return;
+                                }
+
+                                history.push(`/environment/${environment.id}`);
+                            },
+                        },
+                        {
+                            key: 'delete',
+                            iconProps: { iconName: 'Delete' },
+                            name: 'Delete',
+                            disabled: environmentIsALie(environment),
+                            onClick: () => {
+                                if (environment.id) setDeleteDialogHidden(false);
+                            },
+                        },
+                    ],
+                }}
+            />
+            <DeleteDialog
+                environment={environment}
+                deleteEnvironment={deleteEnvironment}
+                // tslint:disable-next-line: react-this-binding-issue
+                cancel={() => {
+                    setDeleteDialogHidden(true);
+                }}
+                hidden={deleteDialogHidden}
+            />
+        </>
+    );
+});
+
+type DeleteDialogProps = {
+    deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
+    cancel: () => void;
+    environment: ILocalCloudEnvironment;
+    hidden: boolean;
+};
+
+function DeleteDialog({ deleteEnvironment, environment, cancel, hidden }: DeleteDialogProps) {
+    return (
+        <Dialog
+            hidden={hidden}
+            dialogContentProps={{
+                type: DialogType.normal,
+                title: `Delete environment ${environment.friendlyName}`,
+                subText: `You are about to delete the ${environment.friendlyName}. Are you sure?`,
+            }}
+            modalProps={{
+                isBlocking: true,
+                styles: { main: { maxWidth: 450 } },
+            }}
+        >
+            <DialogFooter>
+                <PrimaryButton
+                    onClick={
+                        // tslint:disable-next-line: react-this-binding-issue
+                        () => deleteEnvironment(environment.id!)
+                    }
+                    text='Delete'
                 />
-            );
-        }
+                <DefaultButton onClick={cancel} text='Cancel' />
+            </DialogFooter>
+        </Dialog>
+    );
+}
 
-        return (
-            <div className='ms-Grid-row environment-card__users'>
-                {usersElements}
-            </div>
-        )
-    }
-
-    private renderFooter() {
-        return (
-            <div className='ms-Grid' dir='ltr'>
-                <div className='ms-Grid-row'>
-                    <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg1 environment-card__icon'>
-                        <Icon
-                            iconName='OpenInNewWindow'
-                            style={{ color: CommunicationColors.primary }}
-                        />
-                    </div>
-                    <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg1 environment-card__icon'>
-                        <Icon
-                            iconName='GitGraph'
-                            style={{ color: CommunicationColors.primary }}
-                        />
-                    </div>
-                    <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg10'></div>
-                </div>
-            </div>
+export function EnvironmentCard(props: EnvironmentCardProps) {
+    const environmentNameText = <Text variant={'large'}>{props.environment.friendlyName}</Text>;
+    const environmentName =
+        environmentIsALie(props.environment) || props.environment.state !== StateInfo.Available ? (
+            <div className='environment-card__environment-name'>{environmentNameText}</div>
+        ) : (
+            <Link
+                className='environment-card__environment-name'
+                href={`environment/${props.environment.id}`}
+            >
+                {environmentNameText}
+            </Link>
         );
-    }
-    
-    render() {
-        const { className = '', environment, id } = this.props;
 
-        const envMock = envsMock[id - 1];
-
-        return (
-            <RouterLink
-                to={`/environment/${environment.id}`}
-                className={`environment-card ${className}`}
-                style={{ boxShadow: Depths.depth8 }}>
-                <div className='ms-Grid' dir='ltr'>
-                    <div className='ms-Grid-row'>
-                        <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg9'>
-                            <IconLabel
-                                label={environment.friendlyName}
-                                iconName='VisualStudioLogo' />
-                        </div>
-                        <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg3'>
-                            <Link
-                                style={{ backgroundColor: SharedColors.greenCyan10, color: NeutralColors.gray10 }}
-                                className='environment-card__tag'>
-                                    Online
-                            </Link>
-                        </div>
-                    </div>
-                    {/* <div className='ms-Grid-row environment-card__environment-description'>
-                        { envMock.description }
-                    </div> */}
-                    <div className='ms-Grid-row environment-card__date'>
-                        { envMock.date }
-                    </div>
-                    {this.renderUsers()}
-                </div>
-                <Separator />
-                {this.renderFooter()}
-            </RouterLink>
-        );
+    let details = [];
+    details.push({ key: 'Created', value: moment(props.environment.created).format('LLLL') });
+    details.push({ key: 'Updated', value: moment(props.environment.updated).format('LLLL') });
+    if (props.environment.seed.moniker) {
+        details.push({ key: 'Repository', value: props.environment.seed.moniker });
     }
+
+    return (
+        <Stack
+            style={{
+                boxShadow: getTheme().effects.elevation4,
+            }}
+            className='environment-card'
+        >
+            <Stack horizontal verticalAlign='center'>
+                <Icon
+                    iconName='ThisPC'
+                    style={{ color: getTheme().palette.themePrimary }}
+                    className='environment-card__environment-icon'
+                />
+                {environmentName}
+                <Status environment={props.environment} />
+            </Stack>
+
+            <ThinSeparator />
+            <Stack style={{ flexGrow: 1 }}>
+                <Details details={details} />
+            </Stack>
+            <ThinSeparator />
+            <Stack horizontal>
+                <Stack grow={1} />
+                <Actions
+                    environment={props.environment}
+                    deleteEnvironment={props.deleteEnvironment}
+                />
+            </Stack>
+        </Stack>
+    );
 }

@@ -4,12 +4,13 @@ import { Redirect, RouteComponentProps } from 'react-router';
 import './main.css';
 
 import { TitleBar } from '../titlebar/titlebar';
+import { Navigation } from '../navigation/navigation';
 import { Loader } from '../loader/loader';
 
 import { EnvironmentsPanel } from '../environmentsPanel/environments-panel';
 import { authService } from '../../services/authService';
-import { configAMD } from '../../amd/amdConfig';
-import EnvRegService from '../../services/envRegService';
+import { amdConfig } from '../../amd/amdConfig';
+import envRegService from '../../services/envRegService';
 
 declare var AMDLoader: any;
 
@@ -31,15 +32,16 @@ export class Main extends Component<MainProps, MainState> {
         };
     }
 
-    private initializeWokrbechFetching() {
-        configAMD();
-        AMDLoader.global.require(['vs/workbench/workbench.web.api'], (_: any) => {});
+    private initializeWorkbenchFetching() {
+        if (amdConfig()) {
+            AMDLoader.global.require(['vs/workbench/workbench.web.api'], (_: any) => {});
+        }
     }
 
     private async ensurePrivatePreviewUser() {
         let isAuthenticated = false;
         try {
-            await EnvRegService.fetchEnvironments();
+            await envRegService.fetchEnvironments();
             isAuthenticated = true;
         } catch (e) {
             if (e.code === 401) {
@@ -56,7 +58,7 @@ export class Main extends Component<MainProps, MainState> {
         const token = await authService.getCachedToken();
 
         if (token) {
-            this.ensurePrivatePreviewUser()
+            this.ensurePrivatePreviewUser();
         }
     }
 
@@ -71,13 +73,22 @@ export class Main extends Component<MainProps, MainState> {
             return <Loader message='Loading...' />;
         }
 
-        this.initializeWokrbechFetching();
+        this.initializeWorkbenchFetching();
 
         return (
-            <Fragment>
-                <TitleBar />
-                <EnvironmentsPanel />
-            </Fragment>
+            <div className='ms-Grid main'>
+                <div className='ms-Grid-row'>
+                    <TitleBar />
+                </div>
+                <div className='ms-Grid-row main__app-content'>
+                    <div className='ms-Grid-col ms-bgColor-gray20 main__app-navigation-container'>
+                        <Navigation />
+                    </div>
+                    <div className='ms-Grid-col main__app-content-container'>
+                        <EnvironmentsPanel />
+                    </div>
+                </div>
+            </div>
         );
     }
 }

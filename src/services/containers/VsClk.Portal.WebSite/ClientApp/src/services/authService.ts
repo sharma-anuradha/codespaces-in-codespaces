@@ -58,7 +58,7 @@ class AuthService {
         return token;
     }
 
-    public async getCachedToken(expiration: number = 1): Promise<IToken | null> {
+    public async getCachedToken(expiration: number = 1): Promise<IToken | undefined> {
         // get token in memory
         for (let [_, token] of Object.entries(this.tokens)) {
             const expiresIn = getTokenExpiration(token);
@@ -95,22 +95,22 @@ class AuthService {
             console.log(e);
         }
 
-        return null;
+        return undefined;
     }
 
-    private tokenAcquirePromise: Promise<IToken | null> | null = null;
+    private tokenAcquirePromise: Promise<IToken | undefined> | undefined;
 
-    public async acquireToken(): Promise<IToken | null> {
+    public async acquireToken(): Promise<IToken | undefined> {
         if (!this.tokenAcquirePromise) {
             this.tokenAcquirePromise = this.acquireTokenInternal();
         }
 
         const result = await this.tokenAcquirePromise;
-        this.tokenAcquirePromise = null;
+        this.tokenAcquirePromise = undefined;
         return result;
     }
 
-    private async acquireTokenInternal(): Promise<IToken | null> {
+    private async acquireTokenInternal(): Promise<IToken | undefined> {
         const tokenRequest = {
             scopes: SCOPES,
             authority: msalConfig.auth.authority,
@@ -124,7 +124,7 @@ class AuthService {
 
             return token;
         } catch (e) {
-            return null;
+            return undefined;
         }
     }
 
