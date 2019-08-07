@@ -22,7 +22,7 @@
   </PropertyGroup>
 
   <!-- Common SDK References -->
-  <ItemGroup Condition="'$(IsTraversal)'!='true'">
+  <ItemGroup Condition="'$(IsTraversal)'!='true' And '$(UseVsSaaSSdk)'!='false'">
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics.Extensions" Version="$(VsclkSdkVersion)" />

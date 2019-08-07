@@ -1,0 +1,10 @@
+<Project>
+
+  <!-- Overrides and switches for vsclk.build.props -->
+  <PropertyGroup>
+    <UseVsSaaSSdk>false</UseVsSaaSSdk>
+  </PropertyGroup>
+
+  <Import Project="$(ThisFileDirectory)../directory.build.props" />
+
+</Project>
