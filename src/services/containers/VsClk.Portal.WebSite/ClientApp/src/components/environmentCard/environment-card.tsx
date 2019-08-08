@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import moment from 'moment';
-import { withRouter, match } from 'react-router-dom';
-import { History, Location } from 'history';
 
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Text } from 'office-ui-fabric-react/lib/Text';
@@ -91,14 +89,11 @@ function Status({ environment }: { environment: ILocalCloudEnvironment }) {
 }
 
 type ActionProps = {
-    history: History;
-    location: Location<{}>;
-    match: match<{}>;
     environment: ILocalCloudEnvironment;
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
 };
 
-const Actions = withRouter(({ environment, deleteEnvironment, history }: ActionProps) => {
+const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
     const [deleteDialogHidden, setDeleteDialogHidden] = useState(true);
     return (
         <>
@@ -121,13 +116,7 @@ const Actions = withRouter(({ environment, deleteEnvironment, history }: ActionP
                             iconProps: { iconName: 'PlugConnected' },
                             name: 'Connect',
                             disabled: environmentIsALie(environment),
-                            onClick: () => {
-                                if (environmentIsALie(environment)) {
-                                    return;
-                                }
-
-                                history.push(`/environment/${environment.id}`);
-                            },
+                            href: `environment/${environment.id!}`,
                         },
                         {
                             key: 'delete',
@@ -152,7 +141,7 @@ const Actions = withRouter(({ environment, deleteEnvironment, history }: ActionP
             />
         </>
     );
-});
+};
 
 type DeleteDialogProps = {
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
@@ -205,7 +194,6 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
 
     let details = [];
     details.push({ key: 'Created', value: moment(props.environment.created).format('LLLL') });
-    details.push({ key: 'Updated', value: moment(props.environment.updated).format('LLLL') });
     if (props.environment.seed.moniker) {
         details.push({ key: 'Repository', value: props.environment.seed.moniker });
     }
