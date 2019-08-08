@@ -116,16 +116,32 @@ export class CreateEnvironmentPanel extends Component<
             return;
         }
 
-        const githubRepositoryUrl =
-            this.state.selectedEnvironmentType === EnvironmentType.GitHub
-                ? this.state.githubRepositoryUrl
-                : undefined;
+        const githubRepositoryUrl = this.getNormalizedGithubRepositoryUrl();
 
         // The environmentName will be always set here
         this.props.onCreateEnvironment(this.state.environmentName!, githubRepositoryUrl);
 
         this.clearForm();
     };
+
+    private getNormalizedGithubRepositoryUrl(): string | undefined {
+        if (this.state.selectedEnvironmentType !== EnvironmentType.GitHub) {
+            return undefined;
+        }
+
+        if (!this.state.githubRepositoryUrl) {
+            return undefined;
+        }
+
+        const githubUrl = 'https://github.com/';
+        let repo = this.state.githubRepositoryUrl;
+        if (repo.indexOf(githubUrl) === -1) {
+            if (repo.startsWith('/')) repo = repo.substr(1, repo.length);
+            repo = githubUrl.concat(repo);
+        }
+
+        return repo;
+    }
 
     private clearForm = () => {
         this.setState({

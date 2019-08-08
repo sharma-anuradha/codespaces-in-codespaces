@@ -12,6 +12,7 @@ import {
     ILocalCloudEnvironment,
     environmentIsALie,
     StateInfo,
+    isNotAvailable,
 } from '../../interfaces/cloudenvironment';
 
 import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
@@ -108,14 +109,14 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
                             key: 'open-vscode',
                             iconProps: { iconName: 'OpenInNewWindow' },
                             name: 'Open in VS Code',
-                            disabled: environmentIsALie(environment),
+                            disabled: environmentIsALie(environment) || isNotAvailable(environment),
                             onClick: () => {},
                         },
                         {
                             key: 'open-web',
                             iconProps: { iconName: 'PlugConnected' },
                             name: 'Connect',
-                            disabled: environmentIsALie(environment),
+                            disabled: environmentIsALie(environment) || isNotAvailable(environment),
                             href: `environment/${environment.id!}`,
                         },
                         {
