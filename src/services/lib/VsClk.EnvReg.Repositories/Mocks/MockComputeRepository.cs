@@ -3,6 +3,7 @@ using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using VsClk.EnvReg.Models.DataStore.Compute;
@@ -134,17 +135,54 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
             var createCommandLine = new StringBuilder();
             createCommandLine.Append("create ");
             createCommandLine.Append($"{GetCreateOrRunArguments(image, containerName, computeServiceRequest)} ");
-            Process.Start(DockerCLI, createCommandLine.ToString()).WaitForExit();
+            var createDockerProcess = Process.Start(DockerCLI, createCommandLine.ToString());
+            createDockerProcess.WaitForExit();
+            if (createDockerProcess.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"MockCompute: docker create failed with error code {createDockerProcess.ExitCode}");
+            }
+
+            // Sanity test
+            if (!Directory.Exists(cliPublishedpath))
+            {
+                throw new DirectoryNotFoundException($"{cliPublishedpath} not found. Make sure you publish the cli and point appsettings.Development.json at it.");
+            }
+
+            string cloudEnvironmentsCliExecutable = Path.Combine(cliPublishedpath, "vscloudenv");
+            if (!File.Exists(cloudEnvironmentsCliExecutable))
+            {
+                throw new FileNotFoundException($"{cloudEnvironmentsCliExecutable} not found. Publish CloudEnvironments CLI and check the output.");
+            }
+            // End sanity test
 
             var dockerCopyCommandLine = new StringBuilder();
             dockerCopyCommandLine.Append("cp ");
             dockerCopyCommandLine.Append($"{cliPublishedpath}/. "); // Added /. to copy the contents of the directory
             dockerCopyCommandLine.Append($"{containerName}:/.cloudenv/bin ");
-            Process.Start(DockerCLI, dockerCopyCommandLine.ToString()).WaitForExit();
+            var dockerCopyProcess = Process.Start(DockerCLI, dockerCopyCommandLine.ToString());
+            dockerCopyProcess.WaitForExit();
+            if (dockerCopyProcess.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"MockCompute: docker copy command failed with error code {dockerCopyProcess.ExitCode}");
+            }
 
             var dockerStartCommandLine = new StringBuilder();
             dockerStartCommandLine.Append($"start {containerName}");
-            Process.Start(DockerCLI, dockerStartCommandLine.ToString());
+            var dockerStartProcess = new Process
+            {
+                EnableRaisingEvents = true
+            };
+
+            dockerStartProcess.StartInfo = new ProcessStartInfo(DockerCLI, dockerStartCommandLine.ToString());
+            dockerStartProcess.Exited += (s, e) =>
+            {
+                if (dockerStartProcess.ExitCode != 0)
+                {
+                    throw new InvalidOperationException($"MockCompute: docker exited with error code {dockerStartProcess.ExitCode}");
+                }
+            };
+
+            dockerStartProcess.Start();
 
             return containerName;
         }
