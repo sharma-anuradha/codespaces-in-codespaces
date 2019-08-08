@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
     {
         private const string DefaultLocation = "USW2";
         private const string DefaultSkuName = "Large";
-        private const ResourceType DefaultType = ResourceType.Compute;
+        private const ResourceType DefaultType = ResourceType.ComputeVM;
 
         [Fact]
         public void Ctor_throws_if_null()

@@ -4,10 +4,20 @@
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
+ <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
     <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Update="test-settings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

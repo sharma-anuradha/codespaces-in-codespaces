@@ -2,11 +2,15 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
     public class DeploymentStatusInput
     {
-        public DeploymentStatusInput(string azureSubscription, string azureResourceGroupName, string azureDeploymentName, string resourceId)
+        public DeploymentStatusInput(Guid azureSubscription, string azureResourceGroupName, string azureDeploymentName, ResourceId resourceId)
         {
             AzureSubscription = azureSubscription;
             AzureResourceGroupName = azureResourceGroupName;
@@ -14,12 +18,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             ResourceId = resourceId;
         }
 
-        public string AzureSubscription { get; }
+        public Guid AzureSubscription { get; }
 
         public string AzureResourceGroupName { get; }
 
         public string AzureDeploymentName { get; }
 
-        public string ResourceId { get; }
+        public ResourceId ResourceId { get; }
     }
 }

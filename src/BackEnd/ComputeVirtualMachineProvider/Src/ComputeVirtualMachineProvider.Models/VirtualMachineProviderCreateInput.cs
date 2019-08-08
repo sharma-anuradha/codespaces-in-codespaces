@@ -2,6 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     public class VirtualMachineProviderCreateInput
@@ -9,12 +13,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         ///
         /// </summary>
-        public string AzureSubscription { get; set; }
+        public Guid AzureSubscription { get; set; }
 
         /// <summary>
         ///
         /// </summary>
-        public string AzureLocation { get; set; } // 'westus2'
+        public AzureLocation AzureVmLocation { get; set; } // 'westus2'
 
         /// <summary>
         ///

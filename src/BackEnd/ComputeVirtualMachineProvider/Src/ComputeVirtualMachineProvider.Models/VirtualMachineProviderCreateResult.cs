@@ -15,6 +15,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         ///
         /// Example: '/subscriptions/2fa47206-c4b5-40ff-a5e6-9160f9ee000c/storage/<uid>'
         /// </summary>
-        public string ResourceId { get; set; }
+        public ResourceId ResourceId { get; set; }
     }
 }

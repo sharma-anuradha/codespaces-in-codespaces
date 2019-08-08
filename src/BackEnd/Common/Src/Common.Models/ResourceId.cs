@@ -6,7 +6,7 @@ using System;
 using System.Text.RegularExpressions;
 using Microsoft.VsSaaS.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
     /// <summary>
     /// A Cloud Environment back-end resource id.
@@ -29,12 +29,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="resourceType">The cloud environment resource type.</param>
         /// <param name="instanceId">The resource name.</param>
         /// <param name="subscriptionId">The azure subscription id.</param>
+        /// <param name="resourceGroup">The azure resource group.</param>
         /// <param name="location">The azure location.</param>
         public ResourceId(
             ResourceType resourceType,
             Guid instanceId,
             Guid subscriptionId,
+            string resourceGroup,
             AzureLocation location)
+            : this()
         {
             // Construct an empty id.
             if (resourceType == default &&
@@ -43,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 location == default)
             {
                 SubscriptionId = default;
+                ResourceGroup = default;
                 ResourceType = default;
                 InstanceId = default;
                 Location = default;
@@ -52,12 +56,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             {
                 Requires.NotEmpty(subscriptionId, nameof(subscriptionId));
                 Requires.NotEmpty(instanceId, nameof(instanceId));
+                Requires.NotNullOrEmpty(resourceGroup, nameof(resourceGroup));
 
                 ResourceType = RequiresEnumIsDefined(resourceType, nameof(resourceType));
                 InstanceId = instanceId;
                 SubscriptionId = subscriptionId;
+                ResourceGroup = resourceGroup;
                 Location = RequiresEnumIsDefined(location, nameof(location));
-                idToken = Parser.FormatId(ResourceType, InstanceId, SubscriptionId, Location);
+                idToken = Parser.FormatId(ResourceType, InstanceId, SubscriptionId, ResourceGroup, Location);
             }
         }
 
@@ -82,6 +88,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public AzureLocation Location { get; }
 
         /// <summary>
+        /// Gets the Azure resource group name.
+        /// </summary>
+        public string ResourceGroup { get; }
+
+        /// <summary>
         /// Returns the resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
         /// </summary>
         /// <param name="id">The resource id.</param>
@@ -93,10 +104,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <summary>
         /// Parse a Cloud Environment resource token id into a <see cref="ResourceId"/>.
-        /// The expected token format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
+        /// The expected token format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroup/{resourcegroup}/locations/{location}"
         /// where resourceType is <see cref="ResourceType"/>
         /// where instanceId is <see cref="Guid"/>
         /// where subscriptionId is <see cref="Guid"/>
+        /// where resourceGroups is <see cref="string"/>
         /// where location is <see cref="AzureLocation"/>.
         /// </summary>
         /// <param name="idToken">The resource id token string.</param>
@@ -171,6 +183,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             private const string InstanceIdGroupName = "instanceid";
             private const string Subscriptions = "subscriptions";
             private const string SubscriptionIdGroupName = "subscriptionid";
+            private const string ResourceGroups = "resourcegroups";
+            private const string ResourceGroupGroupName = "resourcegroup";
             private const string Locations = "locations";
             private const string LocationGroupName = "location";
             private const string AlphaNumericAndHyphen = "0-9a-zA-Z-";
@@ -179,17 +193,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             private static readonly string ResourceTypeGroup = $"(?<{ResourceTypeGroupName}>[{AlphaNumericAndHyphen}]+)";
             private static readonly string InstanceIdGroup = $"(?<{InstanceIdGroupName}>[{AlphaNumericAndHyphen}]+)";
             private static readonly string SubscriptionIdGroup = $"(?<{SubscriptionIdGroupName}>[{AlphaNumericAndHyphen}]+)";
+            private static readonly string ResourceGroupNameGroup = $"(?<{ResourceGroupGroupName}>[{AlphaNumericAndHyphen}]+)";
             private static readonly string LocationGroup = $"(?<{LocationGroupName}>[{AlphaNumericAndHyphen}]+)";
-            private static readonly string ResourceIdExpression = $"^{Prefix}/{ResourceTypes}/{ResourceTypeGroup}/{Instances}/{InstanceIdGroup}/{Subscriptions}/{SubscriptionIdGroup}/{Locations}/{LocationGroup}$";
+            private static readonly string ResourceIdExpression = $"^{Prefix}/{ResourceTypes}/{ResourceTypeGroup}/{Instances}/{InstanceIdGroup}/{Subscriptions}/{SubscriptionIdGroup}/{ResourceGroups}/{ResourceGroupNameGroup}/{Locations}/{LocationGroup}$";
             private static readonly Regex ResourceIdRegEx = new Regex(ResourceIdExpression, Options);
 
-            public static string FormatId(ResourceType resourceType, Guid instanceId, Guid subscriptionId, AzureLocation location)
+            public static string FormatId(ResourceType resourceType, Guid instanceId, Guid subscriptionId, string resourceGroup, AzureLocation location)
             {
                 return string.Format(
                     IdFormat,
                     resourceType.ToString().ToLowerInvariant(),
                     instanceId,
                     subscriptionId,
+                    resourceGroup,
                     location.ToString().ToLowerInvariant());
             }
 
@@ -243,8 +259,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     return false;
                 }
 
+                // ResourceGroup
+                var resourceGroup = match.Groups[ResourceGroupGroupName].Value;
+                if (!string.IsNullOrEmpty(resourceGroup))
+                {
+                    reason = $"Invalid {nameof(String)}: {resourceGroup}";
+                    return false;
+                }
+
                 // Construct and return a valid ResourceId
-                resourceId = new ResourceId(resourceType, instanceId, subscriptionId, location);
+                resourceId = new ResourceId(resourceType, instanceId, subscriptionId, resourceGroup, location);
                 return true;
             }
         }

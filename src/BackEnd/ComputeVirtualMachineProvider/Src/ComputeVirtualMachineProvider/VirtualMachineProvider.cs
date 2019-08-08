@@ -37,8 +37,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 // create new resource
                 var vmInstance = new VirtualMachineInstance()
                 {
-                    AzureResourceName = input.AzureResourceGroup,
-                    AzureLocation = input.AzureLocation,
+                    AzureInstanceId = Guid.NewGuid(),
+                    AzureLocation = input.AzureVmLocation,
                     AzureResourceGroupName = input.AzureResourceGroup,
                     AzureSubscription = input.AzureSubscription,
                     AzureVmImage = input.AzureVirtualMachineImage,

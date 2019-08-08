@@ -4,6 +4,9 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Moq;
@@ -13,10 +16,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 {
     public class ComputeVirtualMachineProviderTests
     {
-        private const string AzureSubscription = "TestSub1";
+        private static Guid AzureSubscription = Guid.NewGuid();
         private const string AzureResourceGroupName = "TestRG1";
         private const string AzureDeploymentName = "TestDeployment1";
-        private const string ResourceId = "ResourceId1";
+        private static ResourceId ResourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), AzureSubscription, AzureResourceGroupName, AzureLocation.EastUs);
 
         [Fact]
         public void Ctor_with_bad_options()

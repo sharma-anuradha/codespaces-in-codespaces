@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
@@ -11,5 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         Task<DeploymentStatusInput> BeginCreateAsync(VirtualMachineInstance vmInstance);
 
         Task<DeploymentState> CheckDeploymentStatusAsync(DeploymentStatusInput deploymentStatusInput);
+
+        Task<DeploymentState> DeleteVMAsync(ResourceId resourceId);
     }
 }

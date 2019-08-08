@@ -4,19 +4,20 @@
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
+
     /// <summary>
-    /// The Cloud Environment resource type.
+    /// A Cloud Environment back-end resource type.
     /// </summary>
     public enum ResourceType
     {
         /// <summary>
-        /// Compute
+        /// The Cloud Environment back-end compute vm resource type.
         /// </summary>
-        Compute,
+        ComputeVM = 1,
 
         /// <summary>
-        /// Storage
+        /// The Cloud Environment back-end storage account resource type.
         /// </summary>
-        Storage,
+        StorageFileShare = 2,
     }
 }

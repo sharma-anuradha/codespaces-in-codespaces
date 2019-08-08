@@ -4,6 +4,7 @@
 
 using System;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
@@ -28,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal(default, empty.Location);
 
             // Empty from constructor
-            empty = new ResourceId(default, default, default, default);
+            empty = new ResourceId(default, default, default, default, default);
             Assert.Equal(Guid.Empty, empty.InstanceId);
             Assert.Equal(Guid.Empty, empty.SubscriptionId);
             Assert.Equal(default, empty.ResourceType);
@@ -53,9 +54,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         public void Ctor_OK()
         {
             var subscriptionId = Guid.NewGuid();
+            var resourceGroup = Guid.NewGuid().ToString();
             var instanceId = Guid.NewGuid();
             var location = AzureLocation.AustraliaCentral;
-            var id = new ResourceId(ResourceType.ComputeVM, instanceId, subscriptionId, location);
+            var id = new ResourceId(ResourceType.ComputeVM, instanceId, subscriptionId, resourceGroup, location);
             Assert.Equal(ResourceType.ComputeVM, id.ResourceType);
             Assert.Equal(instanceId, id.InstanceId);
             Assert.Equal(subscriptionId, id.SubscriptionId);
@@ -65,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         [Fact]
         public void Ctor_Empty()
         {
-            var empty = new ResourceId(default, default, default, default);
+            var empty = new ResourceId(default, default, default, default, default);
             Assert.Equal(default, empty.ResourceType);
             Assert.Equal(default, empty.InstanceId);
             Assert.Equal(default, empty.SubscriptionId);
@@ -78,12 +80,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             var resourceType = ResourceType.ComputeVM;
             var instanceId = Guid.NewGuid();
             var subscriptionId = Guid.NewGuid();
+            var resourceGroup = Guid.NewGuid().ToString();
             var location = AzureLocation.AustraliaCentral;
 
-            Assert.Throws<ArgumentException>("resourceType", () => new ResourceId(default, instanceId, subscriptionId, location));
-            Assert.Throws<ArgumentException>("instanceId", () => new ResourceId(resourceType, default, subscriptionId, location));
-            Assert.Throws<ArgumentException>("subscriptionId", () => new ResourceId(resourceType, instanceId, default, location));
-            Assert.Throws<ArgumentException>("location", () => new ResourceId(resourceType, instanceId, subscriptionId, default));
+            Assert.Throws<ArgumentException>("resourceType", () => new ResourceId(default, instanceId, subscriptionId, resourceGroup, location));
+            Assert.Throws<ArgumentException>("instanceId", () => new ResourceId(resourceType, default, subscriptionId, resourceGroup, location));
+            Assert.Throws<ArgumentException>("subscriptionId", () => new ResourceId(resourceType, instanceId, default, resourceGroup, location));
+            Assert.Throws<ArgumentException>("location", () => new ResourceId(resourceType, instanceId, subscriptionId, default, location));
+            Assert.Throws<ArgumentException>("location", () => new ResourceId(resourceType, instanceId, subscriptionId, resourceGroup, default));
         }
 
         [Fact]
@@ -107,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         public void Equality_Equals()
         {
             var id1 = NewTestResourceId();
-            var id2 = new ResourceId(id1.ResourceType, id1.InstanceId, id1.SubscriptionId, id1.Location);
+            var id2 = new ResourceId(id1.ResourceType, id1.InstanceId, id1.SubscriptionId, id1.ResourceGroup, id1.Location);
             Assert.True(Equals(id1, id2));
             Assert.True(Equals(id2, id1));
             Assert.Equal(id1, id2);
@@ -187,7 +191,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         private const string InstanceId = "ebeea9c1-6898-4abb-b76f-ad087add2bda";
         private const string SubscriptionId = "34da0f9b-78b3-4158-b1e9-0823f728fcf3";
         public static TheoryData ParseData =>
-            new TheoryData<int, string,bool>
+            new TheoryData<int, string, bool>
             {
                 // The first columun is a test id number for identifying test failures
                 { 0, null, true },
@@ -251,7 +255,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 
         private static ResourceId NewTestResourceId()
         {
-            return new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), Guid.NewGuid(), AzureLocation.AustraliaCentral);
+            return new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid().ToString(), AzureLocation.AustraliaCentral);
         }
     }
 }

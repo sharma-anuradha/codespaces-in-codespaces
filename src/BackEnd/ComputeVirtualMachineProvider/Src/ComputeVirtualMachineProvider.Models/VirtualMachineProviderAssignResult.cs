@@ -12,10 +12,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public class VirtualMachineProviderAssignResult : BaseContinuationResult
     {
         /// <summary>
-        ///
-        /// Example: '/subscriptions/2fa47206-c4b5-40ff-a5e6-9160f9ee000c/storage/<uid>'
-        /// </summary>V
-        public string ResourceId { get; set; }
+        /// Gets or sets example: '/subscriptions/2fa47206-c4b5-40ff-a5e6-9160f9ee000c/storage/<uid>'
+        /// </summary>
+        public ResourceId ResourceId { get; set; }
 
         /// <summary>
         ///
