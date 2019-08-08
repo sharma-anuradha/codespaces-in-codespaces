@@ -23,7 +23,10 @@
     "adminPassword": {
       "type": "string"
     },
-    "customData": {
+    // "customData": {
+    //   "type": "secureString"
+    // },
+    "vmSetupScript": {
       "type": "secureString"
     }
   },
@@ -95,21 +98,19 @@
       }
     },
     {
-      "name": "[parameters('virtualMachineName')]",
-      "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2018-10-01",
-      "location": "[parameters('location')]",
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
       ],
+      "location": "[parameters('location')]",
+      "name": "[parameters('virtualMachineName')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('virtualMachineSize')]"
         },
         "storageProfile": {
           "osDisk": {
-            "createOption": "fromImage",
+            "createOption": "FromImage",
             "managedDisk": {
               "storageAccountType": "Premium_LRS"
             }
@@ -131,10 +132,43 @@
         "osProfile": {
           "computerName": "[parameters('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[parameters('customData')]"
+          "adminPassword": "[parameters('adminPassword')]"
+          //"customData": "[parameters('customData')]"
         }
-      }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "config-app",
+          "properties": {
+            "autoUpgradeMinorVersion": true,
+            "protectedSettings": {
+              //"commandToExecute": "<command-to-execute>",
+              "script": "[parameters('vmSetupScript')]"
+              //"storageAccountName": "<storage-account-name>",
+              //"storageAccountKey": "<storage-account-key>",
+              //"fileUris": [ "https://.." ]
+            },
+            "publisher": "Microsoft.Azure.Extensions",
+            "settings": {
+              "skipDos2Unix": false,
+              "timestamp": 123456789
+            },
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0"
+          },
+          "tags": {
+            "displayName": "config-app"
+          },
+          "type": "Extensions"
+        }
+      ],
+      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "type": "Microsoft.Compute/virtualMachines"
     }
   ],
   "outputs": {

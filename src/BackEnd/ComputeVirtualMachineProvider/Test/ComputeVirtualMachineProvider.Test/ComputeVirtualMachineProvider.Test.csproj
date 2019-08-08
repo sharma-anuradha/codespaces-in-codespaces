@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
     <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
+    <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="test-settings.json">

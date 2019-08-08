@@ -10,17 +10,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
     public class DeploymentStatusInput
     {
-        public DeploymentStatusInput(Guid azureSubscription, string azureResourceGroupName, string azureDeploymentName, ResourceId resourceId)
+        public DeploymentStatusInput(string azureDeploymentName, ResourceId resourceId)
         {
-            AzureSubscription = azureSubscription;
-            AzureResourceGroupName = azureResourceGroupName;
             AzureDeploymentName = azureDeploymentName;
             ResourceId = resourceId;
         }
 
-        public Guid AzureSubscription { get; }
+        public Guid AzureSubscription
+        {
+            get
+            {
+                return ResourceId.SubscriptionId;
+            }
+        }
 
-        public string AzureResourceGroupName { get; }
+        public string AzureResourceGroupName
+        {
+            get
+            {
+                return ResourceId.ResourceGroup;
+            }
+        }
 
         public string AzureDeploymentName { get; }
 

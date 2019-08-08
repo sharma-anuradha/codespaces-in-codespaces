@@ -34,17 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             if (string.IsNullOrEmpty(continuationToken))
             {
-                // create new resource
-                var vmInstance = new VirtualMachineInstance()
-                {
-                    AzureInstanceId = Guid.NewGuid(),
-                    AzureLocation = input.AzureVmLocation,
-                    AzureResourceGroupName = input.AzureResourceGroup,
-                    AzureSubscription = input.AzureSubscription,
-                    AzureVmImage = input.AzureVirtualMachineImage,
-                };
-
-                deploymentStatusInput = await deploymentManager.BeginCreateAsync(vmInstance).ContinueOnAnyContext();
+                deploymentStatusInput = await deploymentManager.BeginCreateAsync(input).ContinueOnAnyContext();
                 resultContinuationToken = deploymentStatusInput.ToJson();
                 resultState = DeploymentState.InProgress;
             }
@@ -76,9 +66,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public Task<VirtualMachineProviderAssignResult> AssignAsync(VirtualMachineProviderAssignInput input, string continuationToken = null)
+        public async Task<VirtualMachineProviderAllocateResult> AllocateAsync(VirtualMachineProviderAllocateInput input, string continuationToken = null)
         {
-            throw new System.NotImplementedException();
+            Requires.NotNull(input, nameof(input));
+            string resultContinuationToken = default;
+            DeploymentState resultState;
+            DeploymentStatusInput deploymentStatusInput;
+
+            deploymentStatusInput = await deploymentManager.BeginAllocateAsync(input).ContinueOnAnyContext();
+            resultContinuationToken = default;
+            resultState = DeploymentState.Succeeded;
+
+            var result = new VirtualMachineProviderAllocateResult()
+            {
+                ContinuationToken = resultContinuationToken,
+                ResourceId = input.ResourceId,
+                RetryAfter = TimeSpan.FromMinutes(1),
+                Status = resultState.ToString(),
+            };
+            return result;
         }
     }
 }

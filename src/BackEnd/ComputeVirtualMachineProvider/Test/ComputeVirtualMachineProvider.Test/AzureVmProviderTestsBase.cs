@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -12,6 +13,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public string ResourceGroupName { get; }
         public string AuthFilePath { get; }
 
+        private AzureDeploymentHelper azureDeploymentHelper;
+        private readonly ResourceId resourceId;
+
         public AzureVmProviderTestsBase()
         {
             var config = new ConfigurationBuilder()
@@ -20,12 +24,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             SubscriptionId = Guid.Parse(config["AZURE_SUBSCRIPTION"]);
             ResourceGroupName = $"test-vm-{Guid.NewGuid()}";
             AuthFilePath = config["AZURE_AUTH_LOCATION"];
+            azureDeploymentHelper = new AzureDeploymentHelper(new AzureClientFactoryMock(AuthFilePath));
+            resourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), SubscriptionId, ResourceGroupName, AzureLocation.EastUs);
+            azureDeploymentHelper.CreateResourceGroupAsync(SubscriptionId, ResourceGroupName, AzureLocation.EastUs).Wait();
         }
 
         public void Dispose()
         {
-            var azureDeploymentManager = new AzureDeploymentManager(new AzureClientFactoryMock(AuthFilePath));
-            _ = azureDeploymentManager.DeleteVMAsync(new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), SubscriptionId, ResourceGroupName, AzureLocation.EastUs)).Result;
+            (azureDeploymentHelper.DeleteResourceGroupAsync(SubscriptionId, ResourceGroupName)).Wait();
         }
     }
 }

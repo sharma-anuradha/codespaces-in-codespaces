@@ -9,10 +9,11 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
+using Microsoft.Azure.Management.Compute.Fluent;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
@@ -26,36 +27,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private const string Key = "value";
 
         /// <inheritdoc/>
-        public async Task<DeploymentStatusInput> BeginCreateAsync(VirtualMachineInstance vmInstance)
+        public async Task<DeploymentStatusInput> BeginCreateAsync(VirtualMachineProviderCreateInput input)
         {
-            IAzure azure = clientFactory.GetAzureClient(vmInstance.AzureSubscription);
+            // create new resource id
+            ResourceId resourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), input.AzureSubscription, input.AzureResourceGroup, input.AzureVmLocation);
+            IAzure azure = clientFactory.GetAzureClient(input.AzureSubscription);
             var parameters = new Dictionary<string, Dictionary<string, object>>()
             {
                 { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
                 { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } }, // TODO:: Make it more secure
-                { "customData", new Dictionary<string, object>() { { Key, CloudInitScript } } }, // TODO:: pipe from config, cloudinit script to deploy docker
-                { "location", new Dictionary<string, object>() { { Key, vmInstance.AzureLocation.ToString() } } },
-                { "virtualMachineName", new Dictionary<string, object>() { { Key, vmInstance.AzureInstanceId.ToString() } } },
-                { "virtualMachineRG", new Dictionary<string, object>() { { Key, vmInstance.AzureResourceGroupName } } },
-                { "virtualMachineSize", new Dictionary<string, object>() { { Key, vmInstance.AzureSku } } },
-                { "networkInterfaceName", new Dictionary<string, object>() { { Key, $"{vmInstance.AzureInstanceId}-nic" } } },
+                { "vmSetupScript", new Dictionary<string, object>() { { Key, VMInitScript } } }, // TODO:: pipe from config, cloudinit script to deploy docker
+                { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
+                { "virtualMachineName", new Dictionary<string, object>() { { Key, resourceId.InstanceId.ToString() } } },
+                { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
+                { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
+                { "networkInterfaceName", new Dictionary<string, object>() { { Key, $"{resourceId.InstanceId}-nic" } } },
             };
 
-            var deploymentName = $"Create-{vmInstance.AzureInstanceId}";
-
-            var resourceGroup = azure.ResourceGroups.Define(vmInstance.AzureResourceGroupName)
-                .WithRegion(vmInstance.AzureLocation.ToString())
-                .Create();
+            var deploymentName = $"Create-{resourceId.InstanceId}";
 
             IDeployment result = await azure.Deployments.Define(deploymentName)
-                .WithExistingResourceGroup(vmInstance.AzureResourceGroupName)
+                .WithExistingResourceGroup(input.AzureResourceGroup)
                 .WithTemplate(VmTemplateJson)
                 .WithParameters(JsonConvert.SerializeObject(parameters))
                 .WithMode(Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
                 .BeginCreateAsync()
                 .ContinueOnAnyContext();
 
-            return new DeploymentStatusInput(vmInstance.AzureSubscription, vmInstance.AzureResourceGroupName, result.Name, vmInstance.GetResourceId());
+            return new DeploymentStatusInput(result.Name, resourceId);
+        }
+
+        /// <inheritdoc/>
+        public async Task<DeploymentStatusInput> BeginAllocateAsync(VirtualMachineProviderAllocateInput input)
+        {
+            IAzure azure = clientFactory.GetAzureClient(input.ResourceId.SubscriptionId);
+            IVirtualMachine linuxVM = await azure.VirtualMachines
+                            .GetByResourceGroupAsync(input.ResourceId.ResourceGroup, input.ResourceId.InstanceId.ToString())
+                            .ContinueOnAnyContext();
+
+            string name = $"Assign-{input.ResourceId.InstanceId}";
+            IVirtualMachine result = await linuxVM.Update()
+                          .UpdateExtension("config-app")
+                          .WithProtectedSetting("script", VMAssignScript)
+                          .WithMinorVersionAutoUpgrade()
+                          .Parent()
+                          .ApplyAsync()
+                          .ContinueOnAnyContext();
+
+            return new DeploymentStatusInput(name, input.ResourceId);
         }
 
         /// <inheritdoc/>
@@ -63,23 +82,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             IAzure azure = clientFactory.GetAzureClient(deploymentStatusInput.ResourceId.SubscriptionId);
             IDeployment deployment = await azure.Deployments.GetByResourceGroupAsync(deploymentStatusInput.AzureResourceGroupName, deploymentStatusInput.AzureDeploymentName).ContinueOnAnyContext();
-            DeploymentState deploymentState = deployment.ProvisioningState.ToEnum<DeploymentState>();
 
-            if (deploymentState == DeploymentState.Succeeded
-            || deploymentState == DeploymentState.Failed
-            || deploymentState == DeploymentState.Cancelled)
+            if (deployment.ProvisioningState.Equals(DeploymentState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
+            || deployment.ProvisioningState.Equals(DeploymentState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
+            || deployment.ProvisioningState.Equals(DeploymentState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
             {
-                return deploymentState;
+                return deployment.ProvisioningState.ToEnum<DeploymentState>();
             }
             return DeploymentState.InProgress;
-        }
-
-        /// <inheritdoc/> 
-        public async Task<DeploymentState> DeleteVMAsync(ResourceId resourceId)
-        {
-            IAzure azure = clientFactory.GetAzureClient(resourceId.SubscriptionId);
-            await azure.ResourceGroups.BeginDeleteByNameAsync(resourceId.ResourceGroup).ContinueOnAnyContext();
-            return DeploymentState.Succeeded;
         }
 
         private static string GetVmTemplate()
@@ -90,6 +100,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private static string GetCloundInitScript()
         {
             string cloudInitScriptString = GetEmbeddedResource("cloudinit.yml");
+            return cloudInitScriptString.ToBase64Encoded();
+        }
+
+        private static string GetCustomScript(string scriptName)
+        {
+            string cloudInitScriptString = GetEmbeddedResource(scriptName);
             return cloudInitScriptString.ToBase64Encoded();
         }
 
@@ -105,13 +121,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 return result;
             }
         }
-
         private static readonly string vmTemplateJson = GetVmTemplate();
         private static readonly string cloudInitScript = GetCloundInitScript();
         private readonly IAzureClientFactory clientFactory;
-
+        private static readonly string vmInitScript = GetCustomScript("vm_init.sh");
+        private static readonly string vmAssignScript = GetCustomScript("vm_assign.sh");
         public static string VmTemplateJson => vmTemplateJson;
-
         public static string CloudInitScript => cloudInitScript;
+        public static string VMInitScript => vmInitScript;
+        public static string VMAssignScript => vmAssignScript;
     }
 }

@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Test
@@ -16,7 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             this.testContext = data;
         }
 
-        // [Fact(Skip = "Integration Test")]
         [Fact]
         public async Task VirtualMachine_Create_Initiate_Ok()
         {
@@ -34,19 +37,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 AzureResourceGroup = rgName,
                 AzureSubscription = subscriptionId,
                 AzureVirtualMachineImage = "Canonical.UbuntuServer.18.04-LTS.latest",
-                SkuName = "Standard_F4s_v2",
+                AzureSkuName = "Standard_F4s_v2",
             };
 
+            var timerCreate = Stopwatch.StartNew();
             VirtualMachineProviderCreateResult createResult = await computeProvider.CreateAsync(input, null);
+            timerCreate.Stop();
+            System.Console.WriteLine($"Time taken to begin create VM {timerCreate.Elapsed.TotalSeconds}");
+            var timerWait = Stopwatch.StartNew();
             Assert.NotNull(createResult);
             Assert.Equal("InProgress", createResult.Status);
-            DeploymentStatusInput createDeploymentStatusToken = createResult.ContinuationToken.ToDeploymentStatusInput();
-            Assert.NotNull(createDeploymentStatusToken);
-            Assert.NotNull(createDeploymentStatusToken.AzureDeploymentName);
-            Assert.Equal(rgName, createDeploymentStatusToken.AzureResourceGroupName);
-            Assert.NotEqual(Guid.Empty, createDeploymentStatusToken.ResourceId.InstanceId);
-            Assert.Equal(subscriptionId, createDeploymentStatusToken.ResourceId.SubscriptionId);
-            Assert.Equal(eastUs, createDeploymentStatusToken.ResourceId.Location);
+            DeploymentStatusInput createDeploymentStatusInput = createResult.ContinuationToken.ToDeploymentStatusInput();
+            Assert.NotNull(createDeploymentStatusInput);
+            Assert.NotNull(createDeploymentStatusInput.AzureDeploymentName);
+            Assert.Equal(rgName, createDeploymentStatusInput.AzureResourceGroupName);
+            Assert.NotEqual(Guid.Empty, createDeploymentStatusInput.ResourceId.InstanceId);
+            Assert.Equal(subscriptionId, createDeploymentStatusInput.ResourceId.SubscriptionId);
+            Assert.Equal(eastUs, createDeploymentStatusInput.ResourceId.Location);
 
 
             VirtualMachineProviderCreateResult statusCheckResult = default;
@@ -62,7 +69,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
             } while (statusCheckResult.Status.Equals(DeploymentState.InProgress.ToString()));
+            timerWait.Stop();
+            System.Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
 
+            var timerAllocate = Stopwatch.StartNew();
+            var fileShareInfo = new ShareConnectionInfo("storageAccountName1",
+                                                        "storageAccountKey1",
+                                                        "storageShare1",
+                                                        "storageFileName1");
+            var input1 = new VirtualMachineProviderAllocateInput(createDeploymentStatusInput.ResourceId,
+                                                                 fileShareInfo,
+                                                                 new Dictionary<string, string>() { });
+            
+            VirtualMachineProviderAllocateResult assignResult = await computeProvider.AllocateAsync(input1);
+            timerAllocate.Stop();
+            System.Console.WriteLine($"Time taken to allocate VM {timerAllocate.Elapsed.TotalSeconds}");
+            Assert.NotNull(assignResult);
         }
     }
 }

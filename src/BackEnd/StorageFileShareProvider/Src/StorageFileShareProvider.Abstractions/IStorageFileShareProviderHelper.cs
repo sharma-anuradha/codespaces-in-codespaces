@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions
 {

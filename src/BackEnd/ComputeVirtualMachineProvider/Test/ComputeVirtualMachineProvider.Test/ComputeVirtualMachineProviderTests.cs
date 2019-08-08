@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         private static Guid AzureSubscription = Guid.NewGuid();
         private const string AzureResourceGroupName = "TestRG1";
         private const string AzureDeploymentName = "TestDeployment1";
-        private static ResourceId ResourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), AzureSubscription, AzureResourceGroupName, AzureLocation.EastUs);
+       private static ResourceId ResourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), AzureSubscription, AzureResourceGroupName, AzureLocation.EastUs);
 
         [Fact]
         public void Ctor_with_bad_options()
@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task VirtualMachine_Create_Initiate_Ok()
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            deploymentManagerMoq.Setup(x => x.BeginCreateAsync(It.IsAny<VirtualMachineInstance>())).Returns(Task.FromResult(CreateDeploymentState()));
+            deploymentManagerMoq.Setup(x => x.BeginCreateAsync(It.IsAny<VirtualMachineProviderCreateInput>())).Returns(Task.FromResult(CreateDeploymentState()));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), null);
             ValidateVirtualMachineCreateResult(result);
@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
             deploymentManagerMoq.Setup(x => x.CheckDeploymentStatusAsync(It.IsAny<DeploymentStatusInput>())).Returns(Task.FromResult(DeploymentState.InProgress));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            string continuationToken = new DeploymentStatusInput(AzureSubscription, AzureResourceGroupName, AzureDeploymentName, ResourceId).ToJson();
+            string continuationToken = new DeploymentStatusInput(AzureDeploymentName, ResourceId).ToJson();
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), continuationToken);
             ValidateVirtualMachineCreateResult(result);
         }
@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq.Setup(x => x.CheckDeploymentStatusAsync(It.IsAny<DeploymentStatusInput>())).Returns(Task.FromResult(outputState));
 
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            string continuationToken = new DeploymentStatusInput(AzureSubscription, AzureResourceGroupName, AzureDeploymentName, ResourceId).ToJson();
+            string continuationToken = new DeploymentStatusInput(AzureDeploymentName, ResourceId).ToJson();
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), continuationToken);
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);
@@ -82,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 
         private static DeploymentStatusInput CreateDeploymentState()
         {
-            return new DeploymentStatusInput(AzureSubscription, AzureResourceGroupName, AzureDeploymentName, ResourceId);
+            return new DeploymentStatusInput(AzureDeploymentName, ResourceId);
         }
     }
 }

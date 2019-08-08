@@ -4,7 +4,6 @@
 
 using System;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
@@ -28,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         ///
         /// </summary>
-        public string SkuName { get; set; }
+        public string AzureSkuName { get; set; }
 
         /// <summary>
         ///
