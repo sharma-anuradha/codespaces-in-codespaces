@@ -1,6 +1,7 @@
 // <copyright file="Startup.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
@@ -13,8 +14,12 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.CosmosDb;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -37,8 +42,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 .SetBasePath(hostingEnvironment.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.secrets.json", optional: true)
-                .AddJsonFile($"appsettings.{hostingEnvironment.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
+                .AddJsonFile($"appsettings.{hostingEnvironment.EnvironmentName}.json", optional: true);
+
+            if (!IsRunningInAzure())
+            {
+                builder = builder.AddJsonFile("appsettings.Local.json", optional: true);
+            }
+
+            builder = builder.AddEnvironmentVariables();
 
             Configuration = builder.Build();
         }
@@ -54,6 +65,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         /// <param name="services">The services collection that should be configured.</param>
         public void ConfigureServices(IServiceCollection services)
         {
+            /*
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy((builder) =>
+                {
+                    builder.WithOrigins(
+                        // Localhost for Portal development
+                        "https://localhost:3000")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
+            */
+
+            // Frameworks
             services
                 .AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
@@ -63,20 +89,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     x.AllowInputFormatterExceptionMessages = HostingEnvironment.IsDevelopment();
                 });
 
+            // Configuration
             var appSettingsConfiguration = Configuration.GetSection("AppSettings");
             var appSettings = appSettingsConfiguration.Get<AppSettings>();
             services.Configure<AppSettings>(appSettingsConfiguration);
 
+            // Logging
             var loggingBaseValues = new LoggingBaseValues
             {
-                ServiceName = "FrontEndWebApi",
+                ServiceName = ServiceConstants.ServiceName,
                 CommitId = appSettings.GitCommit,
             };
 
             // For development, use the default CosmosDB region. Otherwise, when we are running in Azure,
             // use the same region that we are deployed to.
             string preferredCosmosDbRegion = null;
-            if (!HostingEnvironment.IsDevelopment())
+            if (IsRunningInAzure())
             {
                 try
                 {
@@ -105,11 +133,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 options.PreferredLocation = preferredCosmosDbRegion;
             });
 
-            // TODO: Add your collections here
-            services.AddDocumentDbCollection<ExampleEntity, ExampleEntityRepository, ExampleEntityRepository>(ExampleEntityRepository.ConfigureOptions);
+            if (IsRunningInAzure() && appSettings.UseMocksForLocalDevelopment)
+            {
+                throw new InvalidOperationException("Cannot use mocks outside of local development");
+            }
 
-            // TODO: Add other managers, repositories, and providers here
-            // services.AddSingleton<IWidgetManager, WidgetManager>();
+            // Add the environment manager and the cloud cloud environment repository.
+            services.AddEnvironmentManager(
+                sessionSettings =>
+                {
+                    sessionSettings.DefaultHost = ValidationUtil.IsRequired(appSettings.SessionCallbackDefaultHost, nameof(appSettings.SessionCallbackDefaultHost));
+                    sessionSettings.DefaultPath = ValidationUtil.IsRequired(appSettings.SessionCallbackDefaultPath, nameof(appSettings.SessionCallbackDefaultPath));
+                    sessionSettings.PreferredSchema = ValidationUtil.IsRequired(appSettings.SessionCallbackPreferredSchema, nameof(appSettings.SessionCallbackDefaultHost));
+                },
+                appSettings.UseMocksForLocalDevelopment);
+
+            // Add the Live Share user profile and workspace providers.
+            services
+                .AddUserProfile(
+                    options =>
+                    {
+                        options.BaseAddress = ValidationUtil.IsRequired(appSettings.VSLiveShareApiEndpoint, nameof(appSettings.VSLiveShareApiEndpoint));
+                    })
+                .AddWorkspaceProvider(
+                    options =>
+                    {
+                        options.BaseAddress = ValidationUtil.IsRequired(appSettings.VSLiveShareApiEndpoint, nameof(appSettings.VSLiveShareApiEndpoint));
+                    });
+
+            // Add the back-end http client and specific http rest clients.
+            services.AddBackEndHttpClient(
+                options =>
+                {
+                    options.BaseAddress = ValidationUtil.IsRequired(appSettings.BackEndWebApiBaseAddress, nameof(appSettings.BackEndWebApiBaseAddress));
+                },
+                appSettings.UseMocksForLocalDevelopment);
+
+            // Configure mappings betwen REST API models and internal models.
+            services.AddModelMapper();
 
             // VS SaaS services and VS SaaS authentication
             services.AddVsSaaSHostingWithJwtBearerAuthentication(
@@ -117,19 +178,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                loggingBaseValues,
                authConfigOptions =>
                {
-                   authConfigOptions.AudienceAppIds = appSettings.AuthJwtAudiences?.Split(',');
-                   authConfigOptions.Authority = appSettings.AuthJwtAuthority;
+                   authConfigOptions.AudienceAppIds = ValidationUtil.IsRequired(appSettings.AuthJwtAudiences, nameof(AppSettings.AuthJwtAudiences))?.Split(',');
+                   authConfigOptions.Authority = ValidationUtil.IsRequired(appSettings.AuthJwtAuthority, nameof(appSettings.AuthJwtAuthority));
                    authConfigOptions.IsEmailClaimRequired = false;
                });
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>
             {
-                x.SwaggerDoc("v1", new Info()
+                x.SwaggerDoc(ServiceConstants.CurrentApiVersion, new Info()
                 {
-                    Title = "FrontEndWebApi",
-                    Description = "Public APIs for managing Cloud Environments",
-                    Version = "v1",
+                    Title = ServiceConstants.ServiceName,
+                    Description = ServiceConstants.ServiceDescription,
+                    Version = ServiceConstants.CurrentApiVersion,
                 });
 
                 x.DescribeAllEnumsAsStrings();
@@ -184,9 +245,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 c.RoutePrefix = "swagger";
 
                 // The swagger json document is served up from /v1/swagger.
-                c.SwaggerEndpoint("/v1/swagger", "FrontEndWebApi API v1");
+                c.SwaggerEndpoint($"/{ServiceConstants.CurrentApiVersion}/swagger", ServiceConstants.EndpointName);
                 c.DisplayRequestDuration();
             });
+        }
+
+        private static bool IsRunningInAzure()
+        {
+            return Environment.GetEnvironmentVariable(ServiceConstants.RunningInAzureEnvironmentVariable) == ServiceConstants.RunningInAzureEnvironmentVariableValue;
         }
     }
 }

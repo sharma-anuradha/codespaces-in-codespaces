@@ -39,5 +39,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         /// Gets or sets the CosmosDB database to use in the <see cref="AzureCosmosDbHost"/>.
         /// </summary>
         public string AzureCosmosDbDatabaseId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the base address for the back-end web api.
+        /// </summary>
+        public string BackEndWebApiBaseAddress { get; set; }
+
+        /// <summary>
+        /// Gets or sets default host for the session callback.
+        /// </summary>
+        public string SessionCallbackDefaultHost { get; set; }
+
+        /// <summary>
+        /// Gets or sets the session callback default path.
+        /// </summary>
+        public string SessionCallbackDefaultPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the preferred schema for the cloud environment callback.
+        /// </summary>
+        public string SessionCallbackPreferredSchema { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Live Share API endpoint.
+        /// </summary>
+        public string VSLiveShareApiEndpoint { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to use mock providers for local development. DEBUG only.
+        /// </summary>
+        public bool UseMocksForLocalDevelopment { get; set; }
     }
 }

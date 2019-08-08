@@ -5,9 +5,9 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager", "..\Src\EnvironmentManager\EnvironmentManager.csproj", "{5AA17C05-BBD3-4193-B0B0-EC4DEF312A20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager.Abstractions", "..\Src\EnvironmentManager.Abstractions\EnvironmentManager.Abstractions.csproj", "{95AF0CA7-5BC3-4B50-93DE-3D480D73B7EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager.Contracts", "..\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj", "{95AF0CA7-5BC3-4B50-93DE-3D480D73B7EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager.Models", "..\Src\EnvironmentManager.Models\EnvironmentManager.Models.csproj", "{6B9B3488-6B62-492F-9481-975210D952A3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager.Contracts2", "..\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts2.csproj", "{6B9B3488-6B62-492F-9481-975210D952A3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager.Test", "..\Test\EnvironmentManager.Test\EnvironmentManager.Test.csproj", "{9151B166-F1DB-4B1E-8BD1-01C5DDACF923}"
 EndProject

@@ -4,10 +4,8 @@
 
 appSettings:
   - ASPNETCORE_ENVIRONMENT
-  - AppSettings__AuthJwtAudiences
-  - AppSettings__AzureCosmosDbHost
   - AppSettings__AzureCosmosDbAuthKey
-  - AppSettings__AzureCosmosDbDatabaseId
+  - RUNNING_IN_AZURE
 
 pods:
   minReplicaCount: 3

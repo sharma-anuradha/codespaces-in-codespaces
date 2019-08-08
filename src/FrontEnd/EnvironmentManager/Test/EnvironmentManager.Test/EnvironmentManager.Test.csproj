@@ -6,8 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Src\EnvironmentManager\EnvironmentManager.csproj" />
-    <ProjectReference Include="..\..\Src\EnvironmentManager.Abstractions\EnvironmentManager.Abstractions.csproj" />
-    <ProjectReference Include="..\..\Src\EnvironmentManager.Models\EnvironmentManager.Models.csproj" />
+    <ProjectReference Include="..\..\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
+    <ProjectReference Include="BackEndWebApiClient\BackEndWebApiClient.csproj" />
+    <ProjectReference Include="BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

@@ -2,8 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="EnvironmentManager\EnvironmentManager.csproj" />
-    <ProjectReference Include="EnvironmentManager.Abstractions\EnvironmentManager.Abstractions.csproj" />
-    <ProjectReference Include="EnvironmentManager.Models\EnvironmentManager.Models.csproj" />
+    <ProjectReference Include="EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
+    <ProjectReference Include="EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />
   </ItemGroup>
 
 </Project>

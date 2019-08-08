@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="LiveShareWorkspace\LiveShareWorkspace.csproj" />
+    <ProjectReference Include="LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="$(AutoMapperVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />    
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
+  </ItemGroup>
+
+</Project>

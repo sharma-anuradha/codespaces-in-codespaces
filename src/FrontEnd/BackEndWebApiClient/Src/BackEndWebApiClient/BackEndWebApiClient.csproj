@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile\UserProfile.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
+    <ProjectReference Include="..\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

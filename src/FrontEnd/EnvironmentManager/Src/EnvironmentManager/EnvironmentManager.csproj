@@ -1,12 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EnvironmentManager.Abstractions\EnvironmentManager.Abstractions.csproj" />
-    <ProjectReference Include="..\EnvironmentManager.Models\EnvironmentManager.Models.csproj" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
+    <ProjectReference Include="..\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
+    <ProjectReference Include="..\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BackEndWebApiClient\src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

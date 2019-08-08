@@ -3,8 +3,11 @@
   <ItemGroup>
     <ProjectReference Include="AccountManager\dirs.proj" />
     <ProjectReference Include="BackEndWebApiClient\dirs.proj" />
+    <ProjectReference Include="Common\dirs.proj" />
     <ProjectReference Include="EnvironmentManager\dirs.proj" />
     <ProjectReference Include="FrontEndWebApi\dirs.proj" />
+    <ProjectReference Include="LiveShareWorkspace\dirs.proj" />
+    <ProjectReference Include="UserProfile\dirs.proj" />
   </ItemGroup>
 
 </Project>

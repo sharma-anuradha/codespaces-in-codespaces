@@ -33,6 +33,7 @@
     <AltcoverVersion>3.5.587</AltcoverVersion>
     <AspNetCoreAppVersion>2.2.3</AspNetCoreAppVersion>
     <AspNetCoreDllVersions>2.2.0</AspNetCoreDllVersions>
+    <AutoMapperVersion>8.0.0</AutoMapperVersion>
     <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
     <FluentAssertionsVersion>5.4.1</FluentAssertionsVersion>
     <IdentityClient>3.0.0-preview</IdentityClient>
