@@ -6,7 +6,11 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
+using Moq;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Test
@@ -16,8 +20,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
         // Note: These are values to test in dev subscription
         private static readonly string azureSubscriptionId = "86642df6-843e-4610-a956-fdd497102261";
+        private static readonly string azureSubscriptionName = "vsclk-test";
 
-        private static readonly string azureRegion = "westus2";
+        private static readonly string azureLocationStr = "westus2";
+        private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
 
         private static readonly string azureResourceGroup = "vsclk-core-dev-test";
 
@@ -25,7 +31,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         // Get a Blob SAS URL for https://vsengsaas.blob.core.windows.net/cloudenv-storage-ext4/cloudenvdata_latest
         // It's a private blob so needs SAS token.
         // The test will fail otherwise.
-        private static readonly string srcBlobUrl = default;
+        private static readonly string srcBlobUrl = null;
+        private static readonly IServicePrincipal servicePrincipal = null;
 
         /// <summary>
         /// Run all the operations exposed by the provider helper.
@@ -37,13 +44,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             Assert.NotNull(srcBlobUrl);
 
+            var catalogMoq = new Mock<ISystemCatalog>();
+
+            catalogMoq
+                .Setup(x => x.AzureSubscriptionCatalog.AzureSubscriptions)
+                .Returns(new[] {
+                    new AzureSubscription(
+                        azureSubscriptionId,
+                        azureSubscriptionName,
+                        servicePrincipal,
+                        true,
+                        new[] {azureLocation})
+                });
+
             // construct the real StorageFileShareProviderHelper
-            IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper();
+            IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(catalogMoq.Object);
 
             // Verify that we can create the storage resource and prepare it
             var storageAccountId = await providerHelper.CreateStorageAccountAsync(
                 azureSubscriptionId, 
-                azureRegion, 
+                azureLocationStr, 
                 azureResourceGroup);
                 
             try

@@ -24,8 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <param name="providerHelper">An implementation of the <see cref="IStorageFileShareProviderHelper"/> interface.</param>
         public StorageFileShareProvider(IStorageFileShareProviderHelper providerHelper)
         {
-            Requires.NotNull(providerHelper, nameof(providerHelper));
-            this.providerHelper = providerHelper;
+            this.providerHelper = Requires.NotNull(providerHelper, nameof(providerHelper));
         }
 
         /// <inheritdoc/>

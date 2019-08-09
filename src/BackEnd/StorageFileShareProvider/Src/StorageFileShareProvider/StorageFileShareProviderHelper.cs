@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
@@ -26,6 +27,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         private static readonly string StorageMountableShareName = "cloudenvdata";
         private static readonly string StorageMountableFileName = "dockerlib";
         private static readonly string StorageAccountNamePrefix = "vsoce";
+        private readonly ISystemCatalog systemCatalog;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StorageFileShareProviderHelper"/> class.
+        /// </summary>
+        /// <param name="systemCatalog">System catalog.</param>
+        public StorageFileShareProviderHelper(ISystemCatalog systemCatalog)
+        {
+            this.systemCatalog = Requires.NotNull(systemCatalog, nameof(systemCatalog));
+        }
 
         /// <inheritdoc/>
         public async Task<string> CreateStorageAccountAsync(
@@ -179,19 +190,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         {
             Requires.NotNullOrEmpty(azureSubscriptionId, nameof(azureSubscriptionId));
 
-            // TODO Get the service principal for the given subscription id from System Catalog
-            IServicePrincipal sp = null;
-            string azureAppId = sp.ClientId;
-            string azureAppKey = await sp.GetServicePrincipalClientSecret();
-            string azureTenant = sp.TenantId;
-            var creds = new AzureCredentialsFactory()
-                .FromServicePrincipal(
-                    azureAppId,
-                    azureAppKey,
-                    azureTenant,
-                    AzureEnvironment.AzureGlobalCloud);
-            return Azure.Management.Fluent.Azure.Authenticate(creds)
-                .WithSubscription(azureSubscriptionId);
+            try
+            {
+                var azureSub = this.systemCatalog
+                    .AzureSubscriptionCatalog
+                    .AzureSubscriptions
+                    .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
+
+                IServicePrincipal sp = azureSub.ServicePrincipal;
+                string azureAppId = sp.ClientId;
+                string azureAppKey = await sp.GetServicePrincipalClientSecret();
+                string azureTenant = sp.TenantId;
+                var creds = new AzureCredentialsFactory()
+                    .FromServicePrincipal(
+                        azureAppId,
+                        azureAppKey,
+                        azureTenant,
+                        AzureEnvironment.AzureGlobalCloud);
+                return Azure.Management.Fluent.Azure.Authenticate(creds)
+                    .WithSubscription(azureSubscriptionId);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new AzureClientException(azureSubscriptionId);
+            }
         }
 
         private string GetAzureSubscriptionIdFromResourceId(string resourceId)
