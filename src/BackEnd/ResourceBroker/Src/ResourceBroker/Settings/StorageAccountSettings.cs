@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceBrokerSettings.cs" company="Microsoft">
+﻿// <copyright file="StorageAccountSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

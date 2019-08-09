@@ -66,8 +66,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         public string VSLiveShareApiEndpoint { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to use mock providers for local development. DEBUG only.
+        /// Gets or sets a value indicating whether to use mock providers for local development.
         /// </summary>
         public bool UseMocksForLocalDevelopment { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to call the real backend during local development instead of mocks.
+        /// </summary>
+        public bool UseBackEndForLocalDevelopment { get; set; }
     }
 }

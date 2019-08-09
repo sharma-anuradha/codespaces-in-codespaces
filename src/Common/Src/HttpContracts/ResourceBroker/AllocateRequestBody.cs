@@ -1,16 +1,16 @@
-﻿// <copyright file="AllocateInput.cs" company="Microsoft">
+﻿// <copyright file="AllocateRequestBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker
 {
     /// <summary>
-    /// A resource allocation input object.
+    /// The allocate request body.
     /// </summary>
-    public class AllocateInput
+    public class AllocateRequestBody
     {
         /// <summary>
         /// Gets or sets the cloud environment sku name.
@@ -26,10 +26,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         /// Gets or sets the Azure location for this allocation.
         /// </summary>
         public AzureLocation Location { get; set; }
-
-        /// <summary>
-        /// Gets or sets the environment variable dictionary for the environment compute.
-        /// </summary>
-        public Dictionary<string, string> EnvironmentVariables { get; set; }
     }
 }

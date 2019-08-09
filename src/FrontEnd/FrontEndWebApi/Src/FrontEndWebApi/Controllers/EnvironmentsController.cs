@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
@@ -52,6 +53,59 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private ICurrentUserProvider CurrentUserProvider { get; }
 
         private IMapper Mapper { get; }
+
+        /// <summary>
+        /// TEMPORARY TESTING ONLY!
+        /// </summary>
+        /// <returns>OK.</returns>
+        [HttpGet]
+        [Route("_testallocate")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCreateEnvironment()
+        {
+            var input = new CloudEnvironmentInput
+            {
+                Connection = new ConnectionInfoInput
+                {
+                    ConnectionSessionId = null,
+                    ConnectionSessionPath = null,
+                },
+                ContainerImage = null,
+                CreateFileShare = false,
+                FriendlyName = $"Test Environment {Guid.NewGuid()}",
+                Personalization = new Models.PersonalizationInfo
+                {
+                    DefaultShell = "bash",
+                    DotfilesInstallCommand = null,
+                    DotfilesRepository = null,
+                    DotfilesTargetPath = null,
+                },
+                Platform = "any",
+                Seed = new SeedInfoInput
+                {
+                    GitConfig = new GitConfigInput
+                    {
+                        UserEmail = "test.user@contoso.com",
+                        UserName = "Test User",
+                    },
+                    SeedMoniker = "git-seed-moniker",
+                    SeedType = SeedType.Git.ToString(),
+                },
+                Type = CloudEnvironmentType.CloudEnvironment.ToString(),
+                Location = AzureLocation.EastUs.ToString(),
+                SkuName = "Small-Linux-Preview",
+            };
+
+            // Set up a fake user
+            CurrentUserProvider.SetProfile(new UserProfile.Profile
+            {
+                Id = "test-user-id",
+                Provider = "test",
+            });
+            CurrentUserProvider.SetBearerToken(Guid.NewGuid().ToString());
+
+            return await Create(input);
+        }
 
         /// <summary>
         /// Get an environment by id.
@@ -136,6 +190,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(createEnvironmentInput.Type, nameof(createEnvironmentInput.Type));
 
             var model = Mapper.Map<CloudEnvironmentInput, CloudEnvironment>(createEnvironmentInput);
+
+            // TODO HACK: specify a temporary location. Old clients don't specify one.
+            if (string.IsNullOrEmpty(model.SkuName))
+            {
+                model.SkuName = "Small-Linux-Preview";
+            }
+            if (model.Location == default)
+            {
+                model.Location = AzureLocation.EastUs;
+            }
 
             model = await EnvironmentManager.CreateEnvironment(
                 model,

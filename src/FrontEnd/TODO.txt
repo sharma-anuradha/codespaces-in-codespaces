@@ -1,0 +1,24 @@
+BackEndWebApiClient\Src\BackEndWebApiClient\ResourceBroker\HttpResourceBrokerClient.cs:63:        // TODO: Move this into a base class, or an extension method.
+BackEndWebApiClient\Src\BackEndWebApiClient\ResourceBroker\HttpResourceBrokerClient.cs:70:            // TODO: add logging
+BackEndWebApiClient\Src\BackEndWebApiClient\ResourceBroker\HttpResourceBrokerClient.cs:85:            // TODO: add the correlation id header..any other interesting headers.
+BackEndWebApiClient\Src\BackEndWebApiClient\ResourceBroker\HttpResourceBrokerClient.cs:96:                logger.LogException("TODO: HTPP REQUEST FAILED", ex);
+Common\Src\FrontEnd.Common\OptionsExtensions.cs:7:// TODO: move into the Common project!
+Common\TODO.txt:1:TODO: Add Common\Src\Common.csproj
+Common\TODO.txt:2:TODO: Add Common\Src\Common.Models.csproj
+Common\TODO.txt:3:TODO: Move types from FrontEnd\Common\Src\FrontEnd.Common 
+Common\TODO.txt:4:TODO: Move types from BackEnd\Common
+Common\TODO.txt:5:TODO: Move types from BackEnd\Common.Models.csproj
+EnvironmentManager\Src\EnvironmentManager\CloudEnvironmentManager.cs:109:                    // TODO why not throw here?
+EnvironmentManager\Src\EnvironmentManager\CloudEnvironmentManager.cs:123:                // TODO: is there any additional step to kick-off initialization of the environment, other than the Bind call?
+EnvironmentManager\Src\EnvironmentManager\CloudEnvironmentManager.cs:128:                logger.LogInfo("TODO: log success");
+EnvironmentManager\Src\EnvironmentManager\CloudEnvironmentManager.cs:134:                logger.LogException("TODO: add create failed", ex);
+EnvironmentManager\Src\EnvironmentManager\CloudEnvironmentManager.cs:143:                    logger.LogException("TODO: log cleanup failure", ex2);
+EnvironmentManager\Src\EnvironmentManager\CloudEnvironmentManager.cs:320:                // TODO: is this a DUP of the underlying compute VM id?
+EnvironmentManager\Src\EnvironmentManager\CloudEnvironmentManager.cs:344:                    // TODO: real input values go here!
+EnvironmentManager\Src\EnvironmentManager.Repositories\DocumentDbCloudEnvironmentRepository.cs:63:            // TODO: ADD option to SDK
+EnvironmentManager\Src\EnvironmentManager.Repositories\DocumentDbCloudEnvironmentRepository.cs:81:            // TODO: ADD option to SDK
+FrontEndWebApi\Src\FrontEndWebApi\Controllers\EnvironmentsController.cs:194:            // TODO HACK: specify a temporary location. Old clients don't specify one.
+FrontEndWebApi\Src\FrontEndWebApi\Middleware\FriendlyExceptionFilterAttribute.cs:17:    /// TODO: This should be consolidated with the VSSAAS-SDK's UnhandledExceptionReporter
+UserProfile\Src\UserProfile\Http\HttpResponseMessageExtensions.cs:104:        // TODO: Consider moving this class (and other response models) to a shared assembly.
+UserProfile\Src\UserProfile.Contracts\ICurrentUserProvider.cs:16:        /// TODO: token for which API/Audience.
+UserProfile\Src\UserProfile.Contracts\ICurrentUserProvider.cs:26:        /// TODO: token for which API/Audience.

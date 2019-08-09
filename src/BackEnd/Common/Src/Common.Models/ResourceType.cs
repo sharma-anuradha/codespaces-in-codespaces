@@ -4,7 +4,6 @@
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
-
     /// <summary>
     /// A Cloud Environment back-end resource type.
     /// </summary>

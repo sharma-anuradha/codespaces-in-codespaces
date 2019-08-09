@@ -1,0 +1,5 @@
+TODO: Add Common\Src\Common.csproj
+TODO: Add Common\Src\Common.Models.csproj
+TODO: Move types from FrontEnd\Common\Src\FrontEnd.Common 
+TODO: Move types from BackEnd\Common
+TODO: Move types from BackEnd\Common.Models.csproj

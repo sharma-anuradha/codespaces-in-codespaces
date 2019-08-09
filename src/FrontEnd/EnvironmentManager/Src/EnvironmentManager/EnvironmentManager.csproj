@@ -11,11 +11,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\src\HttpContracts\HttpContracts.csproj" />
+    <ProjectReference Include="..\..\..\BackEndWebApiClient\src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />
-    <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\BackEndWebApiClient\src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

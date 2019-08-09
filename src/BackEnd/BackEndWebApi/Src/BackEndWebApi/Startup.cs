@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -83,13 +84,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);
 
-            // System Components services
+            // DocumentDB Client Provider
+            services.AddDocumentDbClientProvider(
+                options =>
+                {
+                    options.DatabaseId = "fake!";
+                    options.AuthKey = "fake";
+                    options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
+                    options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
+                    options.DatabaseId = "fake";
+                    options.HostUrl = "fake";
+                    options.PreferredLocation = "eastus";
+                    options.UseMultipleWriteLocations = false;
+                });
+
+            // System Catalog
             var azureSubscriptionCatalogSettings = Configuration.GetSection("AzureSubscriptionCatalogSettings").Get<AzureSubscriptionCatalogSettings>();
             var skuCatalogSettings = Configuration.GetSection("SkuCatalogSettings").Get<SkuCatalogSettings>();
             services.AddSystemCatalog(
                 azureSubscriptionCatalogSettings,
                 skuCatalogSettings);
 
+            // Resource Broker
             var storageAccountSettings = Configuration.GetSection("StorageAccountSettings").Get<StorageAccountSettings>();
             services.AddResourceBroker(
                 storageAccountSettings,

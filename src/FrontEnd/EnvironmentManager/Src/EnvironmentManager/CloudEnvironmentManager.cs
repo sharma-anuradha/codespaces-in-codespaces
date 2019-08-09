@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 
@@ -26,19 +26,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Initializes a new instance of the <see cref="CloudEnvironmentManager"/> class.
         /// </summary>
         /// <param name="cloudEnvironmentRepository">The cloud environment repository.</param>
-        /// <param name="resourceBrokerClient">The resource broker client.</param>
+        /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
         /// <param name="sessionSettings">The session settings.</param>
         public CloudEnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
-            IResourceBrokerClient resourceBrokerClient,
+            IResourceBrokerHttpContract resourceBrokerHttpClient,
             IWorkspaceRepository workspaceRepository,
             IOptions<SessionSettings> sessionSettings)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             SessionSettings = Requires.NotNull(sessionSettings, nameof(sessionSettings)).Value;
-            ResourceBrokerClient = Requires.NotNull(resourceBrokerClient, nameof(resourceBrokerClient));
+            ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private SessionSettings SessionSettings { get; }
 
-        private IResourceBrokerClient ResourceBrokerClient { get; }
+        private IResourceBrokerHttpContract ResourceBrokerClient { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironment> CreateEnvironment(
@@ -76,6 +76,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ValidationUtil.IsTrue(
                 environments.Count() < CloudEnvironmentQuota,
                 $"You have reached the limit of {CloudEnvironmentQuota} environments");
+            ValidationUtil.IsRequired(cloudEnvironment.SkuName, nameof(cloudEnvironment.SkuName));
+            ValidationUtil.IsTrue(
+                cloudEnvironment.Location != default,
+                "Location is required");
 
             // Static Environment
             if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
@@ -111,10 +115,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 await AllocateStorage(cloudEnvironment, logger);
 
                 // Allocate Compute
-                await AllocateCompute(cloudEnvironment, accessToken, sessionId, logger);
+                var computeResult = await AllocateCompute(cloudEnvironment, accessToken, sessionId, logger);
 
                 // Bind compute to storage
-                await BindComputeToStorage(cloudEnvironment);
+                await StartCompute(cloudEnvironment, computeResult.EnvironmentVariables, logger);
 
                 // TODO: is there any additional step to kick-off initialization of the environment, other than the Bind call?
 
@@ -243,13 +247,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 var storageIdToken = cloudEnvironment.Storage?.ResourceIdToken;
                 if (storageIdToken != null)
                 {
-                    await ResourceBrokerClient.DeallocateAsync(storageIdToken);
+                    await ResourceBrokerClient.DeallocateAsync(storageIdToken, logger);
                 }
 
                 var computeIdToken = cloudEnvironment.Compute?.ResourceIdToken;
                 if (computeIdToken != null)
                 {
-                    await ResourceBrokerClient.DeallocateAsync(computeIdToken);
+                    await ResourceBrokerClient.DeallocateAsync(computeIdToken, logger);
                 }
             }
 
@@ -285,25 +289,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             return workspaceResponse.Id;
         }
 
-        private async Task AllocateCompute(
+        private async Task<AllocateComputeResult> AllocateCompute(
             CloudEnvironment cloudEnvironment,
             string accessToken,
             string sessionId,
             IDiagnosticsLogger logger)
         {
-            var environmentVariables = EnvironmentVariableGenerator.Generate(
-                cloudEnvironment,
-                SessionSettings,
-                accessToken,
-                sessionId);
-
             var compute = await ResourceBrokerClient.AllocateAsync(
-                new AllocateInput
+                new AllocateRequestBody
                 {
                     Type = ResourceType.ComputeVM,
                     SkuName = cloudEnvironment.SkuName,
                     Location = cloudEnvironment.Location,
-                    EnvironmentVariables = environmentVariables,
                 },
                 logger);
 
@@ -320,8 +317,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 ConnectionSessionId = sessionId,
 
-                // TODO: is this the underlying compute VM id?
+                // TODO: is this a DUP of the underlying compute VM id?
                 ConnectionComputeId = cloudEnvironment.Compute.ResourceIdToken,
+            };
+
+            // Construct the environment variables
+            var environmentVariables = EnvironmentVariableGenerator.Generate(
+                cloudEnvironment,
+                SessionSettings,
+                accessToken,
+                sessionId);
+
+            return new AllocateComputeResult
+            {
+                EnvironmentVariables = environmentVariables,
             };
         }
 
@@ -330,7 +339,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             var storage = await ResourceBrokerClient.AllocateAsync(
-                new AllocateInput
+                new AllocateRequestBody
                 {
                     // TODO: real input values go here!
                     Type = ResourceType.Storage,
@@ -348,14 +357,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             };
         }
 
-        private async Task BindComputeToStorage(
-            CloudEnvironment cloudEnvironment)
+        private async Task StartCompute(
+            CloudEnvironment cloudEnvironment,
+            Dictionary<string, string> environmentVariables,
+            IDiagnosticsLogger logger)
         {
-            _ = await ResourceBrokerClient.BindComputeToStorage(new BindInput
-            {
-                ComputeResourceIdToken = cloudEnvironment.Compute.ResourceIdToken,
-                StorageResourceIdToken = cloudEnvironment.Storage.ResourceIdToken,
-            });
+            ValidationUtil.IsRequired(cloudEnvironment?.Compute?.ResourceIdToken, nameof(cloudEnvironment.Compute.ResourceIdToken));
+
+            _ = await ResourceBrokerClient.StartComputeAsync(
+                cloudEnvironment.Compute.ResourceIdToken,
+                new StartComputeRequestBody
+                {
+                    StorageResourceIdToken = cloudEnvironment.Storage.ResourceIdToken,
+                    EnvironmentVariables = environmentVariables,
+                },
+                logger);
+        }
+
+        private class AllocateComputeResult
+        {
+            public Dictionary<string, string> EnvironmentVariables { get; set; }
         }
     }
 }

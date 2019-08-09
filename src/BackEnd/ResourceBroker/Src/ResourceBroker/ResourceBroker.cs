@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.VsSaaS.Diagnostics;
@@ -40,6 +42,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             }
 
             return Mapper.Map<AllocateResult>(item);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> DeallocateAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task StartComputeAsync(string computeResourceIdToken, string storageResourceIdToken, Dictionary<string, string> environmentVariables, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
         }
     }
 }

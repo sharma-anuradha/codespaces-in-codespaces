@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="HttpContracts\HttpContracts.csproj" />
+  </ItemGroup>
+
+</Project>

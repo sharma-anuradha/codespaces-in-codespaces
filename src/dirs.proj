@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="BackEnd/dirs.proj" />
+    <ProjectReference Include="Common/dirs.proj" />
     <ProjectReference Include="Deploy/Deploy.csproj" />
     <ProjectReference Include="FrontEnd/dirs.proj" />
     <ProjectReference Include="Portal/dirs.proj" />

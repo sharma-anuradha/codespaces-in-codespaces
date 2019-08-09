@@ -34,13 +34,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public CosmosDbResourceRepository(
-                IOptionsSnapshot<DocumentDbCollectionOptions> options,
+                IOptions<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
-            : base(options, clientProvider, healthProvider, loggerFactory, defaultLogValues)
+            : base(PromoteToOptionSnapshot(options), clientProvider, healthProvider, loggerFactory, defaultLogValues)
         {
+        }
+
+        // TEMP: Map backend common and frontend commin into src/Common/Src/Common!
+        private static IOptionsSnapshot<TOptions> PromoteToOptionSnapshot<TOptions>(IOptions<TOptions> option)
+            where TOptions : class, new()
+        {
+            return new DirectOptionsSnapshot<TOptions>(option.Value);
+        }
+
+        // TEMP: Map backend common and frontend commin into src/Common/Src/Common!
+        private class DirectOptionsSnapshot<TOptions> : IOptionsSnapshot<TOptions>
+            where TOptions : class, new()
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="DirectOptionsSnapshot{TOptions}"/> class.
+            /// </summary>
+            /// <param name="options">The options instance.</param>
+            public DirectOptionsSnapshot(TOptions options)
+            {
+                Options = options;
+            }
+
+            /// <summary>
+            /// Gets the options value.
+            /// </summary>
+            public TOptions Value => Options;
+
+            private TOptions Options { get; }
+
+            public TOptions Get(string name)
+            {
+                return Options;
+            }
         }
 
         /// <summary>

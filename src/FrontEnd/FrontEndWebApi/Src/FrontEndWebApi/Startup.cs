@@ -124,15 +124,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 }
             }
 
-            // CosmosDB Repositories
-            services.AddDocumentDbClientProvider(options =>
-            {
-                options.HostUrl = appSettings.AzureCosmosDbHost;
-                options.AuthKey = appSettings.AzureCosmosDbAuthKey;
-                options.DatabaseId = appSettings.AzureCosmosDbDatabaseId;
-                options.PreferredLocation = preferredCosmosDbRegion;
-            });
-
             if (IsRunningInAzure() && appSettings.UseMocksForLocalDevelopment)
             {
                 throw new InvalidOperationException("Cannot use mocks outside of local development");
@@ -159,7 +150,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     options =>
                     {
                         options.BaseAddress = ValidationUtil.IsRequired(appSettings.VSLiveShareApiEndpoint, nameof(appSettings.VSLiveShareApiEndpoint));
-                    });
+                    },
+                    appSettings.UseMocksForLocalDevelopment);
 
             // Add the back-end http client and specific http rest clients.
             services.AddBackEndHttpClient(
@@ -167,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 {
                     options.BaseAddress = ValidationUtil.IsRequired(appSettings.BackEndWebApiBaseAddress, nameof(appSettings.BackEndWebApiBaseAddress));
                 },
-                appSettings.UseMocksForLocalDevelopment);
+                appSettings.UseMocksForLocalDevelopment && !appSettings.UseBackEndForLocalDevelopment);
 
             // Configure mappings betwen REST API models and internal models.
             services.AddModelMapper();
@@ -182,6 +174,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                    authConfigOptions.Authority = ValidationUtil.IsRequired(appSettings.AuthJwtAuthority, nameof(appSettings.AuthJwtAuthority));
                    authConfigOptions.IsEmailClaimRequired = false;
                });
+            services.AddDocumentDbClientProvider(options =>
+            {
+                options.HostUrl = appSettings.AzureCosmosDbHost;
+                options.AuthKey = appSettings.AzureCosmosDbAuthKey;
+                options.DatabaseId = appSettings.AzureCosmosDbDatabaseId;
+                options.PreferredLocation = string.Empty;
+            });
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>

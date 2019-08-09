@@ -1,16 +1,16 @@
-﻿// <copyright file="AllocateResult.cs" company="Microsoft">
+﻿// <copyright file="AllocateResponseBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using Microsoft.VsSaaS.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker
 {
     /// <summary>
-    /// The result of a resource allocation.
+    /// The allocate response body.
     /// </summary>
-    public class AllocateResult
+    public class AllocateResponseBody
     {
         /// <summary>
         /// Gets or sets the resource id token.

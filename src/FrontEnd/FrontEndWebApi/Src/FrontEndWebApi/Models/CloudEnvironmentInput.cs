@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
@@ -51,6 +52,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// <summary>
         /// Gets or sets the enviroment platform.
         /// </summary>
+        [Obsolete("This is now implied by SkuName", false)]
         public string Platform { get; set; }
+
+        /***** NEW *****/
+
+        /// <summary>
+        /// Gets or sets the azure location for this environment.
+        /// </summary>
+        public string Location { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cloud environment sku name.
+        /// </summary>
+        public string SkuName { get; set; }
     }
 }
