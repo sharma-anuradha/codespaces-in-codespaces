@@ -4,8 +4,9 @@
 
 appSettings:
   - ASPNETCORE_ENVIRONMENT
-  - AppSettings__StorageAccountSettings__StorageAccountName
-  - AppSettings__StorageAccountSettings__StorageAccountKey
+  - StorageAccountSettings__StorageAccountName
+  - StorageAccountSettings__StorageAccountKey
+  - vsclk_online_dev_kv_app_sp_password
 
 pods:
   minReplicaCount: 3
