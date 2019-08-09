@@ -228,7 +228,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Swagger/OpenAPI
             app.UseSwagger(x =>
             {
-                x.RouteTemplate = "/{documentName}/swagger";
+                x.RouteTemplate = "api/{documentName}/swagger";
                 x.PreSerializeFilters.Add((swaggerDoc, request) =>
                 {
                     swaggerDoc.Host = request.Host.Value;
@@ -238,14 +238,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             app.UseSwaggerUI(c =>
             {
-                // UI should be visible from /swagger endpoint. Note that leading slash
+                // UI should be visible from /api/swagger endpoint. Note that leading slash
                 // is not present on the RoutePrefix below. This is intentional, because it
                 // doesn't work correctly if you add it. I think this is a bug in the Swashbuckle
                 // Swagger UI implementation.
-                c.RoutePrefix = "swagger";
+                c.RoutePrefix = "api/swagger";
 
-                // The swagger json document is served up from /v1/swagger.
-                c.SwaggerEndpoint($"/{ServiceConstants.CurrentApiVersion}/swagger", ServiceConstants.EndpointName);
+                // The swagger json document is served up from /api/v1/swagger.
+                c.SwaggerEndpoint($"/api/{ServiceConstants.CurrentApiVersion}/swagger", ServiceConstants.EndpointName);
                 c.DisplayRequestDuration();
             });
         }
