@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                                                         "storageFileName1");
             var input1 = new VirtualMachineProviderAllocateInput(createDeploymentStatusInput.ResourceId,
                                                                  fileShareInfo,
-                                                                 new Dictionary<string, string>() { });
+                                                                 new Dictionary<string, string>() { {"key1","value1"}, {"key2","value2"}});
             
             VirtualMachineProviderAllocateResult assignResult = await computeProvider.AllocateAsync(input1);
             timerAllocate.Stop();

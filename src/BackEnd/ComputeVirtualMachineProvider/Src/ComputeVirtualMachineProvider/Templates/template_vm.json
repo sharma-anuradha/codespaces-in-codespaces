@@ -142,7 +142,7 @@
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
           ],
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "name": "config-app",
           "properties": {
             "autoUpgradeMinorVersion": true,

@@ -15,8 +15,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// Initializes a new instance of the <see cref="AzureClientException"/> class.
         /// </summary>
         /// <param name="azureSubscriptionId">Azure subscription id.</param>
-        public AzureClientException(string azureSubscriptionId)
-            : base(string.Format("Failed to create Azure client: {0}", azureSubscriptionId))
+        public AzureClientException(string azureSubscriptionId, InvalidOperationException ex)
+            : base(string.Format("Failed to create Azure client: {0}", azureSubscriptionId), ex)
         {
         }
     }

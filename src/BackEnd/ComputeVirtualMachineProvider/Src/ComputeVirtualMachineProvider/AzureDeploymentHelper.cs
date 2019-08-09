@@ -1,4 +1,4 @@
-// <copyright file="AzureDeploymentManager.cs" company="Microsoft">
+// <copyright file="AzureDeploymentHelper.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
         public async Task CreateResourceGroupAsync(Guid subscriptionId, string resourceGroupName, AzureLocation location)
         {
-            IAzure azure = clientFactory.GetAzureClient(subscriptionId);
+            IAzure azure = await clientFactory.GetAzureClientAsync(subscriptionId).ContinueOnAnyContext();
             var resourceGroup = await azure.ResourceGroups.Define(resourceGroupName)
                 .WithRegion(location.ToString())
                 .CreateAsync().ContinueOnAnyContext();
@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
         public async Task DeleteResourceGroupAsync(Guid subscriptionId, string resourceGroupName)
         {
-            IAzure azure = clientFactory.GetAzureClient(subscriptionId);
+            IAzure azure = await clientFactory.GetAzureClientAsync(subscriptionId).ContinueOnAnyContext();
             await azure.ResourceGroups
             .BeginDeleteByNameAsync(resourceGroupName).ContinueOnAnyContext();
         }

@@ -1,14 +1,15 @@
-// <copyright file="AzureDeploymentManager.cs" company="Microsoft">
+// <copyright file="IAzureClientFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
     public interface IAzureClientFactory
     {
-        IAzure GetAzureClient(Guid subscriptionId);
+        Task<IAzure> GetAzureClientAsync(Guid subscriptionId);
     }
 }

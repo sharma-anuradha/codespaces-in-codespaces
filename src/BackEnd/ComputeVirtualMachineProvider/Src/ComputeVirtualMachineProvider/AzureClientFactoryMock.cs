@@ -1,8 +1,9 @@
-// <copyright file="AzureDeploymentManager.cs" company="Microsoft">
+// <copyright file="AzureClientFactoryMock.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 
@@ -17,12 +18,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             this.authFile = authFile;
         }
 
-        public IAzure GetAzureClient(Guid subscriptionId)
+        public async Task<IAzure> GetAzureClientAsync(Guid subscriptionId)
         {
             var credentials = SdkContext.AzureCredentialsFactory
                 .FromFile(authFile);
 
-            return Azure.Management.Fluent.Azure.Authenticate(credentials).WithSubscription(subscriptionId.ToString());
+            return await Task.FromResult(Azure.Management.Fluent.Azure.Authenticate(credentials).WithSubscription(subscriptionId.ToString()));
         }
 
     }

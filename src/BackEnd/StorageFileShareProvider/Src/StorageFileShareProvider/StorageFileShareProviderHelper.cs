@@ -210,9 +210,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 return Azure.Management.Fluent.Azure.Authenticate(creds)
                     .WithSubscription(azureSubscriptionId);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
-                throw new AzureClientException(azureSubscriptionId);
+                throw new AzureClientException(azureSubscriptionId, ex);
             }
         }
 

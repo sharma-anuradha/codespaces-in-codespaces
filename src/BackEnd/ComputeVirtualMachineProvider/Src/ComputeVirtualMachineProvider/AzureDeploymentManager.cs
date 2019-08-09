@@ -7,13 +7,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Newtonsoft.Json;
-using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
@@ -31,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             // create new resource id
             ResourceId resourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), input.AzureSubscription, input.AzureResourceGroup, input.AzureVmLocation);
-            IAzure azure = clientFactory.GetAzureClient(input.AzureSubscription);
+            IAzure azure = await clientFactory.GetAzureClientAsync(input.AzureSubscription).ContinueOnAnyContext();
             var parameters = new Dictionary<string, Dictionary<string, object>>()
             {
                 { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
@@ -60,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <inheritdoc/>
         public async Task<DeploymentStatusInput> BeginAllocateAsync(VirtualMachineProviderAllocateInput input)
         {
-            IAzure azure = clientFactory.GetAzureClient(input.ResourceId.SubscriptionId);
+            IAzure azure = await clientFactory.GetAzureClientAsync(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
             IVirtualMachine linuxVM = await azure.VirtualMachines
                             .GetByResourceGroupAsync(input.ResourceId.ResourceGroup, input.ResourceId.InstanceId.ToString())
                             .ContinueOnAnyContext();
@@ -68,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             string name = $"Assign-{input.ResourceId.InstanceId}";
             IVirtualMachine result = await linuxVM.Update()
                           .UpdateExtension("config-app")
-                          .WithProtectedSetting("script", VMAssignScript)
+                          .WithProtectedSetting("script", GetCustomScriptForVmAssign("vm_assign.sh", input))
                           .WithMinorVersionAutoUpgrade()
                           .Parent()
                           .ApplyAsync()
@@ -80,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <inheritdoc/>
         public async Task<DeploymentState> CheckDeploymentStatusAsync(DeploymentStatusInput deploymentStatusInput)
         {
-            IAzure azure = clientFactory.GetAzureClient(deploymentStatusInput.ResourceId.SubscriptionId);
+            IAzure azure = await clientFactory.GetAzureClientAsync(deploymentStatusInput.ResourceId.SubscriptionId).ContinueOnAnyContext();
             IDeployment deployment = await azure.Deployments.GetByResourceGroupAsync(deploymentStatusInput.AzureResourceGroupName, deploymentStatusInput.AzureDeploymentName).ContinueOnAnyContext();
 
             if (deployment.ProvisioningState.Equals(DeploymentState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
@@ -89,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 return deployment.ProvisioningState.ToEnum<DeploymentState>();
             }
+
             return DeploymentState.InProgress;
         }
 
@@ -97,16 +99,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return GetEmbeddedResource("template_vm.json");
         }
 
-        private static string GetCloundInitScript()
-        {
-            string cloudInitScriptString = GetEmbeddedResource("cloudinit.yml");
-            return cloudInitScriptString.ToBase64Encoded();
-        }
-
         private static string GetCustomScript(string scriptName)
         {
-            string cloudInitScriptString = GetEmbeddedResource(scriptName);
-            return cloudInitScriptString.ToBase64Encoded();
+            string scriptString = GetEmbeddedResource(scriptName);
+            return scriptString.ToBase64Encoded();
+        }
+
+        private static string GetCustomScriptForVmAssign(string scriptName, VirtualMachineProviderAllocateInput input)
+        {
+            string scriptString = GetEmbeddedResource(scriptName);
+            scriptString = AddParamsToScript(input, scriptString);
+            return scriptString.ToBase64Encoded();
+        }
+
+        private static string AddParamsToScript(VirtualMachineProviderAllocateInput input, string scriptString)
+        {
+            var camelCaseSerializer = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+            var storageParams = JsonConvert.SerializeObject(input.FileShareConnection, Formatting.None, camelCaseSerializer);
+            scriptString = scriptString.Replace("SCRIPT_PARAM_STORAGE=''", $"SCRIPT_PARAM_STORAGE='{storageParams}'");
+            var envParams = JsonConvert.SerializeObject(input.VmInputParams);
+            scriptString = scriptString.Replace("SCRIPT_PARAM_CONTAINER_ENV_VARS=''", $"SCRIPT_PARAM_CONTAINER_ENV_VARS='{envParams}'");
+            return scriptString;
         }
 
         private static string GetEmbeddedResource(string resourceName)
@@ -121,14 +134,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 return result;
             }
         }
-        private static readonly string vmTemplateJson = GetVmTemplate();
-        private static readonly string cloudInitScript = GetCloundInitScript();
-        private readonly IAzureClientFactory clientFactory;
+
+        private static readonly string VmTemplateJsonValue = GetVmTemplate();
         private static readonly string vmInitScript = GetCustomScript("vm_init.sh");
-        private static readonly string vmAssignScript = GetCustomScript("vm_assign.sh");
-        public static string VmTemplateJson => vmTemplateJson;
-        public static string CloudInitScript => cloudInitScript;
+        private readonly IAzureClientFactory clientFactory;
+
+        public static string VmTemplateJson => VmTemplateJsonValue;
+
         public static string VMInitScript => vmInitScript;
-        public static string VMAssignScript => vmAssignScript;
     }
 }
