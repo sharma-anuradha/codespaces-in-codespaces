@@ -1,7 +1,7 @@
 #!/bin/sh
 # Mount storage and start the container
 
-# e.g. SCRIPT_PARAM_STORAGE='{"storageAccount":"mystorage","storageKey":"passwordhere","storageShare":"sharename","storageFile":"filename"}'
+# e.g. SCRIPT_PARAM_STORAGE='{"storageAccountName":"mystorage","storageAccountKey":"passwordhere","storageShareName":"sharename","storageFileName":"filename"}'
 # e.g. SCRIPT_PARAM_CONTAINER_ENV_VARS='{"SESSION_ID":"AAAA0000BBBB1111CCCC2222DDDD3333EEEE","SESSION_TOKEN":"abc123","SESSION_CALLBACK":"https://.../api/environment/registration/./_callback","GIT_REPO_URL":"https://github.com/vsls-contrib/guestbook"}'
 
 SCRIPT_PARAM_STORAGE=''
@@ -10,10 +10,10 @@ SCRIPT_PARAM_CONTAINER_ENV_VARS=''
 [ -z "$SCRIPT_PARAM_STORAGE" ] && echo "SCRIPT_PARAM_STORAGE parameter not set." && exit 1;
 [ -z "$SCRIPT_PARAM_CONTAINER_ENV_VARS" ] && echo "SCRIPT_PARAM_CONTAINER_ENV_VARS parameter not set." && exit 1;
 
-CLOUDENVSTORAGE_ACCOUNT=$(echo $SCRIPT_PARAM_STORAGE | python -c "import sys, json; print json.load(sys.stdin)['storageAccount']")
-CLOUDENVSTORAGE_PASS=$(echo $SCRIPT_PARAM_STORAGE | python -c "import sys, json; print json.load(sys.stdin)['storageKey']")
-CLOUDENVSTORAGE_SHARE=$(echo $SCRIPT_PARAM_STORAGE | python -c "import sys, json; print json.load(sys.stdin)['storageShare']")
-CLOUDENVSTORAGE_FILE=$(echo $SCRIPT_PARAM_STORAGE | python -c "import sys, json; print json.load(sys.stdin)['storageFile']")
+CLOUDENVSTORAGE_ACCOUNT=$(echo $SCRIPT_PARAM_STORAGE | python -c "import sys, json; print json.load(sys.stdin)['storageAccountName']")
+CLOUDENVSTORAGE_PASS=$(echo $SCRIPT_PARAM_STORAGE | python -c "import sys, json; print json.load(sys.stdin)['storageAccountKey']")
+CLOUDENVSTORAGE_SHARE=$(echo $SCRIPT_PARAM_STORAGE | python -c "import sys, json; print json.load(sys.stdin)['storageShareName']")
+CLOUDENVSTORAGE_FILE=$(echo $SCRIPT_PARAM_STORAGE | python -c "import sys, json; print json.load(sys.stdin)['storageFileName']")
 
 [ -z "$CLOUDENVSTORAGE_ACCOUNT" ] && echo "CLOUDENVSTORAGE_ACCOUNT parameter not set." && exit 1;
 [ -z "$CLOUDENVSTORAGE_PASS" ] && echo "CLOUDENVSTORAGE_PASS parameter not set." && exit 1;

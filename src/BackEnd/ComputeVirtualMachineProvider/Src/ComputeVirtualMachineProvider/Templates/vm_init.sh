@@ -3,7 +3,7 @@ echo "Updating packages ..."
 apt update
 apt upgrade -y
 echo "Install docker ..."
-sudo apt-get install docker.io
+sudo apt-get install -y docker.io
 echo "Install ORAS ..."
 curl -LO https://github.com/deislabs/oras/releases/download/v0.5.0/oras_0.5.0_linux_amd64.tar.gz
 # unpack, install, dispose
