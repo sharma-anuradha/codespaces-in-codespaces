@@ -69,8 +69,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         [JsonProperty(Required = Required.Default, PropertyName = "dotfilesInstallCommand")]
         public string DotfilesInstallCommand { get; set; }
 
-        [JsonProperty(Required = Required.Default, PropertyName = "defaultShell")]
-        public string DefaultShell { get; set; }
+        [JsonProperty(Required = Required.Default, PropertyName = "preferredShells")]
+        public string[] PreferredShells { get; set; }
     }
 
     public class ConnectionInfo

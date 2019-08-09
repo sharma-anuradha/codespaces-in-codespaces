@@ -70,7 +70,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         // POST api/environment/registration
         [HttpPost]
         public async Task<IActionResult> Create(
-            [FromBody]EnvironmentRegistrationInput modelInput)
+            [FromBody] EnvironmentRegistrationInput modelInput)
         {
             var logger = HttpContext.GetLogger();
             var currentUserId = CurrentUserProvider.GetProfileId();

@@ -75,11 +75,11 @@ namespace VsClk.EnvReg.Repositories
 
             return await EnvironmentRegistrationRepository.GetWhereAsync((model) => model.OwnerId == ownerId, logger);
         }
-        
+
         public async Task<EnvironmentRegistration> RegisterAsync(
             EnvironmentRegistration model,
             EnvironmentRegistrationOptions options,
-            string ownerId, 
+            string ownerId,
             string accessToken,
             IDiagnosticsLogger logger)
         {
@@ -127,6 +127,14 @@ namespace VsClk.EnvReg.Repositories
                 return null;
             }
 
+
+            if (string.IsNullOrEmpty(model.ContainerImage))
+            {
+                // TODO: Hack to detect the container image. When we start supporting custom container images,
+                // we will pass this from clients, and use appropriate logic to detect if it's kitchensink.
+                model.ContainerImage = "kitchensink";
+            }
+
             // Setup - Compute input
             var computeServiceRequest = new ComputeServiceRequest
             {
@@ -157,7 +165,8 @@ namespace VsClk.EnvReg.Repositories
             var serviceRegion = RegistrationUtils.StampToRegion(AppSettings.StampLocation);
 
             var computeTargetId = computeTargets
-                .Where(c => {
+                .Where(c =>
+                {
                     var isAvailable = c.State == "Available";
                     // Compute target region is okay if we haven't specified a region or the region matches the serviceRegion
                     var regionOk = serviceRegion == null || c.Properties.GetValueOrDefault("region") == serviceRegion;
@@ -232,7 +241,7 @@ namespace VsClk.EnvReg.Repositories
 
             UnauthorizedUtil.IsTrue(model.OwnerId == ownerId);
             ValidationUtil.IsTrue(model.Connection.ConnectionSessionId == options.Payload.SessionId);
-            
+
             model.Connection.ConnectionSessionPath = options.Payload.SessionPath;
             model.State = StateInfo.Available.ToString();
 

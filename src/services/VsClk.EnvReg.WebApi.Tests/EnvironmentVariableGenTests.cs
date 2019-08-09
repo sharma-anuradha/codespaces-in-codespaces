@@ -1,12 +1,12 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using System;
+using System.Collections.Generic;
 using VsClk.EnvReg.Repositories;
+using Xunit;
 
 namespace VsClk.EnvReg.WebApi.Tests
 {
-    [TestClass]
     public class EnvironmentVariableGenTests
     {
         private EnvironmentRegistration GetGitEnvForGitRepo()
@@ -59,22 +59,21 @@ namespace VsClk.EnvReg.WebApi.Tests
             {
                 Personalization = new Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore.PersonalizationInfo
                 {
-
                 }
             };
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarGitRepoUrlTest()
         {
             var envReg = GetGitEnvForGitRepo();
             var repoUrl = new EnvVarGitRepoUrl(envReg);
             var result = repoUrl.GetEnvironmentVariable();
-            Assert.AreEqual(result.Key, EnvironmentVariableConstants.GitRepoUrl);
-            Assert.AreEqual(result.Value, envReg.Seed.SeedMoniker);
+            Assert.Equal(result.Key, EnvironmentVariableConstants.GitRepoUrl);
+            Assert.Equal(result.Value, envReg.Seed.SeedMoniker);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarGitRepoUrlBadUrlTest()
         {
             var envReg = new EnvironmentRegistration()
@@ -87,10 +86,10 @@ namespace VsClk.EnvReg.WebApi.Tests
             };
 
             var repoUrl = new EnvVarGitRepoUrl(envReg);
-            Assert.IsNull(repoUrl.GetEnvironmentVariable());
+            Assert.Null(repoUrl.GetEnvironmentVariable());
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarGitRepoUrlNotGitTest()
         {
             var envReg = new EnvironmentRegistration()
@@ -103,64 +102,64 @@ namespace VsClk.EnvReg.WebApi.Tests
             };
 
             var repoUrl = new EnvVarGitRepoUrl(envReg);
-            Assert.IsNull(repoUrl.GetEnvironmentVariable());
+            Assert.Null(repoUrl.GetEnvironmentVariable());
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarGitRepoUrlPullTest()
         {
             var envReg = GetGitEnvForGitPull();
 
             var gitPRNumber = new EnvVarGitPullPRNumber(envReg);
             var prNumber = gitPRNumber.GetEnvironmentVariable();
-            Assert.AreEqual(prNumber.Key, EnvironmentVariableConstants.GitPRNumber);
-            Assert.AreEqual(prNumber.Value, "1347");
+            Assert.Equal(prNumber.Key, EnvironmentVariableConstants.GitPRNumber);
+            Assert.Equal("1347", prNumber.Value);
 
             var repoUrl = new EnvVarGitRepoUrl(envReg);
             var gitRepoUrl = repoUrl.GetEnvironmentVariable();
-            Assert.AreEqual(gitRepoUrl.Key, EnvironmentVariableConstants.GitRepoUrl);
-            Assert.AreEqual(gitRepoUrl.Value, "https://github.com/octocat/Hello-World");
+            Assert.Equal(gitRepoUrl.Key, EnvironmentVariableConstants.GitRepoUrl);
+            Assert.Equal("https://github.com/octocat/Hello-World", gitRepoUrl.Value);
         }
 
 
 
-        [TestMethod]
+        [Fact]
         public void EnvVarGitConfigUserNameTest()
         {
             var envReg = GetEnvForGitConfig();
             var gitConfigUserName = new EnvVarGitConfigUserName(envReg);
             var result = gitConfigUserName.GetEnvironmentVariable();
-            Assert.AreEqual(result.Key, EnvironmentVariableConstants.GitConfigUsername);
-            Assert.AreEqual(result.Value, envReg.Seed.GitConfig.UserName);
+            Assert.Equal(result.Key, EnvironmentVariableConstants.GitConfigUsername);
+            Assert.Equal(result.Value, envReg.Seed.GitConfig.UserName);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarGitConfigUserEmailTest()
         {
             var envReg = GetEnvForGitConfig();
             var gitConfigUserEmail = new EnvVarGitConfigUserEmail(envReg);
             var result = gitConfigUserEmail.GetEnvironmentVariable();
-            Assert.AreEqual(result.Key, EnvironmentVariableConstants.GitConfigUserEmail);
-            Assert.AreEqual(result.Value, envReg.Seed.GitConfig.UserEmail);
+            Assert.Equal(result.Key, EnvironmentVariableConstants.GitConfigUserEmail);
+            Assert.Equal(result.Value, envReg.Seed.GitConfig.UserEmail);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarGitConfigUserNameEmptyTest()
         {
             var envReg = GetEmptyGitConfig();
             var gitConfigUserName = new EnvVarGitConfigUserName(envReg);
-            Assert.IsNull(gitConfigUserName.GetEnvironmentVariable());
+            Assert.Null(gitConfigUserName.GetEnvironmentVariable());
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarGitConfigUserEmailEmptyTest()
         {
             var envReg = GetEmptyGitConfig();
             var gitConfigUserEmail = new EnvVarGitConfigUserEmail(envReg);
-            Assert.IsNull(gitConfigUserEmail.GetEnvironmentVariable());
+            Assert.Null(gitConfigUserEmail.GetEnvironmentVariable());
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarSessionCallbackTest()
         {
             var envReg = new EnvironmentRegistration()
@@ -177,31 +176,31 @@ namespace VsClk.EnvReg.WebApi.Tests
 
             var sessionCallback = new EnvVarSessionCallback(envReg, appSettings);
             var result = sessionCallback.GetEnvironmentVariable();
-            Assert.AreEqual(result.Key, EnvironmentVariableConstants.SessionCallback);
-            Assert.AreEqual(result.Value, $"https://myhost/myPath/registration/{envReg.Id}/_callback");
+            Assert.Equal(result.Key, EnvironmentVariableConstants.SessionCallback);
+            Assert.Equal(result.Value, $"https://myhost/myPath/registration/{envReg.Id}/_callback");
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarSessionTokenTest()
         {
             var accessToken = Guid.NewGuid().ToString();
             var sessionToken = new EnvVarSessionToken(accessToken);
             var result = sessionToken.GetEnvironmentVariable();
-            Assert.AreEqual(result.Key, EnvironmentVariableConstants.SessionToken);
-            Assert.AreEqual(result.Value, accessToken);
+            Assert.Equal(result.Key, EnvironmentVariableConstants.SessionToken);
+            Assert.Equal(result.Value, accessToken);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvVarSessionIdTest()
         {
             var sessionId = Guid.NewGuid().ToString();
             var target = new EnvVarSessionId(sessionId);
             var result = target.GetEnvironmentVariable();
-            Assert.AreEqual(result.Key, EnvironmentVariableConstants.SessionId);
-            Assert.AreEqual(sessionId, result.Value);
+            Assert.Equal(result.Key, EnvironmentVariableConstants.SessionId);
+            Assert.Equal(sessionId, result.Value);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvDotfilesRepoUrlEmptyTest()
         {
             var registration = GetEmptyPersonalizationConfig();
@@ -209,10 +208,10 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validator = new EnvDotfilesRepoUrl(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.IsNull(envVar);
+            Assert.Null(envVar);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvDotfilesRepoUrlTest()
         {
             var registration = GetEmptyPersonalizationConfig();
@@ -222,11 +221,11 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validator = new EnvDotfilesRepoUrl(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.AreEqual(envVar.Key, EnvironmentVariableConstants.DotfilesRepository);
-            Assert.AreEqual(envVar.Value, repository);
+            Assert.Equal(envVar.Key, EnvironmentVariableConstants.DotfilesRepository);
+            Assert.Equal(envVar.Value, repository);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvDotfilesRepoUrlInvalidRepositoryTest()
         {
             var registration = GetEmptyPersonalizationConfig();
@@ -236,10 +235,10 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validator = new EnvDotfilesRepoUrl(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.IsNull(envVar);
+            Assert.Null(envVar);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvDotfilesTargetPathEmptyTest()
         {
             var registration = GetEmptyPersonalizationConfig();
@@ -247,10 +246,10 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validator = new EnvDotfilesTargetPath(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.IsNull(envVar);
+            Assert.Null(envVar);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvDotfilesTargetPathTest()
         {
             var registration = GetEmptyPersonalizationConfig();
@@ -260,11 +259,11 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validator = new EnvDotfilesTargetPath(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.AreEqual(envVar.Key, EnvironmentVariableConstants.DotfilesTargetPath);
-            Assert.AreEqual(envVar.Value, path);
+            Assert.Equal(envVar.Key, EnvironmentVariableConstants.DotfilesTargetPath);
+            Assert.Equal(envVar.Value, path);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvDotfilesInstallCommandEmptyTest()
         {
             var registration = GetEmptyPersonalizationConfig();
@@ -272,10 +271,10 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validator = new EnvDotfilesInstallCommand(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.IsNull(envVar);
+            Assert.Null(envVar);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvDotfilesInstallCommandTest()
         {
             var registration = GetEmptyPersonalizationConfig();
@@ -285,11 +284,11 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validator = new EnvDotfilesInstallCommand(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.AreEqual(envVar.Key, EnvironmentVariableConstants.DotfilesInstallCommand);
-            Assert.AreEqual(envVar.Value, script);
+            Assert.Equal(envVar.Key, EnvironmentVariableConstants.DotfilesInstallCommand);
+            Assert.Equal(envVar.Value, script);
         }
 
-        [TestMethod]
+        [Fact]
         public void EnvDefaultShellEmptyTest()
         {
             var registration = GetEmptyPersonalizationConfig();
@@ -297,34 +296,59 @@ namespace VsClk.EnvReg.WebApi.Tests
             var validator = new EnvDefaultShell(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.IsNull(envVar);
+            Assert.Null(envVar);
         }
 
-        [TestMethod]
-        public void EnvDefaultShellInvalidShellTest()
+        [Theory]
+        [InlineData(true, new string[] { "/bin/sh", "hello" })]
+        [InlineData(true, new string[] { "sh" })]
+        [InlineData(true, null)]
+        [InlineData(true, new string[] { })]
+        [InlineData(true, new string[] { "", "hello" })]
+        [InlineData(false, null)]
+        [InlineData(false, new string[] { })]
+        [InlineData(true, new string[] { "" })]
+        public void EnvDefaultShellInvalidShellTest(bool isKitchenSinkImage, string[] shells)
         {
             var registration = GetEmptyPersonalizationConfig();
-            var shell = "/bin/sh";
-            registration.Personalization.DotfilesInstallCommand = shell;
+            registration.ContainerImage = isKitchenSinkImage ? "kitchensink" : null;
+            registration.Personalization.PreferredShells = shells;
 
             var validator = new EnvDefaultShell(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.IsNull(envVar);
+            Assert.Null(envVar);
         }
 
-        [TestMethod]
-        public void EnvDefaultShellTest()
+        [Theory]
+        [MemberData(nameof(DefaultShell_Valid_MemberData))]
+        public void EnvDefaultShellTest(bool isKitchenSinkImage, string[] shells, string path)
         {
             var registration = GetEmptyPersonalizationConfig();
-            var shell = "/usr/bin/zsh";
-            registration.Personalization.DefaultShell = shell;
+            registration.ContainerImage = isKitchenSinkImage ? "kitchensink" : null;
+            registration.Personalization.PreferredShells = shells;
 
             var validator = new EnvDefaultShell(registration);
             var envVar = validator.GetEnvironmentVariable();
 
-            Assert.AreEqual(envVar.Key, EnvironmentVariableConstants.DefaultShell);
-            Assert.AreEqual(envVar.Value, shell);
+            Assert.Equal(envVar.Key, isKitchenSinkImage ?
+                EnvironmentVariableConstants.KitchenSinkDefaultShell :
+                EnvironmentVariableConstants.CustomImageDefaultShell);
+            Assert.Equal(envVar.Value, path);
+        }
+
+        public static IEnumerable<object[]> DefaultShell_Valid_MemberData()
+        {
+            yield return new object[] { false, new string[] { "cmd.exe" }, "cmd.exe" };
+            yield return new object[] { false, new string[] { "powershell.exe" }, "powershell.exe" };
+            yield return new object[] { false, new string[] { "cmd.exe", "powershell.exe", "hello", "/bin/sh" }, "cmd.exe,powershell.exe,hello,/bin/sh" };
+            yield return new object[] { false, new string[] { "", "hello" }, "hello" };
+            yield return new object[] { false, new string[] { "", "bash", "", "hello", null }, "bash,hello" };
+            yield return new object[] { true, new string[] { "zsh" }, "/usr/bin/zsh" };
+            yield return new object[] { true, new string[] { "bash" }, "/bin/bash" };
+            yield return new object[] { true, new string[] { "fish" }, "/usr/bin/fish" };
+            yield return new object[] { true, new string[] { null, "fish", "bash", "zsh" }, "/usr/bin/fish" };
+            yield return new object[] { true, new string[] { "", "sh", "/bin/bash", "zsh" }, "/usr/bin/zsh" };
         }
     }
 }

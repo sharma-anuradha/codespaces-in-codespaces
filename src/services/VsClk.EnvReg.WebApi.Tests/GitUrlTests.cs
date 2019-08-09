@@ -1,10 +1,9 @@
 ﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VsClk.EnvReg.Models.DataStore.Compute;
+using Xunit;
 
 namespace VsClk.EnvReg.WebApi.Tests
 {
-    [TestClass]
     public class GitUrlTests : Repositories.EnvironmentVariableStrategy
     {
         public GitUrlTests() : base(null)
@@ -16,7 +15,7 @@ namespace VsClk.EnvReg.WebApi.Tests
             throw new NotImplementedException();
         }
 
-        [TestMethod]
+        [Fact]
         public void GitUrlTest()
         {
             var gitURL = "https://github.com/microsoft/vscode";
@@ -31,18 +30,18 @@ namespace VsClk.EnvReg.WebApi.Tests
             var badDomainURL = "https://git.com/sathishMicrosoft/test.git";
             var validSymbolsInGitURL = "https://github.com/sathish-Microsoft/_test.git";
             var invalidSymbolsInGitURL = "https://github.com/sathish@Microsoft/%test.git";
-            Assert.IsTrue(IsValidGitUrl(gitURL));
-            Assert.IsTrue(IsValidGitUrl(gitRepoWithDotURL));
-            Assert.IsTrue(IsValidGitUrl(dotGitURL));
-            Assert.IsTrue(IsValidGitUrl(treeGitURL));
-            Assert.IsTrue(IsValidGitUrl(pullGitURL));
-            Assert.IsTrue(IsValidGitUrl(commitGitURL));
-            Assert.IsTrue(IsValidGitUrl(validSymbolsInGitURL));
-            Assert.IsTrue(IsValidGitUrl(releaseGitURL));
-            Assert.IsFalse(IsValidGitUrl(httpGitURL));
-            Assert.IsFalse(IsValidGitUrl(sshURL));
-            Assert.IsFalse(IsValidGitUrl(badDomainURL));
-            Assert.IsFalse(IsValidGitUrl(invalidSymbolsInGitURL));
+            Assert.True(IsValidGitUrl(gitURL));
+            Assert.True(IsValidGitUrl(gitRepoWithDotURL));
+            Assert.True(IsValidGitUrl(dotGitURL));
+            Assert.True(IsValidGitUrl(treeGitURL));
+            Assert.True(IsValidGitUrl(pullGitURL));
+            Assert.True(IsValidGitUrl(commitGitURL));
+            Assert.True(IsValidGitUrl(validSymbolsInGitURL));
+            Assert.True(IsValidGitUrl(releaseGitURL));
+            Assert.False(IsValidGitUrl(httpGitURL));
+            Assert.False(IsValidGitUrl(sshURL));
+            Assert.False(IsValidGitUrl(badDomainURL));
+            Assert.False(IsValidGitUrl(invalidSymbolsInGitURL));
         }
     }
 }

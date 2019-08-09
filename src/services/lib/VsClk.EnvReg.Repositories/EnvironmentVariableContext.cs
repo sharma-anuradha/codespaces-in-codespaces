@@ -2,7 +2,6 @@
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Linq;
 using VsClk.EnvReg.Models.DataStore.Compute;
 
 namespace VsClk.EnvReg.Repositories
@@ -19,7 +18,8 @@ namespace VsClk.EnvReg.Repositories
         public const string DotfilesRepository = "DOTFILES_REPOSITORY";
         public const string DotfilesTargetPath = "DOTFILES_REPOSITORY_TARGET";
         public const string DotfilesInstallCommand = "DOTFILES_INSTALL_COMMAND";
-        public const string DefaultShell = "SHELL";
+        public const string KitchenSinkDefaultShell = "SHELL";
+        public const string CustomImageDefaultShell = "CLOUDENV_SHELL";
     }
 
     public class EnvironmentVariableGenerator
@@ -288,33 +288,70 @@ namespace VsClk.EnvReg.Repositories
 
     public class EnvDefaultShell : EnvironmentVariableStrategy
     {
+        private static readonly Dictionary<string, string> AvailableShells = new Dictionary<string, string>()
+        {
+            { "bash", "/bin/bash" },
+            { "fish", "/usr/bin/fish" },
+            { "zsh", "/usr/bin/zsh" }
+        };
+
         public EnvDefaultShell(EnvironmentRegistration environmentRegistration) : base(environmentRegistration)
         { }
 
         public override EnvironmentVariable GetEnvironmentVariable()
         {
-            if (EnvironmentRegistration.Personalization != null
-                && !string.IsNullOrWhiteSpace(EnvironmentRegistration.Personalization.DefaultShell)
-                && IsSupportedShell(EnvironmentRegistration.Personalization.DefaultShell))
+            if (EnvironmentRegistration.ContainerImage == "kitchensink")
             {
-                return new EnvironmentVariable(
-                    EnvironmentVariableConstants.DefaultShell,
-                    EnvironmentRegistration.Personalization.DefaultShell);
+                // If it's the kitchen sink image, we already know the location of shell.
+                // Use that to directly set the default shell on linux container when the container is being created.
+                var supportedShell = GetSupportedShell(true);
+                return !string.IsNullOrWhiteSpace(supportedShell) ?
+                   new EnvironmentVariable(EnvironmentVariableConstants.KitchenSinkDefaultShell, supportedShell) :
+                   null;
+            }
+            else
+            {
+                // If it's a custom container image, we need to locate the shell path on the container after it has been created.
+                // Send the list of preferred shells to the container, and let the bootstrap cli set the correct default shell.
+                var supportedShells = GetSupportedShell(false);
+                return !string.IsNullOrWhiteSpace(supportedShells) ?
+                    new EnvironmentVariable(EnvironmentVariableConstants.CustomImageDefaultShell, supportedShells) :
+                    null;
+            }
+        }
+
+        private string GetSupportedShell(bool isKitchenSink)
+        {
+            // The value for this is programatically filled so doesn't need normalization.
+            if (EnvironmentRegistration.Personalization.PreferredShells != null)
+            {
+                if (isKitchenSink)
+                {
+                    foreach (var shell in EnvironmentRegistration.Personalization.PreferredShells)
+                    {
+                        if (shell != null && AvailableShells.TryGetValue(shell, out var kitchenSinkShell))
+                        {
+                            return kitchenSinkShell;
+                        }
+                    }
+                }
+                else
+                {
+                    var shells = string.Empty;
+                    foreach (var shell in EnvironmentRegistration.Personalization.PreferredShells)
+                    {
+                        if (!string.IsNullOrWhiteSpace(shell))
+                        {
+                            shells += shell + ',';
+                        }
+                    }
+
+                    // Remove the last ','
+                    return shells.Length == 0 ? shells : shells.Substring(0, shells.Length - 1);
+                }
             }
 
             return null;
-        }
-
-        private bool IsSupportedShell(string shell)
-        {
-            var availableShells = new string[] {
-                "/bin/bash",
-                "/usr/bin/fish",
-                "/usr/bin/zsh",
-            };
-
-            // The value for this is programatically filled so doesn't need normalization.
-            return availableShells.Contains(shell);
         }
     }
 }
