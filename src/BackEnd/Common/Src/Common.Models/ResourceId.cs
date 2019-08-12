@@ -43,6 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             if (resourceType == default &&
                 instanceId == default &&
                 subscriptionId == default &&
+                string.IsNullOrEmpty(resourceGroup) &&
                 location == default)
             {
                 SubscriptionId = default;
@@ -104,7 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 
         /// <summary>
         /// Parse a Cloud Environment resource token id into a <see cref="ResourceId"/>.
-        /// The expected token format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroup/{resourcegroup}/locations/{location}"
+        /// The expected token format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}"
         /// where resourceType is <see cref="ResourceType"/>
         /// where instanceId is <see cref="Guid"/>
         /// where subscriptionId is <see cref="Guid"/>
@@ -118,10 +119,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 
         /// <summary>
         /// Parse a Cloud Environment resource id token into a <see cref="ResourceId"/>.
-        /// The expected format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
+        /// The expected format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}"
         /// where resourceType is <see cref="ResourceType"/>
         /// where instanceId is <see cref="Guid"/>
         /// where subscriptionId is <see cref="Guid"/>
+        /// where resourcegroup is <see cref="string"/>
         /// where location is <see cref="AzureLocation"/>.
         /// </summary>
         /// <param name="idToken">The resource id token string.</param>
@@ -139,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 
         /// <inheritdoc/>
         /// <summary>
-        /// Returns resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
+        /// Returns resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}"
         /// </summary>
         /// <remarks>
         /// <see cref="object.ToString"/> should not return null.
@@ -189,7 +191,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             private const string LocationGroupName = "location";
             private const string AlphaNumericAndHyphen = "0-9a-zA-Z-";
             private const RegexOptions Options = RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Singleline;
-            private static readonly string IdFormat = $"{Prefix}/{ResourceTypes}/{{0}}/{Instances}/{{1}}/{Subscriptions}/{{2}}/{Locations}/{{3}}";
+            private static readonly string IdFormat = $"{Prefix}/{ResourceTypes}/{{0}}/{Instances}/{{1}}/{Subscriptions}/{{2}}/{ResourceGroups}/{{3}}{Locations}/{{4}}";
             private static readonly string ResourceTypeGroup = $"(?<{ResourceTypeGroupName}>[{AlphaNumericAndHyphen}]+)";
             private static readonly string InstanceIdGroup = $"(?<{InstanceIdGroupName}>[{AlphaNumericAndHyphen}]+)";
             private static readonly string SubscriptionIdGroup = $"(?<{SubscriptionIdGroupName}>[{AlphaNumericAndHyphen}]+)";
@@ -202,7 +204,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             {
                 return string.Format(
                     IdFormat,
-                    resourceType.ToString().ToLowerInvariant(),
+                    resourceType.ToString(),
                     instanceId,
                     subscriptionId,
                     resourceGroup,
@@ -261,9 +263,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 
                 // ResourceGroup
                 var resourceGroup = match.Groups[ResourceGroupGroupName].Value;
-                if (!string.IsNullOrEmpty(resourceGroup))
+                if (string.IsNullOrEmpty(resourceGroup))
                 {
-                    reason = $"Invalid {nameof(String)}: {resourceGroup}";
+                    reason = $"Invalid resourceGroup {nameof(String)}: {resourceGroup}";
                     return false;
                 }
 
