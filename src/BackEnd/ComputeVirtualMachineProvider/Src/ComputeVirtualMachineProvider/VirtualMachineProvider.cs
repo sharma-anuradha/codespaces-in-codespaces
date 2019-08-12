@@ -66,18 +66,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<VirtualMachineProviderAllocateResult> AllocateAsync(VirtualMachineProviderAllocateInput input, string continuationToken = null)
+        public async Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, string continuationToken = null)
         {
             Requires.NotNull(input, nameof(input));
             string resultContinuationToken = default;
             DeploymentState resultState;
             DeploymentStatusInput deploymentStatusInput;
 
-            deploymentStatusInput = await deploymentManager.BeginAllocateAsync(input).ContinueOnAnyContext();
+            deploymentStatusInput = await deploymentManager.BeginStartComputeAsync(input).ContinueOnAnyContext();
             resultContinuationToken = default;
             resultState = DeploymentState.Succeeded;
 
-            var result = new VirtualMachineProviderAllocateResult()
+            var result = new VirtualMachineProviderStartComputeResult()
             {
                 ContinuationToken = resultContinuationToken,
                 ResourceId = input.ResourceId,

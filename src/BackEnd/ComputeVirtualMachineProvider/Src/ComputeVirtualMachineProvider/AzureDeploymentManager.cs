@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 { "networkInterfaceName", new Dictionary<string, object>() { { Key, $"{resourceId.InstanceId}-nic" } } },
             };
 
-            var deploymentName = $"Create-{resourceId.InstanceId}";
+            var deploymentName = $"Create-Vm-{resourceId.InstanceId}";
 
             IDeployment result = await azure.Deployments.Define(deploymentName)
                 .WithExistingResourceGroup(input.AzureResourceGroup)
@@ -59,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<DeploymentStatusInput> BeginAllocateAsync(VirtualMachineProviderAllocateInput input)
+        public async Task<DeploymentStatusInput> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input)
         {
             IAzure azure = await clientFactory.GetAzureClientAsync(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
             IVirtualMachine linuxVM = await azure.VirtualMachines
@@ -105,14 +105,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return scriptString.ToBase64Encoded();
         }
 
-        private static string GetCustomScriptForVmAssign(string scriptName, VirtualMachineProviderAllocateInput input)
+        private static string GetCustomScriptForVmAssign(string scriptName, VirtualMachineProviderStartComputeInput input)
         {
             string scriptString = GetEmbeddedResource(scriptName);
             scriptString = AddParamsToScript(input, scriptString);
             return scriptString.ToBase64Encoded();
         }
 
-        private static string AddParamsToScript(VirtualMachineProviderAllocateInput input, string scriptString)
+        private static string AddParamsToScript(VirtualMachineProviderStartComputeInput input, string scriptString)
         {
             var camelCaseSerializer = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
             var storageParams = JsonConvert.SerializeObject(input.FileShareConnection, Formatting.None, camelCaseSerializer);

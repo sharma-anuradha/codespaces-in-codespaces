@@ -71,20 +71,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             } while (statusCheckResult.Status.Equals(DeploymentState.InProgress.ToString()));
             timerWait.Stop();
             System.Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
-
-            var timerAllocate = Stopwatch.StartNew();
             var fileShareInfo = new ShareConnectionInfo("storageAccountName1",
                                                         "storageAccountKey1",
                                                         "storageShare1",
                                                         "storageFileName1");
-            var input1 = new VirtualMachineProviderAllocateInput(createDeploymentStatusInput.ResourceId,
+            var startComputeInput = new VirtualMachineProviderStartComputeInput(createDeploymentStatusInput.ResourceId,
                                                                  fileShareInfo,
-                                                                 new Dictionary<string, string>() { {"key1","value1"}, {"key2","value2"}});
-            
-            VirtualMachineProviderAllocateResult assignResult = await computeProvider.AllocateAsync(input1);
+                                                                 new Dictionary<string, string>() {
+                                                                     { "SESSION_ID", "value1" },
+                                                                     { "SESSION_TOKEN", "value2" },
+                                                                     { "SESSION_CALLBACK", "value2" } });
+
+            await StartCompute(computeProvider, startComputeInput);
+        }
+
+        private static async Task StartCompute(VirtualMachineProvider computeProvider, VirtualMachineProviderStartComputeInput startComputeInput)
+        {
+            var timerAllocate = Stopwatch.StartNew();
+            VirtualMachineProviderStartComputeResult startComputeResult = await computeProvider.StartComputeAsync(startComputeInput);
             timerAllocate.Stop();
             System.Console.WriteLine($"Time taken to allocate VM {timerAllocate.Elapsed.TotalSeconds}");
-            Assert.NotNull(assignResult);
+            Assert.NotNull(startComputeResult);
         }
     }
 }

@@ -14,7 +14,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public string AuthFilePath { get; }
 
         private AzureDeploymentHelper azureDeploymentHelper;
-        private readonly ResourceId resourceId;
 
         public AzureVmProviderTestsBase()
         {
@@ -25,7 +24,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             ResourceGroupName = $"test-vm-{Guid.NewGuid()}";
             AuthFilePath = config["AZURE_AUTH_LOCATION"];
             azureDeploymentHelper = new AzureDeploymentHelper(new AzureClientFactoryMock(AuthFilePath));
-            resourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), SubscriptionId, ResourceGroupName, AzureLocation.EastUs);
             azureDeploymentHelper.CreateResourceGroupAsync(SubscriptionId, ResourceGroupName, AzureLocation.EastUs).Wait();
         }
 

@@ -11,9 +11,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     /// <summary>
     ///
     /// </summary>
-    public class VirtualMachineProviderAllocateInput
+    public class VirtualMachineProviderStartComputeInput
     {
-        public VirtualMachineProviderAllocateInput(ResourceId resourceId, ShareConnectionInfo shareConnectionInfo, Dictionary<string,string> inputParams)
+        public VirtualMachineProviderStartComputeInput(ResourceId resourceId, ShareConnectionInfo shareConnectionInfo, Dictionary<string,string> inputParams)
         {
             this.ResourceId = resourceId;
             this.FileShareConnection = shareConnectionInfo;

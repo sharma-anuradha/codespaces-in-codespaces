@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
     public interface IDeploymentManager
     {
-        Task<DeploymentStatusInput> BeginAllocateAsync(VirtualMachineProviderAllocateInput input);
+        Task<DeploymentStatusInput> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input);
 
         Task<DeploymentStatusInput> BeginCreateAsync(VirtualMachineProviderCreateInput input);
 

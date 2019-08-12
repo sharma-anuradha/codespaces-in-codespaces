@@ -48,6 +48,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         ///     can be used to call the StatusCheckAsync to find out the status
         ///     of the create request.
         /// </returns>
-        Task<VirtualMachineProviderAllocateResult> AllocateAsync(VirtualMachineProviderAllocateInput input, string continuationToken = null);
+        Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, string continuationToken = null);
     }
 }
