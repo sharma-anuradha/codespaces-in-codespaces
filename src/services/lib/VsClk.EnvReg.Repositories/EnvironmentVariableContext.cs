@@ -323,7 +323,7 @@ namespace VsClk.EnvReg.Repositories
         private string GetSupportedShell(bool isKitchenSink)
         {
             // The value for this is programatically filled so doesn't need normalization.
-            if (EnvironmentRegistration.Personalization.PreferredShells != null)
+            if (EnvironmentRegistration?.Personalization?.PreferredShells != null)
             {
                 if (isKitchenSink)
                 {
