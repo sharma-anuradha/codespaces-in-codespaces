@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.Azure.Storage.Queue;
+using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
@@ -21,7 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="queueName">The name of the queue to get.</param>
         /// <returns>The cloud queue object that can be used to operate on the queue.</returns>
-        CloudQueue GetQueue([ValidatedNotNull] string queueName);
-
+        Task<CloudQueue> GetQueueAsync([ValidatedNotNull] string queueName);
     }
 }

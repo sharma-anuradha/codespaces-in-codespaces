@@ -9,7 +9,9 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
+using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.File;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
@@ -55,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 .WithExistingResourceGroup(azureResourceGroup)
                 .WithGeneralPurposeAccountKindV2()
                 .WithOnlyHttpsTraffic()
-                .WithSku(Azure.Management.Storage.Fluent.StorageAccountSkuType.Standard_LRS)
+                .WithSku(StorageAccountSkuType.Standard_LRS)
                 .CreateAsync();
             return storageAccount.Id;
         }
@@ -71,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             var storageAccount = await azure.StorageAccounts.GetByIdAsync(azureStorageAccountId);
             var storageAccountName = storageAccount.Name;
             var storageAccountKey = await GetStorageAccountKey(storageAccount);
-            var storageCreds = new Azure.Storage.Auth.StorageCredentials(storageAccountName, storageAccountKey);
+            var storageCreds = new StorageCredentials(storageAccountName, storageAccountKey);
             var csa = new CloudStorageAccount(storageCreds, useHttps: true);
             var fileClient = csa.CreateCloudFileClient();
             var fileShare = fileClient.GetShareReference(StorageMountableShareName);
@@ -90,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             var storageAccount = await azure.StorageAccounts.GetByIdAsync(azureStorageAccountId);
             var storageAccountName = storageAccount.Name;
             var storageAccountKey = await GetStorageAccountKey(storageAccount);
-            var storageCreds = new Azure.Storage.Auth.StorageCredentials(storageAccountName, storageAccountKey);
+            var storageCreds = new StorageCredentials(storageAccountName, storageAccountKey);
             var csa = new CloudStorageAccount(storageCreds, useHttps: true);
 
             var srcBlobUri = new Uri(srcBlobUrl);
@@ -113,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             var storageAccount = await azure.StorageAccounts.GetByIdAsync(azureStorageAccountId);
             var storageAccountName = storageAccount.Name;
             var storageAccountKey = await GetStorageAccountKey(storageAccount);
-            var storageCreds = new Azure.Storage.Auth.StorageCredentials(storageAccountName, storageAccountKey);
+            var storageCreds = new StorageCredentials(storageAccountName, storageAccountKey);
             var csa = new CloudStorageAccount(storageCreds, useHttps: true);
             var fileClient = csa.CreateCloudFileClient();
             var fileShare = fileClient.GetShareReference(StorageMountableShareName);
@@ -207,7 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         azureAppKey,
                         azureTenant,
                         AzureEnvironment.AzureGlobalCloud);
-                return Azure.Management.Fluent.Azure.Authenticate(creds)
+                return Microsoft.Azure.Management.Fluent.Azure.Authenticate(creds)
                     .WithSubscription(azureSubscriptionId);
             }
             catch (InvalidOperationException ex)
@@ -221,7 +223,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             return ResourceId.FromString(resourceId).SubscriptionId;
         }
 
-        private async Task<string> GetStorageAccountKey(Azure.Management.Storage.Fluent.IStorageAccount storageAccount)
+        private async Task<string> GetStorageAccountKey(IStorageAccount storageAccount)
         {
             var keys = await storageAccount.GetKeysAsync();
             var key1 = keys[0].Value;

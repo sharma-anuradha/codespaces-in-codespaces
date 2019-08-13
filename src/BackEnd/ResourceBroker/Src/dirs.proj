@@ -4,6 +4,7 @@
     <ProjectReference Include="ResourceBroker\ResourceBroker.csproj" />
     <ProjectReference Include="ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
     <ProjectReference Include="ResourceBroker.Models\ResourceBroker.Models.csproj" />
+    <ProjectReference Include="ResourceBroker.Extensions\ResourceBroker.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

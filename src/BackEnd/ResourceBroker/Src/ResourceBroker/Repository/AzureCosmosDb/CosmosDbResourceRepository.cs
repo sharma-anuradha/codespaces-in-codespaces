@@ -2,8 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
@@ -12,7 +15,7 @@ using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.CosmosDb
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb
 {
     /// <summary>
     /// A document repository of <see cref="ExampleEntity"/>.
@@ -23,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// The name of the collection in CosmosDB.
         /// </summary>
-        public const string CollectionName = "Resources";
+        public const string CollectionName = "resources";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CosmosDbResourceRepository"/> class.
@@ -91,16 +94,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public async Task<ResourceRecord> GetUnassignedResourceAsync(
             string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
         {
-            var items = await QueryAsync(
-                x => x.Where(p => p.SkuName == skuName
-                        && p.Type == type
-                        && p.Location == location
-                        && p.IsAssigned == false)
-                    .OrderBy(p => p.Created)
-                    .Take(1)
-                    .AsDocumentQuery(), logger);
+            var query = new SqlQuerySpec(
+                @"SELECT TOP 1 * 
+                FROM c
+                WHERE c.skuName = @skuName
+                    and c.location = @location
+                    and c.type = @type
+                    and c.isAssigned = @isAssigned
+                ORDER BY c.ready",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@skuName", Value = skuName },
+                    new SqlParameter { Name = "@type", Value = type.ToString() },
+                    new SqlParameter { Name = "@location", Value = location.ToLowerInvariant() },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                });
 
-            return items?.FirstOrDefault();
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<ResourceRecord>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var result = items.FirstOrDefault();
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetUnassignedCountAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1) 
+                FROM c 
+                WHERE c.skuName = @skuName
+                    AND c.type = @type
+                    AND c.location = @location
+                    AND c.isAssigned = @isAssigned",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@skuName", Value = skuName },
+                    new SqlParameter { Name = "@type", Value = type.ToString() },
+                    new SqlParameter { Name = "@location", Value = location.ToLowerInvariant() },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var count = items.FirstOrDefault();
+
+            return count;
         }
     }
 }

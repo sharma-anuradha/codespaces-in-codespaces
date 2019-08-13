@@ -24,5 +24,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
         /// <param name="logger"></param>
         /// <returns></returns>
         Task<ResourceRecord> GetUnassignedResourceAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger);
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="skuName"></param>
+        /// <param name="type"></param>
+        /// <param name="location"></param>
+        /// <param name="logger"></param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<int> GetUnassignedCountAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger);
     }
 }

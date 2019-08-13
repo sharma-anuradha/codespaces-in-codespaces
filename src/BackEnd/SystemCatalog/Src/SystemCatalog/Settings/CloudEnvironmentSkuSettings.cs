@@ -35,6 +35,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings
         public List<AzureLocation> OverrideLocations { get; } = new List<AzureLocation>();
 
         /// <summary>
+        /// Gets or sets the pool level that we would like to be maintained, e.g., 25.
+        /// </summary>
+        [JsonProperty]
+        public int? OverridePoolLevel { get; set; }
+
+        /// <summary>
         /// Gets or sets the Azure compute SKU family, e.g., "standardFSv2Family".
         /// </summary>
         [JsonProperty(Required = Required.Always)]

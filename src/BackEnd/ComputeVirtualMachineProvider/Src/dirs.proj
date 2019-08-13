@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
     <ProjectReference Include="ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
+    <ProjectReference Include="ComputeVirtualMachineProvider.Extensions\ComputeVirtualMachineProvider.Extensions.csproj" />
     <ProjectReference Include="ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
   </ItemGroup>
 

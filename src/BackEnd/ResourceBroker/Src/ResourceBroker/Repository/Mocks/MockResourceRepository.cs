@@ -3,10 +3,13 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
@@ -20,38 +23,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     /// </summary>
     public class MockResourceRepository : IResourceRepository
     {
-        private IDictionary<string, IList<ResourceRecord>> Store { get; }
-            = new Dictionary<string, IList<ResourceRecord>>();
+        /// <summary>
+        /// 
+        /// </summary>
+        public MockResourceRepository()
+        {
+            Random = new Random();
+        }
+
+        private Random Random { get; }
+
+        private ConcurrentDictionary<string, ResourceRecord> Store { get; }
+            = new ConcurrentDictionary<string, ResourceRecord>();
 
         /// <inheritdoc/>
         public async Task<ResourceRecord> GetUnassignedResourceAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
         {
-            var key = BuildKey(skuName, type, location);
-            if (Store.TryGetValue(key, out var collection))
-            {
-                var items = collection
-                    .Where(x => x.IsAssigned == false)
-                    .OrderBy(x => x.Created);
+            await Task.Delay(Random.Next(100, 1000));
 
-                return items.FirstOrDefault();
-            }
+            var items = Store
+                .Select(x => x.Value)
+                .Where(x => x.SkuName == skuName
+                    && x.Type == type
+                    && x.Location == location
+                    && x.IsAssigned == false)
+                .OrderBy(x => x.Ready);
 
-            return null;
+            return items.FirstOrDefault();
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceRecord> UpdateAsync(ResourceRecord record, IDiagnosticsLogger logger)
+        public async Task<int> GetUnassignedCountAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
         {
-            var key = BuildKey(record.SkuName, record.Type, record.Location);
-            if (Store.TryGetValue(key, out var collection))
-            {
-                collection.Remove(record);
-                collection.Add(record);
+            await Task.Delay(Random.Next(100, 1000));
 
-                return record;
-            }
-
-            return null;
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.SkuName == skuName
+                    && x.Type == type
+                    && x.Location == location
+                    && x.IsAssigned == false)
+                .Count();
         }
 
         /// <inheritdoc/>
@@ -67,32 +79,73 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <inheritdoc/>
-        public Task<ResourceRecord> CreateAsync(ResourceRecord document, IDiagnosticsLogger logger)
+        public Task<IEnumerable<TR>> QueryAsync<TR>(Func<IDocumentClient, Uri, FeedOptions, IDocumentQuery<TR>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<ResourceRecord> CreateOrUpdateAsync(ResourceRecord document, IDiagnosticsLogger logger)
+        public async Task<ResourceRecord> UpdateAsync(ResourceRecord document, IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Update(document);
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeleteAsync(DocumentDbKey key, IDiagnosticsLogger logger)
+        public async Task<ResourceRecord> CreateAsync(ResourceRecord document, IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Create(document);
         }
 
         /// <inheritdoc/>
-        public Task<ResourceRecord> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)
+        public async Task<ResourceRecord> CreateOrUpdateAsync(ResourceRecord document, IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Update(document);
         }
 
-        private string BuildKey(string skuName, ResourceType type, string location)
+        /// <inheritdoc/>
+        public async Task<bool> DeleteAsync(DocumentDbKey key, IDiagnosticsLogger logger)
         {
-            return $"{skuName}_{type}_{location}";
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Delete(key);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ResourceRecord> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Get(key);
+        }
+
+        private ResourceRecord Get(DocumentDbKey key)
+        {
+            Store.TryGetValue(key.Id, out var resource);
+            return resource;
+        }
+
+        private bool Delete(DocumentDbKey key)
+        {
+            return Store.TryRemove(key.Id, out var resource);
+        }
+
+        private ResourceRecord Update(ResourceRecord document)
+        {
+            Delete(document.Id);
+            Create(document);
+            return document;
+        }
+
+        private ResourceRecord Create(ResourceRecord document)
+        {
+            Store.TryAdd(document.Id, document);
+            return document;
         }
     }
 }

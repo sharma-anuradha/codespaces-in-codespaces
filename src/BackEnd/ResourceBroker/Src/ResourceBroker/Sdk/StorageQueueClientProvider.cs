@@ -2,10 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Threading.Tasks;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.Queue;
-using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
@@ -16,15 +16,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageQueueClientProvider"/> class.
         /// </summary>
-        /// <param name="options">The <see cref="StorageAccountSettings"/> options instance.</param>
+        /// <param name="storageAccountSettings">The <see cref="StorageAccountSettings"/> options instance.</param>
         public StorageQueueClientProvider(
-            [ValidatedNotNull] IOptions<StorageAccountOptions> options)
+            StorageAccountSettings storageAccountSettings)
         {
-            Requires.NotNull(options, nameof(options));
-            var settings = options.Value.Settings;
+            Requires.NotNull(storageAccountSettings, nameof(storageAccountSettings));
 
-            var storageCredentials = new StorageCredentials(settings.StorageAccountName, settings.StorageAccountKey);
+            var storageCredentials = new StorageCredentials(
+                storageAccountSettings.StorageAccountName,
+                storageAccountSettings.StorageAccountKey);
+
             var storageAccount = new CloudStorageAccount(storageCredentials, useHttps: true);
+
             QueueClient = new CloudQueueClient(storageAccount.QueueStorageUri, storageCredentials);
         }
 
@@ -32,10 +35,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         public CloudQueueClient QueueClient { get; }
 
         /// <inheritdoc/>
-        public CloudQueue GetQueue([ValidatedNotNull] string queueName)
+        public async Task<CloudQueue> GetQueueAsync([ValidatedNotNull] string queueName)
         {
             Requires.NotNullOrEmpty(queueName, nameof(queueName));
-            return QueueClient.GetQueueReference(queueName);
+
+            var client = QueueClient.GetQueueReference(queueName);
+
+            await client.CreateIfNotExistsAsync();
+
+            return client;
         }
     }
 }

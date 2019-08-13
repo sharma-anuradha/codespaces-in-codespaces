@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="ScalingEngine.Test\ScalingEngine.Test.csproj" />
+  </ItemGroup>
+
+</Project>

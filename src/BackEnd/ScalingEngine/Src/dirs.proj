@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="CapacityManagement.Abstractions\CapacityManagement.Abstractions.csproj" />
+    <ProjectReference Include="CapacityManagement.Models\CapacityManagement.Models.csproj" />
+    <ProjectReference Include="CapacityManagement\CapacityManagement.csproj" />
+    <ProjectReference Include="CapacityManagement.Extensions\CapacityManagement.Extensions.csproj" />
+  </ItemGroup>
+
+</Project>

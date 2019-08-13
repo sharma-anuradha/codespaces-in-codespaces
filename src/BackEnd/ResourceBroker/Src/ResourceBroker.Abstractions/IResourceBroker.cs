@@ -10,7 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions
 {
     /// <summary>
-    /// The resource broker that manages alocation, deallocation, and other high-level resource operations.
+    /// The resource broker that manages allocation, deallocation, and other high-level resource operations.
     /// </summary>
     public interface IResourceBroker
     {
@@ -38,6 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// <param name="environmentVariables">The compute environment variables.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task.</returns>
-        Task StartComputeAsync(string computeResourceIdToken, string storageResourceIdToken, Dictionary<string, string> environmentVariables, IDiagnosticsLogger logger);
+        Task StartComputeAsync(
+            string computeResourceIdToken,
+            string storageResourceIdToken,
+            IDictionary<string, string> environmentVariables,
+            IDiagnosticsLogger logger);
     }
 }

@@ -19,9 +19,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
+    <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Extensions\ComputeVirtualMachineProvider.Extensions.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Models\ResourceBroker.Models.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common.Abstractions\Common.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Extensions\ResourceBroker.Extensions.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj" />
+    <ProjectReference Include="..\..\..\ScalingEngine\Src\ScalingEngine.Extensions\ScalingEngine.Extensions.csproj" />
+    <ProjectReference Include="..\..\..\ScalingEngine\Src\ScalingEngine\ScalingEngine.csproj" />
+    <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Extensions\StorageFileShareProvider.Extensions.csproj" />
     <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Extensions\SystemCatalog.Extensions.csproj" />
     <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog\SystemCatalog.csproj" />

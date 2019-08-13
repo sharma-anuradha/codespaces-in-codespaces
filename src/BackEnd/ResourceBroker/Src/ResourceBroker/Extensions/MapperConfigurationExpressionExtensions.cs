@@ -3,6 +3,7 @@
 // </copyright>
 
 using AutoMapper;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
@@ -20,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public static void AddResourceBroker(this IMapperConfigurationExpression cfg)
         {
             cfg.CreateMap<ResourceRecord, AllocateResult>();
+            cfg.CreateMap<ScalingInput, ResourcePoolDefinition>();
         }
     }
 }

@@ -3,8 +3,9 @@
 // </copyright>
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions
 {
     /// <summary>
     /// Extensions methods for <see cref="IApplicationBuilder"/> related to the system catalog.
@@ -15,13 +16,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Uses and validates the system catalog.
         /// </summary>
         /// <param name="app">The aspnet core application builder.</param>
+        /// <param name="env">The hosting environment.</param>
         /// <returns>The applicaton builder instance.</returns>
-        public static IApplicationBuilder UseResourceBroker(
-            this IApplicationBuilder app)
+        public static IApplicationBuilder UseScalingEngine(
+            this IApplicationBuilder app, IHostingEnvironment env)
         {
             Requires.NotNull(app, nameof(app));
 
-            // Nothing currently
+            // NOTE: Nothing to see here yet.
 
             return app;
         }

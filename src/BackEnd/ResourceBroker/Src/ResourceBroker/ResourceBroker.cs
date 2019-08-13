@@ -20,21 +20,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceBroker"/> class.
         /// </summary>
-        /// <param name="resourcePool"></param>
-        /// <param name="mapper"></param>
-        public ResourceBroker(IResourcePool resourcePool, IMapper mapper)
+        /// <param name="resourcePool">Resource pool that should be used.</param>
+        /// <param name="resourceManager">Resource that should be used</param>
+        /// <param name="mapper">Mapper that should be used</param>
+        public ResourceBroker(
+            IResourcePool resourcePool,
+            IResourceManager resourceManager,
+            IMapper mapper)
         {
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
+            ResourceManager = Requires.NotNull(resourceManager, nameof(resourceManager));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
 
         private IResourcePool ResourcePool { get; }
+
+        private IResourceManager ResourceManager { get; }
 
         private IMapper Mapper { get; }
 
         /// <inheritdoc/>
         public async Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
         {
+            // Try and get item from the pool
             var item = await ResourcePool.TryGetAsync(input, logger);
             if (item == null)
             {
@@ -51,9 +59,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task StartComputeAsync(string computeResourceIdToken, string storageResourceIdToken, Dictionary<string, string> environmentVariables, IDiagnosticsLogger logger)
+        public async Task StartComputeAsync(
+            string computeResourceIdToken,
+            string storageResourceIdToken,
+            IDictionary<string, string> environmentVariables,
+            IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            // Start compute
+            await ResourceManager.StartComputeAsync(
+                computeResourceIdToken,
+                storageResourceIdToken,
+                environmentVariables,
+                logger);
         }
     }
 }

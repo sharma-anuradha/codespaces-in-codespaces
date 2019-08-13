@@ -41,6 +41,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
                 .OrderBy(l => Enum.GetName(typeof(AzureLocation), l))
                 .ToList());
 
+            var defaultPoolLevel = skuCatalogSettings.DefaultPoolLevel;
+
             foreach (var cloudEnvironmentSettings in skuCatalogSettings.CloudEnvironmentSkuSettings)
             {
                 var key = cloudEnvironmentSettings.ComputeSkuName;
@@ -64,6 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
                         .ToList());
                 }
 
+                var poolLevel = cloudEnvironmentSettings.OverridePoolLevel.GetValueOrDefault(defaultPoolLevel);
+
                 var cloudEnvironment = new CloudEnvironmentSku(
                     cloudEnvironmentSettings.SkuName,
                     cloudEnvironmentSettings.SkuDisplayName,
@@ -76,7 +80,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
                     cloudEnvironmentSettings.StorageSkuName,
                     cloudEnvironmentSettings.StorageSizeInGB,
                     cloudEnvironmentSettings.StorageCloudEnvironmentUnits,
-                    cloudEnvironmentSettings.ComputeCloudEnvironmentUnits);
+                    cloudEnvironmentSettings.ComputeCloudEnvironmentUnits,
+                    poolLevel);
 
                 CloudEnvironmentSkuDictionary.Add(key, cloudEnvironment);
             }

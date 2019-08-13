@@ -8,12 +8,19 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 using Newtonsoft.Json;
@@ -70,51 +77,84 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             var appSettings = appSettingsConfiguration.Get<AppSettings>();
             services.Configure<AppSettings>(appSettingsConfiguration);
 
+            var storageAccountSettingsConfiguration = Configuration.GetSection("StorageAccountSettings");
+            var storageAccountSettings = storageAccountSettingsConfiguration.Get<StorageAccountSettings>();
+            services.Configure<StorageAccountSettings>(storageAccountSettingsConfiguration);
+            services.AddSingleton(storageAccountSettings);
+
+            // Common services
+            services.AddSingleton<IDistributedLease, DistributedLease>();
+
+            // Logging setup
             var loggingBaseValues = new LoggingBaseValues
             {
                 ServiceName = "BackendWebApi",
                 CommitId = appSettings.GitCommit,
             };
+            var loggerFactory = new DefaultLoggerFactory();
+            services.AddSingleton(
+                loggerFactory.New(new LogValueSet
+                    {
+                        { LoggingConstants.Service, loggingBaseValues.ServiceName },
+                        { LoggingConstants.CommitId, loggingBaseValues.CommitId },
+                    }));
 
             // Mappers services
             var config = new MapperConfiguration(cfg =>
-            {
-                cfg.AddResourceBroker();
-            });
+                {
+                    cfg.AddResourceBroker();
+                });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);
-
-            // DocumentDB Client Provider
-            services.AddDocumentDbClientProvider(
-                options =>
-                {
-                    options.DatabaseId = "fake!";
-                    options.AuthKey = "fake";
-                    options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
-                    options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
-                    options.DatabaseId = "fake";
-                    options.HostUrl = "fake";
-                    options.PreferredLocation = "eastus";
-                    options.UseMultipleWriteLocations = false;
-                });
 
             // System Catalog
             var azureSubscriptionCatalogSettings = Configuration.GetSection("AzureSubscriptionCatalogSettings").Get<AzureSubscriptionCatalogSettings>();
             var skuCatalogSettings = Configuration.GetSection("SkuCatalogSettings").Get<SkuCatalogSettings>();
+
             services.AddSystemCatalog(
                 azureSubscriptionCatalogSettings,
                 skuCatalogSettings);
 
             // Resource Broker
-            var storageAccountSettings = Configuration.GetSection("StorageAccountSettings").Get<StorageAccountSettings>();
+            var resourceBrokerSettingsConfiguration = Configuration.GetSection("ResourceBrokerSettings");
+            var resourceBrokerSettings = resourceBrokerSettingsConfiguration.Get<ResourceBrokerSettings>();
+            services.Configure<ResourceBrokerSettings>(resourceBrokerSettingsConfiguration);
+            services.AddSingleton(resourceBrokerSettings);
+
             services.AddResourceBroker(
                 storageAccountSettings,
-                appSettings.UseMocksForLocalDevelopment);
+                resourceBrokerSettings,
+                appSettings);
+
+            // Scaling Engine
+            services.AddScalingEngine(
+                appSettings);
+
+            // Compute Provider
+            services.AddComputeVirtualMachineProvider(
+                appSettings);
+
+            // Storage Provider
+            services.AddStorageFileShareProvider(
+                appSettings);
 
             // VsSaaS services
-            services.AddVsSaaSHosting(
-                HostingEnvironment,
-                loggingBaseValues);
+            services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
+            services.AddBlobStorageClientProvider<BlobStorageClientProvider>(x =>
+                {
+                    x.AccountKey = storageAccountSettings.StorageAccountKey;
+                    x.AccountName = storageAccountSettings.StorageAccountName;
+                });
+            services.AddDocumentDbClientProvider(options =>
+                {
+                    options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
+                    options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
+                    options.HostUrl = appSettings.AzureCosmosDbHost;
+                    options.AuthKey = appSettings.AzureCosmosDbKey;
+                    options.DatabaseId = appSettings.AzureCosmosDbId;
+                    options.PreferredLocation = appSettings.AzureCosmosPreferredLocation;
+                    options.UseMultipleWriteLocations = false;
+                });
 
             // OpenAPI/swagger services
             services.AddSwaggerGen(x =>
@@ -140,8 +180,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             var isDevelopment = env.IsDevelopment();
 
             // System Components
-            app.UseSystemCatalog();
-            app.UseResourceBroker();
+            app.UseSystemCatalog(env);
+            app.UseScalingEngine(env);
+            app.UseResourceBroker(env);
+            app.UseComputeVirtualMachineProvider(env);
+            app.UseStorageFileShareProvider(env);
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(isDevelopment);

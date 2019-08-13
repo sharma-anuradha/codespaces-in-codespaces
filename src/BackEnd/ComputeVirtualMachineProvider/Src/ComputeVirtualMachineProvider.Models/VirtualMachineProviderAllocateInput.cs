@@ -1,4 +1,4 @@
-﻿// <copyright file="VirtualMachineProviderAssignInput.cs" company="Microsoft">
+﻿// <copyright file="VirtualMachineProviderAllocateInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,14 +13,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     /// </summary>
     public class VirtualMachineProviderStartComputeInput
     {
-        public VirtualMachineProviderStartComputeInput(ResourceId resourceId, ShareConnectionInfo shareConnectionInfo, Dictionary<string,string> inputParams)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="resourceId"></param>
+        /// <param name="shareConnectionInfo"></param>
+        /// <param name="inputParams"></param>
+        public VirtualMachineProviderStartComputeInput(
+            ResourceId resourceId,
+            ShareConnectionInfo shareConnectionInfo,
+            IDictionary<string,string> inputParams)
         {
-            this.ResourceId = resourceId;
-            this.FileShareConnection = shareConnectionInfo;
-            this.VmInputParams = inputParams;
+            ResourceId = resourceId;
+            FileShareConnection = shareConnectionInfo;
+            VmInputParams = inputParams;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public ResourceId ResourceId { get; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public ShareConnectionInfo FileShareConnection { get; }
-        public Dictionary<string, string> VmInputParams { get; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IDictionary<string, string> VmInputParams { get; }
     }
 }

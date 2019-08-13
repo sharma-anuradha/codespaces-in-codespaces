@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -72,5 +73,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions
         /// Gets the number of Cloud Environment Units that will be billed for this SKU when compute is active.
         /// </summary>
         decimal ComputeCloudEnvironmentUnits { get; }
+
+        /// <summary>
+        /// Gets the pool size that should be maintained.
+        /// </summary>
+        int PoolLevel { get; }
     }
 }

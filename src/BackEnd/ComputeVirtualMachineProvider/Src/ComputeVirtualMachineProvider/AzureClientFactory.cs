@@ -53,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         azureTenant,
                         AzureEnvironment.AzureGlobalCloud);
 
-                return Azure.Management.Fluent.Azure.Authenticate(creds)
+                return Microsoft.Azure.Management.Fluent.Azure.Authenticate(creds)
                     .WithSubscription(azureSubscriptionId);
             }
             catch (InvalidOperationException ex)

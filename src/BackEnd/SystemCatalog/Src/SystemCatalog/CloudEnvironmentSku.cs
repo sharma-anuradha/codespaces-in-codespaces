@@ -28,6 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
         /// <param name="storageSizeInGB">The azure storage size in GB.</param>
         /// <param name="storageCloudEnvironmentUnits">The cloud environment units for this sku when active.</param>
         /// <param name="computeCloudEnvironmentUnits">The cloud environment units for this sku when inactive.</param>
+        /// <param name="poolLevel">The size of the pool that should be maintained.</param>
         public CloudEnvironmentSku(
             string skuName,
             string skuDisplayName,
@@ -40,7 +41,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
             string storageSkuName,
             int storageSizeInGB,
             decimal storageCloudEnvironmentUnits,
-            decimal computeCloudEnvironmentUnits)
+            decimal computeCloudEnvironmentUnits,
+            int poolLevel)
         {
             Requires.NotNullOrEmpty(skuName, nameof(skuName));
             Requires.NotNullOrEmpty(skuDisplayName, nameof(skuDisplayName));
@@ -54,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
             Requires.Argument(storageSizeInGB > 0, nameof(storageSizeInGB), "The storage size must be greater than zero.");
             Requires.Argument(storageCloudEnvironmentUnits >= 0m, nameof(storageCloudEnvironmentUnits), "The cloud environment units must be greater than or equal to 0.");
             Requires.Argument(computeCloudEnvironmentUnits >= 0m, nameof(computeCloudEnvironmentUnits), "The cloud environment units must be greater than or equal to 0.");
+            Requires.Argument(poolLevel > 0, nameof(poolLevel), "The pool level must be greater than zero.");
 
             SkuName = skuName;
             SkuDisplayName = skuDisplayName;
@@ -67,6 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
             StorageSizeInGB = storageSizeInGB;
             StorageCloudEnvironmentUnits = storageCloudEnvironmentUnits;
             ComputeCloudEnvironmentUnits = computeCloudEnvironmentUnits;
+            PoolLevel = poolLevel;
         }
 
         /// <inheritdoc/>
@@ -104,5 +108,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog
 
         /// <inheritdoc/>
         public decimal ComputeCloudEnvironmentUnits { get; }
+
+        /// <inheritdoc/>
+        public int PoolLevel { get; }
     }
 }

@@ -59,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 .WithExistingResourceGroup(input.AzureResourceGroup)
                 .WithTemplate(VmTemplateJson)
                 .WithParameters(JsonConvert.SerializeObject(parameters))
-                .WithMode(Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
+                .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
                 .BeginCreateAsync()
                 .ContinueOnAnyContext();
 
@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
             var privateSettings = new Hashtable();
             privateSettings.Add("script", GetCustomScriptForVmAssign("vm_assign.sh", input));
-            var parameters = new Azure.Management.Compute.Fluent.Models.VirtualMachineExtensionUpdate()
+            var parameters = new VirtualMachineExtensionUpdate()
             {
                 ProtectedSettings = privateSettings,
                 ForceUpdateTag = "true",

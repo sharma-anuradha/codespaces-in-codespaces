@@ -6,6 +6,7 @@
     <ProjectReference Include="Common\dirs.proj" />
     <ProjectReference Include="ComputeVirtualMachineProvider\dirs.proj" />
     <ProjectReference Include="ResourceBroker\dirs.proj" />
+    <ProjectReference Include="ScalingEngine\dirs.proj" />
     <ProjectReference Include="StorageFileShareProvider\dirs.proj" />
     <ProjectReference Include="SystemCatalog\dirs.proj" />
   </ItemGroup>

@@ -16,7 +16,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// <param name="storageAccountKey"><see cref="StorageAccountKey"/>.</param>
         /// <param name="storageShareName"><see cref="StorageShareName"/>.</param>
         /// <param name="storageFileName"><see cref="StorageFileName"/>.</param>
-        public ShareConnectionInfo(string storageAccountName, string storageAccountKey, string storageShareName, string storageFileName)
+        public ShareConnectionInfo(
+            string storageAccountName,
+            string storageAccountKey,
+            string storageShareName,
+            string storageFileName)
         {
             StorageAccountName = storageAccountName;
             StorageAccountKey = storageAccountKey;
@@ -25,23 +29,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         }
 
         /// <summary>
-        /// Gets the Azure storage account name.
+        /// Gets or sets the Azure storage account name.
         /// </summary>
-        public string StorageAccountName { get; }
+        public string StorageAccountName { get; set; }
 
         /// <summary>
-        /// Gets the Azure storage account key.
+        /// Gets or sets the Azure storage account key.
         /// </summary>
-        public string StorageAccountKey { get; }
+        public string StorageAccountKey { get; set; }
 
         /// <summary>
-        /// Gets the share name of a share in the storage account.
+        /// Gets or sets the share name of a share in the storage account.
         /// </summary>
-        public string StorageShareName { get; }
+        public string StorageShareName { get; set; }
 
         /// <summary>
-        /// Gets the file name of a file in the share.
+        /// Gets or sets the file name of a file in the share.
         /// </summary>
-        public string StorageFileName { get; }
+        public string StorageFileName { get; set; }
     }
 }

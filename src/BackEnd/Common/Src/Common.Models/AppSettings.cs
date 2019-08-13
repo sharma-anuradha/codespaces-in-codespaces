@@ -15,9 +15,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         public string GitCommit { get; set; }
 
         /// <summary>
+        /// Gets or sets the audiences to accept for JWT tokens.
+        /// This should be a comma-delimited list of one or more audiences.
+        /// </summary>
+        public string AuthJwtAudiences { get; set; }
+
+        /// <summary>
+        /// Gets or sets the CosmosDB host.
+        /// </summary>
+        public string AzureCosmosDbHost { get; set; }
+
+        /// <summary>
+        /// Gets or sets the CosmosDB auth key.
+        /// </summary>
+        public string AzureCosmosDbKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the CosmosDB database to use in the <see cref="AzureCosmosDbHost"/>.
+        /// </summary>
+        public string AzureCosmosDbId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the CosmosDB preferred location.
+        /// </summary>
+        public string AzureCosmosPreferredLocation { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the option which controls whether the
         /// system loads in memory data store for repositories to make inner loop faster.
         /// </summary>
-        public bool UseMocksForLocalDevelopment { get; set; }
+        public bool UseMocksForExternalDependencies { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether mock implementations for the
+        /// Resource Broker.
+        /// </summary>
+        public bool UseMocksForResourceBroker { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether mock implementations for the
+        /// Storage and Compute Providers.
+        /// </summary>
+        public bool UseMocksForResourceProviders { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether mock implementations for the
+        /// Backend API service.
+        /// </summary>
+        public bool UseMocksForBackendApi { get; set; }
     }
 }

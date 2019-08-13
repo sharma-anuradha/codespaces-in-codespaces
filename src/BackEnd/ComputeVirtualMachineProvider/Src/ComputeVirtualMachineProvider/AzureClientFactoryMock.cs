@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var credentials = SdkContext.AzureCredentialsFactory
                 .FromFile(authFile);
 
-            return await Task.FromResult(Azure.Management.Fluent.Azure.Authenticate(credentials).WithSubscription(subscriptionId.ToString()));
+            return await Task.FromResult(Microsoft.Azure.Management.Fluent.Azure.Authenticate(credentials).WithSubscription(subscriptionId.ToString()));
         }
         public async Task<IComputeManagementClient> GetComputeManagementClient(Guid subscriptionId)
         {

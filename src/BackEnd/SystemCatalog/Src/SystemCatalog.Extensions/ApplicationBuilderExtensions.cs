@@ -4,6 +4,7 @@
 
 using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 
@@ -18,9 +19,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Extensions
         /// Uses and validates the system catalog.
         /// </summary>
         /// <param name="app">The aspnet core application builder.</param>
+        /// <param name="env">The hosting environment.</param>
         /// <returns>The applicaton builder instance.</returns>
         public static IApplicationBuilder UseSystemCatalog(
-            this IApplicationBuilder app)
+            this IApplicationBuilder app, IHostingEnvironment env)
         {
             Requires.NotNull(app, nameof(app));
 
