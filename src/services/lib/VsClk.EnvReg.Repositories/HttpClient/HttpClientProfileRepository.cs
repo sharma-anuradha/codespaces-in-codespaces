@@ -25,7 +25,7 @@ namespace VsClk.EnvReg.Repositories.HttpClient
 
         public async Task<Profile> GetCurrentUserProfileAsync(IDiagnosticsLogger logger)
         {
-            var response = await HttpClientProvider.ProfileServiceClient.GetAsync("profile");
+            var response = await HttpClientProvider.ProfileServiceClient.GetAsync("profile?scope=programs");
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 return null;
