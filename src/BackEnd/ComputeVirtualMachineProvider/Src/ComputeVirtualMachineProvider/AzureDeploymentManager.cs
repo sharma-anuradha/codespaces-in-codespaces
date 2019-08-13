@@ -3,11 +3,13 @@
 // </copyright>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -20,15 +22,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
     public class AzureDeploymentManager : IDeploymentManager
     {
+        private const string Key = "value";
+        private const string ExtensionName = "update-vm";
+        private const string ExtensionType = "CustomScript";
+        private const string ExtensionPublisher = "Microsoft.Compute";
+        private static readonly string VmTemplateJsonValue = GetVmTemplate();
+        private static readonly string vmInitScript = GetCustomScript("vm_init.sh");
+        private readonly IAzureClientFactory clientFactory;
+
         public AzureDeploymentManager(IAzureClientFactory clientFactory)
         {
             this.clientFactory = clientFactory;
         }
 
-        private const string Key = "value";
-
         /// <inheritdoc/>
-        public async Task<DeploymentStatusInput> BeginCreateAsync(VirtualMachineProviderCreateInput input)
+        public async Task<DeploymentStatusInput> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input)
         {
             // create new resource id
             ResourceId resourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), input.AzureSubscription, input.AzureResourceGroup, input.AzureVmLocation);
@@ -59,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<DeploymentStatusInput> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input)
+        public async Task<DeploymentStatusInput> BeginStartComputeAsync1(VirtualMachineProviderStartComputeInput input)
         {
             IAzure azure = await clientFactory.GetAzureClientAsync(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
             IVirtualMachine linuxVM = await azure.VirtualMachines
@@ -68,27 +76,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             string name = $"Assign-{input.ResourceId.InstanceId}";
             IVirtualMachine result = await linuxVM.Update()
-                          .UpdateExtension("config-app")
+                          .UpdateExtension(ExtensionName)
                           .WithProtectedSetting("script", GetCustomScriptForVmAssign("vm_assign.sh", input))
                           .WithMinorVersionAutoUpgrade()
                           .Parent()
                           .ApplyAsync()
                           .ContinueOnAnyContext();
 
-            return new DeploymentStatusInput(name, input.ResourceId);
+            return new DeploymentStatusInput(result.Name, input.ResourceId);
         }
 
         /// <inheritdoc/>
-        public async Task<DeploymentState> CheckDeploymentStatusAsync(DeploymentStatusInput deploymentStatusInput)
+        public async Task<DeploymentStatusInput> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input)
+        {
+            IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
+            var privateSettings = new Hashtable();
+            privateSettings.Add("script", GetCustomScriptForVmAssign("vm_assign.sh", input));
+            var parameters = new Azure.Management.Compute.Fluent.Models.VirtualMachineExtensionUpdate()
+            {
+                ProtectedSettings = privateSettings,
+                ForceUpdateTag = "true",
+            };
+
+            var result = await computeClient.VirtualMachineExtensions.BeginUpdateAsync(
+                input.ResourceId.ResourceGroup,
+                input.ResourceId.InstanceId.ToString(),
+                ExtensionName,
+                parameters).ContinueOnAnyContext();
+
+            return new DeploymentStatusInput(result.Name, input.ResourceId);
+        }
+
+        /// <inheritdoc/>
+        public async Task<DeploymentState> CheckStartComputeStatusAsync(DeploymentStatusInput input)
+        {
+            IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
+            VirtualMachineExtensionInner result = await computeClient.VirtualMachineExtensions
+            .GetAsync(
+                input.ResourceId.ResourceGroup,
+                input.ResourceId.InstanceId.ToString(),
+                input.TrackingId).ContinueOnAnyContext();
+            return ParseResult(result.ProvisioningState);
+        }
+
+        /// <inheritdoc/>
+        public async Task<DeploymentState> CheckCreateComputeStatusAsync(DeploymentStatusInput deploymentStatusInput)
         {
             IAzure azure = await clientFactory.GetAzureClientAsync(deploymentStatusInput.ResourceId.SubscriptionId).ContinueOnAnyContext();
-            IDeployment deployment = await azure.Deployments.GetByResourceGroupAsync(deploymentStatusInput.AzureResourceGroupName, deploymentStatusInput.AzureDeploymentName).ContinueOnAnyContext();
+            IDeployment deployment = await azure.Deployments.GetByResourceGroupAsync(deploymentStatusInput.ResourceId.ResourceGroup, deploymentStatusInput.TrackingId).ContinueOnAnyContext();
 
-            if (deployment.ProvisioningState.Equals(DeploymentState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
-            || deployment.ProvisioningState.Equals(DeploymentState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
-            || deployment.ProvisioningState.Equals(DeploymentState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
+            return ParseResult(deployment.ProvisioningState);
+        }
+
+        private static DeploymentState ParseResult(string provisioningState)
+        {
+            if (provisioningState.Equals(DeploymentState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
+           || provisioningState.Equals(DeploymentState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
+           || provisioningState.Equals(DeploymentState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
             {
-                return deployment.ProvisioningState.ToEnum<DeploymentState>();
+                return provisioningState.ToEnum<DeploymentState>();
             }
 
             return DeploymentState.InProgress;
@@ -134,10 +180,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 return result;
             }
         }
-
-        private static readonly string VmTemplateJsonValue = GetVmTemplate();
-        private static readonly string vmInitScript = GetCustomScript("vm_init.sh");
-        private readonly IAzureClientFactory clientFactory;
 
         public static string VmTemplateJson => VmTemplateJsonValue;
 

@@ -143,15 +143,11 @@
             "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
           ],
           "location": "[parameters('location')]",
-          "name": "config-app",
+          "name": "update-vm",
           "properties": {
             "autoUpgradeMinorVersion": true,
             "protectedSettings": {
-              //"commandToExecute": "<command-to-execute>",
               "script": "[parameters('vmSetupScript')]"
-              //"storageAccountName": "<storage-account-name>",
-              //"storageAccountKey": "<storage-account-key>",
-              //"fileUris": [ "https://.." ]
             },
             "publisher": "Microsoft.Azure.Extensions",
             "settings": {
@@ -162,7 +158,7 @@
             "typeHandlerVersion": "2.0"
           },
           "tags": {
-            "displayName": "config-app"
+            "displayName": "update-vm"
           },
           "type": "Extensions"
         }

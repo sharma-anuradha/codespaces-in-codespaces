@@ -5,34 +5,21 @@
 using System;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
     public class DeploymentStatusInput
     {
-        public DeploymentStatusInput(string azureDeploymentName, ResourceId resourceId)
+        [JsonConstructor]
+        public DeploymentStatusInput(string trackingId, ResourceId resourceId)
         {
-            AzureDeploymentName = azureDeploymentName;
+            TrackingId = trackingId;
             ResourceId = resourceId;
         }
 
-        public Guid AzureSubscription
-        {
-            get
-            {
-                return ResourceId.SubscriptionId;
-            }
-        }
-
-        public string AzureResourceGroupName
-        {
-            get
-            {
-                return ResourceId.ResourceGroup;
-            }
-        }
-
-        public string AzureDeploymentName { get; }
+        public string TrackingId { get; }
 
         public ResourceId ResourceId { get; }
     }

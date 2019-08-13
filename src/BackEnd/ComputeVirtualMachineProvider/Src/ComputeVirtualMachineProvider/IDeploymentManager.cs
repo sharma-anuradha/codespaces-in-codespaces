@@ -12,8 +12,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     {
         Task<DeploymentStatusInput> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input);
 
-        Task<DeploymentStatusInput> BeginCreateAsync(VirtualMachineProviderCreateInput input);
+        Task<DeploymentState> CheckStartComputeStatusAsync(DeploymentStatusInput input);
 
-        Task<DeploymentState> CheckDeploymentStatusAsync(DeploymentStatusInput deploymentStatusInput);
+        Task<DeploymentStatusInput> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input);
+
+        Task<DeploymentState> CheckCreateComputeStatusAsync(DeploymentStatusInput deploymentStatusInput);
     }
 }
