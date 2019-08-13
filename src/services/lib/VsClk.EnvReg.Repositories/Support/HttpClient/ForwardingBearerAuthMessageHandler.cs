@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace VsClk.EnvReg.Repositories.Support.HttpClient
 {
-    public class ForwardingBearerAuthMessageHandler : DelegatingHandler
+    public class ForwardingBearerAuthMessageHandler : ForwardingCorrelationIdHandler
     {
         private const string AuthHeaderName = "Authorization";
         private const string AuthTokenPrefix = "Bearer ";
