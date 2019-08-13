@@ -3,6 +3,7 @@ using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using VsClk.EnvReg.Models.DataStore.Compute;
+using System;
 
 namespace VsClk.EnvReg.Repositories
 {
@@ -74,6 +75,8 @@ namespace VsClk.EnvReg.Repositories
 
     public abstract class EnvironmentVariableStrategy
     {
+        private static readonly List<string> schemas = new List<string> { "http", "https" };
+
         public EnvironmentRegistration EnvironmentRegistration { get; }
 
         public EnvironmentVariableStrategy(EnvironmentRegistration environmentRegistration)
@@ -85,8 +88,13 @@ namespace VsClk.EnvReg.Repositories
 
         protected static bool IsValidGitUrl(string url)
         {
-            string regex = @"((^https:\/\/github.com\/([a-zA-Z0-9-_~.\/])+)((.git)*|((tree|pull|commit|releases\/tag)([a-zA-Z0-9-_~.]+)+)))$";
-            return Regex.IsMatch(url, regex);
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                if (schemas.Contains(uri.Scheme))
+                    return true;
+            }
+
+            return false;
         }
     }
 
