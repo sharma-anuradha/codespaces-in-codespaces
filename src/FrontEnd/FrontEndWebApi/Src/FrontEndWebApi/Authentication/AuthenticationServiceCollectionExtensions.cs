@@ -23,14 +23,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="hostEnvironment">The aspnet host environment.</param>
-        /// <param name="appSettings">The global app settings.</param>
+        /// <param name="redisCacheOptions">The redis cache options.</param>
+        /// <param name="jwtBearerOptions">The JWT bearer options.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddVsSaaSAuthentication(
             this IServiceCollection services,
             IHostingEnvironment hostEnvironment,
-            AppSettings appSettings)
+            RedisCacheOptions redisCacheOptions,
+            JwtBearerOptions jwtBearerOptions)
         {
-            services.AddVsSaaSCoreDataProtection(hostEnvironment, appSettings.RedisConnectionString);
+
+            Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
+            Requires.NotNull(redisCacheOptions, nameof(redisCacheOptions));
+            Requires.NotNull(jwtBearerOptions, nameof(jwtBearerOptions));
+
+            services.AddVsSaaSCoreDataProtection(hostEnvironment, redisCacheOptions.RedisConnectionString);
 
             services
                 .AddAuthentication(ProxySchema)
@@ -48,8 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                         return AuthenticationBuilderCookieExtensions.AuthenticationScheme;
                     };
                 })
-                .AddVsSaaSJwtBearer(appSettings)
-                .AddVsSaaSCookieBearer(appSettings);
+                .AddVsSaaSJwtBearer(jwtBearerOptions)
+                .AddVsSaaSCookieBearer();
 
             return services;
         }

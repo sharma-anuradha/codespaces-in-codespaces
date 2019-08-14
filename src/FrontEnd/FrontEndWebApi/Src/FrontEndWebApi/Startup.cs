@@ -167,7 +167,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Custom Authentication
             // TODO why isn't this standard VS SaaS SDK Auth?
-            services.AddVsSaaSAuthentication(HostingEnvironment, appSettings);
+            services.AddVsSaaSAuthentication(
+                HostingEnvironment,
+                new RedisCacheOptions
+                {
+                    // TODO: make this required -- but it isn't configured yet.
+                    RedisConnectionString = appSettings.RedisConnectionString,
+                },
+                new JwtBearerOptions
+                {
+                    Audiences = ValidationUtil.IsRequired(appSettings.AuthJwtAudiences, nameof(appSettings.AuthJwtAudiences)),
+                    Authority = ValidationUtil.IsRequired(appSettings.AuthJwtAuthority, nameof(appSettings.AuthJwtAuthority)),
+                });
 
             // VS SaaS services || BUT NOT VS SaaS authentication
             services.AddVsSaaSHosting(

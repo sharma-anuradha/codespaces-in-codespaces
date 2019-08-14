@@ -140,10 +140,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // VsSaaS services
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
-            services.AddBlobStorageClientProvider<BlobStorageClientProvider>(x =>
+            services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
                 {
-                    x.AccountKey = storageAccountSettings.StorageAccountKey;
-                    x.AccountName = storageAccountSettings.StorageAccountName;
+                    options.AccountKey = storageAccountSettings.StorageAccountKey;
+                    options.AccountName = storageAccountSettings.StorageAccountName;
                 });
             services.AddDocumentDbClientProvider(options =>
                 {

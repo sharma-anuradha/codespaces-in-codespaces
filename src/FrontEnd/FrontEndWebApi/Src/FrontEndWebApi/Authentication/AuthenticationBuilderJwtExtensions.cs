@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
@@ -31,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         private const string BadTokenMessage = "jwt_bearer_bad_token";
 
         // TODO: Get rid of DefaultAudiences, unless replacing them with new Microsoft.VsSaaS.Common.AppIds
-        private static IList<string> DefaultAudiences { get; } = new List<string>
+        private static IEnumerable<string> DefaultAudiences { get; } = new string[]
         {
             "https://management.core.windows.net/",  // live
             "aebc6443-996d-45c2-90f0-388ff96faa56",  // Visual Studio Online Client (DEV)
@@ -43,13 +44,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// Add JWT Bearer authentication.
         /// </summary>
         /// <param name="builder">The application builder.</param>
-        /// <param name="appSettings">The global application settings.</param>
+        /// <param name="jwtBearerOptions">The global application settings.</param>
         /// <returns>The <paramref name="builder"/> instance.</returns>
         public static AuthenticationBuilder AddVsSaaSJwtBearer(
             this AuthenticationBuilder builder,
-            AppSettings appSettings)
+            JwtBearerOptions jwtBearerOptions)
         {
-            var configAudiences = appSettings.AuthJwtAudiences?.Split(',');
+            Requires.NotNull(jwtBearerOptions, nameof(jwtBearerOptions));
+
+            var configAudiences = jwtBearerOptions.Audiences?.Split(',');
             var audiences = (configAudiences ?? new string[0])
                 .ToHashSet(StringComparer.OrdinalIgnoreCase)
                 .Union(DefaultAudiences) // add the default audiences
@@ -67,41 +70,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
                     };
-                    options.Authority = "https://login.microsoftonline.com/common/v2.0";
+                    options.Authority = jwtBearerOptions.Authority;
                     options.Events = new JwtBearerEvents
                     {
                         OnAuthenticationFailed = AuthenticationFailedAsync,
                         OnTokenValidated = TokenValidatedAsync,
-                        OnMessageReceived = MessageReceivedAsync,
                     };
                 });
 
             return builder;
         }
 
-        private static async Task MessageReceivedAsync(MessageReceivedContext arg)
-        {
-            await Task.CompletedTask;
-            var logger = arg.HttpContext.GetLogger() ?? new Microsoft.VsSaaS.Diagnostics.JsonStdoutLogger(new Diagnostics.LogValueSet());
-
-            logger
-                .FluentAddValue("Scheme", arg.Scheme.Name)
-                .FluentAddValue("Audience", arg.Options.Audience)
-                .FluentAddValue("Authority", arg.Options.Authority)
-                .FluentAddValue("Challenge", arg.Options.Challenge)
-                .FluentAddValue("RequestUri", arg.Request.GetDisplayUrl())
-                .FluentAddValue("PrincipalIdentityName", arg.Principal?.Identity.Name)
-                .FluentAddValue("PrincipalIsAuthenticationType", arg.Principal?.Identity.AuthenticationType)
-                .FluentAddValue("PrincipalIsAuthenticated", arg.Principal?.Identity.IsAuthenticated.ToString())
-                .FluentAddValue("Token", arg.Token)
-                .LogInfo("jwt_authentication");
-        }
-
         private static async Task AuthenticationFailedAsync(AuthenticationFailedContext arg)
         {
             await Task.CompletedTask;
 
-            var logger = arg.HttpContext.GetLogger() ?? new Microsoft.VsSaaS.Diagnostics.JsonStdoutLogger(new Diagnostics.LogValueSet());
+            var logger = arg.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
 
             logger
                 .FluentAddValue("Scheme", arg.Scheme.Name)
@@ -118,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         private static async Task TokenValidatedAsync(TokenValidatedContext context)
         {
             // Locate needed services
-            var logger = context.HttpContext.GetLogger();
+            var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
             var profileRepository = context.HttpContext.RequestServices.GetService<IProfileRepository>();
             var currentProfile = context.HttpContext.RequestServices.GetService<ICurrentUserProvider>();
 

@@ -29,11 +29,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// Add Cookie authentication.
         /// </summary>
         /// <param name="builder">The application builder.</param>
-        /// <param name="appSettings">The global appsettings.</param>
         /// <returns>The <paramref name="builder"/> instance.</returns>
         public static AuthenticationBuilder AddVsSaaSCookieBearer(
-            this AuthenticationBuilder builder,
-            AppSettings appSettings)
+            this AuthenticationBuilder builder)
         {
             builder
                 .AddCookie(options =>
