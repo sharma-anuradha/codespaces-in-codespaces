@@ -6,10 +6,14 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
+    /// <summary>
+    /// Creates / Manages Azure Virtual machines.
+    /// </summary>
     public class VirtualMachineProvider : IComputeProvider
     {
         private readonly IDeploymentManager deploymentManager;
@@ -30,39 +34,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input, nameof(input));
             string resultContinuationToken = default;
             DeploymentState resultState;
-            DeploymentStatusInput deploymentStatusInput;
+            ResourceId resourceId = default;
 
-            if (string.IsNullOrEmpty(continuationToken))
-            {
-                deploymentStatusInput = await deploymentManager.BeginCreateComputeAsync(input).ContinueOnAnyContext();
-                resultContinuationToken = deploymentStatusInput.ToJson();
-                resultState = DeploymentState.InProgress;
-            }
-            else
-            {
-                // Check status of deployment request
-                deploymentStatusInput = continuationToken.ToDeploymentStatusInput();
-                resultState = await deploymentManager.CheckCreateComputeStatusAsync(deploymentStatusInput).ContinueOnAnyContext();
-                if (resultState == DeploymentState.InProgress)
-                {
-                    resultContinuationToken = continuationToken;
-                }
-            }
+            (resourceId, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderCreateInput>(
+                input,
+                continuationToken,
+                deploymentManager.BeginCreateComputeAsync,
+                deploymentManager.CheckCreateComputeStatusAsync).ContinueOnAnyContext();
 
             var result = new VirtualMachineProviderCreateResult()
             {
-                ContinuationToken = resultContinuationToken,
-                ResourceId = deploymentStatusInput.ResourceId,
-                RetryAfter = TimeSpan.FromMinutes(1),
+                ResourceId = resourceId,
                 Status = resultState.ToString(),
+                ContinuationToken = resultContinuationToken,
+                RetryAfter = TimeSpan.FromMinutes(1),
             };
             return result;
         }
 
         /// <inheritdoc/>
-        public Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, string continuationToken = null)
+        public async Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, string continuationToken = null)
         {
-            throw new System.NotImplementedException();
+            Requires.NotNull(input, nameof(input));
+            string resultContinuationToken = default;
+            DeploymentState resultState;
+            ResourceId resourceId;
+
+            (resourceId, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderDeleteInput>(
+                input,
+                continuationToken,
+                deploymentManager.BeginDeleteComputeAsync,
+                deploymentManager.CheckDeleteComputeStatusAsync).ContinueOnAnyContext();
+
+            var result = new VirtualMachineProviderDeleteResult()
+            {
+                Status = resultState.ToString(),
+                ContinuationToken = resultContinuationToken,
+                RetryAfter = TimeSpan.FromMinutes(5),
+            };
+
+            return result;
         }
 
         /// <inheritdoc/>
@@ -71,33 +82,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input, nameof(input));
             string resultContinuationToken = default;
             DeploymentState resultState;
+            ResourceId resourceId;
+            (resourceId, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderStartComputeInput>(
+                input,
+                continuationToken,
+                deploymentManager.BeginStartComputeAsync,
+                deploymentManager.CheckStartComputeStatusAsync).ContinueOnAnyContext();
+
+            var result = new VirtualMachineProviderStartComputeResult()
+            {
+                Status = resultState.ToString(),
+                ContinuationToken = resultContinuationToken,
+                RetryAfter = TimeSpan.FromSeconds(1),
+            };
+            return result;
+        }
+
+        private async Task<(ResourceId, DeploymentState, string)> ExecuteAsync<T>(
+            T input,
+            string continuationToken,
+            Func<T, Task<DeploymentStatusInput>> beginOperation,
+            Func<DeploymentStatusInput, Task<DeploymentState>> checkOperationStatus)
+        {
+            DeploymentState resultState;
             DeploymentStatusInput deploymentStatusInput;
+            string resultContinuationToken = default;
 
             if (string.IsNullOrEmpty(continuationToken))
             {
-                deploymentStatusInput = await deploymentManager.BeginStartComputeAsync(input).ContinueOnAnyContext();
-                resultContinuationToken = deploymentStatusInput.ToJson();
+                deploymentStatusInput = await beginOperation(input).ContinueOnAnyContext();
                 resultState = DeploymentState.InProgress;
             }
             else
             {
                 // Check status of deployment request
                 deploymentStatusInput = continuationToken.ToDeploymentStatusInput();
-                resultState = await deploymentManager.CheckStartComputeStatusAsync(deploymentStatusInput).ContinueOnAnyContext();
-                if (resultState == DeploymentState.InProgress)
-                {
-                    resultContinuationToken = continuationToken;
-                }
+                resultState = await checkOperationStatus(deploymentStatusInput).ContinueOnAnyContext();
             }
 
-            var result = new VirtualMachineProviderStartComputeResult()
+            if (resultState == DeploymentState.InProgress)
             {
-                ContinuationToken = resultContinuationToken,
-                ResourceId = input.ResourceId,
-                RetryAfter = TimeSpan.FromSeconds(1),
-                Status = resultState.ToString(),
-            };
-            return result;
+                resultContinuationToken = deploymentStatusInput.ToJson();
+            }
+
+            return (deploymentStatusInput.ResourceId, resultState, resultContinuationToken);
         }
     }
 }

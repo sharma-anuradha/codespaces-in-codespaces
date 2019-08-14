@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Moq;
 using Xunit;
 
@@ -18,8 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     {
         private static Guid AzureSubscription = Guid.NewGuid();
         private const string AzureResourceGroupName = "TestRG1";
-        private const string AzureDeploymentName = "TestDeployment1";
-       private static ResourceId ResourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), AzureSubscription, AzureResourceGroupName, AzureLocation.EastUs);
+        private const string TrackingId = "TestDeployment1";
+        private static ResourceId ResourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), AzureSubscription, AzureResourceGroupName, AzureLocation.EastUs);
 
         [Fact]
         public void Ctor_with_bad_options()
@@ -34,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq.Setup(x => x.BeginCreateComputeAsync(It.IsAny<VirtualMachineProviderCreateInput>())).Returns(Task.FromResult(CreateDeploymentState()));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), null);
-            ValidateVirtualMachineCreateResult(result);
+            ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result);
         }
 
         [Fact]
@@ -43,9 +44,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
             deploymentManagerMoq.Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<DeploymentStatusInput>())).Returns(Task.FromResult(DeploymentState.InProgress));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            string continuationToken = new DeploymentStatusInput(AzureDeploymentName, ResourceId).ToJson();
+            string continuationToken = new DeploymentStatusInput(TrackingId, ResourceId).ToJson();
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), continuationToken);
-            ValidateVirtualMachineCreateResult(result);
+            ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result);
         }
 
         [Theory]
@@ -58,31 +59,116 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq.Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<DeploymentStatusInput>())).Returns(Task.FromResult(outputState));
 
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            string continuationToken = new DeploymentStatusInput(AzureDeploymentName, ResourceId).ToJson();
+            string continuationToken = new DeploymentStatusInput(TrackingId, ResourceId).ToJson();
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), continuationToken);
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);
-            Assert.Equal(ResourceId, result.ResourceId);
             Assert.Null(result.ContinuationToken);
         }
 
-        private static void ValidateVirtualMachineCreateResult(VirtualMachineProviderCreateResult result)
+        [Fact]
+        public async Task VirtualMachine_StartCompute_Initiate_Ok()
+        {
+            var deploymentManagerMoq = new Mock<IDeploymentManager>();
+            deploymentManagerMoq.Setup(x => x.BeginStartComputeAsync(It.IsAny<VirtualMachineProviderStartComputeInput>()))
+                .Returns(Task.FromResult(CreateDeploymentState()));
+            var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
+            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), null);
+            ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result);
+        }
+
+        [Fact]
+        public async Task VirtualMachine_Continue_StartCompute_InProgress()
+        {
+            var deploymentManagerMoq = new Mock<IDeploymentManager>();
+            deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<DeploymentStatusInput>())).Returns(Task.FromResult(DeploymentState.InProgress));
+            var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
+            string continuationToken = new DeploymentStatusInput(TrackingId, ResourceId).ToJson();
+            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), continuationToken);
+            ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result);
+        }
+
+        [Theory]
+        [InlineData(DeploymentState.Succeeded, "Succeeded")]
+        [InlineData(DeploymentState.Cancelled, "Cancelled")]
+        [InlineData(DeploymentState.Failed, "Failed")]
+        public async Task VirtualMachine_Continue_StartCompute_Finished(DeploymentState outputState, string expectedState)
+        {
+            var deploymentManagerMoq = new Mock<IDeploymentManager>();
+            deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<DeploymentStatusInput>())).Returns(Task.FromResult(outputState));
+
+            var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
+            string continuationToken = new DeploymentStatusInput(TrackingId, ResourceId).ToJson();
+            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), continuationToken);
+            Assert.NotNull(result);
+            Assert.Equal(expectedState, result.Status);
+            Assert.Null(result.ContinuationToken);
+        }
+
+        [Fact]
+        public async Task VirtualMachine_DeleteCompute_Initiate_Ok()
+        {
+            var deploymentManagerMoq = new Mock<IDeploymentManager>();
+            deploymentManagerMoq.Setup(x => x.BeginDeleteComputeAsync(It.IsAny<VirtualMachineProviderDeleteInput>()))
+                .Returns(Task.FromResult(CreateDeploymentState()));
+            var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
+            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput(), null);
+            ValidateVirtualMachineResult<VirtualMachineProviderDeleteResult>(result);
+        }
+
+        [Fact]
+        public async Task VirtualMachine_Continue_DeleteCompute_InProgress()
+        {
+            var deploymentManagerMoq = new Mock<IDeploymentManager>();
+            deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<DeploymentStatusInput>())).Returns(Task.FromResult(DeploymentState.InProgress));
+            var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
+            string continuationToken = new DeploymentStatusInput(TrackingId, ResourceId).ToJson();
+            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput(), continuationToken);
+            ValidateVirtualMachineResult<VirtualMachineProviderDeleteResult>(result);
+        }
+
+        [Theory]
+        [InlineData(DeploymentState.Succeeded, "Succeeded")]
+        [InlineData(DeploymentState.Cancelled, "Cancelled")]
+        [InlineData(DeploymentState.Failed, "Failed")]
+        public async Task VirtualMachine_Continue_Deleteompute_Finished(DeploymentState outputState, string expectedState)
+        {
+            var deploymentManagerMoq = new Mock<IDeploymentManager>();
+            deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<DeploymentStatusInput>())).Returns(Task.FromResult(outputState));
+
+            var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
+            string continuationToken = new DeploymentStatusInput(TrackingId, ResourceId).ToJson();
+            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput(), continuationToken);
+            Assert.NotNull(result);
+            Assert.Equal(expectedState, result.Status);
+            Assert.Null(result.ContinuationToken);
+        }
+
+        private static void ValidateVirtualMachineResult<T>(T result) where T : BaseContinuationResult
         {
             Assert.NotNull(result);
             Assert.Equal("InProgress", result.Status);
-            Assert.Equal(ResourceId, result.ResourceId);
             Assert.NotNull(result.ContinuationToken);
             var deploymentStatusInput = result.ContinuationToken.ToDeploymentStatusInput();
             Assert.NotNull(deploymentStatusInput);
+            Assert.Equal(ResourceId, deploymentStatusInput.ResourceId);
             Assert.Equal(AzureSubscription, deploymentStatusInput.ResourceId.SubscriptionId);
             Assert.Equal(AzureResourceGroupName, deploymentStatusInput.ResourceId.ResourceGroup);
-            Assert.Equal(AzureDeploymentName, deploymentStatusInput.TrackingId);
+            Assert.Equal(TrackingId, deploymentStatusInput.TrackingId);
             Assert.Equal(ResourceId, deploymentStatusInput.ResourceId);
         }
 
         private static DeploymentStatusInput CreateDeploymentState()
         {
-            return new DeploymentStatusInput(AzureDeploymentName, ResourceId);
+            return new DeploymentStatusInput(TrackingId, ResourceId);
+        }
+
+        private static VirtualMachineProviderStartComputeInput CreateStartComputeInput()
+        {
+            return new VirtualMachineProviderStartComputeInput(
+                ResourceId,
+                new ShareConnectionInfo("val1", "val2", "val3", "val4"),
+                new System.Collections.Generic.Dictionary<string, string>());
         }
     }
 }

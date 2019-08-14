@@ -128,6 +128,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return ParseResult(deployment.ProvisioningState);
         }
 
+        /// <inheritdoc/>
+        public Task<DeploymentStatusInput> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput arg)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DeploymentState> CheckDeleteComputeStatusAsync(DeploymentStatusInput arg)
+        {
+            throw new NotImplementedException();
+        }
+
         private static DeploymentState ParseResult(string provisioningState)
         {
             if (provisioningState.Equals(DeploymentState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)

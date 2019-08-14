@@ -11,9 +11,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     /// </summary>
     public class VirtualMachineProviderStartComputeResult : BaseContinuationResult
     {
-        /// <summary>
-        /// Gets or sets example: '/subscriptions/2fa47206-c4b5-40ff-a5e6-9160f9ee000c/storage/<uid>'
-        /// </summary>
-        public ResourceId ResourceId { get; set; }
+
     }
 }
