@@ -2,10 +2,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
@@ -31,18 +33,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <inheritdoc/>
         public async Task<Profile> GetCurrentUserProfileAsync(IDiagnosticsLogger logger)
         {
-            _ = logger;
+            const string LogErrorMessage = "httpclientprofilerepository_getcurrentuserprofileasync_error";
 
-            var response = await HttpClientProvider.HttpClient.GetAsync("profile");
+            var response = await HttpClientProvider.HttpClient.GetAsync("profile?scope=programs");
+            logger?.AddValue(LoggingConstants.HttpRequestUri, response.RequestMessage.RequestUri.AbsoluteUri);
+            logger?.AddValue(LoggingConstants.HttpResponseStatus, response.StatusCode.ToString());
+
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
+                logger?.LogError(LogErrorMessage);
                 return null;
             }
 
-            await response.ThrowIfFailedAsync();
+            try
+            {
+                await response.ThrowIfFailedAsync();
+            }
+            catch (Exception ex)
+            {
+                logger?.LogErrorWithDetail(LogErrorMessage, ex.Message);
+                throw;
+            }
 
             var profile = await response.Content.ReadAsAsync<Profile>();
-
             return profile;
         }
     }

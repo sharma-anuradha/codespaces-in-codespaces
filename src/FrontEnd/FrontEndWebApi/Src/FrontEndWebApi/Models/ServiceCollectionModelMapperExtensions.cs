@@ -4,6 +4,7 @@
 
 using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
@@ -22,13 +23,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         {
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap<CallbackInput, CallbackOptions>();
-                cfg.CreateMap<CallbackPayloadInput, CallbackPayloadOptions>();
                 cfg.CreateMap<CloudEnvironment, CloudEnvironmentResult>();
-                cfg.CreateMap<CloudEnvironmentInput, CloudEnvironment>();
-                cfg.CreateMap<ConnectionInfoInput, ConnectionInfo>();
-                cfg.CreateMap<GitConfigInput, GitConfigOptions>();
-                cfg.CreateMap<SeedInfoInput, SeedInfo>();
+                cfg.CreateMap<CreateCloudEnvironmentBody, CloudEnvironment>();
+                cfg.CreateMap<CallbackOptionsBody, CallbackOptions>();
+                cfg.CreateMap<CallbackOptions, CallbackOptionsBody>();
+                cfg.CreateMap<CallbackPayloadOptionsBody, CallbackPayloadOptions>();
+                cfg.CreateMap<CallbackPayloadOptions, CallbackPayloadOptionsBody>();
+                cfg.CreateMap<ConnectionInfoBody, ConnectionInfo>();
+                cfg.CreateMap<ConnectionInfo, ConnectionInfoBody>();
+                cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
+                cfg.CreateMap<GitConfigOptions, GitConfigOptionsBody>();
+                cfg.CreateMap<SeedInfoBody, SeedInfo>();
+                cfg.CreateMap<SeedInfo, SeedInfoBody>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);

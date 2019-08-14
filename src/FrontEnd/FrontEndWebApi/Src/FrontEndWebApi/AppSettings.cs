@@ -74,5 +74,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         /// Gets or sets a value indicating whether to call the real backend during local development instead of mocks.
         /// </summary>
         public bool UseBackEndForLocalDevelopment { get; set; }
+
+        /// <summary>
+        /// Gets or sets the redis cache connection string.
+        /// </summary>
+        public string RedisConnectionString { get; set; }
     }
 }

@@ -40,11 +40,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
         {
             if (useMocks)
             {
-                services.AddSingleton<IResourceBrokerHttpContract, MockResourceBrokerClient>();
+                services.AddSingleton<IResourceBrokerResourcesHttpContract, MockResourceBrokerClient>();
             }
             else
             {
-                services.AddSingleton<IResourceBrokerHttpContract, HttpResourceBrokerClient>();
+                services.AddSingleton<IResourceBrokerResourcesHttpContract, HttpResourceBrokerClient>();
             }
         }
     }

@@ -4,7 +4,7 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Net;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
             }
             else if (context.Exception is UnauthorizedAccessException)
             {
-                context.Result = new StatusCodeResult((int)HttpStatusCode.Unauthorized);
+                context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
             }
         }
     }

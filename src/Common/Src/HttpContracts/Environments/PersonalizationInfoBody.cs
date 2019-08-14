@@ -4,12 +4,12 @@
 
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
     /// <summary>
     /// The environment personalization info.
     /// </summary>
-    public class PersonalizationInfo
+    public class PersonalizationInfoBody
     {
         /// <summary>
         /// Gets or sets the dot-files repository.

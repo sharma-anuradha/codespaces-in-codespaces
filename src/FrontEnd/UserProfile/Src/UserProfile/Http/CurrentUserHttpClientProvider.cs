@@ -27,6 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
 
             HttpMessageHandler httpHandlerChain = new HttpClientHandler();
             httpHandlerChain = new ForwardingBearerAuthMessageHandler(httpHandlerChain, currentUserProvider);
+            httpHandlerChain = new ForwardingCorrelationIdHandler(httpHandlerChain);
 
             HttpClient = new HttpClient(httpHandlerChain)
             {

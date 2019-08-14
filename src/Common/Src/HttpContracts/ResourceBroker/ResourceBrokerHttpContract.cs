@@ -12,29 +12,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
     public static class ResourceBrokerHttpContract
     {
         /// <summary>
-        /// The base uri.
+        /// The v1 API.
         /// </summary>
-        public const string BaseUriPath = "api/v1/resourcebroker";
+        public const string ApiV1Route = "api/v1/";
 
         /// <summary>
-        /// Sub path for managing resources.
+        /// The resource broker route.
         /// </summary>
-        public const string ResourcesSubPath = "resources";
+        public const string ResourceBrokerV1Route = ApiV1Route + "resourcebroker/";
 
         /// <summary>
-        /// Sub path for starting a resource.
+        /// The resource broker resources route.
         /// </summary>
-        public const string StartComputeSubPath = ResourcesSubPath + "/start";
+        public const string ResourcesRoute = ResourceBrokerV1Route + "resources/";
 
         /// <summary>
-        /// The allocate http method.
+        /// The resource start operation route.
         /// </summary>
-        public static readonly HttpMethod AllocateMethod = HttpMethod.Post;
+        public const string StartComputeOperation = "start";
+
+        /// <summary>
+        /// The create resource http method.
+        /// </summary>
+        public static readonly HttpMethod CreateResourceMethod = HttpMethod.Post;
+
+        /// <summary>
+        /// The create resource http method.
+        /// </summary>
+        public static readonly HttpMethod GetResourceMethod = HttpMethod.Get;
 
         /// <summary>
         /// The deallocate http method.
         /// </summary>
-        public static readonly HttpMethod DeallocateMethod = HttpMethod.Delete;
+        public static readonly HttpMethod DeleteResourceMethod = HttpMethod.Delete;
 
         /// <summary>
         /// The start compute http method.
@@ -42,23 +52,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public static readonly HttpMethod StartComputeMethod = HttpMethod.Post;
 
         /// <summary>
-        /// Get the allocate uri.
+        /// Get the create resource uri.
         /// </summary>
         /// <returns>Uri.</returns>
-        public static string GetAllocateUri() => $"{BaseUriPath}/{ResourcesSubPath}";
+        public static string GetCreateResourceUri() => ResourcesRoute;
+
+        /// <summary>
+        /// Get the get resoruce uri.
+        /// </summary>
+        /// <param name="resourceIdToken">The resource id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetGetResourceUri(string resourceIdToken) => GetResourceUri(resourceIdToken);
 
         /// <summary>
         /// Get the deallocate uri.
         /// </summary>
         /// <param name="resourceIdToken">The resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetDeallocateUri(string resourceIdToken) => $"{BaseUriPath}/{ResourcesSubPath}?id={resourceIdToken}";
+        public static string GetDeleteResourceUri(string resourceIdToken) => GetResourceUri(resourceIdToken);
 
         /// <summary>
-        /// Get the start compute uri.
+        /// Get the start compute operation uri.
         /// </summary>
         /// <param name="computeResourceIdToken">The compute resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetStartComputeUri(string computeResourceIdToken) => $"{BaseUriPath}/{StartComputeSubPath}?id={computeResourceIdToken}";
+        public static string GetStartComputeUri(string computeResourceIdToken) => GetResourceOperationUri(computeResourceIdToken, StartComputeOperation);
+
+        private static string GetResourceUri(string resourceIdToken) => $"{ResourcesRoute}?id={resourceIdToken}";
+
+        private static string GetResourceOperationUri(string resourceIdToken, string operationSubRoute) => $"{ResourcesRoute}/{operationSubRoute}?id={resourceIdToken}";
     }
 }

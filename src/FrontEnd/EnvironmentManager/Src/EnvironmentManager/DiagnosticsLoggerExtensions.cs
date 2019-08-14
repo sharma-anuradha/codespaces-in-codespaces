@@ -4,6 +4,7 @@
 
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using System.Data;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -17,22 +18,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueSessionId = "SessionId";
         private const string LogValueComputeId = "ComputeId";
         private const string LogValueStorageId = "StorageId";
+        private const string LogValueType = "Type";
+        private const string LogValueState = "State";
 
         /// <summary>
         /// Add logging fields for an <see cref="CloudEnvironment"/> instance.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <param name="cloudEnvironment">The environment registration.</param>
-        public static void AddRegistrationInfoToResponseLog(this IDiagnosticsLogger logger, CloudEnvironment cloudEnvironment)
+        /// <param name="cloudEnvironment">The cloud environment, or null.</param>
+        /// <returns>The <paramref name="logger"/> instance.</returns>
+        public static IDiagnosticsLogger AddCloudEnvironment(this IDiagnosticsLogger logger, CloudEnvironment cloudEnvironment)
         {
             Requires.NotNull(logger, nameof(logger));
-            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
-            logger
-                .AddEnvironmentId(cloudEnvironment.Id)
-                .AddOwnerId(cloudEnvironment.OwnerId)
-                .AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId)
-                .AddComputeId(cloudEnvironment.Compute?.ResourceIdToken)
-                .AddStorageId(cloudEnvironment.Storage?.ResourceIdToken);
+
+            if (cloudEnvironment != null)
+            {
+                logger
+                    .AddEnvironmentId(cloudEnvironment.Id)
+                    .AddOwnerId(cloudEnvironment.OwnerId)
+                    .AddCloudEnvironmentType(cloudEnvironment.Type)
+                    .AddCloudEnvironmentState(cloudEnvironment.State)
+                    .AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId)
+                    .AddComputeId(cloudEnvironment.Compute?.ResourceIdToken)
+                    .AddStorageId(cloudEnvironment.Storage?.ResourceIdToken);
+            }
+
+            return logger;
         }
 
         /// <summary>
@@ -79,5 +90,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddStorageId(this IDiagnosticsLogger logger, string storageId)
             => logger.FluentAddValue(LogValueStorageId, storageId);
+
+        /// <summary>
+        /// Add the environment type to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="type">The cloud environment type.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddCloudEnvironmentType(this IDiagnosticsLogger logger, CloudEnvironmentType type)
+            => logger.FluentAddValue(LogValueType, type.ToString());
+
+        /// <summary>
+        /// Add the environment state to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="state">The cloud environment type.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddCloudEnvironmentState(this IDiagnosticsLogger logger, CloudEnvironmentState state)
+            => logger.FluentAddValue(LogValueState, state.ToString());
+
     }
 }

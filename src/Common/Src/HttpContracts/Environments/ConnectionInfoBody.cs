@@ -4,12 +4,12 @@
 
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
     /// <summary>
     /// Represents a Live Share connection.
     /// </summary>
-    public class ConnectionInfoInput
+    public class ConnectionInfoBody
     {
         /// <summary>
         /// Gets or sets the Live Share session id.

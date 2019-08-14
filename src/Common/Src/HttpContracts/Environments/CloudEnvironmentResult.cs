@@ -3,9 +3,8 @@
 // </copyright>
 
 using System;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
     /// <summary>
     /// The environment registration REST API result.
@@ -55,12 +54,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// <summary>
         /// Gets or sets the environment seed info.
         /// </summary>
-        public SeedInfo Seed { get; set; }
+        public SeedInfoBody Seed { get; set; }
 
         /// <summary>
         /// Gets or sets the environment connection info.
         /// </summary>
-        public ConnectionInfo Connection { get; set; }
+        public ConnectionInfoBody Connection { get; set; }
 
         /// <summary>
         /// Gets or sets the last active date.

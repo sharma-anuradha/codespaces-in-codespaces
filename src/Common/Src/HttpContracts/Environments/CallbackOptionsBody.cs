@@ -4,12 +4,12 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
     /// <summary>
     /// The environment registration callback input.
     /// </summary>
-    public class CallbackInput
+    public class CallbackOptionsBody
     {
         /// <summary>
         /// Gets or sets the environment type.
@@ -20,6 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// <summary>
         /// Gets or sets the environment registration payload.
         /// </summary>
-        public CallbackPayloadInput Payload { get; set; }
+        public CallbackPayloadOptionsBody Payload { get; set; }
     }
 }

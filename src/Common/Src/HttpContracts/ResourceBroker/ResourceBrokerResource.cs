@@ -8,9 +8,9 @@ using Microsoft.VsSaaS.Common;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker
 {
     /// <summary>
-    /// The allocate response body.
+    /// The resource broker response body.
     /// </summary>
-    public class AllocateResponseBody
+    public class ResourceBrokerResource
     {
         /// <summary>
         /// Gets or sets the resource id token.

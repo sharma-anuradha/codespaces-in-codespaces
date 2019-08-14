@@ -17,6 +17,7 @@ using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -164,16 +165,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Configure mappings betwen REST API models and internal models.
             services.AddModelMapper();
 
-            // VS SaaS services and VS SaaS authentication
-            services.AddVsSaaSHostingWithJwtBearerAuthentication(
+            // Custom Authentication
+            // TODO why isn't this standard VS SaaS SDK Auth?
+            services.AddVsSaaSAuthentication(HostingEnvironment, appSettings);
+
+            // VS SaaS services || BUT NOT VS SaaS authentication
+            services.AddVsSaaSHosting(
                HostingEnvironment,
-               loggingBaseValues,
-               authConfigOptions =>
-               {
-                   authConfigOptions.AudienceAppIds = ValidationUtil.IsRequired(appSettings.AuthJwtAudiences, nameof(AppSettings.AuthJwtAudiences))?.Split(',');
-                   authConfigOptions.Authority = ValidationUtil.IsRequired(appSettings.AuthJwtAuthority, nameof(appSettings.AuthJwtAuthority));
-                   authConfigOptions.IsEmailClaimRequired = false;
-               });
+               loggingBaseValues);
+
             services.AddDocumentDbClientProvider(options =>
             {
                 options.HostUrl = appSettings.AzureCosmosDbHost;

@@ -8,28 +8,36 @@ using Microsoft.VsSaaS.Diagnostics;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker
 {
     /// <summary>
-    /// The resource broker contract.
+    /// The resource broker resource http contract.
     /// </summary>
-    public interface IResourceBrokerHttpContract
+    public interface IResourceBrokerResourcesHttpContract
     {
         /// <summary>
-        /// Allocate a resource.
+        /// Allocate a resource from the resource broker.
         /// </summary>
         /// <param name="allocateRequestBody">The allocation input properties.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The allocation result.</returns>
-        Task<AllocateResponseBody> AllocateAsync(AllocateRequestBody allocateRequestBody, IDiagnosticsLogger logger);
+        Task<ResourceBrokerResource> CreateResourceAsync(CreateResourceRequestBody allocateRequestBody, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Deallocate a resource.
+        /// Get a resource by id from the resource broker.
+        /// </summary>
+        /// <param name="resourceIdToken">The resource id token.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>The allocation result.</returns>
+        Task<ResourceBrokerResource> GetResourceAsync(string resourceIdToken, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Deallocate a resource from the resource broker.
         /// </summary>
         /// <param name="resourceIdToken">The resource id token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource has been deallocated.</returns>
-        Task<bool> DeallocateAsync(string resourceIdToken, IDiagnosticsLogger logger);
+        Task<bool> DeleteResourceAsync(string resourceIdToken, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Bind the compute VM instance with the specified storage.
+        /// Start the compute VM instance with the specified storage.
         /// </summary>
         /// <param name="computeResourceIdToken">The compute resource id token.</param>
         /// <param name="startComputeRequestBody">The bind input parameters.</param>

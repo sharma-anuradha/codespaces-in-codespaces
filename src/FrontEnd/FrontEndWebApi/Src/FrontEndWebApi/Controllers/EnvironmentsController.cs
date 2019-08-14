@@ -3,30 +3,34 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
     /// <summary>
-    /// The environment registration API controller.
+    /// The cloud environment API controller.
     /// </summary>
     [ApiController]
     [Authorize]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.EnvironmentsV1Route)]
-    public class EnvironmentsController : ControllerBase
+    [LoggingBaseName("environments_controller")]
+    public class EnvironmentsController : ControllerBase /* TODO add this later IEnvironmentsHttpContract */
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentsController"/> class.
@@ -55,299 +59,278 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private IMapper Mapper { get; }
 
         /// <summary>
-        /// TEMPORARY TESTING ONLY!
-        /// </summary>
-        /// <returns>OK.</returns>
-        [HttpGet]
-        [Route("_testallocate")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetCreateEnvironment()
-        {
-            var input = new CloudEnvironmentInput
-            {
-                Connection = new ConnectionInfoInput
-                {
-                    ConnectionSessionId = null,
-                    ConnectionSessionPath = null,
-                },
-                ContainerImage = null,
-                CreateFileShare = false,
-                FriendlyName = $"Test Environment {Guid.NewGuid()}",
-                Personalization = new Models.PersonalizationInfo
-                {
-                    DefaultShell = "bash",
-                    DotfilesInstallCommand = null,
-                    DotfilesRepository = null,
-                    DotfilesTargetPath = null,
-                },
-                Platform = "any",
-                Seed = new SeedInfoInput
-                {
-                    GitConfig = new GitConfigInput
-                    {
-                        UserEmail = "test.user@contoso.com",
-                        UserName = "Test User",
-                    },
-                    SeedMoniker = "git-seed-moniker",
-                    SeedType = SeedType.Git.ToString(),
-                },
-                Type = CloudEnvironmentType.CloudEnvironment.ToString(),
-                Location = AzureLocation.EastUs.ToString(),
-                SkuName = "Small-Linux-Preview",
-            };
-
-            // Set up a fake user
-            CurrentUserProvider.SetProfile(new UserProfile.Profile
-            {
-                Id = "test-user-id",
-                Provider = "test",
-            });
-            CurrentUserProvider.SetBearerToken(Guid.NewGuid().ToString());
-
-            return await Create(input);
-        }
-
-        /// <summary>
         /// Get an environment by id.
         /// </summary>
-        /// <example>
-        /// GET environments/{id}
-        /// GET api/environment/registration/{id}
-        /// .
-        /// </example>
         /// <param name="environmentId">The environment id.</param>
         /// <returns>An object result containing the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet("{environmentId}")]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetEnvironment(
+        public async Task<IActionResult> GetEnvironmentAsync(
             [FromRoute]string environmentId)
         {
             var logger = HttpContext.GetLogger();
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var duration = logger.StartDuration();
 
-            var result = await EnvironmentManager.GetEnvironmentAsync(environmentId, currentUserId, logger);
-            if (result == null)
+            try
             {
-                return NotFound();
-            }
+                ValidationUtil.IsRequired(environmentId, nameof(environmentId));
 
-            logger.AddRegistrationInfoToResponseLog(result);
-            return Ok(Mapper.Map<CloudEnvironmentResult>(result));
+                var currentUserId = CurrentUserProvider.GetProfileId();
+                var result = await EnvironmentManager.GetEnvironmentAsync(environmentId, currentUserId, logger);
+                if (result is null)
+                {
+                    logger.AddDuration(duration)
+                        .AddEnvironmentId(environmentId)
+                        .AddReason($"{HttpStatusCode.NotFound}")
+                        .LogError(GetType().FormatLogErrorMessage(nameof(GetEnvironmentAsync)));
+
+                    return NotFound();
+                }
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(result)
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetEnvironmentAsync)));
+
+                return Ok(Mapper.Map<CloudEnvironmentResult>(result));
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .AddEnvironmentId(environmentId)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetEnvironmentAsync)), ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
-        /// Gets all environment registrations belonging to the the current user.
+        /// Lists all cloud environments belonging to the the current user.
         /// </summary>
-        /// <example>
-        /// GET environments
-        /// GET api/environment/registration
-        /// .
-        /// </example>
         /// <returns>An object result containing the list of <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet]
         [ProducesResponseType(typeof(CloudEnvironmentResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetEnvironmentsByOwnerAsync()
+        public async Task<IActionResult> ListEnvironmentsByOwnerAsync()
         {
             var logger = HttpContext.GetLogger();
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var duration = logger.StartDuration();
 
-            var modelsRaw = await EnvironmentManager.GetEnvironmentsByOwnerAsync(currentUserId, logger);
-            if (modelsRaw == null)
+            try
             {
-                return NotFound();
-            }
+                var currentUserId = CurrentUserProvider.GetProfileId();
 
-            return Ok(Mapper.Map<CloudEnvironmentResult[]>(modelsRaw));
+                var modelsRaw = await EnvironmentManager.GetEnvironmentsByOwnerAsync(currentUserId, logger);
+                if (modelsRaw is null)
+                {
+                    logger.AddDuration(duration)
+                        .AddReason($"{HttpStatusCode.NotFound}: no environments for current user.")
+                        .LogError(GetType().FormatLogErrorMessage(nameof(ListEnvironmentsByOwnerAsync)));
+
+                    // TODO: why not return 200 with empty collection?
+                    return NotFound();
+                }
+
+                logger.AddDuration(duration)
+                    .FluentAddValue("Count", modelsRaw.Count().ToString())
+                    .LogInfo(GetType().FormatLogMessage(nameof(ListEnvironmentsByOwnerAsync)));
+
+                return Ok(Mapper.Map<CloudEnvironmentResult[]>(modelsRaw));
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ListEnvironmentsByOwnerAsync)), ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
-        /// Create a new environment registration.
+        /// Create a new cloud environment.
         /// </summary>
-        /// <example>
-        /// POST environments
-        /// POST api/environment/registration
-        /// .
-        /// </example>
-        /// <param name="createEnvironmentInput">The environment registration input.</param>
+        /// <param name="createEnvironmentInput">The cloud environment input.</param>
         /// <returns>An object result containing the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpPost]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Create(
-            [FromBody]CloudEnvironmentInput createEnvironmentInput)
+        public async Task<IActionResult> CreateCloudEnvironmentAsync(
+            [FromBody]CreateCloudEnvironmentBody createEnvironmentInput)
         {
             var logger = HttpContext.GetLogger();
-            var currentUserId = CurrentUserProvider.GetProfileId();
-            var accessToken = CurrentUserProvider.GetBearerToken();
+            var duration = logger.StartDuration();
 
-            ValidationUtil.IsRequired(createEnvironmentInput, nameof(createEnvironmentInput));
-            ValidationUtil.IsRequired(createEnvironmentInput.FriendlyName, nameof(createEnvironmentInput.FriendlyName));
-            ValidationUtil.IsRequired(createEnvironmentInput.Type, nameof(createEnvironmentInput.Type));
-
-            var model = Mapper.Map<CloudEnvironmentInput, CloudEnvironment>(createEnvironmentInput);
-
-            // TODO HACK: specify a temporary location. Old clients don't specify one.
-            if (string.IsNullOrEmpty(model.SkuName))
+            try
             {
-                model.SkuName = "Small-Linux-Preview";
+                ValidationUtil.IsRequired(createEnvironmentInput, nameof(createEnvironmentInput));
+                ValidationUtil.IsRequired(createEnvironmentInput.FriendlyName, nameof(createEnvironmentInput.FriendlyName));
+                ValidationUtil.IsRequired(createEnvironmentInput.Type, nameof(createEnvironmentInput.Type));
+
+                var cloudEnvironment = Mapper.Map<CreateCloudEnvironmentBody, CloudEnvironment>(createEnvironmentInput);
+
+                // TODO HACK: specify a temporary sku. Old clients don't specify one.
+                if (string.IsNullOrEmpty(cloudEnvironment.SkuName))
+                {
+                    cloudEnvironment.SkuName = "Small-Linux-Preview";
+                }
+
+                // TODO HACK: specify a temporary location. Old clients don't specify one.
+                if (cloudEnvironment.Location == default)
+                {
+                    cloudEnvironment.Location = AzureLocation.EastUs;
+                }
+
+                var currentUserId = CurrentUserProvider.GetProfileId();
+                var accessToken = CurrentUserProvider.GetBearerToken();
+
+                cloudEnvironment = await EnvironmentManager.CreateEnvironmentAsync(
+                    cloudEnvironment,
+                    new CloudEnvironmentOptions { CreateFileShare = createEnvironmentInput.CreateFileShare },
+                    currentUserId,
+                    accessToken,
+                    logger);
+
+                if (cloudEnvironment is null)
+                {
+                    // Couldn't be registered. Assume it already exists?
+                    logger.AddDuration(duration)
+                        .AddReason($"{HttpStatusCode.Conflict}: already exists?")
+                        .LogError(GetType().FormatLogErrorMessage(nameof(CreateCloudEnvironmentAsync)));
+
+                    // TODO: 409 conflict might mean that the requested session id already exists
+                    // Could mean that the friendly-name is in conflict, could mean anything!
+                    return StatusCode(StatusCodes.Status409Conflict);
+                }
+
+                var location = new UriBuilder(Request.GetDisplayUrl());
+                location.Path = location.Path.TrimEnd('/');
+                location.Path = $"{location.Path}/{cloudEnvironment.Id}";
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(cloudEnvironment)
+                    .LogInfo(GetType().FormatLogMessage(nameof(CreateCloudEnvironmentAsync)));
+
+                return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(cloudEnvironment));
             }
-            if (model.Location == default)
+            catch (Exception ex)
             {
-                model.Location = AzureLocation.EastUs;
+                logger.AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateCloudEnvironmentAsync)), ex.Message);
+                throw;
             }
-
-            model = await EnvironmentManager.CreateEnvironment(
-                model,
-                new CloudEnvironmentOptions { CreateFileShare = createEnvironmentInput.CreateFileShare },
-                currentUserId,
-                accessToken,
-                logger);
-
-            if (model != null)
-            {
-                logger.AddRegistrationInfoToResponseLog(model);
-                return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(model));
-            }
-
-            // Couldn't be registered. Assume it already exists?
-            return StatusCode((int)HttpStatusCode.Conflict);
         }
 
         /// <summary>
-        /// Replace an existing environment.
+        /// Delete a cloud environment.
         /// </summary>
-        /// <example>
-        /// PUT environments/{id}
-        /// PUT api/environment/registration/{id}
-        /// .
-        /// </example>
-        /// <param name="environmentId">The environment id.</param>
-        /// <returns>Error status code <see cref="HttpStatusCode.NotImplemented"/>.</returns>
-        [HttpPut("{environmentId}")]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public Task<IActionResult> Put(
-            [FromRoute]string environmentId)
-        {
-            _ = environmentId;
-            return Task.FromResult<IActionResult>(StatusCode(StatusCodes.Status501NotImplemented));
-        }
-
-        /// <summary>
-        /// Delete an environment registration.
-        /// </summary>
-        /// <example>
-        /// DELETE environments/{id}
-        /// DELETE api/environment/registration/{id}
-        /// .
-        /// </example>
         /// <param name="environmentId">The environment id.</param>
         /// <returns>Status code <see cref="HttpStatusCode.NoContent"/> if deleted, otherwise <see cref="HttpStatusCode.NotFound"/>.</returns>
         [HttpDelete("{environmentId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Delete(
+        public async Task<IActionResult> DeleteCloudEnvironmentAsync(
             [FromRoute]string environmentId)
         {
             var logger = HttpContext.GetLogger();
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var duration = logger.StartDuration();
 
-            logger.AddEnvironmentId(environmentId);
-
-            var result = await EnvironmentManager.DeleteEnvironmentAsync(
-                environmentId,
-                currentUserId,
-                logger);
-
-            if (!result)
+            try
             {
-                logger.LogWarning("env_not_found");
-                return NotFound();
+                ValidationUtil.IsRequired(environmentId, nameof(environmentId));
+
+                var currentUserId = CurrentUserProvider.GetProfileId();
+
+                var result = await EnvironmentManager.DeleteEnvironmentAsync(
+                    environmentId,
+                    currentUserId,
+                    logger);
+
+                if (!result)
+                {
+                    logger.AddDuration(duration)
+                        .AddEnvironmentId(environmentId)
+                        .AddReason($"{HttpStatusCode.NotFound}")
+                        .LogWarning(GetType().FormatLogMessage(nameof(DeleteCloudEnvironmentAsync)));
+
+                    return NotFound();
+                }
+
+                logger.AddDuration(duration)
+                    .AddEnvironmentId(environmentId)
+                    .LogInfo(GetType().FormatLogMessage(nameof(DeleteCloudEnvironmentAsync)));
+
+                return NoContent();
             }
-
-            return NoContent();
-        }
-
-        /// <summary>
-        /// Update an existing environment registration.
-        /// </summary>
-        /// <example>
-        /// PATCH environments/{id}
-        /// PATCH api/environment/registration/{id}
-        /// .
-        /// </example>
-        /// <param name="environmentId">The environment id.</param>
-        /// <returns>Error status code <see cref="HttpStatusCode.NotImplemented"/>.</returns>
-        [HttpPatch("{environmentId}")]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public Task<IActionResult> Patch(
-            [FromRoute]string environmentId)
-        {
-            _ = environmentId;
-            return Task.FromResult<IActionResult>(StatusCode(StatusCodes.Status501NotImplemented));
-        }
-
-        /// <summary>
-        /// Get a task associated with an environment.
-        /// </summary>
-        /// <param name="id">The environment id.</param>
-        /// <param name="taskId">The task id.</param>
-        /// <returns>Error status code <see cref="HttpStatusCode.NotImplemented"/>.</returns>
-        // GET api/environment/registration/<id>/tasks/<taskId>
-        [HttpGet("{id}/tasks/{taskId}")]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public Task<IActionResult> GetTask(
-            [FromRoute]string id,
-            [FromRoute]string taskId)
-        {
-            return Task.FromResult<IActionResult>(StatusCode((int)HttpStatusCode.NotImplemented));
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .AddEnvironmentId(environmentId)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(DeleteCloudEnvironmentAsync)), ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
         /// Register a callback for an environment.
         /// </summary>
-        /// <example>
-        /// POST  api/environment/registration/{id}/_callback
-        /// .
-        /// </example>
         /// <param name="environmentId">The environment id.</param>
-        /// <param name="updateCloudEnvironmentCallbackInput">The callback info.</param>
+        /// <param name="callbackBody">The callback info.</param>
         /// <returns>An object result that containts the <see cref="CloudEnvironmentResult"/>.</returns>
-        [HttpPost("{environmentId}/_callback")]
+        [HttpPost("{environmentId}/_callback")] // TODO: This should be PATCH not POST
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateEnvironmentCallbackAsync(
             [FromRoute]string environmentId,
-            [FromBody]CallbackInput updateCloudEnvironmentCallbackInput)
+            [FromBody]CallbackOptionsBody callbackBody)
         {
             var logger = HttpContext.GetLogger();
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var duration = logger.StartDuration();
 
-            var options = Mapper.Map<CallbackInput, CallbackOptions>(updateCloudEnvironmentCallbackInput);
-
-            var result = await EnvironmentManager.UpdateEnvironmentCallbackAsync(
-                environmentId,
-                options,
-                currentUserId,
-                logger);
-
-            if (result == null)
+            try
             {
-                logger
-                    .AddEnvironmentId(environmentId)
-                    .AddSessionId(updateCloudEnvironmentCallbackInput.Payload.SessionId)
-                    .LogError("env_not_found_on_callback");
-                return NotFound();
-            }
+                ValidationUtil.IsRequired(environmentId, nameof(environmentId));
+                ValidationUtil.IsRequired(callbackBody, nameof(callbackBody));
+                ValidationUtil.IsRequired(callbackBody?.Payload, nameof(callbackBody.Payload));
+                ValidationUtil.IsRequired(callbackBody?.Payload?.SessionId, nameof(callbackBody.Payload.SessionId));
+                ValidationUtil.IsRequired(callbackBody?.Payload?.SessionPath, nameof(callbackBody.Payload.SessionPath));
 
-            logger.AddRegistrationInfoToResponseLog(result);
-            return Ok(Mapper.Map<CloudEnvironmentResult>(result));
+                var currentUserId = CurrentUserProvider.GetProfileId();
+                var options = Mapper.Map<CallbackOptionsBody, CallbackOptions>(callbackBody);
+                var result = await EnvironmentManager.UpdateEnvironmentCallbackAsync(
+                    environmentId,
+                    options,
+                    currentUserId,
+                    logger);
+
+                if (result is null)
+                {
+                    logger
+                        .AddEnvironmentId(environmentId)
+                        .AddSessionId(callbackBody.Payload.SessionId)
+                        .AddReason($"{HttpStatusCode.NotFound}")
+                        .LogError(GetType().FormatLogErrorMessage(nameof(UpdateEnvironmentCallbackAsync)));
+
+                    return NotFound();
+                }
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(result)
+                    .LogInfo(GetType().FormatLogMessage(nameof(UpdateEnvironmentCallbackAsync)));
+
+                return Ok(Mapper.Map<CloudEnvironmentResult>(result));
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(UpdateEnvironmentCallbackAsync)), ex.Message);
+                throw;
+            }
         }
     }
 }

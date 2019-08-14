@@ -4,10 +4,8 @@
 
 using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
@@ -21,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
     /// <summary>
     /// An http resource broker client.
     /// </summary>
-    public class HttpResourceBrokerClient : IResourceBrokerHttpContract
+    public class HttpResourceBrokerClient : IResourceBrokerResourcesHttpContract
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpResourceBrokerClient"/> class.
@@ -36,19 +34,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         private IHttpClientProvider HttpClientProvider { get; }
 
         /// <inheritdoc/>
-        public async Task<AllocateResponseBody> AllocateAsync(AllocateRequestBody input, IDiagnosticsLogger logger)
+        public async Task<ResourceBrokerResource> CreateResourceAsync(CreateResourceRequestBody input, IDiagnosticsLogger logger)
         {
-            var requestUri = ResourceBrokerHttpContract.GetAllocateUri();
-            var result = await SendAsync<AllocateRequestBody, AllocateResponseBody>(ResourceBrokerHttpContract.AllocateMethod, requestUri, input, logger);
+            var requestUri = ResourceBrokerHttpContract.GetCreateResourceUri();
+            var result = await SendAsync<CreateResourceRequestBody, ResourceBrokerResource>(ResourceBrokerHttpContract.CreateResourceMethod, requestUri, input, logger);
             return result;
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeallocateAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        public async Task<ResourceBrokerResource> GetResourceAsync(string resourceIdToken, IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(resourceIdToken, nameof(resourceIdToken));
-            var requestUri = ResourceBrokerHttpContract.GetDeallocateUri(resourceIdToken);
-            var result = await SendAsync<string, bool>(ResourceBrokerHttpContract.DeallocateMethod, requestUri, null, logger);
+            var requestUri = ResourceBrokerHttpContract.GetGetResourceUri(resourceIdToken);
+            var result = await SendAsync<string, ResourceBrokerResource>(ResourceBrokerHttpContract.GetResourceMethod, requestUri, null, logger);
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> DeleteResourceAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        {
+            Requires.NotNullOrEmpty(resourceIdToken, nameof(resourceIdToken));
+            var requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(resourceIdToken);
+            var result = await SendAsync<string, bool>(ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, null, logger);
             return result;
         }
 
@@ -72,22 +79,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             TInput input,
             IDiagnosticsLogger logger)
         {
-            // TODO: add logging
-            _ = logger;
-
-            //// The request message
-            //var fullUri = new UriBuilder(HttpClientProvider.HttpClient.BaseAddress)
-            //{
-            //    Path = requestUri,
-            //}.Uri;
-
             var httpRequestMessage = new HttpRequestMessage(method, requestUri);
+
+            // Set up logging
+            var duration = logger?.StartDuration();
+            var fullRequestUri = new UriBuilder(HttpClientProvider.HttpClient.BaseAddress)
+            {
+                Path = requestUri,
+            }.Uri;
+            logger?
+                .FluentAddValue(LoggingConstants.HttpRequestMethod, method.ToString())
+                .FluentAddValue(LoggingConstants.HttpRequestUri, fullRequestUri.ToString());
+
+            // TODO: add the correlation id header..any other interesting headers.
             httpRequestMessage.Headers.Add("Accept", "application/json");
 
             var body = JsonConvert.SerializeObject(input);
             httpRequestMessage.Content = new StringContent(body, Encoding.UTF8, "application/json");
-
-            // TODO: add the correlation id header..any other interesting headers.
 
             // Send the request
             HttpResponseMessage httpResponseMessage;
@@ -95,17 +103,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             {
                 httpResponseMessage = await HttpClientProvider.HttpClient.SendAsync(httpRequestMessage);
                 await httpResponseMessage.ThrowIfFailedAsync();
+
+                // Get the response body
+                var resultBody = await httpResponseMessage.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<TResult>(resultBody);
+
+                logger?.TryAddDuration(duration);
+                logger?.LogInfo(GetType().FormatLogMessage(nameof(SendAsync)));
+
+                return result;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                logger.LogException("TODO: HTPP REQUEST FAILED", ex);
+                logger?.TryAddDuration(duration);
+                logger?.LogError(GetType().FormatLogErrorMessage(nameof(SendAsync)));
                 throw;
             }
-
-            // The response body
-            var resultBody = await httpResponseMessage.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<TResult>(resultBody);
-            return result;
         }
     }
 }

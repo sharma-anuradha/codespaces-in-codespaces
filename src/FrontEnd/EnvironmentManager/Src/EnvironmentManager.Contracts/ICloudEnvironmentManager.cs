@@ -39,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="accessToken">The owner's access token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the new <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> CreateEnvironment(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, string ownerId, string accessToken, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, string ownerId, string accessToken, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update the callback information for an existing environment.

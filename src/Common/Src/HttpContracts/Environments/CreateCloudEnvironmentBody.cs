@@ -5,12 +5,12 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
     /// <summary>
     /// The REST API body for registering/creating a new Environment.
     /// </summary>
-    public class CloudEnvironmentInput
+    public class CreateCloudEnvironmentBody
     {
         /// <summary>
         /// Gets or sets teh environment type.
@@ -32,12 +32,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// <summary>
         /// Gets or sets the environment seed info.
         /// </summary>
-        public SeedInfoInput Seed { get; set; }
+        public SeedInfoBody Seed { get; set; }
 
         /// <summary>
         /// Gets or sets the environment personalization info.
         /// </summary>
-        public PersonalizationInfo Personalization { get; set; }
+        public PersonalizationInfoBody Personalization { get; set; }
 
         /// <summary>
         /// Gets or sets the environment container image.
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// <summary>
         /// Gets or sets the environment Live Share connection info.
         /// </summary>
-        public ConnectionInfoInput Connection { get; set; }
+        public ConnectionInfoBody Connection { get; set; }
 
         /// <summary>
         /// Gets or sets the enviroment platform.

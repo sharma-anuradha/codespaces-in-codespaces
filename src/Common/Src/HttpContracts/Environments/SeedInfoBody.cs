@@ -4,12 +4,12 @@
 
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
     /// <summary>
     /// The environment seed info.
     /// </summary>
-    public class SeedInfoInput
+    public class SeedInfoBody
     {
         /// <summary>
         /// Gets or sets the seed type.
@@ -27,6 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// Gets or sets the Git configuration.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "gitConfig")]
-        public GitConfigInput GitConfig { get; set; }
+        public GitConfigOptionsBody GitConfig { get; set; }
     }
 }

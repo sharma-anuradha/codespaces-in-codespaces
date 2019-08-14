@@ -2,12 +2,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
     /// <summary>
     /// The environment registration callback payload.
     /// </summary>
-    public class CallbackPayloadInput
+    public class CallbackPayloadOptionsBody
     {
         /// <summary>
         /// Gets or sets the environment connection session id.
