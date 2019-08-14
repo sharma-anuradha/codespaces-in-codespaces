@@ -4,8 +4,10 @@
 
 using AutoMapper;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 {
@@ -22,6 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         {
             cfg.CreateMap<ResourceRecord, AllocateResult>();
             cfg.CreateMap<ScalingInput, ResourcePoolDefinition>();
+            cfg.CreateMap<FileShareProviderAssignResult, ShareConnectionInfo>();
+            cfg.CreateMap<VirtualMachineProviderStartComputeResult, EnvironmentStartResult>();
         }
     }
 }

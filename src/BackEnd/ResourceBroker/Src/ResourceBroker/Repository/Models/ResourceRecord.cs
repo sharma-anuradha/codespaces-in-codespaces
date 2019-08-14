@@ -76,17 +76,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public ResourceProvisioningStatus ProvisioningStatus { get; set; }
+        public ResourceProvisioningStatus ProvisioningStatus { get; protected set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? ProvisioningStatusChanged { get; set; }
+        public DateTime? ProvisioningStatusChanged { get; protected set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public IList<ResourceProvisioningStatusChanges> ProvisioningStatusChanges { get; set; }
+        public IList<ResourceProvisioningStatusChanges> ProvisioningStatusChanges { get; protected set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
+        public ResourceStartingStatus? StartingStatus { get; protected set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DateTime? StartingStatusChanged { get; protected set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IList<ResourceStartingStatusChanges> StartingStatusChanges { get; protected set; }
 
         /// <summary>
         /// 
@@ -97,13 +113,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         /// <param name="newState"></param>
-        public void UpdateProvisioningStatus(ResourceProvisioningStatus newState)
+        public void UpdateProvisioningStatus(ResourceProvisioningStatus newState, DateTime? newTime = null)
         {
-            var time = DateTime.UtcNow;
+            if (ProvisioningStatus == newState)
+            {
+                return;
+            }
+
+            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
             ProvisioningStatus = newState;
             ProvisioningStatusChanged = time;
 
+            if (ProvisioningStatusChanges == null)
+            {
+                ProvisioningStatusChanges = new List<ResourceProvisioningStatusChanges>();
+            }
+
+            // TODO: should ensure that these are bounded
+
             ProvisioningStatusChanges.Add(new ResourceProvisioningStatusChanges
+            {
+                Status = newState,
+                Time = time,
+            });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="newState"></param>
+        public void UpdateStartingStatus(ResourceStartingStatus newState, DateTime? newTime = null)
+        {
+            if (StartingStatus.HasValue && StartingStatus.Value == newState)
+            {
+                return;
+            }
+
+            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
+            StartingStatus = newState;
+            StartingStatusChanged = time;
+
+            if (StartingStatusChanges == null)
+            {
+                StartingStatusChanges = new List<ResourceStartingStatusChanges>();
+            }
+
+            // TODO: should ensure that these are bounded
+
+            StartingStatusChanges.Add(new ResourceStartingStatusChanges
             {
                 Status = newState,
                 Time = time,

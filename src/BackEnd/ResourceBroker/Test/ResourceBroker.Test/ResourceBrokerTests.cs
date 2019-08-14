@@ -1,4 +1,4 @@
-// <copyright file="UnitTest1.cs" company="Microsoft">
+// <copyright file="ResourceBrokerTests.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 {
@@ -24,12 +25,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         public void Ctor_throws_if_null()
         {
             var resourcePool = new Mock<IResourcePool>().Object;
-            var resourceManager = new Mock<IResourceManager>().Object;
+            var startComputeTask = new Mock<IStartComputeTask>().Object;
             var mapper = new Mock<IMapper>().Object;
 
             Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null));
             Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, mapper));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, resourceManager, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, startComputeTask, null));
             Assert.Throws<ArgumentNullException>(() => new ResourceBroker(resourcePool, null, null));
         }
 
@@ -37,9 +38,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         public void Ctor_ok()
         {
             var resourcePool = new Mock<IResourcePool>().Object;
-            var resourceManager = new Mock<IResourceManager>().Object;
+            var startComputeTask = new Mock<IStartComputeTask>().Object;
             var mapper = new Mock<IMapper>().Object;
-            var provider = new ResourceBroker(resourcePool, resourceManager, mapper);
+            var provider = new ResourceBroker(resourcePool, startComputeTask, mapper);
             Assert.NotNull(provider);
         }
 
@@ -51,11 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 
             var mapper = BuildMapper();
             var logger = new Mock<IDiagnosticsLogger>().Object;
-            var resourceManager = new Mock<IResourceManager>().Object;
+            var startComputeTask = new Mock<IStartComputeTask>().Object;
             var resourcePool = new Mock<IResourcePool>();
             resourcePool.Setup(x => x.TryGetAsync(input, logger)).Returns(Task.FromResult(rawResult));
 
-            var provider = new ResourceBroker(resourcePool.Object, resourceManager, mapper);
+            var provider = new ResourceBroker(resourcePool.Object, startComputeTask, mapper);
 
             var result = await provider.AllocateAsync(input, logger);
 
@@ -74,11 +75,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 
             var mapper = BuildMapper();
             var logger = new Mock<IDiagnosticsLogger>().Object;
-            var resourceManager = new Mock<IResourceManager>().Object;
+            var startComputeTask = new Mock<IStartComputeTask>().Object;
             var resourcePool = new Mock<IResourcePool>();
             resourcePool.Setup(x => x.TryGetAsync(input, logger)).Returns(Task.FromResult((ResourceRecord)null));
 
-            var provider = new ResourceBroker(resourcePool.Object, resourceManager, mapper);
+            var provider = new ResourceBroker(resourcePool.Object, startComputeTask, mapper);
 
             Assert.ThrowsAsync<OutOfCapacityException>(async () => await provider.AllocateAsync(input, logger));
         }

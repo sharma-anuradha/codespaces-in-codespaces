@@ -27,19 +27,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             ResourceType type,
             string location,
             IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Start compute with storage and startup parameters.
-        /// </summary>
-        /// <param name="computeResourceIdToken">The compute resource token id.</param>
-        /// <param name="storageResourceIdToken">The storage resource token id.</param>
-        /// <param name="environmentVariables">The compute environment variables.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>A task gating completion gate.</returns>
-        Task StartComputeAsync(
-            string computeResourceIdToken,
-            string storageResourceIdToken,
-            IDictionary<string, string> environmentVariables,
-            IDiagnosticsLogger logger);
     }
 }

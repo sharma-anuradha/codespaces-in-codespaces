@@ -3,12 +3,12 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
@@ -21,21 +21,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// Initializes a new instance of the <see cref="ResourceBroker"/> class.
         /// </summary>
         /// <param name="resourcePool">Resource pool that should be used.</param>
-        /// <param name="resourceManager">Resource that should be used</param>
-        /// <param name="mapper">Mapper that should be used</param>
+        /// <param name="startComputeTask">Start compute task that should be used.</param>
+        /// <param name="mapper">Mapper that should be used.</param>
         public ResourceBroker(
             IResourcePool resourcePool,
-            IResourceManager resourceManager,
+            IStartComputeTask startComputeTask,
             IMapper mapper)
         {
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
-            ResourceManager = Requires.NotNull(resourceManager, nameof(resourceManager));
+            StartComputeTask = Requires.NotNull(startComputeTask, nameof(startComputeTask));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
 
         private IResourcePool ResourcePool { get; }
 
-        private IResourceManager ResourceManager { get; }
+        private IStartComputeTask StartComputeTask { get; }
 
         private IMapper Mapper { get; }
 
@@ -59,18 +59,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public async Task StartComputeAsync(
-            string computeResourceIdToken,
-            string storageResourceIdToken,
-            IDictionary<string, string> environmentVariables,
-            IDiagnosticsLogger logger)
+        public async Task<EnvironmentStartResult> StartComputeAsync(
+            EnvironmentStartInput input,
+            IDiagnosticsLogger logger,
+            string continuationToken = null)
         {
             // Start compute
-            await ResourceManager.StartComputeAsync(
-                computeResourceIdToken,
-                storageResourceIdToken,
-                environmentVariables,
-                logger);
+            return await StartComputeTask.RunAsync(input, logger, continuationToken);
         }
     }
 }

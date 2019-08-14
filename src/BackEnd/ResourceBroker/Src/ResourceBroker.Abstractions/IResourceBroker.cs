@@ -33,15 +33,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// <summary>
         /// Start compute with storage and startup parameters.
         /// </summary>
-        /// <param name="computeResourceIdToken">The compute resource token id.</param>
-        /// <param name="storageResourceIdToken">The storage resource token id.</param>
-        /// <param name="environmentVariables">The compute environment variables.</param>
+        /// <param name="input">Input for the environment to be started.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="continuationToken">Token used to continue the task.</param>
         /// <returns>A task.</returns>
-        Task StartComputeAsync(
-            string computeResourceIdToken,
-            string storageResourceIdToken,
-            IDictionary<string, string> environmentVariables,
-            IDiagnosticsLogger logger);
+        Task<EnvironmentStartResult> StartComputeAsync(
+            EnvironmentStartInput input,
+            IDiagnosticsLogger logger,
+            string continuationToken = null);
     }
 }

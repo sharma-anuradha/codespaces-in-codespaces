@@ -13,8 +13,10 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 {
@@ -276,7 +278,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <inheritdoc/>
         async Task<StartComputeResponseBody> IResourceBrokerResourcesHttpContract.StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody requestBody, IDiagnosticsLogger logger)
         {
-            await ResourceBroker.StartComputeAsync(computeResourceIdToken, requestBody.StorageResourceIdToken, requestBody.EnvironmentVariables, logger);
+            var input = new EnvironmentStartInput
+            {
+                ComputeResourceId = ResourceId.Parse(computeResourceIdToken),
+                StorageResourceId = requestBody.StorageResourceIdToken,
+                EnvironmentVariables = requestBody.EnvironmentVariables,
+            };
+
+            var result = await ResourceBroker.StartComputeAsync(input, logger);
+
+            // TODO: @JohnR to update endpoints based on continuation result
+            //       Expected that based on this result a 201 will be returned
+            //       to the front end and the front end will return 201 to the
+            //       client. The client will then do status polls to the front
+            //       end, which for the moment, will result in a status poll to
+            //       the backend (different endpoint to this). That endpoint will
+            //       call `ResourceBroker.StartComputeAsync` again with the
+            //       continuation token passed in as an arg. This pattern is how
+            //       we translate between http and .net paradigms.
+
             return new StartComputeResponseBody { };
         }
     }

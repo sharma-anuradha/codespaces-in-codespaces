@@ -18,6 +18,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Azur
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 {
@@ -59,8 +61,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IResourceScalingBroker>(x => x.GetRequiredService<ResourceScalingBroker>());
             services.AddSingleton<IResourceScalingStore>(x => x.GetRequiredService<ResourceScalingBroker>());
 
-            // Async Warmup
+            // Jobs
             services.AddSingleton<IAsyncBackgroundWarmup, ResourceRegisterJobs>();
+
+            // Tasks
+            services.AddSingleton<IStartComputeTask, StartComputeTask>();
 
             // Job Registration
             services.AddSingleton<WatchPoolSizeJob>();
@@ -68,6 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             if (appSettings.UseMocksForResourceProviders)
             {
                 services.AddSingleton<IComputeProvider, MockComputeProvider>();
+                services.AddSingleton<IStorageProvider, MockStorageProvider>();
             }
 
             ConfigureDataServices(services, appSettings);
@@ -116,6 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                         WatchPoolSizeJob.QueueName,
                         MockResourceJobQueueRepository.QueueName,
                         ResourceRegisterJobs.QueueName,
+                        StartComputeTask.QueueName,
                         "background-warmup-job-queue", // TODO: Need to fix this reference somehow
                     });
         }
