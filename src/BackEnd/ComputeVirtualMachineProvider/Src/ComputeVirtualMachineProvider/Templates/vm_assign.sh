@@ -7,6 +7,8 @@
 SCRIPT_PARAM_STORAGE=''
 SCRIPT_PARAM_CONTAINER_ENV_VARS=''
 
+STORAGE_SIZE_IN_GB=32
+
 [ -z "$SCRIPT_PARAM_STORAGE" ] && echo "SCRIPT_PARAM_STORAGE parameter not set." && exit 1;
 [ -z "$SCRIPT_PARAM_CONTAINER_ENV_VARS" ] && echo "SCRIPT_PARAM_CONTAINER_ENV_VARS parameter not set." && exit 1;
 
@@ -33,10 +35,13 @@ systemctl stop docker
 mkdir -p /mnt/$CLOUDENVSTORAGE_SHARE
 mount -t cifs //$CLOUDENVSTORAGE_ACCOUNT.file.core.windows.net/$CLOUDENVSTORAGE_SHARE /mnt/$CLOUDENVSTORAGE_SHARE -o vers=3.0,credentials=/etc/smbcredentials/cloudenvstorage.cred,dir_mode=0777,file_mode=0777,serverino
 
+# Resize ext4 to desired size before we mount the ext4 file system (increasing the size is a fairly quick operation)
+resize2fs -fp /mnt/$CLOUDENVSTORAGE_SHARE/$CLOUDENVSTORAGE_FILE ${STORAGE_SIZE_IN_GB}G
+
 losetup -Pf /mnt/$CLOUDENVSTORAGE_SHARE/$CLOUDENVSTORAGE_FILE
 LOOP_DEVICE=`losetup | grep "/mnt/$CLOUDENVSTORAGE_SHARE/$CLOUDENVSTORAGE_FILE" | cut -d" " -f1`
 mount "$LOOP_DEVICE" /var/lib/docker -o nosuid,nodev
-	
+
 # Start docker again
 systemctl start docker
 
