@@ -100,10 +100,40 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
 
         // PUT api/environment/registration/<id>
         [HttpPut("{id}")]
-        public Task<IActionResult> Put(
+        public async Task<IActionResult> Put(
             [FromRoute]string id, [FromBody]EnvironmentRegistrationInput modelInput)
         {
-            return Task.FromResult<IActionResult>(StatusCode(501));
+#if DEBUG
+            ValidationUtil.IsRequired(id);
+
+            var logger = HttpContext.GetLogger();
+            var currentUserId = CurrentUserProvider.GetProfileId();
+            var accessToken = CurrentUserProvider.GetBearerToken();
+
+            ValidationUtil.IsRequired(modelInput);
+            ValidationUtil.IsRequired(modelInput.FriendlyName);
+            ValidationUtil.IsRequired(modelInput.Type);
+
+            var model = Mapper.Map<EnvironmentRegistrationInput, EnvironmentRegistration>(modelInput);
+
+            model = await RegistrationManager.RefreshAsync(
+                id, 
+                model, 
+                null, 
+                currentUserId, 
+                accessToken, 
+                logger);
+
+            if (model != null)
+            {
+                logger.AddRegistrationInfoToResponseLog(model);
+                return Ok(Mapper.Map<EnvironmentRegistration, EnvironmentRegistrationResult>(model));
+            }
+
+            return StatusCode(409);
+#else
+            return StatusCode(501);
+#endif
         }
 
         // DELETE api/environment/registration/<id>

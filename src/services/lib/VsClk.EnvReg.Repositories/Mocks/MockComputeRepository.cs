@@ -210,6 +210,52 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories
             createCommandLine.Append($"{image} /.cloudenv/bin/vscloudenv bootstrap");
             return createCommandLine.ToString();
         }
+
+        public Task<ComputeResourceResponse> RefreshResourceAsync(string computeTargetId, string oldContainerName, ComputeServiceRequest computeServiceRequest)
+        {
+            if (!this.store.ContainsKey(oldContainerName))
+            {
+                throw new KeyNotFoundException();
+            }
+
+            Enum.TryParse<LocalDockerOptions>(appSettings.UseLocalDockerForComputeProvisioning, true, out LocalDockerOptions options);
+            if (options != LocalDockerOptions.CopyCLI)
+            {
+                throw new NotImplementedException();
+            }
+
+            var newImageName = Guid.NewGuid().ToString();
+            var newContainerName = Guid.NewGuid().ToString();
+
+            var commitCommand = $"commit {oldContainerName} {newImageName}";
+            Process.Start(DockerCLI, commitCommand.ToString()).WaitForExit();
+            
+            var createCommandLine = new StringBuilder();
+            createCommandLine.Append("create ");
+            createCommandLine.Append($"{GetCreateOrRunArguments(newImageName, newContainerName, computeServiceRequest)} ");
+            Process.Start(DockerCLI, createCommandLine.ToString()).WaitForExit();
+
+            var dockerStartCommandLine = new StringBuilder();
+            dockerStartCommandLine.Append($"start {newContainerName}");
+            Process.Start(DockerCLI, dockerStartCommandLine.ToString());
+
+            var computeResource = new ComputeResourceResponse()
+            {
+                Created = DateTime.Now.ToString(),
+                Id = newContainerName,
+                State = StateInfo.Provisioning.ToString()
+            };
+
+            this.store[computeResource.Id] = new MockACI()
+            {
+                ComputeServiceRequest = computeServiceRequest,
+                ComputeResourceResponse = computeResource,
+                ContainerInstance = newContainerName
+            };
+
+            this.store.Remove(oldContainerName);
+            return Task.FromResult(computeResource);
+        }
     }
 
 #endif // DEBUG

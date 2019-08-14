@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Threading.Tasks;
@@ -47,6 +48,11 @@ namespace VsClk.EnvReg.Repositories.HttpClient
                 $"/computeTargets/{connectionComputeTargetId}/compute/{connectionComputeId}");
 
             await response.ThrowIfFailedAsync();
+        }
+
+        public Task<ComputeResourceResponse> RefreshResourceAsync(string computeTargetId, string computeId, ComputeServiceRequest computeServiceRequest)
+        {
+            throw new NotImplementedException();
         }
     }
 }

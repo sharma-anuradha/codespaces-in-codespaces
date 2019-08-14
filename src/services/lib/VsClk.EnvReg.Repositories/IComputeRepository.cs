@@ -11,5 +11,7 @@ namespace VsClk.EnvReg.Repositories
         Task<ComputeResourceResponse> AddResourceAsync(string computeTargetId, ComputeServiceRequest computeServiceRequest);
 
         Task DeleteResourceAsync(string connectionComputeTargetId, string connectionComputeId);
+
+        Task<ComputeResourceResponse> RefreshResourceAsync(string computeTargetId, string computeId, ComputeServiceRequest computeServiceRequest);
     }
 }

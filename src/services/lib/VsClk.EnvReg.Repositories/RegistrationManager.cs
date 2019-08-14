@@ -272,5 +272,61 @@ namespace VsClk.EnvReg.Repositories
 
             return workspaceResponse.Id;
         }
+
+        public async Task<EnvironmentRegistration> RefreshAsync(
+            string id,
+            EnvironmentRegistration model,
+            EnvironmentRegistrationOptions options,
+            string ownerId,
+            string accessToken,
+            IDiagnosticsLogger logger)
+        {
+#if DEBUG
+            model.OwnerId = ownerId;
+            model.Updated = DateTime.UtcNow;
+            model.Id = id;
+
+            UnauthorizedUtil.IsRequired(accessToken);
+
+            var environments = await EnvironmentRegistrationRepository.GetWhereAsync((env) => env.OwnerId == model.OwnerId, logger);
+
+            var oldEnv = environments.Single((env) => env.FriendlyName == model.FriendlyName);
+            ValidationUtil.IsTrue(
+                oldEnv != null,
+                "Environment that friendlyName does not exist.");
+
+            if (model.Type.Equals(EnvType.StaticEnvironment.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                throw new UnauthorizedAccessException("Cannot refresh static environment");
+            }
+
+            var sessionId = model.Connection.ConnectionSessionId;
+
+            // Setup - Compute input
+            var computeServiceRequest = new ComputeServiceRequest
+            {
+                EnvironmentVariables = EnvironmentVariableGenerator.Generate(model, AppSettings, accessToken, sessionId)
+            };
+
+            var computeResource = await ComputeRepository.RefreshResourceAsync(oldEnv.Connection.ConnectionComputeTargetId, oldEnv.Connection.ConnectionComputeId, computeServiceRequest);
+            var containerId = computeResource.Id;
+
+            // Setup
+            model.Connection = new ConnectionInfo()
+            {
+                ConnectionSessionId = sessionId,
+                ConnectionComputeId = containerId,
+                ConnectionComputeTargetId = oldEnv.Connection.ConnectionComputeTargetId,
+                ConnectionSessionPath = null    // To allow callback to update it, and thats how currently client understands it.
+            };
+
+            model.State = StateInfo.Provisioning.ToString();
+
+            model = await EnvironmentRegistrationRepository.UpdateAsync(model, logger);
+            return model;
+#else
+            throw new NotImplementedException();
+#endif
+        }
     }
 }

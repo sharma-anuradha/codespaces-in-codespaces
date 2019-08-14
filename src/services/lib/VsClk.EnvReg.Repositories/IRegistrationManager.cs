@@ -23,6 +23,14 @@ namespace VsClk.EnvReg.Repositories
             string accessToken,
             IDiagnosticsLogger logger);
 
+        Task<EnvironmentRegistration> RefreshAsync(
+            string id,
+            EnvironmentRegistration model,
+            EnvironmentRegistrationOptions options,
+            string ownerId,
+            string accessToken,
+            IDiagnosticsLogger logger);
+
         Task<bool> DeleteAsync(
             string id,
             string ownerId,
