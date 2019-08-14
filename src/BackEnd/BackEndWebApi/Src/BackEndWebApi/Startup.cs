@@ -91,13 +91,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 ServiceName = "BackendWebApi",
                 CommitId = appSettings.GitCommit,
             };
-            var loggerFactory = new DefaultLoggerFactory();
-            services.AddSingleton(
-                loggerFactory.New(new LogValueSet
-                    {
-                        { LoggingConstants.Service, loggingBaseValues.ServiceName },
-                        { LoggingConstants.CommitId, loggingBaseValues.CommitId },
-                    }));
 
             // Mappers services
             var config = new MapperConfiguration(cfg =>
