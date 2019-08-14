@@ -18,7 +18,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     public class HubClient : IHubClient
     {
         private readonly TraceSource traceSource;
-        private readonly CancellationTokenSource stopCts = new CancellationTokenSource();
+        private CancellationTokenSource stopCts;
 
         public HubClient(string url, TraceSource trace)
             : this(HubConnectionHelpers.FromUrl(url).Build(), trace)
@@ -38,6 +38,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         public HubClient(HubConnection hubConnection, TraceSource trace)
         {
             Connection = Requires.NotNull(hubConnection, nameof(trace));
+            Connection.Closed += OnClosedAsync;
             this.traceSource = Requires.NotNull(trace, nameof(trace));
         }
 
@@ -72,11 +73,19 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <inheritdoc/>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            this.traceSource.Verbose($"StartAsync");
-            IsRunning = true;
-            Connection.Closed += OnClosedAsync;
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, StopToken);
-            return AttemptConnectAsync(cts.Token);
+            if (!IsRunning)
+            {
+                this.traceSource.Verbose($"StartAsync");
+                IsRunning = true;
+                this.stopCts?.Dispose();
+                this.stopCts = new CancellationTokenSource();
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, StopToken);
+                return AttemptConnectAsync(cts.Token);
+            }
+            else
+            {
+                return Task.CompletedTask;
+            }
         }
 
         /// <inheritdoc/>
@@ -87,7 +96,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 this.traceSource.Verbose($"StopAsync");
                 IsRunning = false;
                 this.stopCts.Cancel();
-                Connection.Closed -= OnClosedAsync;
                 return Connection.StopAsync(cancellationToken);
             }
             else
@@ -99,12 +107,20 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         private async Task OnClosedAsync(Exception exception)
         {
             this.traceSource.Verbose($"OnClosedAsync exception:{exception?.Message}");
+            await FireConnectionStateChangedAsync();
+
+            if (IsRunning)
+            {
+                AttemptConnectAsync(StopToken).Forget();
+            }
+        }
+
+        private async Task FireConnectionStateChangedAsync()
+        {
             if (ConnectionStateChanged != null)
             {
-                await ConnectionStateChanged?.InvokeAsync(this, EventArgs.Empty);
+                await ConnectionStateChanged.InvokeAsync(this, EventArgs.Empty);
             }
-
-            AttemptConnectAsync(StopToken).Forget();
         }
 
         private async Task AttemptConnectAsync(CancellationToken cancellationToken)
@@ -115,7 +131,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                     var e = new AttemptConnectionEventArgs(retries, backoffTime, error);
                     if (AttemptConnection != null)
                     {
-                        await AttemptConnection?.InvokeAsync(this, e);
+                        await AttemptConnection.InvokeAsync(this, e);
                     }
 
                     return e.BackoffTimeMillisecs;
@@ -125,10 +141,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 60000,
                 this.traceSource,
                 cancellationToken);
-            if (ConnectionStateChanged != null)
-            {
-                await ConnectionStateChanged?.InvokeAsync(this, EventArgs.Empty);
-            }
+            await FireConnectionStateChangedAsync();
         }
     }
 }
