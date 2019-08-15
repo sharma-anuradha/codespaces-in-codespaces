@@ -17,6 +17,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <summary>
         /// Storage
         /// </summary>
-        Storage = 2,
+        StorageFileShare = 2,
     }
 }

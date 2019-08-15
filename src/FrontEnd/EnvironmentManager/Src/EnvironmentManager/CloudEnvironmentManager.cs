@@ -407,7 +407,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 new CreateResourceRequestBody
                 {
                     // TODO: real input values go here!
-                    Type = ResourceType.Storage,
+                    Type = ResourceType.StorageFileShare,
                     SkuName = cloudEnvironment.SkuName,
                     Location = cloudEnvironment.Location,
                 },
