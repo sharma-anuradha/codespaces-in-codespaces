@@ -133,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 case CopyStatus.Pending:
                     return (double)destFile.CopyState.BytesCopied / (double)destFile.CopyState.TotalBytes;
                 default:
-                    throw new StoragePrepareException(azureStorageAccountId, destFile.Uri.ToString(), status.ToString());
+                    throw new StoragePrepareException(azureStorageAccountId, destFile.Uri.ToString(), status.ToString(), destFile.CopyState.StatusDescription);
             }
         }
 

@@ -17,12 +17,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// <param name="azureStorageAccountId">Azure Resource Id of the storage account that was being operated on.</param>
         /// <param name="storagePath">Path to the storage file that was being operated on.</param>
         /// <param name="status">Status message of the prepare operation.</param>
-        public StoragePrepareException(string azureStorageAccountId, string storagePath, string status)
+        /// <param name="statusDescription">Human-readable status message of the prepare operation.</param>
+        public StoragePrepareException(string azureStorageAccountId, string storagePath, string status, string statusDescription)
             : base("Storage file share preparation has terminated in error state")
         {
             AzureStorageAccountId = azureStorageAccountId;
             StoragePath = storagePath;
             Status = status;
+            StatusDescription = statusDescription;
         }
 
         /// <summary>
@@ -36,8 +38,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         public string StoragePath { get; }
 
         /// <summary>
-        /// Gets the status message.
+        /// Gets the status.
         /// </summary>
         public string Status { get; }
+
+        /// <summary>
+        /// Gets the status description.
+        /// </summary>
+        public string StatusDescription { get; }
     }
 }

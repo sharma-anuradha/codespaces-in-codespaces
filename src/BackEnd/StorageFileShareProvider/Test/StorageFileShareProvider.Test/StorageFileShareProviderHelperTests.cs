@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
@@ -26,9 +27,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
 
         private static readonly string azureResourceGroup = "vsclk-core-dev-test";
+        private static readonly int PREPARE_TIMEOUT_MINS = 60;
+        private static readonly int NUM_STORAGE_TO_CREATE = 1;
 
         // Note: Before running tests,
-        // Get a Blob SAS URL for https://vsengsaas.blob.core.windows.net/cloudenv-storage-ext4/cloudenvdata_latest
+        // Get a Blob SAS URL for https://vsengsaas.blob.core.windows.net/cloudenv-storage-ext4/cloudenvdata_2944143
         // It's a private blob so needs SAS token.
         // The test will fail otherwise.
         private static readonly string srcBlobUrl = null;
@@ -60,47 +63,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             // construct the real StorageFileShareProviderHelper
             IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(catalogMoq.Object);
 
-            // Verify that we can create the storage resource and prepare it
-            var storageAccountId = await providerHelper.CreateStorageAccountAsync(
-                azureSubscriptionId, 
-                azureLocationStr, 
-                azureResourceGroup);
-                
+            // Create storage accounts
+            var storageAccountIds = await Task.WhenAll(Enumerable.Range(0, NUM_STORAGE_TO_CREATE).Select(x => providerHelper.CreateStorageAccountAsync(azureSubscriptionId, azureLocationStr, azureResourceGroup)));
+
             try
             {
-                Assert.NotNull(storageAccountId);
+                // Create file shares
+                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.CreateFileShareAsync(id)));
 
-                await providerHelper.CreateFileShareAsync(storageAccountId);
-                await providerHelper.StartPrepareFileShareAsync(storageAccountId, srcBlobUrl);
+                // Start file share preparations
+                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.StartPrepareFileShareAsync(id, srcBlobUrl)));
                 
-                double completedPercent  = 0;
-                int prepareTimeoutMinutes = 30;
-
+                double[] completedPercent  = new double[NUM_STORAGE_TO_CREATE];
+                
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
-                while (completedPercent != 1 && stopWatch.Elapsed < TimeSpan.FromMinutes(prepareTimeoutMinutes))
+
+                
+                while (completedPercent.Any(x => x != 1) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
                 {
-                    completedPercent = await providerHelper.CheckPrepareFileShareAsync(storageAccountId);
+                    // Check completion status
+                    completedPercent = await Task.WhenAll(storageAccountIds.Select(id => providerHelper.CheckPrepareFileShareAsync(id)));
                     Thread.Sleep(TimeSpan.FromSeconds(30));
                 }
 
                 stopWatch.Stop();
 
-                // Verify that we can get the connection info
-                if (completedPercent == 1)
+                // Verify that we can none still haven't finished after the timeout
+                if (completedPercent.Any(x => x != 1))
                 {
-                    var connInfo = await providerHelper.GetConnectionInfoAsync(storageAccountId);
-                    Assert.NotNull(connInfo);
-                }
-                else
-                {
-                    Assert.True(false, string.Format("Failed to complete file share preparation in given time of {0} minutes.", prepareTimeoutMinutes));
+                    Assert.True(false, string.Format("Failed to complete all file share preparations in given time of {0} minutes.", PREPARE_TIMEOUT_MINS));
                 }
             }
             finally
             {
-                // Verify that we can delete the storage account
-                await providerHelper.DeleteStorageAccountAsync(storageAccountId);
+                // Verify that we can delete the storage accounts
+                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.DeleteStorageAccountAsync(id)));
             }
         }
     }
