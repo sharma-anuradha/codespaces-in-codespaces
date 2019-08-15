@@ -92,6 +92,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 CommitId = appSettings.GitCommit,
             };
 
+            // VsSaaS services
+            services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
+            services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
+            {
+                options.AccountKey = storageAccountSettings.StorageAccountKey;
+                options.AccountName = storageAccountSettings.StorageAccountName;
+            });
+            services.AddDocumentDbClientProvider(options =>
+            {
+                options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
+                options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
+                options.HostUrl = appSettings.AzureCosmosDbHost;
+                options.AuthKey = appSettings.AzureCosmosDbKey;
+                options.DatabaseId = appSettings.AzureCosmosDbId;
+                options.PreferredLocation = appSettings.AzureCosmosPreferredLocation;
+                options.UseMultipleWriteLocations = false;
+            });
+
             // Mappers services
             var config = new MapperConfiguration(cfg =>
                 {
@@ -130,24 +148,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Storage Provider
             services.AddStorageFileShareProvider(
                 appSettings);
-
-            // VsSaaS services
-            services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
-            services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
-                {
-                    options.AccountKey = storageAccountSettings.StorageAccountKey;
-                    options.AccountName = storageAccountSettings.StorageAccountName;
-                });
-            services.AddDocumentDbClientProvider(options =>
-                {
-                    options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
-                    options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
-                    options.HostUrl = appSettings.AzureCosmosDbHost;
-                    options.AuthKey = appSettings.AzureCosmosDbKey;
-                    options.DatabaseId = appSettings.AzureCosmosDbId;
-                    options.PreferredLocation = appSettings.AzureCosmosPreferredLocation;
-                    options.UseMultipleWriteLocations = false;
-                });
 
             // OpenAPI/swagger services
             services.AddSwaggerGen(x =>

@@ -1,4 +1,4 @@
-// <copyright file="ValuesController.cs" company="Microsoft">
+// <copyright file="WarmupController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,7 +19,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 {
     /// <summary>
-    /// A sample REST API controller.
+    /// This controller is used to warmup dependent service connections.
+    /// We use this to prevent traffic from hitting the service until everything is ready.
     /// </summary>
     [ApiController]
     [Route("warmup")]

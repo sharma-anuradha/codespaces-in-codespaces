@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.States;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -27,17 +28,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <param name="backgroundJobs"></param>
         /// <param name="jobStorage"></param>
         /// <param name="resourceRepository"></param>
-        /// <param name="logger"></param>
+        /// <param name="loggerFactory"></param>
+        /// <param name="logValues"></param>
         public MockResourceJobQueueRepository(
             IBackgroundJobClient backgroundJobs,
             JobStorage jobStorage,
             IResourceRepository resourceRepository,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLoggerFactory loggerFactory,
+            LogValueSet logValues)
         {
             BackgroundJobs = backgroundJobs;
             JobStorage = jobStorage;
             ResourceRepository = resourceRepository;
-            Logger = logger;
+            Logger = loggerFactory.New(logValues);
             EnqueuedState = new EnqueuedState
                 {
                     Queue = QueueName,

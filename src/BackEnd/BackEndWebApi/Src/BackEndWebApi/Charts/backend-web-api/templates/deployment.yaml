@@ -48,12 +48,24 @@ spec:
             httpGet:
               path: {{ .Values.pods.livenessProbePath }}
               port: http
+            {{- if .Values.pods.livenessProbeDelaySeconds }}
+            initialDelaySeconds: {{ .Values.pods.livenessProbeDelaySeconds }}
+            {{- end }}
+            {{- if .Values.pods.livenessProbeTimeoutSeconds }}
+            timeoutSeconds: {{ .Values.pods.livenessProbeTimeoutSeconds }}
+            {{- end }}
           {{- end }}
           {{- if .Values.pods.readinessProbePath }}
           readinessProbe:
             httpGet:
               path: {{ .Values.pods.readinessProbePath }}
               port: http
+            {{- if .Values.pods.readinessProbeDelaySeconds }}
+            initialDelaySeconds: {{ .Values.pods.readinessProbeDelaySeconds }}
+            {{- end }}
+            {{- if .Values.pods.readinessProbeTimeoutSeconds }}
+            timeoutSeconds: {{ .Values.pods.readinessProbeTimeoutSeconds }}
+            {{- end }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

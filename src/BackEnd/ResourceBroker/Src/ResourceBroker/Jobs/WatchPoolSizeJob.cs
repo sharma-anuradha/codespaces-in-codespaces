@@ -34,7 +34,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
         /// <param name="resourceScalingStore"></param>
         /// <param name="resourceManager"></param>
         /// <param name="resourceRepository"></param>
-        /// <param name="logger"></param>
+        /// <param name="loggerFactory"></param>
+        /// <param name="logValues"></param>
         public WatchPoolSizeJob(
             ResourceBrokerSettings resourceBrokerSettings,
             IBackgroundJobClient backgroundJobs,
@@ -42,7 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
             IResourceScalingStore resourceScalingStore,
             IResourceManager resourceManager,
             IResourceRepository resourceRepository,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLoggerFactory loggerFactory,
+            LogValueSet logValues)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
             BackgroundJobs = backgroundJobs;
@@ -50,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
             ResourceScalingStore = resourceScalingStore;
             ResourceManager = resourceManager;
             ResourceRepository = resourceRepository;
-            Logger = logger;
+            Logger = loggerFactory.New(logValues);
             EnqueuedState = new EnqueuedState
             {
                 Queue = QueueName,
