@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// These tests aren't mocked and so run against real Azure.
         /// It can take 20+ minutes for the file share preparation to complete.
         /// </summary>
-        [Fact]
+        [Fact(Skip = "integration test")]
         public async Task FileShareProviderHelper_E2EFlow_Completes_Without_Errors()
         {
             Assert.NotNull(srcBlobUrl);

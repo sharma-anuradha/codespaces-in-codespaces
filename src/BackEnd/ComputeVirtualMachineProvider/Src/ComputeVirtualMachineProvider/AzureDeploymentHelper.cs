@@ -21,17 +21,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
         public async Task CreateResourceGroupAsync(Guid subscriptionId, string resourceGroupName, AzureLocation location)
         {
-            IAzure azure = await clientFactory.GetAzureClientAsync(subscriptionId).ContinueOnAnyContext();
+            IAzure azure = await clientFactory.GetAzureClientAsync(subscriptionId);
             var resourceGroup = await azure.ResourceGroups.Define(resourceGroupName)
                 .WithRegion(location.ToString())
-                .CreateAsync().ContinueOnAnyContext();
+                .CreateAsync();
         }
 
         public async Task DeleteResourceGroupAsync(Guid subscriptionId, string resourceGroupName)
         {
-            IAzure azure = await clientFactory.GetAzureClientAsync(subscriptionId).ContinueOnAnyContext();
+            IAzure azure = await clientFactory.GetAzureClientAsync(subscriptionId);
             await azure.ResourceGroups
-            .BeginDeleteByNameAsync(resourceGroupName).ContinueOnAnyContext();
+            .BeginDeleteByNameAsync(resourceGroupName);
         }
     }
 }

@@ -5,8 +5,8 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
@@ -36,11 +36,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             DeploymentState resultState;
             ResourceId resourceId = default;
 
-            (resourceId, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderCreateInput>(
+            (resourceId, resultState, resultContinuationToken) = await ExecuteAsync(
                 input,
                 continuationToken,
                 deploymentManager.BeginCreateComputeAsync,
-                deploymentManager.CheckCreateComputeStatusAsync).ContinueOnAnyContext();
+                deploymentManager.CheckCreateComputeStatusAsync);
 
             var result = new VirtualMachineProviderCreateResult()
             {
@@ -58,13 +58,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input, nameof(input));
             string resultContinuationToken = default;
             DeploymentState resultState;
-            ResourceId resourceId;
 
-            (resourceId, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderDeleteInput>(
+            (_, resultState, resultContinuationToken) = await ExecuteAsync(
                 input,
                 continuationToken,
                 deploymentManager.BeginDeleteComputeAsync,
-                deploymentManager.CheckDeleteComputeStatusAsync).ContinueOnAnyContext();
+                deploymentManager.CheckDeleteComputeStatusAsync);
 
             var result = new VirtualMachineProviderDeleteResult()
             {
@@ -82,12 +81,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input, nameof(input));
             string resultContinuationToken = default;
             DeploymentState resultState;
-            ResourceId resourceId;
-            (resourceId, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderStartComputeInput>(
+            (_, resultState, resultContinuationToken) = await ExecuteAsync(
                 input,
                 continuationToken,
                 deploymentManager.BeginStartComputeAsync,
-                deploymentManager.CheckStartComputeStatusAsync).ContinueOnAnyContext();
+                deploymentManager.CheckStartComputeStatusAsync);
 
             var result = new VirtualMachineProviderStartComputeResult()
             {
@@ -110,14 +108,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             if (string.IsNullOrEmpty(continuationToken))
             {
-                deploymentStatusInput = await beginOperation(input).ContinueOnAnyContext();
-                resultState = DeploymentState.InProgress;
+                deploymentStatusInput = await beginOperation(input);
+                resultState = (deploymentStatusInput == default)
+                    ? DeploymentState.Succeeded
+                    : DeploymentState.InProgress;
             }
             else
             {
                 // Check status of deployment request
                 deploymentStatusInput = continuationToken.ToDeploymentStatusInput();
-                resultState = await checkOperationStatus(deploymentStatusInput).ContinueOnAnyContext();
+                resultState = await checkOperationStatus(deploymentStatusInput);
             }
 
             if (resultState == DeploymentState.InProgress)

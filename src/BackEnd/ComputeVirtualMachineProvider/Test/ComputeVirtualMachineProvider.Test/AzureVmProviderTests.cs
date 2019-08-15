@@ -20,19 +20,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             this.testContext = data;
         }
 
-        [Fact]
-        public async Task VirtualMachine_Create_Initiate_Ok()
+        [Fact(Skip = "integration test")]
+        public async Task VirtualMachine_Create_Start_Ok()
         {
             var azureDeploymentManager = new AzureDeploymentManager(new AzureClientFactoryMock(testContext.AuthFilePath));
 
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
-            const AzureLocation eastUs = AzureLocation.EastUs;
+            AzureLocation location = testContext.Location;
             string rgName = testContext.ResourceGroupName;
 
             VirtualMachineProviderCreateInput input = new VirtualMachineProviderCreateInput()
             {
-                AzureVmLocation = eastUs,
+                AzureVmLocation = location,
                 AzureResourceGroup = rgName,
                 AzureSubscription = subscriptionId,
                 AzureVirtualMachineImage = "Canonical.UbuntuServer.18.04-LTS.latest",
@@ -52,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Assert.Equal(rgName, createDeploymentStatusInput.ResourceId.ResourceGroup);
             Assert.NotEqual(Guid.Empty, createDeploymentStatusInput.ResourceId.InstanceId);
             Assert.Equal(subscriptionId, createDeploymentStatusInput.ResourceId.SubscriptionId);
-            Assert.Equal(eastUs, createDeploymentStatusInput.ResourceId.Location);
+            Assert.Equal(location, createDeploymentStatusInput.ResourceId.Location);
 
 
             VirtualMachineProviderCreateResult statusCheckResult = default;
@@ -70,18 +70,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             } while (statusCheckResult.Status.Equals(DeploymentState.InProgress.ToString()));
             timerWait.Stop();
             System.Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
+        }
+
+        [Fact(Skip = "integration test")]
+        public async Task Start_Compute_Ok()
+        {
+            var azureDeploymentManager = new AzureDeploymentManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             var fileShareInfo = new ShareConnectionInfo("storageaccount1",
                                                        "accountkey",
                                                        "cloudenvdata",
                                                        "dockerlib");
-            var startComputeInput = new VirtualMachineProviderStartComputeInput(createDeploymentStatusInput.ResourceId,
-                                                                 fileShareInfo,
-                                                                 new Dictionary<string, string>() {
-                                                                     { "SESSION_ID", "value1" },
-                                                                     { "SESSION_TOKEN", "value2" },
-                                                                     { "SESSION_CALLBACK", "value2" } });
+            ResourceId resourceId = new ResourceId(
+                ResourceType.ComputeVM,
+                Guid.Parse("47b6d3d7-26f3-4fed-9aa8-fa809b0dd3cc"),
+                testContext.SubscriptionId,
+                "vsclk-core-dev-test",
+                AzureLocation.WestUs2);
+            var startComputeInput = new VirtualMachineProviderStartComputeInput(
+                resourceId,
+                fileShareInfo,
+                new Dictionary<string, string>() {
+                    { "SESSION_ID", "value1" },
+                    { "SESSION_TOKEN", "value2" },
+                    { "SESSION_CALLBACK", "value2" } });
 
             await StartCompute(computeProvider, startComputeInput);
+        }
+
+        [Fact(Skip = "integration test")]
+        public async Task Delete_Compute_Ok()
+        {
+            var azureDeploymentManager = new AzureDeploymentManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
+            var result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput
+            {
+                ResourceId = new ResourceId(ResourceType.ComputeVM,
+                  Guid.Parse("47b6d3d7-26f3-4fed-9aa8-fa809b0dd3cc"),
+                  testContext.SubscriptionId,
+                  "vsclk-core-dev-test",
+                  AzureLocation.WestUs2),
+            });
+            Assert.NotNull(result);
         }
 
         private static async Task StartCompute(VirtualMachineProvider computeProvider, VirtualMachineProviderStartComputeInput startComputeInput)

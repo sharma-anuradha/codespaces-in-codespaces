@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     // PROVIDER - DELETE - INPUT
@@ -14,6 +16,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         ///
         /// </summary>
-        public string ResourceId { get; set; }
+        public ResourceId ResourceId { get; set; }
     }
 }

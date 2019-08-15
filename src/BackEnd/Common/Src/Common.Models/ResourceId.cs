@@ -191,7 +191,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             private const string LocationGroupName = "location";
             private const string AlphaNumericAndHyphen = "0-9a-zA-Z-";
             private const RegexOptions Options = RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Singleline;
-            private static readonly string IdFormat = $"{Prefix}/{ResourceTypes}/{{0}}/{Instances}/{{1}}/{Subscriptions}/{{2}}/{ResourceGroups}/{{3}}{Locations}/{{4}}";
+            private static readonly string IdFormat = $"{Prefix}/{ResourceTypes}/{{0}}/{Instances}/{{1}}/{Subscriptions}/{{2}}/{ResourceGroups}/{{3}}/{Locations}/{{4}}";
             private static readonly string ResourceTypeGroup = $"(?<{ResourceTypeGroupName}>[{AlphaNumericAndHyphen}]+)";
             private static readonly string InstanceIdGroup = $"(?<{InstanceIdGroupName}>[{AlphaNumericAndHyphen}]+)";
             private static readonly string SubscriptionIdGroup = $"(?<{SubscriptionIdGroupName}>[{AlphaNumericAndHyphen}]+)";
@@ -208,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
                     instanceId,
                     subscriptionId,
                     resourceGroup,
-                    location.ToString().ToLowerInvariant());
+                    location.ToString()).ToLowerInvariant();
             }
 
             public static bool TryParse(string idToken, out ResourceId resourceId, out string reason)

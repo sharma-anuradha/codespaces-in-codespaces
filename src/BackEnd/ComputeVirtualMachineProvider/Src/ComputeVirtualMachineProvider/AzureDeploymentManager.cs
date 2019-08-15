@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             // create new resource id
             ResourceId resourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), input.AzureSubscription, input.AzureResourceGroup, input.AzureVmLocation);
-            IAzure azure = await clientFactory.GetAzureClientAsync(input.AzureSubscription).ContinueOnAnyContext();
+            IAzure azure = await clientFactory.GetAzureClientAsync(input.AzureSubscription);
             var parameters = new Dictionary<string, Dictionary<string, object>>()
             {
                 { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
@@ -60,36 +60,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 .WithTemplate(VmTemplateJson)
                 .WithParameters(JsonConvert.SerializeObject(parameters))
                 .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
-                .BeginCreateAsync()
-                .ContinueOnAnyContext();
+                .BeginCreateAsync();
 
             return new DeploymentStatusInput(result.Name, resourceId);
         }
 
         /// <inheritdoc/>
-        public async Task<DeploymentStatusInput> BeginStartComputeAsync1(VirtualMachineProviderStartComputeInput input)
-        {
-            IAzure azure = await clientFactory.GetAzureClientAsync(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
-            IVirtualMachine linuxVM = await azure.VirtualMachines
-                            .GetByResourceGroupAsync(input.ResourceId.ResourceGroup, input.ResourceId.InstanceId.ToString())
-                            .ContinueOnAnyContext();
-
-            string name = $"Assign-{input.ResourceId.InstanceId}";
-            IVirtualMachine result = await linuxVM.Update()
-                          .UpdateExtension(ExtensionName)
-                          .WithProtectedSetting("script", GetCustomScriptForVmAssign("vm_assign.sh", input))
-                          .WithMinorVersionAutoUpgrade()
-                          .Parent()
-                          .ApplyAsync()
-                          .ContinueOnAnyContext();
-
-            return new DeploymentStatusInput(result.Name, input.ResourceId);
-        }
-
-        /// <inheritdoc/>
         public async Task<DeploymentStatusInput> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input)
         {
-            IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
+            IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId);
             var privateSettings = new Hashtable();
             privateSettings.Add("script", GetCustomScriptForVmAssign("vm_assign.sh", input));
             var parameters = new VirtualMachineExtensionUpdate()
@@ -102,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 input.ResourceId.ResourceGroup,
                 input.ResourceId.InstanceId.ToString(),
                 ExtensionName,
-                parameters).ContinueOnAnyContext();
+                parameters);
 
             return new DeploymentStatusInput(result.Name, input.ResourceId);
         }
@@ -110,34 +89,69 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <inheritdoc/>
         public async Task<DeploymentState> CheckStartComputeStatusAsync(DeploymentStatusInput input)
         {
-            IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId).ContinueOnAnyContext();
+            IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId);
             VirtualMachineExtensionInner result = await computeClient.VirtualMachineExtensions
             .GetAsync(
                 input.ResourceId.ResourceGroup,
                 input.ResourceId.InstanceId.ToString(),
-                input.TrackingId).ContinueOnAnyContext();
+                input.TrackingId);
             return ParseResult(result.ProvisioningState);
         }
 
         /// <inheritdoc/>
         public async Task<DeploymentState> CheckCreateComputeStatusAsync(DeploymentStatusInput deploymentStatusInput)
         {
-            IAzure azure = await clientFactory.GetAzureClientAsync(deploymentStatusInput.ResourceId.SubscriptionId).ContinueOnAnyContext();
-            IDeployment deployment = await azure.Deployments.GetByResourceGroupAsync(deploymentStatusInput.ResourceId.ResourceGroup, deploymentStatusInput.TrackingId).ContinueOnAnyContext();
+            IAzure azure = await clientFactory.GetAzureClientAsync(deploymentStatusInput.ResourceId.SubscriptionId);
+            IDeployment deployment = await azure.Deployments.GetByResourceGroupAsync(deploymentStatusInput.ResourceId.ResourceGroup, deploymentStatusInput.TrackingId);
 
             return ParseResult(deployment.ProvisioningState);
         }
 
         /// <inheritdoc/>
-        public Task<DeploymentStatusInput> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput arg)
+        public async Task<DeploymentStatusInput> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input)
         {
-            throw new NotImplementedException();
+            // TODO:: move to begin wait pattern
+            string vmName = input.ResourceId.InstanceId.ToString();
+            IAzure azure = await clientFactory.GetAzureClientAsync(input.ResourceId.SubscriptionId);
+            IVirtualMachine linuxVM = await azure.VirtualMachines
+                              .GetByResourceGroupAsync(input.ResourceId.ResourceGroup, vmName);
+
+            if (linuxVM == null)
+            {
+                return default;
+            }
+
+            string diskId = linuxVM.OSDiskId;
+            string nicName = $"{vmName}-nic";
+            string nsgName = $"{vmName}-nsg";
+            string vnetName = $"{vmName}-vnet";
+            string rgName = linuxVM.ResourceGroupName;
+
+            // TODO:: Migrate to new IAAS API that deletes all vm resources along with vm.
+            // ref: https://feedback.azure.com/forums/216843-virtual-machines/suggestions/8945692-delete-vm-with-all-associated-resources
+            await azure.VirtualMachines
+                .DeleteByIdAsync(linuxVM.Id);
+
+            await azure.NetworkInterfaces
+                .DeleteByResourceGroupAsync(rgName, nicName);
+
+            await azure.NetworkSecurityGroups
+               .DeleteByResourceGroupAsync(rgName, nsgName);
+
+            await azure.VirtualNetworkGateways
+             .DeleteByResourceGroupAsync(rgName, vnetName);
+
+            await azure.Disks
+                .DeleteByIdAsync(diskId);
+
+            return default;
         }
 
         /// <inheritdoc/>
-        public Task<DeploymentState> CheckDeleteComputeStatusAsync(DeploymentStatusInput arg)
+        public async Task<DeploymentState> CheckDeleteComputeStatusAsync(DeploymentStatusInput arg)
         {
-            throw new NotImplementedException();
+            // TODO:: move to begin wait pattern
+            return await Task.FromResult(DeploymentState.Succeeded);
         }
 
         private static DeploymentState ParseResult(string provisioningState)
