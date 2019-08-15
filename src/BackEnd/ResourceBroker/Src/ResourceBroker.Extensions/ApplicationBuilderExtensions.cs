@@ -5,6 +5,8 @@
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 {
@@ -26,8 +28,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
             if (env.IsDevelopment())
             {
-                // Setup dashboard
-                app.UseHangfireDashboard();
+                var resourceBroker = app.ApplicationServices.GetService(typeof(IResourceBroker)) as IResourceBroker;
+                if (!(resourceBroker is MockResourceBroker))
+                {
+                    // Setup dashboard
+                    app.UseHangfireDashboard();
+                }
             }
 
             return app;

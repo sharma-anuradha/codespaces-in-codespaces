@@ -24,7 +24,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddEnvironmentManager(
             this IServiceCollection services,
-            Action<SessionSettings> configureSessionSettings,
             bool useMockCloudEnvironmentRepository)
         {
             _ = useMockCloudEnvironmentRepository;
@@ -41,8 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
 
             // The environment mangaer
-            services.Configure(configureSessionSettings)
-                .AddSingleton<ICloudEnvironmentManager, CloudEnvironmentManager>();
+            services.AddSingleton<ICloudEnvironmentManager, CloudEnvironmentManager>();
 
             return services;
         }

@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <param name="computeResourceIdToken">The compute resource id token.</param>
         /// <param name="startComputeRequestBody">The bind input parameters.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>The bind result.</returns>
-        Task<StartComputeResponseBody> StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger);
+        /// <returns>Task.</returns>
+        Task StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger);
     }
 }

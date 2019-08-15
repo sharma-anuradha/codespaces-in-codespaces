@@ -63,7 +63,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         public static IDiagnosticsLogger AddStartComputeRequest(this IDiagnosticsLogger logger, StartComputeRequestBody value)
         {
             var environmentVariables = value != null ? JsonConvert.SerializeObject(value?.EnvironmentVariables, Formatting.Indented) : null;
-
             return logger
                 .FluentAddValue(nameof(StartComputeRequestBody.StorageResourceIdToken), value?.StorageResourceIdToken)
                 .FluentAddValue(nameof(StartComputeRequestBody.EnvironmentVariables), environmentVariables);

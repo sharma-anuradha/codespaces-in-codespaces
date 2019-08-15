@@ -60,16 +60,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<StartComputeResponseBody> StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        public async Task StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(computeResourceIdToken, nameof(computeResourceIdToken));
             var requestUri = ResourceBrokerHttpContract.GetStartComputeUri(computeResourceIdToken);
-            var result = await SendAsync<StartComputeRequestBody, StartComputeResponseBody>(
+            _ = await SendAsync<StartComputeRequestBody, string>(
                 ResourceBrokerHttpContract.StartComputeMethod,
                 requestUri,
                 startComputeRequestBody,
                 logger);
-            return result;
+            return;
         }
 
         // TODO: Move this into a base class, or an extension method.

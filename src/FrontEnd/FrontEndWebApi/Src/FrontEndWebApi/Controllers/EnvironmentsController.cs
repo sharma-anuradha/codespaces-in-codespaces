@@ -185,9 +185,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var currentUserId = CurrentUserProvider.GetProfileId();
                 var accessToken = CurrentUserProvider.GetBearerToken();
 
+                // Build the callback URI.
+                var callbackUriBuilder = new UriBuilder(Request.GetDisplayUrl());
+                callbackUriBuilder.Query = null;
+                callbackUriBuilder.Path = $"{callbackUriBuilder.Path.TrimEnd('/')}/{{0}}/_callback";
+                var callbackUriFormat = callbackUriBuilder.Uri.ToString();
+
                 cloudEnvironment = await EnvironmentManager.CreateEnvironmentAsync(
                     cloudEnvironment,
                     new CloudEnvironmentOptions { CreateFileShare = createEnvironmentInput.CreateFileShare },
+                    callbackUriFormat,
                     currentUserId,
                     accessToken,
                     logger);

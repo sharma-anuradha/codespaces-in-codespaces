@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             // Short circuit things if Resource Broker is being mocked
             if (appSettings.UseMocksForResourceBroker)
             {
+                services.AddSingleton<IResourceBroker, MockResourceBroker>();
                 return services;
             }
 

@@ -132,12 +132,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Add the environment manager and the cloud cloud environment repository.
             services.AddEnvironmentManager(
-                sessionSettings =>
-                {
-                    sessionSettings.DefaultHost = ValidationUtil.IsRequired(appSettings.SessionCallbackDefaultHost, nameof(appSettings.SessionCallbackDefaultHost));
-                    sessionSettings.DefaultPath = ValidationUtil.IsRequired(appSettings.SessionCallbackDefaultPath, nameof(appSettings.SessionCallbackDefaultPath));
-                    sessionSettings.PreferredSchema = ValidationUtil.IsRequired(appSettings.SessionCallbackPreferredSchema, nameof(appSettings.SessionCallbackDefaultHost));
-                },
                 appSettings.UseMocksForLocalDevelopment);
 
             // Add the Live Share user profile and workspace providers.

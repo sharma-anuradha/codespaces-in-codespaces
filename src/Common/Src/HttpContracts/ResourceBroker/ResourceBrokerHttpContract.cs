@@ -14,22 +14,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// <summary>
         /// The v1 API.
         /// </summary>
-        public const string ApiV1Route = "api/v1/";
+        public const string ApiV1Route = "api/v1";
 
         /// <summary>
         /// The resource broker route.
         /// </summary>
-        public const string ResourceBrokerV1Route = ApiV1Route + "resourcebroker/";
+        public const string ResourceBrokerV1Route = ApiV1Route + "/resourcebroker";
 
         /// <summary>
-        /// The resource broker resources route.
+        /// Sub path for starting a compute resource.
         /// </summary>
-        public const string ResourcesRoute = ResourceBrokerV1Route + "resources/";
+        public const string ResourcesRoute = ResourceBrokerV1Route + "/resources";
 
         /// <summary>
-        /// The resource start operation route.
+        /// The allocate http method.
         /// </summary>
-        public const string StartComputeOperation = "start";
+        public const string StartComputeOperation = "startcompute";
 
         /// <summary>
         /// The create resource http method.
@@ -52,7 +52,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public static readonly HttpMethod StartComputeMethod = HttpMethod.Post;
 
         /// <summary>
-        /// Get the create resource uri.
+        /// The get compute status http method.
+        /// </summary>
+        public static readonly HttpMethod GetComputeStatusMethod = HttpMethod.Get;
+
+        /// <summary>
+        /// Get the allocate uri.
         /// </summary>
         /// <returns>Uri.</returns>
         public static string GetCreateResourceUri() => ResourcesRoute;
@@ -72,14 +77,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public static string GetDeleteResourceUri(string resourceIdToken) => GetResourceUri(resourceIdToken);
 
         /// <summary>
+        /// Get the resource uri with id.
+        /// </summary>
+        /// <param name="resourceIdToken">The  resource id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetResourceUri(string resourceIdToken) => $"{ResourcesRoute}?id={resourceIdToken}";
+
+        /// <summary>
         /// Get the start compute operation uri.
         /// </summary>
         /// <param name="computeResourceIdToken">The compute resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetStartComputeUri(string computeResourceIdToken) => GetResourceOperationUri(computeResourceIdToken, StartComputeOperation);
-
-        private static string GetResourceUri(string resourceIdToken) => $"{ResourcesRoute}?id={resourceIdToken}";
-
-        private static string GetResourceOperationUri(string resourceIdToken, string operationSubRoute) => $"{ResourcesRoute}/{operationSubRoute}?id={resourceIdToken}";
+        public static string GetStartComputeUri(string computeResourceIdToken) => $"{ResourcesRoute}/{StartComputeOperation}?id={computeResourceIdToken}";
     }
 }

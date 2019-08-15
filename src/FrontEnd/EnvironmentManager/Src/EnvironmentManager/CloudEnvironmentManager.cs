@@ -30,16 +30,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cloudEnvironmentRepository">The cloud environment repository.</param>
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
-        /// <param name="sessionSettings">The session settings.</param>
         public CloudEnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
-            IWorkspaceRepository workspaceRepository,
-            IOptions<SessionSettings> sessionSettings)
+            IWorkspaceRepository workspaceRepository)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
-            SessionSettings = Requires.NotNull(sessionSettings, nameof(sessionSettings)).Value;
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
         }
 
@@ -47,14 +44,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IWorkspaceRepository WorkspaceRepository { get; }
 
-        private SessionSettings SessionSettings { get; }
-
         private IResourceBrokerResourcesHttpContract ResourceBrokerClient { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironment> CreateEnvironmentAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentOptions cloudEnvironmentOptions,
+            string callbackUriFormat,
             string currentUserId,
             string accessToken,
             IDiagnosticsLogger logger)
@@ -65,27 +61,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
                 Requires.NotNull(cloudEnvironmentOptions, nameof(cloudEnvironmentOptions));
-                UnauthorizedUtil.IsRequired(currentUserId);
-                UnauthorizedUtil.IsRequired(accessToken);
                 Requires.NotNull(logger, nameof(logger));
 
-                // Setup
-                cloudEnvironment.Id = Guid.NewGuid().ToString();
-                cloudEnvironment.OwnerId = currentUserId;
-                cloudEnvironment.Created = cloudEnvironment.Updated = DateTime.UtcNow;
+                // Validate input
+                UnauthorizedUtil.IsRequired(currentUserId);
+                UnauthorizedUtil.IsRequired(accessToken);
+                ValidationUtil.IsRequired(cloudEnvironment.SkuName, nameof(cloudEnvironment.SkuName));
+                ValidationUtil.IsTrue(
+                    cloudEnvironment.Location != default,
+                    "Location is required");
 
+                // Validate against existing environments.
                 var environments = await CloudEnvironmentRepository.GetWhereAsync((env) => env.OwnerId == cloudEnvironment.OwnerId, logger);
-
                 ValidationUtil.IsTrue(
                     !environments.Any((env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)),
                     $"An environment with the friendly name already exists: {cloudEnvironment.FriendlyName}");
                 ValidationUtil.IsTrue(
                     environments.Count() < CloudEnvironmentQuota,
                     $"You have reached the limit of {CloudEnvironmentQuota} environments");
-                ValidationUtil.IsRequired(cloudEnvironment.SkuName, nameof(cloudEnvironment.SkuName));
-                ValidationUtil.IsTrue(
-                    cloudEnvironment.Location != default,
-                    "Location is required");
+
+                // Setup
+                cloudEnvironment.Id = Guid.NewGuid().ToString();
+                cloudEnvironment.OwnerId = currentUserId;
+                cloudEnvironment.Created = cloudEnvironment.Updated = DateTime.UtcNow;
 
                 // Static Environment
                 if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
@@ -97,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                     {
-                        cloudEnvironment.Connection.ConnectionSessionId = await CreateWorkspace(cloudEnvironment.Id, logger);
+                        cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.StaticEnvironment, cloudEnvironment.Id, null, logger);
                     }
 
                     cloudEnvironment.State = CloudEnvironmentState.Provisioning;
@@ -110,32 +108,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return cloudEnvironment;
                 }
 
+                // Allocate Storage
+                // TODO: What about cloudEnvironmentOptions.CreateFileShare
+                cloudEnvironment.Storage = await AllocateStorage(cloudEnvironment, logger);
+
+                // Allocate Compute
+                cloudEnvironment.Compute = await AllocateCompute(cloudEnvironment, logger);
+
                 // Create the Live Share workspace
-                var sessionId = await CreateWorkspace(cloudEnvironment.Id, logger);
-                if (string.IsNullOrWhiteSpace(sessionId))
+                cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceIdToken, logger);
+                if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                 {
                     logger.AddDuration(duration)
                         .AddCloudEnvironment(cloudEnvironment)
-                        .AddSessionId(sessionId)
                         .LogError(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)));
                     throw new InvalidOperationException("Cloud not create the cloud environment workspace session.");
                 }
 
-                // Allocate Storage
-                // What about cloudEnvironmentOptions.CreateFileShare
-                await AllocateStorage(cloudEnvironment, logger);
-
-                // Allocate Compute
-                var computeResult = await AllocateCompute(cloudEnvironment, accessToken, sessionId, logger);
-
-                // Bind compute to storage
-                await StartCompute(cloudEnvironment, computeResult.EnvironmentVariables, logger);
-
-                // TODO: is there any additional step to kick-off initialization of the environment, other than the Bind call?
-
-                // Create the cloud environment record in the provisioining state.
+                // Create the cloud environment record in the provisioining state -- before starting.
+                // This avoids a race condition where the record doesn't exist but the callback could be invoked.
+                // Highly unlikely, but still...
                 cloudEnvironment.State = CloudEnvironmentState.Provisioning;
                 cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, logger);
+
+                // Kick off start-compute before returning.
+                var callbackUri = new Uri(string.Format(callbackUriFormat, cloudEnvironment.Id));
+                await StartCompute(cloudEnvironment, callbackUri, accessToken, logger);
 
                 logger.AddDuration(duration)
                     .AddCloudEnvironment(cloudEnvironment)
@@ -161,10 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
                 catch (Exception ex2)
                 {
-                    throw new AggregateException(
-                        GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)),
-                        ex,
-                        ex2);
+                    throw new AggregateException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex, ex2);
                 }
 
                 throw;
@@ -202,6 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
                 cloudEnvironment.State = CloudEnvironmentState.Available;
+                cloudEnvironment.Updated = DateTime.UtcNow;
                 var result = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
 
                 logger.AddDuration(duration)
@@ -240,25 +236,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return null;
                 }
 
-                UnauthorizedUtil.IsTrue(cloudEnvironment.OwnerId == currentUserId);
+                // Update the new state before returning.
+                var originalState = cloudEnvironment.State;
+                var newState = originalState;
 
-                // Note: We do not do this in the case of GetListByOwnerAsync, because
-                // Will require multiple calls to workspace service, causing un-necessary slowness and
-                // No API as of now to pass multiple workspaceIds
-                var workspace = await WorkspaceRepository.GetStatusAsync(cloudEnvironment.Connection.ConnectionSessionId);
-                if (workspace is null)
+                // Check for an unavailable environment
+                switch (originalState)
                 {
-                    // In this case the workspace is deleted. There is no way of getting to an environment without it.
-                    cloudEnvironment.State = CloudEnvironmentState.Unavailable;
+                    // Remain in provisioining state until _callback is invoked.
+                    case CloudEnvironmentState.Provisioning:
+                        break;
+
+                    // Swap between available and awaiting based on the workspace status
+                    case CloudEnvironmentState.Available:
+                    case CloudEnvironmentState.Awaiting:
+                        var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
+                        var workspace = await WorkspaceRepository.GetStatusAsync(sessionId);
+                        if (workspace == null)
+                        {
+                            // In this case the workspace is deleted. There is no way of getting to an environment without it.
+                            newState = CloudEnvironmentState.Unavailable;
+                        }
+                        else if (workspace.IsHostConnected.HasValue)
+                        {
+                            newState = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
+                        }
+
+                        break;
                 }
-                else
-                {
-                    if (workspace.IsHostConnected.HasValue)
-                    {
-                        cloudEnvironment.State = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
-                    }
 
-                    // else we don't change the model state.
+                // Update the new state before returning.
+                if (originalState != newState)
+                {
+                    cloudEnvironment.State = newState;
+                    cloudEnvironment.Updated = DateTime.UtcNow;
+                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
                 }
 
                 return cloudEnvironment;
@@ -326,17 +338,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             return true;
         }
 
-        private async Task<string> CreateWorkspace(
-            string id,
+        private async Task<ConnectionInfo> CreateWorkspace(
+            CloudEnvironmentType type,
+            string cloudEnvironmentId,
+            string computeIdToken,
             IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
 
-            Requires.NotNullOrEmpty(id, nameof(id));
+            Requires.NotNullOrEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
 
             var workspaceRequest = new WorkspaceRequest()
             {
-                Name = id,
+                Name = cloudEnvironmentId,
                 ConnectionMode = ConnectionMode.Auto,
                 AreAnonymousGuestsAllowed = false,
                 ExpiresAt = DateTime.UtcNow.AddDays(PersistentSessionExpiresInDays),
@@ -346,18 +360,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (string.IsNullOrWhiteSpace(workspaceResponse.Id))
             {
                 logger
-                    .AddEnvironmentId(id)
+                    .AddEnvironmentId(cloudEnvironmentId)
                     .LogError(GetType().FormatLogErrorMessage(nameof(CreateWorkspace)));
                 return null;
             }
 
-            return workspaceResponse.Id;
+            return new ConnectionInfo
+            {
+                ConnectionComputeId = computeIdToken,
+                ConnectionComputeTargetId = type.ToString(),
+                ConnectionSessionId = workspaceResponse.Id,
+                ConnectionSessionPath = null,
+            };
         }
 
-        private async Task<AllocateComputeResult> AllocateCompute(
+        private async Task<ResourceAllocation> AllocateCompute(
             CloudEnvironment cloudEnvironment,
-            string accessToken,
-            string sessionId,
             IDiagnosticsLogger logger)
         {
             var compute = await ResourceBrokerClient.CreateResourceAsync(
@@ -369,51 +387,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 },
                 logger);
 
-            cloudEnvironment.Compute = new ResourceAllocation
+            return new ResourceAllocation
             {
                 ResourceIdToken = compute.ResourceIdToken,
                 SkuName = compute.SkuName,
                 Location = compute.Location,
                 Created = compute.Created,
             };
-
-            // Setup the connection
-            cloudEnvironment.Connection = new ConnectionInfo
-            {
-                ConnectionSessionId = sessionId,
-
-                // TODO: is this a DUP of the underlying compute VM id?
-                ConnectionComputeId = cloudEnvironment.Compute.ResourceIdToken,
-            };
-
-            // Construct the environment variables
-            var environmentVariables = EnvironmentVariableGenerator.Generate(
-                cloudEnvironment,
-                SessionSettings,
-                accessToken,
-                sessionId);
-
-            return new AllocateComputeResult
-            {
-                EnvironmentVariables = environmentVariables,
-            };
         }
 
-        private async Task AllocateStorage(
+        private async Task<ResourceAllocation> AllocateStorage(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
         {
             var storage = await ResourceBrokerClient.CreateResourceAsync(
                 new CreateResourceRequestBody
                 {
-                    // TODO: real input values go here!
                     Type = ResourceType.StorageFileShare,
                     SkuName = cloudEnvironment.SkuName,
                     Location = cloudEnvironment.Location,
                 },
                 logger);
 
-            cloudEnvironment.Storage = new ResourceAllocation
+            return new ResourceAllocation
             {
                 ResourceIdToken = storage.ResourceIdToken,
                 SkuName = storage.SkuName,
@@ -424,12 +420,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private async Task StartCompute(
             CloudEnvironment cloudEnvironment,
-            Dictionary<string, string> environmentVariables,
+            Uri callbackUri,
+            string accessToken,
             IDiagnosticsLogger logger)
         {
-            ValidationUtil.IsRequired(cloudEnvironment?.Compute?.ResourceIdToken, nameof(cloudEnvironment.Compute.ResourceIdToken));
+            Requires.NotNullOrEmpty(cloudEnvironment?.Compute?.ResourceIdToken, $"{nameof(cloudEnvironment.Compute)}.{nameof(cloudEnvironment.Compute.ResourceIdToken)}");
+            Requires.NotNullOrEmpty(cloudEnvironment?.Storage?.ResourceIdToken, $"{nameof(cloudEnvironment.Storage)}.{nameof(cloudEnvironment.Storage.ResourceIdToken)}");
+            Requires.NotNull(callbackUri, nameof(callbackUri));
+            Requires.Argument(callbackUri.IsAbsoluteUri, nameof(callbackUri), "Must be an absolute URI.");
+            Requires.NotNullOrEmpty(accessToken, nameof(accessToken));
 
-            _ = await ResourceBrokerClient.StartComputeAsync(
+            // Construct the start-compute environment variables
+            var environmentVariables = EnvironmentVariableGenerator.Generate(
+                cloudEnvironment,
+                callbackUri,
+                accessToken);
+
+            await ResourceBrokerClient.StartComputeAsync(
                 cloudEnvironment.Compute.ResourceIdToken,
                 new StartComputeRequestBody
                 {
@@ -437,11 +444,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     EnvironmentVariables = environmentVariables,
                 },
                 logger);
-        }
-
-        private class AllocateComputeResult
-        {
-            public Dictionary<string, string> EnvironmentVariables { get; set; }
         }
     }
 }

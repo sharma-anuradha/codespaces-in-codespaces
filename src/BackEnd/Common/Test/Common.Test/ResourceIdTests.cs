@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Throws<ArgumentException>("resourceType", () => new ResourceId(default, instanceId, subscriptionId, resourceGroup, location));
             Assert.Throws<ArgumentException>("instanceId", () => new ResourceId(resourceType, default, subscriptionId, resourceGroup, location));
             Assert.Throws<ArgumentException>("subscriptionId", () => new ResourceId(resourceType, instanceId, default, resourceGroup, location));
-            Assert.Throws<ArgumentException>("location", () => new ResourceId(resourceType, instanceId, subscriptionId, default, location));
+            Assert.Throws<ArgumentNullException>("resourceGroup", () => new ResourceId(resourceType, instanceId, subscriptionId, default, location));
             Assert.Throws<ArgumentException>("location", () => new ResourceId(resourceType, instanceId, subscriptionId, resourceGroup, default));
         }
 
@@ -168,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             var idToken = id.ToString();
             // Specific format
             var expectedLocation = id.Location.ToString().ToLowerInvariant();
-            Assert.Equal($"vssaas/resourcetypes/computevm/instances/{id.InstanceId}/subscriptions/{id.SubscriptionId}/locations/{expectedLocation}", idToken);
+            Assert.Equal($"vssaas/resourcetypes/computevm/instances/{id.InstanceId}/subscriptions/{id.SubscriptionId}/resourcegroups/{id.ResourceGroup}/locations/{expectedLocation}", idToken);
         }
 
         [Fact]
@@ -190,31 +190,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 
         private const string InstanceId = "ebeea9c1-6898-4abb-b76f-ad087add2bda";
         private const string SubscriptionId = "34da0f9b-78b3-4158-b1e9-0823f728fcf3";
+        private const string ResourceGroup = "resource-group";
+
         public static TheoryData ParseData =>
             new TheoryData<int, string, bool>
             {
                 // The first columun is a test id number for identifying test failures
                 { 0, null, true },
                 { 1, string.Empty, true },
-                { 2, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/eastus", true},
-                { 3, " ", false },
-                { 4, "garbage", false },
-                { 5, $" vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/eastus", false},
-                { 6, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/eastus ", false},
-                { 7, $"vs-saas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/eastus", false},
-                { 8, $"vssaas/resource-types/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/eastus", false},
-                { 9, $"vssaas/resourcetypes/compute-vm/instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/eastus", false},
-                { 10, $"vssaas/resourcetypes/computevm/Instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/eastus", true},
-                { 11, $"vssaas/resourcetypes/computevm/instances/{InstanceId}-/subscriptions/{SubscriptionId}/locations/eastus", false},
-                { 12, $"vssaas/resourcetypes/computevm/instances/{InstanceId}X/subscriptions/{SubscriptionId}/locations/eastus", false},
-                { 13, $"vssaas/resourcetypes/computevm/instances/{InstanceId}!/subscriptions/{SubscriptionId}/locations/eastus", false},
-                { 14, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/Subscriptions/{SubscriptionId}/locations/eastus", true},
-                { 15, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}-/locations/eastus", false},
-                { 16, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}X/locations/eastus", false},
-                { 17, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}!/locations/eastus", false},
-                { 18, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/Locations/eastus", true},
-                { 19, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/east-us", false},
-                { 20, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/locations/eastus!", false},
+                { 2, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", true },
+                { 3, $"vssaas/resourcetypes/storagefileshare/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", true },
+
+                // Noise
+                { 4, " ", false },
+                { 5, "garbage", false },
+
+                // Leading or trailing whitespace
+                { 6, $" vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 7, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus ", false },
+
+                // Bad prefix
+                { 8, $"vs-saas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+
+                // Bad delimiter paths
+                { 9, $"vssaas/resource-types/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 10, $"vssaas/resourcetypes!/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 11, $"vssaas/resourcetypes/computevm/instance-s/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 12, $"vssaas/resourcetypes/computevm/instances!/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 13, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscription-s/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 14, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions!/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 15, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroup-s/{ResourceGroup}/locations/eastus", false },
+                { 16, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups!/{ResourceGroup}/locations/eastus", false },
+                { 17, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroup-s/{ResourceGroup}/location-s/eastus", false },
+                { 18, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups!/{ResourceGroup}/locations!/eastus", false },
+
+                // Bad values
+                { 19, $"vssaas/resourcetypes/computevm/instances/{InstanceId}X/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 20, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}X/resourcegroups/{ResourceGroup}/locations/eastus", false },
+                { 21, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}!/locations/eastus", false },
+                { 22, $"vssaas/resourcetypes/computevm/instances/{InstanceId}/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroup}/locations/eastus!", false },
             };
 
         [Theory]

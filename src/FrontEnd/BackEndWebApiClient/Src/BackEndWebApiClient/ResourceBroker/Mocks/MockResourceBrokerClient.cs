@@ -48,9 +48,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<StartComputeResponseBody> StartComputeAsync(string computeResourceTokenId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        public Task StartComputeAsync(string computeResourceTokenId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
-            return Task.FromResult(new StartComputeResponseBody { });
+            return Task.CompletedTask;
         }
     }
 }

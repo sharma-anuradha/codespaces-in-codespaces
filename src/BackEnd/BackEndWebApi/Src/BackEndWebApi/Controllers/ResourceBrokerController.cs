@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 var locationRelativeUri = ResourceBrokerHttpContract.GetGetResourceUri(result.ResourceIdToken);
                 var location = new UriBuilder(Request.GetDisplayUrl())
                 {
-                    Path = Request.Path = locationRelativeUri,
+                    Path = Request.Path = "/" + locationRelativeUri,
                 }.Uri;
 
                 logger
@@ -186,7 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <returns>The <see cref="StartComputeRequestBody"/>.</returns>
         [HttpPost]
         [Route(ResourceBrokerHttpContract.StartComputeOperation)]
-        [ProducesResponseType(typeof(StartComputeResponseBody), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> StartComputeAsync(
             [FromQuery]string id,
             [FromBody]StartComputeRequestBody startComputeRequestBody)
@@ -216,14 +216,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                var result = await ResourceBrokerHttp.StartComputeAsync(id, startComputeRequestBody, logger);
+                await ResourceBrokerHttp.StartComputeAsync(id, startComputeRequestBody, logger);
 
                 logger.AddDuration(duration)
                     .AddResourceIdToken(id)
                     .AddStartComputeRequest(startComputeRequestBody)
                     .LogInfo(GetType().FormatLogMessage(nameof(StartComputeAsync)));
 
-                return Ok(result);
+                return Ok();
             }
             catch (Exception)
             {
@@ -276,28 +276,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <inheritdoc/>
-        async Task<StartComputeResponseBody> IResourceBrokerResourcesHttpContract.StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody requestBody, IDiagnosticsLogger logger)
+        async Task IResourceBrokerResourcesHttpContract.StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
-            var input = new EnvironmentStartInput
+            Requires.NotNullOrEmpty(computeResourceIdToken, nameof(computeResourceIdToken));
+            Requires.NotNull(startComputeRequestBody, nameof(startComputeRequestBody));
+            Requires.NotNullOrEmpty(startComputeRequestBody?.StorageResourceIdToken, nameof(startComputeRequestBody.StorageResourceIdToken));
+            Requires.NotNullOrEmpty(startComputeRequestBody?.EnvironmentVariables, nameof(startComputeRequestBody.EnvironmentVariables));
+
+            var duration = logger.StartDuration();
+
+            try
             {
-                ComputeResourceId = ResourceId.Parse(computeResourceIdToken),
-                StorageResourceId = requestBody.StorageResourceIdToken,
-                EnvironmentVariables = requestBody.EnvironmentVariables,
-            };
+                var input = new EnvironmentStartInput
+                {
+                    ComputeResourceId = ResourceId.Parse(computeResourceIdToken),
+                    StorageResourceId = startComputeRequestBody.StorageResourceIdToken,
+                    EnvironmentVariables = startComputeRequestBody.EnvironmentVariables,
+                };
 
-            var result = await ResourceBroker.StartComputeAsync(input, logger);
+                // Call the resource broker to start the compute.
+                var result = await ResourceBroker.StartComputeAsync(input, logger);
 
-            // TODO: @JohnR to update endpoints based on continuation result
-            //       Expected that based on this result a 201 will be returned
-            //       to the front end and the front end will return 201 to the
-            //       client. The client will then do status polls to the front
-            //       end, which for the moment, will result in a status poll to
-            //       the backend (different endpoint to this). That endpoint will
-            //       call `ResourceBroker.StartComputeAsync` again with the
-            //       continuation token passed in as an arg. This pattern is how
-            //       we translate between http and .net paradigms.
-
-            return new StartComputeResponseBody { };
+                logger.AddDuration(duration)
+                    .AddResourceIdToken(computeResourceIdToken)
+                    .AddStartComputeRequest(startComputeRequestBody)
+                    .LogInfo(GetType().FormatLogMessage(nameof(StartComputeAsync)));
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .AddStartComputeRequest(startComputeRequestBody)
+                    .AddResourceIdToken(computeResourceIdToken)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)), ex.Message);
+                throw;
+            }
         }
     }
 }

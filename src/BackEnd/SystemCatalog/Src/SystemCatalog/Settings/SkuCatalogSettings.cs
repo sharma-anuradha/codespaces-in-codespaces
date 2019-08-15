@@ -29,10 +29,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings
         public List<AzureLocation> DefaultLocations { get; } = new List<AzureLocation>();
 
         /// <summary>
-        /// Gets the default pool level that each sku should have.
+        /// Gets or sets the default pool level that each sku should have.
         /// </summary>
         [JsonProperty]
-        public int DefaultPoolLevel { get; }
+        public int DefaultPoolLevel { get; set; }
 
         /// <summary>
         /// Gets a mapping of OS type to default VM image for that OS.

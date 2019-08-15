@@ -94,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         public string ResourceGroup { get; }
 
         /// <summary>
-        /// Returns the resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}"
+        /// Returns the resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}".
         /// </summary>
         /// <param name="id">The resource id.</param>
         public static implicit operator string(ResourceId id) => id.ToString();
@@ -141,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 
         /// <inheritdoc/>
         /// <summary>
-        /// Returns resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}"
+        /// Returns resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}".
         /// </summary>
         /// <remarks>
         /// <see cref="object.ToString"/> should not return null.

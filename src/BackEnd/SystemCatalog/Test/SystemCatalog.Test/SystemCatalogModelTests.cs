@@ -172,7 +172,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
                             StorageSkuName = "test-storage-sku-name-1",
                         },
                     },
-                DefaultVMImages =
+                    DefaultPoolLevel = 1,
+                    DefaultVMImages =
                     {
                         {  ComputeOS.Linux, "linux-image" },
                     }
@@ -266,7 +267,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Test
                         }
                     }
                 },
-            DefaultVMImages =
+                DefaultPoolLevel = 1,
+                DefaultVMImages =
                 {
                     { ComputeOS.Linux, "default-vm-image-linux" },
                     { ComputeOS.Windows, "default-vm-image-windows" },

@@ -20,11 +20,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// Generates a dictionary of environment variables for the given cloud environment.
         /// </summary>
         /// <param name="cloudEnvironment">The cloud environment.</param>
-        /// <param name="sessionSettings">The session settings.</param>
+        /// <param name="callbackUri">The callback uri.</param>
         /// <param name="accessToken">The user access token.</param>
-        /// <param name="sessionId">The session id.</param>
         /// <returns>A dictionary of environment variables.</returns>
-        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, SessionSettings sessionSettings, string accessToken, string sessionId)
+        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, Uri callbackUri, string accessToken)
         {
             var result = new Dictionary<string, string>();
 
@@ -34,9 +33,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 new EnvVarGitPullPRNumber(cloudEnvironment),
                 new EnvVarGitConfigUserName(cloudEnvironment),
                 new EnvVarGitConfigUserEmail(cloudEnvironment),
-                new EnvVarSessionCallback(cloudEnvironment, sessionSettings),
+                new EnvVarSessionCallback(cloudEnvironment, callbackUri),
                 new EnvVarSessionToken(accessToken),
-                new EnvVarSessionId(sessionId),
+                new EnvVarSessionId(cloudEnvironment),
                 new EnvDotfilesRepoUrl(cloudEnvironment),
                 new EnvDotfilesTargetPath(cloudEnvironment),
                 new EnvDotfilesInstallCommand(cloudEnvironment),
@@ -252,27 +251,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     }
 
     /// <summary>
-    ///  Session settings (typically from AppSettings).
-    /// </summary>
-    public class SessionSettings
-    {
-        /// <summary>
-        /// Gets or sets the preferred schema, http or https.
-        /// </summary>
-        public string PreferredSchema { get; set; }
-
-        /// <summary>
-        /// Gets or sets the default host name.
-        /// </summary>
-        public string DefaultHost { get; set; }
-
-        /// <summary>
-        /// Gets or sets the default path.
-        /// </summary>
-        public string DefaultPath { get; set; }
-    }
-
-    /// <summary>
     /// Generate the session callbackurl from the session settings.
     /// </summary>
     public class EnvVarSessionCallback : EnvironmentVariableStrategy
@@ -281,20 +259,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// Initializes a new instance of the <see cref="EnvVarSessionCallback"/> class.
         /// </summary>
         /// <param name="cloudEnvironment">The cloud environment.</param>
-        /// <param name="sessionSettings">The session settings.</param
-        public EnvVarSessionCallback(CloudEnvironment cloudEnvironment, SessionSettings sessionSettings)
+        /// <param name="callbackUri">The callback uri.</param
+        public EnvVarSessionCallback(CloudEnvironment cloudEnvironment, Uri callbackUri)
             : base(cloudEnvironment)
         {
-            SessionSettings = sessionSettings;
+            CallbackUri = callbackUri;
         }
 
-        private SessionSettings SessionSettings { get; }
+        private Uri CallbackUri { get; }
 
         /// <inheritdoc/>
         public override Tuple<string, string> GetEnvironmentVariable()
         {
-            string apiUrl = SessionSettings.PreferredSchema + "://" + SessionSettings.DefaultHost + SessionSettings.DefaultPath + "/registration/";
-            return new Tuple<string, string>(EnvironmentVariableConstants.SessionCallback, apiUrl + CloudEnvironment.Id + "/_callback");
+            return new Tuple<string, string>(EnvironmentVariableConstants.SessionCallback, CallbackUri.AbsoluteUri);
         }
     }
 
@@ -324,19 +301,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// </summary>
     public class EnvVarSessionId : EnvironmentVariableStrategy
     {
-        private readonly string sessionId;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvVarSessionId"/> class.
         /// </summary>
-        /// <param name="sessionId">The session id.</param>
-        public EnvVarSessionId(string sessionId)
-            : base(null) => this.sessionId = sessionId;
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        public EnvVarSessionId(CloudEnvironment cloudEnvironment)
+            : base(cloudEnvironment)
+        {
+        }
 
         /// <inheritdoc/>
         public override Tuple<string, string> GetEnvironmentVariable()
         {
-            return new Tuple<string, string>(EnvironmentVariableConstants.SessionId, this.sessionId);
+            return new Tuple<string, string>(EnvironmentVariableConstants.SessionId, CloudEnvironment.Connection.ConnectionSessionId);
         }
     }
 
