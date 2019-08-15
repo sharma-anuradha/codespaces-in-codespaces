@@ -63,7 +63,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
             conn1Proxy.Clear();
             conn2Proxy.Clear();
-            await this.relayService.SendDataHubAsync("conn1", hubId, null, "type1", Encoding.UTF8.GetBytes("hi"), default);
+            await this.relayService.SendDataHubAsync("conn1", hubId, SendOption.None, null, "type1", Encoding.UTF8.GetBytes("hi"), default);
             Assert.NotEmpty(conn1Proxy);
             Assert.NotEmpty(conn2Proxy);
             Assert.True(conn2Proxy.ContainsKey(RelayHubMethods.MethodReceiveData));

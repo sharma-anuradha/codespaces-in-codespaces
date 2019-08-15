@@ -8,6 +8,15 @@ using System.Threading.Tasks;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
+    /// Options to send data
+    /// </summary>
+    public enum SendOption
+    {
+        None,
+        ExcludeSelf
+    }
+
+    /// <summary>
     /// Service exposed by the relay hub.
     /// </summary>
     public interface IRelayServiceHub
@@ -20,6 +29,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         Task SendDataHubAsync(
             string hubId,
+            SendOption sendOption,
             string[] targetParticipantIds,
             string type,
             byte[] data);

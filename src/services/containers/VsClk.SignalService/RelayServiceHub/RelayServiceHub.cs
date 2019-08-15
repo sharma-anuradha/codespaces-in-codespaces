@@ -46,11 +46,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public Task SendDataHubAsync(
             string hubId,
+            SendOption sendOption,
             string[] targetParticipantIds,
             string type,
             byte[] data)
         {
-            return this.relayService.SendDataHubAsync(Context.ConnectionId, hubId, targetParticipantIds, type, data, Context.ConnectionAborted);
+            return this.relayService.SendDataHubAsync(Context.ConnectionId, hubId, sendOption, targetParticipantIds, type, data, Context.ConnectionAborted);
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)

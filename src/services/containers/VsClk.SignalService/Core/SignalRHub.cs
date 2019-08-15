@@ -64,14 +64,14 @@ namespace Microsoft.VsCloudKernel.SignalService
             HubDispatcher hubDispatcher;
             if (!this.hubDispatchers.TryGetValue(hubName, out hubDispatcher))
             {
-                throw new HubException($"Hub:{hubName} not registered");
+                throw new HubException($"Hub:{hubName} not registered when invoking method:{hubMethodName}");
             }
 
             if (hubDispatcher.TryGetMethod(hubMethodName, out var methodInfo))
             {
                 if (arguments.Length != methodInfo.GetParameters().Length)
                 {
-                    throw new HubException($"Wrong number of arguments, expected:{methodInfo.GetParameters().Length} actual:{arguments.Length}");
+                    throw new HubException($"Wrong number of arguments, expected:{methodInfo.GetParameters().Length} actual:{arguments.Length} hubAndMethod:{hubAndMethod}");
                 }
 
                 // convert argument types
@@ -105,7 +105,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private static object ToArgumentType(object value, Type argumentType)
         {
-            if (value is JToken jToken)
+            if (argumentType.IsEnum)
+            {
+                return Enum.ToObject(argumentType, value);
+            }
+            else if (value is JToken jToken)
             {
                 return jToken.ToObject(argumentType);
             }

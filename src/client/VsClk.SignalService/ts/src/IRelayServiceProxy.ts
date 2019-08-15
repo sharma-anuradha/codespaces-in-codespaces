@@ -18,6 +18,11 @@ export declare enum ParticipantChangeType {
     Updated = 3
 }
 
+export declare enum SendOption {
+    None,
+    ExcludeSelf
+}
+
 export interface IParticipantChanged {
     readonly participant: IRelayHubParticipant;
     readonly changeType: ParticipantChangeType;
@@ -30,7 +35,7 @@ export interface IRelayHubProxy {
     onReceiveData(callback: (receivedData: IReceivedData) => Promise<void>): void;
     onParticipantChanged(callback: (participantChanged: IParticipantChanged) => Promise<void>): void;
 
-    sendData(targetParticipants: string[], type: string, data: Uint8Array): Promise<void>;
+    sendData(sendOption: SendOption, targetParticipants: string[], type: string, data: Uint8Array): Promise<void>;
 }
 
 export interface IRelayServiceProxy {

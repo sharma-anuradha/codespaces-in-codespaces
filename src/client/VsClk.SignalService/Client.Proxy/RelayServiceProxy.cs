@@ -125,6 +125,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }
 
             public Task SendDataAsync(
+                SendOption sendOption,
                 string[] targetParticipantIds,
                 string type,
                 byte[] data,
@@ -135,7 +136,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                     throw new ObjectDisposedException($"RealyHub:{Id}");
                 }
 
-                return this.relayServiceProxy.hubProxy.InvokeAsync(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, targetParticipantIds, type, data }, cancellationToken);
+                return this.relayServiceProxy.hubProxy.InvokeAsync(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data }, cancellationToken);
             }
 
             internal void OnReceiveData(string fromParticipantId, int uniqueId, string type, byte[] data)

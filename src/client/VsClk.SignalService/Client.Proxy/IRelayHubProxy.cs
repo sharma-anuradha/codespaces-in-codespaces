@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.Threading;
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
     /// <summary>
-    /// A relay hub proxy
+    /// A relay hub proxy.
     /// </summary>
     public interface IRelayHubProxy : IAsyncDisposable
     {
@@ -38,12 +38,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <summary>
         /// Send raw data to all or some participants.
         /// </summary>
+        /// <param name="sendOption">Options to send the data.</param>
         /// <param name="targetParticipantIds">Which target participants to send.</param>
         /// <param name="type">Type of data.</param>
         /// <param name="data">Raw data to send.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Task compeltion.</returns>
         Task SendDataAsync(
+            SendOption sendOption,
             string[] targetParticipantIds,
             string type,
             byte[] data,

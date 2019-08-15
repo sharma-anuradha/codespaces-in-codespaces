@@ -1,6 +1,6 @@
 import * as signalR from '@aspnet/signalr';
 
-import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType }  from './IRelayServiceProxy';
+import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType, SendOption }  from './IRelayServiceProxy';
 import { HubProxyBase } from './HubProxyBase';
 
 export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProxy {
@@ -84,8 +84,8 @@ class RelayHubProxy implements IRelayHubProxy {
         }
     }
 
-    public sendData(targetParticipants: string[], type: string, data: Uint8Array): Promise<void> {
-        return this.relayServiceProxy.invoke('SendDataHubAsync', targetParticipants, type, data );
+    public sendData(sendOption: SendOption, targetParticipants: string[], type: string, data: Uint8Array): Promise<void> {
+        return this.relayServiceProxy.invoke('SendDataHubAsync', sendOption, targetParticipants, type, data );
     }
 
     public async _OnReceiveData(fromParticipantId: string, uniqueId: number, type: string , data: Uint8Array ): Promise<void> {

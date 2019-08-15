@@ -98,6 +98,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public Task SendDataHubAsync(
             string connectionId,
             string hubId,
+            SendOption sendOption,
             string[] targetParticipantIds,
             string type,
             byte[] data,
@@ -111,10 +112,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             using (Logger.BeginMethodScope(RelayServiceScopes.MethodSendDataHub))
             {
                 var targetParticipantIdsStr = targetParticipantIds != null ? string.Join(",", targetParticipantIds) : "*";
-                Logger.LogDebug($"connectionId:{connectionId} hubId:{hubId} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data.Length}");
+                Logger.LogDebug($"connectionId:{connectionId} hubId:{hubId} sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data.Length}");
             }
 
-            return GetRelayHub(hubId).SendDataAsync(connectionId, targetParticipantIds, type, data, cancellationToken);
+            return GetRelayHub(hubId).SendDataAsync(connectionId, sendOption, targetParticipantIds, type, data, cancellationToken);
         }
 
         public async Task DisconnectAsync(string connectionId, CancellationToken cancellationToken)

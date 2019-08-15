@@ -58,6 +58,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public Task SendDataAsync(
             string fromParticipantId,
+            SendOption sendOption,
             string[] targetParticipantIds,
             string type,
             byte[] data, 
@@ -82,7 +83,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (targetParticipantIds == null)
             {
-                return sendTaskCallback(All());
+                return sendTaskCallback(sendOption == SendOption.ExcludeSelf ? AllExcept(fromParticipantId) : All());
             }
             else
             {

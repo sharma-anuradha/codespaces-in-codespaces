@@ -567,7 +567,7 @@ namespace LivesharePresenceClientTest
                     Console.Write($"Enter participant id:('*'):");
                     var participantId = Console.ReadLine();
 
-                    await this.currentRelayHubProxy.SendDataAsync(string.IsNullOrEmpty(participantId) ? null : new string[] { participantId }, TypeTest, Encoding.UTF8.GetBytes(message), DisposeToken);
+                    await this.currentRelayHubProxy.SendDataAsync(SendOption.None, string.IsNullOrEmpty(participantId) ? null : new string[] { participantId }, TypeTest, Encoding.UTF8.GetBytes(message), DisposeToken);
                 }
             }
 
