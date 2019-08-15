@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> QueryAsync(Func<IOrderedQueryable<CloudEnvironment>, IDocumentQuery<CloudEnvironment>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<CloudEnvironment>, IDiagnosticsLogger, Task> pageResultsCallback = null)
+        public Task<IEnumerable<TR>> QueryAsync<TR>(Func<IOrderedQueryable<CloudEnvironment>, IQueryable<TR>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             throw new NotImplementedException();
         }

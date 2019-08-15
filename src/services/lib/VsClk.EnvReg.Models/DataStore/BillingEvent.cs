@@ -39,6 +39,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         /// The type of object depends on the <see cref="EventType" />.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "args")]
+        [JsonConverter(typeof(BillingEventArgsConverter))]
         public object Args { get; set; }
     }
 
@@ -54,13 +55,13 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
 
         /// <summary>
         /// Event that occurrs when we are notified by our RP that an account plan (SKU)
-        /// changed. An initial event should also be emitted when each account is created.
+        /// changed. Events must also be emitted when each account is created and deleted.
         /// </summary>
         /// <seealso cref="BillingStateChange" />
         public const string AccountPlanChange = "accountPlanChange";
 
         /// <summary>
-        /// Event that occurrs when a cloud environment state changes.
+        /// Event that occurrs when a cloud environment state changes (including creation and deletion).
         /// </summary>
         /// <seealso cref="EnvironmentStates" />
         /// <seealso cref="BillingStateChange" />

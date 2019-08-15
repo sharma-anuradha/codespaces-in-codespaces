@@ -1,4 +1,5 @@
-﻿using Microsoft.VsSaaS.Common.Models;
+﻿using System;
+using Microsoft.VsSaaS.Common.Models;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
@@ -10,12 +11,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
     {
         [JsonProperty(Required = Required.Always, PropertyName = "account")]
         public BillingAccountInfo Account { get; set; }
-
-        /// <summary>
-        /// The Cloud Environments (VSLS) profile ID of the user who created the account.
-        /// </summary>
-        [JsonProperty(Required = Required.Always, PropertyName = "ownerId")]
-        public string OwnerId { get; set; }
 
         /// <summary>
         /// The billing plan selected for this account. This corresponds to the "SKU"
@@ -47,7 +42,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
     /// Static (unchanging) identifying information about an account, included in both
     /// <see cref="BillingAccount" /> and <see cref="BillingEvent" /> entities.
     /// </summary>
-    public class BillingAccountInfo
+    public class BillingAccountInfo : IEquatable<BillingAccountInfo>
     {
         /// <summary>
         /// ID of the subscription that contains the account resource.
@@ -75,8 +70,29 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         /// </summary>
         /// <remarks>
         /// All environments associated with an account must be in the same region as the account.
+        /// <para/>
+        /// At least initially there will be a separate database per region, so all entities in
+        /// the same database will have the location value. But this property can allow for
+        /// multiple regions sharing the same database if that is ever preferable.
         /// </remarks>
         [JsonProperty(Required = Required.Always, PropertyName = "location")]
         public string Location { get; set; }
+
+        public bool Equals(BillingAccountInfo other)
+        {
+            return (object)other != null &&
+                this.Subscription == other.Subscription &&
+                this.ResourceGroup == other.ResourceGroup &&
+                this.Name == other.Name &&
+                this.Location == other.Location;
+        }
+
+        public override bool Equals(object obj) => Equals(obj as BillingAccountInfo);
+
+        public override int GetHashCode() => HashCode.Combine(Subscription, Name);
+
+        public static bool operator ==(BillingAccountInfo a, BillingAccountInfo b) =>
+           (object)a == null ? (object)b == null : a.Equals(b);
+        public static bool operator !=(BillingAccountInfo a, BillingAccountInfo b) => !(a == b);
     }
 }

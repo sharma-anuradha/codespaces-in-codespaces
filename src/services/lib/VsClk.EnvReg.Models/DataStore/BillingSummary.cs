@@ -90,6 +90,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         /// <summary>
         /// Environment name.
         /// </summary>
+        [JsonProperty(Required = Required.Always, PropertyName = "name")]
         public string Name { get; set; }
 
         // TODO: Consider adding other environment details here that might
@@ -106,6 +107,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         /// Or if there was no usage detail for an environment for the previous period summary
         /// then the environment must have been inactive during that entire period.
         /// </remarks>
+        [JsonProperty(Required = Required.Always, PropertyName = "endState")]
         public string EndState { get; set; }
 
         /// <summary>

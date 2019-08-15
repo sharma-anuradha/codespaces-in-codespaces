@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Azure.Documents;
+using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
@@ -29,7 +30,17 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Repositories.DocumentDb
         public static void ConfigureOptions(DocumentDbCollectionOptions options)
         {
             Requires.NotNull(options, nameof(options));
-            options.PartitioningStrategy = PartitioningStrategy.IdOnly;
+            options.PartitioningStrategy = PartitioningStrategy.Custom;
+            options.CustomPartitionKeyPaths = new[]
+            {
+                // Billing events are partitioned by subscription ID. Most queries
+                // will filter on a specific account, which includes a subscription ID.
+                "/account/subscription",
+            };
+            options.CustomPartitionKeyFunc = (entity) =>
+            {
+                return new PartitionKey(((BillingEvent)entity).Account?.Subscription);
+            };
         }
     }
 }

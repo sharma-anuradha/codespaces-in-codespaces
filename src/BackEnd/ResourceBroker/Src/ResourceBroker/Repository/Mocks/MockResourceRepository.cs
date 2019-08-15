@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<ResourceRecord>> QueryAsync(Func<IOrderedQueryable<ResourceRecord>, IDocumentQuery<ResourceRecord>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<ResourceRecord>, IDiagnosticsLogger, Task> pageResultsCallback = null)
+        public Task<IEnumerable<TR>> QueryAsync<TR>(Func<IOrderedQueryable<ResourceRecord>, IQueryable<TR>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             throw new NotImplementedException();
         }
