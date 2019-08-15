@@ -75,21 +75,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 await Task.WhenAll(storageAccountIds.Select(id => providerHelper.StartPrepareFileShareAsync(id, srcBlobUrl)));
                 
                 double[] completedPercent  = new double[NUM_STORAGE_TO_CREATE];
-                
+
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
-
                 
                 while (completedPercent.Any(x => x != 1) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
                 {
                     // Check completion status
                     completedPercent = await Task.WhenAll(storageAccountIds.Select(id => providerHelper.CheckPrepareFileShareAsync(id)));
-                    Thread.Sleep(TimeSpan.FromSeconds(30));
+                    Thread.Sleep(TimeSpan.FromMinutes(10));
                 }
 
                 stopWatch.Stop();
 
-                // Verify that we can none still haven't finished after the timeout
+                // Verify that none still haven't finished after the timeout
                 if (completedPercent.Any(x => x != 1))
                 {
                     Assert.True(false, string.Format("Failed to complete all file share preparations in given time of {0} minutes.", PREPARE_TIMEOUT_MINS));
