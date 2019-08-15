@@ -99,16 +99,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
             services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
             {
-                options.AccountKey = storageAccountSettings.StorageAccountKey;
-                options.AccountName = storageAccountSettings.StorageAccountName;
+                options.AccountKey = RequiresNotNullOrEmpty(storageAccountSettings.StorageAccountKey, nameof(storageAccountSettings.StorageAccountKey));
+                options.AccountName = RequiresNotNullOrEmpty(storageAccountSettings.StorageAccountName, nameof(storageAccountSettings.StorageAccountName));
             });
             services.AddDocumentDbClientProvider(options =>
             {
                 options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
                 options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
-                options.HostUrl = appSettings.AzureCosmosDbHost;
-                options.AuthKey = appSettings.AzureCosmosDbKey;
-                options.DatabaseId = appSettings.AzureCosmosDbId;
+                options.HostUrl = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbHost, nameof(appSettings.AzureCosmosDbHost));
+                options.AuthKey = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbKey, nameof(appSettings.AzureCosmosDbKey));
+                options.DatabaseId = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbId, nameof(appSettings.AzureCosmosDbId));
                 options.PreferredLocation = appSettings.AzureCosmosPreferredLocation;
                 options.UseMultipleWriteLocations = false;
             });
@@ -211,6 +211,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 c.SwaggerEndpoint("/v1/swagger", "BackendWebApi API v1");
                 c.DisplayRequestDuration();
             });
+        }
+
+        private static string RequiresNotNullOrEmpty(string value, string paramName)
+        {
+            Requires.NotNullOrEmpty(value, paramName);
+            return value;
         }
     }
 }
