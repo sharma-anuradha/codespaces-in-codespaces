@@ -23,29 +23,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
     public class ResourcePoolTests
     {
         private const string DefaultLocation = "USW2";
-        private const string WestLocation = "USW2";
-        private const string DefaultLogicalSkuName = "Large";
         private const string DefaultResourceSkuName = "LargeVm";
-        private const string StorageResourceSkuName = "LargeVm";
         private const ResourceType DefaultType = ResourceType.ComputeVM;
 
         [Fact]
         public void Ctor_throws_if_null()
         {
             var resourceRepository = new Mock<IResourceRepository>().Object;
-            var resourceScalingStore = new Mock<IResourceScalingStore>().Object;
 
-            Assert.Throws<ArgumentNullException>(() => new ResourcePool(null, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourcePool(resourceRepository, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourcePool(null, resourceScalingStore));
+            Assert.Throws<ArgumentNullException>(() => new ResourcePool(null));
         }
 
         [Fact]
         public void Ctor_ok()
         {
             var resourceRepository = new Mock<IResourceRepository>().Object;
-            var resourceScalingStore = new Mock<IResourceScalingStore>().Object;
-            var pool = new ResourcePool(resourceRepository, resourceScalingStore);
+            var pool = new ResourcePool(resourceRepository);
             Assert.NotNull(pool);
         }
 
@@ -55,15 +48,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var rawResult = BuildResourceRecord();
             var input = BuildAllocateInput();
 
-            var scalingStore = BuildResourceScalingStore();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var repository = new Mock<IResourceRepository>();
             repository.Setup(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger))
                 .Returns(Task.FromResult(rawResult));
 
-            var provider = new ResourcePool(repository.Object, scalingStore.Object);
+            var provider = new ResourcePool(repository.Object);
 
-            var result = await provider.TryGetAsync(input, logger);
+            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger);
 
             Assert.NotNull(result);
             Assert.True(result.IsAssigned);
@@ -75,15 +67,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildAllocateInput();
 
-            var scalingStore = BuildResourceScalingStore();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var repository = new Mock<IResourceRepository>();
             repository.Setup(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger))
                 .Returns(Task.FromResult((ResourceRecord)null));
 
-            var provider = new ResourcePool(repository.Object, scalingStore.Object);
+            var provider = new ResourcePool(repository.Object);
 
-            var result = await provider.TryGetAsync(input, logger);
+            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger);
 
             Assert.Null(result);
         }
@@ -98,7 +89,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 
             var exception = CreateDocumentClientException(new Error(), HttpStatusCode.PreconditionFailed);
 
-            var scalingStore = BuildResourceScalingStore();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var repository = new Mock<IResourceRepository>();
             repository
@@ -116,9 +106,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 .Setup(x => x.UpdateAsync(rawResult3, logger))
                 .Returns(Task.FromResult(rawResult3));
 
-            var provider = new ResourcePool(repository.Object, scalingStore.Object);
+            var provider = new ResourcePool(repository.Object);
 
-            var result = await provider.TryGetAsync(input, logger);
+            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger);
 
             Assert.NotNull(result);
             Assert.True(result.IsAssigned);
@@ -135,7 +125,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 
             var exception = CreateDocumentClientException(new Error(), HttpStatusCode.PreconditionFailed);
 
-            var scalingStore = BuildResourceScalingStore();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var repository = new Mock<IResourceRepository>();
             repository
@@ -153,9 +142,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 .Setup(x => x.UpdateAsync(rawResult3, logger))
                 .Throws(exception);
 
-            var provider = new ResourcePool(repository.Object, scalingStore.Object);
+            var provider = new ResourcePool(repository.Object);
 
-            var result = await provider.TryGetAsync(input, logger);
+            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger);
 
             Assert.Null(result);
         }
@@ -173,29 +162,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             return (DocumentClientException)documentClientExceptionInstance;
         }
 
-        private Mock<IResourceScalingStore> BuildResourceScalingStore()
-        {
-            var definition = new List<ResourcePoolDefinition>()
-            {
-                new ResourcePoolDefinition { Location = DefaultLocation, SkuName = DefaultResourceSkuName, TargetCount = 10, Type = DefaultType, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } },
-                new ResourcePoolDefinition { Location = DefaultLocation, SkuName = StorageResourceSkuName, TargetCount = 10, Type = ResourceType.StorageFileShare, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } },
-                new ResourcePoolDefinition { Location = WestLocation, SkuName = DefaultResourceSkuName, TargetCount = 10, Type = DefaultType, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } }
-            };
 
-            var resourceScalingStore = new Mock<IResourceScalingStore>();
-            resourceScalingStore
-                .Setup(x => x.RetrieveLatestScaleLevels())
-                .Returns(Task.FromResult((IEnumerable<ResourcePoolDefinition>)definition));
-
-            return resourceScalingStore;
-        }
-
-    private AllocateInput BuildAllocateInput()
+        private AllocateInput BuildAllocateInput()
         {
             return new AllocateInput
             {
                 Location = DefaultLocation,
-                SkuName = DefaultLogicalSkuName,
+                SkuName = DefaultResourceSkuName,
                 Type = DefaultType
             };
         }

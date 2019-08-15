@@ -4,7 +4,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
@@ -20,6 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="input"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
-        Task<ResourceRecord> TryGetAsync(AllocateInput input, IDiagnosticsLogger logger);
+        Task<ResourceRecord> TryGetAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger);
     }
 }
