@@ -9,10 +9,13 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.States;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
+using static Microsoft.VsSaaS.Diagnostics.Extensions.DiagnosticsLoggerExtensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
 {
@@ -102,12 +105,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
         public async Task RunTask(ResourcePoolDefinition resourcePoolDefinition)
         {
+            // Setup logging detials
+            var taskId = Guid.NewGuid();
+            var duration = Logger
+                .StartDuration();
+
             // Obtain a leas if no one else has it
             using (var lease = await ObtainLease($"{ReadPoolSizeLease}-{resourcePoolDefinition.BuildName()}"))
             {
                 // If we couldn't obtain a lease, move on
                 if (lease == null)
                 {
+                    // Send logging detials
+                    LogDetails("lease_nofound", taskId, duration, resourcePoolDefinition);
+
                     return;
                 }
 
@@ -120,17 +131,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
                 // Get the delta of how many
                 var poolDeltaCount = poolTargetCount - unassignedCount;
 
+                // Send logging detials
+                var loggingProperties = new Dictionary<string, object>()
+                    {
+                        { "checkUnassignedCount", unassignedCount },
+                        { "checkPoolTargetCount", poolTargetCount },
+                        { "checkPoolDeltaCount", poolDeltaCount },
+                    };
+                LogDetails("lease_obtained", taskId, duration, resourcePoolDefinition, loggingProperties);
+
                 // If we have any positive delta add that many jobs to the queue for processing
                 if (poolDeltaCount > 0)
                 {
                     for (var i = 0; i < poolDeltaCount; i++)
                     {
-                        // Add job definition to the queue
-                        await ResourceManager.AddResourceCreationRequestToJobQueueAsync(
-                            resourcePoolDefinition.SkuName,
-                            resourcePoolDefinition.Type,
-                            resourcePoolDefinition.Location,
-                            Logger);
+                        await RunItemTask(resourcePoolDefinition, taskId, i);
                     }
                 }
                 else if (poolDeltaCount < 0)
@@ -138,6 +153,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
                     // TODO: not doing anything with the case where we are over capacity atm
                 }
             }
+        }
+
+        private async Task RunItemTask(ResourcePoolDefinition resourcePoolDefinition, Guid taskId, int index)
+        {
+            // Setup logging detials
+            var duration = Logger
+                .StartDuration();
+
+            try
+            {
+                // Add job definition to the queue
+                await ResourceManager.AddResourceCreationRequestToJobQueueAsync(
+                    resourcePoolDefinition.SkuName,
+                    resourcePoolDefinition.Type,
+                    resourcePoolDefinition.Location,
+                    Logger);
+
+                LogItemDetails("complete", taskId, index, duration);
+            }
+            catch (Exception e)
+            {
+                LogItemDetails("error", taskId, index, duration, e);
+            }
+
         }
 
         private Task<int> RetrieveUnassignedCount(ResourcePoolDefinition resourceSku)
@@ -157,6 +196,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
         private async Task<IDisposable> ObtainLease(string leaseName)
         {
             return await DistributedLease.Obtain(ResourceBrokerSettings.BlobContainerName, leaseName);
+        }
+
+        private void LogDetails(
+            string logName,
+            Guid taskId,
+            Duration duration,
+            ResourcePoolDefinition resourcePoolDefinition,
+            IDictionary<string, object> properties = null)
+        {
+            Logger
+                .AddDuration(duration)
+                .AddTaskId(taskId)
+                .AddResourceLocation(resourcePoolDefinition.Location)
+                .AddResourceSku(resourcePoolDefinition.SkuName)
+                .AddResourceType(resourcePoolDefinition.Type)
+                .AddProperties(properties)
+                .LogInfo($"watch_pool_size_{logName}");
+        }
+
+        private void LogItemDetails(
+            string logName,
+            Guid taskId,
+            int iterationId,
+            Duration duration,
+            Exception exception = null)
+        {
+            Logger
+                .AddDuration(duration)
+                .AddTaskId(taskId)
+                .AddIterationId(iterationId);
+
+            if (exception != null)
+            {
+                Logger.LogException($"watch_pool_size_item_{logName}", exception);
+            }
+            else
+            {
+                Logger.LogInfo($"watch_pool_size_item_{logName}");
+            }
         }
     }
 }

@@ -90,9 +90,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             {
                 throw new ArgumentException($"Sku resource match was not found. SkuName = {skuName}, Type = {type}, Location = {location}");
             }
+
             if (resourceSku.Count() > 1)
             {
-                throw new ArgumentException("More than one Sku resource match was found. SkuName = {skuName}, Type = {type}, Location = {location}");
+                throw new ArgumentException($"More than one Sku resource match was found. SkuName = {skuName}, Type = {type}, Location = {location}");
             }
 
             return resourceSku.Single().SkuName;
