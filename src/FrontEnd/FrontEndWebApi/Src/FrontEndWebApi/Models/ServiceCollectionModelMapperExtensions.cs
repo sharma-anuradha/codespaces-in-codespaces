@@ -25,16 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
             {
                 cfg.CreateMap<CloudEnvironment, CloudEnvironmentResult>();
                 cfg.CreateMap<CreateCloudEnvironmentBody, CloudEnvironment>();
-                cfg.CreateMap<CallbackOptionsBody, CallbackOptions>();
-                cfg.CreateMap<CallbackOptions, CallbackOptionsBody>();
-                cfg.CreateMap<CallbackPayloadOptionsBody, CallbackPayloadOptions>();
-                cfg.CreateMap<CallbackPayloadOptions, CallbackPayloadOptionsBody>();
                 cfg.CreateMap<ConnectionInfoBody, ConnectionInfo>();
-                cfg.CreateMap<ConnectionInfo, ConnectionInfoBody>();
-                cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
-                cfg.CreateMap<GitConfigOptions, GitConfigOptionsBody>();
                 cfg.CreateMap<SeedInfoBody, SeedInfo>();
-                cfg.CreateMap<SeedInfo, SeedInfoBody>();
+                cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
+                cfg.CreateMap<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>();
+                cfg.CreateMap<EnvironmetnRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);

@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="ownerId">The owner's user id.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the updated <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> UpdateEnvironmentCallbackAsync(string environmentId, CallbackOptions options, string ownerId, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> UpdateEnvironmentCallbackAsync(string environmentId, EnvironmentRegistrationCallbackOptions options, string ownerId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Deletes an environment.

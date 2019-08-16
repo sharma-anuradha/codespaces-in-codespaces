@@ -47,6 +47,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// <param name="callbackOptionsBody">The callback info.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task.</returns>
-        Task<CloudEnvironmentResult> UpdateEnvironmentCallbackAsync(string environmentId, CallbackOptionsBody callbackOptionsBody, IDiagnosticsLogger logger);
+        Task<CloudEnvironmentResult> UpdateEnvironmentCallbackAsync(string environmentId, EnvironmentRegistrationCallbackBody callbackOptionsBody, IDiagnosticsLogger logger);
     }
 }

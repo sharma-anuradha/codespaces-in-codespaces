@@ -186,9 +186,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var accessToken = CurrentUserProvider.GetBearerToken();
 
                 // Build the callback URI.
-                var callbackUriBuilder = new UriBuilder(Request.GetDisplayUrl());
-                callbackUriBuilder.Query = null;
+                var callbackUriBuilder = new UriBuilder(Request.GetDisplayUrl())
+                {
+                    Query = null,
+                };
                 callbackUriBuilder.Path = $"{callbackUriBuilder.Path.TrimEnd('/')}/{{0}}/_callback";
+                if (!callbackUriBuilder.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+                {
+                    callbackUriBuilder.Scheme = Uri.UriSchemeHttps;
+                }
+
                 var callbackUriFormat = callbackUriBuilder.Uri.ToString();
 
                 cloudEnvironment = await EnvironmentManager.CreateEnvironmentAsync(
@@ -294,7 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateEnvironmentCallbackAsync(
             [FromRoute]string environmentId,
-            [FromBody]CallbackOptionsBody callbackBody)
+            [FromBody]EnvironmentRegistrationCallbackBody callbackBody)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
@@ -308,7 +315,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(callbackBody?.Payload?.SessionPath, nameof(callbackBody.Payload.SessionPath));
 
                 var currentUserId = CurrentUserProvider.GetProfileId();
-                var options = Mapper.Map<CallbackOptionsBody, CallbackOptions>(callbackBody);
+                var options = Mapper.Map<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>(callbackBody);
                 var result = await EnvironmentManager.UpdateEnvironmentCallbackAsync(
                     environmentId,
                     options,

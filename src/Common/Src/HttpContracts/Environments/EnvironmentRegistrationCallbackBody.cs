@@ -1,4 +1,4 @@
-﻿// <copyright file="CallbackInput.cs" company="Microsoft">
+﻿// <copyright file="EnvironmentRegistrationCallbackBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,10 +9,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
     /// <summary>
     /// The environment registration callback input.
     /// </summary>
-    public class CallbackOptionsBody
+    public class EnvironmentRegistrationCallbackBody
     {
         /// <summary>
-        /// Gets or sets the environment type.
+        /// Gets or sets the callback payload type.
         /// </summary>
         [Required]
         public string Type { get; set; }
@@ -20,6 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// <summary>
         /// Gets or sets the environment registration payload.
         /// </summary>
-        public CallbackPayloadOptionsBody Payload { get; set; }
+        public EnvironmetnRegistrationCallbackPayloadBody Payload { get; set; }
     }
 }

@@ -73,14 +73,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
             {
                 System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));
 
-                var callback = new CallbackOptionsBody
+                var callback = new EnvironmentRegistrationCallbackBody
                 {
-                    Payload = new CallbackPayloadOptionsBody
+                    Payload = new EnvironmetnRegistrationCallbackPayloadBody
                     {
                         SessionId = sessionId,
                         SessionPath = sessionPath,
                     },
-                    Type = "CloudEnvironment",
+                    Type = "connectioninfo",
                 };
 
                 using (var client = new HttpClient())

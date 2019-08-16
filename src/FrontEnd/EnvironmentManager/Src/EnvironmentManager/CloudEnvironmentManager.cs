@@ -169,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public async Task<CloudEnvironment> UpdateEnvironmentCallbackAsync(
             string id,
-            CallbackOptions options,
+            EnvironmentRegistrationCallbackOptions options,
             string currentUserId,
             IDiagnosticsLogger logger)
         {
