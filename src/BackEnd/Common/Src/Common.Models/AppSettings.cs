@@ -36,11 +36,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         public string AzureCosmosDbId { get; set; }
 
         /// <summary>
-        /// Gets or sets the CosmosDB preferred location.
-        /// </summary>
-        public string AzureCosmosPreferredLocation { get; set; }
-
-        /// <summary>
         /// Gets or sets a value indicating whether the option which controls whether the
         /// system loads in memory data store for repositories to make inner loop faster.
         /// </summary>
@@ -57,11 +52,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// Storage and Compute Providers.
         /// </summary>
         public bool UseMocksForResourceProviders { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether mock implementations for the
-        /// Backend API service.
-        /// </summary>
-        public bool UseMocksForBackendApi { get; set; }
     }
 }

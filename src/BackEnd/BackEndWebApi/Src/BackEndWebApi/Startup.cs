@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
@@ -46,8 +48,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 .SetBasePath(hostingEnvironment.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.secrets.json", optional: true)
-                .AddJsonFile($"appsettings.{hostingEnvironment.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
+                .AddJsonFile($"appsettings.{hostingEnvironment.EnvironmentName}.json", optional: true);
+
+            if (!IsRunningInAzure())
+            {
+                builder = builder.AddJsonFile("appsettings.Local.json", optional: true);
+            }
+
+            builder = builder.AddEnvironmentVariables();
 
             Configuration = builder.Build();
         }
@@ -83,6 +91,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.Configure<StorageAccountSettings>(storageAccountSettingsConfiguration);
             services.AddSingleton(storageAccountSettings);
 
+            if (IsRunningInAzure())
+            {
+                if (appSettings.UseMocksForExternalDependencies ||
+                    appSettings.UseMocksForResourceBroker ||
+                    appSettings.UseMocksForResourceProviders)
+                {
+                    throw new InvalidOperationException("Cannot use mocks outside of local development");
+                }
+            }
+
             // Common services
             services.AddSingleton<IDistributedLease, DistributedLease>();
             services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
@@ -102,6 +120,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 options.AccountKey = RequiresNotNullOrEmpty(storageAccountSettings.StorageAccountKey, nameof(storageAccountSettings.StorageAccountKey));
                 options.AccountName = RequiresNotNullOrEmpty(storageAccountSettings.StorageAccountName, nameof(storageAccountSettings.StorageAccountName));
             });
+
+            // For development, use the default CosmosDB region. Otherwise, when we are running in Azure,
+            // use the same region that we are deployed to.
+            string preferredCosmosDbRegion = null;
+            if (IsRunningInAzure())
+            {
+                try
+                {
+                    preferredCosmosDbRegion = Retry
+                        .DoAsync(async (attemptNumber) => await AzureInstanceMetadata.GetCurrentLocationAsync())
+                        .GetAwaiter()
+                        .GetResult();
+                }
+                catch (Exception e)
+                {
+                    var logger = new DefaultLoggerFactory().New(new LogValueSet()
+                    {
+                        { LoggingConstants.Service, loggingBaseValues.ServiceName },
+                        { LoggingConstants.CommitId, loggingBaseValues.CommitId },
+                    });
+                    logger.AddExceptionInfo(e).LogError("error_querying_azure_region_from_instance_metadata");
+                }
+            }
+
             services.AddDocumentDbClientProvider(options =>
             {
                 options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
@@ -109,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 options.HostUrl = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbHost, nameof(appSettings.AzureCosmosDbHost));
                 options.AuthKey = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbKey, nameof(appSettings.AzureCosmosDbKey));
                 options.DatabaseId = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbId, nameof(appSettings.AzureCosmosDbId));
-                options.PreferredLocation = appSettings.AzureCosmosPreferredLocation;
+                options.PreferredLocation = preferredCosmosDbRegion;
                 options.UseMultipleWriteLocations = false;
             });
 
@@ -213,6 +255,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             });
         }
 
+        private static bool IsRunningInAzure()
+        {
+            return Environment.GetEnvironmentVariable("RUNNING_IN_AZURE") == "true";
+        }
+        
         private static string RequiresNotNullOrEmpty(string value, string paramName)
         {
             Requires.NotNullOrEmpty(value, paramName);

@@ -184,7 +184,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 options.HostUrl = appSettings.AzureCosmosDbHost;
                 options.AuthKey = appSettings.AzureCosmosDbAuthKey;
                 options.DatabaseId = appSettings.AzureCosmosDbDatabaseId;
-                options.PreferredLocation = string.Empty;
+                options.PreferredLocation = preferredCosmosDbRegion;
             });
 
             // OpenAPI/swagger

@@ -4,6 +4,8 @@
 
 appSettings:
   - ASPNETCORE_ENVIRONMENT
+  - RUNNING_IN_AZURE
+  - AppSettings__AzureCosmosDbAuthKey
   - StorageAccountSettings__StorageAccountName
   - StorageAccountSettings__StorageAccountKey
   - vsclk_online_dev_kv_app_sp_password
