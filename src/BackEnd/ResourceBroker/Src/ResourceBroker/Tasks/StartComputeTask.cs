@@ -8,9 +8,11 @@ using AutoMapper;
 using Hangfire;
 using Hangfire.States;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -24,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// </summary>
     public class StartComputeTask : IStartComputeTask
     {
-        public const string QueueName = "start-compute-job-queue";
+        public const string QueueName = "start-compute-task";
 
         public StartComputeTask(
             IResourceRepository resourceRepository,
@@ -74,85 +76,157 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             EnvironmentStartInput input,
             IDiagnosticsLogger logger)
         {
-            var result = new EnvironmentStartResult
+            // Create base logger
+            var timer = logger.StartDuration();
+            logger = logger.FromExisting();
+
+            try
             {
-                ResourceId = input.ComputeResourceId,
-                Status = ResourceStartingStatus.Initialized.ToString(),
-                ContinuationToken = input.ComputeResourceId.ToString(),
-                RetryAfter = TimeSpan.FromSeconds(10),
-            };
+                var result = new EnvironmentStartResult
+                {
+                    ResourceId = input.ComputeResourceId,
+                    Status = ResourceStartingStatus.Initialized.ToString(),
+                    ContinuationToken = input.ComputeResourceId.ToString(),
+                    RetryAfter = TimeSpan.FromSeconds(10),
+                };
 
-            // Queue actual work so we can return asap
-            BackgroundJobs.Create(() => RunStartAsync(input, logger), EnqueuedState);
+                // Queue actual work so we can return asap
+                BackgroundJobs.Create(() => RunStartAsync(input, logger, timer), EnqueuedState);
 
-            return result;
+                logger.AddDuration(timer).LogInfo("start_compute_initialize_complete");
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                logger.AddDuration(timer).LogException("start_compute_initialize_error", e);
+
+                throw;
+            }
         }
 
         public async Task<EnvironmentStartResult> RunStartAsync(
             EnvironmentStartInput input,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            DiagnosticsLoggerExtensions.Duration timer)
         {
-            // Get file share connection info for target share
-            var fileShareProviderAssignInput = new FileShareProviderAssignInput { ResourceId = input.StorageResourceId };
-            var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, null)
-                .ContinueOnAnyContext();
+            try
+            {
+                logger.FluentAddValue("DurationStart", timer.Elapsed.TotalMilliseconds.ToString());
 
-            // Start compute preperation process
-            var computeStorageFileShareInfo = Mapper.Map<ShareConnectionInfo>(storageResult);
-            var computeProviderStartInput = new VirtualMachineProviderStartComputeInput(
-                input.ComputeResourceId,
-                computeStorageFileShareInfo,
-                input.EnvironmentVariables);
+                // Get file share connection info for target share
+                var fileShareProviderAssignInput = new FileShareProviderAssignInput { ResourceId = input.StorageResourceId };
+                var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, null)
+                    .ContinueOnAnyContext();
 
-            // Run core task
-            var computeResult = await RunContinuationAsync(computeProviderStartInput, logger, null);
+                logger.FluentAddValue("DurationPostFileShareAssigned", timer.Elapsed.TotalMilliseconds.ToString());
 
-            // Setup result to send back
-            var result = Mapper.Map<EnvironmentStartResult>(computeResult);
-            result.ContinuationToken = input.ComputeResourceId.InstanceId.ToString();
+                // Start compute preperation process
+                var computeStorageFileShareInfo = Mapper.Map<ShareConnectionInfo>(storageResult);
+                var computeProviderStartInput = new VirtualMachineProviderStartComputeInput(
+                    input.ComputeResourceId,
+                    computeStorageFileShareInfo,
+                    input.EnvironmentVariables);
 
-            return result;
+                // Run core task
+                var computeResult = await RunContinuationAsync(computeProviderStartInput, logger, timer, null);
+
+                logger.FluentAddValue("DurationPostInitialRunContinuation", timer.Elapsed.TotalMilliseconds.ToString());
+
+                // Setup result to send back
+                var result = Mapper.Map<EnvironmentStartResult>(computeResult);
+                result.ContinuationToken = input.ComputeResourceId.InstanceId.ToString();
+
+                logger.AddDuration(timer).LogInfo("start_compute_start_complete");
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                logger.AddDuration(timer).LogException("start_compute_start_error", e);
+
+                throw;
+            }
         }
 
         [Queue(QueueName)]
         public async Task<VirtualMachineProviderStartComputeResult> RunContinuationAsync(
             VirtualMachineProviderStartComputeInput computeProviderStartInput,
             IDiagnosticsLogger logger,
+            DiagnosticsLoggerExtensions.Duration timer,
             string continuationToken = null)
         {
-            // Continue compute continuation
-            var computeResult = await ComputeProvider.StartComputeAsync(computeProviderStartInput, continuationToken);
-
-            // Get the resource so that we can update the status
-            var resource = await ResourceRepository.GetAsync(computeProviderStartInput.ResourceId.InstanceId.ToString(), logger);
-
-            // TODO: Should have a null check here
-
-            // Compute the current status
-            var startingStatus = string.IsNullOrEmpty(computeResult.ContinuationToken) ?
-                ResourceStartingStatus.Complete :
-                (resource.StartingStatus.HasValue ?
-                    ResourceStartingStatus.Waiting : ResourceStartingStatus.Initialized);
-
-            // Update the resource if needed
-            if (!resource.StartingStatus.HasValue
-                || resource.StartingStatus.Value != startingStatus)
+            try
             {
-                resource.UpdateStartingStatus(startingStatus);
+                logger
+                    .FluentAddValue("IsInitialContinuation", string.IsNullOrEmpty(continuationToken).ToString())
+                    .FluentAddValue("DurationStart", timer.Elapsed.TotalMilliseconds.ToString());
 
-                await ResourceRepository.UpdateAsync(resource, logger);
+                // Continue compute continuation
+                var computeResult = await ComputeProvider.StartComputeAsync(computeProviderStartInput, continuationToken);
+
+                logger.FluentAddValue("DurationPostComputeStart", timer.Elapsed.TotalMilliseconds.ToString());
+
+                // Get the resource so that we can update the status
+                var resource = await ResourceRepository.GetAsync(computeProviderStartInput.ResourceId.InstanceId.ToString(), logger);
+
+                logger.FluentAddValue("DurationPostFetchResource", timer.Elapsed.TotalMilliseconds.ToString());
+
+                // Ensure that we have a record to work with
+                if (resource == null)
+                {
+                    throw new ArgumentNullException("Was not able to find target compute resource.");
+                }
+
+                logger
+                    .FluentAddValue(ResourceLoggingConstants.ResourceLocation, resource.Location)
+                    .FluentAddValue(ResourceLoggingConstants.ResourceSkuName, resource.SkuName)
+                    .FluentAddValue(ResourceLoggingConstants.ResourceType, resource.Type.ToString());
+
+                // Compute the current status
+                var startingStatus = string.IsNullOrEmpty(computeResult.ContinuationToken) ?
+                    ResourceStartingStatus.Complete :
+                    (resource.StartingStatus.HasValue ?
+                        ResourceStartingStatus.Waiting : ResourceStartingStatus.Initialized);
+
+                logger.FluentAddValue("StartingStatus", startingStatus.ToString());
+
+                // Update the resource if needed
+                if (!resource.StartingStatus.HasValue
+                    || resource.StartingStatus.Value != startingStatus)
+                {
+                    logger.FluentAddValue("DidStatusUpdate", "true");
+
+                    // Update the Status
+                    resource.UpdateStartingStatus(startingStatus);
+
+                    // Update database record
+                    await ResourceRepository.UpdateAsync(resource, logger);
+
+                    logger.FluentAddValue("DurationPostStatusUpdate", timer.Elapsed.TotalMilliseconds.ToString());
+                }
+
+                // Queue next status check task if needed
+                if (startingStatus != ResourceStartingStatus.Complete)
+                {
+                    logger.FluentAddValue("DidTriggerNextContinuation", "true");
+
+                    // Recursively call ourselves
+                    BackgroundJobs.Schedule(
+                        () => RunContinuationAsync(computeProviderStartInput, logger, timer, computeResult.ContinuationToken),
+                        computeResult.RetryAfter);
+                }
+
+                logger.AddDuration(timer).LogInfo("start_compute_continuation_complete");
+
+                return computeResult;
             }
-
-            // Queue next status check task if needed
-            if (startingStatus != ResourceStartingStatus.Complete)
+            catch (Exception e)
             {
-                // Recursively call ourselves
-                BackgroundJobs.Schedule(
-                    () => RunContinuationAsync(computeProviderStartInput, logger, computeResult.ContinuationToken),
-                    computeResult.RetryAfter);
-            }
+                logger.AddDuration(timer).LogException("start_compute_continuation_error", e);
 
-            return computeResult;
+                throw;
+            }
         }
 
         public async Task<EnvironmentStartResult> StatusCheckAsync(
@@ -160,10 +234,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IDiagnosticsLogger logger,
             string continuationToken)
         {
+            // Find target resource
             var resource = await ResourceRepository.GetAsync(input.ComputeResourceId.InstanceId.ToString(), logger);
 
-            // TODO: Should have a null check here
+            // Ensure that we have a record to work with
+            if (resource == null)
+            {
+                throw new ArgumentNullException("Was not able to find target compute resource.");
+            }
 
+            // Build result to return
             var result = new EnvironmentStartResult
             {
                 ResourceId = input.ComputeResourceId,
@@ -171,7 +251,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 ContinuationToken = continuationToken,
                 RetryAfter = TimeSpan.FromSeconds(10),
             };
-
             if (resource.StartingStatus != ResourceStartingStatus.Complete)
             {
                 result.ContinuationToken = null;
