@@ -248,9 +248,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 },
                 logger);
 
-            if (!Enum.TryParse<AzureLocation>(result.Location, out var location))
+            if (!Enum.TryParse<AzureLocation>(result.Location, ignoreCase: true, out var location))
             {
-                throw new InvalidOperationException($"Inavlid {nameof(AzureLocation)}: {result.Location}");
+                throw new InvalidOperationException($"Invalid {nameof(AzureLocation)}: {result.Location}");
             }
 
             return new ResourceBrokerResource
