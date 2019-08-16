@@ -20,8 +20,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         /// Changes to this property should also be recorded as
         /// <see cref="BillingEventTypes.AccountPlanChange"/> events in the billing events collection.
         /// </remarks>
-        [JsonProperty(Required = Required.Default, PropertyName = "plan")]
-        public string Plan { get; set; }
+        [JsonProperty(Required = Required.Default, PropertyName = "sku")]
+        public Sku Plan { get; set; }
 
         /// <summary>
         /// Current state of the subscription, which may impact what operations and billing are allowed.
@@ -94,5 +94,17 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         public static bool operator ==(BillingAccountInfo a, BillingAccountInfo b) =>
            (object)a == null ? (object)b == null : a.Equals(b);
         public static bool operator !=(BillingAccountInfo a, BillingAccountInfo b) => !(a == b);
+    }
+
+    /// <summary>
+    /// Azure standard Sku model
+    /// </summary>
+    public class Sku
+    {
+        [JsonProperty(Required = Required.Default, PropertyName = "name")]
+        public string Name { get; set; }
+
+        [JsonProperty(Required = Required.Default, PropertyName = "tier")]
+        public string Tier { get; set; }
     }
 }

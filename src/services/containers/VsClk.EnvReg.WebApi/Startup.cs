@@ -2,12 +2,18 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories.DocumentDb;
+using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication;
+using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Provider;
+using Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories.Mocks;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Azure.Storage.FileShare;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -74,6 +80,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 cfg.CreateMap<GitConfigInput, GitConfig>();
                 cfg.CreateMap<EnvironmentRegistrationCallbackInput, EnvironmentRegistrationCallbackOptions>();
                 cfg.CreateMap<EnvironmentRegistrationCallbackPayloadInput, EnvironmentRegistrationCallbackPayloadOptions>();
+                cfg.CreateMap<BillingAccountInput, BillingAccount>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);
@@ -89,6 +96,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             services.AddSingleton<IRegistrationManager, RegistrationManager>();
             services.AddSingleton<IProfileRepository, HttpClientProfileRepository>();
             services.AddSingleton<IWorkspaceRepository, HttpClientWorkspaceRepository>();
+            services.AddSingleton<IAccountManager, AccountManager>();
             ConfigureComputeService(services, appSettings);
 
 
@@ -136,6 +144,8 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 // Use the mock db if we're developing locally
                 services.AddSingleton<IEnvironmentRegistrationRepository, MockEnvironmentRegistrationRepository>();
                 services.AddSingleton<IStorageRegistrationRepository, MockStorageRegistrationRepository>();
+                services.AddSingleton<IBillingAccountRepository, MockBillingAccountRepository>();
+
                 return;
             }
 #endif
@@ -150,6 +160,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             services.AddDocumentDbCollection<EnvironmentRegistration, IEnvironmentRegistrationRepository, DocumentDbEnvironmentRegistrationRepository>(
                 DocumentDbEnvironmentRegistrationRepository.ConfigureOptions);
             services.AddDocumentDbCollection<FileShare, IStorageRegistrationRepository, DocumentDbSotrageRegistrationRepository>(DocumentDbSotrageRegistrationRepository.ConfigureOptions);
+            services.AddDocumentDbCollection<BillingAccount, IBillingAccountRepository, DocumentDbAccountRepository>(DocumentDbAccountRepository.ConfigureOptions);
         }
 
         private void ConfigureComputeService(IServiceCollection services, AppSettings appSettings)
@@ -207,6 +218,57 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
 
             //app.UseHttpsRedirection();
             app.UseMvc();
+            app.UseMvc(ConfigureRoutes);
+        }
+
+        private void ConfigureRoutes(IRouteBuilder routeBuilder)
+        {
+            ConfigureRoutesForAccountManagementController(routeBuilder);
+        }
+
+        private void ConfigureRoutesForAccountManagementController(IRouteBuilder routeBuilder)
+        {
+            routeBuilder.MapRoute(
+                name: "OnResourceCreationValidate",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate",
+                defaults: new { controller = "Account", action = "OnResourceCreationValidate" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceCreationBegin",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}",
+                defaults: new { controller = "Account", action = "OnResourceCreationBegin" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "PUT" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceCreationCompleted",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted",
+                defaults: new { controller = "Account", action = "OnResourceCreationCompleted" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
+
+            routeBuilder.MapRoute(
+               name: "OnResourceReadValidate",
+               template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate",
+               defaults: new { controller = "Account", action = "OnResourceReadValidate" },
+               constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceListGet",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}",
+                defaults: new { controller = "Account", action = "OnResourceListGet" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceListGetBySubscription",
+                template: "subscriptions/{subscriptionId}/providers/{providerNamespace}/{resourceType}",
+                defaults: new { controller = "Account", action = "OnResourceListGetBySubscription" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceDeletionValidate",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate",
+                defaults: new { controller = "Account", action = "OnResourceDeletionValidate" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
         }
     }
 
