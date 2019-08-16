@@ -3,26 +3,25 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
     /// <summary>
     /// Manager that coordinates resource orchistration efforts.
     /// </summary>
-    public class ResourceManager : IResourceManager
+    public class PutResourceCreateOnJobQueueTask : IPutResourceCreateOnJobQueueTask
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResourceManager"/> class.
+        /// Initializes a new instance of the <see cref="PutResourceCreateOnJobQueueTask"/> class.
         /// </summary>
         /// <param name="resourceRepository">Resource repository that should be used.</param>
         /// <param name="resourceJobQueueRepository">Resource Job Queue repository that should be used.</param>
-        public ResourceManager(
+        public PutResourceCreateOnJobQueueTask(
             IResourceRepository resourceRepository,
             IResourceJobQueueRepository resourceJobQueueRepository)
         {
@@ -35,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IResourceJobQueueRepository ResourceJobQueueRepository { get; }
 
         /// <inheritdoc/>
-        public async Task AddResourceCreationRequestToJobQueueAsync(
+        public async Task RunAsync(
             string skuName,
             ResourceType type,
             string location,
@@ -56,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             record.UpdateProvisioningStatus(ResourceProvisioningStatus.Queued);
 
-            // Create the resource record 
+            // Create the resource record
             await ResourceRepository.CreateAsync(record, logger);
 
             // Add record to queue so that it can be picked up and processed

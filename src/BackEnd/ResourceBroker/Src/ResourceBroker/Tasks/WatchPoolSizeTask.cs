@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchPoolSizeJob.cs" company="Microsoft">
+﻿// <copyright file="WatchPoolSizeTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -15,21 +15,20 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
-using static Microsoft.VsSaaS.Diagnostics.Extensions.DiagnosticsLoggerExtensions;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
     /// <summary>
     /// 
     /// </summary>
-    public class WatchPoolSizeJob
+    public class WatchPoolSizeTask : IWatchPoolSizeTask
     {
         public const string QueueName = "pool-size-resource-job-queue";
 
         private const string ReadPoolSizeLease = nameof(ReadPoolSizeLease);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="WatchPoolSizeJob"/> class.
+        /// Initializes a new instance of the <see cref="WatchPoolSizeTask"/> class.
         /// </summary>
         /// <param name="resourceBrokerSettings"></param>
         /// <param name="backgroundJobs"></param>
@@ -39,12 +38,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
         /// <param name="resourceRepository"></param>
         /// <param name="loggerFactory"></param>
         /// <param name="logValues"></param>
-        public WatchPoolSizeJob(
+        public WatchPoolSizeTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IBackgroundJobClient backgroundJobs,
             IDistributedLease distributedLease,
             IResourceScalingStore resourceScalingStore,
-            IResourceManager resourceManager,
+            IPutResourceCreateOnJobQueueTask resourceManager,
             IResourceRepository resourceRepository,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet logValues)
@@ -70,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
 
         private IResourceScalingStore ResourceScalingStore { get; }
 
-        private IResourceManager ResourceManager { get; }
+        private IPutResourceCreateOnJobQueueTask ResourceManager { get; }
 
         private IResourceRepository ResourceRepository { get; }
 
@@ -78,16 +77,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
 
         private IState EnqueuedState { get; }
 
-        /// <summary>
-        /// This job, for each resource sku we have, will move through those resoruces randomly
-        /// and in parallel. As each resource is processed, it will attempt to obtain a lock on
-        /// that resource, if it can't obtain a lock, it will continue onto the next item (as its
-        /// assumed another worker is successfully working on that data), if it can obtain a lock,
-        /// it will determine how many items need to be added to the job queue and add those items
-        /// to the queue.
-        /// </summary>
-        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        public async Task Run()
+        /// <inheritdoc/>
+        public async Task RunAsync()
         {
             // Create base logger
             var logger = Logger.FromExisting(true);
@@ -97,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
             foreach (var resourceUnit in resourceUnits)
             {
                 // Spawn out the tasks and run in parallel
-                BackgroundJobs.Create(() => RunTask(resourceUnit, logger), EnqueuedState);
+                BackgroundJobs.Create(() => RunPoolCheckAsync(resourceUnit, logger), EnqueuedState);
             }
         }
 
@@ -107,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
         /// <param name="resourcePoolDefinition">Definition of the pool that is being processed.</param>
         /// <param name="logger">Logger that should be used.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        public async Task RunTask(ResourcePoolDefinition resourcePoolDefinition, IDiagnosticsLogger logger)
+        public async Task RunPoolCheckAsync(ResourcePoolDefinition resourcePoolDefinition, IDiagnosticsLogger logger)
         {
             // Setup logging detials
             logger = logger.WithValues(new LogValueSet
@@ -155,7 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
                     {
                         var loggerItem = logger.WithValue("ActivityInstanceIteration", i.ToString());
 
-                        await RunItemTask(resourcePoolDefinition, loggerItem);
+                        await AddPoolItemAsync(resourcePoolDefinition, loggerItem);
                     }
                 }
                 else if (poolDeltaCount < 0)
@@ -165,7 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
             }
         }
 
-        private async Task RunItemTask(ResourcePoolDefinition resourcePoolDefinition, IDiagnosticsLogger logger)
+        private async Task AddPoolItemAsync(ResourcePoolDefinition resourcePoolDefinition, IDiagnosticsLogger logger)
         {
             // Setup logging detials
             var duration = Logger.StartDuration();
@@ -173,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
             try
             {
                 // Add job definition to the queue
-                await ResourceManager.AddResourceCreationRequestToJobQueueAsync(
+                await ResourceManager.RunAsync(
                     resourcePoolDefinition.SkuName,
                     resourcePoolDefinition.Type,
                     resourcePoolDefinition.Location,
@@ -193,7 +184,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
 
         private Task<int> RetrieveUnassignedCount(ResourcePoolDefinition resourceSku)
         {
-            return ResourceRepository.GetUnassignedCountAsync(resourceSku.SkuName, resourceSku.Type, resourceSku.Location, Logger);
+            return ResourceRepository.GetUnassignedCountAsync(
+                resourceSku.SkuName, resourceSku.Type, resourceSku.Location, Logger);
         }
 
         private async Task<IEnumerable<ResourcePoolDefinition>> RetrieveResourceSkus()
@@ -209,7 +201,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
         {
             return await DistributedLease.Obtain(ResourceBrokerSettings.BlobContainerName, leaseName);
         }
-
-
     }
 }

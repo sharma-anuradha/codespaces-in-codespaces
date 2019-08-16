@@ -1,4 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿// <copyright file="IStartComputeTask.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 

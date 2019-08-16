@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="StartComputeTask.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Threading.Tasks;
 using AutoMapper;
 using Hangfire;

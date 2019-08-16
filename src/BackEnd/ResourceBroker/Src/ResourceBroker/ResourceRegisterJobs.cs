@@ -5,7 +5,7 @@
 using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// needs to be run.</param>
         public ResourceRegisterJobs(
             IRecurringJobManager recurringJobManager,
-            WatchPoolSizeJob watchPoolSizeJob)
+            WatchPoolSizeTask watchPoolSizeJob)
         {
             RecurringJobManager = recurringJobManager;
             WatchPoolSizeJob = watchPoolSizeJob;
@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IRecurringJobManager RecurringJobManager { get; }
 
-        private WatchPoolSizeJob WatchPoolSizeJob { get; }
+        private WatchPoolSizeTask WatchPoolSizeJob { get; }
 
         private RecurringJobOptions RecurringJobOptions { get; }
 
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Watch Pool Size
             RecurringJobManager.AddOrUpdate(
                 nameof(WatchPoolSizeJob),
-                () => WatchPoolSizeJob.Run(),
+                () => WatchPoolSizeJob.RunAsync(),
                 Every5Minutes,
                 null,
                 QueueName);

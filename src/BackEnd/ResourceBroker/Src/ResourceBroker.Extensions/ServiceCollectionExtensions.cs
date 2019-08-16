@@ -10,7 +10,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
@@ -57,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             // Core services
             services.AddSingleton<IResourceBroker, ResourceBroker>();
             services.AddSingleton<IResourcePool, ResourcePool>();
-            services.AddSingleton<IResourceManager, ResourceManager>();
+            services.AddSingleton<IPutResourceCreateOnJobQueueTask, PutResourceCreateOnJobQueueTask>();
             services.AddSingleton<ResourceScalingBroker>();
             services.AddSingleton<IResourceScalingBroker>(x => x.GetRequiredService<ResourceScalingBroker>());
             services.AddSingleton<IResourceScalingStore>(x => x.GetRequiredService<ResourceScalingBroker>());
@@ -69,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IStartComputeTask, StartComputeTask>();
 
             // Job Registration
-            services.AddSingleton<WatchPoolSizeJob>();
+            services.AddSingleton<WatchPoolSizeTask>();
 
             if (appSettings.UseMocksForResourceProviders)
             {
@@ -120,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddHangfireServer(configuration => configuration
                 .Queues = new string[]
                     {
-                        WatchPoolSizeJob.QueueName,
+                        WatchPoolSizeTask.QueueName,
                         MockResourceJobQueueRepository.QueueName,
                         ResourceRegisterJobs.QueueName,
                         StartComputeTask.QueueName,
