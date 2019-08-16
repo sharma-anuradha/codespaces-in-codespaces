@@ -89,12 +89,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
         public async Task Run()
         {
+            // Create base logger
+            var logger = Logger.FromExisting(true);
+
             // Get Currnet catalog
             var resourceUnits = await RetrieveResourceSkus();
             foreach (var resourceUnit in resourceUnits)
             {
                 // Spawn out the tasks and run in parallel
-                BackgroundJobs.Create(() => RunTask(resourceUnit), EnqueuedState);
+                BackgroundJobs.Create(() => RunTask(resourceUnit, logger), EnqueuedState);
             }
         }
 
@@ -102,13 +105,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
         /// This is public due to the need to HangFire to use public methods.
         /// </summary>
         /// <param name="resourcePoolDefinition">Definition of the pool that is being processed.</param>
+        /// <param name="logger">Logger that should be used.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        public async Task RunTask(ResourcePoolDefinition resourcePoolDefinition)
+        public async Task RunTask(ResourcePoolDefinition resourcePoolDefinition, IDiagnosticsLogger logger)
         {
             // Setup logging detials
-            var taskId = Guid.NewGuid();
-            var duration = Logger
-                .StartDuration();
+            logger = logger.WithValues(new LogValueSet
+                {
+                    { "ActivityInstanceId", Guid.NewGuid().ToString() },
+                    { ResourceLoggingConstants.ResourceLocation, resourcePoolDefinition.Location },
+                    { ResourceLoggingConstants.ResourceSkuName, resourcePoolDefinition.SkuName },
+                    { ResourceLoggingConstants.ResourceType, resourcePoolDefinition.Type.ToString() },
+                });
+            var duration = logger.StartDuration();
 
             // Obtain a leas if no one else has it
             using (var lease = await ObtainLease($"{ReadPoolSizeLease}-{resourcePoolDefinition.BuildName()}"))
@@ -117,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
                 if (lease == null)
                 {
                     // Send logging detials
-                    LogDetails("lease_nofound", taskId, duration, resourcePoolDefinition);
+                    logger.AddDuration(duration).LogInfo($"watch_pool_size_lease_not_found");
 
                     return;
                 }
@@ -132,20 +141,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
                 var poolDeltaCount = poolTargetCount - unassignedCount;
 
                 // Send logging detials
-                var loggingProperties = new Dictionary<string, object>()
+                logger.WithValues(new LogValueSet
                     {
-                        { "checkUnassignedCount", unassignedCount },
-                        { "checkPoolTargetCount", poolTargetCount },
-                        { "checkPoolDeltaCount", poolDeltaCount },
-                    };
-                LogDetails("lease_obtained", taskId, duration, resourcePoolDefinition, loggingProperties);
+                        { "checkUnassignedCount", unassignedCount.ToString() },
+                        { "checkPoolTargetCount", poolTargetCount.ToString() },
+                        { "checkPoolDeltaCount", poolDeltaCount.ToString() },
+                    }).AddDuration(duration).LogInfo($"watch_pool_size_lease_obtained");
 
                 // If we have any positive delta add that many jobs to the queue for processing
                 if (poolDeltaCount > 0)
                 {
                     for (var i = 0; i < poolDeltaCount; i++)
                     {
-                        await RunItemTask(resourcePoolDefinition, taskId, i);
+                        var loggerItem = logger.WithValue("ActivityInstanceIteration", i.ToString());
+
+                        await RunItemTask(resourcePoolDefinition, loggerItem);
                     }
                 }
                 else if (poolDeltaCount < 0)
@@ -155,11 +165,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
             }
         }
 
-        private async Task RunItemTask(ResourcePoolDefinition resourcePoolDefinition, Guid taskId, int index)
+        private async Task RunItemTask(ResourcePoolDefinition resourcePoolDefinition, IDiagnosticsLogger logger)
         {
             // Setup logging detials
-            var duration = Logger
-                .StartDuration();
+            var duration = Logger.StartDuration();
 
             try
             {
@@ -168,15 +177,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
                     resourcePoolDefinition.SkuName,
                     resourcePoolDefinition.Type,
                     resourcePoolDefinition.Location,
-                    Logger);
+                    logger);
 
-                LogItemDetails("complete", taskId, index, duration);
+                logger.AddDuration(duration).LogInfo("watch_pool_size_item_complete");
             }
             catch (Exception e)
             {
-                LogItemDetails("error", taskId, index, duration, e);
-            }
+                logger.AddDuration(duration).LogException("watch_pool_size_item_complete", e);
 
+                // We aren't doing anything with the exception here, we are logging that we
+                // didn't complete and we don't want to kill the whole ask because of one
+                // fail.
+            }
         }
 
         private Task<int> RetrieveUnassignedCount(ResourcePoolDefinition resourceSku)
@@ -198,43 +210,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Jobs
             return await DistributedLease.Obtain(ResourceBrokerSettings.BlobContainerName, leaseName);
         }
 
-        private void LogDetails(
-            string logName,
-            Guid taskId,
-            Duration duration,
-            ResourcePoolDefinition resourcePoolDefinition,
-            IDictionary<string, object> properties = null)
-        {
-            Logger
-                .AddDuration(duration)
-                .AddTaskId(taskId)
-                .AddResourceLocation(resourcePoolDefinition.Location)
-                .AddResourceSku(resourcePoolDefinition.SkuName)
-                .AddResourceType(resourcePoolDefinition.Type)
-                .AddProperties(properties)
-                .LogInfo($"watch_pool_size_{logName}");
-        }
 
-        private void LogItemDetails(
-            string logName,
-            Guid taskId,
-            int iterationId,
-            Duration duration,
-            Exception exception = null)
-        {
-            Logger
-                .AddDuration(duration)
-                .AddTaskId(taskId)
-                .AddIterationId(iterationId);
-
-            if (exception != null)
-            {
-                Logger.LogException($"watch_pool_size_item_{logName}", exception);
-            }
-            else
-            {
-                Logger.LogInfo($"watch_pool_size_item_{logName}");
-            }
-        }
     }
 }

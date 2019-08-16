@@ -9,6 +9,7 @@ using AutoMapper;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 
@@ -48,6 +49,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public async Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
         {
+            // Setting up logger
+            logger = logger.WithValues(new LogValueSet
+                {
+                    { ResourceLoggingConstants.ResourceLocation, input.Location },
+                    { ResourceLoggingConstants.ResourceSkuName, input.SkuName },
+                    { ResourceLoggingConstants.ResourceType, input.Type.ToString() },
+                });
+
             // Map logical sku to resource sku
             var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
 

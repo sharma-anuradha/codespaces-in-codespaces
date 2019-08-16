@@ -28,21 +28,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
         /// <param name="backgroundJobs"></param>
         /// <param name="asyncWarmupServices"></param>
         /// <param name="asyncBackgroundWarmupServices"></param>
-        /// <param name="logger"></param>
+        /// <param name="loggerFactory"></param>
         /// <param name="triggerWarmupState"></param>
         public TriggerWarmup(
              IHealthProvider healthProvider,
              IBackgroundJobClient backgroundJobs,
              IEnumerable<IAsyncWarmup> asyncWarmupServices,
              IEnumerable<IAsyncBackgroundWarmup> asyncBackgroundWarmupServices,
-             IDiagnosticsLogger logger,
+             IDiagnosticsLoggerFactory loggerFactory,
              TriggerWarmupState triggerWarmupState)
         {
             HealthProvider = healthProvider;
             BackgroundJobs = backgroundJobs;
             AsyncWarmupServices = asyncWarmupServices;
             AsyncBackgroundWarmupServices = asyncBackgroundWarmupServices;
-            Logger = logger;
+            Logger = loggerFactory.New();
             EnqueuedState = new EnqueuedState
             {
                 Queue = QueueName,

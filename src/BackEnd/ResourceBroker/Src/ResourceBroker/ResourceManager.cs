@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             string location,
             IDiagnosticsLogger logger)
         {
-            // Add record to database so that it can be tracked
+            // Build new resource record
             var id = Guid.NewGuid().ToString();
             var time = DateTime.UtcNow;
             var record = new ResourceRecord
@@ -56,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             record.UpdateProvisioningStatus(ResourceProvisioningStatus.Queued);
 
+            // Create the resource record 
             await ResourceRepository.CreateAsync(record, logger);
 
             // Add record to queue so that it can be picked up and processed
