@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     "Location is required");
 
                 // Validate against existing environments.
-                var environments = await CloudEnvironmentRepository.GetWhereAsync((env) => env.OwnerId == cloudEnvironment.OwnerId, logger);
+                var environments = await CloudEnvironmentRepository.GetWhereAsync((env) => env.OwnerId == currentUserId, logger);
                 ValidationUtil.IsTrue(
                     !environments.Any((env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)),
                     $"An environment with the friendly name already exists: {cloudEnvironment.FriendlyName}");

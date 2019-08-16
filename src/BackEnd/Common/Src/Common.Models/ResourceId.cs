@@ -94,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         public string ResourceGroup { get; }
 
         /// <summary>
-        /// Returns the resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}".
+        /// Returns the resource id token in the format "vssaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/locations/{location}".
         /// </summary>
         /// <param name="id">The resource id.</param>
         public static implicit operator string(ResourceId id) => id.ToString();
@@ -105,7 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 
         /// <summary>
         /// Parse a Cloud Environment resource token id into a <see cref="ResourceId"/>.
-        /// The expected token format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}"
+        /// The expected token format is "vssaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}"
         /// where resourceType is <see cref="ResourceType"/>
         /// where instanceId is <see cref="Guid"/>
         /// where subscriptionId is <see cref="Guid"/>
@@ -119,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 
         /// <summary>
         /// Parse a Cloud Environment resource id token into a <see cref="ResourceId"/>.
-        /// The expected format is "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}"
+        /// The expected format is "vssaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}"
         /// where resourceType is <see cref="ResourceType"/>
         /// where instanceId is <see cref="Guid"/>
         /// where subscriptionId is <see cref="Guid"/>
@@ -141,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 
         /// <inheritdoc/>
         /// <summary>
-        /// Returns resource id token in the format "vasaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}".
+        /// Returns resource id token in the format "vssaas/resourcetypes/{resourceType}/instances/{instanceId}/subscriptions/{subscriptionId}/resourcegroups/{resourcegroup}/locations/{location}".
         /// </summary>
         /// <remarks>
         /// <see cref="object.ToString"/> should not return null.

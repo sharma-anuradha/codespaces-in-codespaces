@@ -101,6 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     and c.location = @location
                     and c.type = @type
                     and c.isAssigned = @isAssigned
+                    and c.isReady = @isReady
                 ORDER BY c.ready",
                 new SqlParameterCollection
                 {
@@ -108,6 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     new SqlParameter { Name = "@type", Value = type.ToString() },
                     new SqlParameter { Name = "@location", Value = location.ToLowerInvariant() },
                     new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isReady", Value = true },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<ResourceRecord>(uri, query, feedOptions).AsDocumentQuery(), logger);

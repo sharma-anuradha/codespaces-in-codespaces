@@ -259,7 +259,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         {
             return Environment.GetEnvironmentVariable("RUNNING_IN_AZURE") == "true";
         }
-        
+
         private static string RequiresNotNullOrEmpty(string value, string paramName)
         {
             Requires.NotNullOrEmpty(value, paramName);
