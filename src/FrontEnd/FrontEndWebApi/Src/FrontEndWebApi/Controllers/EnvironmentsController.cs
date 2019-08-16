@@ -194,9 +194,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 if (!callbackUriBuilder.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
                 {
                     callbackUriBuilder.Scheme = Uri.UriSchemeHttps;
+                    callbackUriBuilder.Port = -1;
                 }
 
-                var callbackUriFormat = callbackUriBuilder.Uri.ToString();
+                var callbackUriFormat = callbackUriBuilder.Uri.AbsoluteUri;
 
                 cloudEnvironment = await EnvironmentManager.CreateEnvironmentAsync(
                     cloudEnvironment,
