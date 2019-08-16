@@ -149,8 +149,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
                 options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
                 options.HostUrl = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbHost, nameof(appSettings.AzureCosmosDbHost));
-                options.AuthKey = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbKey, nameof(appSettings.AzureCosmosDbKey));
-                options.DatabaseId = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbId, nameof(appSettings.AzureCosmosDbId));
+                options.AuthKey = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbAuthKey, nameof(appSettings.AzureCosmosDbAuthKey));
+                options.DatabaseId = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId));
                 options.PreferredLocation = preferredCosmosDbRegion;
                 options.UseMultipleWriteLocations = false;
             });

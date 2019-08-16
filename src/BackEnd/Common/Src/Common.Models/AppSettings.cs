@@ -28,12 +28,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <summary>
         /// Gets or sets the CosmosDB auth key.
         /// </summary>
-        public string AzureCosmosDbKey { get; set; }
+        public string AzureCosmosDbAuthKey { get; set; }
 
         /// <summary>
         /// Gets or sets the CosmosDB database to use in the <see cref="AzureCosmosDbHost"/>.
         /// </summary>
-        public string AzureCosmosDbId { get; set; }
+        public string AzureCosmosDbDatabaseId { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the option which controls whether the
