@@ -18,10 +18,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override Dictionary<string, object> GetParticipantProperties(Dictionary<string, object> properties)
         {
-            var user = Context.User;
-
             // enforce always to use the Claims parameter from the context call
-            var userId = user?.FindFirst("userId")?.Value;
+            var userId = Context?.User?.FindFirst("userId")?.Value;
+            if (userId == null)
+            {
+                return properties;
+            }
+
             if (properties == null)
             {
                 properties = new Dictionary<string, object>();

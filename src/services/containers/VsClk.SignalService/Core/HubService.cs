@@ -41,6 +41,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             return HubClients(hubClients => hubClients.Client(connectionId));
         }
 
+        public IEnumerable<IClientProxy> All(string groupName)
+        {
+            return HubClients(hubClients => hubClients.Group(groupName));
+        }
+
+        public IEnumerable<IClientProxy> AllExcept(string groupName, IReadOnlyList<string> excludedConnectionIds)
+        {
+            return HubClients(hubClients => hubClients.GroupExcept(groupName, excludedConnectionIds));
+        }
+
         public IEnumerable<IClientProxy> HubClients(Func<IHubClients<IClientProxy>, IClientProxy> hubClientsCallback)
         {
             return HubContextHosts

@@ -21,7 +21,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             HubName = hubName;
             HubType = hubType;
-            this.methods = hubType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).ToDictionary(m => m.Name, m => m);
+            this.methods = hubType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+               .Where(m => !m.IsSpecialName)
+               .ToDictionary(m => m.Name, m => m);
         }
 
         public string HubName { get; }

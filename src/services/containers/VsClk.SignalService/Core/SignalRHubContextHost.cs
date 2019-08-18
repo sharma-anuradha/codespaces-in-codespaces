@@ -10,9 +10,12 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// Implements IHubContextHost from the universal SignalRHub
     /// </summary>
     /// <typeparam name="THub"></typeparam>
-    public class SignalRHubContextHost<THub> : IHubContextHost where THub : Hub
+    /// <typeparam name="TSignalRHub"></typeparam>
+    public class SignalRHubContextHost<THub, TSignalRHub> : IHubContextHost
+        where THub : Hub
+        where TSignalRHub : SignalRHub
     {
-        public SignalRHubContextHost(IHubContext<SignalRHub> hubContext)
+        public SignalRHubContextHost(IHubContext<TSignalRHub> hubContext)
         {
             Clients = new HubClientsProxy(hubContext.Clients, HubType.Name.ToCamelCase());
             Groups = hubContext.Groups;

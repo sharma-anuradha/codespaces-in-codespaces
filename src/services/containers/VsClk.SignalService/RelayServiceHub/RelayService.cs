@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,12 +11,14 @@ using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-
     /// <summary>
     /// The non Hub Service class instance that manage all the relay hubs
     /// </summary>
     public class RelayService : HubService<RelayServiceHub>
     {
+        private const string HubIdScope = "HubId";
+        private const string ConnectionScope = "Connection";
+
         private ConcurrentDictionary<string, RelayHub> relayHubs = new ConcurrentDictionary<string, RelayHub>();
         private ConcurrentDictionary<string, ConcurrentHashSet<RelayHub>> connectionHubs = new ConcurrentDictionary<string, ConcurrentHashSet<RelayHub>>();
 
@@ -25,13 +28,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             ILogger<RelayService> logger)
             : base(options.Id, hubContextHosts, logger)
         {
-            if (HubContextHosts.Length != 1)
-            {
-                throw new ArgumentException("Expected one realy hub context");
-            }
         }
 
-        internal IHubContextHost Hub => HubContextHosts[0];
+        private IEnumerable<IGroupManager> AllGroups => HubContextHosts.Select(hCtxt => hCtxt.Groups);
 
         public RelayServiceMetrics GetMetrics()
         {
@@ -67,14 +66,14 @@ namespace Microsoft.VsCloudKernel.SignalService
             Requires.NotNullOrEmpty(connectionId, nameof(connectionId));
             Requires.NotNullOrEmpty(hubId, nameof(hubId));
 
-            using (Logger.BeginMethodScope(RelayServiceScopes.MethodJoinHub))
+            using (BeginHubScope(RelayServiceScopes.MethodJoinHub, hubId, connectionId))
             {
-                Logger.LogDebug($"connectionId:{connectionId} hubId:{hubId} properties:{properties.ConvertToString()}");
+                Logger.LogDebug($"properties:{properties.ConvertToString()}");
             }
 
             var relayHub = GetRelayHub(hubId, createIfNotExists);
             this.connectionHubs.AddOrUpdate(connectionId, (hubs) => hubs.Add(relayHub));
-            await Hub.Groups.AddToGroupAsync(connectionId, hubId, cancellationToken);
+            await Task.WhenAll(AllGroups.Select(g => g.AddToGroupAsync(connectionId, hubId, cancellationToken)));
             return await relayHub.JoinAsync(connectionId, properties, cancellationToken);
         }
 
@@ -83,16 +82,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             Requires.NotNullOrEmpty(connectionId, nameof(connectionId));
             Requires.NotNullOrEmpty(hubId, nameof(hubId));
 
-            using (Logger.BeginMethodScope(RelayServiceScopes.MethodLeaveHub))
+            using (BeginHubScope(RelayServiceScopes.MethodLeaveHub, hubId, connectionId))
             {
-                Logger.LogDebug($"connectionId:{connectionId} hubId:{hubId}");
+                Logger.LogDebug("Leaving from API");
             }
 
             var relayHub = GetRelayHub(hubId);
             this.connectionHubs.AddOrUpdate(connectionId, (hubs) => hubs.TryRemove(relayHub));
 
             await relayHub.LeaveAsync(connectionId, cancellationToken);
-            await Hub.Groups.RemoveFromGroupAsync(connectionId, hubId, cancellationToken);
+            await Task.WhenAll(AllGroups.Select(g => g.RemoveFromGroupAsync(connectionId, hubId, cancellationToken)));
         }
 
         public Task SendDataHubAsync(
@@ -109,10 +108,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             Requires.NotNullOrEmpty(type, nameof(type));
             Requires.NotNull(data, nameof(data));
 
-            using (Logger.BeginMethodScope(RelayServiceScopes.MethodSendDataHub))
+            using (BeginHubScope(RelayServiceScopes.MethodSendDataHub, hubId, connectionId))
             {
                 var targetParticipantIdsStr = targetParticipantIds != null ? string.Join(",", targetParticipantIds) : "*";
-                Logger.LogDebug($"connectionId:{connectionId} hubId:{hubId} sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data.Length}");
+                Logger.LogDebug($"sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data.Length}");
             }
 
             return GetRelayHub(hubId).SendDataAsync(connectionId, sendOption, targetParticipantIds, type, data, cancellationToken);
@@ -126,8 +125,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 await Task.WhenAll(relayHubs.Values.Select(async hub =>
                 {
+                    using (BeginHubScope(RelayServiceScopes.MethodDisconnectHub, hub.Id, connectionId))
+                    {
+                        Logger.LogDebug("Leaving hub from disconnect");
+                    }
+
                     await hub.LeaveAsync(connectionId, cancellationToken);
-                    await Hub.Groups.RemoveFromGroupAsync(connectionId, hub.Id, cancellationToken);
+                    await Task.WhenAll(AllGroups.Select(g => g.RemoveFromGroupAsync(connectionId, hub.Id, cancellationToken)));
                 }));
             }
         }
@@ -148,5 +152,14 @@ namespace Microsoft.VsCloudKernel.SignalService
                 throw new HubException($"No relay hub found for:{hubId}");
             }
         }
+
+        public IDisposable BeginHubScope(string method, string hubId, string connectionId)
+        {
+            return Logger.BeginScope(
+                    (LoggerScopeHelpers.MethodScope, method),
+                    (HubIdScope, hubId),
+                    (ConnectionScope, connectionId));
+        }
+
     }
 }

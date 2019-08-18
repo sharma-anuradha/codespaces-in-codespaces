@@ -176,7 +176,7 @@ namespace LivesharePresenceClientTest
                 var traceSource = CreateTraceSource("SignalR.CLI");
                 traceSource.Verbose($"Started CLI using serviceEndpoint:{serviceEndpoint}");
 
-                var hubClient = new HubClient(serviceEndpoint, traceSource);
+                var hubClient = new HubClient(hubConnectionBuilder.Build(), traceSource);
                 hubClient.StartAsync(DisposeToken).Forget();
 
                 OnHubCreated(hubClient, traceSource);

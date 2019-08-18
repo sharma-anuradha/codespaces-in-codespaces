@@ -13,7 +13,6 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     internal class RelayHub
     {
-
         private readonly RelayService service;
         private ConcurrentDictionary<string, Dictionary<string, object>> participants = new ConcurrentDictionary<string, Dictionary<string, object>>();
         private ConcurrentDictionary<string, int> typeUniqueId = new ConcurrentDictionary<string, int>();
@@ -73,13 +72,13 @@ namespace Microsoft.VsCloudKernel.SignalService
                     return v;
                 });
 
-            Func<IClientProxy, Task> sendTaskCallback = (proxy) => proxy.SendAsync(
+            Func<IEnumerable<IClientProxy>, Task> sendTaskCallback = (clients) => Task.WhenAll(clients.Select(proxy => proxy.SendAsync(
                    RelayHubMethods.MethodReceiveData,
                    Id,
                    fromParticipantId,
                    uniqueId,
                    type,
-                   data);
+                   data)));
 
             if (targetParticipantIds == null)
             {
@@ -87,7 +86,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
             else
             {
-                return Task.WhenAll(targetParticipantIds.Select(id => sendTaskCallback(Client(id))));
+                return Task.WhenAll(targetParticipantIds.Select(id => sendTaskCallback(Clients(id))));
             }
         }
 
@@ -97,30 +96,28 @@ namespace Microsoft.VsCloudKernel.SignalService
             ParticipantChangeType changeType,
             CancellationToken cancellationToken)
         {
-            return All().SendAsync(
+            return Task.WhenAll(All().Select(clientProxy => clientProxy.SendAsync(
                 RelayHubMethods.MethodParticipantChanged,
                 Id,
                 participantId,
                 properties,
                 changeType,
-                cancellationToken);
+                cancellationToken)));
         }
 
-        private IHubContextHost Hub => this.service.Hub;
-
-        private IClientProxy All()
+        private IEnumerable<IClientProxy> All()
         {
-            return Hub.Clients.Group(Id);
+            return this.service.All(Id);
         }
 
-        private IClientProxy AllExcept(string connectionId)
+        private IEnumerable<IClientProxy> AllExcept(string connectionId)
         {
-            return Hub.Clients.GroupExcept(Id, new string[] { connectionId });
+            return this.service.AllExcept(Id, new string[] { connectionId });
         }
 
-        private IClientProxy Client(string connectionId)
+        private IEnumerable<IClientProxy> Clients(string connectionId)
         {
-            return Hub.Clients.Client(connectionId);
+            return this.service.Clients(connectionId);
         }
     }
 }

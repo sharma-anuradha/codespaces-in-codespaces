@@ -17,10 +17,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override string GetContactIdentity(string contactId)
         {
-            var user = Context.User;
-
             // enforce always to use the Claims parameter from the context call
-            return user?.FindFirst("userId")?.Value;
+            return Context?.User?.FindFirst("userId")?.Value ?? contactId;
         }
     }
 }

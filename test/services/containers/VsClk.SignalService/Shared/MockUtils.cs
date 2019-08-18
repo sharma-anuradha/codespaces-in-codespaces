@@ -51,7 +51,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
         public static IHubContextHost CreateHubContextHostMock<THub>(Dictionary<string, IClientProxy> clientProxies) where THub : Hub
         {
-            return new HubContextHost<THub>(CreateHubContextMock<THub>(clientProxies));
+            return new HubContextHost<THub, THub>(CreateHubContextMock<THub>(clientProxies));
         }
 
         public static IEnumerable<IHubContextHost> CreateSingleHubContextHostMock<THub>(Dictionary<string, IClientProxy> clientProxies) where THub : Hub

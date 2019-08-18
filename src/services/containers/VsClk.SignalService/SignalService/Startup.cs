@@ -66,7 +66,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public bool UseAzureSignalR { get; private set; }
         public bool EnableAuthentication { get; private set; }
         public string Environment => this._hostEnvironment.EnvironmentName;
-        public bool IsDevelopmentEnv => this._hostEnvironment.EnvironmentName.Equals("Development");
+        public bool IsDevelopmentEnv => this._hostEnvironment.IsDevelopment();
 
         #endregion
 
@@ -187,14 +187,28 @@ namespace Microsoft.VsCloudKernel.SignalService
                 signalRService.AddAzureSignalR();
             }
 
-            // support for universal signalR hub
-            services.AddSingleton(new HubDispatcher(PresenceServiceHub.Name, typeof(PresenceServiceHub)));
-            services.AddSingleton(new HubDispatcher(RelayServiceHub.Name, typeof(RelayServiceHub)));
+            // support dispatching for universal signalR hub
+            services.AddSingleton(new HubDispatcher(PresenceServiceHub.Name, EnableAuthentication ? typeof(AuthorizedPresenceServiceHub) : typeof(PresenceServiceHub)));
+            services.AddSingleton(new HubDispatcher(RelayServiceHub.Name, EnableAuthentication ? typeof(AuthorizedRelayServiceHub) : typeof(RelayServiceHub)));
 
             // hub context hosts definition
-            services.AddSingleton<IHubContextHost, HubContextHost<PresenceServiceHub>>();
-            services.AddSingleton<IHubContextHost, SignalRHubContextHost<PresenceServiceHub>>();
-            services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub>>();
+            if (EnableAuthentication)
+            {
+                // support for custom presence endpoint
+                services.AddSingleton<IHubContextHost, HubContextHost<PresenceServiceHub, AuthorizedPresenceServiceHub>>();
+
+                // universal hub supported contexts
+                services.AddSingleton<IHubContextHost, SignalRHubContextHost<PresenceServiceHub, AuthorizedSignalRHub>>();
+                services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub, AuthorizedSignalRHub>>();
+            }
+
+            if (IsDevelopmentEnv || !EnableAuthentication)
+            {
+                services.AddSingleton<IHubContextHost, HubContextHost<PresenceServiceHub, PresenceServiceHub>>();
+
+                services.AddSingleton<IHubContextHost, SignalRHubContextHost<PresenceServiceHub, SignalRHub>>();
+                services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub, SignalRHub>>();
+            }
 
             // a background service to control lifetime of the presence service
             services.AddHostedService<PresenceBackgroundService>();

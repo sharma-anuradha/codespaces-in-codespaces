@@ -9,5 +9,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string MethodJoinHub = "JoinHub";
         public const string MethodLeaveHub = "LeaveHub";
         public const string MethodSendDataHub = "SendDataHub";
+        public const string MethodDisconnectHub = "DisconnectHub";
     }
 }

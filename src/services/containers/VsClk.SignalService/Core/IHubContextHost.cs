@@ -27,8 +27,11 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Simple IHubContextHost implementation from a standard hub being defined
     /// </summary>
+    /// <typeparam name="THubType"></typeparam>
     /// <typeparam name="THub"></typeparam>
-    public class HubContextHost<THub> : IHubContextHost where THub : Hub
+    public class HubContextHost<THubType ,THub> : IHubContextHost
+        where THub : Hub
+        where THubType : Hub
     {
         public HubContextHost(IHubContext<THub> hubContext)
         {
@@ -38,7 +41,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         #region IHubContextHost
 
-        public Type HubType => typeof(THub);
+        public Type HubType => typeof(THubType);
         public IHubClients Clients { get; }
         public IGroupManager Groups { get; }
 
