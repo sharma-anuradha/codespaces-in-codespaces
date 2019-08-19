@@ -197,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     callbackUriBuilder.Port = -1;
                 }
 
-                var callbackUriFormat = callbackUriBuilder.Uri.AbsoluteUri;
+                var callbackUriFormat = callbackUriBuilder.Uri.ToString();
 
                 cloudEnvironment = await EnvironmentManager.CreateEnvironmentAsync(
                     cloudEnvironment,
