@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
+    <ProjectReference Include="Billing.Test\Billing.Test.csproj" />
   </ItemGroup>
 
 </Project>

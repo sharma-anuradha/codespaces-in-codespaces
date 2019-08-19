@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
-    <ProjectReference Include="AccountManager\dirs.proj" />
+    <ProjectReference Include="Accounts\dirs.proj" />
     <ProjectReference Include="BackEndWebApiClient\dirs.proj" />
+    <ProjectReference Include="Billing\dirs.proj" />
     <ProjectReference Include="Common\dirs.proj" />
     <ProjectReference Include="EnvironmentManager\dirs.proj" />
     <ProjectReference Include="FrontEndWebApi\dirs.proj" />

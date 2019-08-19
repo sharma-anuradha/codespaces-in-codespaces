@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Accounts\Accounts.csproj" />
+    <ProjectReference Include="..\..\src\Accounts.Contracts\Accounts.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
