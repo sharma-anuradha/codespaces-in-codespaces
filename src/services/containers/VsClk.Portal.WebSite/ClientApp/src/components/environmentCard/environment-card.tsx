@@ -195,7 +195,7 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
 
     let details = [];
     details.push({ key: 'Created', value: moment(props.environment.created).format('LLLL') });
-    if (props.environment.seed.moniker) {
+    if (props.environment.seed && props.environment.seed.moniker) {
         details.push({ key: 'Repository', value: props.environment.seed.moniker });
     }
 
