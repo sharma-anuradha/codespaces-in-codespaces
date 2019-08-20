@@ -16,6 +16,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     /// </summary>
     public class VirtualMachineProvider : IComputeProvider
     {
+        private const int VmCreationRetryAfterSeconds = 15;
+        private const int VmDeletionRetryAfterSeconds = 5;
+        private const int VmStartEnvRetryAfterSeconds = 1;
         private readonly IDeploymentManager deploymentManager;
 
         /// <summary>
@@ -47,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 ResourceId = resourceId,
                 Status = resultState.ToString(),
                 ContinuationToken = resultContinuationToken,
-                RetryAfter = TimeSpan.FromMinutes(1),
+                RetryAfter = TimeSpan.FromSeconds(VmCreationRetryAfterSeconds),
             };
             return result;
         }
@@ -69,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 Status = resultState.ToString(),
                 ContinuationToken = resultContinuationToken,
-                RetryAfter = TimeSpan.FromMinutes(5),
+                RetryAfter = TimeSpan.FromSeconds(VmDeletionRetryAfterSeconds),
             };
 
             return result;
@@ -91,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 Status = resultState.ToString(),
                 ContinuationToken = resultContinuationToken,
-                RetryAfter = TimeSpan.FromSeconds(1),
+                RetryAfter = TimeSpan.FromSeconds(VmStartEnvRetryAfterSeconds),
             };
             return result;
         }
@@ -99,8 +102,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private async Task<(ResourceId, DeploymentState, string)> ExecuteAsync<T>(
             T input,
             string continuationToken,
-            Func<T, Task<DeploymentStatusInput>> beginOperation,
-            Func<DeploymentStatusInput, Task<DeploymentState>> checkOperationStatus)
+            Func<T, Task<(DeploymentState, DeploymentStatusInput)>> beginOperation,
+            Func<DeploymentStatusInput, Task<(DeploymentState, DeploymentStatusInput)>> checkOperationStatus)
         {
             DeploymentState resultState;
             DeploymentStatusInput deploymentStatusInput;
@@ -108,16 +111,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             if (string.IsNullOrEmpty(continuationToken))
             {
-                deploymentStatusInput = await beginOperation(input);
-                resultState = (deploymentStatusInput == default)
-                    ? DeploymentState.Succeeded
-                    : DeploymentState.InProgress;
+                (resultState, deploymentStatusInput) = await beginOperation(input);
             }
             else
             {
                 // Check status of deployment request
                 deploymentStatusInput = continuationToken.ToDeploymentStatusInput();
-                resultState = await checkOperationStatus(deploymentStatusInput);
+                (resultState, deploymentStatusInput) = await checkOperationStatus(deploymentStatusInput);
             }
 
             if (resultState == DeploymentState.InProgress)

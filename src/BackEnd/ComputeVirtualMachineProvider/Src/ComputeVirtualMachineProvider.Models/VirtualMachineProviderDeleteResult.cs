@@ -11,9 +11,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     /// </summary>
     public class VirtualMachineProviderDeleteResult : BaseContinuationResult
     {
-        /// <summary>
-        ///
-        /// </summary>
-        public string TrackingId { get; set; }
     }
 }

@@ -34,8 +34,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         // Get a Blob SAS URL for https://vsengsaas.blob.core.windows.net/cloudenv-storage-ext4/cloudenvdata_2944143
         // It's a private blob so needs SAS token.
         // The test will fail otherwise.
-        private static readonly string srcBlobUrl = null;
-        private static readonly IServicePrincipal servicePrincipal = null;
+        private static readonly string srcBlobUrl = "https://vsclkcloudenvstbaseusw2.blob.core.windows.net/ext4-images/cloudenvdata_2944625?sp=r&st=2019-08-15T22:58:51Z&se=2019-11-01T06:58:51Z&spr=https&sv=2018-03-28&sig=UlFTxeXB4stjFPgyeZb4aR1YoZmHoZMXE1SA1JaBdvc%3D&sr=b";
+        private static readonly IServicePrincipal servicePrincipal = new ServicePrincipal("9866b124-fabf-4eed-a015-50d5491acd9d", "a", "72f988bf-86f1-41af-91ab-2d7cd011db47", s => Task.FromResult("b43819aa-6f40-4638-899f-2722b0e9ad92"));
 
         /// <summary>
         /// Run all the operations exposed by the provider helper.

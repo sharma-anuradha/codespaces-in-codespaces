@@ -10,5 +10,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         Failed = 2,
         Cancelled = 3,
         InProgress = 4,
+        Pending = 5,
     }
 }

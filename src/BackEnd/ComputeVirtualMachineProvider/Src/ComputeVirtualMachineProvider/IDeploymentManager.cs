@@ -18,41 +18,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        Task<DeploymentStatusInput> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input);
+        Task<(DeploymentState, DeploymentStatusInput)> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input);
 
         /// <summary>
         /// Check status of container creation on Azure Virtual Machine.
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        Task<DeploymentState> CheckStartComputeStatusAsync(DeploymentStatusInput input);
+        Task<(DeploymentState, DeploymentStatusInput)> CheckStartComputeStatusAsync(DeploymentStatusInput input);
 
         /// <summary>
         /// Kick off Azure Virtual Machine creation.
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        Task<DeploymentStatusInput> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input);
+        Task<(DeploymentState, DeploymentStatusInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input);
 
         /// <summary>
         /// Check status of Azure Virtual Machine creation.
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        Task<DeploymentState> CheckCreateComputeStatusAsync(DeploymentStatusInput input);
+        Task<(DeploymentState, DeploymentStatusInput)> CheckCreateComputeStatusAsync(DeploymentStatusInput input);
 
         /// <summary>
         /// Kick off Azure Virtual Machine deletion.
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        Task<DeploymentStatusInput> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input);
+        Task<(DeploymentState, DeploymentStatusInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input);
 
         /// <summary>
         /// Check status of Azure Virtual Machine deletion.
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        Task<DeploymentState> CheckDeleteComputeStatusAsync(DeploymentStatusInput input);
+        Task<(DeploymentState, DeploymentStatusInput)> CheckDeleteComputeStatusAsync(DeploymentStatusInput input);
     }
 }

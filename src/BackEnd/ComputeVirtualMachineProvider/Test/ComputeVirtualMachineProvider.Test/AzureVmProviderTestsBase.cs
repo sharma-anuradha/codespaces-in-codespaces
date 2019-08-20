@@ -22,16 +22,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 .AddJsonFile("test-settings.json")
                 .Build();
             SubscriptionId = Guid.Parse(config["AZURE_SUBSCRIPTION"]);
-            ResourceGroupName = $"test-vm-{Guid.NewGuid()}";
+            ResourceGroupName = "test-vm-80baa231-d7e7-44c1-9ec5-3c274c322576";
             Location = AzureLocation.WestUs2;
             AuthFilePath = config["AZURE_AUTH_LOCATION"];
             azureDeploymentHelper = new AzureDeploymentHelper(new AzureClientFactoryMock(AuthFilePath));
-            azureDeploymentHelper.CreateResourceGroupAsync(SubscriptionId, ResourceGroupName, AzureLocation.EastUs).Wait();
         }
 
         public void Dispose()
         {
-            (azureDeploymentHelper.DeleteResourceGroupAsync(SubscriptionId, ResourceGroupName)).Wait();
         }
     }
 }

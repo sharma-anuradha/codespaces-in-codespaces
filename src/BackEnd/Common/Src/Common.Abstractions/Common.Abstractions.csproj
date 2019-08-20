@@ -7,5 +7,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Common.Models\Common.Models.csproj" />
   </ItemGroup>
+ 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+  </ItemGroup>
 
 </Project>
