@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="Capacity.Test\Capacity.Test.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,3 +1,12 @@
+Big Picture:
+- Refactor Common projects into .\src\Common\
+- Add and clean up logging messages throught the front-end
+- Add unit tests throughout front-end
+- Refactor HttpClient stuff with proper correlation id
+- Add SDK support for DocumentDbProvider IOptions<T>
+
+From Code:
+
 BackEndWebApiClient\Src\BackEndWebApiClient\ResourceBroker\HttpResourceBrokerClient.cs:63:        // TODO: Move this into a base class, or an extension method.
 BackEndWebApiClient\Src\BackEndWebApiClient\ResourceBroker\HttpResourceBrokerClient.cs:70:            // TODO: add logging
 BackEndWebApiClient\Src\BackEndWebApiClient\ResourceBroker\HttpResourceBrokerClient.cs:85:            // TODO: add the correlation id header..any other interesting headers.
@@ -22,3 +31,4 @@ FrontEndWebApi\Src\FrontEndWebApi\Middleware\FriendlyExceptionFilterAttribute.cs
 UserProfile\Src\UserProfile\Http\HttpResponseMessageExtensions.cs:104:        // TODO: Consider moving this class (and other response models) to a shared assembly.
 UserProfile\Src\UserProfile.Contracts\ICurrentUserProvider.cs:16:        /// TODO: token for which API/Audience.
 UserProfile\Src\UserProfile.Contracts\ICurrentUserProvider.cs:26:        /// TODO: token for which API/Audience.
+

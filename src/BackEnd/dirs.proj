@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="BackEndWebApi\dirs.proj" />
-    <ProjectReference Include="CapacityManagement\dirs.proj" />
+    <ProjectReference Include="Capacity\dirs.proj" />
     <ProjectReference Include="Common\dirs.proj" />
     <ProjectReference Include="ComputeVirtualMachineProvider\dirs.proj" />
     <ProjectReference Include="ResourceBroker\dirs.proj" />

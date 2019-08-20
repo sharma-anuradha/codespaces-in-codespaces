@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -166,7 +167,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // System Catalog
             var azureSubscriptionCatalogSettings = Configuration.GetSection("AzureSubscriptionCatalogSettings").Get<AzureSubscriptionCatalogSettings>();
             var skuCatalogSettings = Configuration.GetSection("SkuCatalogSettings").Get<SkuCatalogSettings>();
-
             services.AddSystemCatalog(
                 azureSubscriptionCatalogSettings,
                 skuCatalogSettings);
@@ -176,7 +176,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             var resourceBrokerSettings = resourceBrokerSettingsConfiguration.Get<ResourceBrokerSettings>();
             services.Configure<ResourceBrokerSettings>(resourceBrokerSettingsConfiguration);
             services.AddSingleton(resourceBrokerSettings);
-
             services.AddResourceBroker(
                 storageAccountSettings,
                 resourceBrokerSettings,
@@ -193,6 +192,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Storage Provider
             services.AddStorageFileShareProvider(
                 appSettings);
+
+            // Capacity Manager
+            services.AddCapacityManager(
+                appSettings.UseMocksForExternalDependencies);
 
             // OpenAPI/swagger services
             services.AddSwaggerGen(x =>
