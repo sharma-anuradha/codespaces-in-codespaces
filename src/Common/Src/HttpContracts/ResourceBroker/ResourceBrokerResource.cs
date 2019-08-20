@@ -1,4 +1,4 @@
-﻿// <copyright file="AllocateResponseBody.cs" company="Microsoft">
+﻿// <copyright file="ResourceBrokerResource.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

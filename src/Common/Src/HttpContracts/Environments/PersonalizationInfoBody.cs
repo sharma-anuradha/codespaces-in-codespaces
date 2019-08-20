@@ -1,4 +1,4 @@
-﻿// <copyright file="PersonalizationInfo.cs" company="Microsoft">
+﻿// <copyright file="PersonalizationInfoBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

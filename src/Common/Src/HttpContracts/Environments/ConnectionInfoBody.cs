@@ -1,4 +1,4 @@
-﻿// <copyright file="ConnectionInfoInput.cs" company="Microsoft">
+﻿// <copyright file="ConnectionInfoBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

@@ -1,4 +1,4 @@
-﻿// <copyright file="SeedInfoInput.cs" company="Microsoft">
+﻿// <copyright file="SeedInfoBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

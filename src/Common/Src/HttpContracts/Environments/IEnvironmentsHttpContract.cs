@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// <copyright file="IEnvironmentsHttpContract.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 

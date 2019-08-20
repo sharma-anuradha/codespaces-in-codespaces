@@ -1,4 +1,4 @@
-﻿// <copyright file="GitConfigInput.cs" company="Microsoft">
+﻿// <copyright file="GitConfigOptionsBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

@@ -2,9 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Data;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using System.Data;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -108,6 +108,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddCloudEnvironmentState(this IDiagnosticsLogger logger, CloudEnvironmentState state)
             => logger.FluentAddValue(LogValueState, state.ToString());
-
     }
 }

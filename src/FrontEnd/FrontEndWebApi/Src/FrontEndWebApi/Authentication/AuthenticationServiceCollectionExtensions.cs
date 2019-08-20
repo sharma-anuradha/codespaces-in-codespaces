@@ -32,7 +32,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             RedisCacheOptions redisCacheOptions,
             JwtBearerOptions jwtBearerOptions)
         {
-
             Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
             Requires.NotNull(redisCacheOptions, nameof(redisCacheOptions));
             Requires.NotNull(jwtBearerOptions, nameof(jwtBearerOptions));

@@ -1,4 +1,4 @@
-// <copyright file="CloudEnvironmentInput.cs" company="Microsoft">
+// <copyright file="CreateCloudEnvironmentBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

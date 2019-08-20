@@ -1,4 +1,4 @@
-﻿// <copyright file="LoggingHelper.cs" company="Microsoft">
+﻿// <copyright file="LoggingBaseNameAttribute.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

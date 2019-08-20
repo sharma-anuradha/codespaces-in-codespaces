@@ -1,4 +1,4 @@
-﻿// <copyright file="IResourceBrokerHttpContract.cs" company="Microsoft">
+﻿// <copyright file="IResourceBrokerResourcesHttpContract.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
