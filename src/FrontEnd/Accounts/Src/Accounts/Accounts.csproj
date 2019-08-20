@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\Accounts.Contracts\Accounts.Contracts.csproj" />
   </ItemGroup>
 

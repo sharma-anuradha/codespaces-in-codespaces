@@ -1,44 +1,40 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures.Internal;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.VsCloudKernel.Services.EnvReg.Models;
-using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
-using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
-using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Middleware;
-using Microsoft.VsCloudKernel.Services.Logging;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Newtonsoft.Json;
+﻿// <copyright file="AccountController.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using VsClk.EnvReg.Models.Errors;
-using VsClk.EnvReg.Repositories;
-using VsClk.EnvReg.Telemetry;
-using Sku = Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore.Sku;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Newtonsoft.Json;
+using Sku = Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Sku;
 
-namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
-{   
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
+{
     [FriendlyExceptionFilter]
     public class AccountController : ControllerBase
     {
-        private IAccountManager AccountManager { get; }
-        private ICurrentUserProvider CurrentUserProvider { get; }
+        private readonly IAccountManager accountManager;
+
+        private readonly ICurrentUserProvider currentUserProvider;
 
         public AccountController(IAccountManager accountManager, ICurrentUserProvider currentUserProvider, IMapper mapper)
         {
-            AccountManager = accountManager;
-            CurrentUserProvider = currentUserProvider;
+            this.accountManager = accountManager;
+            this.currentUserProvider = currentUserProvider;
         }
 
         [HttpPost]
         [ActionName("OnResourceCreationValidate")]
-        public async Task<IActionResult> OnResourceCreationValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public Task<IActionResult> OnResourceCreationValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             var logger = HttpContext.GetLogger();
             try
@@ -48,7 +44,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
                 ValidationUtil.IsRequired(resourceName);
-
             }
             catch (Exception ex)
             {
@@ -58,28 +53,34 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                     Error = new ResourceProviderErrorInfo
                     {
                         Code = "NullParameters",
-                        Message = "",
+                        Message = string.Empty,
                     },
                     Status = "Failed",
                 };
 
                 // Required response format in case of validation failure.
-                return CreateResponse(HttpStatusCode.OK, rpErrorResponse);
+                return Task.FromResult<IActionResult>(CreateResponse(HttpStatusCode.OK, rpErrorResponse));
             }
-            
+
             // Required response format in case validation pass with empty body.
-            return new OkObjectResult(string.Empty);
+            return Task.FromResult<IActionResult>(new OkObjectResult(string.Empty));
         }
 
         [HttpPut]
         [ActionName("OnResourceCreationBegin")]
-        public async Task<IActionResult> OnResourceCreationBegin(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName, [FromBody] BillingAccountInput modelInput)
+        public async Task<IActionResult> OnResourceCreationBegin(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName,
+            [FromBody] AccountInput modelInput)
         {
             var logger = HttpContext.GetLogger();
 
             try
-            {    
-                var accessToken = CurrentUserProvider.GetBearerToken();
+            {
+                var accessToken = this.currentUserProvider.GetBearerToken();
 
                 ValidationUtil.IsRequired(subscriptionId);
                 ValidationUtil.IsRequired(resourceGroup);
@@ -88,22 +89,22 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 ValidationUtil.IsRequired(resourceName);
                 ValidationUtil.IsRequired(modelInput);
 
-                var account = new BillingAccount
+                var account = new VsoAccount
                 {
-                    Account = new BillingAccountInfo
+                    Account = new VsoAccountInfo
                     {
                         Location = modelInput.Location,
                         Name = resourceName,
                         ResourceGroup = resourceGroup,
-                        Subscription = subscriptionId
+                        Subscription = subscriptionId,
                     },
                     Plan = new Sku
                     {
-                        Name = modelInput.Properties.Plan.Name
-                    }
+                        Name = modelInput.Properties.Plan.Name,
+                    },
                 };
 
-                await AccountManager.CreateOrUpdateAsync(account, logger);
+                await this.accountManager.CreateOrUpdateAsync(account, logger);
 
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, modelInput);
@@ -116,7 +117,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                     Error = new ResourceProviderErrorInfo
                     {
                         Code = "CreateResourceFailed",
-                        Message = "",
+                        Message = string.Empty,
                     },
                     Status = "Failed",
                 };
@@ -124,17 +125,15 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 // Required response format in case of validation failure.
                 return CreateResponse(HttpStatusCode.BadRequest, rpErrorResponse);
             }
-            
         }
 
         [HttpPost]
         [ActionName("OnResourceCreationCompleted")]
-        public async Task<IActionResult> OnResourceCreationCompleted(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public Task<IActionResult> OnResourceCreationCompleted(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             // Do post creation processing here ex: start billing, write billing Events
-
             // Required response format with empty body.
-            return new OkObjectResult(string.Empty);
+            return Task.FromResult<IActionResult>(new OkObjectResult(string.Empty));
         }
 
         [HttpPost]
@@ -151,14 +150,14 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 ValidationUtil.IsRequired(resourceType);
                 ValidationUtil.IsRequired(resourceName);
 
-                var account = new BillingAccountInfo
+                var account = new VsoAccountInfo
                 {
                     Name = resourceName,
                     ResourceGroup = resourceGroup,
-                    Subscription = subscriptionId
+                    Subscription = subscriptionId,
                 };
 
-                var response = await AccountManager.DeleteAsync(account, logger);
+                var response = await this.accountManager.DeleteAsync(account, logger);
                 if (!response)
                 {
                     return CreateResponse(statusCode: HttpStatusCode.OK, new ResourceProviderErrorResponse
@@ -166,11 +165,12 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                         Error = new ResourceProviderErrorInfo
                         {
                             Code = "DeleteFailed",
-                            Message = "",
+                            Message = string.Empty,
                         },
                         Status = "Failed",
                     });
                 }
+
                 // Required response format in case validation pass with empty body.
                 return new OkObjectResult(string.Empty);
             }
@@ -182,7 +182,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                     Error = new ResourceProviderErrorInfo
                     {
                         Code = "DeleteFailed",
-                        Message = "",
+                        Message = string.Empty,
                     },
                     Status = "Failed",
                 };
@@ -190,7 +190,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 // Required response format in case of validation failure.
                 return CreateResponse(statusCode: HttpStatusCode.OK, rpErrorResponse);
             }
-
         }
 
         [HttpGet]
@@ -200,15 +199,15 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
             var logger = HttpContext.GetLogger();
 
             try
-            {   
-                var accessToken = CurrentUserProvider.GetBearerToken();
+            {
+                var accessToken = this.currentUserProvider.GetBearerToken();
 
                 ValidationUtil.IsRequired(subscriptionId);
                 ValidationUtil.IsRequired(resourceGroup);
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
 
-                var accounts = await AccountManager.GetListAsync(subscriptionId, resourceGroup, logger);
+                var accounts = await this.accountManager.GetListAsync(subscriptionId, resourceGroup, logger);
 
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, accounts);
@@ -222,7 +221,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                     Error = new ResourceProviderErrorInfo
                     {
                         Code = "GetResourceListFailed",
-                        Message = "",
+                        Message = string.Empty,
                     },
                     Status = "Failed",
                 };
@@ -230,7 +229,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 // Required response format in case of validation failure.
                 return CreateResponse(HttpStatusCode.OK, rpErrorResponse);
             }
-            
         }
 
         [HttpGet]
@@ -239,14 +237,14 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
         {
             var logger = HttpContext.GetLogger();
             try
-            {   
-                var accessToken = CurrentUserProvider.GetBearerToken();
+            {
+                var accessToken = this.currentUserProvider.GetBearerToken();
 
                 ValidationUtil.IsRequired(subscriptionId);
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
 
-                var accounts = await AccountManager.GetListBySubscriptionAsync(subscriptionId, logger);
+                var accounts = await this.accountManager.GetListBySubscriptionAsync(subscriptionId, logger);
 
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, accounts);
@@ -259,7 +257,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                     Error = new ResourceProviderErrorInfo
                     {
                         Code = "GetResourceListFailed",
-                        Message = "",
+                        Message = string.Empty,
                     },
                     Status = "Failed",
                 };
@@ -267,15 +265,14 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Controllers
                 // Required response format in case of validation failure.
                 return CreateResponse(HttpStatusCode.OK, rpErrorResponse);
             }
-
         }
+
         [HttpGet]
         [ActionName("OnResourceReadValidate")]
-        public async Task<IActionResult> OnResourceReadValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public Task<IActionResult> OnResourceReadValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
-            //Used for pre-read validation only. The Resource is returned from RPSaaS(MetaRP) CosmosDB storage and not from here
-
-            return new OkObjectResult(string.Empty);
+            // Used for pre-read validation only. The Resource is returned from RPSaaS(MetaRP) CosmosDB storage and not from here
+            return Task.FromResult<IActionResult>(new OkObjectResult(string.Empty));
         }
 
         /// <summary>

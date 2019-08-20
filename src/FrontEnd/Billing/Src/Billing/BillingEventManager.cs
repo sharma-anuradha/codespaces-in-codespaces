@@ -1,13 +1,16 @@
-﻿using System;
+﻿// <copyright file="BillingEventManager.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
-using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 
-namespace Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
     /// Provides higher-level APIs for creating and querying billing events.
@@ -16,6 +19,10 @@ namespace Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories
     {
         private readonly IBillingEventRepository billingEventRepository;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BillingEventManager"/> class.
+        /// </summary>
+        /// <param name="billingEventRepository">Event repository.</param>
         public BillingEventManager(
             IBillingEventRepository billingEventRepository)
         {
@@ -35,7 +42,7 @@ namespace Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories
         /// <param name="logger">Optional logger.</param>
         /// <returns>The created event entity, including unique ID and timestamp.</returns>
         public async Task<BillingEvent> CreateEventAsync(
-            BillingAccountInfo account,
+            VsoAccountInfo account,
             EnvironmentInfo environment,
             string eventType,
             object args,
@@ -64,7 +71,7 @@ namespace Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories
         /// <param name="end">Optional end time (UTC), or null to look at all events after the start time.</param>
         /// <param name="logger">Optional logger.</param>
         /// <returns>List of distinct accounts of all billing events within the specified time.</returns>
-        public async Task<IEnumerable<BillingAccountInfo>> GetAccountsAsync(
+        public async Task<IEnumerable<VsoAccountInfo>> GetAccountsAsync(
             DateTime start,
             DateTime? end,
             IDiagnosticsLogger logger)
@@ -101,7 +108,7 @@ namespace Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories
         /// <param name="logger">Optional logger.</param>
         /// <returns>List of billing events matching the parameters.</returns>
         public async Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
-            BillingAccountInfo account,
+            VsoAccountInfo account,
             DateTime start,
             DateTime? end,
             ICollection<string> eventTypes,

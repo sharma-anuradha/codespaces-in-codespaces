@@ -12,7 +12,6 @@ using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
 using Microsoft.VsCloudKernel.Services.EnvReg.Repositories.DocumentDb;
 using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication;
 using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Provider;
-using Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories.Mocks;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Azure.Storage.FileShare;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
@@ -80,7 +79,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 cfg.CreateMap<GitConfigInput, GitConfig>();
                 cfg.CreateMap<EnvironmentRegistrationCallbackInput, EnvironmentRegistrationCallbackOptions>();
                 cfg.CreateMap<EnvironmentRegistrationCallbackPayloadInput, EnvironmentRegistrationCallbackPayloadOptions>();
-                cfg.CreateMap<BillingAccountInput, BillingAccount>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);
@@ -96,7 +94,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             services.AddSingleton<IRegistrationManager, RegistrationManager>();
             services.AddSingleton<IProfileRepository, HttpClientProfileRepository>();
             services.AddSingleton<IWorkspaceRepository, HttpClientWorkspaceRepository>();
-            services.AddSingleton<IAccountManager, AccountManager>();
             ConfigureComputeService(services, appSettings);
 
 
@@ -144,7 +141,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
                 // Use the mock db if we're developing locally
                 services.AddSingleton<IEnvironmentRegistrationRepository, MockEnvironmentRegistrationRepository>();
                 services.AddSingleton<IStorageRegistrationRepository, MockStorageRegistrationRepository>();
-                services.AddSingleton<IBillingAccountRepository, MockBillingAccountRepository>();
 
                 return;
             }
@@ -160,7 +156,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             services.AddDocumentDbCollection<EnvironmentRegistration, IEnvironmentRegistrationRepository, DocumentDbEnvironmentRegistrationRepository>(
                 DocumentDbEnvironmentRegistrationRepository.ConfigureOptions);
             services.AddDocumentDbCollection<FileShare, IStorageRegistrationRepository, DocumentDbSotrageRegistrationRepository>(DocumentDbSotrageRegistrationRepository.ConfigureOptions);
-            services.AddDocumentDbCollection<BillingAccount, IBillingAccountRepository, DocumentDbAccountRepository>(DocumentDbAccountRepository.ConfigureOptions);
         }
 
         private void ConfigureComputeService(IServiceCollection services, AppSettings appSettings)

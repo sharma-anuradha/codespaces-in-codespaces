@@ -4,36 +4,33 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
-using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
-using Microsoft.VsCloudKernel.Services.EnvReg.Repositories.DocumentDb;
-using Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace VsClk.EnvReg.WebApi.Tests
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
 {
     public class BillingEventManagerTests
     {
         private static readonly string subscription = Guid.NewGuid().ToString();
-        private static readonly BillingAccountInfo testAccount = new BillingAccountInfo
+        private static readonly VsoAccountInfo testAccount = new VsoAccountInfo
         {
             Subscription = subscription,
             ResourceGroup = "testRG",
             Name = "testAccount",
             Location = "nowhere"
         };
-        private static readonly BillingAccountInfo testAccount2 = new BillingAccountInfo
+        private static readonly VsoAccountInfo testAccount2 = new VsoAccountInfo
         {
             Subscription = subscription,
             ResourceGroup = "testRG",
             Name = "testAccount2",
             Location = "nowhere"
         };
-        private static readonly BillingAccountInfo testAccount3 = new BillingAccountInfo
+        private static readonly VsoAccountInfo testAccount3 = new VsoAccountInfo
         {
             Subscription = subscription,
             ResourceGroup = "testRG",
@@ -93,8 +90,8 @@ namespace VsClk.EnvReg.WebApi.Tests
                 defaultLogValues: null);
 
             var collectionOptions = new DocumentDbCollectionOptions();
-            DocumentDbBillingEventRepository.ConfigureOptions(collectionOptions);
-            return new DocumentDbBillingEventRepository(
+            BillingEventRepository.ConfigureOptions(collectionOptions);
+            return new BillingEventRepository(
                 Options.Create(collectionOptions),
                 clientProvider,
                 healthProvider,

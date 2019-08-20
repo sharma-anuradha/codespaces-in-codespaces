@@ -1,27 +1,31 @@
-﻿using System;
+﻿// <copyright file="IBillingEventManager.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 
-namespace Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     public interface IBillingEventManager
     {
         Task<BillingEvent> CreateEventAsync(
-            BillingAccountInfo account,
+            VsoAccountInfo account,
             EnvironmentInfo environment,
             string eventType,
             object args,
             IDiagnosticsLogger logger);
 
-        Task<IEnumerable<BillingAccountInfo>> GetAccountsAsync(
+        Task<IEnumerable<VsoAccountInfo>> GetAccountsAsync(
             DateTime start,
             DateTime? end,
             IDiagnosticsLogger logger);
 
         Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
-            BillingAccountInfo account,
+            VsoAccountInfo account,
             DateTime start,
             DateTime? end,
             ICollection<string> eventTypes,

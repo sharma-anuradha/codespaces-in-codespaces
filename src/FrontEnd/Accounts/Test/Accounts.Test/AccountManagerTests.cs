@@ -1,23 +1,15 @@
-﻿using Microsoft.Azure.Management.BatchAI.Fluent.Models;
-using Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore;
-using Microsoft.VsCloudKernel.Services.EnvReg.Repositories;
-using Microsoft.VsCloudKernel.Services.VsClk.EnvReg.Repositories.Mocks;
-using Microsoft.VsSaaS.Diagnostics;
-using System;
+﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-using VsClk.EnvReg.Repositories;
+using Microsoft.VsSaaS.Diagnostics;
 using Xunit;
 
-namespace VsClk.EnvReg.WebApi.Tests
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
 {
     public class AccountManagerTests
     {
-        private readonly IBillingAccountRepository billingAccountRepository;
+        private readonly IAccountRepository VsoAccountRepository;
         private readonly AccountManager accountManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger;
@@ -28,15 +20,15 @@ namespace VsClk.EnvReg.WebApi.Tests
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
 
-            billingAccountRepository = new MockBillingAccountRepository();
-            accountManager = new AccountManager(billingAccountRepository);
+            VsoAccountRepository = new MockAccountRepository();
+            accountManager = new AccountManager(VsoAccountRepository);
         }
 
-        private BillingAccount GenerateAccount(string name, string subscriptionOption = null)
+        private VsoAccount GenerateAccount(string name, string subscriptionOption = null)
         {
-            return new BillingAccount
+            return new VsoAccount
             {
-                Account = new BillingAccountInfo
+                Account = new VsoAccountInfo
                 {
                     Subscription = subscriptionOption ?? subscription,
                     ResourceGroup = "myRG",

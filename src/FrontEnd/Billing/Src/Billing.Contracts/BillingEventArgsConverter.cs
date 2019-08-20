@@ -1,12 +1,17 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿// <copyright file="BillingEventArgsConverter.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
 
-namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
+using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     public class BillingEventArgsConverter : JsonConverter
     {
         public override bool CanRead => true;
+
         public override bool CanWrite => false;
 
         public override object ReadJson(
@@ -18,7 +23,6 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
             {
                 // This converter may support other event args types in the future
                 // by checking for key properties of those types.
-
                 if (obj.ContainsKey("oldValue") && obj.ContainsKey("newValue"))
                 {
                     return obj.ToObject<BillingStateChange>();
@@ -34,6 +38,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
         }
 
         public override bool CanConvert(Type objectType) => throw new NotSupportedException();
+
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) =>
             throw new NotSupportedException();
     }

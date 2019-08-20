@@ -1,6 +1,10 @@
-﻿namespace Microsoft.VsCloudKernel.Services.EnvReg.Models.DataStore
+﻿// <copyright file="VsoAccountExtensions.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
 {
-    public static class BillingAccountExtensions
+    public static class VsoAccountExtensions
     {
         // TODO: Update these identifiers.
         public const string ProviderName = "Microsoft.VSOnline";
@@ -11,13 +15,13 @@
         /// Gets the fully-qualified Azure resource path of the account, starting with "/subscriptions/...",
         /// and including the api-version query parameter.
         /// </summary>
-        public static string GetResourcePath(this BillingAccount account) => account.Account?.GetResourcePath();
+        public static string GetResourcePath(this VsoAccount account) => account.Account?.GetResourcePath();
 
         /// <summary>
         /// Gets the fully-qualified Azure resource path of the account, starting with "/subscriptions/...",
         /// and including the api-version query parameter.
         /// </summary>
-        public static string GetResourcePath(this BillingAccountInfo account)
+        public static string GetResourcePath(this VsoAccountInfo account)
         {
             Requires.NotNull(account, nameof(account));
             Requires.NotNullOrWhiteSpace(account.Subscription, nameof(account.Subscription));

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// <copyright file="ResourceProviderErrorResponse.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
 
-namespace VsClk.EnvReg.Models.Errors
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
     /// The error class used by the ResourceProvider to send properly formatted responses back to RPaaS.
@@ -18,18 +18,5 @@ namespace VsClk.EnvReg.Models.Errors
         /// Gets or sets the error object.
         /// </summary>
         public ResourceProviderErrorInfo Error { get; set; }
-    }
-
-    public class ResourceProviderErrorInfo
-    {
-        /// <summary>
-        /// Gets or sets the error code.
-        /// </summary>
-        public string Code { get; set; }
-
-        /// <summary>
-        /// Gets or sets the error message.
-        /// </summary>
-        public string Message { get; set; }
     }
 }
