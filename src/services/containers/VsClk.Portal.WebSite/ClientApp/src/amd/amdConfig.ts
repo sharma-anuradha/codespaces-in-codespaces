@@ -27,6 +27,7 @@ export const amdConfig = () => {
             'semver-umd': `${
                 window.location.origin
             }/static/web-standalone/node_modules/semver-umd/lib/semver-umd.js`,
+            "@microsoft/applicationinsights-web":`${window.location.origin}/static/web-standalone/node_modules/@microsoft/applicationinsights-web/dist/applicationinsights-web.js`
         },
     });
 

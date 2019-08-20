@@ -69,6 +69,7 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchState> {
                 remoteAuthority: `localhost`,
                 webviewEndpoint: `http://localhost`,
                 webSocketFactory: VSLSWebSocketFactory,
+                connectionToken: WEB_EMBED_PRODUCT_JSON.commit
             };
 
             trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);

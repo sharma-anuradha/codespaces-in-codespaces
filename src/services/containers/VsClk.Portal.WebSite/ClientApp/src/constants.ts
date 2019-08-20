@@ -6,8 +6,13 @@ export const DEFAULT_EXTENSIONS = [
 ];
 
 export const PACKAGE_JSON = require('../package.json');
-export const WEB_EMBED_PRODUCT_JSON = require('./product-vscode-web.json');
 
+export interface IProductJSON {
+    commit: string;
+    quality: 'stable' | 'insider';
+}
+
+export const WEB_EMBED_PRODUCT_JSON = require('./product-vscode-web.json') as IProductJSON;
 
 const VSLS_PROD_API_URI = 'http://prod.liveshare.vsengsaas.visualstudio.com';
 const VSLS_DEV_API_URI = '/vsls-api';
