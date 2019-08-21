@@ -6,10 +6,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
 {
     public static class VsoAccountExtensions
     {
-        // TODO: Update these identifiers.
         public const string ProviderName = "Microsoft.VSOnline";
-        public const string AccountResourceType = "vsonlineaccount";
-        public const string ApiVersion = "2019-07";
+        public const string AccountResourceType = "accounts";
+        public const string ApiVersion = "2019-07-01";
 
         /// <summary>
         /// Gets the fully-qualified Azure resource path of the account, starting with "/subscriptions/...",

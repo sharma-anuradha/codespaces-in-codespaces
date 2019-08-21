@@ -21,8 +21,11 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 {
@@ -130,9 +133,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 throw new InvalidOperationException("Cannot use mocks outside of local development");
             }
 
-            // Add the environment manager and the cloud cloud environment repository.
-            services.AddEnvironmentManager(
-                appSettings.UseMocksForLocalDevelopment);
+            // Add the environment manager and the cloud environment repository.
+            services.AddEnvironmentManager(appSettings.UseMocksForLocalDevelopment);
+
+            // Add the account manager and the account management repository
+            services.AddAccountManager(appSettings.UseBackEndForLocalDevelopment);
 
             // Add the Live Share user profile and workspace providers.
             services
@@ -228,6 +233,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Frameworks
             app.UseMvc();
+            app.UseMvc(ConfigureRoutes);
 
             // Swagger/OpenAPI
             app.UseSwagger(x =>
@@ -254,7 +260,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             });
         }
 
-        private static bool IsRunningInAzure()
+        private void ConfigureRoutes(IRouteBuilder routeBuilder)
+        {
+            ConfigureRoutesForAccountManagementController(routeBuilder);
+        }
+
+        private void ConfigureRoutesForAccountManagementController(IRouteBuilder routeBuilder)
+        {
+            routeBuilder.MapRoute(
+                name: "OnResourceCreationValidate",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate",
+                defaults: new { controller = "Account", action = "OnResourceCreationValidate" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceCreationBegin",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}",
+                defaults: new { controller = "Account", action = "OnResourceCreationBegin" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "PUT" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceCreationCompleted",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted",
+                defaults: new { controller = "Account", action = "OnResourceCreationCompleted" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
+
+            routeBuilder.MapRoute(
+               name: "OnResourceReadValidate",
+               template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate",
+               defaults: new { controller = "Account", action = "OnResourceReadValidate" },
+               constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceListGet",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}",
+                defaults: new { controller = "Account", action = "OnResourceListGet" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceListGetBySubscription",
+                template: "subscriptions/{subscriptionId}/providers/{providerNamespace}/{resourceType}",
+                defaults: new { controller = "Account", action = "OnResourceListGetBySubscription" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
+
+            routeBuilder.MapRoute(
+                name: "OnResourceDeletionValidate",
+                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate",
+                defaults: new { controller = "Account", action = "OnResourceDeletionValidate" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
+        }
+    
+    private static bool IsRunningInAzure()
         {
             return Environment.GetEnvironmentVariable(ServiceConstants.RunningInAzureEnvironmentVariable) == ServiceConstants.RunningInAzureEnvironmentVariableValue;
         }

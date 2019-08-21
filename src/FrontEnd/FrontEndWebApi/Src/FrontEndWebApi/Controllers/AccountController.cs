@@ -14,24 +14,34 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Newtonsoft.Json;
 using Sku = Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Sku;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
+    /// <summary>
+    /// The VSO Account api called by RPSaaS.
+    /// </summary>
     [FriendlyExceptionFilter]
+    [LoggingBaseName("accounts_controller")]
     public class AccountController : ControllerBase
     {
         private readonly IAccountManager accountManager;
 
         private readonly ICurrentUserProvider currentUserProvider;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AccountController"/> class.
+        /// </summary>
         public AccountController(IAccountManager accountManager, ICurrentUserProvider currentUserProvider, IMapper mapper)
         {
             this.accountManager = accountManager;
             this.currentUserProvider = currentUserProvider;
         }
 
+        /// <summary>
+        /// This method will be called by RPSaaS before they create the resource in their DB to validate inputs.
+        /// </summary>
+        /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
         [HttpPost]
         [ActionName("OnResourceCreationValidate")]
         public Task<IActionResult> OnResourceCreationValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
@@ -66,6 +76,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             return Task.FromResult<IActionResult>(new OkObjectResult(string.Empty));
         }
 
+        /// <summary>
+        /// This method will be called by RPSaaS Service before they create the resource in their DB.
+        /// </summary>
+        /// <returns>Returns an Http status code and a VSOAccount object</returns>
         [HttpPut]
         [ActionName("OnResourceCreationBegin")]
         public async Task<IActionResult> OnResourceCreationBegin(
@@ -127,6 +141,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// This method will be called by RPSaaS Service after they create the resource in their DB.
+        /// This method could be used to start billing.
+        /// </summary>
+        /// <returns>Returns a Http status code and message</returns>
         [HttpPost]
         [ActionName("OnResourceCreationCompleted")]
         public Task<IActionResult> OnResourceCreationCompleted(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
@@ -136,6 +155,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             return Task.FromResult<IActionResult>(new OkObjectResult(string.Empty));
         }
 
+        /// <summary>
+        /// This method will be called by RPSaaS Service before they delete the resource in their DB.
+        /// </summary>
+        /// <returns>Returns a Http status code and message.</returns>
         [HttpPost]
         [ActionName("OnResourceDeletionValidate")]
         public async Task<IActionResult> OnResourceDeletionValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
@@ -192,6 +215,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets a list of VSO Account objects filtered by the input subscriptionID and resourceGroup.
+        /// </summary>
+        /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [HttpGet]
         [ActionName("OnResourceListGet")]
         public async Task<IActionResult> OnResourceListGet(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType)
@@ -231,6 +258,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets a list of VSO Account objects filtered by the input subscriptionID.
+        /// </summary>
+        /// <returns>Returns an Http status code and a list of VSO Account objects filtering by subscriptionID.</returns>
         [HttpGet]
         [ActionName("OnResourceListGetBySubscription")]
         public async Task<IActionResult> OnResourceListGetBySubscription(string subscriptionId, string providerNamespace, string resourceType)
@@ -267,6 +298,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets a VSO Account object.
+        /// </summary>
+        /// <returns>Returns a Http status code and a VSO Account object.</returns>
         [HttpGet]
         [ActionName("OnResourceReadValidate")]
         public Task<IActionResult> OnResourceReadValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
