@@ -14,7 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
     <ProjectReference Include="..\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
-    <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
     
   </ItemGroup>

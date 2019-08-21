@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemCatalog.Extensions", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{E869788E-C474-4A4B-8B19-58F2AC2E0F91}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "..\..\Common\Src\Common\Common.csproj", "{CF88B9A7-94C5-4350-A526-DEC6FD6D7732}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "..\..\Common\Src\Common\BackEnd.Common.csproj", "{CF88B9A7-94C5-4350-A526-DEC6FD6D7732}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Abstractions", "..\..\Common\Src\Common.Abstractions\Common.Abstractions.csproj", "{7E5DDE0E-93DE-4F84-90A7-82FE0B982987}"
 EndProject

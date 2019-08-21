@@ -19,6 +19,20 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
     public static class LoggingExtensions
     {
         /// <summary>
+        /// Gets the logging base name for the given type. Returns the value of the [LogginBaseName] attribute, or if not specified, the type name if not.
+        /// </summary>
+        /// <param name="class">The implementation class type that emitst a logging message.</param>
+        /// <returns>The logging message base name.</returns>
+        public static string GetLogMessageBaseName(this Type @class)
+        {
+            Requires.NotNull(@class, nameof(@class));
+            var loggingBaseNameAttribute = @class.GetCustomAttributes(typeof(LoggingBaseNameAttribute), inherit: true).OfType<LoggingBaseNameAttribute>().FirstOrDefault();
+            var loggingBaseName = loggingBaseNameAttribute?.LoggingBaseName;
+            loggingBaseName = loggingBaseName ?? @class.Name;
+            return loggingBaseName.ToLowerInvariant();
+        }
+
+        /// <summary>
         /// Format a log info message.
         /// </summary>
         /// <param name="class">The implementation class type that emitst a logging message.</param>
@@ -53,20 +67,6 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             var methodNamePart = string.IsNullOrEmpty(methodName) ? string.Empty : $"_{methodName}";
             var errorPart = !isError ? string.Empty : "_error";
             return $"{loggingBaseName}{methodNamePart}{errorPart}".ToLowerInvariant();
-        }
-
-        /// <summary>
-        /// Gets the logging base name for the given type. Returns the value of the [LogginBaseName] attribute, or if not specified, the type name if not.
-        /// </summary>
-        /// <param name="class">The implementation class type that emitst a logging message.</param>
-        /// <returns>The logging message base name.</returns>
-        public static string GetLogMessageBaseName(this Type @class)
-        {
-            Requires.NotNull(@class, nameof(@class));
-            var loggingBaseNameAttribute = @class.GetCustomAttributes(typeof(LoggingBaseNameAttribute), inherit: true).OfType<LoggingBaseNameAttribute>().FirstOrDefault();
-            var loggingBaseName = loggingBaseNameAttribute?.LoggingBaseName;
-            loggingBaseName = loggingBaseName ?? @class.Name;
-            return loggingBaseName.ToLowerInvariant();
         }
     }
 }

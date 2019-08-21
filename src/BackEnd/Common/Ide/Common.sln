@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Src\Common\Common.csproj", "{21A6E6DB-C4D1-48A6-8DAA-BEF46C700794}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Src\Common\BackEnd.Common.csproj", "{21A6E6DB-C4D1-48A6-8DAA-BEF46C700794}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Abstractions", "..\Src\Common.Abstractions\Common.Abstractions.csproj", "{17F638BA-7CAA-4B4E-93B3-016A01D5C7C8}"
 EndProject

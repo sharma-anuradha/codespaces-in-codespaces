@@ -20,7 +20,7 @@
     <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
     <ProjectReference Include="..\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
     <ProjectReference Include="..\ResourceBroker.Models\ResourceBroker.Models.csproj" />
-    <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\Capacity\src\Capacity.Contracts\Capacity.Contracts.csproj" />
   </ItemGroup>
 

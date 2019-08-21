@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
     <ProjectReference Include="..\Capacity.Contracts\Capacity.Contracts.csproj" />
   </ItemGroup>
 

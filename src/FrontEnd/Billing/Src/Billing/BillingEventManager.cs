@@ -8,6 +8,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -51,17 +52,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Requires.NotNull(account, nameof(account));
             Requires.NotNullOrEmpty(eventType, nameof(eventType));
 
-            var billingEvent = new BillingEvent
+            var duration = logger.StartDuration();
+            try
             {
-                Id = Guid.NewGuid().ToString(),
-                Time = DateTime.UtcNow,
-                Account = account,
-                Environment = environment,
-                Type = eventType,
-                Args = args,
-            };
-            billingEvent = await this.billingEventRepository.CreateAsync(billingEvent, logger);
-            return billingEvent;
+                var billingEvent = new BillingEvent
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Time = DateTime.UtcNow,
+                    Account = account,
+                    Environment = environment,
+                    Type = eventType,
+                    Args = args,
+                };
+                billingEvent = await this.billingEventRepository.CreateAsync(billingEvent, logger);
+
+                logger.AddDuration(duration)
+                    .AddAccount(account)
+                    .LogInfo(GetType().FormatLogMessage(nameof(CreateEventAsync)));
+                return billingEvent;
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .AddAccount(account)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEventAsync)), ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -80,21 +96,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Requires.Argument(
                 end == null || end.Value.Kind == DateTimeKind.Utc, nameof(end), "DateTime values must be UTC.");
 
-            Expression<Func<BillingEvent, bool>> where;
-            if (end == null)
+            var duration = logger.StartDuration();
+            try
             {
-                // Optimize common queries with no end date.
-                where = bev => start <= bev.Time;
-            }
-            else
-            {
-                where = bev => start <= bev.Time && bev.Time < end.Value;
-            }
+                Expression<Func<BillingEvent, bool>> where;
+                if (end == null)
+                {
+                    // Optimize common queries with no end date.
+                    where = bev => start <= bev.Time;
+                }
+                else
+                {
+                    where = bev => start <= bev.Time && bev.Time < end.Value;
+                }
 
-            var accounts = await this.billingEventRepository.QueryAsync(
-                q => q.Where(where).Select(bev => bev.Account).Distinct(),
-                logger);
-            return accounts;
+                var accounts = await this.billingEventRepository.QueryAsync(
+                    q => q.Where(where).Select(bev => bev.Account).Distinct(),
+                    logger);
+
+                logger.AddDuration(duration)
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountsAsync)));
+                return accounts;
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountsAsync)), ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -119,56 +148,70 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Requires.Argument(
                 end == null || end.Value.Kind == DateTimeKind.Utc, nameof(end), "DateTime values must be UTC.");
 
-            Expression<Func<BillingEvent, bool>> where;
-            if (eventTypes == null)
+            var duration = logger.StartDuration();
+            try
             {
-                // Optimize common queries with no event types or end date.
-                if (end == null)
+                Expression<Func<BillingEvent, bool>> where;
+                if (eventTypes == null)
                 {
-                    where = bev => bev.Account == account &&
-                        start <= bev.Time;
+                    // Optimize common queries with no event types or end date.
+                    if (end == null)
+                    {
+                        where = bev => bev.Account == account &&
+                            start <= bev.Time;
+                    }
+                    else
+                    {
+                        where = bev => bev.Account == account &&
+                            start <= bev.Time && bev.Time < end.Value;
+                    }
+                }
+                else if (eventTypes.Count == 1)
+                {
+                    string eventType = eventTypes.Single();
+                    if (end == null)
+                    {
+                        where = bev => bev.Account == account &&
+                            start <= bev.Time && bev.Type == eventType;
+                    }
+                    else
+                    {
+                        where = bev => bev.Account == account &&
+                            start <= bev.Time && bev.Time < end.Value && bev.Type == eventType;
+                    }
                 }
                 else
                 {
-                    where = bev => bev.Account == account &&
-                        start <= bev.Time && bev.Time < end.Value;
+                    if (end == null)
+                    {
+                        where = bev => bev.Account == account &&
+                            start <= bev.Time && eventTypes.Contains(bev.Type);
+                    }
+                    else
+                    {
+                        where = bev => bev.Account == account &&
+                            start <= bev.Time && bev.Time < end.Value && eventTypes.Contains(bev.Type);
+                    }
                 }
-            }
-            else if (eventTypes.Count == 1)
-            {
-                string eventType = eventTypes.Single();
-                if (end == null)
-                {
-                    where = bev => bev.Account == account &&
-                        start <= bev.Time && bev.Type == eventType;
-                }
-                else
-                {
-                    where = bev => bev.Account == account &&
-                        start <= bev.Time && bev.Time < end.Value && bev.Type == eventType;
-                }
-            }
-            else
-            {
-                if (end == null)
-                {
-                    where = bev => bev.Account == account &&
-                        start <= bev.Time && eventTypes.Contains(bev.Type);
-                }
-                else
-                {
-                    where = bev => bev.Account == account &&
-                        start <= bev.Time && bev.Time < end.Value && eventTypes.Contains(bev.Type);
-                }
-            }
 
-            // This should be a single-partition query.
-            // The billing event collection is partitioned on subscription, and all queries
-            // filter on account, which includes the subscription property.
-            var billingEvents = await this.billingEventRepository.QueryAsync(
-                q => q.Where(where).OrderBy(bev => bev.Time), logger);
+                // This should be a single-partition query.
+                // The billing event collection is partitioned on subscription, and all queries
+                // filter on account, which includes the subscription property.
+                var billingEvents = await this.billingEventRepository.QueryAsync(
+                    q => q.Where(where).OrderBy(bev => bev.Time), logger);
 
-            return billingEvents;
+                logger.AddDuration(duration)
+                    .AddAccount(account)
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountEventsAsync)));
+                return billingEvents;
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .AddAccount(account)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountEventsAsync)), ex.Message);
+                throw;
+            }
         }
     }
 }

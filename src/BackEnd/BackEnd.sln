@@ -45,7 +45,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Abstractions", "Comm
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Test", "Common\Test\Common.Test\Common.Test.csproj", "{5DE6DF94-CCA0-402E-A425-27AFFA12F4A4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Src\Common\Common.csproj", "{624B4141-D3D1-4FF6-BF6E-BE909025E279}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Src\Common\BackEnd.Common.csproj", "{624B4141-D3D1-4FF6-BF6E-BE909025E279}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Models", "Common\Src\Common.Models\Common.Models.csproj", "{EE7BFE26-1BF2-4B61-9CA6-761421CBE982}"
 EndProject
@@ -76,6 +76,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Capacity.Contracts", "Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj", "{26E1D1CE-1305-41C2-9873-BDB326949F27}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Capacity.Test", "Capacity\Test\Capacity.Test\Capacity.Test.csproj", "{D122B7E7-21BC-4DC1-A42E-91D63916A070}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Common\Src\Common\Common.csproj", "{53C661D1-6F60-4F23-8B08-95F4479B913C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -483,6 +485,18 @@ Global
 		{D122B7E7-21BC-4DC1-A42E-91D63916A070}.Release|x64.Build.0 = Release|Any CPU
 		{D122B7E7-21BC-4DC1-A42E-91D63916A070}.Release|x86.ActiveCfg = Release|Any CPU
 		{D122B7E7-21BC-4DC1-A42E-91D63916A070}.Release|x86.Build.0 = Release|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Debug|x64.Build.0 = Debug|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Debug|x86.Build.0 = Debug|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Release|x64.ActiveCfg = Release|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Release|x64.Build.0 = Release|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Release|x86.ActiveCfg = Release|Any CPU
+		{53C661D1-6F60-4F23-8B08-95F4479B913C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

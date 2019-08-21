@@ -31,7 +31,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpContracts", "..\Common\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackEndWebApi", "..\BackEnd\BackEndWebApi\Src\BackEndWebApi\BackEndWebApi.csproj", "{D859E510-C4CC-4C20-9C28-0A693AB063F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\BackEnd\Common\Src\Common\Common.csproj", "{BE0B76B3-F389-4BC1-B02A-8B9F2E32290C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\BackEnd\Common\Src\Common\BackEnd.Common.csproj", "{BE0B76B3-F389-4BC1-B02A-8B9F2E32290C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Abstractions", "..\BackEnd\Common\Src\Common.Abstractions\Common.Abstractions.csproj", "{473315B8-E1B1-41D3-A552-202CD51B3DF9}"
 EndProject
@@ -92,6 +92,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Capacity.Contracts", "..\BackEnd\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj", "{8C6A7B21-C084-48ED-881D-9A4FDE23CF97}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Capacity.Test", "..\BackEnd\Capacity\Test\Capacity.Test\Capacity.Test.csproj", "{44E59550-F85D-4B05-9C64-B49DFF8BB73B}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Billing", "..\FrontEnd\Billing\Src\Billing\Billing.csproj", "{EE259503-A4A8-447A-BF56-2FD627C78917}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Billing.Contracts", "..\FrontEnd\Billing\Src\Billing.Contracts\Billing.Contracts.csproj", "{337FC818-D665-43FB-99A7-A9FA000F9589}"
@@ -103,6 +104,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Accounts.Contracts", "..\FrontEnd\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj", "{EA842DEA-F4D9-4567-B83B-4566E22122CA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Accounts.Test", "..\FrontEnd\Accounts\Test\Accounts.Test\Accounts.Test.csproj", "{27365388-0910-4E79-B526-91B933106DB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Common\Src\Common\Common.csproj", "{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -729,5 +732,17 @@ Global
 		{27365388-0910-4E79-B526-91B933106DB4}.Release|x64.Build.0 = Release|Any CPU
 		{27365388-0910-4E79-B526-91B933106DB4}.Release|x86.ActiveCfg = Release|Any CPU
 		{27365388-0910-4E79-B526-91B933106DB4}.Release|x86.Build.0 = Release|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Debug|x64.Build.0 = Debug|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Debug|x86.Build.0 = Debug|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|x64.ActiveCfg = Release|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|x64.Build.0 = Release|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|x86.ActiveCfg = Release|Any CPU
+		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

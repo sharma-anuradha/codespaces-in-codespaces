@@ -17,8 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\Capacity\Src\Capacity\Capacity.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Extensions\ComputeVirtualMachineProvider.Extensions.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />

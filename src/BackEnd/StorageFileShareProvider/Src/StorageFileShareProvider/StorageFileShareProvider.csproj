@@ -13,7 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj" />
     <ProjectReference Include="..\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
-    <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog\SystemCatalog.csproj" />
     <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
   </ItemGroup>

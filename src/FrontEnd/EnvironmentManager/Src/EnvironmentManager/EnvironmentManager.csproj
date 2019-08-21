@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
