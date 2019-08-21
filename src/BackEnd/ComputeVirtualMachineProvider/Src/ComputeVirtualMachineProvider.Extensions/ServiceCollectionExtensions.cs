@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 
             // Core services
             services.AddSingleton<IComputeProvider, VirtualMachineProvider>();
-            services.AddSingleton<IDeploymentManager, AzureDeploymentManager>();
+            services.AddSingleton<IDeploymentManager, LinuxVirtualMachineManager>();
 
             // External Service
             if (appSettings.UseMocksForExternalDependencies)

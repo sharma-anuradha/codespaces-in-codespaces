@@ -1,4 +1,4 @@
-﻿// <copyright file="AzureDeploymentManager.cs" company="Microsoft">
+﻿// <copyright file="LinuxVirtualMachineManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,16 +8,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
-using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
-using Microsoft.Rest.Azure;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -30,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     /// <summary>
     /// Create, update and deletes Azure virtual machines.
     /// </summary>
-    public class AzureDeploymentManager : IDeploymentManager
+    public class LinuxVirtualMachineManager : IDeploymentManager
     {
         private const string Key = "value";
         private const string ExtensionName = "update-vm";
@@ -44,10 +40,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private readonly IAzureClientFactory clientFactory;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AzureDeploymentManager"/> class.
+        /// Initializes a new instance of the <see cref="LinuxVirtualMachineManager"/> class.
         /// </summary>
         /// <param name="clientFactory">Builds Azure clients.</param>
-        public AzureDeploymentManager(IAzureClientFactory clientFactory)
+        public LinuxVirtualMachineManager(IAzureClientFactory clientFactory)
         {
             this.clientFactory = clientFactory;
         }
@@ -333,7 +329,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
         private static string GetEmbeddedResource(string resourceName)
         {
-            string namespaceString = typeof(AzureDeploymentManager).Namespace;
+            string namespaceString = typeof(LinuxVirtualMachineManager).Namespace;
             var fullResourceName = $"{namespaceString}.Templates.{resourceName}";
             var assembly = Assembly.GetExecutingAssembly();
             using (Stream stream = assembly.GetManifestResourceStream(fullResourceName))

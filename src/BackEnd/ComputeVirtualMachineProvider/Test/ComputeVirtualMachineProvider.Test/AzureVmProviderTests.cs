@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         //[Fact]
         public async Task VirtualMachine_Create_Start_Ok()
         {
-            var azureDeploymentManager = new AzureDeploymentManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
 
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
@@ -80,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         // [Fact]
         public async Task VirtualMachine_Create_Multiple_VM_Ok()
         {
-            var azureDeploymentManager = new AzureDeploymentManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
             AzureLocation location = testContext.Location;
@@ -109,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         [Fact(Skip = "integration test")]
         public async Task Start_Compute_Ok()
         {
-            var azureDeploymentManager = new AzureDeploymentManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             var fileShareInfo = new ShareConnectionInfo("storageaccount1",
                                                        "accountkey",
@@ -137,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task Delete_Compute_Ok()
         {
             var deleteTimer = Stopwatch.StartNew();
-            var azureDeploymentManager = new AzureDeploymentManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             VirtualMachineProviderDeleteInput input = new VirtualMachineProviderDeleteInput
             {
