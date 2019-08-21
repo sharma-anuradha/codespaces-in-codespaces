@@ -40,7 +40,7 @@ resize2fs -fp /mnt/$CLOUDENVSTORAGE_SHARE/$CLOUDENVSTORAGE_FILE ${STORAGE_SIZE_I
 
 losetup -Pf /mnt/$CLOUDENVSTORAGE_SHARE/$CLOUDENVSTORAGE_FILE
 LOOP_DEVICE=`losetup | grep "/mnt/$CLOUDENVSTORAGE_SHARE/$CLOUDENVSTORAGE_FILE" | cut -d" " -f1`
-mount "$LOOP_DEVICE" /var/lib/docker -o nosuid,nodev
+mount "$LOOP_DEVICE" /var/lib/docker -o nodev
 
 # Start docker again
 systemctl start docker
