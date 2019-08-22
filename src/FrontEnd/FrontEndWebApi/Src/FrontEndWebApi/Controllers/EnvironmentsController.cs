@@ -179,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 // TODO HACK: specify a temporary location. Old clients don't specify one.
                 if (cloudEnvironment.Location == default)
                 {
-                    cloudEnvironment.Location = AzureLocation.EastUs;
+                    cloudEnvironment.Location = AzureLocation.WestUs2;
                 }
 
                 var currentUserId = CurrentUserProvider.GetProfileId();
