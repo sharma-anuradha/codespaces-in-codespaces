@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         protected override string TargetName => "JobCreateStorage";
 
         /// <inheritdoc/>
-        protected override ResourceType TargetType => ResourceType.ComputeVM;
+        protected override ResourceType TargetType => ResourceType.StorageFileShare;
 
         private IStorageProvider StorageProvider { get; }
 

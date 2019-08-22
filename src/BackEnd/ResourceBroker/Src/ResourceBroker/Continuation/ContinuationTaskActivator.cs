@@ -40,12 +40,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         public async Task<ContinuationTaskMessageHandlerResult> Execute(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
             // Run the core continuation
-            var inpuut = new ContinuationTaskMessageHandlerInput
+            var input = new ContinuationTaskMessageHandlerInput
             {
                 HandlerInput = payload.Input,
                 Metadata = payload.Metadata,
             };
-            var result = await handler.Continue(inpuut, logger, payload.ContinuationToken);
+            var result = await handler.Continue(input, logger, payload.ContinuationToken);
 
             // If we have another result pending put onto queue
             if (!string.IsNullOrEmpty(result.HandlerResult.ContinuationToken))
