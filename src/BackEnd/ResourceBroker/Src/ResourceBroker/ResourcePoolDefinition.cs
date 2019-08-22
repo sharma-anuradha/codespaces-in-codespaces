@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// Builds the name of the resource.
         /// </summary>
         /// <returns>Returns the resource name.</returns>
-        public string BuildName()
+        public virtual string BuildName()
         {
             return $"{SkuName}-{Type}-{Location}";
         }

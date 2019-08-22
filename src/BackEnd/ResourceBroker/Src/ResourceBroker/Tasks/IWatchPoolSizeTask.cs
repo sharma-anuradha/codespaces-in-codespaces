@@ -2,11 +2,13 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
-    public interface IWatchPoolSizeTask
+    public interface IWatchPoolSizeTask : IDisposable
     {
         /// <summary>
         /// This job, for each resource sku we have, will move through those resoruces randomly
@@ -17,6 +19,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// to the queue.
         /// </summary>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task RunAsync();
+        Task<bool> RunAsync(IDiagnosticsLogger rootLogger);
     }
 }

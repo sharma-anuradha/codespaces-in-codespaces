@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
@@ -56,19 +57,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             // Core services
             services.AddSingleton<IResourceBroker, ResourceBroker>();
             services.AddSingleton<IResourcePool, ResourcePool>();
-            services.AddSingleton<IPutResourceCreateOnJobQueueTask, PutResourceCreateOnJobQueueTask>();
             services.AddSingleton<ResourceScalingBroker>();
             services.AddSingleton<IResourceScalingBroker>(x => x.GetRequiredService<ResourceScalingBroker>());
             services.AddSingleton<IResourceScalingStore>(x => x.GetRequiredService<ResourceScalingBroker>());
+
+            // Continuation
+            services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();
+            services.AddSingleton<IContinuationTaskMessagePump, ContinuationTaskMessagePump>();
+            services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();
+            services.AddSingleton<IContinuationTaskActivator, ContinuationTaskActivator>();
+            services.AddTransient<IContinuationTaskWorker, ContinuationTaskWorker>();
 
             // Jobs
             services.AddSingleton<IAsyncBackgroundWarmup, ResourceRegisterJobs>();
 
             // Tasks
             services.AddSingleton<IStartComputeTask, StartComputeTask>();
+            services.AddSingleton<CreateComputeContinuationHandler>();
+            services.AddSingleton<ICreateComputeContinuationHandler>(x => x.GetRequiredService<CreateComputeContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateComputeContinuationHandler>());
+            services.AddSingleton<CreateStorageContinuationHandler>();
+            services.AddSingleton<ICreateStorageContinuationHandler>(x => x.GetRequiredService<CreateStorageContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateStorageContinuationHandler>());
 
             // Job Registration
-            services.AddSingleton<WatchPoolSizeTask>();
+            services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
 
             if (appSettings.UseMocksForResourceProviders)
             {
@@ -119,7 +132,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddHangfireServer(configuration => configuration
                 .Queues = new string[]
                     {
-                        WatchPoolSizeTask.QueueName,
                         MockResourceJobQueueRepository.QueueName,
                         ResourceRegisterJobs.QueueName,
                         StartComputeTask.QueueName,

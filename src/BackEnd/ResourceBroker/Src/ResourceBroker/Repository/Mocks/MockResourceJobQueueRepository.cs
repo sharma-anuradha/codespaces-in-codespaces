@@ -3,13 +3,11 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.States;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
@@ -61,8 +59,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         private Random Random { get; }
 
         /// <inheritdoc/>
-        public Task AddAsync(string id, IDiagnosticsLogger logger)
+        public Task AddAsync(string id, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
+            // TODO: Delay add to queue if needed
+
             BackgroundJobs.Create(() => AddToQueue(id), EnqueuedState);
 
             return Task.CompletedTask;
@@ -110,6 +110,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             resource.UpdateProvisioningStatus(ResourceProvisioningStatus.Completed);
 
             await ResourceRepository.UpdateAsync(resource, Logger);
+        }
+
+        public Task<IEnumerable<IResourceJobQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IResourceJobQueueMessage> GetAsync(IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteAsync(IResourceJobQueueMessage message, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
         }
     }
 }

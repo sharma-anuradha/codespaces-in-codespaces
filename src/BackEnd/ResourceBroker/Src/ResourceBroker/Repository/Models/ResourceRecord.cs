@@ -76,33 +76,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public ResourceProvisioningStatus ProvisioningStatus { get; protected set; }
+        public ResourceProvisioningStatus? ProvisioningStatus { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? ProvisioningStatusChanged { get; protected set; }
+        public DateTime? ProvisioningStatusChanged { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public IList<ResourceProvisioningStatusChanges> ProvisioningStatusChanges { get; protected set; }
+        public IList<ResourceProvisioningStatusChanges> ProvisioningStatusChanges { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public ResourceStartingStatus? StartingStatus { get; protected set; }
+        public ResourceStartingStatus? StartingStatus { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? StartingStatusChanged { get; protected set; }
+        public DateTime? StartingStatusChanged { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public IList<ResourceStartingStatusChanges> StartingStatusChanges { get; protected set; }
+        public IList<ResourceStartingStatusChanges> StartingStatusChanges { get; set; }
 
         /// <summary>
         /// 

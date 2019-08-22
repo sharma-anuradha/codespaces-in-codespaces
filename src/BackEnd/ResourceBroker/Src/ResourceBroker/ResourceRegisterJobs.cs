@@ -2,9 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
-using Hangfire;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
@@ -24,34 +25,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
         /// </summary>
-        /// <param name="recurringJobManager">The job manager that runs the scheduled jobs.</param>
         /// <param name="watchPoolSizeJob">The <see cref="WatchPoolSizeJob"/> job that
         /// needs to be run.</param>
+        /// <param name="continuationTaskWorkerPoolManager"></param>
+        /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public ResourceRegisterJobs(
-            IRecurringJobManager recurringJobManager,
-            WatchPoolSizeTask watchPoolSizeJob)
+            IWatchPoolSizeTask watchPoolSizeJob,
+            IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
+            ITaskHelper taskHelper)
         {
-            RecurringJobManager = recurringJobManager;
             WatchPoolSizeJob = watchPoolSizeJob;
+            ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
+            TaskHelper = taskHelper;
         }
 
-        private IRecurringJobManager RecurringJobManager { get; }
+        private IWatchPoolSizeTask WatchPoolSizeJob { get; }
 
-        private WatchPoolSizeTask WatchPoolSizeJob { get; }
+        private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
-        private RecurringJobOptions RecurringJobOptions { get; }
+        private ITaskHelper TaskHelper { get; }
 
         /// <inheritdoc/>
         public Task WarmupCompletedAsync()
         {
             // Job: Watch Pool Size
-            RecurringJobManager.AddOrUpdate(
-                nameof(WatchPoolSizeJob),
-                () => WatchPoolSizeJob.RunAsync(),
-                Every5Minutes,
-                null,
-                QueueName);
-            RecurringJobManager.Trigger(nameof(WatchPoolSizeJob));
+            TaskHelper.RunBackgroundSchedule(
+                "watch-pool-size",
+                TimeSpan.FromMinutes(2),
+                (childLogger) => WatchPoolSizeJob.RunAsync(childLogger));
+
+            // Job: Continuation Task Worker Pool Manager
+            TaskHelper.RunBackground(
+                "continuation-task-queue-manage",
+                (childLogger) => ContinuationTaskWorkerPoolManager.StartAsync(childLogger));
 
             return Task.CompletedTask;
         }

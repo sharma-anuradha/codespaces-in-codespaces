@@ -25,5 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         ///
         /// </summary>
         public TimeSpan RetryAfter { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public object NextInput { get; set; }
     }
 }

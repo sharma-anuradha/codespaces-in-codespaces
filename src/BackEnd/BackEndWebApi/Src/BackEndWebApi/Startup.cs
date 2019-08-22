@@ -106,6 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddSingleton<IDistributedLease, DistributedLease>();
             services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
             services.AddSingleton<TriggerWarmupState>();
+            services.AddSingleton<ITaskHelper, TaskHelper>();
 
             // Logging setup
             var loggingBaseValues = new LoggingBaseValues
@@ -113,6 +114,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 ServiceName = "BackendWebApi",
                 CommitId = appSettings.GitCommit,
             };
+            services.AddTransient<IDiagnosticsLogger>(x =>
+            {
+                var loggerFactory = x.GetService<IDiagnosticsLoggerFactory>();
+                var logValueSet = x.GetService<LogValueSet>();
+                return loggerFactory.New(logValueSet);
+            });
 
             // VsSaaS services
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
