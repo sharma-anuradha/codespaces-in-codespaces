@@ -17,6 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 {
     public class AzureVmProviderTests : IClassFixture<AzureVmProviderTestsBase>
     {
+        private const int TargetVmCount = 1;
         private AzureVmProviderTestsBase testContext;
         public AzureVmProviderTests(AzureVmProviderTestsBase data)
         {
@@ -77,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         }
 
         [Fact(Skip = "integration test")]
-        // [Fact]
+        //[Fact]
         public async Task VirtualMachine_Create_Multiple_VM_Ok()
         {
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
@@ -96,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             };
 
             var timerCreate = Stopwatch.StartNew();
-            VirtualMachineProviderCreateResult[] initiateVmCreationList = await Task.WhenAll(Enumerable.Range(0, 10).Select(x => computeProvider.CreateAsync(input, null)));
+            VirtualMachineProviderCreateResult[] initiateVmCreationList = await Task.WhenAll(Enumerable.Range(0, TargetVmCount).Select(x => computeProvider.CreateAsync(input, null)));
             timerCreate.Stop();
             Console.WriteLine($"Time taken to begin create 10 VMs {timerCreate.Elapsed.TotalSeconds}");
 

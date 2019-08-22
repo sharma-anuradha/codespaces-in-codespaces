@@ -14,6 +14,7 @@ using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -54,6 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             // create new resource id
             var resourceId = new Common.Models.ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), input.AzureSubscription, input.AzureResourceGroup, input.AzureVmLocation);
             IAzure azure = await clientFactory.GetAzureClientAsync(input.AzureSubscription);
+            await azure.CreateIfNotExistsResourceGroupAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
+     
             var parameters = new Dictionary<string, Dictionary<string, object>>()
             {
                 { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },

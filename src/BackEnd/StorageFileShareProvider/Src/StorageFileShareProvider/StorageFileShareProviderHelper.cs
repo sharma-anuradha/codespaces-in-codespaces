@@ -13,6 +13,8 @@ using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.File;
+using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
@@ -49,8 +51,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             Requires.NotNullOrEmpty(azureRegion, nameof(azureRegion));
             Requires.NotNullOrEmpty(azureResourceGroup, nameof(azureResourceGroup));
             Requires.NotNullOrEmpty(azureSubscriptionId, nameof(azureSubscriptionId));
-
             var azure = await GetAzureClient(azureSubscriptionId);
+            await azure.CreateIfNotExistsResourceGroupAsync(azureResourceGroup, azureRegion);
             var storageAccountName = await GenerateStorageAccountName(azure);
             var storageAccount = await azure.StorageAccounts.Define(storageAccountName)
                 .WithRegion(azureRegion)
