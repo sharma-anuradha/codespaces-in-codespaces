@@ -503,8 +503,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 NewValue = state.ToString(),
             };
 
-            await BillingEventManager.CreateEventAsync(
-                account, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
+            //await BillingEventManager.CreateEventAsync(
+            //    account, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
 
             cloudEnvironment.State = state;
         }
