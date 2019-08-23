@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Xunit;
 
@@ -9,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
 {
     public class AccountManagerTests
     {
-        private readonly IAccountRepository VsoAccountRepository;
+        private readonly IAccountRepository accountRepository;
         private readonly AccountManager accountManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger;
@@ -20,8 +21,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
 
-            VsoAccountRepository = new MockAccountRepository();
-            accountManager = new AccountManager(VsoAccountRepository);
+            this.accountRepository = new MockAccountRepository();
+            this.accountManager = new AccountManager(this.accountRepository);
         }
 
         private VsoAccount GenerateAccount(string name, string subscriptionOption = null)
@@ -33,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
                     Subscription = subscriptionOption ?? subscription,
                     ResourceGroup = "myRG",
                     Name = name,
-                    Location = "global"
+                    Location = AzureLocation.WestUs2,
                 },
                 Plan = new Sku
                 {

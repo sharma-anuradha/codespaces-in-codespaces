@@ -1,10 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient\BackEndWebApiClient.csproj" />
+    <ProjectReference Include="..\..\..\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Billing\Src\Billing\Billing.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
+    <ProjectReference Include="..\..\Src\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />
     <ProjectReference Include="..\..\Src\EnvironmentManager\EnvironmentManager.csproj" />
     <ProjectReference Include="..\..\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
   </ItemGroup>

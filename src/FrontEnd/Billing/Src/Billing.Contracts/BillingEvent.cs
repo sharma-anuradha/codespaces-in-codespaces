@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// if the event type is not associated with a specific environment.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "environment")]
-        public EnvironmentInfo Environment { get; set; }
+        public EnvironmentBillingInfo Environment { get; set; }
 
         /// <summary>
         /// One of the <see cref="BillingEventTypes" /> constants.

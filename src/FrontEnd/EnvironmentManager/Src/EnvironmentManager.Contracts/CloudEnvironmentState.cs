@@ -10,6 +10,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     public enum CloudEnvironmentState
     {
         /// <summary>
+        /// Uninitialized state.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Environment is created but not yet provisioning. (INITIAL STATE)
+        /// </summary>
+        Created,
+
+        /// <summary>
         /// Readying the environment.
         /// </summary>
         Provisioning,
@@ -28,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Environment is unavailable connect. There is no recovery path.
         /// </summary>
         Unavailable,
+
+        /// <summary>
+        /// Environment is deleted. (TERMINAL STATE)
+        /// </summary>
+        Deleted,
     }
 }

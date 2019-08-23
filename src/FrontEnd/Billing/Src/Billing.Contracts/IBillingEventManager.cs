@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     {
         Task<BillingEvent> CreateEventAsync(
             VsoAccountInfo account,
-            EnvironmentInfo environment,
+            EnvironmentBillingInfo environment,
             string eventType,
             object args,
             IDiagnosticsLogger logger);

@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
@@ -14,18 +16,17 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Swagger;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 {
@@ -133,11 +134,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 throw new InvalidOperationException("Cannot use mocks outside of local development");
             }
 
+            // Add the account manager and the account management repository
+            services.AddAccountManager(appSettings.UseMocksForLocalDevelopment);
+
+            // Add the billing event manager and the billing event repository
+            services.AddBillingEventManager(appSettings.UseMocksForLocalDevelopment);
+
             // Add the environment manager and the cloud environment repository.
             services.AddEnvironmentManager(appSettings.UseMocksForLocalDevelopment);
-
-            // Add the account manager and the account management repository
-            services.AddAccountManager(appSettings.UseBackEndForLocalDevelopment);
 
             // Add the Live Share user profile and workspace providers.
             services
@@ -309,8 +313,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 defaults: new { controller = "Account", action = "OnResourceDeletionValidate" },
                 constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
         }
-    
-    private static bool IsRunningInAzure()
+
+        private static bool IsRunningInAzure()
         {
             return Environment.GetEnvironmentVariable(ServiceConstants.RunningInAzureEnvironmentVariable) == ServiceConstants.RunningInAzureEnvironmentVariableValue;
         }

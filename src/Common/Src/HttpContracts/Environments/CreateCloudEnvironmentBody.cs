@@ -55,8 +55,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         [Obsolete("This is now implied by SkuName", false)]
         public string Platform { get; set; }
 
-        /***** NEW *****/
-
         /// <summary>
         /// Gets or sets the azure location for this environment.
         /// </summary>
@@ -66,5 +64,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the cloud environment sku name.
         /// </summary>
         public string SkuName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the fully-qualified Azure resource id of the Account object.
+        /// </summary>
+        public string AccountId { get; set; }
     }
 }

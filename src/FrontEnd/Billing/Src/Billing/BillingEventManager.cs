@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <returns>The created event entity, including unique ID and timestamp.</returns>
         public async Task<BillingEvent> CreateEventAsync(
             VsoAccountInfo account,
-            EnvironmentInfo environment,
+            EnvironmentBillingInfo environment,
             string eventType,
             object args,
             IDiagnosticsLogger logger)

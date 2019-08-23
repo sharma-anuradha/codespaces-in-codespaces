@@ -18,20 +18,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         {
         }
 
-        /// <inheritdoc/>
-        public async Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace)
+        /// <summary>Gets or sets a function for returning a mocked Create response.</summary>
+        public Func<WorkspaceRequest, WorkspaceResponse> MockCreate { get; set; } = (workspace) => new WorkspaceResponse
         {
-            await Task.CompletedTask;
-            return new WorkspaceResponse
-            {
-                Id = Guid.NewGuid().ToString(),
-                SessionToken = Guid.NewGuid().ToString(),
-                HeartbeatInterval = TimeSpan.FromSeconds(60),
-                Name = workspace.Name,
-                ConnectionMode = workspace.ConnectionMode,
-                AreAnonymousGuestsAllowed = workspace.AreAnonymousGuestsAllowed,
-                ExpiresAt = workspace.ExpiresAt,
-            };
+            Id = Guid.NewGuid().ToString(),
+            SessionToken = Guid.NewGuid().ToString(),
+            HeartbeatInterval = TimeSpan.FromSeconds(60),
+            Name = workspace.Name,
+            ConnectionMode = workspace.ConnectionMode,
+            AreAnonymousGuestsAllowed = workspace.AreAnonymousGuestsAllowed,
+            ExpiresAt = workspace.ExpiresAt,
+        };
+
+        /// <summary>Gets or sets a function for returning a mocked GetStatus response.</summary>
+        public Func<string, WorkspaceResponse> MockGetStatus { get; set; } = (workspaceId) => new WorkspaceResponse
+        {
+            Id = workspaceId,
+            SessionToken = Guid.NewGuid().ToString(),
+            HeartbeatInterval = TimeSpan.FromSeconds(60),
+            Name = "test-connection",
+            ConnectionMode = ConnectionMode.Auto,
+            AreAnonymousGuestsAllowed = false,
+            ExpiresAt = DateTime.UtcNow + TimeSpan.FromDays(1),
+        };
+
+        /// <inheritdoc/>
+        public Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace)
+        {
+            Requires.NotNull(MockCreate, nameof(MockCreate));
+            return Task.FromResult(MockCreate(workspace));
         }
 
         /// <inheritdoc/>
@@ -41,19 +56,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         }
 
         /// <inheritdoc/>
-        public async Task<WorkspaceResponse> GetStatusAsync(string workspaceId)
+        public Task<WorkspaceResponse> GetStatusAsync(string workspaceId)
         {
-            await Task.CompletedTask;
-            return new WorkspaceResponse
-            {
-                Id = workspaceId,
-                SessionToken = Guid.NewGuid().ToString(),
-                HeartbeatInterval = TimeSpan.FromSeconds(60),
-                Name = "test-connection",
-                ConnectionMode = ConnectionMode.Auto,
-                AreAnonymousGuestsAllowed = false,
-                ExpiresAt = DateTime.UtcNow + TimeSpan.FromDays(1),
-            };
+            Requires.NotNull(MockGetStatus, nameof(MockGetStatus));
+            return Task.FromResult(MockGetStatus(workspaceId));
         }
     }
 }

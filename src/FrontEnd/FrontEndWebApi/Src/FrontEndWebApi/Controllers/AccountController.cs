@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -102,12 +103,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(resourceType);
                 ValidationUtil.IsRequired(resourceName);
                 ValidationUtil.IsRequired(modelInput);
+                ValidationUtil.IsTrue(
+                    Enum.TryParse(modelInput.Location, out AzureLocation location),
+                    $"Invalid location: ${modelInput.Location}");
 
                 var account = new VsoAccount
                 {
                     Account = new VsoAccountInfo
                     {
-                        Location = modelInput.Location,
+                        Location = location,
                         Name = resourceName,
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,

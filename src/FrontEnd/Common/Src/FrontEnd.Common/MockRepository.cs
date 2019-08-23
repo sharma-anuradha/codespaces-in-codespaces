@@ -97,6 +97,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
         }
 
+        public void Clear()
+        {
+            this.store.Clear();
+        }
+
         public bool ContainsKey(string key) => this.store.ContainsKey(key);
 
         public bool TryGetValue(string key, out T value) => this.store.TryGetValue(key, out value);

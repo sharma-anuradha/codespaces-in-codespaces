@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
@@ -21,33 +22,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
             Subscription = subscription,
             ResourceGroup = "testRG",
             Name = "testAccount",
-            Location = "nowhere"
+            Location = AzureLocation.WestUs2,
         };
         private static readonly VsoAccountInfo testAccount2 = new VsoAccountInfo
         {
             Subscription = subscription,
             ResourceGroup = "testRG",
             Name = "testAccount2",
-            Location = "nowhere"
+            Location = AzureLocation.WestUs2,
         };
         private static readonly VsoAccountInfo testAccount3 = new VsoAccountInfo
         {
             Subscription = subscription,
             ResourceGroup = "testRG",
             Name = "testAccount3",
-            Location = "nowhere"
+            Location = AzureLocation.WestUs2,
         };
-        private static readonly EnvironmentInfo testEnvironment = new EnvironmentInfo
+        private static readonly EnvironmentBillingInfo testEnvironment = new EnvironmentBillingInfo
         {
             Id = Guid.NewGuid().ToString(),
             Name = "testEnvironment",
             UserId = Guid.NewGuid().ToString(),
+            Sku = new Sku { Name = "testSku", Tier = "test" },
         };
-        private static readonly EnvironmentInfo testEnvironment2 = new EnvironmentInfo
+        private static readonly EnvironmentBillingInfo testEnvironment2 = new EnvironmentBillingInfo
         {
             Id = Guid.NewGuid().ToString(),
             Name = "testEnvironment2",
             UserId = testEnvironment.UserId,
+            Sku = new Sku { Name = "testSku", Tier = "test" },
         };
 
         private readonly IBillingEventRepository repository;

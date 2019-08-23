@@ -5,12 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
@@ -30,14 +29,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cloudEnvironmentRepository">The cloud environment repository.</param>
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
+        /// <param name="billingEventManager">The billing event manager.</param>
         public CloudEnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
-            IWorkspaceRepository workspaceRepository)
+            IWorkspaceRepository workspaceRepository,
+            IBillingEventManager billingEventManager)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
+            BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -45,6 +47,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IWorkspaceRepository WorkspaceRepository { get; }
 
         private IResourceBrokerResourcesHttpContract ResourceBrokerClient { get; }
+
+        private IBillingEventManager BillingEventManager { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironment> CreateEnvironmentAsync(
@@ -98,7 +102,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.StaticEnvironment, cloudEnvironment.Id, null, logger);
                     }
 
-                    cloudEnvironment.State = CloudEnvironmentState.Provisioning;
+                    // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, logger);
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, logger);
+
                     cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, logger);
 
                     logger.AddDuration(duration)
@@ -125,10 +132,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     throw new InvalidOperationException("Cloud not create the cloud environment workspace session.");
                 }
 
+                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, logger);
+
                 // Create the cloud environment record in the provisioining state -- before starting.
                 // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                 // Highly unlikely, but still...
-                cloudEnvironment.State = CloudEnvironmentState.Provisioning;
+                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, logger);
+
                 cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, logger);
 
                 // Kick off start-compute before returning.
@@ -196,7 +206,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ValidationUtil.IsTrue(cloudEnvironment.Connection.ConnectionSessionId == options.Payload.SessionId);
 
                 cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
-                cloudEnvironment.State = CloudEnvironmentState.Available;
+                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, logger);
                 cloudEnvironment.Updated = DateTime.UtcNow;
                 var result = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
 
@@ -268,7 +278,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 // Update the new state before returning.
                 if (originalState != newState)
                 {
-                    cloudEnvironment.State = newState;
+                    await SetEnvironmentStateAsync(cloudEnvironment, newState, logger);
                     cloudEnvironment.Updated = DateTime.UtcNow;
                     cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
                 }
@@ -316,6 +326,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
 
             UnauthorizedUtil.IsTrue(cloudEnvironment.OwnerId == currentUserId);
+
+            await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, logger);
 
             if (cloudEnvironment.Type == CloudEnvironmentType.CloudEnvironment)
             {
@@ -444,6 +456,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     EnvironmentVariables = environmentVariables,
                 },
                 logger);
+        }
+
+        /// <summary>
+        /// Updates the `State` property of an environment and emits a billing event
+        /// to record the state change for billing purposes.
+        /// </summary>
+        private async Task SetEnvironmentStateAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentState state,
+            IDiagnosticsLogger logger)
+        {
+            var oldState = cloudEnvironment.State;
+
+            VsoAccountInfo account;
+            if (cloudEnvironment.AccountId == default)
+            {
+                // Use a temporary account if the environment doesn't have one.
+                // TODO: Remove this; make the account required.
+                account = new VsoAccountInfo
+                {
+                    Subscription = Guid.Empty.ToString(),
+                    ResourceGroup = "none",
+                    Name = "none",
+                };
+            }
+            else
+            {
+                Requires.Argument(
+                    VsoAccountInfo.TryParse(cloudEnvironment.AccountId, out account),
+                    nameof(cloudEnvironment.AccountId),
+                    "Invalid account ID");
+            }
+
+            var environment = new EnvironmentBillingInfo
+            {
+                Id = cloudEnvironment.Id,
+                Name = cloudEnvironment.FriendlyName,
+                UserId = cloudEnvironment.OwnerId,
+                Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
+            };
+
+            var stateChange = new BillingStateChange
+            {
+                OldValue = oldState == default ? null : oldState.ToString(),
+                NewValue = state.ToString(),
+            };
+
+            await BillingEventManager.CreateEventAsync(
+                account, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
+
+            cloudEnvironment.State = state;
         }
     }
 }

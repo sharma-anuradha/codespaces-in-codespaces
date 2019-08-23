@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets the environment state.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "state")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public CloudEnvironmentState State { get; set; }
 
         /// <summary>
@@ -82,13 +83,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         [JsonProperty(Required = Required.Always, PropertyName = "active")]
         public DateTime Active { get; set; }
 
-        /***** NEW PROPERTIES *****/
-
         /// <summary>
         /// Gets or sets the fully-qualified Azure resource id of the Account object.
         /// </summary>
-        [JsonProperty(Required = Required.AllowNull, PropertyName = "azureAccountId")]
-        public string AzureAccountId { get; set; }
+        [JsonProperty(Required = Required.AllowNull, PropertyName = "accountId")]
+        public string AccountId { get; set; }
 
         /// <summary>
         /// Gets or sets the environment sku name.

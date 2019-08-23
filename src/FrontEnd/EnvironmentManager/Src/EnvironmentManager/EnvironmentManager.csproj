@@ -13,7 +13,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\HttpContracts\HttpContracts.csproj" />
+    <ProjectReference Include="..\..\..\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />

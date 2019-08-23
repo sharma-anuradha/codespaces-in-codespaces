@@ -70,5 +70,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the environment platform.
         /// </summary>
         public string Platform { get; set; }
+
+        /// <summary>
+        /// Gets or sets the azure location of the environment.
+        /// </summary>
+        public string Location { get; set; }
+
+        /// <summary>
+        /// Gets or sets the fully-qualified Azure resource id of the Account object.
+        /// </summary>
+        public string AccountId { get; set; }
     }
 }
