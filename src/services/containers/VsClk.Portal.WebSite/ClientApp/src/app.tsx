@@ -13,6 +13,7 @@ import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ApplicationState } from './reducers/rootReducer';
 import { ProtectedRoute } from './ProtectedRoute';
+import { BlogPost } from './BlogPost';
 
 export interface AppState {}
 
@@ -34,18 +35,7 @@ class AppRoot extends Component<AppProps, AppState> {
             <Provider store={store}>
                 <Router>
                     <div className='vssass'>
-                        <Route
-                            exact
-                            path='/'
-                            render={
-                                // tslint:disable-next-line: react-this-binding-issue
-                                () => {
-                                    location.href =
-                                        'https://devblogs.microsoft.com/visualstudio/intelligent-productivity-and-collaboration-from-anywhere/';
-                                    return null;
-                                }
-                            }
-                        />
+                        <Route exact path='/' component={BlogPost} />
                         <ProtectedRoute exact path='/environments' component={Main} />
                         <Route exact path='/welcome' component={Welcome} />
                         <ProtectedRoute path='/environment/:id' component={Workbench} />
