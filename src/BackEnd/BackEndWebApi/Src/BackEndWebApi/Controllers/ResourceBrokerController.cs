@@ -242,7 +242,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             var result = await ResourceBroker.AllocateAsync(
                 new ResourceBroker.Models.AllocateInput
                 {
-                    Location = requestBody.Location.ToString(),
+                    Location = requestBody.Location.ToString().ToLowerInvariant(),
                     SkuName = requestBody.SkuName,
                     Type = (Common.Models.ResourceType)requestBody.Type,
                 },

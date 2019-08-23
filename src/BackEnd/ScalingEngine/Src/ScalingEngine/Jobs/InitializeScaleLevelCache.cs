@@ -201,7 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             {
                 TargetCount = distinctList.Select(y => y.Environment.PoolLevel).Sum(),
                 SkuName = skuNameCallback(target),
-                Location = target.Location.ToString().ToLower(),
+                Location = target.Location.ToString().ToLowerInvariant(),
                 Type = resourceType,
                 EnvironmentSkus = distinctList.Select(y => y.Environment.SkuName),
             };

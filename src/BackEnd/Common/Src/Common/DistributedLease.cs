@@ -80,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private static string EnsureBlobSafeName(string name)
         {
-            return name.Replace("_", string.Empty).ToLower();
+            return name.Replace("_", string.Empty).ToLowerInvariant();
         }
 
         private async Task<IDisposable> InnerCreate(
