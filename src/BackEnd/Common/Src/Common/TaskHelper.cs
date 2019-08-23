@@ -121,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             return async () =>
             {
-                var result = false;
+                var result = true;
 
                 logger = (logger ?? Logger).FromExisting(logger == null);
                 var duration = logger.StartDuration();

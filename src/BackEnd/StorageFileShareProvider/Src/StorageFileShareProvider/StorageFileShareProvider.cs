@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         }
                         else
                         {
-                            resultRetryAfter = TimeSpan.FromMinutes(10);
+                            resultRetryAfter = TimeSpan.FromMinutes(1);
                             nextState = FileShareProviderCreateState.CheckFileShare;
                         }
 
