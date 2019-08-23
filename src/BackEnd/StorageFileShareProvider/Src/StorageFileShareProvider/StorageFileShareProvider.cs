@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Newtonsoft.Json;
@@ -80,10 +81,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 resultResourceId = prevContinuation.ResourceId;
             }
 
+            var resultState = OperationState.Succeeded;
             if (nextState != default)
             {
                 var nextContinuation = new FileShareProviderCreateContinuationToken(nextState, resultResourceId);
                 resultContinuationToken = JsonConvert.SerializeObject(nextContinuation);
+                resultState = OperationState.InProgress;
             }
 
             var result = new FileShareProviderCreateResult()
@@ -91,6 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 ResourceId = resultResourceId,
                 RetryAfter = resultRetryAfter,
                 ContinuationToken = resultContinuationToken,
+                Status = resultState,
             };
 
             return result;
@@ -103,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             await providerHelper.DeleteStorageAccountAsync(input.ResourceId);
 
-            var result = new FileShareProviderDeleteResult() { };
+            var result = new FileShareProviderDeleteResult() { Status = OperationState.Succeeded };
             return result;
         }
 
@@ -118,7 +122,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 info.StorageAccountName,
                 info.StorageAccountKey,
                 info.StorageShareName,
-                info.StorageFileName);
+                info.StorageFileName)
+            { Status = OperationState.Succeeded};
 
             return result;
         }

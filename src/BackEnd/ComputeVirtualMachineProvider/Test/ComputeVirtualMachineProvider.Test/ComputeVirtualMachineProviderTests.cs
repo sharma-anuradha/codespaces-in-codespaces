@@ -35,36 +35,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq.Setup(x => x.BeginCreateComputeAsync(It.IsAny<VirtualMachineProviderCreateInput>()))
                 .Returns(
                    Task.FromResult(
-                    (DeploymentState.InProgress, CreateDeploymentState())));
+                    (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), null);
-            ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result, DeploymentState.InProgress);
+            ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result, OperationState.InProgress);
         }
 
         [Fact]
         public async Task VirtualMachine_Continue_Create_InProgress()
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            deploymentManagerMoq.Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<DeploymentStatusInput>()))
+            deploymentManagerMoq.Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(
                   Task.FromResult(
-                    (DeploymentState.InProgress, CreateDeploymentState())));
+                    (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            string continuationToken = new DeploymentStatusInput(TrackingId, ResourceId).ToJson();
+            string continuationToken = new NextStageInput(TrackingId, ResourceId).ToJson();
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), continuationToken);
-            ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result, DeploymentState.InProgress);
+            ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result, OperationState.InProgress);
         }
 
         [Theory]
-        [InlineData(DeploymentState.Succeeded, "Succeeded")]
-        [InlineData(DeploymentState.Cancelled, "Cancelled")]
-        [InlineData(DeploymentState.Failed, "Failed")]
-        public async Task VirtualMachine_Continue_Create_Finished(DeploymentState outputState, string expectedState)
+        [InlineData(OperationState.Succeeded, OperationState.Succeeded)]
+        [InlineData(OperationState.Cancelled, OperationState.Cancelled)]
+        [InlineData(OperationState.Failed, OperationState.Failed)]
+        public async Task VirtualMachine_Continue_Create_Finished(OperationState outputState, OperationState expectedState)
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            DeploymentStatusInput deploymentStatusInput = new DeploymentStatusInput(TrackingId, ResourceId);
+            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceId);
             string continuationToken = deploymentStatusInput.ToJson();
-            deploymentManagerMoq.Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<DeploymentStatusInput>()))
+            deploymentManagerMoq.Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(
                   Task.FromResult(
                     (outputState, deploymentStatusInput)));
@@ -83,36 +83,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq.Setup(x => x.BeginStartComputeAsync(It.IsAny<VirtualMachineProviderStartComputeInput>()))
                 .Returns(
                    Task.FromResult(
-                       (DeploymentState.InProgress, CreateDeploymentState())));
+                       (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), null);
-            ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result, DeploymentState.InProgress);
+            ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result, OperationState.InProgress);
         }
 
         [Fact]
         public async Task VirtualMachine_Continue_StartCompute_InProgress()
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<DeploymentStatusInput>()))
+            deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(
                 Task.FromResult(
-                    (DeploymentState.InProgress, CreateDeploymentState())));
+                    (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            string continuationToken = new DeploymentStatusInput(TrackingId, ResourceId).ToJson();
+            string continuationToken = new NextStageInput(TrackingId, ResourceId).ToJson();
             VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), continuationToken);
-            ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result, DeploymentState.InProgress);
+            ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result, OperationState.InProgress);
         }
 
         [Theory]
-        [InlineData(DeploymentState.Succeeded, "Succeeded")]
-        [InlineData(DeploymentState.Cancelled, "Cancelled")]
-        [InlineData(DeploymentState.Failed, "Failed")]
-        public async Task VirtualMachine_Continue_StartCompute_Finished(DeploymentState outputState, string expectedState)
+        [InlineData(OperationState.Succeeded, OperationState.Succeeded)]
+        [InlineData(OperationState.Cancelled, OperationState.Cancelled)]
+        [InlineData(OperationState.Failed, OperationState.Failed)]
+        public async Task VirtualMachine_Continue_StartCompute_Finished(OperationState outputState, OperationState expectedState)
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            DeploymentStatusInput deploymentStatusInput = new DeploymentStatusInput(TrackingId, ResourceId);
+            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceId);
             string continuationToken = deploymentStatusInput.ToJson();
-            deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<DeploymentStatusInput>()))
+            deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(
                     Task.FromResult(
                         (outputState, deploymentStatusInput)));
@@ -131,36 +131,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq.Setup(x => x.BeginDeleteComputeAsync(It.IsAny<VirtualMachineProviderDeleteInput>()))
                 .Returns(
                    Task.FromResult(
-                       (DeploymentState.InProgress,CreateDeploymentState())));
+                       (OperationState.InProgress,CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput(), null);
-            ValidateVirtualMachineResult<VirtualMachineProviderDeleteResult>(result, DeploymentState.InProgress);
+            ValidateVirtualMachineResult<VirtualMachineProviderDeleteResult>(result, OperationState.InProgress);
         }
 
         [Fact]
         public async Task VirtualMachine_Continue_DeleteCompute_InProgress()
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            DeploymentStatusInput deploymentStatusInput = new DeploymentStatusInput(TrackingId, ResourceId);
+            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceId);
             string continuationToken = deploymentStatusInput.ToJson();
-            deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<DeploymentStatusInput>()))
+            deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(Task.FromResult(
-                    (DeploymentState.InProgress, deploymentStatusInput)));
+                    (OperationState.InProgress, deploymentStatusInput)));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput(), continuationToken);
-            ValidateVirtualMachineResult<VirtualMachineProviderDeleteResult>(result, DeploymentState.InProgress);
+            ValidateVirtualMachineResult<VirtualMachineProviderDeleteResult>(result, OperationState.InProgress);
         }
 
         [Theory]
-        [InlineData(DeploymentState.Succeeded, "Succeeded")]
-        [InlineData(DeploymentState.Cancelled, "Cancelled")]
-        [InlineData(DeploymentState.Failed, "Failed")]
-        public async Task VirtualMachine_Continue_Deleteompute_Finished(DeploymentState outputState, string expectedState)
+        [InlineData(OperationState.Succeeded, OperationState.Succeeded)]
+        [InlineData(OperationState.Cancelled, OperationState.Cancelled)]
+        [InlineData(OperationState.Failed, OperationState.Failed)]
+        public async Task VirtualMachine_Continue_Deleteompute_Finished(OperationState outputState, OperationState expectedState)
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            DeploymentStatusInput deploymentStatusInput = new DeploymentStatusInput(TrackingId, ResourceId);
+            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceId);
             string continuationToken = deploymentStatusInput.ToJson();
-            deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<DeploymentStatusInput>()))
+            deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(
                 Task.FromResult(
                     (outputState, deploymentStatusInput)));
@@ -172,10 +172,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Assert.Null(result.ContinuationToken);
         }
 
-        private static void ValidateVirtualMachineResult<T>(T result, DeploymentState expectedState) where T : BaseContinuationResult
+        private static void ValidateVirtualMachineResult<T>(T result, OperationState expectedState) where T : BaseContinuationResult
         {
             Assert.NotNull(result);
-            Assert.Equal(expectedState.ToString(), result.Status);
+            Assert.Equal(expectedState, result.Status);
             Assert.NotNull(result.ContinuationToken);
             var deploymentStatusInput = result.ContinuationToken.ToDeploymentStatusInput();
             Assert.NotNull(deploymentStatusInput);
@@ -186,9 +186,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Assert.Equal(ResourceId, deploymentStatusInput.ResourceId);
         }
 
-        private static DeploymentStatusInput CreateDeploymentState()
+        private static NextStageInput CreateDeploymentState()
         {
-            return new DeploymentStatusInput(TrackingId, ResourceId);
+            return new NextStageInput(TrackingId, ResourceId);
         }
 
         private static VirtualMachineProviderStartComputeInput CreateStartComputeInput()

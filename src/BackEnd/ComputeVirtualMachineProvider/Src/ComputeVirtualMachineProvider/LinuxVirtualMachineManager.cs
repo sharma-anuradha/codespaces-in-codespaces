@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(DeploymentState, DeploymentStatusInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input)
+        public async Task<(OperationState, NextStageInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input)
         {
             // create new resource id
             var resourceId = new Common.Models.ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), input.AzureSubscription, input.AzureResourceGroup, input.AzureVmLocation);
@@ -78,11 +78,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
                 .BeginCreateAsync();
 
-            return (DeploymentState.InProgress, new DeploymentStatusInput(result.Name, resourceId));
+            return (OperationState.InProgress, new NextStageInput(result.Name, resourceId));
         }
 
         /// <inheritdoc/>
-        public async Task<(DeploymentState, DeploymentStatusInput)> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input)
+        public async Task<(OperationState, NextStageInput)> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input)
         {
             IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId);
             var privateSettings = new Hashtable();
@@ -99,11 +99,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 ExtensionName,
                 parameters);
 
-            return (DeploymentState.InProgress, new DeploymentStatusInput(result.Name, input.ResourceId));
+            return (OperationState.InProgress, new NextStageInput(result.Name, input.ResourceId));
         }
 
         /// <inheritdoc/>
-        public async Task<(DeploymentState, DeploymentStatusInput)> CheckStartComputeStatusAsync(DeploymentStatusInput input)
+        public async Task<(OperationState, NextStageInput)> CheckStartComputeStatusAsync(NextStageInput input)
         {
             IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId);
             VirtualMachineExtensionInner result = await computeClient.VirtualMachineExtensions
@@ -115,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(DeploymentState, DeploymentStatusInput)> CheckCreateComputeStatusAsync(DeploymentStatusInput deploymentStatusInput)
+        public async Task<(OperationState, NextStageInput)> CheckCreateComputeStatusAsync(NextStageInput deploymentStatusInput)
         {
             IAzure azure = await clientFactory.GetAzureClientAsync(deploymentStatusInput.ResourceId.SubscriptionId);
             IDeployment deployment = await azure.Deployments.GetByResourceGroupAsync(deploymentStatusInput.ResourceId.ResourceGroup, deploymentStatusInput.TrackingId);
@@ -124,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(DeploymentState, DeploymentStatusInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input)
+        public async Task<(OperationState, NextStageInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input)
         {
             string vmName = input.ResourceId.InstanceId.ToString();
             IAzure azure = await clientFactory.GetAzureClientAsync(input.ResourceId.SubscriptionId);
@@ -133,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                               .GetByResourceGroupAsync(resourceGroup, vmName);
             if (linuxVM == null)
             {
-                return (DeploymentState.Succeeded, new DeploymentStatusInput(default, input.ResourceId));
+                return (OperationState.Succeeded, new NextStageInput(default, input.ResourceId));
             }
 
             IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId);
@@ -145,18 +145,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             // Save resource state for continuation token.
             var resourcesToBeDeleted = new Dictionary<string, VmResourceState>
             {
-                { VmNameKey,  (linuxVM.Name, DeploymentState.InProgress) },
-                { DiskNameKey,  (disk.Name, DeploymentState.Pending) },
-                { NicNameKey,  ($"{vmName}-nic", DeploymentState.Pending) },
-                { NsgNameKey,  ($"{vmName}-nsg", DeploymentState.Pending) },
-                { VnetNameKey, ($"{vmName}-vnet", DeploymentState.Pending) },
+                { VmNameKey,  (linuxVM.Name, OperationState.InProgress) },
+                { DiskNameKey,  (disk.Name, OperationState.NotStarted) },
+                { NicNameKey,  ($"{vmName}-nic", OperationState.NotStarted) },
+                { NsgNameKey,  ($"{vmName}-nsg", OperationState.NotStarted) },
+                { VnetNameKey, ($"{vmName}-vnet", OperationState.NotStarted) },
             };
 
-            return (DeploymentState.InProgress, new DeploymentStatusInput(JsonConvert.SerializeObject(resourcesToBeDeleted), input.ResourceId));
+            return (OperationState.InProgress, new NextStageInput(JsonConvert.SerializeObject(resourcesToBeDeleted), input.ResourceId));
         }
 
         /// <inheritdoc/>
-        public async Task<(DeploymentState, DeploymentStatusInput)> CheckDeleteComputeStatusAsync(DeploymentStatusInput input)
+        public async Task<(OperationState, NextStageInput)> CheckDeleteComputeStatusAsync(NextStageInput input)
         {
             Dictionary<string, VmResourceState> resourcesToBeDeleted = JsonConvert
                 .DeserializeObject<Dictionary<string, VmResourceState>>(input.TrackingId);
@@ -165,18 +165,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             INetworkManagementClient networkClient = await clientFactory.GetNetworkManagementClient(input.ResourceId.SubscriptionId);
             IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.ResourceId.SubscriptionId);
 
-            if (resourcesToBeDeleted[VmNameKey].State != DeploymentState.Succeeded)
+            if (resourcesToBeDeleted[VmNameKey].State != OperationState.Succeeded)
             {
                 // Check if virtual machine deletion is complete
                 IVirtualMachine linuxVM = await azure.VirtualMachines
                           .GetByResourceGroupAsync(resourceGroup, resourcesToBeDeleted[VmNameKey].Name);
                 if (linuxVM != null)
                 {
-                    return (DeploymentState.InProgress, input);
+                    return (OperationState.InProgress, input);
                 }
                 else
                 {
-                    resourcesToBeDeleted[VmNameKey] = (resourcesToBeDeleted[VmNameKey].Name, DeploymentState.Succeeded);
+                    resourcesToBeDeleted[VmNameKey] = (resourcesToBeDeleted[VmNameKey].Name, OperationState.Succeeded);
                 }
             }
 
@@ -221,29 +221,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 throw;
             }
 
-            var deploymentStausInput = new DeploymentStatusInput(JsonConvert.SerializeObject(resourcesToBeDeleted), input.ResourceId);
+            var deploymentStausInput = new NextStageInput(JsonConvert.SerializeObject(resourcesToBeDeleted), input.ResourceId);
             var resultState = GetFinalState(resourcesToBeDeleted);
             return (resultState, deploymentStausInput);
         }
 
-        private static DeploymentState GetFinalState(Dictionary<string, VmResourceState> resourcesToBeDeleted)
+        private static OperationState GetFinalState(Dictionary<string, VmResourceState> resourcesToBeDeleted)
         {
-            if (resourcesToBeDeleted.Any(r => r.Value.State == DeploymentState.InProgress))
+            if (resourcesToBeDeleted.Any(r => r.Value.State == OperationState.InProgress))
             {
-                return DeploymentState.InProgress;
+                return OperationState.InProgress;
             }
 
-            if (resourcesToBeDeleted.Any(r => r.Value.State == DeploymentState.Failed))
+            if (resourcesToBeDeleted.Any(r => r.Value.State == OperationState.Failed))
             {
-                return DeploymentState.Failed;
+                return OperationState.Failed;
             }
 
-            if (resourcesToBeDeleted.Any(r => r.Value.State == DeploymentState.Cancelled))
+            if (resourcesToBeDeleted.Any(r => r.Value.State == OperationState.Cancelled))
             {
-                return DeploymentState.Cancelled;
+                return OperationState.Cancelled;
             }
 
-            return DeploymentState.Succeeded;
+            return OperationState.Succeeded;
         }
 
         private static Task CheckResourceStatus<TResult>(
@@ -253,8 +253,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
            string resourceNameKey)
         {
             string resourceName = resourcesToBeDeleted[resourceNameKey].Name;
-            DeploymentState resourceState = resourcesToBeDeleted[resourceNameKey].State;
-            if (resourceState == DeploymentState.Pending)
+            OperationState resourceState = resourcesToBeDeleted[resourceNameKey].State;
+            if (resourceState == OperationState.NotStarted)
             {
                 Task beginDeleteTask = deleteResourceFunc(resourceName);
                 return beginDeleteTask.ContinueWith(
@@ -262,19 +262,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     {
                         if (task.IsCompleted)
                         {
-                            resourcesToBeDeleted[resourceNameKey] = (resourceName, DeploymentState.InProgress);
+                            resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.InProgress);
                         }
                         else if (task.IsFaulted)
                         {
-                            resourcesToBeDeleted[resourceNameKey] = (resourceName, DeploymentState.Failed);
+                            resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.Failed);
                         }
                         else if (task.IsCanceled)
                         {
-                            resourcesToBeDeleted[resourceNameKey] = (resourceName, DeploymentState.Cancelled);
+                            resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.Cancelled);
                         }
                     });
             }
-            else if (resourceState == DeploymentState.InProgress)
+            else if (resourceState == OperationState.InProgress)
             {
                 Task<TResult> checkStatusTask = checkResourceFunc(resourceName);
                 return checkStatusTask.ContinueWith(
@@ -282,7 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                      {
                          if (task.IsCompleted && task.Result == null)
                          {
-                             resourcesToBeDeleted[resourceNameKey] = (resourceName, DeploymentState.Succeeded);
+                             resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.Succeeded);
                          }
                      });
             }
@@ -290,16 +290,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return Task.CompletedTask;
         }
 
-        private static DeploymentState ParseResult(string provisioningState)
+        private static OperationState ParseResult(string provisioningState)
         {
-            if (provisioningState.Equals(DeploymentState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
-           || provisioningState.Equals(DeploymentState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
-           || provisioningState.Equals(DeploymentState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
+            if (provisioningState.Equals(OperationState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
+           || provisioningState.Equals(OperationState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
+           || provisioningState.Equals(OperationState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
             {
-                return provisioningState.ToEnum<DeploymentState>();
+                return provisioningState.ToEnum<OperationState>();
             }
 
-            return DeploymentState.InProgress;
+            return OperationState.InProgress;
         }
 
         private static string GetVmTemplate()

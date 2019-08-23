@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public ResourceStartingStatus? StartingStatus { get; set; }
+        public OperationState? StartingStatus { get; set; }
 
         /// <summary>
         /// 
@@ -142,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         /// <param name="newState"></param>
-        public void UpdateStartingStatus(ResourceStartingStatus newState, DateTime? newTime = null)
+        public void UpdateStartingStatus(OperationState newState, DateTime? newTime = null)
         {
             if (StartingStatus.HasValue && StartingStatus.Value == newState)
             {

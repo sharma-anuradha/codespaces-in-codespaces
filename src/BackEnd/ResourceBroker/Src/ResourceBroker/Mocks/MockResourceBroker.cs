@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
                     ContinuationToken = input.ComputeResourceId,
                     ResourceId = input.ComputeResourceId,
                     RetryAfter = TimeSpan.FromMinutes(1),
-                    Status = string.Empty,
+                    Status = OperationState.NotStarted,
                 };
             });
 

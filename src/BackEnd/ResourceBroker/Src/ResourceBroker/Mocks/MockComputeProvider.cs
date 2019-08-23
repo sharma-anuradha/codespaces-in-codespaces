@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 
@@ -43,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
                 {
                     ContinuationToken = continuationToken,
                     RetryAfter = TimeSpan.FromSeconds(1),
-                    Status = "Starting",
+                    Status = OperationState.InProgress,
                 };
 
                 return initialResult;
@@ -57,13 +58,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
             {
                 ContinuationToken = continuationToken,
                 RetryAfter = TimeSpan.FromSeconds(1),
-                Status = "Running",
+                Status = OperationState.InProgress,
             };
             if (stateTracker.Counter == stateTracker.TargetCount)
             {
                 continueResult.RetryAfter = default(TimeSpan);
                 continueResult.ContinuationToken = null;
-                continueResult.Status = "Finished";
+                continueResult.Status = OperationState.Succeeded;
             }
 
             return continueResult;

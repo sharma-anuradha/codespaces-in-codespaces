@@ -5,6 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
@@ -26,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             {
                 TrackingId = Guid.NewGuid().ToString(),
                 Created = DateTime.UtcNow,
-                Status = "Initialized",
+                Status = OperationState.Initialized,
                 ContinuationToken = null,
                 Input = input,
                 Metadata = null,

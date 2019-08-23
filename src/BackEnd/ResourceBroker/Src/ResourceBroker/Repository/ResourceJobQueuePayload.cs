@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
@@ -21,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
 
         public string ContinuationToken { get; set; }
 
-        public string Status { get; set; }
+        public OperationState Status { get; set; }
 
         public string ToJson()
         {

@@ -12,22 +12,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
     public abstract class BaseContinuationResult
     {
         /// <summary>
-        ///
+        /// Gets / Sets the operation state.
         /// </summary>
-        public string Status { get; set; }
+        public OperationState Status { get; set; }
 
         /// <summary>
-        ///
+        /// Gets / sets the continuation token for operation.
         /// </summary>
         public string ContinuationToken { get; set; }
 
         /// <summary>
-        ///
+        /// Gets / Sets the time to retry after current call.
         /// </summary>
         public TimeSpan RetryAfter { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets / Sets the input for next operation phase.
         /// </summary>
         public object NextInput { get; set; }
     }

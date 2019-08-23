@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public ResourceStartingStatus Status { get; set; }
+        public OperationState Status { get; set; }
 
         /// <summary>
         /// 

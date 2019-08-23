@@ -10,6 +10,7 @@ using Hangfire.States;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -85,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 var result = new EnvironmentStartResult
                 {
                     ResourceId = input.ComputeResourceId,
-                    Status = ResourceStartingStatus.Initialized.ToString(),
+                    Status = OperationState.Initialized,
                     ContinuationToken = input.ComputeResourceId.ToString(),
                     RetryAfter = TimeSpan.FromSeconds(10),
                 };
@@ -184,10 +185,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     .FluentAddValue(ResourceLoggingConstants.ResourceType, resource.Type.ToString());
 
                 // Compute the current status
-                var startingStatus = string.IsNullOrEmpty(computeResult.ContinuationToken) ?
-                    ResourceStartingStatus.Complete :
-                    (resource.StartingStatus.HasValue ?
-                        ResourceStartingStatus.Waiting : ResourceStartingStatus.Initialized);
+                // TODO:: Add handling for Failed / Canceled states
+                var startingStatus = computeResult.Status;
 
                 logger.FluentAddValue("StartingStatus", startingStatus.ToString());
 
@@ -207,7 +206,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 }
 
                 // Queue next status check task if needed
-                if (startingStatus != ResourceStartingStatus.Complete)
+                if (startingStatus != OperationState.Succeeded)
                 {
                     logger.FluentAddValue("DidTriggerNextContinuation", "true");
 
@@ -247,11 +246,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var result = new EnvironmentStartResult
             {
                 ResourceId = input.ComputeResourceId,
-                Status = resource.StartingStatus.ToString(),
+                Status = resource.StartingStatus.HasValue ? OperationState.NotStarted : resource.StartingStatus.Value,
                 ContinuationToken = continuationToken,
                 RetryAfter = TimeSpan.FromSeconds(10),
             };
-            if (resource.StartingStatus != ResourceStartingStatus.Complete)
+            if (resource.StartingStatus != OperationState.Succeeded)
             {
                 result.ContinuationToken = null;
                 result.RetryAfter = default(TimeSpan);
