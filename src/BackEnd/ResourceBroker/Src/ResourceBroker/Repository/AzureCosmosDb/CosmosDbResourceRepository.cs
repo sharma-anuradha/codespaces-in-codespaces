@@ -42,15 +42,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
-            : base(PromoteToOptionSnapshot(options), clientProvider, healthProvider, loggerFactory, defaultLogValues)
+            : base(PromoteToOptionSnapshot(options.Value), clientProvider, healthProvider, loggerFactory, defaultLogValues)
         {
         }
 
         // TEMP: Map backend common and frontend commin into src/Common/Src/Common!
-        private static IOptionsSnapshot<TOptions> PromoteToOptionSnapshot<TOptions>(IOptions<TOptions> option)
+        private static IOptionsSnapshot<TOptions> PromoteToOptionSnapshot<TOptions>(TOptions option)
             where TOptions : class, new()
         {
-            return new DirectOptionsSnapshot<TOptions>(option.Value);
+            ConfigureOptions(option as DocumentDbCollectionOptions);
+            return new DirectOptionsSnapshot<TOptions>(option);
         }
 
         // TEMP: Map backend common and frontend commin into src/Common/Src/Common!
