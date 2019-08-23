@@ -1,7 +1,5 @@
-import React, { Component, FormEvent, MouseEvent } from 'react';
+import React, { Component, FormEvent, KeyboardEvent, SyntheticEvent } from 'react';
 import {
-    BaseButton,
-    Button,
     PrimaryButton,
     DefaultButton,
 } from 'office-ui-fabric-react/lib/Button';
@@ -9,6 +7,7 @@ import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
+import { KeyCodes } from '@uifabric/utilities';
 
 enum EnvironmentType {
     Empty = 'empty',
@@ -51,6 +50,7 @@ export class CreateEnvironmentPanel extends Component<
                 isOpen={this.props.showPanel}
                 type={PanelType.smallFixedFar}
                 isFooterAtBottom={true}
+                onKeyDown={this.dismissPanel}
                 onDismiss={this.props.hidePanel}
                 headerText='Create Environment'
                 closeButtonAriaLabel='Close'
@@ -60,10 +60,11 @@ export class CreateEnvironmentPanel extends Component<
                     <TextField
                         label='Environment Name'
                         placeholder='environmentNameExample'
+                        onKeyDown={this.submitForm}
                         value={environmentNameValue}
+                        onChange={this.environmentNameChanged}
                         autoFocus
                         required
-                        onChange={this.environmentNameChanged}
                     />
                     <Dropdown
                         label='Environment Type'
@@ -78,10 +79,11 @@ export class CreateEnvironmentPanel extends Component<
                     {this.state.selectedEnvironmentType === EnvironmentType.GitHub && (
                         <TextField
                             label='GitHub Repository'
+                            placeholder='vsls-contrib/guestbook'
+                            onKeyDown={this.submitForm}
                             value={repositoryUrlValue}
                             onChange={this.githubRepositoryUrlChanged}
                             errorMessage={this.state.githubRepositoryUrlValidationMessage}
-                            placeholder='vsls-contrib/guestbook'
                         />
                     )}
                 </Stack>
@@ -91,25 +93,33 @@ export class CreateEnvironmentPanel extends Component<
 
     private onRenderFooterContent = () => {
         return (
-            <div>
+            <>
                 <PrimaryButton
                     onClick={this.createEnvironment}
                     style={{ marginRight: '.8rem' }}
-                    disabled={this.isCurrentStateValid()}
+                    disabled={!this.isCurrentStateValid()}
                 >
                     Create
                 </PrimaryButton>
                 <DefaultButton onClick={this.clearForm}>Cancel</DefaultButton>
-            </div>
+            </>
         );
     };
 
-    private createEnvironment: (
-        event: MouseEvent<
-            HTMLButtonElement | HTMLAnchorElement | HTMLDivElement | BaseButton | Button
-        >
-    ) => void = (event) => {
-        if (this.isCurrentStateValid()) {
+    submitForm = (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (event.keyCode === KeyCodes.enter) {
+            this.createEnvironment(event);
+        }
+    };
+
+    dismissPanel: ((event: KeyboardEvent<any>) => void) | undefined = (event) => {
+        if (event.keyCode === KeyCodes.escape) {
+            this.clearForm();
+        }
+    };
+
+    private createEnvironment = (event: SyntheticEvent<any, any>) => {
+        if (!this.isCurrentStateValid()) {
             event.preventDefault();
             event.stopPropagation();
 
@@ -122,7 +132,7 @@ export class CreateEnvironmentPanel extends Component<
         this.props.onCreateEnvironment(this.state.environmentName!, githubRepositoryUrl);
 
         this.clearForm();
-    };
+    }
 
     private getNormalizedGithubRepositoryUrl(): string | undefined {
         if (this.state.selectedEnvironmentType !== EnvironmentType.GitHub) {
@@ -190,7 +200,7 @@ export class CreateEnvironmentPanel extends Component<
             }
         }
 
-        return validationFailed;
+        return !validationFailed;
     }
 
     private environmentNameChanged: (
