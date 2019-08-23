@@ -2,6 +2,9 @@
 echo "Updating packages ..."
 apt update
 apt upgrade -y
+echo "Increase file watcher limit"
+echo "fs.inotify.max_user_watches=524288" | tee -a /etc/sysctl.conf
+sysctl -p
 echo "Install docker ..."
 apt-get install -y docker.io
 echo "Install ORAS ..."
@@ -14,8 +17,6 @@ rm -rf oras_0.5.0_*.tar.gz oras-install/
 echo "Pull VM Agent..."
 mkdir /vmagent
 cd /vmagent
-# Increase the amount of inotify watchers
-echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf && sysctl -p
 #oras pull -u <userid> -p <password> <acrUri/image:tag>
 #apt-get install unzip
 #unzip CLI_linux*.zip
