@@ -133,7 +133,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                 .Queues = new string[]
                     {
                         MockResourceJobQueueRepository.QueueName,
-                        ResourceRegisterJobs.QueueName,
                         StartComputeTask.QueueName,
                         "background-warmup-job-queue", // TODO: Need to fix this reference somehow
                     });

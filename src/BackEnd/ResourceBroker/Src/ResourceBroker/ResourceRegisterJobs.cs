@@ -16,13 +16,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     public class ResourceRegisterJobs : IAsyncBackgroundWarmup
     {
         /// <summary>
-        /// Name of the queue being used.
-        /// </summary>
-        public const string QueueName = "recurring-queue";
-
-        private const string Every5Minutes = "*/5 * * * *";
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
         /// </summary>
         /// <param name="watchPoolSizeJob">The <see cref="WatchPoolSizeJob"/> job that
@@ -51,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Watch Pool Size
             TaskHelper.RunBackgroundSchedule(
                 "watch-pool-size",
-                TimeSpan.FromMinutes(2),
+                TimeSpan.FromMinutes(1),
                 (childLogger) => WatchPoolSizeJob.RunAsync(childLogger));
 
             // Job: Continuation Task Worker Pool Manager

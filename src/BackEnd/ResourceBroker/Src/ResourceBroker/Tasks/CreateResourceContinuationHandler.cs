@@ -60,28 +60,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             logger.FluentAddValue("IsInitialContinuation", string.IsNullOrEmpty(continuationToken).ToString());
 
             // First time through we want to add the resource
+            var record = (ResourceRecord)null;
             if (continuationToken == null)
             {
                 // Add record to database
-                await CreateResourceRecord(input, logger);
+                record = await CreateResourceRecord(input, logger);
             }
             else
             {
                 // Update record in database
-                await UpdateResourceRecord(input, logger);
+                record = await UpdateResourceRecord(input, logger);
             }
 
             // Trigger core continuation
             var result = await CreateResourceAsync(input, continuationToken);
 
-            // If we are finished, update the db record to reflect that
+            // First time through we want to update the resource id
+            if (continuationToken == null)
+            {
+                record.ResourceId = result.ResourceId;
+
+                record = await ResourceRepository.UpdateAsync(record, logger);
+            }
+
+            // Last time through we want to finialize the resource
             if (string.IsNullOrEmpty(result.ContinuationToken))
             {
                 logger
                     .FluentAddValue("IsFinalContinuation", true.ToString())
                     .FluentAddValue("DidStatusUpdate", "true");
 
-                await FinalizeResourceRecord(input, logger);
+                // Finialize record in database
+                record = await FinalizeResourceRecord(input, logger);
             }
 
             return new ContinuationTaskMessageHandlerResult
@@ -91,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             };
         }
 
-        protected abstract Task<BaseContinuationResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken);
+        protected abstract Task<BaseResourceCreateResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken);
 
         private async Task<ResourceRecord> CreateResourceRecord(
             CreateResourceContinuationInput input,

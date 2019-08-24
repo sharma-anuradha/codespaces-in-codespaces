@@ -9,11 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     /// <summary>
     /// Result of the provider create operation.
     /// </summary>
-    public class FileShareProviderCreateResult : BaseContinuationResult
+    public class FileShareProviderCreateResult : BaseResourceCreateResult
     {
-        /// <summary>
-        /// Gets or sets the resource id.
-        /// </summary>
-        public string ResourceId { get; set; }
     }
 }

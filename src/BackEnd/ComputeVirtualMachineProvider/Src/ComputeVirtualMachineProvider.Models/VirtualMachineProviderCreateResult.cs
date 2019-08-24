@@ -9,11 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     /// <summary>
     /// Result returned for virtual machine creation.
     /// </summary>
-    public class VirtualMachineProviderCreateResult : BaseContinuationResult
+    public class VirtualMachineProviderCreateResult : BaseResourceCreateResult
     {
-        /// <summary>
-        /// ResourceId for virtual machine.
-        /// </summary>
-        public ResourceId ResourceId { get; set; }
     }
 }

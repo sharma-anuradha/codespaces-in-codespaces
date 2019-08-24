@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
         /// <inheritdoc/>
-        protected async override Task<BaseContinuationResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken)
+        protected async override Task<BaseResourceCreateResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken)
         {
             var container = BlobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
             var blob = container.GetBlobReference(ResourceBrokerSettings.FileShareTemplateBlobName);
