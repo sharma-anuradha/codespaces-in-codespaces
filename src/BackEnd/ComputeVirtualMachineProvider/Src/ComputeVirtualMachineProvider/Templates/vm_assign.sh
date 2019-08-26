@@ -52,7 +52,7 @@ CONTAINER_ENVS_FILE=$(mktemp)
 echo "$CONTAINER_ENVIRONMENT_VARIABLES" > $CONTAINER_ENVS_FILE
 
 # Start the container with the environment variables
-docker run -d --restart=no --env-file $CONTAINER_ENVS_FILE $CONTAINER_IMAGE_ID
+docker run -d --restart=unless-stopped --env-file $CONTAINER_ENVS_FILE $CONTAINER_IMAGE_ID
 
 # cleanup
 rm $CONTAINER_ENVS_FILE
