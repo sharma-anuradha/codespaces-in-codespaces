@@ -177,7 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             // Get file share connection info for target share
             var fileShareProviderAssignInput = new FileShareProviderAssignInput { ResourceId = input.StorageResourceId };
-            var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, null);
+            var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, logger, continuationToken: null);
 
             // Update storage to be completed
             await UpdateResourceStatus(storageRecord, storageResult.Status, logger.FromExisting());

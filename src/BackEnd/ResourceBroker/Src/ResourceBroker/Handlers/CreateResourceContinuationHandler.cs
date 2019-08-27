@@ -85,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             // Trigger core continuation
-            var result = await CreateResourceAsync(input, continuationToken);
+            var result = await CreateResourceAsync(input, continuationToken, logger);
 
             // Update record resource id database
             record = await UpdateResourceRecordIdAsync(record, result, logger);
@@ -104,7 +104,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         protected abstract Task<ResourceCreateContinuationResult> CreateResourceAsync(
             CreateResourceContinuationInput input,
-            string continuationToken);
+            string continuationToken,
+            IDiagnosticsLogger logger);
 
         private async Task<ResourceRecord> CreateResourceRecordAsync(
             CreateResourceContinuationInput input,

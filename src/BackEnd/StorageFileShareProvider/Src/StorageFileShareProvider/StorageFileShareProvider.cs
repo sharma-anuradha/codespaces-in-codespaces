@@ -4,6 +4,8 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
@@ -29,9 +31,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         }
 
         /// <inheritdoc/>
-        public async Task<FileShareProviderCreateResult> CreateAsync(FileShareProviderCreateInput input, string continuationToken = null)
+        public async Task<FileShareProviderCreateResult> CreateAsync(
+            FileShareProviderCreateInput input,
+            IDiagnosticsLogger logger,
+            string continuationToken = null)
         {
             Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
 
             TimeSpan resultRetryAfter = default;
             string resultContinuationToken = default;
@@ -39,12 +45,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             FileShareProviderCreateState nextState;
             string resultResourceId;
 
+            var duration = logger.StartDuration();
+
+            logger = logger.WithValues(new LogValueSet
+            {
+                { nameof(input.AzureSubscription), input.AzureSubscription },
+                { nameof(input.AzureLocation), input.AzureLocation },
+                { nameof(input.AzureResourceGroup), input.AzureResourceGroup },
+                { nameof(input.AzureSkuName), input.AzureSkuName },
+            });
+
             if (continuationToken == null)
             {
                 var storageAccountId = await providerHelper.CreateStorageAccountAsync(
                     input.AzureSubscription,
                     input.AzureLocation,
-                    input.AzureResourceGroup);
+                    input.AzureResourceGroup,
+                    logger);
                 resultResourceId = storageAccountId;
                 nextState = FileShareProviderCreateState.CreateFileShare;
             }
@@ -54,15 +71,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 switch (prevContinuation.NextState)
                 {
                     case FileShareProviderCreateState.CreateFileShare:
-                        await providerHelper.CreateFileShareAsync(prevContinuation.ResourceId);
+                        await providerHelper.CreateFileShareAsync(prevContinuation.ResourceId, logger);
                         nextState = FileShareProviderCreateState.PrepareFileShare;
                         break;
                     case FileShareProviderCreateState.PrepareFileShare:
-                        await providerHelper.StartPrepareFileShareAsync(prevContinuation.ResourceId, input.StorageBlobUrl);
+                        await providerHelper.StartPrepareFileShareAsync(prevContinuation.ResourceId, input.StorageBlobUrl, logger);
                         nextState = FileShareProviderCreateState.CheckFileShare;
                         break;
                     case FileShareProviderCreateState.CheckFileShare:
-                        var completed = await providerHelper.CheckPrepareFileShareAsync(prevContinuation.ResourceId);
+                        var completed = await providerHelper.CheckPrepareFileShareAsync(prevContinuation.ResourceId, logger);
                         if (completed == 1)
                         {
                             nextState = default;
@@ -72,7 +89,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                             resultRetryAfter = TimeSpan.FromMinutes(1);
                             nextState = FileShareProviderCreateState.CheckFileShare;
                         }
-
                         break;
                     default:
                         throw new StorageCreateException(string.Format("Invalid continuation token: {0}", continuationToken));
@@ -97,33 +113,74 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 Status = resultState,
             };
 
+            logger
+                .FluentAddValue(nameof(result.ResourceId), result.ResourceId)
+                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+                .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
+                .FluentAddValue(nameof(result.Status), result.Status.ToString())
+                .AddDuration(duration)
+                .LogInfo("file_share_storage_provider_create_step_complete");
+
             return result;
         }
 
         /// <inheritdoc/>
-        public async Task<FileShareProviderDeleteResult> DeleteAsync(FileShareProviderDeleteInput input, string continuationToken = null)
+        public async Task<FileShareProviderDeleteResult> DeleteAsync(
+            FileShareProviderDeleteInput input,
+            IDiagnosticsLogger logger,
+            string continuationToken = null)
         {
             Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
 
-            await providerHelper.DeleteStorageAccountAsync(input.ResourceId);
+            var duration = logger.StartDuration();
+
+            logger = logger.WithValue(nameof(input.ResourceId), input.ResourceId);
+
+            await providerHelper.DeleteStorageAccountAsync(input.ResourceId, logger);
 
             var result = new FileShareProviderDeleteResult() { Status = OperationState.Succeeded };
+
+            logger
+                .FluentAddValue(nameof(input.ResourceId), input.ResourceId)
+                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+                .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
+                .FluentAddValue(nameof(result.Status), result.Status.ToString())
+                .AddDuration(duration)
+                .LogInfo("file_share_storage_provider_delete_step_complete");
+
             return result;
         }
 
         /// <inheritdoc/>
-        public async Task<FileShareProviderAssignResult> AssignAsync(FileShareProviderAssignInput input, string continuationToken = null)
+        public async Task<FileShareProviderAssignResult> AssignAsync(
+            FileShareProviderAssignInput input,
+            IDiagnosticsLogger logger,
+            string continuationToken = null)
         {
             Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
 
-            var info = await providerHelper.GetConnectionInfoAsync(input.ResourceId);
+            var duration = logger.StartDuration();
+
+            logger = logger.WithValue(nameof(input.ResourceId), input.ResourceId);
+
+            var info = await providerHelper.GetConnectionInfoAsync(input.ResourceId, logger);
 
             var result = new FileShareProviderAssignResult(
                 info.StorageAccountName,
                 info.StorageAccountKey,
                 info.StorageShareName,
                 info.StorageFileName)
-            { Status = OperationState.Succeeded};
+            { Status = OperationState.Succeeded };
+
+            logger
+                .FluentAddValue(nameof(input.ResourceId), input.ResourceId)
+                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+                .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
+                .FluentAddValue(nameof(result.Status), result.Status.ToString())
+                .AddDuration(duration)
+                .LogInfo("file_share_storage_provider_assign_step_complete");
 
             return result;
         }

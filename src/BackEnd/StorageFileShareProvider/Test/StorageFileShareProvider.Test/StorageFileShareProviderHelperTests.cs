@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
@@ -31,8 +32,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly int NUM_STORAGE_TO_CREATE = 1;
 
         // Note: Before running tests,
-        // Get a Blob SAS URL for https://vsengsaas.blob.core.windows.net/cloudenv-storage-ext4/cloudenvdata_2944143
-        // It's a private blob so needs SAS token.
+        // Get a Blob SAS URL.
+        // If it's a private blob include the SAS token.
         // The test will fail otherwise.
         private static readonly string srcBlobUrl = "";
         private static readonly IServicePrincipal servicePrincipal = null;
@@ -46,6 +47,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         public async Task FileShareProviderHelper_E2EFlow_Completes_Without_Errors()
         {
             Assert.NotNull(srcBlobUrl);
+
+            var logger = new DefaultLoggerFactory().New();
 
             var catalogMoq = new Mock<ISystemCatalog>();
 
@@ -64,15 +67,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(catalogMoq.Object);
 
             // Create storage accounts
-            var storageAccountIds = await Task.WhenAll(Enumerable.Range(0, NUM_STORAGE_TO_CREATE).Select(x => providerHelper.CreateStorageAccountAsync(azureSubscriptionId, azureLocationStr, azureResourceGroup)));
+            var storageAccountIds = await Task.WhenAll(Enumerable.Range(0, NUM_STORAGE_TO_CREATE).Select(x => providerHelper.CreateStorageAccountAsync(azureSubscriptionId, azureLocationStr, azureResourceGroup, logger)));
 
             try
             {
                 // Create file shares
-                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.CreateFileShareAsync(id)));
+                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.CreateFileShareAsync(id, logger)));
 
                 // Start file share preparations
-                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.StartPrepareFileShareAsync(id, srcBlobUrl)));
+                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.StartPrepareFileShareAsync(id, srcBlobUrl, logger)));
                 
                 double[] completedPercent  = new double[NUM_STORAGE_TO_CREATE];
 
@@ -81,9 +84,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 
                 while (completedPercent.Any(x => x != 1) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
                 {
+                    Thread.Sleep(TimeSpan.FromMinutes(1));
                     // Check completion status
-                    completedPercent = await Task.WhenAll(storageAccountIds.Select(id => providerHelper.CheckPrepareFileShareAsync(id)));
-                    Thread.Sleep(TimeSpan.FromMinutes(10));
+                    completedPercent = await Task.WhenAll(storageAccountIds.Select(id => providerHelper.CheckPrepareFileShareAsync(id, logger)));
                 }
 
                 stopWatch.Stop();
@@ -97,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             finally
             {
                 // Verify that we can delete the storage accounts
-                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.DeleteStorageAccountAsync(id)));
+                await Task.WhenAll(storageAccountIds.Select(id => providerHelper.DeleteStorageAccountAsync(id, logger)));
             }
         }
     }

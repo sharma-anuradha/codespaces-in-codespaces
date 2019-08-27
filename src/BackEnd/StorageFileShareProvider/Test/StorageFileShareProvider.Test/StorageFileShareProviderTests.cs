@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Moq;
@@ -35,20 +36,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         [Fact]
         public async Task FileShare_Create_Ok()
         {
+            var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             var mockCheckPrepareResults = new[] { 0.0, 0.5, 0.7, 1 };
             providerHelperMoq
-                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockResourceId);
             providerHelperMoq
-                .Setup(x => x.CreateFileShareAsync(It.IsAny<string>()))
+                .Setup(x => x.CreateFileShareAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
             providerHelperMoq
-                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
             
             providerHelperMoq
-                .SetupSequence(x => x.CheckPrepareFileShareAsync(It.IsAny<string>()))
+                .SetupSequence(x => x.CheckPrepareFileShareAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(mockCheckPrepareResults[0])
                 .ReturnsAsync(mockCheckPrepareResults[1])
                 .ReturnsAsync(mockCheckPrepareResults[2])
@@ -80,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     // At the beginning, continuation token should be null.
                     Assert.Null(continuationToken);
                 }
-                var result = await storageProvider.CreateAsync(input, continuationToken);
+                var result = await storageProvider.CreateAsync(input, logger, continuationToken);
                 // result should not be null after each iteration
                 Assert.NotNull(result);
                 // ResourceId should not be null after each iteration
@@ -98,16 +100,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         [Fact]
         public async Task FileShare_Delete_Ok()
         {
+            var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
-                .Setup(x => x.DeleteStorageAccountAsync(It.IsAny<string>()))
+                .Setup(x => x.DeleteStorageAccountAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             var input = new FileShareProviderDeleteInput()
             {
                 ResourceId = MockResourceId,
             };
-            var result = await storageProvider.DeleteAsync(input);
+            var result = await storageProvider.DeleteAsync(input, logger);
             Assert.NotNull(result);
             Assert.Null(result.ContinuationToken);
         }
@@ -118,10 +121,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         [Fact]
         public async Task FileShare_Delete_Null_Input()
         {
+            var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             FileShareProviderDeleteInput input = null;
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await storageProvider.DeleteAsync(input));
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await storageProvider.DeleteAsync(input, logger));
         }
 
         /// <summary>
@@ -131,6 +135,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         [Fact]
         public async Task FileShare_Assign_Ok()
         {
+            var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             var mockConnInfo = new ShareConnectionInfo(
                 MockStorageAccountName,
@@ -138,14 +143,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 MockStorageShareName,
                 MockStorageFileName);
             providerHelperMoq
-                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<string>()))
+                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockConnInfo));
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             var input = new FileShareProviderAssignInput()
             {
                 ResourceId = MockResourceId,
             };
-            var result = await storageProvider.AssignAsync(input);
+            var result = await storageProvider.AssignAsync(input, logger);
             Assert.NotNull(result);
             Assert.Equal(MockStorageAccountName, result.StorageAccountName);
             Assert.Equal(MockStorageAccountKey, result.StorageAccountKey);
@@ -160,10 +165,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         [Fact]
         public async Task FileShare_Assign_Null_Input()
         {
+            var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             FileShareProviderAssignInput input = null;
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await storageProvider.AssignAsync(input));
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await storageProvider.AssignAsync(input, logger));
         }
     }
 }

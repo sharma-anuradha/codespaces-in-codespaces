@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -47,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
         /// <inheritdoc/>
-        protected async override Task<ResourceCreateContinuationResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken)
+        protected async override Task<ResourceCreateContinuationResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken, IDiagnosticsLogger logger)
         {
             var container = BlobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
             var blob = container.GetBlobReference(ResourceBrokerSettings.FileShareTemplateBlobName);
@@ -66,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 StorageBlobUrl = blob.Uri + sas,
             };
 
-            return await StorageProvider.CreateAsync(providerInput, continuationToken);
+            return await StorageProvider.CreateAsync(providerInput, logger, continuationToken);
         }
     }
 }

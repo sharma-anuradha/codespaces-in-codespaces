@@ -1,4 +1,4 @@
-// <copyright file="AzureDeploymentHelper.cs" company="Microsoft">
+// <copyright file="AzureDeploymentExtension.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
