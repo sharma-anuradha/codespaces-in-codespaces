@@ -1,11 +1,15 @@
 import { SshChannel, SshDisconnectReason } from '@vs/vs-ssh';
-
 import { Event, Emitter } from 'vscode-jsonrpc';
-import { EnvConnector } from '../ts-agent';
 
-import { trace } from '../utils/trace';
+import { EnvConnector } from '../ts-agent';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { bufferToArrayBuffer } from '../utils/bufferToArrayBuffer';
+import { trace as baseTrace } from '../utils/trace';
+
+const trace = baseTrace.extend('VSLSWebSocket:trace');
+trace.log =
+    // tslint:disable-next-line: no-console
+    typeof console.debug === 'function' ? console.debug.bind(console) : console.log.bind(console);
 
 const envConnector = new EnvConnector();
 

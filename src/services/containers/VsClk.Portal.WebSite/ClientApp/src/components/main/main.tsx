@@ -9,20 +9,7 @@ import { Navigation } from '../navigation/navigation';
 import { EnvironmentsPanel } from '../environmentsPanel/environments-panel';
 import { amdConfig } from '../../amd/amdConfig';
 
-declare var AMDLoader: any;
-
-interface MainProps extends RouteComponentProps {}
-
-interface MainState {
-    loading?: boolean;
-    showNameModal?: boolean;
-}
-
-export class Main extends Component<MainProps, MainState> {
-    constructor(props: any) {
-        super(props);
-    }
-
+export class Main extends Component {
     componentDidMount() {
         this.initializeWorkbenchFetching();
     }

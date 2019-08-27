@@ -1,5 +1,3 @@
-declare var AMDLoader: any;
-
 export const amdConfig = () => {
     // tslint:disable-next-line: no-typeof-undefined
     if (typeof AMDLoader === 'undefined') {

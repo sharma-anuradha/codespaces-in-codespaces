@@ -19,20 +19,32 @@ type Props = {
 } & RouteProps &
     RouteComponentProps;
 
-export const ProtectedRoute = connect(getAuthInfo)(
-    withRouter(({ component: Component, isAuthenticating, isAuthenticated, ...rest }: Props) => {
-        const routeRender = (props: any) => {
-            if (isAuthenticating && !isAuthenticated) {
-                return <Loader message='Signing in...' />;
-            }
+const ProtectedRouteView = (props: Props) => {
+    const { isAuthenticating, isAuthenticated, component: Component, ...rest } = props;
 
-            if (isAuthenticated) {
-                return <Component {...props} />;
-            }
+    if (isAuthenticating && !isAuthenticated) {
+        return <Loader message='Signing in...' />;
+    }
 
-            return <Redirect to='/' />;
-        };
+    if (!isAuthenticating && !isAuthenticated) {
+        return <Redirect to='/welcome' />;
+    }
 
-        return <Route {...rest} render={routeRender} />;
-    })
-);
+    return <Component {...rest} />;
+};
+
+const AuthenticatedRoute = connect(getAuthInfo)(ProtectedRouteView);
+
+type ProtectedRouteProps = {
+    path: string;
+    exact?: boolean;
+    component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
+};
+
+export const ProtectedRoute = (props: ProtectedRouteProps) => {
+    const { component, ...rest } = props;
+    const render: RouteProps['render'] = (props: RouteComponentProps<any>) => (
+        <AuthenticatedRoute {...props} component={component} />
+    );
+    return <Route {...rest} render={render} />;
+};

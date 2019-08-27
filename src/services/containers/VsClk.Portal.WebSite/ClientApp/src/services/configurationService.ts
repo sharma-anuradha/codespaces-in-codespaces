@@ -1,29 +1,20 @@
+import { useWebClient } from '../actions/middleware/useWebClient';
+
 export interface IConfiguration {
     environmentRegistrationEndpoint: string;
 }
 
-const defaultConfig: IConfiguration = {
+export const defaultConfig: IConfiguration = {
     environmentRegistrationEndpoint: '/api/environment/registration',
 };
 
-let configCache: IConfiguration | undefined;
-
+export const configurationEndpoint = '/configuration';
 export async function getServiceConfiguration(): Promise<IConfiguration> {
-    if (configCache) {
-        return configCache;
-    }
+    const webClient = useWebClient();
 
-    try {
-        const response = await fetch('/configuration');
-
-        if (response.status !== 200) {
-            return defaultConfig;
-        }
-
-        configCache = (await response.json()) as IConfiguration;
-
-        return configCache;
-    } catch (err) {
-        return defaultConfig;
-    }
+    return await webClient.request<IConfiguration>(
+        configurationEndpoint,
+        {},
+        { requiresAuthentication: false }
+    );
 }

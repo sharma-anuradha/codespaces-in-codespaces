@@ -1,13 +1,13 @@
-import { IConfiguration } from '../services/configurationService';
+import { IConfiguration, defaultConfig } from '../services/configurationService';
 
 import {
     fetchConfigurationSuccessActionType,
     FetchConfigurationAction,
     FetchConfigurationFailureAction,
     FetchConfigurationSuccessAction,
-} from '../actions/configuration';
+} from '../actions/fetchConfiguration';
 
-type ConfigurationState = IConfiguration | null;
+export type ConfigurationState = IConfiguration | null;
 type AcceptedActions =
     | FetchConfigurationAction
     | FetchConfigurationFailureAction

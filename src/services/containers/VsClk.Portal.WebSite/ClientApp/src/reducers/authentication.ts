@@ -1,21 +1,22 @@
 import { IToken } from '../services/authService';
 
+import { ClearAuthTokenAction, clearAuthTokenActionType } from '../actions/clearAuthToken';
 import {
-    getAuthTokenActionType,
-    getAuthTokenFailureActionType,
-    getAuthTokenSuccessActionType,
-    clearAuthTokenActionType,
-    signInActionType,
-    signInFailureActionType,
-    signInSuccessActionType,
-    GetAuthTokenAction,
-    GetAuthTokenFailureAction,
-    GetAuthTokenSuccessAction,
     SignInAction,
     SignInFailureAction,
     SignInSuccessAction,
-    ClearAuthTokenAction,
-} from '../actions/authentication';
+    signInActionType,
+    signInFailureActionType,
+    signInSuccessActionType,
+} from '../actions/signIn';
+import {
+    GetAuthTokenAction,
+    GetAuthTokenFailureAction,
+    GetAuthTokenSuccessAction,
+    getAuthTokenActionType,
+    getAuthTokenFailureActionType,
+    getAuthTokenSuccessActionType,
+} from '../actions/getAuthToken';
 
 type AcceptedActions =
     | GetAuthTokenAction

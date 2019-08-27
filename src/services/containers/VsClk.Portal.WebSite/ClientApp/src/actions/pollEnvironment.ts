@@ -1,8 +1,8 @@
-import envRegService from '../services/envRegService';
-import { action, Dispatch } from './actionUtils';
+import * as envRegService from '../services/envRegService';
 import { wait } from '../dependencies';
 import { ICloudEnvironment, StateInfo } from '../interfaces/cloudenvironment';
-import { ReduxAuthenticationProvider } from './reduxAuthenticationProvider';
+import { useDispatch } from './middleware/useDispatch';
+import { action } from './middleware/useActionCreator';
 
 export const pollEnvironmentActionType = 'async.environments.poll';
 export const pollEnvironmentWaitingActionType = 'async.environments.poll.waiting';
@@ -29,7 +29,8 @@ export type PollEnvironmentSuccessAction = ReturnType<typeof pollEnvironmentSucc
 export type PollEnvironmentFailureAction = ReturnType<typeof pollEnvironmentFailureAction>;
 
 // Exposed - callable actions that have side-effects
-export const pollEnvironment = (id: string) => async (dispatch: Dispatch) => {
+export async function pollEnvironment(id: string) {
+    const dispatch = useDispatch();
     try {
         dispatch(pollEnvironmentAction(id));
 
@@ -59,13 +60,10 @@ export const pollEnvironment = (id: string) => async (dispatch: Dispatch) => {
     }
 
     async function isEnvironmentValidYet() {
-        let environment = await envRegService.getEnvironment(
-            id,
-            new ReduxAuthenticationProvider(dispatch)
-        );
+        let environment = await envRegService.getEnvironment(id);
         if (!environment) {
             dispatch(pollEnvironmentWaitingAction(id));
-            await wait(2000);
+            await wait(1000);
 
             return;
         }
@@ -78,7 +76,7 @@ export const pollEnvironment = (id: string) => async (dispatch: Dispatch) => {
         } = environment;
 
         if (!sessionId || sessionPath) {
-            await wait(2000);
+            await wait(1000);
             dispatch(pollEnvironmentWaitingAction(id));
 
             return;
@@ -88,6 +86,7 @@ export const pollEnvironment = (id: string) => async (dispatch: Dispatch) => {
             return environment;
         }
 
+        await wait(1000);
         dispatch(pollEnvironmentUpdateAction(environment));
     }
-};
+}

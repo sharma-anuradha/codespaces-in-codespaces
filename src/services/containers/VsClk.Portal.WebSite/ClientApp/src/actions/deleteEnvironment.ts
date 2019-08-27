@@ -1,6 +1,6 @@
-import envRegService from '../services/envRegService';
-import { action, Dispatch } from './actionUtils';
-import { ReduxAuthenticationProvider } from './reduxAuthenticationProvider';
+import * as envRegService from '../services/envRegService';
+import { useDispatch } from './middleware/useDispatch';
+import { action } from './middleware/useActionCreator';
 
 export const deleteEnvironmentActionType = 'async.environments.delete';
 export const deleteEnvironmentSuccessActionType = 'async.environments.delete.success';
@@ -19,13 +19,14 @@ export type DeleteEnvironmentSuccessAction = ReturnType<typeof deleteEnvironment
 export type DeleteEnvironmentFailureAction = ReturnType<typeof deleteEnvironmentFailureAction>;
 
 // Exposed - callable actions that have side-effects
-export const deleteEnvironment = (id: string) => async (dispatch: Dispatch) => {
+export async function deleteEnvironment(id: string) {
+    const dispatch = useDispatch();
     // 1. Try to delete environment
     try {
         dispatch(deleteEnvironmentAction(id));
-        await envRegService.deleteEnvironment(id, new ReduxAuthenticationProvider(dispatch));
+        await envRegService.deleteEnvironment(id);
         dispatch(deleteEnvironmentSuccessAction(id));
     } catch (err) {
         dispatch(deleteEnvironmentFailureAction(id, err));
     }
-};
+}

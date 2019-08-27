@@ -18,7 +18,9 @@
             ]
         },
         "function-name": false,
-        // Developer says if it's necessary
-        "no-unnecessary-local-variable": false
+        "no-unnecessary-local-variable": false,
+        "no-backbone-get-set-outside-model": false,
+        "no-unused-variable": true,
+        "mocha-no-side-effect-code": false
     }
 }

@@ -5,6 +5,4 @@
 import * as debug from 'debug';
 import { PACKAGE_JSON } from '../constants';
 
-const trace = debug.default(PACKAGE_JSON.name);
-
-export { trace };
+export const trace = debug.default(PACKAGE_JSON.name);

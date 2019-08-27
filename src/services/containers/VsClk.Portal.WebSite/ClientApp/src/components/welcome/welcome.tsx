@@ -4,7 +4,7 @@ import { Redirect } from 'react-router-dom';
 import { Button } from 'office-ui-fabric-react/lib/Button';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 
-import { signIn } from '../../actions/authentication';
+import { signIn } from '../../actions/signIn';
 
 import './welcome.css';
 import { ApplicationState } from '../../reducers/rootReducer';

@@ -1,8 +1,10 @@
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
-import envRegService from '../services/envRegService';
+import * as envRegService from '../services/envRegService';
 
-import { action, Dispatch } from './actionUtils';
-import { ReduxAuthenticationProvider } from './reduxAuthenticationProvider';
+import { action } from './middleware/useActionCreator';
+import { useDispatch } from './middleware/useDispatch';
+import { ServiceAuthenticationError } from './middleware/useWebClient';
+import { clearAuthToken } from './clearAuthToken';
 
 export const fetchEnvironmentsActionType = 'async.environments.fetch';
 export const fetchEnvironmentsSuccessActionType = 'async.environments.fetch.success';
@@ -13,7 +15,7 @@ const fetchEnvironmentsAction = () => action(fetchEnvironmentsActionType);
 const fetchEnvironmentsSuccessAction = (environments: ICloudEnvironment[]) =>
     action(fetchEnvironmentsSuccessActionType, { environments });
 const fetchEnvironmentsFailureAction = (error: Error) =>
-    action(fetchEnvironmentsFailureActionType, undefined, error);
+    action(fetchEnvironmentsFailureActionType, error);
 
 // Types to register with reducers
 export type FetchEnvironmentsAction = ReturnType<typeof fetchEnvironmentsAction>;
@@ -21,14 +23,21 @@ export type FetchEnvironmentsSuccessAction = ReturnType<typeof fetchEnvironments
 export type FetchEnvironmentsFailureAction = ReturnType<typeof fetchEnvironmentsFailureAction>;
 
 // Exposed - callable actions that have side-effects
-export const fetchEnvironments = () => async (dispatch: Dispatch) => {
+export async function fetchEnvironments() {
+    const dispatch = useDispatch();
     try {
         dispatch(fetchEnvironmentsAction());
-        const environments = await envRegService.fetchEnvironments(
-            new ReduxAuthenticationProvider(dispatch)
-        );
+
+        const environments = await envRegService.fetchEnvironments();
         dispatch(fetchEnvironmentsSuccessAction(environments));
     } catch (err) {
+        if (err instanceof ServiceAuthenticationError) {
+            dispatch(clearAuthToken());
+            dispatch(fetchEnvironmentsFailureAction(err));
+
+            throw err;
+        }
+
         dispatch(fetchEnvironmentsFailureAction(err));
     }
-};
+}

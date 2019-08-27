@@ -4,23 +4,17 @@ import moment from 'moment';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import { getTheme } from 'office-ui-fabric-react/lib/Styling';
-
-import './environment-card.css';
-import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
-
-import {
-    ILocalCloudEnvironment,
-    environmentIsALie,
-    StateInfo,
-    isNotAvailable,
-} from '../../interfaces/cloudenvironment';
-
 import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
-
-import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
+import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
+
+import { ILocalCloudEnvironment, StateInfo } from '../../interfaces/cloudenvironment';
+import { deleteEnvironment } from '../../actions/deleteEnvironment';
+import { environmentIsALie, isNotAvailable } from '../../utils/environmentUtils';
+
+import './environment-card.css';
 
 export interface EnvironmentCardProps {
     className?: string;

@@ -17,11 +17,8 @@ import {
     CreateEnvironmentFailureAction,
 } from '../actions/createEnvironment';
 import {
-    pollEnvironmentActionType,
     pollEnvironmentUpdateActionType,
-    pollEnvironmentWaitingActionType,
     pollEnvironmentSuccessActionType,
-    pollEnvironmentFailureActionType,
     PollEnvironmentSuccessAction,
     PollEnvironmentUpdateAction,
 } from '../actions/pollEnvironment';

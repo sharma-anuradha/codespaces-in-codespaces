@@ -8,56 +8,58 @@ import { WEB_EMBED_PRODUCT_JSON } from '../../constants';
 
 import { VSLSWebSocket, IWebSocketFactory } from '../../resolvers/vslsResolver';
 import { IToken } from '../../services/authService';
-import envRegService from '../../services/envRegService';
 
 import { amdConfig } from '../../amd/amdConfig';
-import { ReduxAuthenticationProvider } from '../../actions/reduxAuthenticationProvider';
-import { Dispatch } from '../../actions/actionUtils';
 import { ApplicationState } from '../../reducers/rootReducer';
+import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
+import { isEnvironmentAvailable } from '../../utils/environmentUtils';
 
-declare var AMDLoader: any;
-
-export interface WorkbenchProps extends RouteComponentProps {
-    dispatch: Dispatch;
+export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
+    environmentInfo: ILocalCloudEnvironment | undefined;
 }
 
-export interface WorkbenchState {
-    isLoading?: boolean;
-}
+amdConfig();
 
-class WorkbenchView extends Component<WorkbenchProps, WorkbenchState> {
-    constructor(props: WorkbenchProps) {
-        super(props);
+class WorkbenchView extends Component<WorkbenchProps> {
+    // Since we have external scripts running outside of react scope,
+    // we'll mange the instantiation flag outside of state as well.
+    private workbenchMounted: boolean = false;
 
-        this.state = {};
-    }
-
-    async componentDidMount() {
-        amdConfig();
-
-        new ReduxAuthenticationProvider(this.props.dispatch);
-        const environmentId = location.href.split('environment/')[1];
-
-        const authProvider = new ReduxAuthenticationProvider(this.props.dispatch);
-
-        const environmentInfo = await envRegService.getEnvironment(environmentId, authProvider);
-        if (!environmentInfo) {
+    componentDidUpdate() {
+        const { environmentInfo } = this.props;
+        if (!isEnvironmentAvailable(environmentInfo)) {
             return;
         }
 
-        trace(`Environment info: `, environmentInfo);
+        this.mountWorkbench(environmentInfo);
+    }
 
-        const { sessionPath } = environmentInfo.connection;
-        const { accessToken } = this.props.token!;
+    async componentDidMount() {
+        const { environmentInfo } = this.props;
+        if (!isEnvironmentAvailable(environmentInfo)) {
+            return;
+        }
+
+        this.mountWorkbench(environmentInfo);
+    }
+
+    mountWorkbench(environmentInfo: ICloudEnvironment) {
+        if (this.workbenchMounted) {
+            return;
+        }
+
+        this.workbenchMounted = true;
 
         AMDLoader.global.require(['vs/workbench/workbench.web.api'], (workbench: any) => {
-            const VSLSWebSocketFactory: IWebSocketFactory = new (class
-                implements IWebSocketFactory {
+            const { sessionPath } = environmentInfo.connection;
+            const { accessToken } = this.props.token!;
+
+            const VSLSWebSocketFactory: IWebSocketFactory = {
                 create(url: string) {
                     return new VSLSWebSocket(url, accessToken, environmentInfo);
-                }
-            })();
+                },
+            };
 
             const config = {
                 folderUri: {
@@ -69,11 +71,10 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchState> {
                 remoteAuthority: `localhost`,
                 webviewEndpoint: `http://localhost`,
                 webSocketFactory: VSLSWebSocketFactory,
-                connectionToken: WEB_EMBED_PRODUCT_JSON.commit
+                connectionToken: WEB_EMBED_PRODUCT_JSON.commit,
             };
 
             trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
-
             workbench.create(this.workbenchRef, config);
         });
     }
@@ -100,8 +101,15 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchState> {
     }
 }
 
-const getAuthToken = ({ authentication: { token } }: ApplicationState) => ({
-    token,
-});
+const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: string }>) => {
+    const environmentInfo = state.environments.environments.find((e) => {
+        return e.id === props.match.params.id;
+    });
 
-export const Workbench = connect(getAuthToken)(WorkbenchView);
+    return {
+        token: state.authentication.token,
+        environmentInfo,
+    };
+};
+
+export const Workbench = connect(getProps)(WorkbenchView);

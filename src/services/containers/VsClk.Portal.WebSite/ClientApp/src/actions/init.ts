@@ -1,23 +1,28 @@
-import { fetchConfiguration } from './configuration';
+import { fetchConfiguration } from './fetchConfiguration';
 import { fetchEnvironments } from './fetchEnvironments';
-import { Dispatch, action } from './actionUtils';
-import { getAuthToken } from './authentication';
+import { useActionCreator } from './middleware/useActionCreator';
+import { getAuthToken } from './getAuthToken';
+import { useDispatch } from './middleware/useDispatch';
 
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
 export const initActionFailureType = 'async.app.init.failure';
 
-export const init = async (dispatch: Dispatch) => {
-    dispatch(action(initActionType));
+export async function init() {
+    const dispatch = useDispatch();
+    const action = useActionCreator();
 
+    dispatch(action(initActionType));
     try {
         const configFetch = dispatch(fetchConfiguration());
-        const environmentFetch = dispatch(getAuthToken()).then(() => dispatch(fetchEnvironments()));
+        const authenticate = dispatch(getAuthToken());
 
-        await Promise.all([configFetch, environmentFetch]);
+        await Promise.all([configFetch, authenticate]);
+
+        await dispatch(fetchEnvironments());
 
         dispatch(action(initActionSuccessType));
     } catch (err) {
         dispatch(action(initActionFailureType, err));
     }
-};
+}

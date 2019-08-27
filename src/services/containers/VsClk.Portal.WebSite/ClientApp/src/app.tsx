@@ -9,36 +9,41 @@ import { Workbench } from './components/workbench/workbench';
 
 import { configureStore } from './store/configureStore';
 import { init } from './actions/init';
-import { AnyAction } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
 import { ApplicationState } from './reducers/rootReducer';
 import { ProtectedRoute } from './ProtectedRoute';
 import { BlogPost } from './BlogPost';
+import { Loader } from './components/loader/loader';
+import { ConfigurationState } from './reducers/configuration';
 
 export interface AppState {}
 
 type StoreType = ReturnType<typeof configureStore>;
 interface AppProps {
     store: StoreType;
-    dispatch: ThunkDispatch<ApplicationState, any, AnyAction>;
+    configuration: ConfigurationState;
+    init: typeof init;
 }
 
 class AppRoot extends Component<AppProps, AppState> {
     async componentDidMount() {
-        this.props.dispatch(init);
+        this.props.init();
     }
 
     private renderMain() {
-        const { store } = this.props;
+        const { store, configuration } = this.props;
+
+        if (!configuration) {
+            return <Loader message='Fetching configuration...' />;
+        }
 
         return (
             <Provider store={store}>
                 <Router>
                     <div className='vssass'>
-                        <Route exact path='/' component={BlogPost} />
+                        <ProtectedRoute path='/environment/:id' component={Workbench} />
                         <ProtectedRoute exact path='/environments' component={Main} />
                         <Route exact path='/welcome' component={Welcome} />
-                        <ProtectedRoute path='/environment/:id' component={Workbench} />
+                        <Route exact path='/' component={BlogPost} />
                     </div>
                 </Router>
             </Provider>
@@ -53,4 +58,11 @@ class AppRoot extends Component<AppProps, AppState> {
     }
 }
 
-export const App = connect()(AppRoot);
+const getConfig = ({ configuration }: ApplicationState) => ({
+    configuration,
+});
+
+export const App = connect(
+    getConfig,
+    { init }
+)(AppRoot);

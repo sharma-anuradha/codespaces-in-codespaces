@@ -41,12 +41,6 @@ class AuthService {
 
     private tokens: ITokensMemoryCache = {};
 
-    private async defaultSilentSignIn() {
-        const token = await this.getCachedToken();
-
-        return token;
-    }
-
     public async signIn() {
         const loginRequest = {
             scopes: SCOPES,
@@ -164,15 +158,3 @@ class AuthService {
 }
 
 export const authService = new AuthService();
-
-export class AuthenticationError extends Error {
-    constructor() {
-        super('Authentication Failed.');
-        Error.captureStackTrace(this, AuthenticationError);
-    }
-}
-
-export interface IAuthenticationProvider {
-    getToken(): Promise<IToken | undefined>;
-    signOut(): Promise<void>;
-}

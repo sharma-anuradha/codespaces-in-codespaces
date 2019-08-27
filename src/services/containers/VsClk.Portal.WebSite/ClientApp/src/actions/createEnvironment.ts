@@ -1,9 +1,12 @@
-import envRegService, { CreateEnvironmentParameters } from '../services/envRegService';
-import { action, Dispatch } from './actionUtils';
+import {
+    createEnvironment as createCloudEnvironment,
+    CreateEnvironmentParameters,
+} from '../services/envRegService';
 import { createUniqueId } from '../dependencies';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { pollEnvironment } from './pollEnvironment';
-import { ReduxAuthenticationProvider } from './reduxAuthenticationProvider';
+import { action } from './middleware/useActionCreator';
+import { useDispatch } from './middleware/useDispatch';
 
 export const createEnvironmentActionType = 'async.environments.create';
 export const createEnvironmentSuccessActionType = 'async.environments.create.success';
@@ -23,26 +26,23 @@ export type CreateEnvironmentSuccessAction = ReturnType<typeof createEnvironment
 export type CreateEnvironmentFailureAction = ReturnType<typeof createEnvironmentFailureAction>;
 
 // Exposed - callable actions that have side-effects
-export const createEnvironment = (parameters: CreateEnvironmentParameters) => async (
-    dispatch: Dispatch
-) => {
+export async function createEnvironment(parameters: CreateEnvironmentParameters) {
+    const dispatch = useDispatch();
+
     // Have a lieId so we can identify the instance for optimistic UI updates.
     const lieId = createUniqueId();
 
     // 1. Try to create environment
     try {
         dispatch(createEnvironmentAction(lieId, parameters));
-        const environment = await envRegService.createEnvironment(
-            parameters,
-            new ReduxAuthenticationProvider(dispatch)
-        );
+        const environment = await createCloudEnvironment(parameters);
         dispatch(createEnvironmentSuccessAction(lieId, environment));
         try {
             dispatch(pollEnvironment(environment.id));
-        } catch {
+        } catch (err) {
             // Noop
         }
     } catch (err) {
         dispatch(createEnvironmentFailureAction(lieId, err));
     }
-};
+}

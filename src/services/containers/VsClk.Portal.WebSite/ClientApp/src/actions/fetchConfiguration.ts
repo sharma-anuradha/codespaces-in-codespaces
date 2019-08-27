@@ -1,6 +1,7 @@
 import { getServiceConfiguration, IConfiguration } from '../services/configurationService';
 
-import { action, Dispatch } from './actionUtils';
+import { action } from './middleware/useActionCreator';
+import { useDispatch } from './middleware/useDispatch';
 
 export const fetchConfigurationActionType = 'async.configuration.fetch';
 export const fetchConfigurationSuccessActionType = 'async.configuration.fetch.success';
@@ -11,7 +12,7 @@ const fetchConfigurationAction = () => action(fetchConfigurationActionType);
 const fetchConfigurationSuccessAction = (configuration: IConfiguration) =>
     action(fetchConfigurationSuccessActionType, { configuration });
 const fetchConfigurationFailureAction = (error: Error) =>
-    action(fetchConfigurationFailureActionType, undefined, error);
+    action(fetchConfigurationFailureActionType, error);
 
 // Types to register with reducers
 export type FetchConfigurationAction = ReturnType<typeof fetchConfigurationAction>;
@@ -19,7 +20,9 @@ export type FetchConfigurationSuccessAction = ReturnType<typeof fetchConfigurati
 export type FetchConfigurationFailureAction = ReturnType<typeof fetchConfigurationFailureAction>;
 
 // Exposed - callable actions that have side-effects
-export const fetchConfiguration = () => async (dispatch: Dispatch) => {
+export async function fetchConfiguration() {
+    const dispatch = useDispatch();
+
     try {
         dispatch(fetchConfigurationAction());
         const configuration = await getServiceConfiguration();
@@ -27,4 +30,4 @@ export const fetchConfiguration = () => async (dispatch: Dispatch) => {
     } catch (err) {
         dispatch(fetchConfigurationFailureAction(err));
     }
-};
+}

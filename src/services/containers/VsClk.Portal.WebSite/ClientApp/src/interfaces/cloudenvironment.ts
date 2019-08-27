@@ -31,14 +31,6 @@ export type ILocalCloudEnvironment = { lieId?: string } & Partial<
 > &
     Pick<ICloudEnvironment, RequiredLocalEnvironmentProperties>;
 
-export function environmentIsALie({ lieId }: ILocalCloudEnvironment) {
-    return lieId != null;
-}
-
-export function isNotAvailable({ state }: ILocalCloudEnvironment): boolean {
-    return state !== StateInfo.Available;
-}
-
 export interface Connection {
     sessionId: string;
     sessionPath: string;
