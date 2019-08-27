@@ -24,17 +24,21 @@ namespace VsClk.EnvReg.Repositories
         private IStorageManager FileShareManager { get; }
         private IWorkspaceRepository WorkspaceRepository { get; }
 
+        private IAuthRepository AuthRepository { get;  }
+
         public RegistrationManager(
             IEnvironmentRegistrationRepository environmentRegistrationRepository,
             IComputeRepository computeRepository,
             IStorageManager fileShareManager,
             IWorkspaceRepository workspaceRepository,
+            IAuthRepository authRepository,
             AppSettings appSettings)
         {
             EnvironmentRegistrationRepository = environmentRegistrationRepository;
             ComputeRepository = computeRepository;
             FileShareManager = fileShareManager;
             WorkspaceRepository = workspaceRepository;
+            AuthRepository = authRepository;
             AppSettings = appSettings;
         }
 
@@ -92,6 +96,10 @@ namespace VsClk.EnvReg.Repositories
             // Validation
             UnauthorizedUtil.IsRequired(accessToken);
 
+            // Exchange AAD token for a Cascade token.
+            var cascadeToken = await AuthRepository.ExchangeToken(accessToken);
+            UnauthorizedUtil.IsRequired(cascadeToken);
+
             var environments = await EnvironmentRegistrationRepository.GetWhereAsync((env) => env.OwnerId == model.OwnerId, logger);
 
             ValidationUtil.IsTrue(
@@ -127,7 +135,6 @@ namespace VsClk.EnvReg.Repositories
                 return null;
             }
 
-
             if (string.IsNullOrEmpty(model.ContainerImage))
             {
                 // TODO: Hack to detect the container image. When we start supporting custom container images,
@@ -138,7 +145,7 @@ namespace VsClk.EnvReg.Repositories
             // Setup - Compute input
             var computeServiceRequest = new ComputeServiceRequest
             {
-                EnvironmentVariables = EnvironmentVariableGenerator.Generate(model, AppSettings, accessToken, sessionId)
+                EnvironmentVariables = EnvironmentVariableGenerator.Generate(model, AppSettings, accessToken, sessionId, cascadeToken)
             };
 
             // Action - File Share
@@ -302,10 +309,16 @@ namespace VsClk.EnvReg.Repositories
 
             var sessionId = model.Connection.ConnectionSessionId;
 
+            var cascadeToken = await AuthRepository.ExchangeToken(accessToken);
+            if (string.IsNullOrWhiteSpace(cascadeToken))
+            {
+                return null;
+            }
+
             // Setup - Compute input
             var computeServiceRequest = new ComputeServiceRequest
             {
-                EnvironmentVariables = EnvironmentVariableGenerator.Generate(model, AppSettings, accessToken, sessionId)
+                EnvironmentVariables = EnvironmentVariableGenerator.Generate(model, AppSettings, accessToken, sessionId, cascadeToken)
             };
 
             var computeResource = await ComputeRepository.RefreshResourceAsync(oldEnv.Connection.ConnectionComputeTargetId, oldEnv.Connection.ConnectionComputeId, computeServiceRequest);

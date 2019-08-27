@@ -29,6 +29,7 @@ namespace VsClk.EnvReg.Repositories.Support.HttpClient
             ProfileServiceClient = liveShareHttpClient;
             ComputeServiceClient = computeHttpClient;
             WorkspaceServiceClient = liveShareHttpClient;
+            AuthServiceClient = liveShareHttpClient;
         }
 
         public System.Net.Http.HttpClient ProfileServiceClient { get; }
@@ -36,5 +37,7 @@ namespace VsClk.EnvReg.Repositories.Support.HttpClient
         public System.Net.Http.HttpClient ComputeServiceClient { get; }
 
         public System.Net.Http.HttpClient WorkspaceServiceClient { get; }
+
+        public System.Net.Http.HttpClient AuthServiceClient { get; }
     }
 }

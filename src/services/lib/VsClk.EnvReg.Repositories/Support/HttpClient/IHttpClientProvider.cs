@@ -7,5 +7,7 @@
         System.Net.Http.HttpClient ComputeServiceClient { get; }
 
         System.Net.Http.HttpClient WorkspaceServiceClient { get; }
+
+        System.Net.Http.HttpClient AuthServiceClient { get; }
     }
 }

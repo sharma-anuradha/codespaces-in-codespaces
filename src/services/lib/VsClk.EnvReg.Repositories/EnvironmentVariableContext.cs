@@ -15,6 +15,7 @@ namespace VsClk.EnvReg.Repositories
         public const string GitConfigUserEmail = "GIT_CONFIG_USER_EMAIL";
         public const string SessionCallback = "SESSION_CALLBACK";
         public const string SessionToken = "SESSION_TOKEN";
+        public const string SessionCascadeToken = "SESSION_CASCADE_TOKEN";
         public const string SessionId = "SESSION_ID";
         public const string DotfilesRepository = "DOTFILES_REPOSITORY";
         public const string DotfilesTargetPath = "DOTFILES_REPOSITORY_TARGET";
@@ -25,7 +26,7 @@ namespace VsClk.EnvReg.Repositories
 
     public class EnvironmentVariableGenerator
     {
-        public static List<EnvironmentVariable> Generate(EnvironmentRegistration environmentRegistration, AppSettings appSettings, string accessToken, string sessionId)
+        public static List<EnvironmentVariable> Generate(EnvironmentRegistration environmentRegistration, AppSettings appSettings, string accessToken, string sessionId, string cascadeToken)
         {
             List<EnvironmentVariable> result = new List<EnvironmentVariable>();
 
@@ -37,6 +38,7 @@ namespace VsClk.EnvReg.Repositories
                 new EnvVarGitConfigUserEmail(environmentRegistration),
                 new EnvVarSessionCallback(environmentRegistration, appSettings),
                 new EnvVarSessionToken(accessToken),
+                new EnvVarSessionCascadeToken(cascadeToken),
                 new EnvVarSessionId(sessionId),
                 new EnvDotfilesRepoUrl(environmentRegistration),
                 new EnvDotfilesTargetPath(environmentRegistration),
@@ -218,6 +220,21 @@ namespace VsClk.EnvReg.Repositories
         public override EnvironmentVariable GetEnvironmentVariable()
         {
             return new EnvironmentVariable(EnvironmentVariableConstants.SessionToken, this.accessToken);
+        }
+    }
+
+    public class EnvVarSessionCascadeToken : EnvironmentVariableStrategy
+    {
+        private readonly string cascadeToken;
+
+        public EnvVarSessionCascadeToken(string token) : base(null)
+        {
+            this.cascadeToken = token;
+        }
+
+        public override EnvironmentVariable GetEnvironmentVariable()
+        {
+            return new EnvironmentVariable(EnvironmentVariableConstants.SessionCascadeToken, this.cascadeToken);
         }
     }
 

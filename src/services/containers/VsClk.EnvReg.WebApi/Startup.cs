@@ -94,6 +94,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
             services.AddSingleton<IRegistrationManager, RegistrationManager>();
             services.AddSingleton<IProfileRepository, HttpClientProfileRepository>();
             services.AddSingleton<IWorkspaceRepository, HttpClientWorkspaceRepository>();
+            services.AddSingleton<IAuthRepository, HttpClientAuthRepository>();
             ConfigureComputeService(services, appSettings);
 
 
