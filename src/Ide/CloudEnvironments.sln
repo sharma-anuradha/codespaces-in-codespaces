@@ -1,111 +1,113 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29223.76
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackEndWebApiClient", "..\FrontEnd\BackEndWebApiClient\Src\BackEndWebApiClient\BackEndWebApiClient.csproj", "{BFC8D647-C2C4-47FE-AE08-A0B607E99307}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackEndWebApiClient", "..\FrontEnd\BackEndWebApiClient\Src\BackEndWebApiClient\BackEndWebApiClient.csproj", "{BFC8D647-C2C4-47FE-AE08-A0B607E99307}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackEndWebApiClient.Contracts", "..\FrontEnd\BackEndWebApiClient\Src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj", "{C02DEC50-8B27-463A-B05B-E8B690DC1A88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackEndWebApiClient.Contracts", "..\FrontEnd\BackEndWebApiClient\Src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj", "{C02DEC50-8B27-463A-B05B-E8B690DC1A88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrontEnd.Common", "..\FrontEnd\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj", "{0353ECB9-FF29-488E-AF9E-F5F17486FFC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrontEnd.Common", "..\FrontEnd\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj", "{0353ECB9-FF29-488E-AF9E-F5F17486FFC7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager", "..\FrontEnd\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj", "{FCAD49DE-90D7-4823-8A4C-7F98FF292DF8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnvironmentManager", "..\FrontEnd\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj", "{FCAD49DE-90D7-4823-8A4C-7F98FF292DF8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager.Contracts", "..\FrontEnd\EnvironmentManager\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj", "{9ABCFA61-71AB-478A-98CB-C7500E6F5E8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnvironmentManager.Contracts", "..\FrontEnd\EnvironmentManager\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj", "{9ABCFA61-71AB-478A-98CB-C7500E6F5E8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager.Repositories", "..\FrontEnd\EnvironmentManager\Src\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj", "{E9D79578-42DD-45B4-94CB-DFBDAF54BDF6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnvironmentManager.Repositories", "..\FrontEnd\EnvironmentManager\Src\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj", "{E9D79578-42DD-45B4-94CB-DFBDAF54BDF6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvironmentManager.Test", "..\FrontEnd\EnvironmentManager\Test\EnvironmentManager.Test\EnvironmentManager.Test.csproj", "{0F3E6E4E-EAB3-4E3A-9EA1-CFB03FF70227}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnvironmentManager.Test", "..\FrontEnd\EnvironmentManager\Test\EnvironmentManager.Test\EnvironmentManager.Test.csproj", "{0F3E6E4E-EAB3-4E3A-9EA1-CFB03FF70227}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrontEndWebApi", "..\FrontEnd\FrontEndWebApi\Src\FrontEndWebApi\FrontEndWebApi.csproj", "{38BD678F-1A25-4C9A-ADDF-1F39146AFC88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrontEndWebApi", "..\FrontEnd\FrontEndWebApi\Src\FrontEndWebApi\FrontEndWebApi.csproj", "{38BD678F-1A25-4C9A-ADDF-1F39146AFC88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveShareWorkspace", "..\FrontEnd\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj", "{450C8C09-E291-42AF-A31E-02AA8BD4F0D2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveShareWorkspace", "..\FrontEnd\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj", "{450C8C09-E291-42AF-A31E-02AA8BD4F0D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveShareWorkspace.Contracts", "..\FrontEnd\LiveShareWorkspace\Src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj", "{223806D1-84E4-4CB8-9ACA-59347792AC05}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveShareWorkspace.Contracts", "..\FrontEnd\LiveShareWorkspace\Src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj", "{223806D1-84E4-4CB8-9ACA-59347792AC05}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserProfile", "..\FrontEnd\UserProfile\Src\UserProfile\UserProfile.csproj", "{D6D0294A-5AE6-4D9C-8611-C8EA28226031}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserProfile", "..\FrontEnd\UserProfile\Src\UserProfile\UserProfile.csproj", "{D6D0294A-5AE6-4D9C-8611-C8EA28226031}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserProfile.Contracts", "..\FrontEnd\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj", "{0A3DBBB5-5C6A-4CE6-8755-D8D97EA71BD8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserProfile.Contracts", "..\FrontEnd\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj", "{0A3DBBB5-5C6A-4CE6-8755-D8D97EA71BD8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpContracts", "..\Common\Src\HttpContracts\HttpContracts.csproj", "{9EF0282D-041A-46CE-A0B4-98A8158B19B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpContracts", "..\Common\Src\HttpContracts\HttpContracts.csproj", "{9EF0282D-041A-46CE-A0B4-98A8158B19B4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackEndWebApi", "..\BackEnd\BackEndWebApi\Src\BackEndWebApi\BackEndWebApi.csproj", "{D859E510-C4CC-4C20-9C28-0A693AB063F8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackEndWebApi", "..\BackEnd\BackEndWebApi\Src\BackEndWebApi\BackEndWebApi.csproj", "{D859E510-C4CC-4C20-9C28-0A693AB063F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\BackEnd\Common\Src\Common\BackEnd.Common.csproj", "{BE0B76B3-F389-4BC1-B02A-8B9F2E32290C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackEnd.Common", "..\BackEnd\Common\Src\Common\BackEnd.Common.csproj", "{BE0B76B3-F389-4BC1-B02A-8B9F2E32290C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Abstractions", "..\BackEnd\Common\Src\Common.Abstractions\Common.Abstractions.csproj", "{473315B8-E1B1-41D3-A552-202CD51B3DF9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Abstractions", "..\BackEnd\Common\Src\Common.Abstractions\Common.Abstractions.csproj", "{473315B8-E1B1-41D3-A552-202CD51B3DF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Models", "..\BackEnd\Common\Src\Common.Models\Common.Models.csproj", "{35651A0D-8053-4DC9-924C-3E977A8F1DAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Models", "..\BackEnd\Common\Src\Common.Models\Common.Models.csproj", "{35651A0D-8053-4DC9-924C-3E977A8F1DAA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Test", "..\BackEnd\Common\Test\Common.Test\Common.Test.csproj", "{19AA975F-6110-40E0-AEC6-3C33C4989BFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Test", "..\BackEnd\Common\Test\Common.Test\Common.Test.csproj", "{19AA975F-6110-40E0-AEC6-3C33C4989BFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeVirtualMachineProvider", "..\BackEnd\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj", "{639EE825-6A90-4615-B7C5-DF0595B11418}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeVirtualMachineProvider", "..\BackEnd\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj", "{639EE825-6A90-4615-B7C5-DF0595B11418}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeVirtualMachineProvider.Abstractions", "..\BackEnd\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj", "{A63BA820-55D4-4726-84A1-73DC13125521}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeVirtualMachineProvider.Abstractions", "..\BackEnd\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj", "{A63BA820-55D4-4726-84A1-73DC13125521}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeVirtualMachineProvider.Models", "..\BackEnd\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj", "{3B572067-4D23-455A-B514-8E0AC93E1BA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeVirtualMachineProvider.Models", "..\BackEnd\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj", "{3B572067-4D23-455A-B514-8E0AC93E1BA9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeVirtualMachineProvider.Test", "..\BackEnd\ComputeVirtualMachineProvider\Test\ComputeVirtualMachineProvider.Test\ComputeVirtualMachineProvider.Test.csproj", "{6A82408C-6202-4365-832C-32942CE2C2D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeVirtualMachineProvider.Test", "..\BackEnd\ComputeVirtualMachineProvider\Test\ComputeVirtualMachineProvider.Test\ComputeVirtualMachineProvider.Test.csproj", "{6A82408C-6202-4365-832C-32942CE2C2D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceBroker", "..\BackEnd\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj", "{BF5E6E88-0C9F-4D2C-823B-384AF4792367}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResourceBroker", "..\BackEnd\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj", "{BF5E6E88-0C9F-4D2C-823B-384AF4792367}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceBroker.Abstractions", "..\BackEnd\ResourceBroker\Src\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj", "{ECF2454C-EA3C-445C-824D-BA6441B6580B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResourceBroker.Abstractions", "..\BackEnd\ResourceBroker\Src\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj", "{ECF2454C-EA3C-445C-824D-BA6441B6580B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceBroker.Models", "..\BackEnd\ResourceBroker\Src\ResourceBroker.Models\ResourceBroker.Models.csproj", "{99A70B53-8235-4042-AE49-17052636BDD7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResourceBroker.Models", "..\BackEnd\ResourceBroker\Src\ResourceBroker.Models\ResourceBroker.Models.csproj", "{99A70B53-8235-4042-AE49-17052636BDD7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceBroker.Test", "..\BackEnd\ResourceBroker\Test\ResourceBroker.Test\ResourceBroker.Test.csproj", "{8134680C-A82F-4312-8768-06FABDB9AD18}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResourceBroker.Test", "..\BackEnd\ResourceBroker\Test\ResourceBroker.Test\ResourceBroker.Test.csproj", "{8134680C-A82F-4312-8768-06FABDB9AD18}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StorageFileShareProvider", "..\BackEnd\StorageFileShareProvider\Src\StorageFileShareProvider\StorageFileShareProvider.csproj", "{AB5883D5-C083-4D22-8B33-B95E3108B289}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageFileShareProvider", "..\BackEnd\StorageFileShareProvider\Src\StorageFileShareProvider\StorageFileShareProvider.csproj", "{AB5883D5-C083-4D22-8B33-B95E3108B289}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StorageFileShareProvider.Abstractions", "..\BackEnd\StorageFileShareProvider\Src\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj", "{CB372256-9AB9-4D86-BF00-FBEAF166236F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageFileShareProvider.Abstractions", "..\BackEnd\StorageFileShareProvider\Src\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj", "{CB372256-9AB9-4D86-BF00-FBEAF166236F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StorageFileShareProvider.Models", "..\BackEnd\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj", "{8B6D668C-E08E-4685-9494-0F893358C93A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageFileShareProvider.Models", "..\BackEnd\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj", "{8B6D668C-E08E-4685-9494-0F893358C93A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StorageFileShareProvider.Test", "..\BackEnd\StorageFileShareProvider\Test\StorageFileShareProvider.Test\StorageFileShareProvider.Test.csproj", "{3A7F132A-51DB-4A92-8E4A-48B4CC1AFB96}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageFileShareProvider.Test", "..\BackEnd\StorageFileShareProvider\Test\StorageFileShareProvider.Test\StorageFileShareProvider.Test.csproj", "{3A7F132A-51DB-4A92-8E4A-48B4CC1AFB96}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemCatalog", "..\BackEnd\SystemCatalog\Src\SystemCatalog\SystemCatalog.csproj", "{EF7E6A14-C1D8-4227-9AA9-58E6395A4872}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemCatalog", "..\BackEnd\SystemCatalog\Src\SystemCatalog\SystemCatalog.csproj", "{EF7E6A14-C1D8-4227-9AA9-58E6395A4872}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemCatalog.Abstractions", "..\BackEnd\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj", "{DDC0C15F-18D8-48B7-AFE1-D992BB9647A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemCatalog.Abstractions", "..\BackEnd\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj", "{DDC0C15F-18D8-48B7-AFE1-D992BB9647A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemCatalog.Extensions", "..\BackEnd\SystemCatalog\Src\SystemCatalog.Extensions\SystemCatalog.Extensions.csproj", "{56E29041-B39C-4E36-BBDA-4AB018ECC64F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemCatalog.Extensions", "..\BackEnd\SystemCatalog\Src\SystemCatalog.Extensions\SystemCatalog.Extensions.csproj", "{56E29041-B39C-4E36-BBDA-4AB018ECC64F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemCatalog.Test", "..\BackEnd\SystemCatalog\Test\SystemCatalog.Test\SystemCatalog.Test.csproj", "{62E488FE-0208-4B6E-896A-F96D1865F735}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemCatalog.Test", "..\BackEnd\SystemCatalog\Test\SystemCatalog.Test\SystemCatalog.Test.csproj", "{62E488FE-0208-4B6E-896A-F96D1865F735}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeVirtualMachineProvider.Extensions", "..\BackEnd\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Extensions\ComputeVirtualMachineProvider.Extensions.csproj", "{052A15B0-5C4A-4210-8A56-3CC3E7265B0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeVirtualMachineProvider.Extensions", "..\BackEnd\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Extensions\ComputeVirtualMachineProvider.Extensions.csproj", "{052A15B0-5C4A-4210-8A56-3CC3E7265B0F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceBroker.Extensions", "..\BackEnd\ResourceBroker\Src\ResourceBroker.Extensions\ResourceBroker.Extensions.csproj", "{9F87F603-00D0-4390-96AF-1E0820E15F84}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResourceBroker.Extensions", "..\BackEnd\ResourceBroker\Src\ResourceBroker.Extensions\ResourceBroker.Extensions.csproj", "{9F87F603-00D0-4390-96AF-1E0820E15F84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScalingEngine", "..\BackEnd\ScalingEngine\Src\ScalingEngine\ScalingEngine.csproj", "{087B5135-B9D7-481A-9754-5A0868E73E92}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScalingEngine", "..\BackEnd\ScalingEngine\Src\ScalingEngine\ScalingEngine.csproj", "{087B5135-B9D7-481A-9754-5A0868E73E92}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScalingEngine.Abstractions", "..\BackEnd\ScalingEngine\Src\ScalingEngine.Abstractions\ScalingEngine.Abstractions.csproj", "{B67B784A-E0BA-47FB-812A-DC900E4A8618}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScalingEngine.Abstractions", "..\BackEnd\ScalingEngine\Src\ScalingEngine.Abstractions\ScalingEngine.Abstractions.csproj", "{B67B784A-E0BA-47FB-812A-DC900E4A8618}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScalingEngine.Extensions", "..\BackEnd\ScalingEngine\Src\ScalingEngine.Extensions\ScalingEngine.Extensions.csproj", "{56897DCF-FC31-476E-A83F-36BD326018FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScalingEngine.Extensions", "..\BackEnd\ScalingEngine\Src\ScalingEngine.Extensions\ScalingEngine.Extensions.csproj", "{56897DCF-FC31-476E-A83F-36BD326018FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScalingEngine.Models", "..\BackEnd\ScalingEngine\Src\ScalingEngine.Models\ScalingEngine.Models.csproj", "{A5634FB5-3809-421A-87C7-69A778D88A06}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScalingEngine.Models", "..\BackEnd\ScalingEngine\Src\ScalingEngine.Models\ScalingEngine.Models.csproj", "{A5634FB5-3809-421A-87C7-69A778D88A06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScalingEngine.Test", "..\BackEnd\ScalingEngine\Test\ScalingEngine.Test\ScalingEngine.Test.csproj", "{688279BD-C84C-44F7-9601-2015D38675F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScalingEngine.Test", "..\BackEnd\ScalingEngine\Test\ScalingEngine.Test\ScalingEngine.Test.csproj", "{688279BD-C84C-44F7-9601-2015D38675F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StorageFileShareProvider.Extensions", "..\BackEnd\StorageFileShareProvider\Src\StorageFileShareProvider.Extensions\StorageFileShareProvider.Extensions.csproj", "{8CE99F9E-9C63-4F7B-843D-6C171247A478}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageFileShareProvider.Extensions", "..\BackEnd\StorageFileShareProvider\Src\StorageFileShareProvider.Extensions\StorageFileShareProvider.Extensions.csproj", "{8CE99F9E-9C63-4F7B-843D-6C171247A478}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Capacity", "..\BackEnd\Capacity\Src\Capacity\Capacity.csproj", "{50739861-3BC8-42DF-B5DC-E2B3E6857445}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Capacity", "..\BackEnd\Capacity\Src\Capacity\Capacity.csproj", "{50739861-3BC8-42DF-B5DC-E2B3E6857445}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Capacity.Contracts", "..\BackEnd\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj", "{8C6A7B21-C084-48ED-881D-9A4FDE23CF97}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Capacity.Contracts", "..\BackEnd\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj", "{8C6A7B21-C084-48ED-881D-9A4FDE23CF97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Capacity.Test", "..\BackEnd\Capacity\Test\Capacity.Test\Capacity.Test.csproj", "{44E59550-F85D-4B05-9C64-B49DFF8BB73B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Capacity.Test", "..\BackEnd\Capacity\Test\Capacity.Test\Capacity.Test.csproj", "{44E59550-F85D-4B05-9C64-B49DFF8BB73B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Billing", "..\FrontEnd\Billing\Src\Billing\Billing.csproj", "{EE259503-A4A8-447A-BF56-2FD627C78917}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Billing", "..\FrontEnd\Billing\Src\Billing\Billing.csproj", "{EE259503-A4A8-447A-BF56-2FD627C78917}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Billing.Contracts", "..\FrontEnd\Billing\Src\Billing.Contracts\Billing.Contracts.csproj", "{337FC818-D665-43FB-99A7-A9FA000F9589}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Billing.Contracts", "..\FrontEnd\Billing\Src\Billing.Contracts\Billing.Contracts.csproj", "{337FC818-D665-43FB-99A7-A9FA000F9589}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Billing.Test", "..\FrontEnd\Billing\Test\Billing.Test\Billing.Test.csproj", "{6E2C6CB1-5DB9-4BD3-9097-96F9B9584CA0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Billing.Test", "..\FrontEnd\Billing\Test\Billing.Test\Billing.Test.csproj", "{6E2C6CB1-5DB9-4BD3-9097-96F9B9584CA0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Accounts", "..\FrontEnd\Accounts\Src\Accounts\Accounts.csproj", "{DDBCA7D8-0559-4852-ABBE-03E31011B3E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts", "..\FrontEnd\Accounts\Src\Accounts\Accounts.csproj", "{DDBCA7D8-0559-4852-ABBE-03E31011B3E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Accounts.Contracts", "..\FrontEnd\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj", "{EA842DEA-F4D9-4567-B83B-4566E22122CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Contracts", "..\FrontEnd\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj", "{EA842DEA-F4D9-4567-B83B-4566E22122CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Accounts.Test", "..\FrontEnd\Accounts\Test\Accounts.Test\Accounts.Test.csproj", "{27365388-0910-4E79-B526-91B933106DB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Test", "..\FrontEnd\Accounts\Test\Accounts.Test\Accounts.Test.csproj", "{27365388-0910-4E79-B526-91B933106DB4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Common\Src\Common\Common.csproj", "{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "..\Common\Src\Common\Common.csproj", "{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Auth", "..\Common\Src\Auth\Auth.csproj", "{4720BB0C-569A-4542-B296-8640D91FB5F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -115,9 +117,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BFC8D647-C2C4-47FE-AE08-A0B607E99307}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -744,5 +743,23 @@ Global
 		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|x64.Build.0 = Release|Any CPU
 		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|x86.ActiveCfg = Release|Any CPU
 		{DCA53689-B03F-4D60-812B-ECDFA3AFA4A9}.Release|x86.Build.0 = Release|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Debug|x64.Build.0 = Debug|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Debug|x86.Build.0 = Debug|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Release|x64.ActiveCfg = Release|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Release|x64.Build.0 = Release|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Release|x86.ActiveCfg = Release|Any CPU
+		{4720BB0C-569A-4542-B296-8640D91FB5F9}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {22ED116B-56E2-431D-807D-317DC90F9CD7}
 	EndGlobalSection
 EndGlobal
