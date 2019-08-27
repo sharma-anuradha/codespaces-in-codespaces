@@ -4,7 +4,8 @@
 
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
@@ -13,18 +14,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <summary>
         ///
         /// </summary>
-        /// <param name="handler"></param>
-        /// <param name="input"></param>
         /// <param name="name"></param>
+        /// <param name="input"></param>
         /// <param name="logger"></param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        Task<ContinuationTaskMessageHandlerResult> Execute(IContinuationTaskMessageHandler handler, object input, string name, IDiagnosticsLogger logger);
+        Task<ContinuationResult> Execute(string name, object input, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        Task<ContinuationTaskMessageHandlerResult> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>
-        Task<ContinuationTaskMessageHandlerResult> Execute(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger);
+        Task<ContinuationTaskMessageHandlerResult> Continue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger);
     }
 }

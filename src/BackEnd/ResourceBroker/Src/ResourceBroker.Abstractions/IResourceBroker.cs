@@ -39,7 +39,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// <returns>A task.</returns>
         Task<EnvironmentStartResult> StartComputeAsync(
             EnvironmentStartInput input,
-            IDiagnosticsLogger logger,
-            string continuationToken = null);
+            IDiagnosticsLogger logger);
     }
 }

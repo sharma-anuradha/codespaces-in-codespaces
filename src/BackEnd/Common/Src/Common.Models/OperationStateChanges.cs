@@ -1,16 +1,17 @@
-﻿using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+﻿// <copyright file="OperationStateChanges.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    public class ResourceStartingStatusChanges
+    public class OperationStateChanges
     {
         /// <summary>
         /// 

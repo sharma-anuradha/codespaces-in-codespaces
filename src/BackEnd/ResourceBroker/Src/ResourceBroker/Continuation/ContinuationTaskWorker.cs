@@ -7,13 +7,20 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class ContinuationTaskWorker : IContinuationTaskWorker
     {
-        private static readonly TimeSpan MissDelayTime = TimeSpan.FromSeconds(2);
+        private const string LogBaseName = ResourceLoggingsConstants.ContinuationTaskWorker;
+        private static readonly TimeSpan MissDelayTime = TimeSpan.FromSeconds(1);
+        private static readonly int LongMinMissDelayTime = 2;
+        private static readonly int LongMaxMissDelayTime = 5;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContinuationTaskWorker"/> class.
@@ -23,13 +30,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <param name="handlers"></param>
         public ContinuationTaskWorker(
             IContinuationTaskActivator activator,
-            IContinuationTaskMessagePump messagePump,
-            IEnumerable<IContinuationTaskMessageHandler> handlers)
+            IContinuationTaskMessagePump messagePump)
         {
+            ActivityLevel = 100;
             Activator = activator;
             MessagePump = messagePump;
-            Handlers = handlers;
-            ActivityLevel = 100;
+            Random = new Random();
         }
 
         /// <inheritdoc/>
@@ -39,19 +45,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private IContinuationTaskMessagePump MessagePump { get; }
 
-        private IEnumerable<IContinuationTaskMessageHandler> Handlers { get; }
+        private Random Random { get; }
 
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public async Task<bool> Run(IDiagnosticsLogger logger)
+        public async Task<bool> RunAsync(IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("ContinuationRunId", Guid.NewGuid().ToString());
-            var rootLogger = logger.FromExisting();
-            logger.FluentAddValue("ContinuationActivityLevel", ActivityLevel.ToString());
+            logger.FluentAddBaseValue("ContinuationWorkerRunId", Guid.NewGuid().ToString())
+                .FluentAddValue("ContinuationActivityLevel", ActivityLevel.ToString());
 
             // Get message from the queue
-            var message = await MessagePump.GetMessageAsync(rootLogger);
+            var message = await MessagePump.GetMessageAsync(logger.FromExisting());
 
             logger.FluentAddValue("ContinuationFoundMessages", (message != null).ToString());
 
@@ -65,40 +70,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 }
 
                 // Pull out typed message content
-                var typedPayload = message.GetTypedPayload<ResourceJobQueuePayload>();
+                var payload = message.GetTypedPayload<ResourceJobQueuePayload>();
 
-                logger
-                    .FluentAddValue("ContinuationTrackingId", typedPayload.TrackingId)
-                    .FluentAddValue("ContinuationTarget", typedPayload.Target)
-                    .FluentAddValue("ContinuationCreateOffSet", (DateTime.UtcNow - typedPayload.Created).TotalMilliseconds.ToString());
+                logger.FluentAddValue("ContinuationTrackingId", payload.TrackingId)
+                    .FluentAddValue("ContinuationHandleTarget", payload.Target)
+                    .FluentAddValue("ContinuationIsInitial", string.IsNullOrEmpty(payload.ContinuationToken).ToString())
+                    .FluentAddValue("ContinuationPreStatus", payload.Status.ToString())
+                    .FluentAddValue("ContinuationCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds.ToString());
 
                 // Try and handle message
-                var didHandle = false;
-                foreach (var handler in Handlers)
+                var result = await Activator.Continue(payload, logger.FromExisting());
+
+                logger.FluentAddValue("ContinuationWasHandled", (result != null).ToString());
+                if (result != null)
                 {
-                    // Check if this handler can handle this message
-                    if (handler.CanHandle(typedPayload))
-                    {
-                        logger.FluentAddValue("ContinuationHandler", handler.GetType().Name);
-
-                        var continueDuration = logger.StartDuration();
-
-                        // Activate the core continuation
-                        var result = await Activator.Execute(handler, typedPayload, rootLogger);
-
-                        logger
-                            .FluentAddValue("ContinuationHandleDuration", continueDuration.Elapsed.TotalMilliseconds.ToString())
-                            .FluentAddValue("ContinuationHasNext", (!string.IsNullOrEmpty(result.HandlerResult.ContinuationToken)).ToString());
-
-                        didHandle = true;
-                        break;
-                    }
+                    logger.FluentAddValue("ContinuationPostStatus", result.Result.Status.ToString())
+                        .FluentAddValue("ContinuationRetryAfter", result.Result.RetryAfter.ToString())
+                        .FluentAddValue("ContinuationIsFinal", string.IsNullOrEmpty(result.Result.ContinuationToken).ToString());
                 }
 
-                logger.FluentAddValue("ContinuationWasHandled", didHandle.ToString());
-
                 // Delete message when we are done
-                await MessagePump.DeleteMessage(message, rootLogger);
+                await MessagePump.DeleteMessage(message, logger.FromExisting());
             }
             else
             {
@@ -106,9 +98,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 if (ActivityLevel > 0)
                 {
                     ActivityLevel--;
+                    await Task.Delay(MissDelayTime);
                 }
-
-                await Task.Delay(MissDelayTime);
+                else
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(Random.Next(LongMinMissDelayTime, LongMaxMissDelayTime)));
+                }
             }
 
             return !Disposed;

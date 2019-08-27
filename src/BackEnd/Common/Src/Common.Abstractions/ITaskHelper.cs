@@ -19,25 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
         /// <param name="name"></param>
         /// <param name="callback"></param>
         /// <param name="logger"></param>
-        void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, IDiagnosticsLogger logger = null);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="schedule"></param>
-        /// <param name="callback"></param>
-        /// <param name="logger"></param>
-        void RunBackgroundSchedule(string name, TimeSpan schedule, Func<IDiagnosticsLogger, Task<bool>> callback, IDiagnosticsLogger logger = null);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="schedule"></param>
-        /// <param name="callback"></param>
-        /// <param name="logger"></param>
-        void RunBackgroundScheduleLoop(string name, TimeSpan schedule, Func<IDiagnosticsLogger, Task<bool>> callback, IDiagnosticsLogger logger = null);
+        void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null);
 
         /// <summary>
         /// Runs a TPL Task fire-and-forget style, the right way - in the

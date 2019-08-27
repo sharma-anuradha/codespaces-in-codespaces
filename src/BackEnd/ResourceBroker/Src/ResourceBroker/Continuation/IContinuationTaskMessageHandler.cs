@@ -4,14 +4,28 @@
 
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public interface IContinuationTaskMessageHandler
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <returns></returns>
         bool CanHandle(ResourceJobQueuePayload payload);
 
-        Task<ContinuationTaskMessageHandlerResult> Continue(ContinuationTaskMessageHandlerInput input, IDiagnosticsLogger logger, string continuationToken);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        Task<ContinuationTaskMessageHandlerResult> Continue(ContinuationTaskMessageHandlerInput input, IDiagnosticsLogger logger);
     }
 }

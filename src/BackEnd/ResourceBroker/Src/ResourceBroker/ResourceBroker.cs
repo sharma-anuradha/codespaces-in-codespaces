@@ -9,9 +9,11 @@ using AutoMapper;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
@@ -29,12 +31,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         public ResourceBroker(
             IResourcePool resourcePool,
             IResourceScalingStore resourceScalingStore,
-            IStartComputeTask startComputeTask,
+            IContinuationTaskActivator continuationTaskActivator,
             IMapper mapper)
         {
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
             ResourceScalingStore = Requires.NotNull(resourceScalingStore, nameof(resourceScalingStore));
-            StartComputeTask = Requires.NotNull(startComputeTask, nameof(startComputeTask));
+            ContinuationTaskActivator = Requires.NotNull(continuationTaskActivator, nameof(continuationTaskActivator));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
 
@@ -42,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IResourceScalingStore ResourceScalingStore { get; }
 
-        private IStartComputeTask StartComputeTask { get; }
+        private IContinuationTaskActivator ContinuationTaskActivator { get; }
 
         private IMapper Mapper { get; }
 
@@ -52,9 +54,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Setting up logger
             logger = logger.WithValues(new LogValueSet
                 {
-                    { ResourceLoggingConstants.ResourceLocation, input.Location },
-                    { ResourceLoggingConstants.ResourceSkuName, input.SkuName },
-                    { ResourceLoggingConstants.ResourceType, input.Type.ToString() },
+                    { ResourceLoggingPropertyConstants.ResourceLocation, input.Location },
+                    { ResourceLoggingPropertyConstants.ResourceSkuName, input.SkuName },
+                    { ResourceLoggingPropertyConstants.ResourceType, input.Type.ToString() },
                 });
 
             // Map logical sku to resource sku
@@ -79,11 +81,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public async Task<EnvironmentStartResult> StartComputeAsync(
             EnvironmentStartInput input,
-            IDiagnosticsLogger logger,
-            string continuationToken = null)
+            IDiagnosticsLogger logger)
         {
-            // Start compute
-            return await StartComputeTask.RunAsync(input, logger, continuationToken);
+            var continuationInput = new StartEnvironementContinuationInput
+            {
+                ComputeResourceId = input.ComputeResourceId,
+                EnvironmentVariables = input.EnvironmentVariables,
+                StorageResourceId = input.StorageResourceId,
+            };
+
+            var result = await ContinuationTaskActivator.StartComputeResource(continuationInput, logger);
+
+            return new EnvironmentStartResult
+            {
+                ContinuationToken = result.ContinuationToken,
+                NextInput = result.NextInput,
+                RetryAfter = result.RetryAfter,
+                Status = result.Status,
+                ResourceId = input.ComputeResourceId,
+            };
         }
 
         private async Task<string> MapLogicalSkuToResourceSku(string skuName, ResourceType type, string location)

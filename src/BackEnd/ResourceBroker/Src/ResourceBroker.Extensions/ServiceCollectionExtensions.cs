@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
@@ -72,13 +73,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IAsyncBackgroundWarmup, ResourceRegisterJobs>();
 
             // Tasks
-            services.AddSingleton<IStartComputeTask, StartComputeTask>();
             services.AddSingleton<CreateComputeContinuationHandler>();
             services.AddSingleton<ICreateComputeContinuationHandler>(x => x.GetRequiredService<CreateComputeContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateComputeContinuationHandler>());
             services.AddSingleton<CreateStorageContinuationHandler>();
             services.AddSingleton<ICreateStorageContinuationHandler>(x => x.GetRequiredService<CreateStorageContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateStorageContinuationHandler>());
+            services.AddSingleton<StartEnvironmentContinuationHandler>();
+            services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
 
             // Job Registration
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
@@ -133,7 +136,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                 .Queues = new string[]
                     {
                         MockResourceJobQueueRepository.QueueName,
-                        StartComputeTask.QueueName,
                         "background-warmup-job-queue", // TODO: Need to fix this reference somehow
                     });
         }

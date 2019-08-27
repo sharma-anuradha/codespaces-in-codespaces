@@ -147,5 +147,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             Store.TryAdd(document.Id, document);
             return document;
         }
+
+        public Task<ResourceRecord> GetByResourceId(string resourceId, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

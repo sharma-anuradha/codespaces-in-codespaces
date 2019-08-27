@@ -9,7 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     /// <summary>
     /// Result of the provider assign operation.
     /// </summary>
-    public class FileShareProviderAssignResult : BaseContinuationResult
+    public class FileShareProviderAssignResult : ContinuationResult
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="FileShareProviderAssignResult"/> class.

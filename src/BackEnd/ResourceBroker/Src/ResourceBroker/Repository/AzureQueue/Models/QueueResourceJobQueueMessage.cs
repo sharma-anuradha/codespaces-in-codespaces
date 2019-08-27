@@ -3,9 +3,10 @@
 // </copyright>
 
 using Microsoft.Azure.Storage.Queue;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureQueue
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureQueue.Models
 {
     /// <summary>
     /// 

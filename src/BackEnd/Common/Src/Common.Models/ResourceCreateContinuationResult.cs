@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
     /// <summary>
     /// 
     /// </summary>
-    public class BaseResourceCreateResult : BaseContinuationResult
+    public class ResourceCreateContinuationResult : ContinuationResult
     {
         /// <summary>
         /// Gets or sets the resource id.

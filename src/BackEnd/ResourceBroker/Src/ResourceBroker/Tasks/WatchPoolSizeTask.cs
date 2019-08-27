@@ -10,10 +10,10 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
@@ -30,8 +30,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// Initializes a new instance of the <see cref="WatchPoolSizeTask"/> class.
         /// </summary>
         /// <param name="resourceBrokerSettings"></param>
-        /// <param name="createComputeContinuationHandler"></param>
-        /// <param name="createStorageContinuationHandler"></param>
         /// <param name="continuationTaskActivator"></param>
         /// <param name="distributedLease"></param>
         /// <param name="resourceScalingStore"></param>
@@ -39,8 +37,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="taskHelper"></param>
         public WatchPoolSizeTask(
             ResourceBrokerSettings resourceBrokerSettings,
-            ICreateComputeContinuationHandler createComputeContinuationHandler,
-            ICreateStorageContinuationHandler createStorageContinuationHandler,
             IContinuationTaskActivator continuationTaskActivator,
             IDistributedLease distributedLease,
             IResourceScalingStore resourceScalingStore,
@@ -48,8 +44,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ITaskHelper taskHelper)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
-            CreateComputeContinuationHandler = createComputeContinuationHandler;
-            CreateStorageContinuationHandler = createStorageContinuationHandler;
             ContinuationTaskActivator = continuationTaskActivator;
             DistributedLease = distributedLease;
             ResourceScalingStore = resourceScalingStore;
@@ -58,10 +52,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
-
-        private IContinuationTaskMessageHandler CreateComputeContinuationHandler { get; }
-
-        private IContinuationTaskMessageHandler CreateStorageContinuationHandler { get; }
 
         private IContinuationTaskActivator ContinuationTaskActivator { get; }
 
@@ -104,14 +94,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             Disposed = true;
         }
 
-        private async Task RunPoolCheckAsync(ResourcePoolDefinition resourcePoolDefinition, IDiagnosticsLogger rootLogger)
+        private async Task RunPoolCheckAsync(ResourcePoolDefinition resourcePoolDefinition, IDiagnosticsLogger logger)
         {
-            rootLogger
-                .FluentAddValue("ActivityInstanceId", Guid.NewGuid().ToString())
-                .FluentAddValue(ResourceLoggingConstants.ResourceLocation, resourcePoolDefinition.Location)
-                .FluentAddValue(ResourceLoggingConstants.ResourceSkuName, resourcePoolDefinition.SkuName)
-                .FluentAddValue(ResourceLoggingConstants.ResourceType, resourcePoolDefinition.Type.ToString());
-            var logger = rootLogger.FromExisting();
+            logger.FluentAddBaseValue("ActivityInstanceId", Guid.NewGuid().ToString())
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceLocation, resourcePoolDefinition.Location)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceSkuName, resourcePoolDefinition.SkuName)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceType, resourcePoolDefinition.Type.ToString());
 
             // Obtain a leas if no one else has it
             using (var lease = await ObtainLease($"{ReadPoolSizeLease}-{resourcePoolDefinition.BuildName()}"))
@@ -125,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 }
 
                 // Determine the effective size of the pool
-                var unassignedCount = await RetrieveUnassignedCount(resourcePoolDefinition, rootLogger);
+                var unassignedCount = await RetrieveUnassignedCount(resourcePoolDefinition, logger.FromExisting());
 
                 // Get the desiered pool target size
                 var poolTargetCount = resourcePoolDefinition.TargetCount;
@@ -133,8 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 // Get the delta of how many
                 var poolDeltaCount = poolTargetCount - unassignedCount;
 
-                logger
-                    .FluentAddValue("CheckUnassignedCount", unassignedCount.ToString())
+                logger.FluentAddValue("CheckUnassignedCount", unassignedCount.ToString())
                     .FluentAddValue("CheckPoolTargetCount", poolTargetCount.ToString())
                     .FluentAddValue("CheckPoolDeltaCount", poolDeltaCount.ToString());
 
@@ -158,7 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task AddPoolItemAsync(ResourcePoolDefinition resourcePoolDefinition, int iteration, IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("ActivityInstanceIterationId", iteration.ToString());
+            logger.FluentAddBaseValue("ActivityInstanceIterationId", iteration.ToString());
 
             var input = new CreateResourceContinuationInput()
             {
@@ -167,15 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 SkuName = resourcePoolDefinition.SkuName,
             };
 
-            var handler = CreateStorageContinuationHandler;
-            var target = "JobCreateStorage";
-            if (resourcePoolDefinition.Type == ResourceType.ComputeVM)
-            {
-                handler = CreateComputeContinuationHandler;
-                target = "JobCreateCompute";
-            }
-
-            await ContinuationTaskActivator.Execute(handler, input, target, logger);
+            await ContinuationTaskActivator.CreatePooledResource(input, logger);
         }
 
         private Task<int> RetrieveUnassignedCount(ResourcePoolDefinition resourceSku, IDiagnosticsLogger logger)

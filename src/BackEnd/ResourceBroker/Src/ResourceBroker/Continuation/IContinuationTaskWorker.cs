@@ -21,6 +21,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>
-        Task<bool> Run(IDiagnosticsLogger logger);
+        Task<bool> RunAsync(IDiagnosticsLogger logger);
     }
 }

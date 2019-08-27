@@ -95,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             // and is currently being processed.
             var resource = await ResourceRepository.GetAsync(id, Logger);
 
-            resource.UpdateProvisioningStatus(ResourceProvisioningStatus.Provisioning);
+            resource.UpdateProvisioningStatus(OperationState.InProgress);
 
             await ResourceRepository.UpdateAsync(resource, Logger);
 
@@ -107,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
 
             resource.IsReady = true;
             resource.Ready = DateTime.UtcNow;
-            resource.UpdateProvisioningStatus(ResourceProvisioningStatus.Completed);
+            resource.UpdateProvisioningStatus(OperationState.Succeeded);
 
             await ResourceRepository.UpdateAsync(resource, Logger);
         }

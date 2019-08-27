@@ -24,50 +24,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private IDiagnosticsLogger Logger { get; }
 
         /// <inheritdoc/>
-        public void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, IDiagnosticsLogger logger = null)
+        public void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null)
         {
             var wrappedCallback = WrapCallback(name, callback, logger);
 
-            Task.Factory.StartNew(
-                async () =>
-                {
-                    while (await wrappedCallback())
-                    {
-                    }
-                },
-                TaskCreationOptions.LongRunning);
-        }
+            logger = (logger ?? Logger).FromExisting()
+                .FluentAddBaseValue("TaskManagerId", Guid.NewGuid().ToString())
+                .FluentAddBaseValue("TaskName", name);
 
-        /// <inheritdoc/>
-        public void RunBackgroundSchedule(string name, TimeSpan schedule, Func<IDiagnosticsLogger, Task<bool>> callback, IDiagnosticsLogger logger = null)
-        {
-            var wrappedCallback = WrapCallback(name, callback, logger);
-
-            Task.Run(
-                async () =>
-                {
-                    var contine = await Task.Run(wrappedCallback);
-                    if (contine)
-                    {
-                        await Task.Delay(schedule);
-
-                        RunBackgroundSchedule(name, schedule, callback, logger);
-                    }
-                });
-        }
-
-        /// <inheritdoc/>
-        public void RunBackgroundScheduleLoop(string name, TimeSpan schedule, Func<IDiagnosticsLogger, Task<bool>> callback, IDiagnosticsLogger logger = null)
-        {
-            var wrappedCallback = WrapCallback(name, callback, logger);
+            logger.LogInfo("task-helper-run-background-loop-started");
 
             Task.Run(
                 async () =>
                 {
                     while (await wrappedCallback())
                     {
-                        await Task.Delay(schedule);
+                        if (schedule != null)
+                        {
+                            await Task.Delay(schedule.Value);
+                        }
                     }
+
+                    logger.LogInfo("task-helper-run-background-loop-exited");
                 });
         }
 
@@ -108,11 +86,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 {
                     await callback(logger);
 
-                    logger.AddDuration(duration).LogInfo($"{name}_complete");
+                    logger.AddDuration(duration).LogInfo($"{name}-complete");
                 }
                 catch (Exception e)
                 {
-                    logger.AddDuration(duration).LogException($"{name}_error", e);
+                    logger.AddDuration(duration).LogException($"{name}-error", e);
                 }
             };
         }
@@ -130,11 +108,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 {
                     result = await callback(logger);
 
-                    logger.AddDuration(duration).LogInfo($"{name}_complete");
+                    logger.AddDuration(duration).LogInfo($"{name}-complete");
                 }
                 catch (Exception e)
                 {
-                    logger.AddDuration(duration).LogException($"{name}_error", e);
+                    logger.AddDuration(duration).LogException($"{name}-error", e);
                 }
 
                 return result;

@@ -9,7 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     /// <summary>
     /// Result of the provider delete operation.
     /// </summary>
-    public class FileShareProviderDeleteResult : BaseContinuationResult
+    public class FileShareProviderDeleteResult : ContinuationResult
     {
     }
 }

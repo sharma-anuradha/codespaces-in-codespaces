@@ -9,12 +9,11 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     public class CreateComputeContinuationHandler
         : CreateResourceContinuationHandler, ICreateComputeContinuationHandler
@@ -38,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IComputeProvider ComputeProvider { get; }
 
         /// <inheritdoc/>
-        protected async override Task<BaseResourceCreateResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken)
+        protected async override Task<ResourceCreateContinuationResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken)
         {
             var didParseLocation = Enum.TryParse(input.Location, true, out AzureLocation azureLocation);
             if (!didParseLocation)

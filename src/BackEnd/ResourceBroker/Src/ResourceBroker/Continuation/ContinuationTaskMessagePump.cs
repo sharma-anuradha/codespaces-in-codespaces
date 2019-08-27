@@ -9,19 +9,22 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
     public class ContinuationTaskMessagePump : IContinuationTaskMessagePump
     {
-        private const int TargetMessageCacheLength = 10;
-
         public ContinuationTaskMessagePump(
+            IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IResourceJobQueueRepository resourceJobQueueRepository)
         {
+            ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             ResourceJobQueueRepository = resourceJobQueueRepository;
             MessageCache = new ConcurrentQueue<IResourceJobQueueMessage>();
         }
+
+        private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
         private IResourceJobQueueRepository ResourceJobQueueRepository { get; }
 
@@ -30,19 +33,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public async Task<bool> StartAsync(IDiagnosticsLogger logger)
+        public async Task<bool> TryPopulateCacheAsync(IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("CacheLevel", MessageCache.Count.ToString());
+            var targetMessageCacheLength = ContinuationTaskWorkerPoolManager.CurrentWorkerCount;
+
+            logger.FluentAddValue("PumpCacheLevel", MessageCache.Count.ToString())
+                .FluentAddValue("PumpTargetLevel", targetMessageCacheLength.ToString());
 
             // Only trigger work when we have something to really do
-            if (MessageCache.Count < (TargetMessageCacheLength / 2))
+            if (MessageCache.Count < (targetMessageCacheLength / 2))
             {
-                logger.FluentAddValue("DidExecute", true.ToString());
+                logger.FluentAddValue("PumpFillDidTrigger", true.ToString());
 
                 // Fetch items
-                var items = await ResourceJobQueueRepository.GetAsync(TargetMessageCacheLength - MessageCache.Count, logger);
+                var items = await ResourceJobQueueRepository.GetAsync(targetMessageCacheLength - MessageCache.Count, logger.FromExisting());
 
-                logger.FluentAddValue("FoundItems", items.Count().ToString());
+                logger.FluentAddValue("PumpFoundItems", items.Count().ToString());
 
                 // Add each item to the local cache
                 foreach (var item in items)

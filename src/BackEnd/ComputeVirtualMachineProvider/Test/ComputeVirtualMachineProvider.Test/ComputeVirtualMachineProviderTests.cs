@@ -172,7 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Assert.Null(result.ContinuationToken);
         }
 
-        private static void ValidateVirtualMachineResult<T>(T result, OperationState expectedState) where T : BaseContinuationResult
+        private static void ValidateVirtualMachineResult<T>(T result, OperationState expectedState) where T : ContinuationResult
         {
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);

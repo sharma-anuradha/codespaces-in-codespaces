@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
@@ -20,19 +21,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="watchPoolSizeJob">The <see cref="WatchPoolSizeJob"/> job that
         /// needs to be run.</param>
+        /// <param name="continuationTaskMessagePump"></param>
         /// <param name="continuationTaskWorkerPoolManager"></param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public ResourceRegisterJobs(
             IWatchPoolSizeTask watchPoolSizeJob,
+            IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             ITaskHelper taskHelper)
         {
             WatchPoolSizeJob = watchPoolSizeJob;
+            ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
         }
 
         private IWatchPoolSizeTask WatchPoolSizeJob { get; }
+
+        private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
@@ -41,15 +47,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public Task WarmupCompletedAsync()
         {
+            // Job: Populate continuation message cache
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingsConstants.ContinuationTaskMessagePump}-try-populate-cache",
+                (childLogger) => ContinuationTaskMessagePump.TryPopulateCacheAsync(childLogger),
+                TimeSpan.FromSeconds(10));
+
             // Job: Watch Pool Size
-            TaskHelper.RunBackgroundSchedule(
+            TaskHelper.RunBackgroundLoop(
                 "watch-pool-size",
-                TimeSpan.FromMinutes(1),
-                (childLogger) => WatchPoolSizeJob.RunAsync(childLogger));
+                (childLogger) => WatchPoolSizeJob.RunAsync(childLogger),
+                TimeSpan.FromMinutes(1));
 
             // Job: Continuation Task Worker Pool Manager
             TaskHelper.RunBackground(
-                "continuation-task-queue-manage",
+                $"{ResourceLoggingsConstants.ContinuationTaskWorkerPoolManager}-start",
                 (childLogger) => ContinuationTaskWorkerPoolManager.StartAsync(childLogger));
 
             return Task.CompletedTask;

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
@@ -15,7 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 using Microsoft.WindowsAzure.Storage.Blob;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     public class CreateStorageContinuationHandler
         : CreateResourceContinuationHandler, ICreateStorageContinuationHandler
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
         /// <inheritdoc/>
-        protected async override Task<BaseResourceCreateResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken)
+        protected async override Task<ResourceCreateContinuationResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken)
         {
             var container = BlobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
             var blob = container.GetBlobReference(ResourceBrokerSettings.FileShareTemplateBlobName);

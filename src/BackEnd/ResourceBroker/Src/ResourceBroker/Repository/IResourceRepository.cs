@@ -18,6 +18,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="resourceId"></param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        Task<ResourceRecord> GetByResourceId(string resourceId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="skuName"></param>
         /// <param name="type"></param>
         /// <param name="location"></param>

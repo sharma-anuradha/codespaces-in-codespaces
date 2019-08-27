@@ -4,9 +4,9 @@
 
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
-    public interface ICreateComputeContinuationHandler : IContinuationTaskMessageHandler
+    public interface ICreateStorageContinuationHandler : IContinuationTaskMessageHandler
     {
     }
 }

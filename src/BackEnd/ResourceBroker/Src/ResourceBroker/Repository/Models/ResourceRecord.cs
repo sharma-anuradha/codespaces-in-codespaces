@@ -76,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public ResourceProvisioningStatus? ProvisioningStatus { get; set; }
+        public OperationState? ProvisioningStatus { get; set; }
 
         /// <summary>
         /// 
@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// 
         /// </summary>
-        public IList<ResourceProvisioningStatusChanges> ProvisioningStatusChanges { get; set; }
+        public IList<OperationStateChanges> ProvisioningStatusChanges { get; set; }
 
         /// <summary>
         /// 
@@ -102,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// 
         /// </summary>
-        public IList<ResourceStartingStatusChanges> StartingStatusChanges { get; set; }
+        public IList<OperationStateChanges> StartingStatusChanges { get; set; }
 
         /// <summary>
         /// 
@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         /// <param name="newState"></param>
-        public void UpdateProvisioningStatus(ResourceProvisioningStatus newState, DateTime? newTime = null)
+        public void UpdateProvisioningStatus(OperationState newState, DateTime? newTime = null)
         {
             if (ProvisioningStatus == newState)
             {
@@ -126,12 +126,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
 
             if (ProvisioningStatusChanges == null)
             {
-                ProvisioningStatusChanges = new List<ResourceProvisioningStatusChanges>();
+                ProvisioningStatusChanges = new List<OperationStateChanges>();
             }
 
             // TODO: should ensure that these are bounded
 
-            ProvisioningStatusChanges.Add(new ResourceProvisioningStatusChanges
+            ProvisioningStatusChanges.Add(new OperationStateChanges
             {
                 Status = newState,
                 Time = time,
@@ -155,12 +155,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
 
             if (StartingStatusChanges == null)
             {
-                StartingStatusChanges = new List<ResourceStartingStatusChanges>();
+                StartingStatusChanges = new List<OperationStateChanges>();
             }
 
             // TODO: should ensure that these are bounded
 
-            StartingStatusChanges.Add(new ResourceStartingStatusChanges
+            StartingStatusChanges.Add(new OperationStateChanges
             {
                 Status = newState,
                 Time = time,

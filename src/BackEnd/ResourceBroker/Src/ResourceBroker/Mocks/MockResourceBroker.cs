@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
-        public async Task<EnvironmentStartResult> StartComputeAsync(EnvironmentStartInput input, IDiagnosticsLogger logger, string continuationToken = null)
+        public async Task<EnvironmentStartResult> StartComputeAsync(EnvironmentStartInput input, IDiagnosticsLogger logger)
         {
             // TODO: get these from shared Constants.
             const string SessionCallbackVaraible = "SESSION_CALLBACK";

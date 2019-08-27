@@ -6,7 +6,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 {
     /// <summary>
     /// Create compute continuation input.

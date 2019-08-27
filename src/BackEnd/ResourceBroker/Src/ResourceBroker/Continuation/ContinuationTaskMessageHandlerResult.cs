@@ -6,10 +6,19 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class ContinuationTaskMessageHandlerResult
     {
-        public BaseContinuationResult HandlerResult { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public ContinuationResult Result { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public object Metadata { get; set; }
     }
 }

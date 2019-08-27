@@ -9,7 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
     /// <summary>
     ///
     /// </summary>
-    public abstract class BaseContinuationResult
+    public class ContinuationResult
     {
         /// <summary>
         /// Gets / Sets the operation state.

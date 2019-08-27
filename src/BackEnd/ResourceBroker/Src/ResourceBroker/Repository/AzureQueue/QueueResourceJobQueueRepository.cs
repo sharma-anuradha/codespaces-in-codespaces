@@ -9,9 +9,10 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureQueue.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureQueue
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
     /// <summary>
     /// 
@@ -37,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <inheritdoc/>
         protected override string QueueId
         {
-            get { return "resource-job-queue"; }
+            get { return "resource-job-queue-temp"; }
         }
 
         /// <inheritdoc/>

@@ -5,7 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>
-        Task<bool> StartAsync(IDiagnosticsLogger logger);
+        Task<bool> TryPopulateCacheAsync(IDiagnosticsLogger logger);
 
         /// <summary>
         /// 
