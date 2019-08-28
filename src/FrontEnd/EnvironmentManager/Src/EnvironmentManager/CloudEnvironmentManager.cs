@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                     {
-                        cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.StaticEnvironment, cloudEnvironment.Id, null, logger);
+                        cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.StaticEnvironment, cloudEnvironment.Id, Guid.Empty, logger);
                     }
 
                     // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.
@@ -123,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 cloudEnvironment.Compute = await AllocateCompute(cloudEnvironment, logger);
 
                 // Create the Live Share workspace
-                cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceIdToken, logger);
+                cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger);
                 if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                 {
                     logger.AddDuration(duration)
@@ -331,16 +331,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (cloudEnvironment.Type == CloudEnvironmentType.CloudEnvironment)
             {
-                var storageIdToken = cloudEnvironment.Storage?.ResourceIdToken;
+                var storageIdToken = cloudEnvironment.Storage?.ResourceId;
                 if (storageIdToken != null)
                 {
-                    await ResourceBrokerClient.DeleteResourceAsync(storageIdToken, logger);
+                    await ResourceBrokerClient.DeleteResourceAsync(storageIdToken.Value, logger);
                 }
 
-                var computeIdToken = cloudEnvironment.Compute?.ResourceIdToken;
+                var computeIdToken = cloudEnvironment.Compute?.ResourceId;
                 if (computeIdToken != null)
                 {
-                    await ResourceBrokerClient.DeleteResourceAsync(computeIdToken, logger);
+                    await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
                 }
             }
 
@@ -353,7 +353,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private async Task<ConnectionInfo> CreateWorkspace(
             CloudEnvironmentType type,
             string cloudEnvironmentId,
-            string computeIdToken,
+            Guid computeIdToken,
             IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
@@ -362,7 +362,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var workspaceRequest = new WorkspaceRequest()
             {
-                Name = cloudEnvironmentId,
+                Name = cloudEnvironmentId.ToString(),
                 ConnectionMode = ConnectionMode.Auto,
                 AreAnonymousGuestsAllowed = false,
                 ExpiresAt = DateTime.UtcNow.AddDays(PersistentSessionExpiresInDays),
@@ -379,7 +379,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             return new ConnectionInfo
             {
-                ConnectionComputeId = computeIdToken,
+                ConnectionComputeId = computeIdToken.ToString(),
                 ConnectionComputeTargetId = type.ToString(),
                 ConnectionSessionId = workspaceResponse.Id,
                 ConnectionSessionPath = null,
@@ -401,7 +401,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             return new ResourceAllocation
             {
-                ResourceIdToken = compute.ResourceIdToken,
+                ResourceId = compute.ResourceId,
                 SkuName = compute.SkuName,
                 Location = compute.Location,
                 Created = compute.Created,
@@ -423,7 +423,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             return new ResourceAllocation
             {
-                ResourceIdToken = storage.ResourceIdToken,
+                ResourceId = storage.ResourceId,
                 SkuName = storage.SkuName,
                 Location = storage.Location,
                 Created = storage.Created,
@@ -436,8 +436,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string accessToken,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(cloudEnvironment?.Compute?.ResourceIdToken, $"{nameof(cloudEnvironment.Compute)}.{nameof(cloudEnvironment.Compute.ResourceIdToken)}");
-            Requires.NotNullOrEmpty(cloudEnvironment?.Storage?.ResourceIdToken, $"{nameof(cloudEnvironment.Storage)}.{nameof(cloudEnvironment.Storage.ResourceIdToken)}");
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(cloudEnvironment.Compute, nameof(cloudEnvironment.Compute));
+            Requires.NotNull(cloudEnvironment.Storage, nameof(cloudEnvironment.Storage));
+            Requires.NotEmpty(cloudEnvironment.Compute.ResourceId, $"{nameof(cloudEnvironment.Compute)}.{nameof(cloudEnvironment.Compute.ResourceId)}");
+            Requires.NotEmpty(cloudEnvironment.Storage.ResourceId, $"{nameof(cloudEnvironment.Storage)}.{nameof(cloudEnvironment.Storage.ResourceId)}");
             Requires.NotNull(callbackUri, nameof(callbackUri));
             Requires.Argument(callbackUri.IsAbsoluteUri, nameof(callbackUri), "Must be an absolute URI.");
             Requires.NotNullOrEmpty(accessToken, nameof(accessToken));
@@ -449,10 +452,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 accessToken);
 
             await ResourceBrokerClient.StartComputeAsync(
-                cloudEnvironment.Compute.ResourceIdToken,
+                cloudEnvironment.Compute.ResourceId,
                 new StartComputeRequestBody
                 {
-                    StorageResourceIdToken = cloudEnvironment.Storage.ResourceIdToken,
+                    StorageResourceId = cloudEnvironment.Storage.ResourceId,
                     EnvironmentVariables = environmentVariables,
                 },
                 logger);

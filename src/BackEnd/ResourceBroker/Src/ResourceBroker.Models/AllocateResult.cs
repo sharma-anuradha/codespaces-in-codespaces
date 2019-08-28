@@ -13,9 +13,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
     public class AllocateResult
     {
         /// <summary>
-        /// 
+        /// The resource broker resource id.
         /// </summary>
-        public string ResourceId { get; set; }
+        public Guid Id { get; set; }
 
         /// <summary>
         /// 
@@ -31,6 +31,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// 
         /// </summary>
         public string Location { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public AzureResourceInfo AzureResourceInfo { get; set; }
 
         /// <summary>
         /// 

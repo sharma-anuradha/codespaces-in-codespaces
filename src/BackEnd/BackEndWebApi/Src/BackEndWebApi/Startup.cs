@@ -28,6 +28,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Exten
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
@@ -167,6 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             var config = new MapperConfiguration(cfg =>
                 {
                     cfg.AddResourceBroker();
+                    cfg.CreateMap<JValue, Guid>().ConvertUsing(g => Guid.Parse(g.Value.ToString()));
                 });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);

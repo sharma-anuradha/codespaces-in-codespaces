@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Data;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -39,8 +40,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddCloudEnvironmentType(cloudEnvironment.Type)
                     .AddCloudEnvironmentState(cloudEnvironment.State)
                     .AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId)
-                    .AddComputeId(cloudEnvironment.Compute?.ResourceIdToken)
-                    .AddStorageId(cloudEnvironment.Storage?.ResourceIdToken);
+                    .AddComputeId(cloudEnvironment.Compute?.ResourceId)
+                    .AddStorageId(cloudEnvironment.Storage?.ResourceId);
             }
 
             return logger;
@@ -79,8 +80,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="computeId">The environment connection compute id.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
-        public static IDiagnosticsLogger AddComputeId(this IDiagnosticsLogger logger, string computeId)
-            => logger.FluentAddValue(LogValueComputeId, computeId);
+        public static IDiagnosticsLogger AddComputeId(this IDiagnosticsLogger logger, Guid? computeId)
+            => logger.FluentAddValue(LogValueComputeId, computeId?.ToString());
 
         /// <summary>
         /// Add the environment connection compute id to the logger.
@@ -88,8 +89,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="storageId">The environment connection storage id.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
-        public static IDiagnosticsLogger AddStorageId(this IDiagnosticsLogger logger, string storageId)
-            => logger.FluentAddValue(LogValueStorageId, storageId);
+        public static IDiagnosticsLogger AddStorageId(this IDiagnosticsLogger logger, Guid? storageId)
+            => logger.FluentAddValue(LogValueStorageId, storageId.ToString());
 
         /// <summary>
         /// Add the environment type to the logger.

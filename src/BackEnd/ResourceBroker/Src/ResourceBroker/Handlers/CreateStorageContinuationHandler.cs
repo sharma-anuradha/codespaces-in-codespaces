@@ -18,9 +18,21 @@ using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class CreateStorageContinuationHandler
         : CreateResourceContinuationHandler, ICreateStorageContinuationHandler
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CreateStorageContinuationHandler"/> class.
+        /// </summary>
+        /// <param name="storageProvider"></param>
+        /// <param name="subscriptionCatalog"></param>
+        /// <param name="resourceRepository"></param>
+        /// <param name="mapper"></param>
+        /// <param name="blobStorageClientProvider"></param>
+        /// <param name="resourceBrokerSettings"></param>
         public CreateStorageContinuationHandler(
             IStorageProvider storageProvider,
             IAzureSubscriptionCatalog subscriptionCatalog,
@@ -48,7 +60,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
         /// <inheritdoc/>
-        protected async override Task<ResourceCreateContinuationResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken, IDiagnosticsLogger logger)
+        protected async override Task<ResourceCreateContinuationResult> CreateResourceAsync(
+            CreateResourceContinuationInput input,
+            string continuationToken,
+            IDiagnosticsLogger logger)
         {
             var container = BlobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
             var blob = container.GetBlobReference(ResourceBrokerSettings.FileShareTemplateBlobName);

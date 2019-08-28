@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker
@@ -14,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <summary>
         /// Gets or sets the storage resource id token.
         /// </summary>
-        public string StorageResourceIdToken { get; set; }
+        public Guid StorageResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the environment variable dictionary for the environment compute.

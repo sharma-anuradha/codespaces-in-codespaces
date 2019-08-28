@@ -37,9 +37,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input, nameof(input));
             string resultContinuationToken = default;
             OperationState resultState;
-            ResourceId resourceId = default;
+            AzureResourceInfo azureResourceInfo = default;
 
-            (resourceId, resultState, resultContinuationToken) = await ExecuteAsync(
+            (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderCreateInput>(
                 input,
                 continuationToken,
                 deploymentManager.BeginCreateComputeAsync,
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             var result = new VirtualMachineProviderCreateResult()
             {
-                ResourceId = resourceId,
+                AzureResourceInfo = azureResourceInfo,
                 Status = resultState,
                 ContinuationToken = resultContinuationToken,
                 RetryAfter = TimeSpan.FromSeconds(VmCreationRetryAfterSeconds),
@@ -61,8 +61,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input, nameof(input));
             string resultContinuationToken = default;
             OperationState resultState;
+            AzureResourceInfo azureResourceInfo;
 
-            (_, resultState, resultContinuationToken) = await ExecuteAsync(
+            (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderDeleteInput>(
                 input,
                 continuationToken,
                 deploymentManager.BeginDeleteComputeAsync,
@@ -84,7 +85,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input, nameof(input));
             string resultContinuationToken = default;
             OperationState resultState;
-            (_, resultState, resultContinuationToken) = await ExecuteAsync(
+            AzureResourceInfo azureResourceInfo;
+            (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderStartComputeInput>(
                 input,
                 continuationToken,
                 deploymentManager.BeginStartComputeAsync,
@@ -99,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return result;
         }
 
-        private async Task<(ResourceId, OperationState, string)> ExecuteAsync<T>(
+        private async Task<(AzureResourceInfo, OperationState, string)> ExecuteAsync<T>(
             T input,
             string continuationToken,
             Func<T, Task<(OperationState, NextStageInput)>> beginOperation,
@@ -125,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 resultContinuationToken = deploymentStatusInput.ToJson();
             }
 
-            return (deploymentStatusInput.ResourceId, resultState, resultContinuationToken);
+            return (deploymentStatusInput.AzureResourceInfo, resultState, resultContinuationToken);
         }
     }
 }

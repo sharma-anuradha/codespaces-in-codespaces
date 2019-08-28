@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
     /// <summary>
     /// 
     /// </summary>
-    public class OutOfCapacityException : Exception
+    public class OutOfCapacityException : ResourceBrokerException
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="OutOfCapacityException"/> class.
@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// <param name="type"></param>
         /// <param name="location"></param>
         public OutOfCapacityException(string skuName, ResourceType type, string location)
-            : base("Pool is currently empty. SkuName = {skuName}, Type = {type}, Location = {location}")
+            : base($"Pool is currently empty. SkuName = {skuName}, Type = {type}, Location = {location}")
         {
             SkuName = skuName;
             Type = type;

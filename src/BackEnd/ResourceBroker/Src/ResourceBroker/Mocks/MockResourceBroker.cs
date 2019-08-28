@@ -28,18 +28,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         {
             var now = DateTime.UtcNow;
             var location = (AzureLocation)Enum.Parse(typeof(AzureLocation), input.Location);
+            var resourceId = Guid.NewGuid();
             return Task.FromResult(new AllocateResult
             {
                 Created = now,
                 Location = input.Location,
-                ResourceId = new ResourceId(input.Type, Guid.NewGuid(), MockSubscriptionId, MockResourceGroup, location),
+                Id = resourceId,
+                AzureResourceInfo = new AzureResourceInfo(MockSubscriptionId, MockResourceGroup, resourceId.ToString()),
                 SkuName = input.SkuName,
                 Type = input.Type,
             });
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeallocateAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        public Task<bool> DeallocateAsync(string resourceId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
@@ -61,8 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
             {
                 return new EnvironmentStartResult
                 {
-                    ContinuationToken = input.ComputeResourceId,
-                    ResourceId = input.ComputeResourceId,
+                    ContinuationToken = input.ComputeResourceId.ToString(),
                     RetryAfter = TimeSpan.FromMinutes(1),
                     Status = OperationState.NotStarted,
                 };

@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Net.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker
@@ -65,29 +66,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// <summary>
         /// Get the get resoruce uri.
         /// </summary>
-        /// <param name="resourceIdToken">The resource id token.</param>
+        /// <param name="resourceId">The resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetGetResourceUri(string resourceIdToken) => GetResourceUri(resourceIdToken);
+        public static string GetGetResourceUri(Guid resourceId) => GetResourceUri(resourceId);
 
         /// <summary>
         /// Get the deallocate uri.
         /// </summary>
-        /// <param name="resourceIdToken">The resource id token.</param>
+        /// <param name="resourceId">The resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetDeleteResourceUri(string resourceIdToken) => GetResourceUri(resourceIdToken);
+        public static string GetDeleteResourceUri(Guid resourceId) => GetResourceUri(resourceId);
 
         /// <summary>
         /// Get the resource uri with id.
         /// </summary>
-        /// <param name="resourceIdToken">The  resource id token.</param>
+        /// <param name="resourceId">The  resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetResourceUri(string resourceIdToken) => $"{ResourcesRoute}?id={resourceIdToken}";
+        public static string GetResourceUri(Guid resourceId) => $"{ResourcesRoute}?id={resourceId}";
 
         /// <summary>
         /// Get the start compute operation uri.
         /// </summary>
-        /// <param name="computeResourceIdToken">The compute resource id token.</param>
+        /// <param name="computeResourceId">The compute resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetStartComputeUri(string computeResourceIdToken) => $"{ResourcesRoute}/{StartComputeOperation}?id={computeResourceIdToken}";
+        public static string GetStartComputeUri(Guid computeResourceId) => $"{ResourcesRoute}/{StartComputeOperation}?id={computeResourceId}";
     }
 }

@@ -14,8 +14,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public class VirtualMachineProviderDeleteInput
     {
         /// <summary>
-        ///
+        /// Gets or sets he azure resource to be deleted.
         /// </summary>
-        public ResourceId ResourceId { get; set; }
+        public AzureResourceInfo AzureResourceInfo { get; set; }
     }
 }

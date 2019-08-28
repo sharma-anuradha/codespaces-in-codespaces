@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             logger.FluentAddValue("ContinuationIsInitial", string.IsNullOrEmpty(continuationToken).ToString());
 
             // First time through we want to add the resource
-            var record = (ResourceRecord)null;
+            var record = default(ResourceRecord);
             if (continuationToken == null)
             {
                 // Add record to database
@@ -88,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var result = await CreateResourceAsync(input, continuationToken, logger);
 
             // Update record resource id database
-            record = await UpdateResourceRecordIdAsync(record, result, logger);
+            record = await UpdateResourceRecordWithResultAsync(record, result, logger);
 
             // Last time through we want to finialize the resource
             if (string.IsNullOrEmpty(result.ContinuationToken))
@@ -129,15 +129,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 Created = time,
                 Location = input.Location,
                 SkuName = input.SkuName,
-                ResourceGroup = $"RG-{id}",
-                Subscription = SubscriptionCatalog.AzureSubscriptions.FirstOrDefault().SubscriptionId,
             };
             record.UpdateProvisioningStatus(OperationState.Initialized);
 
             // Update input
-            input.InstanceId = record.Id;
-            input.ResourceGroup = record.ResourceGroup;
-            input.Subscription = record.Subscription;
+            input.Id = record.Id;
+            input.ResourceGroup = $"RG-{id}";
+            input.Subscription = SubscriptionCatalog.AzureSubscriptions.FirstOrDefault().SubscriptionId;
+
+            // TODO: Update to get above info from the capacity manager
 
             // Create the actual record
             await ResourceRepository.CreateAsync(record, logger);
@@ -150,29 +150,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IDiagnosticsLogger logger)
         {
             // If we where in Provisioning state, update it to be so
-            var record = await ResourceRepository.GetAsync(input.InstanceId, logger);
-            if (record.ProvisioningStatus != OperationState.InProgress)
+            var record = await ResourceRepository.GetAsync(input.Id, logger);
+
+            // Only need to update if we have to do something
+            if (record.UpdateProvisioningStatus(OperationState.InProgress))
             {
                 logger.FluentAddValue("ResourceStatusUpdate", true.ToString());
 
-                record.UpdateProvisioningStatus(OperationState.InProgress);
-
-                await ResourceRepository.UpdateAsync(record, logger);
+                record = await ResourceRepository.UpdateAsync(record, logger);
             }
 
             return record;
         }
 
-        private async Task<ResourceRecord> UpdateResourceRecordIdAsync(
+        private async Task<ResourceRecord> UpdateResourceRecordWithResultAsync(
             ResourceRecord record,
             ResourceCreateContinuationResult result,
             IDiagnosticsLogger logger)
         {
             // First time through we want to update the resource id
-            if (string.IsNullOrEmpty(record.ResourceId)
-                && !string.IsNullOrEmpty(result.ResourceId))
+            if (record.AzureResourceInfo == null
+                && result.AzureResourceInfo != null)
             {
-                record.ResourceId = result.ResourceId;
+                record.UpdateProvisioningStatus(OperationState.InProgress);
+                record.AzureResourceInfo = result.AzureResourceInfo;
 
                 record = await ResourceRepository.UpdateAsync(record, logger);
             }
@@ -186,13 +187,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             logger.FluentAddValue("ResourceFinalizeRecord", true.ToString());
 
-            var record = await ResourceRepository.GetAsync(input.InstanceId, logger);
+            var record = await ResourceRepository.GetAsync(input.Id, logger);
 
             record.IsReady = true;
             record.Ready = DateTime.UtcNow;
             record.UpdateProvisioningStatus(OperationState.Succeeded);
 
-            await ResourceRepository.UpdateAsync(record, logger);
+            record = await ResourceRepository.UpdateAsync(record, logger);
 
             return record;
         }

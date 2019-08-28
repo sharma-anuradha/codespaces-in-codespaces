@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeallocateAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        public Task<bool> DeallocateAsync(string resourceId, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -85,9 +85,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             var continuationInput = new StartEnvironementContinuationInput
             {
-                ComputeResourceId = input.ComputeResourceId,
+                ComputeResourceId = input.ComputeResourceId.ToString(),
                 EnvironmentVariables = input.EnvironmentVariables,
-                StorageResourceId = input.StorageResourceId,
+                StorageResourceId = input.StorageResourceId.ToString(),
             };
 
             var result = await ContinuationTaskActivator.StartComputeResource(continuationInput, logger);
@@ -98,7 +98,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 NextInput = result.NextInput,
                 RetryAfter = result.RetryAfter,
                 Status = result.Status,
-                ResourceId = input.ComputeResourceId,
             };
         }
 

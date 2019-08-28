@@ -25,10 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// <summary>
         /// Deallocate a resource.
         /// </summary>
-        /// <param name="resourceIdToken">The resource id token.</param>
+        /// <param name="resourceId">The resource id token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resoruce was deleted.</returns>
-        Task<bool> DeallocateAsync(string resourceIdToken, IDiagnosticsLogger logger);
+        Task<bool> DeallocateAsync(string resourceId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Start compute with storage and startup parameters.

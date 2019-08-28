@@ -1,4 +1,4 @@
-﻿// <copyright file="VirtualMachineProviderAssignResult.cs" company="Microsoft">
+﻿// <copyright file="VirtualMachineProviderStartComputeResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

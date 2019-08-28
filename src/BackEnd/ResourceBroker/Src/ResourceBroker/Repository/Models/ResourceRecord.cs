@@ -15,12 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     /// 
     /// </summary>
     public class ResourceRecord : TaggedEntity
-    { 
-        /// <summary>
-        /// 
-        /// </summary>
-        public string ResourceId { get; set; }
-
+    {
         /// <summary>
         /// 
         /// </summary>
@@ -33,19 +28,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public ResourceType Type { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the azure resource info from the compute or storage provider.
+        /// </summary>
+        public AzureResourceInfo AzureResourceInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the azure location.
         /// </summary>
         public string Location { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Subscription { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string ResourceGroup { get; set; }
 
         /// <summary>
         /// 
@@ -113,11 +103,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// 
         /// </summary>
         /// <param name="newState"></param>
-        public void UpdateProvisioningStatus(OperationState newState, DateTime? newTime = null)
+        public bool UpdateProvisioningStatus(OperationState newState, DateTime? newTime = null)
         {
             if (ProvisioningStatus == newState)
             {
-                return;
+                return false;
             }
 
             var time = newTime.GetValueOrDefault(DateTime.UtcNow);
@@ -136,17 +126,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 Status = newState,
                 Time = time,
             });
+
+            return true;
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="newState"></param>
-        public void UpdateStartingStatus(OperationState newState, DateTime? newTime = null)
+        public bool UpdateStartingStatus(OperationState newState, DateTime? newTime = null)
         {
             if (StartingStatus.HasValue && StartingStatus.Value == newState)
             {
-                return;
+                return false;
             }
 
             var time = newTime.GetValueOrDefault(DateTime.UtcNow);
@@ -165,6 +157,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 Status = newState,
                 Time = time,
             });
+
+            return true;
         }
     }
 }

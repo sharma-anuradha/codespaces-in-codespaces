@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 
@@ -23,26 +24,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <summary>
         /// Get a resource by id from the resource broker.
         /// </summary>
-        /// <param name="resourceIdToken">The resource id token.</param>
+        /// <param name="resourceId">The resource id token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The allocation result.</returns>
-        Task<ResourceBrokerResource> GetResourceAsync(string resourceIdToken, IDiagnosticsLogger logger);
+        Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Deallocate a resource from the resource broker.
         /// </summary>
-        /// <param name="resourceIdToken">The resource id token.</param>
+        /// <param name="resourceId">The resource id.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource has been deallocated.</returns>
-        Task<bool> DeleteResourceAsync(string resourceIdToken, IDiagnosticsLogger logger);
+        Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Start the compute VM instance with the specified storage.
         /// </summary>
-        /// <param name="computeResourceIdToken">The compute resource id token.</param>
+        /// <param name="computeResourceId">The compute resource id.</param>
         /// <param name="startComputeRequestBody">The bind input parameters.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Task.</returns>
-        Task StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger);
+        Task StartComputeAsync(Guid computeResourceId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger);
     }
 }

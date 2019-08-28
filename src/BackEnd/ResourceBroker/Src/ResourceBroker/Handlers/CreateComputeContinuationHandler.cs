@@ -38,7 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IComputeProvider ComputeProvider { get; }
 
         /// <inheritdoc/>
-        protected async override Task<ResourceCreateContinuationResult> CreateResourceAsync(CreateResourceContinuationInput input, string continuationToken, IDiagnosticsLogger logger)
+        protected async override Task<ResourceCreateContinuationResult> CreateResourceAsync(
+            CreateResourceContinuationInput input,
+            string continuationToken,
+            IDiagnosticsLogger logger)
         {
             var didParseLocation = Enum.TryParse(input.Location, true, out AzureLocation azureLocation);
             if (!didParseLocation)

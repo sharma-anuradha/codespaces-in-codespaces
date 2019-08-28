@@ -12,6 +12,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// <summary>
         /// Initializes a new instance of the <see cref="ShareConnectionInfo"/> class.
         /// </summary>
+        public ShareConnectionInfo()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ShareConnectionInfo"/> class.
+        /// </summary>
         /// <param name="storageAccountName"><see cref="StorageAccountName"/>.</param>
         /// <param name="storageAccountKey"><see cref="StorageAccountKey"/>.</param>
         /// <param name="storageShareName"><see cref="StorageShareName"/>.</param>

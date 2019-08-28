@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
 
         public object Input { get; set; }
 
-        public object Metadata { get; internal set; }
+        public object Metadata { get; set; }
 
         public string ContinuationToken { get; set; }
 

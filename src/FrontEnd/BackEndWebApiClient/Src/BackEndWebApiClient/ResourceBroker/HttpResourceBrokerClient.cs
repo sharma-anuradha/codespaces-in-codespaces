@@ -42,28 +42,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceBrokerResource> GetResourceAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        public async Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(resourceIdToken, nameof(resourceIdToken));
-            var requestUri = ResourceBrokerHttpContract.GetGetResourceUri(resourceIdToken);
+            Requires.NotEmpty(resourceId, nameof(resourceId));
+            var requestUri = ResourceBrokerHttpContract.GetGetResourceUri(resourceId);
             var result = await SendAsync<string, ResourceBrokerResource>(ResourceBrokerHttpContract.GetResourceMethod, requestUri, null, logger);
             return result;
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteResourceAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        public async Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(resourceIdToken, nameof(resourceIdToken));
-            var requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(resourceIdToken);
+            Requires.NotEmpty(resourceId, nameof(resourceId));
+            var requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(resourceId);
             var result = await SendAsync<string, bool>(ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, null, logger);
             return result;
         }
 
         /// <inheritdoc/>
-        public async Task StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        public async Task StartComputeAsync(Guid computeResourceId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(computeResourceIdToken, nameof(computeResourceIdToken));
-            var requestUri = ResourceBrokerHttpContract.GetStartComputeUri(computeResourceIdToken);
+            Requires.NotEmpty(computeResourceId, nameof(computeResourceId));
+            var requestUri = ResourceBrokerHttpContract.GetStartComputeUri(computeResourceId);
             _ = await SendAsync<StartComputeRequestBody, string>(
                 ResourceBrokerHttpContract.StartComputeMethod,
                 requestUri,

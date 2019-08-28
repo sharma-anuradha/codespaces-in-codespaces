@@ -31,7 +31,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpContracts", "..\Common\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackEndWebApi", "..\BackEnd\BackEndWebApi\Src\BackEndWebApi\BackEndWebApi.csproj", "{D859E510-C4CC-4C20-9C28-0A693AB063F8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackEnd.Common", "..\BackEnd\Common\Src\Common\BackEnd.Common.csproj", "{BE0B76B3-F389-4BC1-B02A-8B9F2E32290C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.Common", "..\BackEnd\Common\Src\Common\BackEnd.Common.csproj", "{BE0B76B3-F389-4BC1-B02A-8B9F2E32290C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Abstractions", "..\BackEnd\Common\Src\Common.Abstractions\Common.Abstractions.csproj", "{473315B8-E1B1-41D3-A552-202CD51B3DF9}"
 EndProject

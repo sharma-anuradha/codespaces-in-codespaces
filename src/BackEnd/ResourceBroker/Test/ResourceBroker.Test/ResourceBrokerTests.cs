@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
             var resourcePool = new Mock<IResourcePool>();
-            resourcePool.Setup(x => x.TryGetAsync(DefaultResourceSkuName, input.Type, input.Location, logger)).Returns(Task.FromResult(rawResult));
+            resourcePool.Setup(x => x.TryGetAsync(DefaultResourceSkuName, input.Type, input.Location, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(rawResult));
             var scalingStore = BuildResourceScalingStore();
 
             var provider = new ResourceBroker(resourcePool.Object, scalingStore.Object, continuationTaskActivator, mapper);
@@ -75,8 +75,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 
             Assert.NotNull(result);
             Assert.Equal(rawResult.Created, result.Created);
-            Assert.Equal(rawResult.Location, result.Location);
-            Assert.Equal(rawResult.ResourceId, result.ResourceId);
             Assert.Equal(rawResult.SkuName, result.SkuName);
             Assert.Equal(rawResult.Type, result.Type);
         }
@@ -147,10 +145,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             return new ResourceRecord
             {
-                ResourceId = "ID",
                 SkuName = DefaultResourceSkuName,
                 Type = DefaultType,
-                Location = DefaultLocation,
                 Created = DateTime.UtcNow,
                 IsAssigned = false,
                 Assigned = DateTime.UtcNow

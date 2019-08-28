@@ -54,11 +54,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             NextStageInput createDeploymentStatusInput = createResult.ContinuationToken.ToDeploymentStatusInput();
             Assert.NotNull(createDeploymentStatusInput);
             Assert.NotNull(createDeploymentStatusInput.TrackingId);
-            Assert.Equal(rgName, createDeploymentStatusInput.ResourceId.ResourceGroup);
-            Assert.NotEqual(Guid.Empty, createDeploymentStatusInput.ResourceId.InstanceId);
-            Assert.Equal(subscriptionId, createDeploymentStatusInput.ResourceId.SubscriptionId);
-            Assert.Equal(location, createDeploymentStatusInput.ResourceId.Location);
-
+            Assert.Equal(rgName, createDeploymentStatusInput.AzureResourceInfo.ResourceGroup);
+            Assert.Equal(subscriptionId, createDeploymentStatusInput.AzureResourceInfo.SubscriptionId);
 
             VirtualMachineProviderCreateResult statusCheckResult = default;
             do
@@ -116,19 +113,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                                                        "accountkey",
                                                        "cloudenvdata",
                                                        "dockerlib");
-            ResourceId resourceId = new ResourceId(
-                ResourceType.ComputeVM,
-                Guid.Parse("47b6d3d7-26f3-4fed-9aa8-fa809b0dd3cc"),
-                testContext.SubscriptionId,
-                "vsclk-core-dev-test",
-                AzureLocation.WestUs2);
+            var resourceId = Guid.Parse("47b6d3d7-26f3-4fed-9aa8-fa809b0dd3cc");
+            var azureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceId.ToString());
             var startComputeInput = new VirtualMachineProviderStartComputeInput(
                 resourceId,
+                azureResourceInfo,
                 fileShareInfo,
-                new Dictionary<string, string>() {
+                new Dictionary<string, string>()
+                {
                     { "SESSION_ID", "value1" },
                     { "SESSION_TOKEN", "value2" },
-                    { "SESSION_CALLBACK", "value2" } });
+                    { "SESSION_CALLBACK", "value2" }
+                });
 
             await StartCompute(computeProvider, startComputeInput);
         }
@@ -140,13 +136,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var deleteTimer = Stopwatch.StartNew();
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
+
+            var resourceName = Guid.Parse("894adc3d-758c-41ec-bb58-d7cf0640a676").ToString();
             VirtualMachineProviderDeleteInput input = new VirtualMachineProviderDeleteInput
             {
-                ResourceId = new ResourceId(ResourceType.ComputeVM,
-                  Guid.Parse("894adc3d-758c-41ec-bb58-d7cf0640a676"),
-                  testContext.SubscriptionId,
-                  testContext.ResourceGroupName,
-                  testContext.Location),
+                AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceName),
             };
 
             var deleteResult = await computeProvider.DeleteAsync(input);
@@ -201,11 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             NextStageInput startComputeStatusCheckInput = startComputeResult.ContinuationToken.ToDeploymentStatusInput();
             Assert.NotNull(startComputeStatusCheckInput);
             Assert.NotNull(startComputeStatusCheckInput.TrackingId);
-            Assert.Equal(startComputeInput.ResourceId.ResourceGroup, startComputeStatusCheckInput.ResourceId.ResourceGroup);
-            Assert.NotEqual(Guid.Empty, startComputeStatusCheckInput.ResourceId.InstanceId);
-            Assert.Equal(startComputeInput.ResourceId.SubscriptionId, startComputeStatusCheckInput.ResourceId.SubscriptionId);
-            Assert.Equal(startComputeInput.ResourceId.Location, startComputeStatusCheckInput.ResourceId.Location);
-
+            Assert.NotNull(startComputeStatusCheckInput.AzureResourceInfo);
 
             VirtualMachineProviderStartComputeResult statusCheckResult = default;
             var timerWait = Stopwatch.StartNew();

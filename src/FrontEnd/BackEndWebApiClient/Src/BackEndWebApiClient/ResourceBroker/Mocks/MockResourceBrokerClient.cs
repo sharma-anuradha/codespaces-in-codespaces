@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             var mockInstanceId = Guid.NewGuid();
             var result = new ResourceBrokerResource
             {
-                ResourceIdToken = $"vssaas/resourcetypes/{allocateRequestBody.Type.ToString()}/instances/{mockInstanceId}/subscriptions/{MockSubscriptionId}/resourcegroups/{MockResourceGroup}/locations/{allocateRequestBody.Location.ToString().ToLowerInvariant()}",
+                ResourceId = mockInstanceId,
                 Created = DateTime.UtcNow,
                 Location = allocateRequestBody.Location,
                 SkuName = allocateRequestBody.SkuName,
@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<ResourceBrokerResource> GetResourceAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        public Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -42,13 +42,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         /// <inheritdoc/>
 
         /// <inheritdoc/>
-        public Task<bool> DeleteResourceAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        public Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task StartComputeAsync(string computeResourceTokenId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        public Task StartComputeAsync(Guid computeResource, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }

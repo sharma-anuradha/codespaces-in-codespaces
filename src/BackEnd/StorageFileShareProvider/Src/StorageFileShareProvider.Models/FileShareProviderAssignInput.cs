@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
 {
     /// <summary>
@@ -10,8 +12,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     public class FileShareProviderAssignInput
     {
         /// <summary>
-        /// Gets or sets the resource id.
+        /// Gets or sets the azure resource info.
         /// </summary>
-        public string ResourceId { get; set; }
+        public AzureResourceInfo AzureResourceInfo { get; set; }
     }
 }

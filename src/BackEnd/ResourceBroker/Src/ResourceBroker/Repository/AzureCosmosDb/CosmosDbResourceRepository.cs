@@ -92,23 +92,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceRecord> GetByResourceId(string resourceId, IDiagnosticsLogger logger)
-        {
-            var query = new SqlQuerySpec(
-                "SELECT * FROM c WHERE c.resourceId = @resourceId",
-                new SqlParameterCollection
-                {
-                    new SqlParameter { Name = "@resourceId", Value = resourceId },
-                });
-
-            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<ResourceRecord>(uri, query, feedOptions).AsDocumentQuery(), logger);
-
-            var result = items.FirstOrDefault();
-
-            return result;
-        }
-
-        /// <inheritdoc/>
         public async Task<ResourceRecord> GetUnassignedResourceAsync(
             string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
         {

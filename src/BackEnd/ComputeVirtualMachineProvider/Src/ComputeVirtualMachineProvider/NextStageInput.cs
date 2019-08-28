@@ -19,22 +19,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// Initializes a new instance of the <see cref="NextStageInput"/> class.
         /// </summary>
         /// <param name="trackingId">Tracking id to resume next phase.</param>
-        /// <param name="resourceId">Resource Id.</param>
+        /// <param name="azureResourceInfo">The azure resource info.</param>
         [JsonConstructor]
-        public NextStageInput(string trackingId, ResourceId resourceId)
+        public NextStageInput(string trackingId, AzureResourceInfo azureResourceInfo)
         {
+            Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
             TrackingId = trackingId;
-            ResourceId = resourceId;
+            AzureResourceInfo = azureResourceInfo;
         }
 
         /// <summary>
-        /// Gets / Sets tracking id for next continuation phase.
+        /// Gets the tracking id for next continuation phase.
         /// </summary>
         public string TrackingId { get; }
 
         /// <summary>
-        /// Gets / Sets the resource id.
+        /// Gets the compute azure resource info.
         /// </summary>
-        public ResourceId ResourceId { get; }
+        public AzureResourceInfo AzureResourceInfo { get; }
     }
 }

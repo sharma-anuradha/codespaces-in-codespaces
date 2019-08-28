@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <summary>
         /// Gets or sets the resource id token.
         /// </summary>
-        public string ResourceIdToken { get; set; }
+        public Guid ResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the cloud environment sku name.

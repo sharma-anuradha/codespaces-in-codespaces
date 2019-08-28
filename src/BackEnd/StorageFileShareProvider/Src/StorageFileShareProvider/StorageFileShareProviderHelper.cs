@@ -17,6 +17,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
@@ -47,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         }
 
         /// <inheritdoc/>
-        public async Task<string> CreateStorageAccountAsync(
+        public async Task<AzureResourceInfo> CreateStorageAccountAsync(
             string azureSubscriptionId,
             string azureRegion,
             string azureResourceGroup,
@@ -56,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             Requires.NotNullOrEmpty(azureRegion, nameof(azureRegion));
             Requires.NotNullOrEmpty(azureResourceGroup, nameof(azureResourceGroup));
             Requires.NotNullOrEmpty(azureSubscriptionId, nameof(azureSubscriptionId));
+
             logger = logger.WithValues(new LogValueSet
             {
                 { "AzureRegion", azureRegion },
@@ -76,34 +78,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     .WithSku(StorageAccountSkuType.Standard_LRS)
                     .CreateAsync();
 
-                var storageAccountId = storageAccount.Id;
-                logger
-                    .FluentAddValue("StorageAccountName", storageAccountName)
-                    .FluentAddValue("AzureStorageAccountId", storageAccountId)
+                logger.FluentAddValue("AzureStorageAccountName", storageAccountName)
                     .LogInfo("file_share_storage_provider_helper_create_storage_account_complete");
-                return storageAccountId;
+
+                return new AzureResourceInfo(Guid.Parse(azureSubscriptionId), azureResourceGroup, storageAccountName);
             }
             catch (Exception ex)
             {
                 logger.LogException("file_share_storage_provider_helper_create_storage_account_error", ex);
-                throw ex;
+
+                throw;
             }
         }
 
         /// <inheritdoc/>
         public async Task CreateFileShareAsync(
-            string azureStorageAccountId,
+            AzureResourceInfo azureResourceInfo,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(azureStorageAccountId, nameof(azureStorageAccountId));
-            logger = logger.WithValue("AzureStorageAccountId", azureStorageAccountId);
+            Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
+            logger = logger.WithValue("AzureStorageAccountName", azureResourceInfo.Name);
 
-            var azureSubscriptionId = GetAzureSubscriptionIdFromResourceId(azureStorageAccountId);
-            var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
+            var azureSubscriptionId = azureResourceInfo.SubscriptionId;
+            var azure = await azureClientFactory.GetAzureClientAsync(azureSubscriptionId);
 
             try
             {
-                var storageAccount = await azure.StorageAccounts.GetByIdAsync(azureStorageAccountId);
+                var storageAccount = await azure.StorageAccounts.GetByResourceGroupAsync(azureResourceInfo.ResourceGroup, azureResourceInfo.Name);
                 var storageAccountName = storageAccount.Name;
                 var storageAccountKey = await GetStorageAccountKey(storageAccount);
                 var storageCreds = new StorageCredentials(storageAccountName, storageAccountKey);
@@ -122,20 +123,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
         /// <inheritdoc/>
         public async Task StartPrepareFileShareAsync(
-            string azureStorageAccountId,
+            AzureResourceInfo azureResourceInfo,
             string srcBlobUrl,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(azureStorageAccountId, nameof(azureStorageAccountId));
+            Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
             Requires.NotNullOrEmpty(srcBlobUrl, nameof(srcBlobUrl));
-            logger = logger.WithValue("AzureStorageAccountId", azureStorageAccountId);
+            logger = logger.WithValue("AzureStorageAccountName", azureResourceInfo.Name);
 
-            var azureSubscriptionId = GetAzureSubscriptionIdFromResourceId(azureStorageAccountId);
-            var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
+            var azureSubscriptionId = azureResourceInfo.SubscriptionId;
+            var azure = await azureClientFactory.GetAzureClientAsync(azureSubscriptionId);
 
             try
             {
-                var storageAccount = await azure.StorageAccounts.GetByIdAsync(azureStorageAccountId);
+                var storageAccount = await azure.StorageAccounts.GetByResourceGroupAsync(azureResourceInfo.ResourceGroup, azureResourceInfo.Name);
                 var storageAccountName = storageAccount.Name;
                 var storageAccountKey = await GetStorageAccountKey(storageAccount);
                 var storageCreds = new StorageCredentials(storageAccountName, storageAccountKey);
@@ -149,31 +150,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
                 await destFile.StartCopyAsync(srcBlobUri);
 
-                logger
-                    .FluentAddValue("DestinationStorageFilePath", destFile.Uri.ToString())
+                logger.FluentAddValue("DestinationStorageFilePath", destFile.Uri.ToString())
                     .LogInfo("file_share_storage_provider_helper_start_prepare_file_share_complete");
             }
             catch (Exception ex)
             {
                 logger.LogException("file_share_storage_provider_helper_start_prepare_file_share_error", ex);
-                throw ex;
+
+                throw;
             }
         }
 
         /// <inheritdoc/>
         public async Task<double> CheckPrepareFileShareAsync(
-            string azureStorageAccountId,
+            AzureResourceInfo azureResourceInfo,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(azureStorageAccountId, nameof(azureStorageAccountId));
-            logger = logger.WithValue("AzureStorageAccountId", azureStorageAccountId);
+            Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
+            logger = logger.WithValue("AzureStorageAccountName", azureResourceInfo.Name);
 
-            var azureSubscriptionId = GetAzureSubscriptionIdFromResourceId(azureStorageAccountId);
-            var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
+            var azureSubscriptionId = azureResourceInfo.SubscriptionId;
+            var azure = await azureClientFactory.GetAzureClientAsync(azureSubscriptionId);
 
             try
             {
-                var storageAccount = await azure.StorageAccounts.GetByIdAsync(azureStorageAccountId);
+                var storageAccount = await azure.StorageAccounts.GetByResourceGroupAsync(azureResourceInfo.ResourceGroup, azureResourceInfo.Name);
                 var storageAccountName = storageAccount.Name;
                 var storageAccountKey = await GetStorageAccountKey(storageAccount);
                 var storageCreds = new StorageCredentials(storageAccountName, storageAccountKey);
@@ -201,40 +202,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         var copyStatus = status.ToString();
                         var copyStatusDesc = destFile.CopyState.StatusDescription;
                         var destFilePath = destFile.Uri.ToString();
-                        logger
-                            .FluentAddValue("CopyStatus", copyStatus)
+
+                        logger.FluentAddValue("CopyStatus", copyStatus)
                             .FluentAddValue("CopyStatusDescription", copyStatusDesc)
                             .FluentAddValue("DestinationStorageFilePath", destFilePath)
                             .LogError("file_share_storage_provider_helper_check_prepare_file_share_error");
-                        throw new StoragePrepareException(azureStorageAccountId, destFilePath, copyStatus, copyStatusDesc);
+
+                        throw new StoragePrepareException(azureResourceInfo, destFilePath, copyStatus, copyStatusDesc);
                 }
 
-                logger
-                    .FluentAddValue("CompletedAmount", completedAmount.ToString())
+                logger.FluentAddValue("CompletedAmount", completedAmount.ToString())
                     .LogInfo("file_share_storage_provider_helper_check_prepare_file_share_complete");
+
                 return completedAmount;
             }
             catch (Exception ex)
             {
                 logger.LogException("file_share_storage_provider_helper_check_prepare_file_share_error", ex);
-                throw ex;
+
+                throw;
             }
         }
 
         /// <inheritdoc/>
         public async Task<ShareConnectionInfo> GetConnectionInfoAsync(
-            string azureStorageAccountId,
+            AzureResourceInfo azureResourceInfo,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(azureStorageAccountId, nameof(azureStorageAccountId));
-            logger = logger.WithValue("AzureStorageAccountId", azureStorageAccountId);
+            Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
+            logger = logger.WithValue("AzureStorageAccountName", azureResourceInfo.Name);
 
-            var azureSubscriptionId = GetAzureSubscriptionIdFromResourceId(azureStorageAccountId);
-            var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
+            var azureSubscriptionId = azureResourceInfo.SubscriptionId;
+            var azure = await azureClientFactory.GetAzureClientAsync(azureSubscriptionId);
 
             try
             {
-                var storageAccount = await azure.StorageAccounts.GetByIdAsync(azureStorageAccountId);
+                var storageAccount = await azure.StorageAccounts.GetByResourceGroupAsync(azureResourceInfo.ResourceGroup, azureResourceInfo.Name);
                 var storageAccountName = storageAccount.Name;
                 var storageAccountKey = await GetStorageAccountKey(storageAccount);
                 var shareConnectionInfo = new ShareConnectionInfo(
@@ -254,24 +257,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
         /// <inheritdoc/>
         public async Task DeleteStorageAccountAsync(
-            string azureStorageAccountId,
+            AzureResourceInfo azureResourceInfo,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(azureStorageAccountId, nameof(azureStorageAccountId));
-            logger = logger.WithValue("AzureStorageAccountId", azureStorageAccountId);
+            Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
+            logger = logger.WithValue("AzureStorageAccountName", azureResourceInfo.Name);
 
-            var azureSubscriptionId = GetAzureSubscriptionIdFromResourceId(azureStorageAccountId);
-            var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
+            var azureSubscriptionId = azureResourceInfo.SubscriptionId;
+            var azure = await azureClientFactory.GetAzureClientAsync(azureSubscriptionId);
 
             try
             {
-                await azure.StorageAccounts.DeleteByIdAsync(azureStorageAccountId);
+                await azure.StorageAccounts.DeleteByResourceGroupAsync(azureResourceInfo.ResourceGroup, azureResourceInfo.Name);
+
                 logger.LogInfo("file_share_storage_provider_helper_delete_storage_account_complete");
             }
             catch (Exception ex)
             {
                 logger.LogException("file_share_storage_provider_helper_delete_storage_account_error", ex);
-                throw ex;
+                throw;
             }
         }
 
@@ -300,11 +304,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             logger.LogError("file_share_storage_provider_helper_generate_account_name_error");
             throw new StorageCreateException("Unable to generate storage account name");
-        }
-
-        private string GetAzureSubscriptionIdFromResourceId(string resourceId)
-        {
-            return ResourceId.FromString(resourceId).SubscriptionId;
         }
 
         private async Task<string> GetStorageAccountKey(IStorageAccount storageAccount)

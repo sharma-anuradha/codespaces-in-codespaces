@@ -48,14 +48,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var rawResult = BuildResourceRecord();
             var input = BuildAllocateInput();
 
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new Mock<IDiagnosticsLogger>();
+            logger.Setup(l => l.WithValue(It.IsAny<string>(), It.IsAny<string>())).Returns(logger.Object);
             var repository = new Mock<IResourceRepository>();
-            repository.Setup(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger))
+            repository.Setup(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger.Object))
                 .Returns(Task.FromResult(rawResult));
 
             var provider = new ResourcePool(repository.Object);
 
-            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger);
+            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger.Object);
 
             Assert.NotNull(result);
             Assert.True(result.IsAssigned);
@@ -67,14 +68,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildAllocateInput();
 
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new Mock<IDiagnosticsLogger>();
+            logger.Setup(l => l.WithValue(It.IsAny<string>(), It.IsAny<string>())).Returns(logger.Object);
             var repository = new Mock<IResourceRepository>();
-            repository.Setup(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger))
+            repository.Setup(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((ResourceRecord)null));
 
             var provider = new ResourcePool(repository.Object);
 
-            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger);
+            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger.Object);
 
             Assert.Null(result);
         }
@@ -89,7 +91,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 
             var exception = CreateDocumentClientException(new Error(), HttpStatusCode.PreconditionFailed);
 
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var mockLogger = new Mock<IDiagnosticsLogger>();
+            var logger = mockLogger.Object;
+            mockLogger.Setup(l => l.WithValue(It.IsAny<string>(), It.IsAny<string>())).Returns(logger);
             var repository = new Mock<IResourceRepository>();
             repository
                 .SetupSequence(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger))
@@ -125,7 +129,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 
             var exception = CreateDocumentClientException(new Error(), HttpStatusCode.PreconditionFailed);
 
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var mockLogger = new Mock<IDiagnosticsLogger>();
+            var logger = mockLogger.Object;
+            mockLogger.Setup(l => l.WithValue(It.IsAny<string>(), It.IsAny<string>())).Returns(logger);
             var repository = new Mock<IResourceRepository>();
             repository
                 .SetupSequence(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger))
@@ -177,10 +183,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             return new ResourceRecord
             {
-                ResourceId = "ID",
                 SkuName = DefaultResourceSkuName,
                 Type = DefaultType,
-                Location = DefaultLocation,
+                AzureResourceInfo = null,
                 Created = DateTime.UtcNow,
                 IsAssigned = false,
                 Assigned = DateTime.UtcNow

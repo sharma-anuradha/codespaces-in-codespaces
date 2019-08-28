@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
 {
     /// <summary>
@@ -13,11 +15,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// Initializes a new instance of the <see cref="FileShareProviderCreateContinuationToken"/> class.
         /// </summary>
         /// <param name="nextState"><see cref="NextState"/>.</param>
-        /// <param name="resourceId"><see cref="ResourceId"/>.</param>
-        public FileShareProviderCreateContinuationToken(FileShareProviderCreateState nextState, string resourceId)
+        /// <param name="azureResourceInfo">The resource info of the azure storage account.</param>
+        public FileShareProviderCreateContinuationToken(FileShareProviderCreateState nextState, AzureResourceInfo azureResourceInfo)
         {
             NextState = nextState;
-            ResourceId = resourceId;
+            AzureResourceInfo = azureResourceInfo;
         }
 
         /// <summary>
@@ -26,8 +28,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         public FileShareProviderCreateState NextState { get; }
 
         /// <summary>
-        /// Gets the resource id.
+        /// Gets the resource info of the azure storage account.
         /// </summary>
-        public string ResourceId { get; }
+        public AzureResourceInfo AzureResourceInfo { get; }
     }
 }

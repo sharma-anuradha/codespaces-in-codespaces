@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             string resultContinuationToken = default;
 
             FileShareProviderCreateState nextState;
-            string resultResourceId;
+            AzureResourceInfo resultResourceInfo;
 
             var duration = logger.StartDuration();
 
@@ -57,12 +57,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             if (continuationToken == null)
             {
-                var storageAccountId = await providerHelper.CreateStorageAccountAsync(
+                var resourceInfo = await providerHelper.CreateStorageAccountAsync(
                     input.AzureSubscription,
                     input.AzureLocation,
                     input.AzureResourceGroup,
                     logger);
-                resultResourceId = storageAccountId;
+                resultResourceInfo = resourceInfo;
                 nextState = FileShareProviderCreateState.CreateFileShare;
             }
             else
@@ -71,15 +71,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 switch (prevContinuation.NextState)
                 {
                     case FileShareProviderCreateState.CreateFileShare:
-                        await providerHelper.CreateFileShareAsync(prevContinuation.ResourceId, logger);
+                        await providerHelper.CreateFileShareAsync(prevContinuation.AzureResourceInfo, logger);
                         nextState = FileShareProviderCreateState.PrepareFileShare;
                         break;
                     case FileShareProviderCreateState.PrepareFileShare:
-                        await providerHelper.StartPrepareFileShareAsync(prevContinuation.ResourceId, input.StorageBlobUrl, logger);
+                        await providerHelper.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageBlobUrl, logger);
                         nextState = FileShareProviderCreateState.CheckFileShare;
                         break;
                     case FileShareProviderCreateState.CheckFileShare:
-                        var completed = await providerHelper.CheckPrepareFileShareAsync(prevContinuation.ResourceId, logger);
+                        var completed = await providerHelper.CheckPrepareFileShareAsync(prevContinuation.AzureResourceInfo, logger);
                         if (completed == 1)
                         {
                             nextState = default;
@@ -94,27 +94,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         throw new StorageCreateException(string.Format("Invalid continuation token: {0}", continuationToken));
                 }
 
-                resultResourceId = prevContinuation.ResourceId;
+                resultResourceInfo = prevContinuation.AzureResourceInfo;
             }
 
             var resultState = OperationState.Succeeded;
             if (nextState != default)
             {
-                var nextContinuation = new FileShareProviderCreateContinuationToken(nextState, resultResourceId);
+                var nextContinuation = new FileShareProviderCreateContinuationToken(nextState, resultResourceInfo);
                 resultContinuationToken = JsonConvert.SerializeObject(nextContinuation);
                 resultState = OperationState.InProgress;
             }
 
             var result = new FileShareProviderCreateResult()
             {
-                ResourceId = resultResourceId,
+                AzureResourceInfo = resultResourceInfo,
                 RetryAfter = resultRetryAfter,
                 ContinuationToken = resultContinuationToken,
                 Status = resultState,
             };
 
             logger
-                .FluentAddValue(nameof(result.ResourceId), result.ResourceId)
+                .FluentAddValue(nameof(result.AzureResourceInfo.Name), result.AzureResourceInfo.Name)
                 .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
                 .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
                 .FluentAddValue(nameof(result.Status), result.Status.ToString())
@@ -135,15 +135,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var duration = logger.StartDuration();
 
-            logger = logger.WithValue(nameof(input.ResourceId), input.ResourceId);
+            logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
 
-            await providerHelper.DeleteStorageAccountAsync(input.ResourceId, logger);
+            await providerHelper.DeleteStorageAccountAsync(input.AzureResourceInfo, logger);
 
             var result = new FileShareProviderDeleteResult() { Status = OperationState.Succeeded };
 
-            logger
-                .FluentAddValue(nameof(input.ResourceId), input.ResourceId)
-                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+            logger.FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
                 .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
                 .FluentAddValue(nameof(result.Status), result.Status.ToString())
                 .AddDuration(duration)
@@ -163,9 +161,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var duration = logger.StartDuration();
 
-            logger = logger.WithValue(nameof(input.ResourceId), input.ResourceId);
+            logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
 
-            var info = await providerHelper.GetConnectionInfoAsync(input.ResourceId, logger);
+            var info = await providerHelper.GetConnectionInfoAsync(input.AzureResourceInfo, logger);
 
             var result = new FileShareProviderAssignResult(
                 info.StorageAccountName,
@@ -174,9 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 info.StorageFileName)
             { Status = OperationState.Succeeded };
 
-            logger
-                .FluentAddValue(nameof(input.ResourceId), input.ResourceId)
-                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+            logger.FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
                 .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
                 .FluentAddValue(nameof(result.Status), result.Status.ToString())
                 .AddDuration(duration)

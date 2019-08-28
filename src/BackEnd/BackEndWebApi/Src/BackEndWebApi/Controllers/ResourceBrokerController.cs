@@ -76,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 var result = await ResourceBrokerHttp.CreateResourceAsync(createResourceRequestBody, logger);
 
                 // Set the location header.
-                var locationRelativeUri = ResourceBrokerHttpContract.GetGetResourceUri(result.ResourceIdToken);
+                var locationRelativeUri = ResourceBrokerHttpContract.GetGetResourceUri(result.ResourceId);
                 var location = new UriBuilder(Request.GetDisplayUrl())
                 {
                     Path = Request.Path = "/" + locationRelativeUri,
@@ -105,7 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Gets a resource by id.
         /// <para>
-        /// GET api/v1/resourcebroker/resources?id={resourceIdToken}.
+        /// GET api/v1/resourcebroker/resources?id={resourceId}.
         /// </para>
         /// </summary>
         /// <param name="id">Resource id token.</param>
@@ -123,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Deallocates a resource from the resource broker.
         /// <para>
-        /// DELETE api/resourcebroker/resources?id={resourceIdToken}.
+        /// DELETE api/resourcebroker/resources?id={resourceId}.
         /// </para>
         /// </summary>
         /// <param name="id">The resource id token.</param>
@@ -138,10 +138,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
 
-            if (string.IsNullOrEmpty(id))
+            if (!Guid.TryParse(id, out var resourceId))
             {
                 logger.AddDuration(duration)
-                    .AddReason($"{HttpStatusCode.BadRequest}: id is null or empty")
+                    .AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid")
                     .LogError(GetType().FormatLogErrorMessage(nameof(DeallocateAsync)));
 
                 return BadRequest();
@@ -149,10 +149,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                if (!await ResourceBrokerHttp.DeleteResourceAsync(id, logger))
+                if (!await ResourceBrokerHttp.DeleteResourceAsync(resourceId, logger))
                 {
                     logger.AddDuration(duration)
-                        .AddResourceIdToken(id)
+                        .AddResourceId(resourceId)
                         .AddReason($"{HttpStatusCode.NotFound}")
                         .LogInfo(GetType().FormatLogErrorMessage(nameof(DeallocateAsync)));
 
@@ -160,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 }
 
                 logger.AddDuration(duration)
-                    .AddResourceIdToken(id)
+                    .AddResourceId(resourceId)
                     .LogInfo(GetType().FormatLogMessage(nameof(DeallocateAsync)));
 
                 return NoContent();
@@ -168,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             catch (Exception)
             {
                 logger.AddDuration(duration)
-                    .AddResourceIdToken(id)
+                    .AddResourceId(resourceId)
                     .LogError(GetType().FormatLogErrorMessage(nameof(DeallocateAsync)));
                 throw;
             }
@@ -194,11 +194,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
 
-            if (string.IsNullOrEmpty(id))
+            if (!Guid.TryParse(id, out var computeResourceId))
             {
                 logger.AddDuration(duration)
                     .AddStartComputeRequest(startComputeRequestBody)
-                    .AddReason($"{HttpStatusCode.BadRequest}: id is null or empty")
+                    .AddReason($"{HttpStatusCode.BadRequest}: id missing or invalid")
                     .LogError(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)));
 
                 return BadRequest();
@@ -207,7 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             if (startComputeRequestBody is null)
             {
                 logger.AddDuration(duration)
-                    .AddResourceIdToken(id)
+                    .AddResourceId(computeResourceId)
                     .AddReason($"{HttpStatusCode.BadRequest}: body is null")
                     .LogError(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)));
 
@@ -216,10 +216,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                await ResourceBrokerHttp.StartComputeAsync(id, startComputeRequestBody, logger);
+                await ResourceBrokerHttp.StartComputeAsync(computeResourceId, startComputeRequestBody, logger);
 
                 logger.AddDuration(duration)
-                    .AddResourceIdToken(id)
+                    .AddResourceId(computeResourceId)
                     .AddStartComputeRequest(startComputeRequestBody)
                     .LogInfo(GetType().FormatLogMessage(nameof(StartComputeAsync)));
 
@@ -228,7 +228,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             catch (Exception)
             {
                 logger.AddDuration(duration)
-                    .AddResourceIdToken(id)
+                    .AddResourceId(computeResourceId)
                     .AddStartComputeRequest(startComputeRequestBody)
                     .LogError(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)));
                 throw;
@@ -257,30 +257,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             {
                 Type = requestBody.Type,
                 SkuName = result.SkuName,
-                ResourceIdToken = result.ResourceId,
+                ResourceId = result.Id,
                 Location = location,
                 Created = result.Created,
             };
         }
 
         /// <inheritdoc/>
-        Task<ResourceBrokerResource> IResourceBrokerResourcesHttpContract.GetResourceAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        Task<ResourceBrokerResource> IResourceBrokerResourcesHttpContract.GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        async Task<bool> IResourceBrokerResourcesHttpContract.DeleteResourceAsync(string resourceIdToken, IDiagnosticsLogger logger)
+        async Task<bool> IResourceBrokerResourcesHttpContract.DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            return await ResourceBroker.DeallocateAsync(resourceIdToken, logger);
+            return await ResourceBroker.DeallocateAsync(resourceId.ToString(), logger);
         }
 
         /// <inheritdoc/>
-        async Task IResourceBrokerResourcesHttpContract.StartComputeAsync(string computeResourceIdToken, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        async Task IResourceBrokerResourcesHttpContract.StartComputeAsync(Guid computeResourceId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(computeResourceIdToken, nameof(computeResourceIdToken));
+            Requires.NotEmpty(computeResourceId, nameof(computeResourceId));
             Requires.NotNull(startComputeRequestBody, nameof(startComputeRequestBody));
-            Requires.NotNullOrEmpty(startComputeRequestBody?.StorageResourceIdToken, nameof(startComputeRequestBody.StorageResourceIdToken));
+            Requires.NotEmpty(startComputeRequestBody.StorageResourceId, nameof(startComputeRequestBody.StorageResourceId));
             Requires.NotNullOrEmpty(startComputeRequestBody?.EnvironmentVariables, nameof(startComputeRequestBody.EnvironmentVariables));
 
             var duration = logger.StartDuration();
@@ -289,8 +289,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             {
                 var input = new EnvironmentStartInput
                 {
-                    ComputeResourceId = ResourceId.Parse(computeResourceIdToken),
-                    StorageResourceId = startComputeRequestBody.StorageResourceIdToken,
+                    ComputeResourceId = computeResourceId,
+                    StorageResourceId = startComputeRequestBody.StorageResourceId,
                     EnvironmentVariables = startComputeRequestBody.EnvironmentVariables,
                 };
 
@@ -298,7 +298,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 var result = await ResourceBroker.StartComputeAsync(input, logger);
 
                 logger.AddDuration(duration)
-                    .AddResourceIdToken(computeResourceIdToken)
+                    .AddResourceId(computeResourceId)
                     .AddStartComputeRequest(startComputeRequestBody)
                     .LogInfo(GetType().FormatLogMessage(nameof(StartComputeAsync)));
             }
@@ -306,7 +306,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             {
                 logger.AddDuration(duration)
                     .AddStartComputeRequest(startComputeRequestBody)
-                    .AddResourceIdToken(computeResourceIdToken)
+                    .AddResourceId(computeResourceId)
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)), ex.Message);
                 throw;
             }

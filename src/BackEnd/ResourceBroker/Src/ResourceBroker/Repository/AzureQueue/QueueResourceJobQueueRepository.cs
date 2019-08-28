@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <inheritdoc/>
         protected override string QueueId
         {
-            get { return "resource-job-queue-temp"; }
+            get { return "resource-job-queue"; }
         }
 
         /// <inheritdoc/>

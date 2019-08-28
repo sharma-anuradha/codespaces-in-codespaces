@@ -2,8 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
@@ -15,12 +15,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// <summary>
         /// Gets or sets the compute resource token id.
         /// </summary>
-        public ResourceId ComputeResourceId { get; set; }
+        public Guid ComputeResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the storage resource token id.
         /// </summary>
-        public string StorageResourceId { get; set; }
+        public Guid StorageResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the compute environment variables.

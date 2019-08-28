@@ -20,7 +20,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         private static Guid AzureSubscription = Guid.NewGuid();
         private const string AzureResourceGroupName = "TestRG1";
         private const string TrackingId = "TestDeployment1";
-        private static ResourceId ResourceId = new ResourceId(ResourceType.ComputeVM, Guid.NewGuid(), AzureSubscription, AzureResourceGroupName, AzureLocation.EastUs);
+        private static Guid ResourceId = Guid.NewGuid();
+        private static string ResourceName = ResourceId.ToString();
+        private static AzureResourceInfo ResourceInfo = new AzureResourceInfo(AzureSubscription, AzureResourceGroupName, ResourceName);
 
         [Fact]
         public void Ctor_with_bad_options()
@@ -50,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                   Task.FromResult(
                     (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            string continuationToken = new NextStageInput(TrackingId, ResourceId).ToJson();
+            string continuationToken = new NextStageInput(TrackingId, ResourceInfo).ToJson();
             VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), continuationToken);
             ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result, OperationState.InProgress);
         }
@@ -62,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task VirtualMachine_Continue_Create_Finished(OperationState outputState, OperationState expectedState)
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceId);
+            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceInfo);
             string continuationToken = deploymentStatusInput.ToJson();
             deploymentManagerMoq.Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(
@@ -98,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 Task.FromResult(
                     (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            string continuationToken = new NextStageInput(TrackingId, ResourceId).ToJson();
+            string continuationToken = new NextStageInput(TrackingId, ResourceInfo).ToJson();
             VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), continuationToken);
             ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result, OperationState.InProgress);
         }
@@ -110,7 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task VirtualMachine_Continue_StartCompute_Finished(OperationState outputState, OperationState expectedState)
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceId);
+            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceInfo);
             string continuationToken = deploymentStatusInput.ToJson();
             deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(
@@ -141,7 +143,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task VirtualMachine_Continue_DeleteCompute_InProgress()
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceId);
+            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceInfo);
             string continuationToken = deploymentStatusInput.ToJson();
             deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(Task.FromResult(
@@ -158,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task VirtualMachine_Continue_Deleteompute_Finished(OperationState outputState, OperationState expectedState)
         {
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
-            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceId);
+            NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceInfo);
             string continuationToken = deploymentStatusInput.ToJson();
             deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<NextStageInput>()))
                 .Returns(
@@ -179,22 +181,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Assert.NotNull(result.ContinuationToken);
             var deploymentStatusInput = result.ContinuationToken.ToDeploymentStatusInput();
             Assert.NotNull(deploymentStatusInput);
-            Assert.Equal(ResourceId, deploymentStatusInput.ResourceId);
-            Assert.Equal(AzureSubscription, deploymentStatusInput.ResourceId.SubscriptionId);
-            Assert.Equal(AzureResourceGroupName, deploymentStatusInput.ResourceId.ResourceGroup);
+            Assert.Equal(ResourceInfo, deploymentStatusInput.AzureResourceInfo);
             Assert.Equal(TrackingId, deploymentStatusInput.TrackingId);
-            Assert.Equal(ResourceId, deploymentStatusInput.ResourceId);
         }
 
         private static NextStageInput CreateDeploymentState()
         {
-            return new NextStageInput(TrackingId, ResourceId);
+            return new NextStageInput(TrackingId, ResourceInfo);
         }
 
         private static VirtualMachineProviderStartComputeInput CreateStartComputeInput()
         {
             return new VirtualMachineProviderStartComputeInput(
                 ResourceId,
+                ResourceInfo,
                 new ShareConnectionInfo("val1", "val2", "val3", "val4"),
                 new System.Collections.Generic.Dictionary<string, string>());
         }

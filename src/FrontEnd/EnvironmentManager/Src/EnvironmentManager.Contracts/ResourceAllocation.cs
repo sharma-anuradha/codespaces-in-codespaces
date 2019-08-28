@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets the resource id token.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public string ResourceIdToken { get; set; }
+        public Guid ResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the Azure location.

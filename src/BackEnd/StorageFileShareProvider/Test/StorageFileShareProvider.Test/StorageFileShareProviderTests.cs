@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
+using Microsoft.Azure.Management.AppService.Fluent.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Moq;
 using Xunit;
 
@@ -14,15 +16,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 {
     public class StorageFileShareProviderTests
     {
-        private const string MockResourceId = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/TestRg1/providers/Microsoft.Storage/storageAccounts/TestStorageAccount";
+        // private const string MockResourceId = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/TestRg1/providers/Microsoft.Storage/storageAccounts/TestStorageAccount";
         private const string MockResourceGroup = "TestRg1";
         private const string MockLocation = "westus2";
-        private const string MockSubscriptionId = "00000000-0000-0000-0000-000000000000";
         private const string MockStorageBlobUrl = "https://staccname.blob.core.windows.net/containername/blobname";
         private const string MockStorageAccountName = "vsoce123";
         private const string MockStorageAccountKey = "SecretKey";
         private const string MockStorageShareName = "cloudenvdata";
         private const string MockStorageFileName = "dockerlib";
+        private static readonly Guid MockSubscriptionId = Guid.Parse("a058a07c-dfbb-4501-82a2-fa0bb37ec166");
+        private static readonly AzureResourceInfo MockAzureResourceInfo = new AzureResourceInfo(MockSubscriptionId, MockResourceGroup, MockStorageAccountName);
 
         [Fact]
         public void Ctor_with_bad_options()
@@ -41,16 +44,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var mockCheckPrepareResults = new[] { 0.0, 0.5, 0.7, 1 };
             providerHelperMoq
                 .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(MockResourceId);
+                .ReturnsAsync(MockAzureResourceInfo);
             providerHelperMoq
-                .Setup(x => x.CreateFileShareAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.CreateFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
             providerHelperMoq
-                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
             
             providerHelperMoq
-                .SetupSequence(x => x.CheckPrepareFileShareAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .SetupSequence(x => x.CheckPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(mockCheckPrepareResults[0])
                 .ReturnsAsync(mockCheckPrepareResults[1])
                 .ReturnsAsync(mockCheckPrepareResults[2])
@@ -62,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             {
                 AzureResourceGroup = MockResourceGroup,
                 AzureLocation = MockLocation,
-                AzureSubscription = MockSubscriptionId,
+                AzureSubscription = MockSubscriptionId.ToString(),
                 StorageBlobUrl = MockStorageBlobUrl,
             };
 
@@ -86,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 // result should not be null after each iteration
                 Assert.NotNull(result);
                 // ResourceId should not be null after each iteration
-                Assert.NotNull(result.ResourceId);
+                Assert.NotNull(result.AzureResourceInfo);
                 continuationToken = result.ContinuationToken;
             }
             // After all the steps, continuation token should be null as that's how we signal completion.
@@ -103,12 +106,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
-                .Setup(x => x.DeleteStorageAccountAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.DeleteStorageAccountAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             var input = new FileShareProviderDeleteInput()
             {
-                ResourceId = MockResourceId,
+                AzureResourceInfo = MockAzureResourceInfo,
             };
             var result = await storageProvider.DeleteAsync(input, logger);
             Assert.NotNull(result);
@@ -143,12 +146,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 MockStorageShareName,
                 MockStorageFileName);
             providerHelperMoq
-                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockConnInfo));
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             var input = new FileShareProviderAssignInput()
             {
-                ResourceId = MockResourceId,
+                AzureResourceInfo = MockAzureResourceInfo,
             };
             var result = await storageProvider.AssignAsync(input, logger);
             Assert.NotNull(result);

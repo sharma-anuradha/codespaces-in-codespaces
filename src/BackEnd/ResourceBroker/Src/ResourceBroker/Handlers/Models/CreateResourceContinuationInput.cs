@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// <summary>
         /// Gets or sets the instance id of the persisted record.
         /// </summary>
-        public string InstanceId { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets the subscription.
