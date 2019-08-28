@@ -25,8 +25,8 @@ restore:
   commands:
     - !!defaultcommand
       name: 'Update nuget credentials'
-      command: '.pipelines\replaceNugetConfig.cmd'    
-    - !!defaultcommand                            
+      command: '.pipelines\replaceNugetConfig.cmd'
+    - !!defaultcommand
       name: 'cdpx-restore'
       command: 'cdpx-restore.cmd'
 
@@ -40,3 +40,18 @@ build:
           to: 'binaries'
           include:
             - '**/*'
+
+test:
+  commands:
+    - !!testcommand
+      name: 'cdpx-test'
+      command: 'cdpx-test.cmd'
+      testresults:
+       - from: 'bin\release\testresults'
+         title: 'Test Results'
+         type: 'vstest'
+         include:
+           - '*.trx'
+           - 'coverage\**\*.htm'
+           - 'coverage\**\*.csv'
+           - 'coverage\**\*.txt'

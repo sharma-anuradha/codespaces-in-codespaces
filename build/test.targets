@@ -9,14 +9,15 @@
     <!-- The code-coverage reporting tool is currently Windows-only. -->
     <Target Name="ReportCoverage" AfterTargets="AltCoverGenerateCoverageResult" Condition=" '$(OS)' == 'Windows_NT' ">
         <PropertyGroup>
-            <CoverageDir>$(TargetDir)CodeCoverage</CoverageDir>
+            <CoverageDir>$(TestResultsDirectory)\coverage\$(TestBaseName)</CoverageDir>
             <CoverageSummary>$(CoverageDir)\Summary.txt</CoverageSummary>
             <CoverageDetail>$(CoverageDir)\index.htm</CoverageDetail>
+            <ReportGeneratorTool>$(NuGetPackageRoot)ReportGenerator\$(ReportGeneratorVersion)\tools\net47\ReportGenerator.exe</ReportGeneratorTool>
         </PropertyGroup>
 
         <Exec
           Condition="Exists('$(AltCoverXmlReport)')"
-          Command="&quot;$(ReportGeneratorTool)&quot; -reports:&quot;$(AltCoverXmlReport)&quot; -targetdir:&quot;$(CoverageDir)&quot; -reporttypes:TextSummary;CsvSummary;Html"
+          Command="&quot;$(ReportGeneratorTool)&quot; -reports:&quot;$(AltCoverXmlReport)&quot; -targetdir:&quot;$(CoverageDir)&quot; -reporttypes:TextSummary;CsvSummary;HtmlInline"
           ContinueOnError="True" />
 
         <ReadLinesFromFile File="$(CoverageSummary)" Condition="Exists('$(CoverageSummary)')">

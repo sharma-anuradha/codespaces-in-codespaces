@@ -45,7 +45,7 @@
     <NerdBankGitVersioningVersion>2.3.38</NerdBankGitVersioningVersion>
     <NewtonsoftJsonVersion>12.0.1</NewtonsoftJsonVersion>
     <OctokitVersion>0.32.0</OctokitVersion>
-    <ReportGeneratorVersion>3.1.2</ReportGeneratorVersion>
+    <ReportGeneratorVersion>4.0.15</ReportGeneratorVersion>
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
     <SwashbuckleAspNetCorePackageVersion>4.0.1</SwashbuckleAspNetCorePackageVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
@@ -90,14 +90,17 @@
         <SkipSigning>true</SkipSigning>
         <UseStyleCop>false</UseStyleCop>
         <UseCodeAnalysis>false</UseCodeAnalysis>
+        <TestBaseName>$(MSBuildProjectName.Replace('.Test', ''))</TestBaseName>
         <TestResultsDirectory Condition=" '$(TestResultsDirectory)'==''">$(BaseOutputPath)testresults</TestResultsDirectory>
+        <VSTestResultsDirectory>$(TestResultsDirectory)</VSTestResultsDirectory>
+        <VSTestLogger>trx%3BLogFileName=$(TestBaseName).trx</VSTestLogger>
         <!-- Test methods don't need to end with Async suffix. -->
         <NoWarn>$(NoWarn);VSTHRD200</NoWarn>
       </PropertyGroup>
       <!-- AltCover properties -->
       <PropertyGroup Condition=" '$(CodeCoverage)' == 'true' ">
         <AltCover>true</AltCover>
-        <AltCoverXmlReport>$(TestResultsDirectory)/$(MSBuildProjectName)-coverage.xml</AltCoverXmlReport>
+        <AltCoverXmlReport>$(TestResultsDirectory)/$(TestBaseName)-coverage.xml</AltCoverXmlReport>
         <AltCoverAssemblyExcludeFilter>Interop|Test|xunit|AltCover</AltCoverAssemblyExcludeFilter>
         <AltCoverTypeFilter>ThisAssembly</AltCoverTypeFilter>
       </PropertyGroup>
