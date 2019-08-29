@@ -179,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             {
                 AzureResourceInfo = resources.Storage.AzureResourceInfo,
             };
-            var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, null);
+            var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, logger);
 
             // Update storage to be completed
             await resources.UpdateStorageStartStatus(storageResult.Status, logger);
