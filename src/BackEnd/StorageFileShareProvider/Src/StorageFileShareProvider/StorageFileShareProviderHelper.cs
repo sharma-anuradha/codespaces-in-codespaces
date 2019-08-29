@@ -6,8 +6,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
@@ -269,7 +267,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             try
             {
                 await azure.StorageAccounts.DeleteByResourceGroupAsync(azureResourceInfo.ResourceGroup, azureResourceInfo.Name);
-
+                await azure.ResourceGroups.BeginDeleteByNameAsync(azureResourceInfo.ResourceGroup);
                 logger.LogInfo("file_share_storage_provider_helper_delete_storage_account_complete");
             }
             catch (Exception ex)

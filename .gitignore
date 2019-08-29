@@ -332,6 +332,9 @@ ASALocalRun/
 # ASP.NET Core secrets
 appsettings.secrets.json
 
+# ASP.NET Core test
+appsettings.test.json
+
 .DS_Store
 
 /.pipelines/node
