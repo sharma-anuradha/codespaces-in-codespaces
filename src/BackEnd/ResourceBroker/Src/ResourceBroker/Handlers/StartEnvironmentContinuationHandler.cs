@@ -65,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             ContinuationTaskMessageHandlerInput handlerInput,
             IDiagnosticsLogger logger)
         {
-            var input = Mapper.Map<StartEnvironementContinuationInput>(handlerInput.Input);
+            var input = Mapper.Map<StartEnvironmentContinuationInput>(handlerInput.Input);
             var computeProviderStartInput = Mapper.Map<VirtualMachineProviderStartComputeInput>(handlerInput.Metadata);
 
             return await Continue(input, computeProviderStartInput, handlerInput.Status, handlerInput.ContinuationToken, logger);
@@ -73,23 +73,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         /// <inheritdoc/>
         protected virtual async Task<ContinuationTaskMessageHandlerResult> Continue(
-            StartEnvironementContinuationInput input,
+            StartEnvironmentContinuationInput input,
             VirtualMachineProviderStartComputeInput computeProviderStartInput,
             OperationState? status,
             string continuationToken,
             IDiagnosticsLogger logger)
         {
             var result = (ContinuationResult)null;
-            var resources = new ResourcePair(ResourceRepository);
+            var computeReference = new ResourceReference(ResourceRepository);
+            var storageReference = new ResourceReference(ResourceRepository);
 
             // Fetch Resource
-            await resources.PopulateAwait(input.ComputeResourceId, input.StorageResourceId, logger);
+            await computeReference.PopulateAsync(input.ComputeResourceId, logger);
+            await storageReference.PopulateAsync(input.StorageResourceId, logger);
 
             // First time through, queue things up
             if (status == null)
             {
                 // Add record to database
-                result = await QueueStartRequestAsync(input, resources, logger);
+                result = await QueueStartRequestAsync(input, computeReference, storageReference, logger);
             }
             else
             {
@@ -97,34 +99,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 if (computeProviderStartInput == null)
                 {
                     // Assign storage
-                    var storageResult = await AssignStorageAsync(resources, logger);
+                    var storageResult = await AssignStorageAsync(storageReference, logger);
 
                     // Build the compute start input
-                    computeProviderStartInput = BuildComputeInputAsync(input, resources.Compute.AzureResourceInfo, storageResult, logger);
+                    computeProviderStartInput = BuildComputeInputAsync(input, computeReference.Resource.AzureResourceInfo, storageResult, logger);
                 }
 
                 // Deal with error case
                 if (computeProviderStartInput != null)
                 {
                     // Start the compute
-                    var computeResult = await StartComputeAsync(computeProviderStartInput, continuationToken, resources, logger);
-
-                    // Build resource
-                    result = new ContinuationResult
-                        {
-                            Status = computeResult.Status,
-                            ContinuationToken = computeResult.ContinuationToken,
-                            RetryAfter = computeResult.RetryAfter,
-                            NextInput = input,
-                        };
+                    result = await StartComputeAsync(input, computeProviderStartInput, continuationToken, computeReference, logger);
                 }
                 else
                 {
-                    // Update compute to deal with the fact that storage has bombed
-                    await resources.UpdateComputeStartStatus(OperationState.Failed, logger);
-
-                    // Setup failed result
-                    result = new ContinuationResult { Status = OperationState.Failed };
+                    // Fail the operation
+                    result = await FailComputeAsync(computeReference, logger);
                 }
             }
 
@@ -135,26 +125,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 };
         }
 
-        private async Task<ContinuationResult> QueueStartRequestAsync(StartEnvironementContinuationInput input, ResourcePair resources, IDiagnosticsLogger logger)
+        private async Task<ContinuationResult> QueueStartRequestAsync(
+            StartEnvironmentContinuationInput input,
+            ResourceReference computeReference,
+            ResourceReference storageReference,
+            IDiagnosticsLogger logger)
         {
-            var nextStatus = OperationState.Initialized;
-
             // Update status
-            await resources.UpdateComputeStartStatus(nextStatus, logger);
-            await resources.UpdateStorageStartStatus(nextStatus, logger);
+            await computeReference.SaveStartingStatus(OperationState.Initialized, logger);
+            await storageReference.SaveStartingStatus(OperationState.Initialized, logger);
 
             // Build resource
             return new ContinuationResult
                 {
-                    Status = nextStatus,
-                    ContinuationToken = input.ComputeResourceId,
+                    Status = OperationState.Initialized,
+                    ContinuationToken = input.ComputeResourceId.ToString(),
                     RetryAfter = TimeSpan.Zero,
                     NextInput = input,
                 };
         }
 
         private VirtualMachineProviderStartComputeInput BuildComputeInputAsync(
-            StartEnvironementContinuationInput input,
+            StartEnvironmentContinuationInput input,
             AzureResourceInfo computeAzureResourceInfo,
             FileShareProviderAssignResult storageResult,
             IDiagnosticsLogger logger)
@@ -163,99 +155,71 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var computeStorageFileShareInfo = Mapper.Map<ShareConnectionInfo>(storageResult);
 
             return new VirtualMachineProviderStartComputeInput(
-                Guid.Parse(input.ComputeResourceId), // TODO: should Ids be Guid or string consistently throughout?
+                input.ComputeResourceId,
                 computeAzureResourceInfo,
                 computeStorageFileShareInfo,
                 input.EnvironmentVariables);
         }
 
-        private async Task<FileShareProviderAssignResult> AssignStorageAsync(ResourcePair resources, IDiagnosticsLogger logger)
+        private async Task<FileShareProviderAssignResult> AssignStorageAsync(ResourceReference storageReference, IDiagnosticsLogger logger)
         {
             // Update storage to be inprogress
-            await resources.UpdateStorageStartStatus(OperationState.InProgress, logger);
+            await storageReference.SaveStartingStatus(OperationState.InProgress, logger);
 
             // Get file share connection info for target share
             var fileShareProviderAssignInput = new FileShareProviderAssignInput
             {
-                AzureResourceInfo = resources.Storage.AzureResourceInfo,
+                AzureResourceInfo = storageReference.Resource.AzureResourceInfo,
             };
             var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, logger);
 
             // Update storage to be completed
-            await resources.UpdateStorageStartStatus(storageResult.Status, logger);
+            await storageReference.SaveStartingStatus(storageResult.Status, logger);
 
             return storageResult;
         }
 
-        private async Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(
+        private async Task<ContinuationResult> StartComputeAsync(
+            StartEnvironmentContinuationInput input,
             VirtualMachineProviderStartComputeInput computeProviderStartInput,
             string continuationToken,
-            ResourcePair resources,
+            ResourceReference computeReference,
             IDiagnosticsLogger logger)
         {
             // First time through the continuationToken shouldn't be our initial queue continuation
-            continuationToken = resources.Compute.StartingStatus == OperationState.Initialized ? null : continuationToken;
+            continuationToken = computeReference.Resource.StartingStatus == OperationState.Initialized ? null : continuationToken;
 
             // Only need to update things if we are in init state
-            if (resources.Compute.StartingStatus == OperationState.Initialized)
+            if (computeReference.Resource.StartingStatus == OperationState.Initialized)
             {
-                await resources.UpdateComputeStartStatus(OperationState.InProgress, logger);
+                await computeReference.SaveStartingStatus(OperationState.InProgress, logger);
             }
 
             // Start compute command
             var computeResult = await ComputeProvider.StartComputeAsync(computeProviderStartInput, continuationToken);
 
             // Update status to reflect compute result
-            await resources.UpdateComputeStartStatus(computeResult.Status, logger);
+            await computeReference.SaveStartingStatus(computeResult.Status, logger);
 
-            return computeResult;
+            // Build resource
+            return new ContinuationResult
+            {
+                Status = computeResult.Status,
+                ContinuationToken = computeResult.ContinuationToken,
+                RetryAfter = computeResult.RetryAfter,
+                NextInput = input,
+            };
         }
 
-        // TODO: Might get bought abstracted to be more generalizable in the future
-        private class ResourcePair
+        private async Task<ContinuationResult> FailComputeAsync(
+            ResourceReference computeReference,
+            IDiagnosticsLogger logger)
         {
-            public ResourcePair(IResourceRepository resourceRepository)
-            {
-                ResourceRepository = resourceRepository;
-            }
+            // Update compute to deal with the fact that storage has bombed
+            await computeReference.SaveStartingStatus(OperationState.Failed, logger);
 
-            private IResourceRepository ResourceRepository { get; }
-
-            public ResourceRecord Compute { get; private set; }
-
-            public ResourceRecord Storage { get; private set; }
-
-            public async Task PopulateAwait(string computeId, string storageId, IDiagnosticsLogger logger)
-            {
-                // Get the resource so that we can update the status
-                Compute = await ResourceRepository.GetAsync(computeId, logger.FromExisting());
-                if (Compute == null)
-                {
-                    throw new ResourceNotFoundException(Guid.Parse(computeId));
-                }
-
-                Storage = await ResourceRepository.GetAsync(storageId, logger.FromExisting());
-                if (Storage == null)
-                {
-                    throw new ResourceNotFoundException(Guid.Parse(storageId));
-                }
-            }
-
-            public async Task UpdateComputeStartStatus(OperationState state, IDiagnosticsLogger logger)
-            {
-                if (Compute.UpdateStartingStatus(state))
-                {
-                    Compute = await ResourceRepository.UpdateAsync(Compute, logger.FromExisting());
-                }
-            }
-
-            public async Task UpdateStorageStartStatus(OperationState state, IDiagnosticsLogger logger)
-            {
-                if (Storage.UpdateStartingStatus(state))
-                {
-                    Storage = await ResourceRepository.UpdateAsync(Storage, logger.FromExisting());
-                }
-            }
+            // Setup failed result
+            return new ContinuationResult { Status = OperationState.Failed };
         }
     }
 }

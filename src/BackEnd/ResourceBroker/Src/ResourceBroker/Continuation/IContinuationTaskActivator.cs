@@ -27,12 +27,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <param name="logger"></param>
         /// <returns></returns>
         Task<ContinuationTaskMessageHandlerResult> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="logger"></param>
-        /// <returns></returns>
-        Task<ContinuationTaskMessageHandlerResult> Continue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger);
     }
 }

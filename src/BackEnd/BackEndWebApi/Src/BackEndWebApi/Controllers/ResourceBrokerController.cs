@@ -272,7 +272,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <inheritdoc/>
         async Task<bool> IResourceBrokerResourcesHttpContract.DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            return await ResourceBroker.DeallocateAsync(resourceId.ToString(), logger);
+            return (await ResourceBroker.DeallocateAsync(new DeallocateInput { ResourceId = resourceId }, logger)).Successful;
         }
 
         /// <inheritdoc/>

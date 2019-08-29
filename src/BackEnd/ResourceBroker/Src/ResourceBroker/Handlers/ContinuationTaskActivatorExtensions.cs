@@ -41,10 +41,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <returns></returns>
         public static async Task<ContinuationResult> StartComputeResource(
             this IContinuationTaskActivator activator,
-            StartEnvironementContinuationInput input,
+            StartEnvironmentContinuationInput input,
             IDiagnosticsLogger logger)
         {
             var target = "JobStartCompute";
+
+            return await activator.Execute(target, input, logger);
+        }
+
+        public static async Task<ContinuationResult> DeleteResource(
+            this IContinuationTaskActivator activator,
+            DeleteResourceContinuationInput input,
+            IDiagnosticsLogger logger)
+        {
+            var target = "JobDeleteResource";
 
             return await activator.Execute(target, input, logger);
         }

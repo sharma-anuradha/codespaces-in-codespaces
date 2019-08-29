@@ -76,6 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     .FluentAddValue("ContinuationHandleTarget", payload.Target)
                     .FluentAddValue("ContinuationIsInitial", string.IsNullOrEmpty(payload.ContinuationToken).ToString())
                     .FluentAddValue("ContinuationPreStatus", payload.Status.ToString())
+                    .FluentAddValue("ContinuationCreated", payload.Created.ToString())
                     .FluentAddValue("ContinuationCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds.ToString());
 
                 // Try and handle message

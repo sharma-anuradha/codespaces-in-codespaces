@@ -41,9 +41,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeallocateAsync(string resourceId, IDiagnosticsLogger logger)
+        public Task<DeallocateResult> DeallocateAsync(DeallocateInput input, IDiagnosticsLogger logger)
         {
-            return Task.FromResult(true);
+            return Task.FromResult(new DeallocateResult { Successful = true });
         }
 
         /// <inheritdoc/>
@@ -61,12 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
 
             var task = Task.Run(() =>
             {
-                return new EnvironmentStartResult
-                {
-                    ContinuationToken = input.ComputeResourceId.ToString(),
-                    RetryAfter = TimeSpan.FromMinutes(1),
-                    Status = OperationState.NotStarted,
-                };
+                return new EnvironmentStartResult { Successful = true };
             });
 
             // Mock the VM callback.

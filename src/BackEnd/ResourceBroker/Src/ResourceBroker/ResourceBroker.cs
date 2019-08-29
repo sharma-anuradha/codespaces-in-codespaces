@@ -73,9 +73,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeallocateAsync(string resourceId, IDiagnosticsLogger logger)
+        public async Task<DeallocateResult> DeallocateAsync(
+            DeallocateInput input,
+            IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            var continuationInput = new DeleteResourceContinuationInput
+            {
+                ResourceId = input.ResourceId,
+            };
+
+            await ContinuationTaskActivator.DeleteResource(continuationInput, logger);
+
+            return new DeallocateResult { Successful = true };
         }
 
         /// <inheritdoc/>
@@ -83,22 +92,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             EnvironmentStartInput input,
             IDiagnosticsLogger logger)
         {
-            var continuationInput = new StartEnvironementContinuationInput
+            var continuationInput = new StartEnvironmentContinuationInput
             {
-                ComputeResourceId = input.ComputeResourceId.ToString(),
+                ComputeResourceId = input.ComputeResourceId,
                 EnvironmentVariables = input.EnvironmentVariables,
-                StorageResourceId = input.StorageResourceId.ToString(),
+                StorageResourceId = input.StorageResourceId,
             };
 
-            var result = await ContinuationTaskActivator.StartComputeResource(continuationInput, logger);
+            await ContinuationTaskActivator.StartComputeResource(continuationInput, logger);
 
-            return new EnvironmentStartResult
-            {
-                ContinuationToken = result.ContinuationToken,
-                NextInput = result.NextInput,
-                RetryAfter = result.RetryAfter,
-                Status = result.Status,
-            };
+            return new EnvironmentStartResult { Successful = true };
         }
 
         private async Task<string> MapLogicalSkuToResourceSku(string skuName, ResourceType type, string location)

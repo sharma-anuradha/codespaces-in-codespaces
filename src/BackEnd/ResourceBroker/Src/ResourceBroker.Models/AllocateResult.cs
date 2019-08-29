@@ -8,32 +8,32 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
     /// <summary>
-    /// 
+    /// Input required for Allocation result.
     /// </summary>
     public class AllocateResult
     {
         /// <summary>
-        /// The resource broker resource id.
+        /// Gets or sets the resource broker resource id.
         /// </summary>
         public Guid Id { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the target Sku Name.
         /// </summary>
         public string SkuName { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the target Resource Type.
         /// </summary>
         public ResourceType Type { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the target Location.
         /// </summary>
         public string Location { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the Allocated Resource Info.
         /// </summary>
         public AzureResourceInfo AzureResourceInfo { get; set; }
 

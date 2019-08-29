@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             // Jobs
             services.AddSingleton<IAsyncBackgroundWarmup, ResourceRegisterJobs>();
 
-            // Tasks
+            // Handlers
             services.AddSingleton<CreateComputeContinuationHandler>();
             services.AddSingleton<ICreateComputeContinuationHandler>(x => x.GetRequiredService<CreateComputeContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateComputeContinuationHandler>());
@@ -82,6 +82,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<StartEnvironmentContinuationHandler>();
             services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
+            services.AddSingleton<DeleteResourceContinuationHandler>();
+            services.AddSingleton<IDeleteResourceContinuationHandler>(x => x.GetRequiredService<DeleteResourceContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<DeleteResourceContinuationHandler>());
 
             // Job Registration
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();

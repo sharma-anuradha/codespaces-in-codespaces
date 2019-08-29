@@ -67,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             return (await GetAsync(1, logger)).FirstOrDefault();
         }
 
+        /// <inheritdoc/>
         public async Task DeleteAsync(IResourceJobQueueMessage message, IDiagnosticsLogger logger)
         {
             var queue = await GetQueueAsync();

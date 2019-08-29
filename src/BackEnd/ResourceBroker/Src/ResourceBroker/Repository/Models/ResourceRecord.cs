@@ -97,6 +97,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// 
         /// </summary>
+        public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
+        public OperationState? DeletingStatus { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DateTime? DeletingStatusChanged { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IList<OperationStateChanges> DeletingStatusChanges { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public dynamic Properties { get; set; }
 
         /// <summary>
@@ -153,6 +174,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             // TODO: should ensure that these are bounded
 
             StartingStatusChanges.Add(new OperationStateChanges
+            {
+                Status = newState,
+                Time = time,
+            });
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="newState"></param>
+        public bool UpdateDeletingStatus(OperationState newState, DateTime? newTime = null)
+        {
+            if (DeletingStatus.HasValue && DeletingStatus.Value == newState)
+            {
+                return false;
+            }
+
+            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
+            DeletingStatus = newState;
+            DeletingStatusChanged = time;
+
+            if (DeletingStatusChanges == null)
+            {
+                DeletingStatusChanges = new List<OperationStateChanges>();
+            }
+
+            // TODO: should ensure that these are bounded
+
+            DeletingStatusChanges.Add(new OperationStateChanges
             {
                 Status = newState,
                 Time = time,

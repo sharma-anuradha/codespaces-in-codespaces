@@ -6,8 +6,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
-    // PROVIDER - DELETE - INPUT
-
     /// <summary>
     ///
     /// </summary>

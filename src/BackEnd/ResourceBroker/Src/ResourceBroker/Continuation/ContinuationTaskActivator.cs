@@ -57,7 +57,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         public async Task<ContinuationTaskMessageHandlerResult> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
             var continueFindDuration = logger
-                .FluentAddBaseValue("ContinuationFindId", Guid.NewGuid().ToString())
+                .FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid().ToString())
+                .FluentAddBaseValue("ContinuationTrackingId", payload.TrackingId)
+                .FluentAddValue("ContinuationIsInitial", string.IsNullOrEmpty(payload.ContinuationToken).ToString())
+                .FluentAddValue("ContinuationPreStatus", payload.Status.ToString())
                 .StartDuration();
 
             var result = (ContinuationTaskMessageHandlerResult)null;
@@ -72,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     var continueDuration = logger.StartDuration();
 
                     // Activate the core continuation
-                    result = await Continue(handler, payload, logger.FromExisting());
+                    result = await Continue(handler, payload, logger);
 
                     logger.FluentAddValue("ContinuationPostStatus", result.Result.Status.ToString())
                         .FluentAddValue("ContinuationRetryAfter", result.Result.RetryAfter.ToString())
@@ -85,21 +88,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
             logger.FluentAddValue("ContinuationWasHandled", didHandle.ToString())
                 .FluentAddValue("ContinuationFindHandleDuration", continueFindDuration.Elapsed.TotalMilliseconds.ToString())
-                .LogInfo($"{LogBaseName}-find-continue-complete");
+                .LogInfo($"{LogBaseName}-continue-complete");
 
             return result;
         }
 
-        /// <inheritdoc/>
-        public async Task<ContinuationTaskMessageHandlerResult> Continue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        private async Task<ContinuationTaskMessageHandlerResult> Continue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
-            var continueDuration = logger.StartDuration();
-
-            logger.FluentAddBaseValue("ContinuationHandleId", Guid.NewGuid().ToString())
-                .FluentAddValue("ContinuationHandler", handler.GetType().Name)
-                .FluentAddValue("ContinuationIsInitial", string.IsNullOrEmpty(payload.ContinuationToken).ToString())
-                .FluentAddValue("ContinuationPreStatus", payload.Status.ToString());
-
             // Run the core continuation
             var input = new ContinuationTaskMessageHandlerInput
             {
@@ -109,10 +104,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 ContinuationToken = payload.ContinuationToken,
             };
             var result = await handler.Continue(input, logger.FromExisting());
-
-            logger.FluentAddValue("ContinuationPostStatus", result.Result.Status.ToString())
-                .FluentAddValue("ContinuationRetryAfter", result.Result.RetryAfter.ToString())
-                .FluentAddValue("ContinuationIsFinal", string.IsNullOrEmpty(result.Result.ContinuationToken).ToString());
 
             // If we have another result pending put onto queue
             if (!string.IsNullOrEmpty(result.Result.ContinuationToken))
@@ -124,10 +115,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
                 await MessagePump.AddPayloadAsync(nextPayload, result.Result.RetryAfter, logger.FromExisting());
             }
-
-            logger
-                .FluentAddValue("ContinuationHandleDuration", continueDuration.Elapsed.TotalMilliseconds.ToString())
-                .LogInfo($"{LogBaseName}-continue-complete");
 
             return result;
         }
