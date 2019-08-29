@@ -9,6 +9,8 @@ namespace VsClk.EnvReg.Repositories
 {
     public static class EnvironmentVariableConstants
     {
+        public const string EnvironmentId = "CLOUDENV_ENVIRONMENT_ID";
+        public const string ServiceEndpoint = "CLOUDENV_SERVICE_ENDPOINT";
         public const string GitRepoUrl = "GIT_REPO_URL";
         public const string GitPRNumber = "GIT_PR_NUM";
         public const string GitConfigUsername = "GIT_CONFIG_USER_NAME";
@@ -32,6 +34,8 @@ namespace VsClk.EnvReg.Repositories
 
             var list = new EnvironmentVariableStrategy[]
             {
+                new EnvVarEnvironmentId(environmentRegistration),
+                new EnvVarServiceEndpoint(appSettings),
                 new EnvVarGitRepoUrl(environmentRegistration),
                 new EnvVarGitPullPRNumber(environmentRegistration),
                 new EnvVarGitConfigUserName(environmentRegistration),
@@ -97,6 +101,37 @@ namespace VsClk.EnvReg.Repositories
             }
 
             return false;
+        }
+    }
+
+    public class EnvVarEnvironmentId : EnvironmentVariableStrategy
+    {
+        private readonly string sessionId;
+
+        public EnvVarEnvironmentId(EnvironmentRegistration environmentRegistration) : base(environmentRegistration)
+        {
+        }
+
+        public override EnvironmentVariable GetEnvironmentVariable()
+        {
+            return new EnvironmentVariable(EnvironmentVariableConstants.EnvironmentId, this.EnvironmentRegistration.Id);
+        }
+    }
+
+    public class EnvVarServiceEndpoint : EnvironmentVariableStrategy
+    {
+        private AppSettings AppSettings { get; }
+
+        public EnvVarServiceEndpoint(AppSettings appSettings) : base(null)
+        {
+            
+            AppSettings = appSettings;
+        }
+
+        public override EnvironmentVariable GetEnvironmentVariable()
+        {
+            var url = AppSettings.PreferredSchema + "://" + AppSettings.DefaultHost + AppSettings.DefaultPath + "/registration/";
+            return new EnvironmentVariable(EnvironmentVariableConstants.ServiceEndpoint, url);
         }
     }
 

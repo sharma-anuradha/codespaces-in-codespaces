@@ -70,19 +70,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         /// <param name="services">The services collection that should be configured.</param>
         public void ConfigureServices(IServiceCollection services)
         {
-            /*
-            services.AddCors(options =>
-            {
-                options.AddDefaultPolicy((builder) =>
+            // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
+            if (HostingEnvironment.IsDevelopment()) {
+                services.AddCors(options =>
                 {
-                    builder.WithOrigins(
-                        // Localhost for Portal development
-                        "https://localhost:3000")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
+                    options.AddDefaultPolicy((builder) =>
+                    {
+                        builder.WithOrigins(
+                            "https://localhost:3000")
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                    });
                 });
-            });
-            */
+            }
 
             // Frameworks
             services
@@ -231,6 +231,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             var isDevelopment = env.IsDevelopment();
+
+            if (isDevelopment) 
+            {
+                app.UseCors();
+            }
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(isDevelopment);

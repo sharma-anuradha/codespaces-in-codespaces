@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsCloudKernel.Services.EnvReg.Models;
@@ -14,14 +12,11 @@ using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication;
 using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Provider;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Azure.Storage.FileShare;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using VsClk.EnvReg.Repositories;
-using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Provider;
 using VsClk.EnvReg.Repositories.Support.HttpClient;
 using VsClk.EnvReg.Repositories.HttpClient;
-using Microsoft.VsCloudKernel.Services.EnvReg.WebApi.Authentication;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -176,7 +171,7 @@ namespace Microsoft.VsCloudKernel.Services.EnvReg.WebApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            //Use generted swagger.json
+            //Use generated swagger.json
             app.UseSwagger();
 
             // Use swagger-ui to view the components of the web api

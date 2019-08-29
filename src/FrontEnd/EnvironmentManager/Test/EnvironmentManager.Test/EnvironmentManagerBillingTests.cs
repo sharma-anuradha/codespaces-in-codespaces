@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -26,6 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         private readonly IDiagnosticsLogger logger;
         private const string testUserId = "test-user";
         private const string testAccessToken = "test-token";
+        private readonly Uri testServiceUri = new Uri("http://localhost/");
         private const string testCallbackUriFormat = "http://localhost/{0}";
         private static readonly VsoAccountInfo testAccount = new VsoAccountInfo
         {
@@ -66,6 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
                     AccountId = testAccount.ResourceId,
                 },
                 new CloudEnvironmentOptions(),
+                testServiceUri,
                 testCallbackUriFormat,
                 testUserId,
                 testAccessToken,

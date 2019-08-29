@@ -59,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public async Task<CloudEnvironment> CreateEnvironmentAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentOptions cloudEnvironmentOptions,
+            Uri serviceUri,
             string callbackUriFormat,
             string currentUserId,
             string accessToken,
@@ -158,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     throw new InvalidOperationException("Cloud not create the cloud environment workspace session.");
                 }
 
-                // Create the cloud environment record in the provisioining state -- before starting.
+                // Create the cloud environment record in the provisioning state -- before starting.
                 // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                 // Highly unlikely, but still...
                 await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, logger);
@@ -167,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 // Kick off start-compute before returning.
                 var callbackUri = new Uri(string.Format(callbackUriFormat, cloudEnvironment.Id));
-                await StartCompute(cloudEnvironment, callbackUri, accessToken, logger);
+                await StartCompute(cloudEnvironment, serviceUri, callbackUri, accessToken, logger);
 
                 logger.AddDuration(duration)
                     .AddCloudEnvironment(cloudEnvironment)
@@ -277,7 +278,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 // Check for an unavailable environment
                 switch (originalState)
                 {
-                    // Remain in provisioining state until _callback is invoked.
+                    // Remain in provisioning state until _callback is invoked.
                     case CloudEnvironmentState.Provisioning:
                         break;
 
@@ -456,6 +457,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private async Task StartCompute(
             CloudEnvironment cloudEnvironment,
+            Uri serviceUri,
             Uri callbackUri,
             string accessToken,
             IDiagnosticsLogger logger)
@@ -472,6 +474,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Construct the start-compute environment variables
             var environmentVariables = EnvironmentVariableGenerator.Generate(
                 cloudEnvironment,
+                serviceUri,
                 callbackUri,
                 accessToken);
 

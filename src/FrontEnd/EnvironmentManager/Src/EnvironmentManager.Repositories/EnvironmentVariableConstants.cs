@@ -10,6 +10,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     public static class EnvironmentVariableConstants
     {
 #pragma warning disable SA1600 // Elements should be documented
+        public const string EnvironmentId = "CLOUDENV_ENVIRONMENT_ID";
+        public const string ServiceEndpoint = "CLOUDENV_SERVICE_ENDPOINT";
         public const string GitRepoUrl = "GIT_REPO_URL";
         public const string GitPRNumber = "GIT_PR_NUM";
         public const string GitConfigUsername = "GIT_CONFIG_USER_NAME";

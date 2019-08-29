@@ -20,22 +20,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// Generates a dictionary of environment variables for the given cloud environment.
         /// </summary>
         /// <param name="cloudEnvironment">The cloud environment.</param>
+        /// <param name="serviceUri">The service uri.</param>
         /// <param name="callbackUri">The callback uri.</param>
         /// <param name="accessToken">The user access token.</param>
         /// <returns>A dictionary of environment variables.</returns>
-        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, Uri callbackUri, string accessToken)
+        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, Uri serviceUri, Uri callbackUri, string accessToken)
         {
             var result = new Dictionary<string, string>();
 
             var list = new EnvironmentVariableStrategy[]
             {
+                // Variables for vscode cloudenv extension
+                new EnvVarEnvironmentId(cloudEnvironment),
+                new EnvVarServiceEndpoint(cloudEnvironment, serviceUri),
+
+                // Variables for repository seed
                 new EnvVarGitRepoUrl(cloudEnvironment),
                 new EnvVarGitPullPRNumber(cloudEnvironment),
                 new EnvVarGitConfigUserName(cloudEnvironment),
                 new EnvVarGitConfigUserEmail(cloudEnvironment),
+
+                // Variables for session bootstrap
                 new EnvVarSessionCallback(cloudEnvironment, callbackUri),
                 new EnvVarSessionToken(accessToken),
                 new EnvVarSessionId(cloudEnvironment),
+                
+                // Variables for personalization
                 new EnvDotfilesRepoUrl(cloudEnvironment),
                 new EnvDotfilesTargetPath(cloudEnvironment),
                 new EnvDotfilesInstallCommand(cloudEnvironment),
@@ -158,6 +168,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     }
 
     /// <summary>
+    /// Generate the environment id variable 
+    /// </summary>
+    public class EnvVarEnvironmentId : EnvironmentVariableStrategy
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnvVarEnvironmentId"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        public EnvVarEnvironmentId(CloudEnvironment cloudEnvironment)
+            : base(cloudEnvironment)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            return new Tuple<string, string>(EnvironmentVariableConstants.EnvironmentId, CloudEnvironment.Id);
+        }
+    }
+
+    /// <summary>
+    /// Generate the service endpoint environment variable.
+    /// </summary>
+    public class EnvVarServiceEndpoint : EnvironmentVariableStrategy
+    {
+        private Uri ServiceUri { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnvVarServiceEndpoint"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        public EnvVarServiceEndpoint(CloudEnvironment cloudEnvironment, Uri serviceUri)
+            : base(cloudEnvironment)
+        {
+            Requires.NotNull(serviceUri, nameof(serviceUri));
+
+            ServiceUri = serviceUri;
+        }
+
+        /// <inheritdoc/>
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            return new Tuple<string, string>(EnvironmentVariableConstants.ServiceEndpoint, ServiceUri.ToString());
+        }
+    }
+
+    /// <summary>
     /// Generate the git pull PR number environment variable.
     /// </summary>
     public class EnvVarGitPullPRNumber : EnvironmentVariableStrategy
@@ -222,7 +279,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     }
 
     /// <summary>
-    /// Generate the git onfig user email environment variable.
+    /// Generate the git config user email environment variable.
     /// </summary>
     public class EnvVarGitConfigUserEmail : EnvironmentVariableStrategy
     {
@@ -297,7 +354,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     }
 
     /// <summary>
-    /// Generate the sesison id environment variable.
+    /// Generate the session id environment variable.
     /// </summary>
     public class EnvVarSessionId : EnvironmentVariableStrategy
     {

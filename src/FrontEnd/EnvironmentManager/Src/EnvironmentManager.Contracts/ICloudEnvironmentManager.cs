@@ -36,12 +36,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="environmentRegistration">The environment registration data.</param>
         /// <param name="options">The environment registration options.</param>
+        /// <param name="serviceUri">The service uri, to construct let cloudenv extension connect to the right service from server.</param>
         /// <param name="callbackUriFormat">The callback uri format, to construct the callback with the new environment id.</param>
-        /// <param name="ownerId">The ower id.</param>
+        /// <param name="ownerId">The owner id.</param>
         /// <param name="accessToken">The owner's access token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the new <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, Uri serviceUri, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update the callback information for an existing environment.

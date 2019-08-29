@@ -189,6 +189,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var currentUserId = CurrentUserProvider.GetProfileId();
                 var accessToken = CurrentUserProvider.GetBearerToken();
 
+                // Build the service URI.
+                var serviceUriBuilder = new UriBuilder(Request.GetDisplayUrl())
+                {
+                    Query = null,
+                };
+                serviceUriBuilder.Path = serviceUriBuilder.Path.TrimEnd('/');
+                if (!serviceUriBuilder.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+                {
+                    serviceUriBuilder.Scheme = Uri.UriSchemeHttps;
+                    serviceUriBuilder.Port = -1;
+                }
+
                 // Build the callback URI.
                 var callbackUriBuilder = new UriBuilder(Request.GetDisplayUrl())
                 {
@@ -206,6 +218,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 cloudEnvironment = await EnvironmentManager.CreateEnvironmentAsync(
                     cloudEnvironment,
                     new CloudEnvironmentOptions { CreateFileShare = createEnvironmentInput.CreateFileShare },
+                    serviceUriBuilder.Uri,
                     callbackUriFormat,
                     currentUserId,
                     accessToken,
