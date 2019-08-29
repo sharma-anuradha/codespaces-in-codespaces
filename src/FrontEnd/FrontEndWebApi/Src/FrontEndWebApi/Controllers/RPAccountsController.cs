@@ -6,12 +6,14 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -22,18 +24,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// <summary>
     /// The VSO Account api called by RPSaaS.
     /// </summary>
+    [Authorize(Policy = "RPSaaSIdentity", AuthenticationSchemes = AuthenticationBuilderRPSaasExtensions.AuthenticationScheme)]
     [FriendlyExceptionFilter]
-    [LoggingBaseName("accounts_controller")]
-    public class AccountController : ControllerBase
+    [LoggingBaseName("rpaccounts_controller")]
+    public class RPAccountsController : ControllerBase
     {
         private readonly IAccountManager accountManager;
 
         private readonly ICurrentUserProvider currentUserProvider;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AccountController"/> class.
+        /// Initializes a new instance of the <see cref="RPAccountsController"/> class.
         /// </summary>
-        public AccountController(IAccountManager accountManager, ICurrentUserProvider currentUserProvider, IMapper mapper)
+        public RPAccountsController(IAccountManager accountManager, ICurrentUserProvider currentUserProvider, IMapper mapper)
         {
             this.accountManager = accountManager;
             this.currentUserProvider = currentUserProvider;
@@ -103,8 +106,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(resourceType);
                 ValidationUtil.IsRequired(resourceName);
                 ValidationUtil.IsRequired(modelInput);
+                var nospacesLocation = modelInput.Location.Replace(" ", string.Empty);
                 ValidationUtil.IsTrue(
-                    Enum.TryParse(modelInput.Location, out AzureLocation location),
+                    Enum.TryParse(nospacesLocation, true, out AzureLocation location),
                     $"Invalid location: ${modelInput.Location}");
 
                 var account = new VsoAccount

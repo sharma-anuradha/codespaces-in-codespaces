@@ -14,7 +14,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
     /// </summary>
     public static class AuthenticationServiceCollectionExtensions
     {
-        private const string ProxySchema = "Proxy";
         private const string DataProtectionName = ServiceConstants.ServiceName;
         private const string DataProtectionRedisKey = "DataProtection-Keys";
 
@@ -25,41 +24,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <param name="hostEnvironment">The aspnet host environment.</param>
         /// <param name="redisCacheOptions">The redis cache options.</param>
         /// <param name="jwtBearerOptions">The JWT bearer options.</param>
+        /// <param name="rpSaasAuthority">The RPSaaS Signature Authority URL.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddVsSaaSAuthentication(
             this IServiceCollection services,
             IHostingEnvironment hostEnvironment,
             RedisCacheOptions redisCacheOptions,
-            JwtBearerOptions jwtBearerOptions)
+            JwtBearerOptions jwtBearerOptions,
+            string rpSaasAuthority)
         {
             Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
             Requires.NotNull(redisCacheOptions, nameof(redisCacheOptions));
             Requires.NotNull(jwtBearerOptions, nameof(jwtBearerOptions));
+            Requires.NotNull(rpSaasAuthority, nameof(rpSaasAuthority));
 
             services.AddVsSaaSCoreDataProtection(hostEnvironment, redisCacheOptions.RedisConnectionString);
 
-            services
-                .AddAuthentication(ProxySchema)
-                .AddPolicyScheme(ProxySchema, "Authorization Bearer or Cookie", options =>
-                {
-                    options.ForwardDefaultSelector = context =>
-                    {
-                        // Dynamically switch to the correct underlying scheme based on path
-                        if (context.Request.Path.HasValue &&
-                            context.Request.Path.Value.Contains("/api/"))
-                        {
-                            return AuthenticationBuilderJwtExtensions.AuthenticationScheme;
-                        }
-
-                        return AuthenticationBuilderCookieExtensions.AuthenticationScheme;
-                    };
-                })
+            services.AddAuthentication()
                 .AddVsSaaSJwtBearer(jwtBearerOptions)
+                .AddRPSaaSJwtBearer(rpSaasAuthority)
                 .AddVsSaaSCookieBearer();
 
             return services;
         }
-
+        
         private static void AddVsSaaSCoreDataProtection(
             this IServiceCollection services,
             IHostingEnvironment hostEnvironment,

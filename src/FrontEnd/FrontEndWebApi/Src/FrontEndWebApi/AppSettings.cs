@@ -79,5 +79,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         /// Gets or sets the redis cache connection string.
         /// </summary>
         public string RedisConnectionString { get; set; }
+
+        /// <summary>
+        /// Gets or sets the RPSaaS ApplicationID.
+        /// This appid claim will be present for all api calls coming from RPSaaS.
+        /// </summary>
+        public string RPSaaSAppIdString { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Authority URL used to valided RPSaaS
+        /// signing signature.
+        /// </summary>
+        public string RPSaaSAuthorityString { get; set; }
     }
 }
