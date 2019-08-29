@@ -1,0 +1,6 @@
+{
+    "extensions": [
+        "ms-vscode.csharp"
+    ],
+    "postCreateCommand": ".devcontainer/initenv.sh"
+}
