@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ using Microsoft.Azure.Documents.Linq;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Diagnostics;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -22,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         where T : IEntity
     {
         private readonly ConcurrentDictionary<string, T> store = new ConcurrentDictionary<string, T>();
+        private readonly JsonSerializer jsonSerializer = new JsonSerializer();
 
         public IEnumerable<string> Keys => this.store.Keys;
 
@@ -35,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             Requires.NotNullAllowStructs(document, nameof(document));
             Requires.NotNull(document.Id, nameof(document.Id));
+            TestSerialization(document);
 
             if (!this.store.TryAdd(document.Id, document))
             {
@@ -48,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             Requires.NotNullAllowStructs(document, nameof(document));
             Requires.NotNull(document.Id, nameof(document.Id));
+            TestSerialization(document);
 
             return Task.FromResult<T>(this.store.AddOrUpdate(document.Id, document, (id, oldDocument) => document));
         }
@@ -81,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             Requires.NotNullAllowStructs(document, nameof(document));
             Requires.NotNull(document.Id, nameof(document.Id));
+            TestSerialization(document);
 
             if (!this.store.TryGetValue(document.Id, out var existingDoc))
             {
@@ -109,5 +115,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public IEnumerator<KeyValuePair<string, T>> GetEnumerator() => this.store.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)this.store).GetEnumerator();
+
+        /// <summary>
+        /// Serialize the document just to verify that it is serializable (all required properties are filled, etc.)
+        /// </summary>
+        private void TestSerialization(T document)
+        {
+            using (var stringWriter = new StringWriter())
+            {
+                jsonSerializer.Serialize(stringWriter, document);
+            }
+        }
     }
 }

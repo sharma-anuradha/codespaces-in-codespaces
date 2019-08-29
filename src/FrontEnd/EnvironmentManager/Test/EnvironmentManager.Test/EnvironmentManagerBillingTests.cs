@@ -15,11 +15,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
     public class EnvironmentManagerBillingTests
     {
         private readonly MockCloudEnvironmentRepository environmentRepository;
-        private readonly CloudEnvironmentManager environmentManager;
+        private readonly MockAccountRepository accountRepository;
         private readonly MockBillingEventRepository billingEventRepository;
-        private readonly IBillingEventManager billingEventManager;
         private readonly MockClientWorkspaceRepository workspaceRepository;
+        private readonly IAccountManager accountManager;
+        private readonly IBillingEventManager billingEventManager;
         private readonly IResourceBrokerResourcesHttpContract resourceBroker;
+        private readonly CloudEnvironmentManager environmentManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger;
         private const string testUserId = "test-user";
@@ -38,7 +40,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             this.logger = loggerFactory.New();
 
             this.environmentRepository = new MockCloudEnvironmentRepository();
+            this.accountRepository = new MockAccountRepository();
             this.billingEventRepository = new MockBillingEventRepository();
+            this.accountManager = new AccountManager(this.accountRepository);
             this.billingEventManager = new BillingEventManager(this.billingEventRepository);
             this.workspaceRepository = new MockClientWorkspaceRepository();
             this.resourceBroker = new MockResourceBrokerClient();
@@ -47,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
                 this.environmentRepository,
                 this.resourceBroker,
                 this.workspaceRepository,
+                this.accountManager,
                 this.billingEventManager);
         }
 
@@ -103,20 +108,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             Assert.Equal(newState == default ? null : newState.ToString(), change.NewValue);
         }
 
-        [Fact(Skip = "Temporarily disable failing test.")]
+        [Fact]
         public async Task CreateEnvironmentInitializesBillingState()
         {
             var testEnvironment = await CreateTestEnvironmentAsync();
 
             Assert.Collection(
-                this.billingEventRepository.Values.OrderBy(ev => ev.Time),
-                (billingEvent) => VerifyEnvironmentStateChange(
-                    testEnvironment, billingEvent, default, CloudEnvironmentState.Created),
+                this.billingEventRepository.Values,
                 (billingEvent) => VerifyEnvironmentStateChange(
                     testEnvironment, billingEvent, CloudEnvironmentState.Created, CloudEnvironmentState.Provisioning));
         }
 
-        [Fact(Skip = "Temporarily disable failing test.")]
+        [Fact]
         public async Task UpdateEnvironmentUpdatesBillingState()
         {
             var testEnvironment = await CreateTestEnvironmentAsync();
@@ -130,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
                     testEnvironment, billingEvent, CloudEnvironmentState.Provisioning, CloudEnvironmentState.Available));
         }
 
-        [Fact(Skip = "Temporarily disable failing test.")]
+        [Fact]
         public async Task UnavailableEnvironmentUpdatesBillingState()
         {
             var testEnvironment = await CreateTestEnvironmentAsync();
@@ -150,7 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
                     testEnvironment, billingEvent, CloudEnvironmentState.Available, CloudEnvironmentState.Unavailable));
         }
 
-        [Fact(Skip = "Temporarily disable failing test.")]
+        [Fact]
         public async Task DeleteEnvironmentUpdatesBillingState()
         {
             var testEnvironment = await CreateTestEnvironmentAsync();

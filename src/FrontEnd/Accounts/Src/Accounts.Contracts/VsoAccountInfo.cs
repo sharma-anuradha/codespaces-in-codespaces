@@ -65,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         /// Gets the Azure resource ID (path) of the account, which is in the form
         /// `/subscriptions/{Subscription}/resourceGroups/{ResourceGroup}/providers/{ProviderName}/{AccountResourceType}/{Name}`.
         /// </summary>
+        [JsonIgnore]
         public string ResourceId
         {
             get

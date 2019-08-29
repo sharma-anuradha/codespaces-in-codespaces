@@ -29,16 +29,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cloudEnvironmentRepository">The cloud environment repository.</param>
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
+        /// <param name="accountManager">The account manager.</param>
         /// <param name="billingEventManager">The billing event manager.</param>
         public CloudEnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
             IWorkspaceRepository workspaceRepository,
+            IAccountManager accountManager,
             IBillingEventManager billingEventManager)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
+            AccountManager = Requires.NotNull(accountManager, nameof(accountManager));
             BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
         }
 
@@ -47,6 +50,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IWorkspaceRepository WorkspaceRepository { get; }
 
         private IResourceBrokerResourcesHttpContract ResourceBrokerClient { get; }
+
+        private IAccountManager AccountManager { get; }
 
         private IBillingEventManager BillingEventManager { get; }
 
@@ -83,6 +88,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ValidationUtil.IsTrue(
                     environments.Count() < CloudEnvironmentQuota,
                     $"You have reached the limit of {CloudEnvironmentQuota} environments");
+
+                // TODO: Make AccountId required after clients are updated to supply it.
+                if (cloudEnvironment.AccountId != null)
+                {
+                    // Validate that the specified account ID is well-formed.
+                    ValidationUtil.IsTrue(
+                        VsoAccountInfo.TryParse(cloudEnvironment.AccountId, out var account),
+                        $"Invalid account ID: {cloudEnvironment.AccountId}");
+
+                    // Validate the account exists (and lookup the account details).
+                    account.Location = cloudEnvironment.Location;
+                    var accountDetails = await AccountManager.GetAsync(account, logger);
+                    if (accountDetails == null)
+                    {
+                        throw new ArgumentException($"Account not found.", nameof(cloudEnvironment.AccountId));
+                    }
+
+                    // TODO: Validate the calling user has contribute access to the account?
+                    // TODO: Validate the account & subscription are in a good state?
+                    // TODO: Check for quota on # of environments per account?
+                }
 
                 // Setup
                 cloudEnvironment.Id = Guid.NewGuid().ToString();
@@ -131,8 +157,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .LogError(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)));
                     throw new InvalidOperationException("Cloud not create the cloud environment workspace session.");
                 }
-
-                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, logger);
 
                 // Create the cloud environment record in the provisioining state -- before starting.
                 // This avoids a race condition where the record doesn't exist but the callback could be invoked.
@@ -476,7 +500,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (cloudEnvironment.AccountId == default)
             {
                 // Use a temporary account if the environment doesn't have one.
-                // TODO: Remove this; make the account required.
+                // TODO: Remove this; make the account required after clients are updated to supply it.
                 account = new VsoAccountInfo
                 {
                     Subscription = Guid.Empty.ToString(),
@@ -502,12 +526,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var stateChange = new BillingStateChange
             {
-                OldValue = oldState == default ? null : oldState.ToString(),
+                OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
                 NewValue = state.ToString(),
             };
 
-            //await BillingEventManager.CreateEventAsync(
-            //    account, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
+            await BillingEventManager.CreateEventAsync(
+                account, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
 
             cloudEnvironment.State = state;
         }
