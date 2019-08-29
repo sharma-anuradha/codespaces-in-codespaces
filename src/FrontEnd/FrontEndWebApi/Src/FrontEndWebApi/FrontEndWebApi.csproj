@@ -20,17 +20,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
-    <ProjectReference Include="..\..\..\Accounts\src\Accounts.Contracts\Accounts.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Accounts\src\Accounts\Accounts.csproj" />
+    <ProjectReference Include="..\..\..\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Accounts\Src\Accounts\Accounts.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient\BackEndWebApiClient.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing\Billing.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
     <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj" />
-    <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
-    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile\UserProfile.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile\UserProfile.csproj" />
   </ItemGroup>
 
   <ItemGroup>

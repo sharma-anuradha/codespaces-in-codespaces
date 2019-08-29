@@ -11,9 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
-    <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
-    <ProjectReference Include="..\..\src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
+    <ProjectReference Include="..\..\Src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
+    <ProjectReference Include="..\..\Src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
   </ItemGroup>
   <ItemGroup>

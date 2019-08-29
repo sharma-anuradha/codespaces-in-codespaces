@@ -7,7 +7,7 @@
     <RootName>Microsoft.VsSaaS.Services.CloudEnvironments</RootName>
   </PropertyGroup>
 
-  <Import Project="$(ThisFileDirectory)../directory.build.props" />
+  <Import Project="$(ThisFileDirectory)../Directory.Build.props" />
 
   <!-- Product Properties -->
   <PropertyGroup>

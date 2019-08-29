@@ -7,8 +7,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
-    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile\UserProfile.csproj" />
-    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile\UserProfile.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
     <ProjectReference Include="..\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
   </ItemGroup>
 

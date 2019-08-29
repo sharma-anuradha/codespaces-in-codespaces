@@ -7,9 +7,9 @@
             "name": ".NET Core Launch (web)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
+             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/../../../../bin/Debug/VsClk.Portal.WebSite/Microsoft.VsCloudKernel.Services.VsClk.Portal.WebSite.dll",
+            "program": "${workspaceFolder}/../../../../bin/debug/VsClk.Portal.WebSite/Microsoft.VsCloudKernel.Services.VsClk.Portal.WebSite.dll",
             "args": [
                 "--urls",
                 "https://localhost:3000"
