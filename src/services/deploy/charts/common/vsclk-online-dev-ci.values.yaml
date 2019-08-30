@@ -24,7 +24,7 @@ config:
   authRedirectUrl: https://online.dev.core.vsengsaas.visualstudio.com
   keyVaultName: vsclk-online-dev-kv
   clusterDefaultHost: online.dev.core.vsengsaas.visualstudio.com
-  environmentRegistrationEndpoint: https://online.dev.core.vsengsaas.visualstudio.com/api/environment/registration
+  environmentRegistrationEndpoint: https://online.dev.core.vsengsaas.visualstudio.com/api/v1/environments
 
 azure-secrets:
   # vsclk-core-dev

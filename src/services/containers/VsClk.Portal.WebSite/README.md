@@ -22,7 +22,7 @@ Create secrets file `<projectRoot>/src/services/containers/VsClk.Portal.WebSite/
 {
   "AppSettings": {
     "IsLocal": true,
-    "EnvironmentRegistrationEndpoint": "http://localhost:5000/api/registration"
+    "EnvironmentRegistrationEndpoint": "https://online.dev.core.vsengsaas.visualstudio.com/api/v1/environments"
   }
 }
 ```
