@@ -18,7 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class ResourceBroker : IResourceBroker
     {

@@ -8,7 +8,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class OutOfCapacityException : ResourceBrokerException
     {
@@ -27,17 +27,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string SkuName { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public ResourceType Type { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string Location { get; set; }
     }

@@ -12,17 +12,17 @@ using Newtonsoft.Json.Converters;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class ResourceRecord : TaggedEntity
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string SkuName { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public ResourceType Type { get; set; }
@@ -38,64 +38,64 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public string Location { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public bool IsReady { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public DateTime? Ready { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public bool IsAssigned { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public DateTime? Assigned { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public DateTime Created { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? ProvisioningStatus { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public DateTime? ProvisioningStatusChanged { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public IList<OperationStateChanges> ProvisioningStatusChanges { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? StartingStatus { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public DateTime? StartingStatusChanged { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public IList<OperationStateChanges> StartingStatusChanges { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public bool IsDeleted { get; set; }
 
@@ -121,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public dynamic Properties { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="newState"></param>
         public bool UpdateProvisioningStatus(OperationState newState, DateTime? newTime = null)
@@ -141,7 +141,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             }
 
             // TODO: should ensure that these are bounded
-
             ProvisioningStatusChanges.Add(new OperationStateChanges
             {
                 Status = newState,
@@ -152,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="newState"></param>
         public bool UpdateStartingStatus(OperationState newState, DateTime? newTime = null)
@@ -172,7 +171,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             }
 
             // TODO: should ensure that these are bounded
-
             StartingStatusChanges.Add(new OperationStateChanges
             {
                 Status = newState,

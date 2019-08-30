@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         Task<ContinuationResult> Execute(string name, object input, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="payload"></param>
         /// <param name="logger"></param>

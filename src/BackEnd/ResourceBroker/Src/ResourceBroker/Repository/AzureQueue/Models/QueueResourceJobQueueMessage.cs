@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureQueue.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class QueueResourceJobQueueMessage : IResourceJobQueueMessage
     {

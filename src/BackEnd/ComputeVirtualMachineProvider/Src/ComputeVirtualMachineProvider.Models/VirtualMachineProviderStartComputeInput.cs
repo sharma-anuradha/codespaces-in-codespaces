@@ -1,8 +1,7 @@
-﻿// <copyright file="VirtualMachineProviderStartComputeInput.cs" company="Microsoft">
+﻿// <copyright file="VirtualMachineProviderAllocateInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
@@ -10,56 +9,40 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     /// <summary>
-    ///
+    /// Provides input for cloud environment.
     /// </summary>
     public class VirtualMachineProviderStartComputeInput
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VirtualMachineProviderStartComputeInput"/> class.
-        /// </summary>
-        public VirtualMachineProviderStartComputeInput()
-        {
-        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VirtualMachineProviderStartComputeInput"/> class.
         /// </summary>
-        /// <param name="computeResourceId">The compute resource broker id.</param>
-        /// <param name="computeAzureResourceInfo">The compute azure resource info.</param>
-        /// <param name="shareConnectionInfo">The file share connection info.</param>
-        /// <param name="inputParams">The VM params.</param>
+        /// <param name="azureResourceInfo">Azure resource info object.</param>
+        /// <param name="shareConnectionInfo">File share connection details.</param>
+        /// <param name="inputParams">Environment creation input.</param>
         public VirtualMachineProviderStartComputeInput(
-            Guid computeResourceId,
-            AzureResourceInfo computeAzureResourceInfo,
+            AzureResourceInfo azureResourceInfo,
             ShareConnectionInfo shareConnectionInfo,
             IDictionary<string, string> inputParams)
         {
-            Requires.Argument(computeResourceId != default, nameof(computeResourceId), "required");
-            Requires.NotNull(computeAzureResourceInfo, nameof(computeAzureResourceInfo));
-            ComputeResourceId = computeResourceId;
-            ComputeAzureResourceInfo = computeAzureResourceInfo;
+            AzureResourceInfo = azureResourceInfo;
             FileShareConnection = shareConnectionInfo;
             VmInputParams = inputParams;
         }
 
         /// <summary>
-        /// Gets the resource broker compute resource id.
+        /// Gets the azure resource info object instance.
         /// </summary>
-        public Guid ComputeResourceId { get; set; }
+        public AzureResourceInfo AzureResourceInfo { get; }
 
         /// <summary>
-        /// Gets the azure resource info.
+        /// Gets file share connection object instance.
         /// </summary>
-        public AzureResourceInfo ComputeAzureResourceInfo { get; set; }
+        public ShareConnectionInfo FileShareConnection { get; }
 
         /// <summary>
-        /// Gets the file share connection info.
+        /// Gets the input parameters to start the environment.
         /// </summary>
-        public ShareConnectionInfo FileShareConnection { get; set; }
-
-        /// <summary>
-        /// Gets the virtual-machine parameters.
-        /// </summary>
-        public IDictionary<string, string> VmInputParams { get; set; }
+        public IDictionary<string, string> VmInputParams { get; }
     }
 }

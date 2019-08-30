@@ -11,12 +11,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IResourceRepository : IDocumentDbCollection<ResourceRecord>
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="skuName"></param>
         /// <param name="type"></param>

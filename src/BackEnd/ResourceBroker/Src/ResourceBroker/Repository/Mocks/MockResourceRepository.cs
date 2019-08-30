@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     public class MockResourceRepository : IResourceRepository
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public MockResourceRepository()
         {

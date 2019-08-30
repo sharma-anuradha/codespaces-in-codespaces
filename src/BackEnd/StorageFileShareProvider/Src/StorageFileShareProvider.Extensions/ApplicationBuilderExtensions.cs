@@ -24,7 +24,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.E
             Requires.NotNull(app, nameof(app));
 
             // Nothing yet
-
             return app;
         }
     }

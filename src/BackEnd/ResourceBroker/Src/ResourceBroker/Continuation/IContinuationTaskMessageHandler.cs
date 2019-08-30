@@ -9,19 +9,19 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IContinuationTaskMessageHandler
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="payload"></param>
         /// <returns></returns>
         bool CanHandle(ResourceJobQueuePayload payload);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="input"></param>
         /// <param name="logger"></param>

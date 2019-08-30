@@ -21,7 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class StartEnvironmentContinuationHandler : IStartEnvironmentContinuationHandler
     {
@@ -155,7 +155,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var computeStorageFileShareInfo = Mapper.Map<ShareConnectionInfo>(storageResult);
 
             return new VirtualMachineProviderStartComputeInput(
-                input.ComputeResourceId,
                 computeAzureResourceInfo,
                 computeStorageFileShareInfo,
                 input.EnvironmentVariables);
@@ -196,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             // Start compute command
-            var computeResult = await ComputeProvider.StartComputeAsync(computeProviderStartInput, continuationToken);
+            var computeResult = await ComputeProvider.StartComputeAsync(computeProviderStartInput, logger, continuationToken);
 
             // Update status to reflect compute result
             await computeReference.SaveStartingStatus(computeResult.Status, logger);

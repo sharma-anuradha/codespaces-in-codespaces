@@ -9,7 +9,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IResourceScalingBroker
     {

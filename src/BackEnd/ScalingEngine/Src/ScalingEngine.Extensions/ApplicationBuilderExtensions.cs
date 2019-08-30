@@ -24,7 +24,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions
             Requires.NotNull(app, nameof(app));
 
             // NOTE: Nothing to see here yet.
-
             return app;
         }
     }

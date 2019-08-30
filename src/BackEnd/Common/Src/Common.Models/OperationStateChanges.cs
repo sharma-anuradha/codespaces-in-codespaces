@@ -9,18 +9,18 @@ using Newtonsoft.Json.Converters;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class OperationStateChanges
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState Status { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public DateTime Time { get; set; }
     }

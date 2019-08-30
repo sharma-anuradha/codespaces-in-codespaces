@@ -9,12 +9,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string ContinuationTaskActivator = "continuation-task-activator";
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public const string ContinuationTaskMessagePump = "continuation-task-message-pump";
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public const string ContinuationTaskWorkerPoolManager = "continuation-task-worker-pool-manager";
 

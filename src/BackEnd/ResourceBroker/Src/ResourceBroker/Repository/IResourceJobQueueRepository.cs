@@ -11,12 +11,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IResourceJobQueueRepository
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="id">Id of the item in the queue.</param>
         /// <param name="logger"></param>
@@ -39,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
         Task<IResourceJobQueueMessage> GetAsync(IDiagnosticsLogger logger);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="message"></param>
         /// <param name="logger"></param>

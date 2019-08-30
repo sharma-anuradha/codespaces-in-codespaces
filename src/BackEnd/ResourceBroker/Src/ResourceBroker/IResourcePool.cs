@@ -10,12 +10,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IResourcePool
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="input"></param>
         /// <param name="logger"></param>

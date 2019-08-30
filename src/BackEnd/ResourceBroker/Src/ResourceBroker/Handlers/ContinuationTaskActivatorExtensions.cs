@@ -11,12 +11,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public static class ContinuationTaskActivatorExtensions
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="activator"></param>
         /// <param name="input"></param>
@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="activator"></param>
         /// <param name="input"></param>

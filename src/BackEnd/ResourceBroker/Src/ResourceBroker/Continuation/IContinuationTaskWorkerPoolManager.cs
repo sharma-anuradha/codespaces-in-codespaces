@@ -9,17 +9,17 @@ using Microsoft.VsSaaS.Diagnostics;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IContinuationTaskWorkerPoolManager : IDisposable
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         int CurrentWorkerCount { get; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>

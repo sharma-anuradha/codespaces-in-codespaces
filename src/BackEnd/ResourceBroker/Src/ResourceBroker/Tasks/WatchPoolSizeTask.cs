@@ -20,7 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class WatchPoolSizeTask : IWatchPoolSizeTask
     {

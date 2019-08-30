@@ -7,6 +7,7 @@ using System.Timers;
 using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -28,6 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         //[Fact]
         public async Task VirtualMachine_Create_Start_Ok()
         {
+            var logger = new DefaultLoggerFactory().New();
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
 
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
@@ -45,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             };
 
             var timerCreate = Stopwatch.StartNew();
-            VirtualMachineProviderCreateResult createResult = await computeProvider.CreateAsync(input, null);
+            VirtualMachineProviderCreateResult createResult = await computeProvider.CreateAsync(input, logger, null);
             timerCreate.Stop();
             Console.WriteLine($"Time taken to begin create VM {timerCreate.Elapsed.TotalSeconds}");
             var timerWait = Stopwatch.StartNew();
@@ -61,15 +63,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             do
             {
                 await Task.Delay(500);
-                statusCheckResult = await computeProvider.CreateAsync(input, createResult.ContinuationToken);
+                statusCheckResult = await computeProvider.CreateAsync(input, logger, createResult.ContinuationToken);
                 Assert.NotNull(statusCheckResult);
-                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress.ToString()) || statusCheckResult.Status.Equals(OperationState.Succeeded.ToString()));
-                if (statusCheckResult.Status.Equals(OperationState.InProgress.ToString()))
+                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
+                if (statusCheckResult.Status.Equals(OperationState.InProgress))
                 {
                     NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToDeploymentStatusInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
-            } while (statusCheckResult.Status.Equals(OperationState.InProgress.ToString()));
+            } while (statusCheckResult.Status.Equals(OperationState.InProgress));
             timerWait.Stop();
             Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
         }
@@ -78,6 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         //[Fact]
         public async Task VirtualMachine_Create_Multiple_VM_Ok()
         {
+            var logger = new DefaultLoggerFactory().New();
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
@@ -94,12 +97,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             };
 
             var timerCreate = Stopwatch.StartNew();
-            VirtualMachineProviderCreateResult[] initiateVmCreationList = await Task.WhenAll(Enumerable.Range(0, TargetVmCount).Select(x => computeProvider.CreateAsync(input, null)));
+            VirtualMachineProviderCreateResult[] initiateVmCreationList = await Task.WhenAll(Enumerable.Range(0, TargetVmCount).Select(x => computeProvider.CreateAsync(input, logger, null)));
             timerCreate.Stop();
             Console.WriteLine($"Time taken to begin create 10 VMs {timerCreate.Elapsed.TotalSeconds}");
 
             var timerWait = Stopwatch.StartNew();
-            VirtualMachineProviderCreateResult[] vmStatus = await Task.WhenAll(initiateVmCreationList.Select(x => WaitForVMCreation(computeProvider, input, x)));
+            VirtualMachineProviderCreateResult[] vmStatus = await Task.WhenAll(initiateVmCreationList.Select(x => WaitForVMCreation(computeProvider, input, x, logger)));
             timerWait.Stop();
             System.Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
         }
@@ -107,6 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         [Fact(Skip = "integration test")]
         public async Task Start_Compute_Ok()
         {
+            var logger = new DefaultLoggerFactory().New();
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             var fileShareInfo = new ShareConnectionInfo("storageaccount1",
@@ -116,7 +120,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var resourceId = Guid.Parse("47b6d3d7-26f3-4fed-9aa8-fa809b0dd3cc");
             var azureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceId.ToString());
             var startComputeInput = new VirtualMachineProviderStartComputeInput(
-                resourceId,
                 azureResourceInfo,
                 fileShareInfo,
                 new Dictionary<string, string>()
@@ -126,24 +129,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     { "SESSION_CALLBACK", "value2" }
                 });
 
-            await StartCompute(computeProvider, startComputeInput);
+            await StartCompute(computeProvider, startComputeInput, logger);
         }
 
         [Fact(Skip = "integration test")]
         //[Fact]
         public async Task Delete_Compute_Ok()
         {
+            var logger = new DefaultLoggerFactory().New();
             var deleteTimer = Stopwatch.StartNew();
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
 
-            var resourceName = Guid.Parse("894adc3d-758c-41ec-bb58-d7cf0640a676").ToString();
+            var resourceName = Guid.Parse("8a1a3a88-e79f-4f8e-ac49-e7cad3d45376").ToString();
             VirtualMachineProviderDeleteInput input = new VirtualMachineProviderDeleteInput
             {
                 AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceName),
             };
 
-            var deleteResult = await computeProvider.DeleteAsync(input);
+            var deleteResult = await computeProvider.DeleteAsync(input, logger);
             deleteTimer.Stop();
             System.Console.WriteLine($"Time taken to create VM {deleteTimer.Elapsed.TotalSeconds}");
 
@@ -152,42 +156,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             do
             {
                 await Task.Delay(500);
-                deleteStatusCheckResult = await computeProvider.DeleteAsync(input, deleteStatusCheckResult.ContinuationToken);
+                deleteStatusCheckResult = await computeProvider.DeleteAsync(input, logger, deleteStatusCheckResult.ContinuationToken);
                 Assert.NotNull(deleteStatusCheckResult);
-                Assert.True(deleteStatusCheckResult.Status.Equals(OperationState.InProgress.ToString())
-                    || deleteStatusCheckResult.Status.Equals(OperationState.Succeeded.ToString()));
-                if (deleteStatusCheckResult.Status.Equals(OperationState.InProgress.ToString()))
+                Assert.True(deleteStatusCheckResult.Status.Equals(OperationState.InProgress)
+                    || deleteStatusCheckResult.Status.Equals(OperationState.Succeeded));
+                if (deleteStatusCheckResult.Status.Equals(OperationState.InProgress))
                 {
                     NextStageInput statusCheckdeploymentStatusToken = deleteStatusCheckResult.ContinuationToken.ToDeploymentStatusInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
-            } while (deleteStatusCheckResult.Status.Equals(OperationState.InProgress.ToString()));
+            } while (deleteStatusCheckResult.Status.Equals(OperationState.InProgress));
             timerWait.Stop();
             System.Console.WriteLine($"Time taken to start environment on VM {timerWait.Elapsed.TotalSeconds}");
         }
 
-        private static async Task<VirtualMachineProviderCreateResult> WaitForVMCreation(VirtualMachineProvider computeProvider, VirtualMachineProviderCreateInput input, VirtualMachineProviderCreateResult vmToken)
+        private static async Task<VirtualMachineProviderCreateResult> WaitForVMCreation(VirtualMachineProvider computeProvider, VirtualMachineProviderCreateInput input, VirtualMachineProviderCreateResult vmToken, IDiagnosticsLogger logger)
         {
             VirtualMachineProviderCreateResult statusCheckResult = default;
             do
             {
                 await Task.Delay(500);
-                statusCheckResult = await computeProvider.CreateAsync(input, vmToken.ContinuationToken);
+                statusCheckResult = await computeProvider.CreateAsync(input, logger, vmToken.ContinuationToken);
                 Assert.NotNull(statusCheckResult);
-                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress.ToString()) || statusCheckResult.Status.Equals(OperationState.Succeeded.ToString()));
-                if (statusCheckResult.Status.Equals(OperationState.InProgress.ToString()))
+                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
+                if (statusCheckResult.Status.Equals(OperationState.InProgress))
                 {
                     NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToDeploymentStatusInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
-            } while (statusCheckResult.Status.Equals(OperationState.InProgress.ToString()));
+            } while (statusCheckResult.Status.Equals(OperationState.InProgress));
             return statusCheckResult;
         }
 
-        private static async Task StartCompute(VirtualMachineProvider computeProvider, VirtualMachineProviderStartComputeInput startComputeInput)
+        private static async Task StartCompute(VirtualMachineProvider computeProvider, VirtualMachineProviderStartComputeInput startComputeInput, IDiagnosticsLogger logger)
         {
             var timerStartCompute = Stopwatch.StartNew();
-            VirtualMachineProviderStartComputeResult startComputeResult = await computeProvider.StartComputeAsync(startComputeInput);
+            VirtualMachineProviderStartComputeResult startComputeResult = await computeProvider.StartComputeAsync(startComputeInput, logger);
             timerStartCompute.Stop();
             System.Console.WriteLine($"Time taken to allocate VM {timerStartCompute.Elapsed.TotalSeconds}");
             Assert.NotNull(startComputeResult);
@@ -202,15 +206,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             do
             {
                 await Task.Delay(500);
-                statusCheckResult = await computeProvider.StartComputeAsync(startComputeInput, startComputeResult.ContinuationToken);
+                statusCheckResult = await computeProvider.StartComputeAsync(startComputeInput, logger, startComputeResult.ContinuationToken);
                 Assert.NotNull(statusCheckResult);
-                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress.ToString()) || statusCheckResult.Status.Equals(OperationState.Succeeded.ToString()));
-                if (statusCheckResult.Status.Equals(OperationState.InProgress.ToString()))
+                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
+                if (statusCheckResult.Status.Equals(OperationState.InProgress))
                 {
                     NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToDeploymentStatusInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
-            } while (statusCheckResult.Status.Equals(OperationState.InProgress.ToString()));
+            } while (statusCheckResult.Status.Equals(OperationState.InProgress));
             timerWait.Stop();
             System.Console.WriteLine($"Time taken to start environment on VM {timerWait.Elapsed.TotalSeconds}");
         }

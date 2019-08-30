@@ -11,7 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class TaskHelper : ITaskHelper
     {

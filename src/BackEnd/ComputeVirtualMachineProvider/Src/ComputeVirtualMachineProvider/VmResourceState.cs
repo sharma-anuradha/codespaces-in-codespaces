@@ -1,4 +1,4 @@
-﻿// <copyright file="AzureDeploymentManager.cs" company="Microsoft">
+﻿// <copyright file="VmResourceState.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

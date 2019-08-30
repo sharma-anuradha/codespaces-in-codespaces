@@ -5,7 +5,7 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class ScalingResult
     {

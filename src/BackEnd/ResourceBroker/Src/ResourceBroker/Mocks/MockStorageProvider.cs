@@ -11,7 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class MockStorageProvider : IStorageProvider
     {

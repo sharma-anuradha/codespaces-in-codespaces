@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -12,7 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class MockComputeProvider : IComputeProvider
     {
@@ -30,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         private Random Random { get; }
 
         /// <inheritdoc/>
-        public async Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, string continuationToken = null)
+        public async Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger, string continuationToken = null)
         {
             await Task.Delay(Random.Next(100, 1000));
 
@@ -71,13 +72,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<VirtualMachineProviderCreateResult> CreateAsync(VirtualMachineProviderCreateInput input, string continuationToken = null)
+        public Task<VirtualMachineProviderCreateResult> CreateAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger, string continuationToken = null)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, string continuationToken = null)
+        public Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger, string continuationToken = null)
         {
             throw new NotImplementedException();
         }

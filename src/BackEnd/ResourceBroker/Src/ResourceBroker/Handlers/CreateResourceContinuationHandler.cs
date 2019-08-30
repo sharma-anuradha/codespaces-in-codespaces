@@ -18,7 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public abstract class CreateResourceContinuationHandler : IContinuationTaskMessageHandler
     {

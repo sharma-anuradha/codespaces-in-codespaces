@@ -5,7 +5,7 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
 {
     /// <summary>
-    /// Triggers tasks that need to run on warmup. 
+    /// Triggers tasks that need to run on warmup.
     /// </summary>
     public interface ITriggerWarmup
     {

@@ -31,6 +31,7 @@
     }
   },
   "variables": {
+    "diskName": "[concat(parameters('virtualMachineName'),'-disk')]",
     "nsgName": "[concat(parameters('virtualMachineName'),'-nsg')]",
     "vnetName": "[concat(parameters('virtualMachineName'),'-vnet')]",
     "nicName": "[concat(parameters('virtualMachineName'),'-nic')]",
@@ -110,6 +111,7 @@
         },
         "storageProfile": {
           "osDisk": {
+            "name": "[variables('diskName')]",
             "createOption": "FromImage",
             "managedDisk": {
               "storageAccountType": "Premium_LRS"

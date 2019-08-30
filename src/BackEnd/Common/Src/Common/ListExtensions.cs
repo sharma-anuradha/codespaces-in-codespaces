@@ -8,14 +8,14 @@ using System.Collections.Generic;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public static class ListExtensions
     {
         private static Random rng = new Random();
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>

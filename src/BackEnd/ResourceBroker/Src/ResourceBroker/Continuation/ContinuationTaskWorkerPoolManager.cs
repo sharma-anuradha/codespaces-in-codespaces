@@ -15,7 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class ContinuationTaskWorkerPoolManager : IContinuationTaskWorkerPoolManager
     {

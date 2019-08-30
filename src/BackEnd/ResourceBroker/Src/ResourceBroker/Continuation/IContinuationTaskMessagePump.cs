@@ -12,14 +12,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
     public interface IContinuationTaskMessagePump : IDisposable
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>
         Task<bool> TryPopulateCacheAsync(IDiagnosticsLogger logger);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>

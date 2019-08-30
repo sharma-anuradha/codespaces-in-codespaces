@@ -11,7 +11,7 @@ using Microsoft.WindowsAzure.Storage;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class ActionDisposable : IDisposable
     {
@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="action"></param>
         /// <returns></returns>

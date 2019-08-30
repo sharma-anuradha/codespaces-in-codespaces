@@ -14,14 +14,14 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mocks
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class MockResourceJobQueueRepository : IResourceJobQueueRepository
     {
         public const string QueueName = "mock-resource-job-queue";
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="backgroundJobs"></param>
         /// <param name="jobStorage"></param>
@@ -62,7 +62,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public Task AddAsync(string id, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             // TODO: Delay add to queue if needed
-
             BackgroundJobs.Create(() => AddToQueue(id), EnqueuedState);
 
             return Task.CompletedTask;

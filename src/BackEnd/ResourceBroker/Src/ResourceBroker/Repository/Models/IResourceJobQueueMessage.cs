@@ -5,17 +5,17 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface IResourceJobQueueMessage
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         string Content { get; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>

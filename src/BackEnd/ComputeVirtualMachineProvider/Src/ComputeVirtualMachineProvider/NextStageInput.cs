@@ -1,4 +1,4 @@
-// <copyright file="DeploymentStatusInput.cs" company="Microsoft">
+// <copyright file="NextStageInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -21,11 +21,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <param name="trackingId">Tracking id to resume next phase.</param>
         /// <param name="azureResourceInfo">The azure resource info.</param>
         [JsonConstructor]
-        public NextStageInput(string trackingId, AzureResourceInfo azureResourceInfo)
+        public NextStageInput(string trackingId, AzureResourceInfo azureResourceInfo, int retryAttempt = 0)
         {
             Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
             TrackingId = trackingId;
             AzureResourceInfo = azureResourceInfo;
+            RetryAttempt = retryAttempt;
         }
 
         /// <summary>
@@ -37,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// Gets the compute azure resource info.
         /// </summary>
         public AzureResourceInfo AzureResourceInfo { get; }
+
+        /// <summary>
+        /// Gets the retry attempt count.
+        /// </summary>
+        public int RetryAttempt { get; }
     }
 }

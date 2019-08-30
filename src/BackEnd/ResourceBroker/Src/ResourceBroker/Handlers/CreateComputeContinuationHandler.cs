@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 AzureVirtualMachineImage = "Canonical:UbuntuServer:18.04-LTS:latest",
             };
 
-            return await ComputeProvider.CreateAsync(providerInput, continuationToken);
+            return await ComputeProvider.CreateAsync(providerInput, logger, continuationToken);
         }
     }
 }

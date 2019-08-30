@@ -12,12 +12,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public static class MapperConfigurationExpressionExtensions
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="cfg"></param>
         public static void AddResourceBroker(this IMapperConfigurationExpression cfg)

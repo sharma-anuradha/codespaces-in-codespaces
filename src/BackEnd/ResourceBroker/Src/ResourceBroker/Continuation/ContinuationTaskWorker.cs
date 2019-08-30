@@ -13,7 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class ContinuationTaskWorker : IContinuationTaskWorker
     {

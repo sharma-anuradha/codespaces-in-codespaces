@@ -189,7 +189,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 AzureResourceInfo = azureResourceInfo,
             };
 
-            return await ComputeProvider.DeleteAsync(providerInput, continuationToken);
+            return await ComputeProvider.DeleteAsync(providerInput, logger, continuationToken);
         }
 
 

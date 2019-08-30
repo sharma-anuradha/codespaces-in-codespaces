@@ -15,7 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class QueueResourceJobQueueRepository : QueueCollectionBase, IResourceJobQueueRepository
     {

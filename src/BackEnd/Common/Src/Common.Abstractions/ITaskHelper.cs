@@ -9,12 +9,12 @@ using Microsoft.VsSaaS.Diagnostics;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public interface ITaskHelper
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="name"></param>
         /// <param name="callback"></param>
