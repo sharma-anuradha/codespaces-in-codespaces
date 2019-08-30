@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
-    <RootNamespace>ComputeVirtualMachineProvider.Models</RootNamespace>
+    <RootNamespace>Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

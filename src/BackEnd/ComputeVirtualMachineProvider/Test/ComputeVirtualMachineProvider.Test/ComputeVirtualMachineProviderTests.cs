@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Moq;
@@ -187,7 +188,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);
             Assert.NotNull(result.ContinuationToken);
-            var deploymentStatusInput = result.ContinuationToken.ToDeploymentStatusInput();
+            var deploymentStatusInput = result.ContinuationToken.ToNextStageInput();
             Assert.NotNull(deploymentStatusInput);
             Assert.Equal(ResourceInfo, deploymentStatusInput.AzureResourceInfo);
             Assert.Equal(TrackingId, deploymentStatusInput.TrackingId);

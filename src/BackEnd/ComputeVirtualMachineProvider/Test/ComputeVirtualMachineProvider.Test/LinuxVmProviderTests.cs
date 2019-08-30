@@ -13,18 +13,18 @@ using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Test
 {
-    public class AzureVmProviderTests : IClassFixture<AzureVmProviderTestsBase>
+    public class LinuxVmProviderTests : IClassFixture<AzureVmProviderTestsBase>
     {
         private const int TargetVmCount = 1;
         private AzureVmProviderTestsBase testContext;
-        public AzureVmProviderTests(AzureVmProviderTestsBase data)
+        public LinuxVmProviderTests(AzureVmProviderTestsBase data)
         {
             this.testContext = data;
         }
 
         [Fact(Skip = "integration test")]
         //[Fact]
-        public async Task VirtualMachine_Create_Start_Ok()
+        public async Task Create_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var timerWait = Stopwatch.StartNew();
             Assert.NotNull(createResult);
             Assert.Equal(OperationState.InProgress, createResult.Status);
-            NextStageInput createDeploymentStatusInput = createResult.ContinuationToken.ToDeploymentStatusInput();
+            NextStageInput createDeploymentStatusInput = createResult.ContinuationToken.ToNextStageInput();
             Assert.NotNull(createDeploymentStatusInput);
             Assert.NotNull(createDeploymentStatusInput.TrackingId);
             Assert.Equal(rgName, createDeploymentStatusInput.AzureResourceInfo.ResourceGroup);
@@ -65,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
                 if (statusCheckResult.Status.Equals(OperationState.InProgress))
                 {
-                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToDeploymentStatusInput();
+                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToNextStageInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
             } while (statusCheckResult.Status.Equals(OperationState.InProgress));
@@ -75,9 +75,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 
         [Fact(Skip = "integration test")]
         //[Fact]
-        public async Task VirtualMachine_Create_Multiple_VM_Ok()
+        public async Task Create_Multiple_Compute_Ok()
         {
-            var logger = new DefaultLoggerFactory().New();
+            var logger = new DefaultLoggerFactory().New();           
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
@@ -159,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     || deleteStatusCheckResult.Status.Equals(OperationState.Succeeded));
                 if (deleteStatusCheckResult.Status.Equals(OperationState.InProgress))
                 {
-                    NextStageInput statusCheckdeploymentStatusToken = deleteStatusCheckResult.ContinuationToken.ToDeploymentStatusInput();
+                    NextStageInput statusCheckdeploymentStatusToken = deleteStatusCheckResult.ContinuationToken.ToNextStageInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
             } while (deleteStatusCheckResult.Status.Equals(OperationState.InProgress));
@@ -178,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
                 if (statusCheckResult.Status.Equals(OperationState.InProgress))
                 {
-                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToDeploymentStatusInput();
+                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToNextStageInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
             } while (statusCheckResult.Status.Equals(OperationState.InProgress));
@@ -193,7 +193,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             System.Console.WriteLine($"Time taken to allocate VM {timerStartCompute.Elapsed.TotalSeconds}");
             Assert.NotNull(startComputeResult);
             Assert.Equal(OperationState.InProgress, startComputeResult.Status);
-            NextStageInput startComputeStatusCheckInput = startComputeResult.ContinuationToken.ToDeploymentStatusInput();
+            NextStageInput startComputeStatusCheckInput = startComputeResult.ContinuationToken.ToNextStageInput();
             Assert.NotNull(startComputeStatusCheckInput);
             Assert.NotNull(startComputeStatusCheckInput.TrackingId);
             Assert.NotNull(startComputeStatusCheckInput.AzureResourceInfo);
@@ -208,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
                 if (statusCheckResult.Status.Equals(OperationState.InProgress))
                 {
-                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToDeploymentStatusInput();
+                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.ContinuationToken.ToNextStageInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
             } while (statusCheckResult.Status.Equals(OperationState.InProgress));

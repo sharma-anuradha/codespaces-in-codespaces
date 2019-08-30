@@ -21,6 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -390,7 +391,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private static string GetEmbeddedResource(string resourceName)
         {
             string namespaceString = typeof(LinuxVirtualMachineManager).Namespace;
-            var fullResourceName = $"{namespaceString}.Templates.{resourceName}";
+            var fullResourceName = $"{namespaceString}.Templates.Linux.{resourceName}";
             var assembly = Assembly.GetExecutingAssembly();
             using (Stream stream = assembly.GetManifestResourceStream(fullResourceName))
             using (StreamReader reader = new StreamReader(stream))

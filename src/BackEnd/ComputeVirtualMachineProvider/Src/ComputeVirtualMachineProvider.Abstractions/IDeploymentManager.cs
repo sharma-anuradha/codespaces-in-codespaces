@@ -7,7 +7,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions
 {
     /// <summary>
     /// Manage Azure Virtual Machine.

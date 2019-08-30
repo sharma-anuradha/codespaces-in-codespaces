@@ -175,7 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             else
             {
                 // Check status of deployment request
-                nextStageInput = continuationToken.ToDeploymentStatusInput();
+                nextStageInput = continuationToken.ToNextStageInput();
                 (resultState, nextStageInput) = await checkOperationStatus(nextStageInput, logger);
             }
 

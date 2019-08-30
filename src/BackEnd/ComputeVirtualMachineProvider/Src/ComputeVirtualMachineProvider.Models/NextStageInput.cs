@@ -2,10 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     /// <summary>
     /// Input for next continuation.

@@ -20,16 +20,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Templates\template_vm.json">
+    <EmbeddedResource Include="Templates\Linux\template_vm.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Templates\cloudinit.yml">
+    <EmbeddedResource Include="Templates\Linux\cloudinit.yml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Templates\vm_init.sh">
+    <EmbeddedResource Include="Templates\Linux\vm_assign.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Templates\vm_assign.sh">
+    <EmbeddedResource Include="Templates\Linux\vm_init.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
