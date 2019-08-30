@@ -55,8 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(resourceId);
-            var result = await SendAsync<string, bool>(ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, null, logger);
-            return result;
+            await SendRawAsync<string>(ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, null, logger);
+            return true;
         }
 
         /// <inheritdoc/>
@@ -74,6 +74,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
 
         // TODO: Move this into a base class, or an extension method.
         private async Task<TResult> SendAsync<TInput, TResult>(
+            HttpMethod method,
+            string requestUri,
+            TInput input,
+            IDiagnosticsLogger logger)
+        {
+            var rawResult = await SendRawAsync(method, requestUri, input, logger);
+
+            try
+            {
+                var result = JsonConvert.DeserializeObject<TResult>(rawResult);
+
+                return result;
+            }
+            catch (Exception)
+            {
+                logger?.LogError(GetType().FormatLogErrorMessage(nameof(SendAsync)));
+                throw;
+            }
+        }
+
+        // TODO: Move this into a base class, or an extension method.
+        private async Task<string> SendRawAsync<TInput>(
             HttpMethod method,
             string requestUri,
             TInput input,
@@ -106,17 +128,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
 
                 // Get the response body
                 var resultBody = await httpResponseMessage.Content.ReadAsStringAsync();
-                var result = JsonConvert.DeserializeObject<TResult>(resultBody);
 
                 logger?.TryAddDuration(duration);
-                logger?.LogInfo(GetType().FormatLogMessage(nameof(SendAsync)));
+                logger?.LogInfo(GetType().FormatLogMessage(nameof(SendRawAsync)));
 
-                return result;
+                return resultBody;
             }
             catch (Exception)
             {
                 logger?.TryAddDuration(duration);
-                logger?.LogError(GetType().FormatLogErrorMessage(nameof(SendAsync)));
+                logger?.LogError(GetType().FormatLogErrorMessage(nameof(SendRawAsync)));
                 throw;
             }
         }
