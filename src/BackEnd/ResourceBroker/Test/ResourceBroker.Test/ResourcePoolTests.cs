@@ -3,12 +3,10 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;

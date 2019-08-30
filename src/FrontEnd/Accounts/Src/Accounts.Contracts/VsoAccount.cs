@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using Microsoft.VsSaaS.Common.Models;
 using Newtonsoft.Json;
 

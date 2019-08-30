@@ -4,8 +4,6 @@
 
 using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;

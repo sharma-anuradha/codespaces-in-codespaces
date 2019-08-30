@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Data;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 

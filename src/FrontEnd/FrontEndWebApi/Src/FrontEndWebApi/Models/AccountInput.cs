@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models

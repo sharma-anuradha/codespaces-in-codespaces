@@ -3,10 +3,6 @@
 // </copyright>
 
 using System;
-using System.Threading.Tasks;
-using Microsoft.VsSaaS.Azure.Storage.Blob;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.WindowsAzure.Storage;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {

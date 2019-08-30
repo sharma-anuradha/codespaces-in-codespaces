@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
-using Microsoft.Azure.Management.AppService.Fluent.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Moq;
 using Xunit;

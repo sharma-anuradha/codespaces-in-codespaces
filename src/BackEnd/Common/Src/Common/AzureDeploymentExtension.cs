@@ -2,12 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
-using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
 {
