@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/launchsettings.json",
+  "profiles": {
+      "Production": {
+          "commandName": "Project"
+      },
+      "Local": {
+          "commandName": "Project",
+          "environmentVariables": {
+              "ASPNETCORE_ENVIRONMENT": "Development"
+          },
+          "launchBrowser": true,
+          "applicationUrl": "https://localhost:3000",
+          "launchUrl": "https://localhost:3000/welcome"
+      }
+  }
+}
