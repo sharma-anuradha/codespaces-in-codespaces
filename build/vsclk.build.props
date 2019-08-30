@@ -14,6 +14,8 @@
     <RootName Condition="'$(RootName)'==''">Microsoft.VsCloudKernel.Services</RootName>
     <AssemblyName Condition="'$(AssemblyName)'==''">$(RootName).$(MSBuildProjectName)</AssemblyName>
     <RootNamespace Condition="'$(RootNamespace)'==''">$(RootName).$(MSBuildProjectName)</RootNamespace>
+    <IsPublishable Condition="'$(IsPublishable)'==''" >false</IsPublishable>
+    <IsPackable Condition="'$(IsPackable)'==''" >false</IsPackable>
   </PropertyGroup>
   
   <!-- Compiler options -->

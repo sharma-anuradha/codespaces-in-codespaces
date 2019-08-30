@@ -5,6 +5,7 @@
     <AssemblyName>Microsoft.VsCloudKernel.SignalService</AssemblyName>
     <LangVersion>7.1</LangVersion>
     <Timestamp>$([System.DateTime]::Now.ToString("yyyyMMdd.HHmmss"))</Timestamp>
+    <IsPublishable>true</IsPublishable>
   </PropertyGroup>
 
   <ItemGroup>

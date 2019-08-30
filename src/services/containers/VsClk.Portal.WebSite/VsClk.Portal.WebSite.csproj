@@ -5,6 +5,7 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <SpaRoot>ClientApp\</SpaRoot>
     <RootNamespace>Microsoft.VsCloudKernel.Services.Portal.WebSite</RootNamespace>
+    <IsPublishable>true</IsPublishable>
   </PropertyGroup>
 
   <ItemGroup>

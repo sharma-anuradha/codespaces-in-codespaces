@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <IsPublishable>true</IsPublishable>
   </PropertyGroup>
 
   <ItemGroup>

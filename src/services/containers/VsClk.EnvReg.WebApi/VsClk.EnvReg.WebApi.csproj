@@ -4,6 +4,7 @@
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <RootNamespace>Microsoft.VsCloudKernel.Services.EnvReg.WebApi</RootNamespace>
+    <IsPublishable>true</IsPublishable>
   </PropertyGroup>
 
   <ItemGroup>
