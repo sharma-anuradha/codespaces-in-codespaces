@@ -68,20 +68,6 @@ export async function pollEnvironment(id: string) {
             return;
         }
 
-        const {
-            connection: { sessionId, sessionPath } = {
-                sessionId: undefined,
-                sessionPath: undefined,
-            },
-        } = environment;
-
-        if (!sessionId || sessionPath) {
-            await wait(1000);
-            dispatch(pollEnvironmentWaitingAction(id));
-
-            return;
-        }
-
         if (environment.state.toString() === StateInfo.Available) {
             return environment;
         }
