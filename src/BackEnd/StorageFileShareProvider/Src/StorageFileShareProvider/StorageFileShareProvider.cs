@@ -38,13 +38,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
 
-            TimeSpan resultRetryAfter = default;
-            string resultContinuationToken = default;
-            string continuationToken = input.ContinuationToken;
-
-            FileShareProviderCreateState nextState;
-            AzureResourceInfo resultResourceInfo;
-
             var duration = logger.StartDuration();
 
             logger = logger.WithValues(new LogValueSet
@@ -54,6 +47,103 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 { nameof(input.AzureResourceGroup), input.AzureResourceGroup },
                 { nameof(input.AzureSkuName), input.AzureSkuName },
             });
+
+            var result = await logger.OperationScopeAsync(
+                    "file_share_storage_provider_create_step",
+                    async () =>
+                    {
+                        var r = await CreateInnerAsync(input, logger);
+                        logger.FluentAddValue(nameof(r.AzureResourceInfo.Name), r.AzureResourceInfo.Name)
+                              .FluentAddValue(nameof(r.RetryAfter), r.RetryAfter.ToString())
+                              .FluentAddValue(nameof(r.NextInput.ContinuationToken), r.NextInput?.ContinuationToken)
+                              .FluentAddValue(nameof(r.Status), r.Status.ToString());
+                        return r;
+                    },
+                    (_) => new FileShareProviderCreateResult() { Status = OperationState.Failed },
+                    swallowException: true);
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<FileShareProviderDeleteResult> DeleteAsync(
+            FileShareProviderDeleteInput input,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
+
+            var duration = logger.StartDuration();
+
+            logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
+
+            var result = await logger.OperationScopeAsync(
+                "file_share_storage_provider_delete_step",
+                async () =>
+                {
+                    await providerHelper.DeleteStorageAccountAsync(input.AzureResourceInfo, logger);
+                    var r = new FileShareProviderDeleteResult() { Status = OperationState.Succeeded };
+                    logger.FluentAddValue(nameof(r.RetryAfter), r.RetryAfter.ToString())
+                          .FluentAddValue(nameof(r.Status), r.Status.ToString());
+                    return r;
+                },
+                (_) => new FileShareProviderDeleteResult() { Status = OperationState.Failed },
+                swallowException: true);
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<FileShareProviderAssignResult> AssignAsync(
+            FileShareProviderAssignInput input,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
+
+            var duration = logger.StartDuration();
+
+            logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
+
+            var result = await logger.OperationScopeAsync(
+                "file_share_storage_provider_assign_step",
+                async () =>
+                {
+                    var info = await providerHelper.GetConnectionInfoAsync(input.AzureResourceInfo, logger);
+                    var r = new FileShareProviderAssignResult(
+                        info.StorageAccountName,
+                        info.StorageAccountKey,
+                        info.StorageShareName,
+                        info.StorageFileName)
+                    { Status = OperationState.Succeeded };
+                    logger.FluentAddValue(nameof(r.RetryAfter), r.RetryAfter.ToString())
+                        .FluentAddValue(nameof(r.Status), r.Status.ToString())
+                        .AddDuration(duration);
+                    return r;
+                },
+                (_) => new FileShareProviderAssignResult() { Status = OperationState.Failed },
+                swallowException: true);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Create operation helper function that implements the Create continuation state machine.
+        /// </summary>
+        /// <param name="input">Provides input to Create Azure file share.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>
+        /// The result of this step in the state machine.
+        /// </returns>
+        private async Task<FileShareProviderCreateResult> CreateInnerAsync(
+            FileShareProviderCreateInput input,
+            IDiagnosticsLogger logger)
+        {
+            TimeSpan resultRetryAfter = default;
+            string resultContinuationToken = default;
+            FileShareProviderCreateState nextState;
+            AzureResourceInfo resultResourceInfo;
+            string continuationToken = input.ContinuationToken;
 
             if (continuationToken == null)
             {
@@ -89,6 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                             resultRetryAfter = TimeSpan.FromMinutes(1);
                             nextState = FileShareProviderCreateState.CheckFileShare;
                         }
+
                         break;
                     default:
                         throw new StorageCreateException(string.Format("Invalid continuation token: {0}", continuationToken));
@@ -97,8 +188,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 resultResourceInfo = prevContinuation.AzureResourceInfo;
             }
 
-            var resultState = OperationState.Succeeded;
-            if (nextState != default)
+            OperationState resultState;
+            if (nextState == default)
+            {
+                resultState = OperationState.Succeeded;
+            }
+            else
             {
                 var nextContinuation = new FileShareProviderCreateContinuationToken(nextState, resultResourceInfo);
                 resultContinuationToken = JsonConvert.SerializeObject(nextContinuation);
@@ -112,67 +207,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 NextInput = input.BuildNextInput(resultContinuationToken),
                 Status = resultState,
             };
-
-            logger
-                .FluentAddValue(nameof(result.AzureResourceInfo.Name), result.AzureResourceInfo.Name)
-                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-                .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
-                .FluentAddValue(nameof(result.Status), result.Status.ToString())
-                .AddDuration(duration)
-                .LogInfo("file_share_storage_provider_create_step_complete");
-
-            return result;
-        }
-
-        /// <inheritdoc/>
-        public async Task<FileShareProviderDeleteResult> DeleteAsync(
-            FileShareProviderDeleteInput input,
-            IDiagnosticsLogger logger)
-        {
-            Requires.NotNull(input, nameof(input));
-            Requires.NotNull(logger, nameof(logger));
-
-            var duration = logger.StartDuration();
-
-            logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
-
-            await providerHelper.DeleteStorageAccountAsync(input.AzureResourceInfo, logger);
-
-            var result = new FileShareProviderDeleteResult() { Status = OperationState.Succeeded };
-
-            logger.FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-                .FluentAddValue(nameof(result.Status), result.Status.ToString())
-                .AddDuration(duration)
-                .LogInfo("file_share_storage_provider_delete_step_complete");
-
-            return result;
-        }
-
-        /// <inheritdoc/>
-        public async Task<FileShareProviderAssignResult> AssignAsync(
-            FileShareProviderAssignInput input,
-            IDiagnosticsLogger logger)
-        {
-            Requires.NotNull(input, nameof(input));
-            Requires.NotNull(logger, nameof(logger));
-
-            var duration = logger.StartDuration();
-
-            logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
-
-            var info = await providerHelper.GetConnectionInfoAsync(input.AzureResourceInfo, logger);
-
-            var result = new FileShareProviderAssignResult(
-                info.StorageAccountName,
-                info.StorageAccountKey,
-                info.StorageShareName,
-                info.StorageFileName)
-            { Status = OperationState.Succeeded };
-
-            logger.FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-                .FluentAddValue(nameof(result.Status), result.Status.ToString())
-                .AddDuration(duration)
-                .LogInfo("file_share_storage_provider_assign_step_complete");
 
             return result;
         }

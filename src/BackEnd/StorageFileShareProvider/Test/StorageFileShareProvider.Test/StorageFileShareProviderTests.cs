@@ -60,14 +60,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
 
-            string continuationToken = null;
             var input = new FileShareProviderCreateInput()
             {
                 AzureResourceGroup = MockResourceGroup,
                 AzureLocation = MockLocation,
                 AzureSubscription = MockSubscriptionId.ToString(),
-                StorageBlobUrl = MockStorageBlobUrl,
-                ContinuationToken = continuationToken,
+                StorageBlobUrl = MockStorageBlobUrl
             };
 
             // 3 because there are 3 steps before we wait for the preparation to complete.
@@ -77,23 +75,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             // Wait for preparation to complete...
             int expectedIterations = 3 + mockCheckPrepareResults.Length;
 
-            for (int iteration = 0; iteration < expectedIterations; iteration++)
+            for (int iteration = 1; iteration <= expectedIterations; iteration++)
             {
-                if (iteration == 0)
+                if (iteration == 1)
                 {
                     // At the beginning, continuation token should be null.
-                    Assert.Null(continuationToken);
+                    Assert.Null(input.ContinuationToken);
                 }
                 var result = await storageProvider.CreateAsync(input, logger);
                 // result should not be null after each iteration
                 Assert.NotNull(result);
-                // ResourceId should not be null after each iteration
+                // Resource info should not be null after each iteration
                 Assert.NotNull(result.AzureResourceInfo);
-                continuationToken = result.NextInput?.ContinuationToken;
+                var continuationToken = result.NextInput?.ContinuationToken;
                 input = (FileShareProviderCreateInput)result.NextInput;
+                // On final iteration, operation state should be succeeded with null continuation token, otherwise, in progress.
+                if (iteration == expectedIterations)
+                {
+                    Assert.Equal(OperationState.Succeeded, result.Status);
+                    Assert.Null(continuationToken);
+                }
+                else
+                {
+                    Assert.Equal(OperationState.InProgress, result.Status);
+                }
             }
-            // After all the steps, continuation token should be null as that's how we signal completion.
-            Assert.Null(continuationToken);
+        }
+
+        /// <summary>
+        /// Create operation that failed should return null continuation token and failed status.
+        /// </summary>
+        [Fact]
+        public async Task FileShare_Create_Failed()
+        {
+            var logger = new DefaultLoggerFactory().New();
+            var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
+            providerHelperMoq
+                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Throws(new Exception());
+            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var input = new FileShareProviderCreateInput()
+            {
+                AzureResourceGroup = MockResourceGroup,
+                AzureLocation = MockLocation,
+                AzureSubscription = MockSubscriptionId.ToString(),
+                StorageBlobUrl = MockStorageBlobUrl,
+            };
+            var result = await storageProvider.CreateAsync(input, logger);
+            Assert.NotNull(result);
+            Assert.Null(result.NextInput);
+            Assert.Equal(OperationState.Failed, result.Status);
         }
 
         /// <summary>
@@ -116,6 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var result = await storageProvider.DeleteAsync(input, logger);
             Assert.NotNull(result);
             Assert.Null(result.NextInput);
+            Assert.Equal(OperationState.Succeeded, result.Status);
         }
 
         /// <summary>
@@ -129,6 +161,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             FileShareProviderDeleteInput input = null;
             await Assert.ThrowsAsync<ArgumentNullException>(async () => await storageProvider.DeleteAsync(input, logger));
+        }
+
+        /// <summary>
+        /// Delete operation that failed should return null continuation token and failed status.
+        /// </summary>
+        [Fact]
+        public async Task FileShare_Delete_Failed()
+        {
+            var logger = new DefaultLoggerFactory().New();
+            var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
+            providerHelperMoq
+                .Setup(x => x.DeleteStorageAccountAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .Throws(new Exception());
+            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            FileShareProviderDeleteInput input = new FileShareProviderDeleteInput()
+            {
+                AzureResourceInfo = MockAzureResourceInfo,
+            };
+            var result = await storageProvider.DeleteAsync(input, logger);
+            Assert.NotNull(result);
+            Assert.Null(result.NextInput);
+            Assert.Equal(OperationState.Failed, result.Status);
         }
 
         /// <summary>
@@ -160,6 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             Assert.Equal(MockStorageShareName, result.StorageShareName);
             Assert.Equal(MockStorageFileName, result.StorageFileName);
             Assert.Null(result.NextInput);
+            Assert.Equal(OperationState.Succeeded, result.Status);
         }
 
         /// <summary>
@@ -173,6 +228,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             FileShareProviderAssignInput input = null;
             await Assert.ThrowsAsync<ArgumentNullException>(async () => await storageProvider.AssignAsync(input, logger));
+        }
+
+        /// <summary>
+        /// Assign operation that failed should return null continuation token and failed status.
+        /// </summary>
+        [Fact]
+        public async Task FileShare_Assign_Failed()
+        {
+            var logger = new DefaultLoggerFactory().New();
+            var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
+            providerHelperMoq
+                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .Throws(new Exception());
+            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            FileShareProviderAssignInput input = new FileShareProviderAssignInput()
+            {
+                AzureResourceInfo = MockAzureResourceInfo,
+            };
+            var result = await storageProvider.AssignAsync(input, logger);
+            Assert.NotNull(result);
+            Assert.Null(result.NextInput);
+            Assert.Equal(OperationState.Failed, result.Status);
         }
     }
 }

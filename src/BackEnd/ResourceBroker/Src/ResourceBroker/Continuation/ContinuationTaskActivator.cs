@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     if (result != null)
                     {
                         logger.FluentAddValue("ContinuationPayloadPostStatus", result.Status)
-                            .FluentAddValue("ContinuationPayloadIsFinal", result.Status.IsFinial());
+                            .FluentAddValue("ContinuationPayloadIsFinal", result.Status.IsFinal());
                     }
 
                     didHandle = true;
@@ -116,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 logger.FluentAddValue("ContinuationRetryAfter", result.RetryAfter.ToString());
 
                 // Put onto quueue if not finished
-                if (!result.Status.IsFinial())
+                if (!result.Status.IsFinal())
                 {
                     // Setup next payload
                     payload.Input = result.NextInput;

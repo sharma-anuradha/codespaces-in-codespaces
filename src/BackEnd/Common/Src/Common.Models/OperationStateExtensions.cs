@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// </summary>
         /// <param name="operationState">Target operational state.</param>
         /// <returns>Returns if it is final or not.</returns>
-        public static bool IsFinial(this OperationState operationState)
+        public static bool IsFinal(this OperationState operationState)
         {
             return operationState == OperationState.Succeeded
                 || operationState == OperationState.Cancelled
@@ -26,9 +26,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// </summary>
         /// <param name="operationState">Target operational state.</param>
         /// <returns>Returns if it is final or not.</returns>
-        public static bool IsFinial(this OperationState? operationState)
+        public static bool IsFinal(this OperationState? operationState)
         {
-            return operationState.HasValue ? operationState.Value.IsFinial() : true;
+            return operationState.HasValue ? operationState.Value.IsFinal() : true;
         }
     }
 }

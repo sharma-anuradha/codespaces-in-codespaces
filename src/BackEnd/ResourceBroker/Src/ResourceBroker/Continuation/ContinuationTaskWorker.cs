@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <inheritdoc/>
         public Task<bool> RunAsync(IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(LogBaseName, () => InnerRunAsync(logger), true);
+            return logger.OperationScopeAsync(LogBaseName, () => InnerRunAsync(logger), swallowException: true);
         }
 
         /// <inheritdoc/>

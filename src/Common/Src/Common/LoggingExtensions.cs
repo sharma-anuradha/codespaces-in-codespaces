@@ -28,9 +28,10 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="logger">Target logger.</param>
         /// <param name="name">Base name of the operaiton scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
+         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the task.</returns>
-        public static async Task OperationScopeAsync(this IDiagnosticsLogger logger, string name, Func<Task> callback, bool swallowException = false)
+        public static async Task OperationScopeAsync(this IDiagnosticsLogger logger, string name, Func<Task> callback, Action<Exception> errCallback = default, bool swallowException = false)
         {
             var duration = Stopwatch.StartNew();
 
@@ -42,6 +43,8 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
             catch (Exception e)
             {
+                errCallback?.Invoke(e);
+
                 logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}-error", e);
 
                 if (!swallowException)
@@ -59,9 +62,10 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="logger">Target logger.</param>
         /// <param name="name">Base name of the operaiton scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the task.</returns>
-        public static async Task<T> OperationScopeAsync<T>(this IDiagnosticsLogger logger, string name, Func<Task<T>> callback, bool swallowException = false)
+        public static async Task<T> OperationScopeAsync<T>(this IDiagnosticsLogger logger, string name, Func<Task<T>> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
         {
             var duration = Stopwatch.StartNew();
             var result = default(T);
@@ -74,6 +78,11 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
             catch (Exception e)
             {
+                if (errCallback != default)
+                {
+                    result = errCallback(e);
+                }
+
                 logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}-error", e);
 
                 if (!swallowException)
@@ -92,8 +101,9 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="logger">Target logger.</param>
         /// <param name="name">Base name of the operaiton scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
-        public static void OperationScope(this IDiagnosticsLogger logger, string name, Action callback, bool swallowException = false)
+        public static void OperationScope(this IDiagnosticsLogger logger, string name, Action callback, Action<Exception> errCallback = default, bool swallowException = false)
         {
             var duration = logger.StartDuration();
 
@@ -105,6 +115,8 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
             catch (Exception e)
             {
+                errCallback?.Invoke(e);
+
                 logger.AddDuration(duration).LogException($"{name}-error", e);
 
                 if (!swallowException)
@@ -122,9 +134,10 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="logger">Target logger.</param>
         /// <param name="name">Base name of the operaiton scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the callback result.</returns>
-        public static T OperationScope<T>(this IDiagnosticsLogger logger, string name, Func<T> callback, bool swallowException = false)
+        public static T OperationScope<T>(this IDiagnosticsLogger logger, string name, Func<T> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
         {
             var duration = logger.StartDuration();
             var result = default(T);
@@ -137,6 +150,11 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
             catch (Exception e)
             {
+                if (errCallback != default)
+                {
+                    result = errCallback(e);
+                }
+
                 logger.AddDuration(duration).LogException($"{name}-error", e);
 
                 if (!swallowException)
