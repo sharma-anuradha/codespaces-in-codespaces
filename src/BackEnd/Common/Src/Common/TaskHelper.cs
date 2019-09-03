@@ -26,11 +26,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null)
         {
-            var wrappedCallback = WrapCallback(name, callback, logger);
-
-            logger = (logger ?? Logger).FromExisting()
+            logger = (logger ?? Logger).WithValues(new LogValueSet())
                 .FluentAddBaseValue("TaskManagerId", Guid.NewGuid().ToString())
                 .FluentAddBaseValue("TaskName", name);
+
+            var wrappedCallback = WrapCallback(name, callback, logger);
 
             logger.LogInfo("task-helper-run-background-loop-started");
 
@@ -79,18 +79,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             return async () =>
             {
-                logger = (logger ?? Logger).FromExisting(logger == null);
-                var duration = logger.StartDuration();
-
+                logger = logger ?? Logger;
                 try
                 {
-                    await callback(logger);
-
-                    logger.AddDuration(duration).LogInfo($"{name}-complete");
+                    await callback(logger.WithValues(new LogValueSet()));
                 }
                 catch (Exception e)
                 {
-                    logger.AddDuration(duration).LogException($"{name}-error", e);
+                    logger.FluentAddValue("TaskName", name).LogException($"task-helper-run-error", e);
                 }
             };
         }
@@ -100,19 +96,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return async () =>
             {
                 var result = true;
-
-                logger = (logger ?? Logger).FromExisting(logger == null);
-                var duration = logger.StartDuration();
+                logger = logger ?? Logger;
 
                 try
                 {
                     result = await callback(logger);
-
-                    logger.AddDuration(duration).LogInfo($"{name}-complete");
                 }
                 catch (Exception e)
                 {
-                    logger.AddDuration(duration).LogException($"{name}-error", e);
+                    logger.LogException($"task-run-error", e);
                 }
 
                 return result;

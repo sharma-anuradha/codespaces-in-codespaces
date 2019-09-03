@@ -1,206 +1,125 @@
-﻿// <copyright file="CreateResourceContinuationHandler.cs" company="Microsoft">
+﻿// <copyright file="DeleteResourceContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// 
+    /// Continuation handler that manages starting of environement.
     /// </summary>
-    public class DeleteResourceContinuationHandler : IDeleteResourceContinuationHandler
+    public class DeleteResourceContinuationHandler
+        : BaseContinuationTaskMessageHandler<DeleteResourceContinuationInput>, IDeleteResourceContinuationHandler
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="CreateResourceContinuationHandler"/> class.
+        /// Gets default target name for item on queue.
         /// </summary>
-        /// <param name="computeProvider"></param>
-        /// <param name="storageProvider"></param>
-        /// <param name="resourceRepository"></param>
-        /// <param name="subscriptionCatalog"></param>
-        /// <param name="mapper"></param>
+        public const string DefaultQueueTarget = "JobDeleteCompute";
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DeleteResourceContinuationHandler"/> class.
+        /// </summary>
+        /// <param name="computeProvider">Compute provider.</param>
+        /// <param name="storageProvider">Storatge provider.</param>
+        /// <param name="resourceRepository">Resource repository to be used.</param>
         public DeleteResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
-            IResourceRepository resourceRepository,
-            IAzureSubscriptionCatalog subscriptionCatalog,
-            IMapper mapper)
+            IResourceRepository resourceRepository)
+            : base(resourceRepository)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
-            ResourceRepository = resourceRepository;
-            SubscriptionCatalog = subscriptionCatalog;
-            Mapper = mapper;
         }
 
-        private IComputeProvider ComputeProvider { get; }
-
-        private IStorageProvider StorageProvider { get; }
-
-        private IResourceRepository ResourceRepository { get; }
-
-        private IAzureSubscriptionCatalog SubscriptionCatalog { get; }
-
-        private IMapper Mapper { get; }
+        /// <summary>
+        /// Gets default target name for item on queue.
+        /// </summary>
+        protected override string DefaultTarget => DefaultQueueTarget;
 
         /// <inheritdoc/>
-        public virtual bool CanHandle(ResourceJobQueuePayload payload)
+        protected override ResourceOperation Operation => ResourceOperation.Deleting;
+
+        private IComputeProvider ComputeProvider { get; set; }
+
+        private IStorageProvider StorageProvider { get; set; }
+
+        /// <inheritdoc/>
+        protected override Task<ContinuationInput> BuildOperationInputAsync(DeleteResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
-            return payload.Target == "JobDeleteResource";
+            var operationInput = (ContinuationInput)null;
+            if (resource.Value.Type == ResourceType.ComputeVM)
+            {
+                operationInput = new VirtualMachineProviderDeleteInput
+                {
+                    AzureResourceInfo = resource.Value.AzureResourceInfo,
+                };
+            }
+            else if (resource.Value.Type == ResourceType.StorageFileShare)
+            {
+                operationInput = new FileShareProviderDeleteInput
+                {
+                    AzureResourceInfo = resource.Value.AzureResourceInfo,
+                };
+            }
+            else
+            {
+                throw new NotSupportedException($"Resource type is not selected - {resource.Value.Type}");
+            }
+
+            return Task.FromResult(operationInput);
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationTaskMessageHandlerResult> Continue(
-            ContinuationTaskMessageHandlerInput handlerInput,
-            IDiagnosticsLogger logger)
-        {
-            var input = Mapper.Map<DeleteResourceContinuationInput>(handlerInput.Input);
-
-            return await Continue(input, handlerInput.Status, handlerInput.ContinuationToken, logger);
-        }
-
-        private async Task<ContinuationTaskMessageHandlerResult> Continue(
-            DeleteResourceContinuationInput input,
-            OperationState? status,
-            string continuationToken,
-            IDiagnosticsLogger logger)
+        protected override async Task<ContinuationResult> RunOperationAsync(ContinuationInput operationInput, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
             var result = (ContinuationResult)null;
-            var resourceReference = new ResourceReference(ResourceRepository);
 
-            // Fetch Resource
-            await resourceReference.PopulateAsync(input.ResourceId, logger);
-
-            // First time through, queue things up
-            if (status == null)
+            // Run create operation
+            if (resource.Value.Type == ResourceType.ComputeVM)
             {
-                // Add record to database
-                result = await QueueDeleteRequestAsync(input, resourceReference, logger);
+                result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)operationInput, logger.WithValues(new LogValueSet()));
+            }
+            else if (resource.Value.Type == ResourceType.StorageFileShare)
+            {
+                result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)operationInput, logger.WithValues(new LogValueSet()));
             }
             else
             {
-                // Delete the resource
-                result = await DeleteResourceAsync(input, continuationToken, resourceReference, logger);
+                throw new NotSupportedException($"Resource type is not selected - {resource.Value.Type}");
             }
 
-            return new ContinuationTaskMessageHandlerResult { Result = result };
+            return result;
         }
 
-        private async Task<ContinuationResult> QueueDeleteRequestAsync(
-            DeleteResourceContinuationInput input,
-            ResourceReference reference,
-            IDiagnosticsLogger logger)
+        /// <inheritdoc/>
+        protected override async Task<ContinuationResult> RunOperationAsync(DeleteResourceContinuationInput input, ResourceRecordRef record, IDiagnosticsLogger logger)
         {
-            // Flag necessary properties
-            reference.Resource.IsReady = false;
-            reference.Resource.IsDeleted = true;
+            // Perform core operation first
+            var result = await base.RunOperationAsync(input, record, logger);
 
-            // Update status
-            await reference.SaveDeletingStatus(OperationState.Initialized, logger);
-
-            // Build resource
-            return new ContinuationResult
+            // Make sure we bring over the Resource info if we have it
+            if (result.Status == OperationState.Succeeded)
             {
-                Status = OperationState.Initialized,
-                ContinuationToken = input.ResourceId.ToString(),
-                RetryAfter = TimeSpan.Zero,
-                NextInput = input,
-            };
-        }
-
-        private async Task<ContinuationResult> DeleteResourceAsync(
-            DeleteResourceContinuationInput input,
-            string continuationToken,
-            ResourceReference reference,
-            IDiagnosticsLogger logger)
-        {
-            // First time through the continuationToken shouldn't be our initial queue continuation
-            continuationToken = reference.Resource.DeletingStatus == OperationState.Initialized ? null : continuationToken;
-
-            // Only need to update things if we are in init state
-            if (reference.Resource.DeletingStatus == OperationState.Initialized)
-            {
-                await reference.SaveDeletingStatus(OperationState.InProgress, logger);
-            }
-
-            // Delete compute command
-            var deleteResult = (ContinuationResult)null;
-            if (reference.Resource.Type == ResourceType.ComputeVM)
-            {
-                deleteResult = await CoreDeleteComputeAsync(
-                    reference.Resource.AzureResourceInfo,
-                    continuationToken,
-                    logger);
-            }
-            else if (reference.Resource.Type == ResourceType.StorageFileShare)
-            {
-                deleteResult = await CoreDeleteStorageAsync(
-                    reference.Resource.AzureResourceInfo,
-                    continuationToken,
-                    logger);
-            }
-            else
-            {
-                throw new NotSupportedException($"Resource type is not selected - {reference.Resource.Type}");
-            }
-
-            // Update status to reflect compute result
-            await reference.SaveDeletingStatus(deleteResult.Status, logger);
-
-            // Delete the docdb record
-            var deleteStatus = deleteResult.Status;
-            if (reference.Resource.DeletingStatus == OperationState.Succeeded)
-            {
-                var deleteDbResult = await ResourceRepository.DeleteAsync(input.ResourceId.ToString(), logger);
-
-                // Deal wit the case where detele didn't work
-                if (!deleteDbResult)
+                var deleted = await ResourceRepository.DeleteAsync(input.ResourceId.ToString(), logger.WithValues(new LogValueSet()));
+                if (!deleted)
                 {
-                    deleteStatus = OperationState.Failed;
+                    return await FailOperationAsync(input, record, logger);
                 }
             }
 
-            return new ContinuationResult
-            {
-                Status = deleteStatus,
-                ContinuationToken = deleteResult.ContinuationToken,
-                RetryAfter = deleteResult.RetryAfter,
-                NextInput = input,
-            };
-        }
-
-        protected async Task<ContinuationResult> CoreDeleteComputeAsync(AzureResourceInfo azureResourceInfo, string continuationToken, IDiagnosticsLogger logger)
-        {
-            var providerInput = new VirtualMachineProviderDeleteInput
-            {
-                AzureResourceInfo = azureResourceInfo,
-            };
-
-            return await ComputeProvider.DeleteAsync(providerInput, logger, continuationToken);
-        }
-
-
-        protected async Task<ContinuationResult> CoreDeleteStorageAsync(AzureResourceInfo azureResourceInfo, string continuationToken, IDiagnosticsLogger logger)
-        {
-            var providerInput = new FileShareProviderDeleteInput
-            {
-                AzureResourceInfo = azureResourceInfo,
-            };
-
-            return await StorageProvider.DeleteAsync(providerInput, logger, continuationToken);
+            return result;
         }
     }
 }

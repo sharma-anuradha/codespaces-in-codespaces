@@ -3,7 +3,10 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 /// <summary>
 /// Construct consistent logging messages.
@@ -18,6 +21,202 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
     /// </summary>
     public static class LoggingExtensions
     {
+        /// <summary>
+        /// Wraps the given operation in a logging scope which will catch and log exceptions
+        /// as well as the successful completeion of the operation.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        /// <returns>Returns the task.</returns>
+        public static async Task OperationScopeAsync(this IDiagnosticsLogger logger, string name, Func<Task> callback, bool swallowException = false)
+        {
+            var duration = Stopwatch.StartNew();
+
+            try
+            {
+                await callback();
+
+                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogInfo($"{name}-complete");
+            }
+            catch (Exception e)
+            {
+                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}-error", e);
+
+                if (!swallowException)
+                {
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope which will catch and log exceptions
+        /// as well as the successful completeion of the operation.
+        /// </summary>
+        /// <typeparam name="T">Return type.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        /// <returns>Returns the task.</returns>
+        public static async Task<T> OperationScopeAsync<T>(this IDiagnosticsLogger logger, string name, Func<Task<T>> callback, bool swallowException = false)
+        {
+            var duration = Stopwatch.StartNew();
+            var result = default(T);
+
+            try
+            {
+                result = await callback();
+
+                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogInfo($"{name}-complete");
+            }
+            catch (Exception e)
+            {
+                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}-error", e);
+
+                if (!swallowException)
+                {
+                    throw;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope which will catch and log exceptions
+        /// as well as the successful completeion of the operation.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        public static void OperationScope(this IDiagnosticsLogger logger, string name, Action callback, bool swallowException = false)
+        {
+            var duration = logger.StartDuration();
+
+            try
+            {
+                callback();
+
+                logger.AddDuration(duration).LogInfo($"{name}-complete");
+            }
+            catch (Exception e)
+            {
+                logger.AddDuration(duration).LogException($"{name}-error", e);
+
+                if (!swallowException)
+                {
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope which will catch and log exceptions
+        /// as well as the successful completeion of the operation.
+        /// </summary>
+        /// <typeparam name="T">Return type.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        /// <returns>Returns the callback result.</returns>
+        public static T OperationScope<T>(this IDiagnosticsLogger logger, string name, Func<T> callback, bool swallowException = false)
+        {
+            var duration = logger.StartDuration();
+            var result = default(T);
+
+            try
+            {
+                result = callback();
+
+                logger.AddDuration(duration).LogInfo($"{name}-complete");
+            }
+            catch (Exception e)
+            {
+                logger.AddDuration(duration).LogException($"{name}-error", e);
+
+                if (!swallowException)
+                {
+                    throw;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Adds key/value pair to the logger.
+        /// </summary>
+        /// <typeparam name="T">Type of the value.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Name of the property.</param>
+        /// <param name="value">Value being set.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger FluentAddValue<T>(this IDiagnosticsLogger logger, string name, T value)
+            where T : struct
+        {
+            return logger.FluentAddValue(name, value.ToString());
+        }
+
+        /// <summary>
+        /// Adds key/value pair to the logger.
+        /// </summary>
+        /// <typeparam name="T">Type of the value.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Name of the property.</param>
+        /// <param name="value">Value being set.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger FluentAddValue<T>(this IDiagnosticsLogger logger, string name, T? value)
+            where T : struct
+        {
+            return logger.FluentAddValue(name, value.HasValue ? value.Value.ToString() : null);
+        }
+
+        /// <summary>
+        /// Adds key/value pair to the logger.
+        /// </summary>
+        /// <typeparam name="T">Type of the value.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Name of the property.</param>
+        /// <param name="value">Value being set.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger FluentAddBaseValue<T>(this IDiagnosticsLogger logger, string name, T value)
+            where T : struct
+        {
+            return logger.FluentAddBaseValue(name, value.ToString());
+        }
+
+        /// <summary>
+        /// Adds key/value pair to the logger.
+        /// </summary>
+        /// <typeparam name="T">Type of the value.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Name of the property.</param>
+        /// <param name="value">Value being set.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger FluentAddBaseValue<T>(this IDiagnosticsLogger logger, string name, T? value)
+            where T : struct
+        {
+            return logger.FluentAddBaseValue(name, value.HasValue ? value.Value.ToString() : null);
+        }
+
+        /// <summary>
+        /// Starts a time when invokes and when disposed, stops the timer and adds the property.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Name of the property.</param>
+        /// <returns>Disposable that terminates the timer.</returns>
+        public static IDisposable TrackDuration(this IDiagnosticsLogger logger, string name)
+        {
+            var sw = Stopwatch.StartNew();
+
+            return ActionDisposable.Create(() => logger.FluentAddValue(name, sw.ElapsedMilliseconds));
+        }
+
         /// <summary>
         /// Gets the logging base name for the given type. Returns the value of the [LogginBaseName] attribute, or if not specified, the type name if not.
         /// </summary>

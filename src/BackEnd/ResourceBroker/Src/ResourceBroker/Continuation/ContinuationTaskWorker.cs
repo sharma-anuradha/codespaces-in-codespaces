@@ -12,11 +12,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
     /// <summary>
-    ///
+    /// Continuation worker that gets available messages and passes them off to the activator
+    /// for processing.
     /// </summary>
     public class ContinuationTaskWorker : IContinuationTaskWorker
     {
-        private const string LogBaseName = ResourceLoggingsConstants.ContinuationTaskWorker;
+        private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskWorker;
         private static readonly TimeSpan MissDelayTime = TimeSpan.FromSeconds(1);
         private static readonly int LongMinMissDelayTime = 2;
         private static readonly int LongMaxMissDelayTime = 5;
@@ -24,9 +25,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <summary>
         /// Initializes a new instance of the <see cref="ContinuationTaskWorker"/> class.
         /// </summary>
-        /// <param name="activator"></param>
-        /// <param name="messagePump"></param>
-        /// <param name="handlers"></param>
+        /// <param name="activator">Activator that figures out which handler can process the message.</param>
+        /// <param name="messagePump">Message pump that supplies the next messages.</param>
         public ContinuationTaskWorker(
             IContinuationTaskActivator activator,
             IContinuationTaskMessagePump messagePump)
@@ -49,15 +49,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public async Task<bool> RunAsync(IDiagnosticsLogger logger)
+        public Task<bool> RunAsync(IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ContinuationWorkerRunId", Guid.NewGuid().ToString())
-                .FluentAddValue("ContinuationActivityLevel", ActivityLevel.ToString());
+            return logger.OperationScopeAsync(LogBaseName, () => InnerRunAsync(logger), true);
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            Disposed = true;
+        }
+
+        private async Task<bool> InnerRunAsync(IDiagnosticsLogger logger)
+        {
+            logger.FluentAddBaseValue("ContinuationWorkerRunId", Guid.NewGuid())
+                .FluentAddValue("ContinuationActivityLevel", ActivityLevel);
 
             // Get message from the queue
-            var message = await MessagePump.GetMessageAsync(logger.FromExisting());
+            var message = await MessagePump.GetMessageAsync(logger.WithValues(new LogValueSet()));
 
-            logger.FluentAddValue("ContinuationFoundMessages", (message != null).ToString());
+            logger.FluentAddValue("ContinuationFoundMessages", message != null);
 
             // Process messages if we can
             if (message != null)
@@ -71,26 +82,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 // Pull out typed message content
                 var payload = message.GetTypedPayload<ResourceJobQueuePayload>();
 
-                logger.FluentAddValue("ContinuationTrackingId", payload.TrackingId)
-                    .FluentAddValue("ContinuationHandleTarget", payload.Target)
-                    .FluentAddValue("ContinuationIsInitial", string.IsNullOrEmpty(payload.ContinuationToken).ToString())
-                    .FluentAddValue("ContinuationPreStatus", payload.Status.ToString())
-                    .FluentAddValue("ContinuationCreated", payload.Created.ToString())
-                    .FluentAddValue("ContinuationCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds.ToString());
+                logger.FluentAddValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                    .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
+                    .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
+                    .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
+                    .FluentAddValue("ContinuationPayloadCreated", payload.Created)
+                    .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds);
 
                 // Try and handle message
-                var result = await Activator.Continue(payload, logger.FromExisting());
+                var nextPayload = await Activator.Continue(payload, logger.WithValues(new LogValueSet()));
 
-                logger.FluentAddValue("ContinuationWasHandled", (result != null).ToString());
-                if (result != null)
+                logger.FluentAddValue("ContinuationWasHandled", nextPayload != null);
+
+                // Deals with error case
+                if (nextPayload != null)
                 {
-                    logger.FluentAddValue("ContinuationPostStatus", result.Result.Status.ToString())
-                        .FluentAddValue("ContinuationRetryAfter", result.Result.RetryAfter.ToString())
-                        .FluentAddValue("ContinuationIsFinal", string.IsNullOrEmpty(result.Result.ContinuationToken).ToString());
+                    logger.FluentAddValue("ContinuationPayloadPostStatus", nextPayload.Status)
+                        .FluentAddValue("ContinuationPayloadPostRetryAfter", nextPayload.RetryAfter)
+                        .FluentAddValue("ContinuationPayloadIsFinal", nextPayload.Input == null);
                 }
 
                 // Delete message when we are done
-                await MessagePump.DeleteMessage(message, logger.FromExisting());
+                await MessagePump.DeleteMessage(message, logger.WithValues(new LogValueSet()));
             }
             else
             {
@@ -107,12 +120,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             }
 
             return !Disposed;
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            Disposed = true;
         }
     }
 }

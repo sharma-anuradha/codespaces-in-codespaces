@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
             // Mock the VM callback.
             _ = task.ContinueWith(async t =>
             {
-                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));
+                await Task.Delay(TimeSpan.FromSeconds(2));
 
                 var callback = new EnvironmentRegistrationCallbackBody
                 {

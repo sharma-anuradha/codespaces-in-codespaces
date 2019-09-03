@@ -1,4 +1,4 @@
-﻿// <copyright file="VirtualMachineProviderAllocateInput.cs" company="Microsoft">
+﻿// <copyright file="VirtualMachineProviderStartComputeInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,19 +11,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     /// <summary>
     /// Provides input for cloud environment.
     /// </summary>
-    public class VirtualMachineProviderStartComputeInput
+    public class VirtualMachineProviderStartComputeInput : ContinuationInput
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VirtualMachineProviderStartComputeInput"/> class.
+        /// </summary>
+        public VirtualMachineProviderStartComputeInput()
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VirtualMachineProviderStartComputeInput"/> class.
         /// </summary>
-        /// <param name="azureResourceInfo">Azure resource info object.</param>
-        /// <param name="shareConnectionInfo">File share connection details.</param>
-        /// <param name="inputParams">Environment creation input.</param>
+        /// <param name="azureResourceInfo">The compute azure resource info.</param>
+        /// <param name="shareConnectionInfo">The file share connection info.</param>
+        /// <param name="inputParams">The VM params.</param>
         public VirtualMachineProviderStartComputeInput(
             AzureResourceInfo azureResourceInfo,
             ShareConnectionInfo shareConnectionInfo,
-            IDictionary<string, string> inputParams)
+            IDictionary<string, string> inputParams,
+            string continuationToken)
+            : base(continuationToken)
         {
             AzureResourceInfo = azureResourceInfo;
             FileShareConnection = shareConnectionInfo;
@@ -33,16 +41,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         /// Gets the azure resource info object instance.
         /// </summary>
-        public AzureResourceInfo AzureResourceInfo { get; }
+        public AzureResourceInfo AzureResourceInfo { get; set; }
 
         /// <summary>
         /// Gets file share connection object instance.
         /// </summary>
-        public ShareConnectionInfo FileShareConnection { get; }
+        public ShareConnectionInfo FileShareConnection { get; set; }
 
         /// <summary>
         /// Gets the input parameters to start the environment.
         /// </summary>
-        public IDictionary<string, string> VmInputParams { get; }
+        public IDictionary<string, string> VmInputParams { get; set; }
     }
 }

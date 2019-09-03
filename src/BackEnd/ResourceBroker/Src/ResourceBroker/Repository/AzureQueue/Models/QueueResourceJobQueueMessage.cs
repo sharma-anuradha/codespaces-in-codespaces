@@ -36,7 +36,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <inheritdoc/>
         public T GetTypedPayload<T>()
         {
-            return JsonConvert.DeserializeObject<T>(Message.AsString);
+            return JsonConvert.DeserializeObject<T>(
+                Message.AsString, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
         }
     }
 }

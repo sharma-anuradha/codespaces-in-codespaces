@@ -1,4 +1,4 @@
-﻿// <copyright file="IStartEnvironmentContinuationHandler.cs" company="Microsoft">
+﻿// <copyright file="ICreateResourceContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,9 +7,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// Marker interface for the Start Resource Handler.
+    /// Marker interface for the Create Resource Handler.
     /// </summary>
-    public interface IStartEnvironmentContinuationHandler : IContinuationTaskMessageHandler
+    public interface ICreateResourceContinuationHandler : IContinuationTaskMessageHandler
     {
     }
 }

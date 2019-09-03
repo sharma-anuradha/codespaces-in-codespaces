@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using System;
 using System.Collections.Generic;
 
@@ -10,13 +11,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     /// <summary>
     /// Start compute continuation input.
     /// </summary>
-    public class StartEnvironmentContinuationInput
+    public class StartEnvironmentContinuationInput : ContinuationOperationInput
     {
-        /// <summary>
-        /// Gets or sets the compute resource id.
-        /// </summary>
-        public Guid ComputeResourceId { get; set; }
-
         /// <summary>
         /// Gets or sets the storage resource id.
         /// </summary>

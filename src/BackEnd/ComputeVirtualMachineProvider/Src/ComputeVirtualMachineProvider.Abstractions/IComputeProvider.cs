@@ -19,13 +19,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// </summary>
         /// <param name="input">Provides input to Create Azure virtual machine.</param>
         /// <param name="logger">Diagnostics logger object.</param>
-        /// <param name="continuationToken">Continuation token.</param>
         /// <returns>
         ///     Result of the Create operations which includes TrackingId which
         ///     can be used to call the StatusCheckAsync to find out the status
         ///     of the create request.
         /// </returns>
-        Task<VirtualMachineProviderCreateResult> CreateAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger, string continuationToken = null);
+        Task<VirtualMachineProviderCreateResult> CreateAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger);
 
         /// <summary>
         /// NOTE, this won't wait for Delete workflow to finish
@@ -33,25 +32,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// </summary>
         /// <param name="input">Provides input to Delete Azure virtual machine.</param>
         /// <param name="logger">Diagnostics logger object.</param>
-        /// <param name="continuationToken">Continuation token.</param>
         /// <returns>
         ///     Result of the Delete operations which includes TrackingId which
         ///     can be used to call the StatusCheckAsync to find out the status
         ///     of the create request.
         /// </returns>
-        Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger, string continuationToken = null);
+        Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Prep VM to create user environment
+        /// Prep VM to create user environment.
         /// </summary>
         /// <param name="input">Provides input to create cloud environment.</param>
         /// <param name="logger">Diagnostics logger object.</param>
-        /// <param name="continuationToken">Continuation token.</param>
         /// <returns>
         ///     Result of the Delete operations which includes TrackingId which
         ///     can be used to call the StatusCheckAsync to find out the status
         ///     of the create request.
         /// </returns>
-        Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger, string continuationToken = null);
+        Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger);
     }
 }

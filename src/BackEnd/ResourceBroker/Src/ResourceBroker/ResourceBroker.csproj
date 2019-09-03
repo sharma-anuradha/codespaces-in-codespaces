@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="8.1.1" />
+    <PackageReference Include="AutoMapper" Version="$(AutoMapperVersion)" />
     <PackageReference Include="Hangfire.Core" Version="1.7.6" />
     <PackageReference Include="Microsoft.Azure.Storage.Queue" Version="$(AzureStoragePackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />

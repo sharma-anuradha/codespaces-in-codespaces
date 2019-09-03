@@ -2,18 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 {
     /// <summary>
     /// Delete compute continuation input.
     /// </summary>
-    public class DeleteResourceContinuationInput
+    public class DeleteResourceContinuationInput : ContinuationOperationInput
     {
-        /// <summary>
-        /// Gets or sets the target Resource Id.
-        /// </summary>
-        public Guid ResourceId { get; set; }
     }
 }

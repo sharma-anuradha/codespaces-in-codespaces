@@ -2,12 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
 {
     /// <summary>
     /// Input for the provider create operation.
     /// </summary>
-    public class FileShareProviderCreateInput
+    public class FileShareProviderCreateInput : ContinuationInput
     {
         /// <summary>
         /// Gets or sets Azure Subscription Id.

@@ -1,4 +1,4 @@
-﻿// <copyright file="ContinuationTaskQueueManager.cs" company="Microsoft">
+﻿// <copyright file="ContinuationTaskWorkerPoolManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -15,11 +15,13 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
     /// <summary>
-    ///
+    /// Continuation manager that controls the workers that gets available messages
+    /// and passes them off to the activator for processing.
     /// </summary>
     public class ContinuationTaskWorkerPoolManager : IContinuationTaskWorkerPoolManager
     {
-        private const string LogBaseName = ResourceLoggingsConstants.ContinuationTaskWorkerPoolManager;
+        private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskWorkerPoolManager;
+        private const string LogLevelBaseName = ResourceLoggingConstants.ContinuationTaskWorkerPoolManager + "-manage-level";
         private const int TargetWorkerCount = 5;
         private const int MaxWorkerCount = 10;
         private const int MinWorkerCount = 3;
@@ -27,15 +29,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <summary>
         /// Initializes a new instance of the <see cref="ContinuationTaskWorkerPoolManager"/> class.
         /// </summary>
-        /// <param name="taskHelper"></param>
-        /// <param name="serviceProvider"></param>
+        /// <param name="taskHelper">Target task helper.</param>
+        /// <param name="serviceProvider">Target service provider.</param>
         public ContinuationTaskWorkerPoolManager(
             ITaskHelper taskHelper,
             IServiceProvider serviceProvider)
         {
             TaskHelper = taskHelper;
             ServiceProvider = serviceProvider;
-            WorkerPool = new ConcurrentDictionary<string, IContinuationTaskWorker>();
+            WorkerPool = new ConcurrentDictionary<Guid, IContinuationTaskWorker>();
         }
 
         /// <inheritdoc/>
@@ -48,26 +50,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private IServiceProvider ServiceProvider { get; }
 
-        private ConcurrentDictionary<string, IContinuationTaskWorker> WorkerPool { get; }
+        private ConcurrentDictionary<Guid, IContinuationTaskWorker> WorkerPool { get; }
 
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
         public Task StartAsync(IDiagnosticsLogger logger)
         {
-            // Spawn other worker threads
-            for (var i = 0; i < TargetWorkerCount; i++)
-            {
-                StartWorker("InitialStart", logger.FromExisting());
-            }
-
-            // Trigger message level runner
-            TaskHelper.RunBackgroundLoop(
-                $"{LogBaseName}-manage-level",
-                (childLogger) => ManageLevelAsync(childLogger),
-                TimeSpan.FromSeconds(30));
-
-            return Task.CompletedTask;
+            return logger.OperationScopeAsync(LogBaseName, () => InnerStartAsync(logger), true);
         }
 
         /// <inheritdoc/>
@@ -76,14 +66,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             Disposed = true;
         }
 
+        private Task InnerStartAsync(IDiagnosticsLogger logger)
+        {
+            logger.FluentAddValue("ContinuationStartLevel", TargetWorkerCount);
+
+            // Spawn other worker threads
+            for (var i = 0; i < TargetWorkerCount; i++)
+            {
+                StartWorker("InitialStart", logger.WithValues(new LogValueSet()));
+            }
+
+            // Trigger message level runner
+            TaskHelper.RunBackgroundLoop(
+                LogLevelBaseName,
+                (childLogger) => ManageLevelAsync(childLogger),
+                TimeSpan.FromSeconds(30));
+
+            return Task.CompletedTask;
+        }
+
         private Task<bool> ManageLevelAsync(IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(LogLevelBaseName, () => InnerManageLevelAsync(logger), true);
+        }
+
+        private Task<bool> InnerManageLevelAsync(IDiagnosticsLogger logger)
         {
             var overCapacityCount = 0;
             var underCapacityCount = 0;
             var belowMinimumCount = 0;
             var aboveMaximumCount = 0;
 
-            logger.FluentAddValue("ContinuationPreLevelCount", WorkerPool.Count.ToString());
+            logger.FluentAddValue("ContinuationPreLevelCount", WorkerPool.Count);
 
             // Move the pool level up and down based on how active the workers are
             foreach (var entry in WorkerPool)
@@ -93,13 +107,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     && WorkerPool.Count > MinWorkerCount)
                 {
                     overCapacityCount++;
-                    EndWorker(entry.Key, "OverCapacity", logger.FromExisting());
+                    EndWorker(entry.Key, "OverCapacity", logger.WithValues(new LogValueSet()));
                 }
                 else if (worker.ActivityLevel > 175
                     && WorkerPool.Count < MaxWorkerCount)
                 {
                     underCapacityCount++;
-                    StartWorker("UnderCapacity", logger.FromExisting());
+                    StartWorker("UnderCapacity", logger.WithValues(new LogValueSet()));
                 }
             }
 
@@ -109,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 for (var i = WorkerPool.Count - 1; i < TargetWorkerCount; i++)
                 {
                     belowMinimumCount++;
-                    StartWorker("BelowMinimum", logger.FromExisting());
+                    StartWorker("BelowMinimum", logger.WithValues(new LogValueSet()));
                 }
             }
             else if (WorkerPool.Count > MaxWorkerCount)
@@ -119,29 +133,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 foreach (var worker in workers)
                 {
                     aboveMaximumCount++;
-                    EndWorker(worker.Value, "AboveMaximum", logger.FromExisting());
+                    EndWorker(worker.Value, "AboveMaximum", logger.WithValues(new LogValueSet()));
                 }
             }
 
-            logger.FluentAddValue("ContinuationPostLevelCount", WorkerPool.Count.ToString())
-                .FluentAddValue("ContinuationOverCapacityCount", overCapacityCount.ToString())
-                .FluentAddValue("ContinuationUnderCapacityCount", underCapacityCount.ToString())
-                .FluentAddValue("ContinuationBelowMinimumCount", belowMinimumCount.ToString())
-                .FluentAddValue("ContinuationAboveMaximumCount", aboveMaximumCount.ToString());
+            logger.FluentAddValue("ContinuationPostLevelCount", WorkerPool.Count)
+                .FluentAddValue("ContinuationOverCapacityCount", overCapacityCount)
+                .FluentAddValue("ContinuationUnderCapacityCount", underCapacityCount)
+                .FluentAddValue("ContinuationBelowMinimumCount", belowMinimumCount)
+                .FluentAddValue("ContinuationAboveMaximumCount", aboveMaximumCount);
 
             return Task.FromResult(!Disposed);
         }
 
         private void StartWorker(string reason, IDiagnosticsLogger logger)
         {
-            var id = Guid.NewGuid().ToString();
+            var id = Guid.NewGuid();
             var worker = ServiceProvider.GetService<IContinuationTaskWorker>();
 
-            logger.FluentAddBaseValue("ContinuationWorkerId", id.ToString())
+            logger.FluentAddBaseValue("ContinuationWorkerId", id)
                 .FluentAddValue("ContinuatioWorkerStartReason", reason);
 
             TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingsConstants.ContinuationTaskWorker}-run",
+                $"{ResourceLoggingConstants.ContinuationTaskWorker}-run",
                 async (childLogger) => await worker.RunAsync(childLogger),
                 null,
                 logger);
@@ -151,7 +165,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             logger.LogInfo($"{LogBaseName}-start-worker");
         }
 
-        private void EndWorker(string id, string reason, IDiagnosticsLogger logger)
+        private void EndWorker(Guid id, string reason, IDiagnosticsLogger logger)
         {
             if (WorkerPool.TryRemove(id, out var worker))
             {
@@ -163,7 +177,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         {
             worker.Dispose();
 
-            logger.LogInfo($"{LogBaseName}-end-worker");
+            logger.FluentAddValue("ContinuatioWorkerEndReason", reason)
+                .LogInfo($"{LogBaseName}-end-worker");
         }
     }
 

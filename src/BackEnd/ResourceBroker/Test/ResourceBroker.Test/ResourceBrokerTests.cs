@@ -56,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             Assert.NotNull(provider);
         }
 
-        [Fact(Skip = "Temporarily disable failing test.")]
+        [Fact()]
         public async void ResourceBroker_WhenHasCapacity_ReturnsResource()
         {
             var input = BuildAllocateInput();

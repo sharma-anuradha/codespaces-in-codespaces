@@ -14,6 +14,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// <summary>
         /// Initializes a new instance of the <see cref="FileShareProviderAssignResult"/> class.
         /// </summary>
+        public FileShareProviderAssignResult()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FileShareProviderAssignResult"/> class.
+        /// </summary>
         /// <param name="storageAccountName"><see cref="StorageAccountName"/>.</param>
         /// <param name="storageAccountKey"><see cref="StorageAccountKey"/>.</param>
         /// <param name="storageShareName"><see cref="StorageShareName"/>.</param>
@@ -29,21 +36,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// <summary>
         /// Gets the Azure storage account name.
         /// </summary>
-        public string StorageAccountName { get; }
+        public string StorageAccountName { get; set; }
 
         /// <summary>
         /// Gets the Azure storage account key.
         /// </summary>
-        public string StorageAccountKey { get; }
+        public string StorageAccountKey { get; set; }
 
         /// <summary>
         /// Gets the share name of a share in the storage account.
         /// </summary>
-        public string StorageShareName { get; }
+        public string StorageShareName { get; set; }
 
         /// <summary>
         /// Gets the file name of a file in the share.
         /// </summary>
-        public string StorageFileName { get; }
+        public string StorageFileName { get; set; }
     }
 }

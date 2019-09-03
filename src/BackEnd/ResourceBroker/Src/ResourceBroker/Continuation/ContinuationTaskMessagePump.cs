@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 logger.FluentAddValue("PumpFillDidTrigger", true.ToString());
 
                 // Fetch items
-                var items = await ResourceJobQueueRepository.GetAsync(targetMessageCacheLength - MessageCache.Count, logger.FromExisting());
+                var items = await ResourceJobQueueRepository.GetAsync(targetMessageCacheLength - MessageCache.Count, logger.WithValues(new LogValueSet()));
 
                 logger.FluentAddValue("PumpFoundItems", items.Count().ToString());
 

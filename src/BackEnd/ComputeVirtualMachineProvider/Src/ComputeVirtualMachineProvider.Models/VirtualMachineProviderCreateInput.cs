@@ -4,10 +4,11 @@
 
 using System;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
-    public class VirtualMachineProviderCreateInput
+    public class VirtualMachineProviderCreateInput : ContinuationInput
     {
         /// <summary>
         ///

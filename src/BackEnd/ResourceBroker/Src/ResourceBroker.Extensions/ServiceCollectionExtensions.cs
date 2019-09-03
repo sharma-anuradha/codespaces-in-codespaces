@@ -72,12 +72,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IAsyncBackgroundWarmup, ResourceRegisterJobs>();
 
             // Handlers
-            services.AddSingleton<CreateComputeContinuationHandler>();
-            services.AddSingleton<ICreateComputeContinuationHandler>(x => x.GetRequiredService<CreateComputeContinuationHandler>());
-            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateComputeContinuationHandler>());
-            services.AddSingleton<CreateStorageContinuationHandler>();
-            services.AddSingleton<ICreateStorageContinuationHandler>(x => x.GetRequiredService<CreateStorageContinuationHandler>());
-            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateStorageContinuationHandler>());
+            services.AddSingleton<CreateResourceContinuationHandler>();
+            services.AddSingleton<ICreateResourceContinuationHandler>(x => x.GetRequiredService<CreateResourceContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateResourceContinuationHandler>());
             services.AddSingleton<StartEnvironmentContinuationHandler>();
             services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());

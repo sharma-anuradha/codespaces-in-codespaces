@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     /// <summary>
     /// Create compute continuation input.
     /// </summary>
-    public class CreateResourceContinuationInput
+    public class CreateResourceContinuationInput : ContinuationOperationInput
     {
         /// <summary>
         /// Gets or sets the name of the sku.
@@ -28,20 +28,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets the location of the resource.
         /// </summary>
         public string Location { get; set; }
-
-        /// <summary>
-        /// Gets or sets the instance id of the persisted record.
-        /// </summary>
-        public string Id { get; set; }
-
-        /// <summary>
-        /// Gets or sets the subscription.
-        /// </summary>
-        public string Subscription { get; set; }
-
-        /// <summary>
-        /// Gets or sets the resource group.
-        /// </summary>
-        public string ResourceGroup { get; set; }
     }
 }

@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<VirtualMachineProviderCreateResult> CreateAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger, string continuationToken = null)
+        public async Task<VirtualMachineProviderCreateResult> CreateAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
@@ -51,9 +51,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 { nameof(input.AzureVirtualMachineImage), input.AzureVirtualMachineImage },
             });
 
-            (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderCreateInput>(
+            (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync(
                 input,
-                continuationToken,
                 logger,
                 deploymentManager.BeginCreateComputeAsync,
                 deploymentManager.CheckCreateComputeStatusAsync);
@@ -62,23 +61,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 AzureResourceInfo = azureResourceInfo,
                 Status = resultState,
-                ContinuationToken = resultContinuationToken,
                 RetryAfter = TimeSpan.FromSeconds(VmCreationRetryAfterSeconds),
+                NextInput = input.BuildNextInput(resultContinuationToken),
             };
 
             // TODO:: Add correlation id
-            logger
-               .FluentAddValue(nameof(result.AzureResourceInfo), result.AzureResourceInfo.Name)
+            logger.FluentAddValue(nameof(result.AzureResourceInfo), result.AzureResourceInfo.Name)
                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-               .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
+               .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
                .FluentAddValue(nameof(result.Status), result.Status.ToString())
                .AddDuration(duration)
                .LogInfo("virtual_machine_compute_provider_create_step_complete");
+
             return result;
         }
 
         /// <inheritdoc/>
-        public async Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger, string continuationToken = null)
+        public async Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
@@ -91,11 +90,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 { nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString() },
                 { nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup },
-                { nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name},
+                { nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name },
             });
             (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderDeleteInput>(
                 input,
-                continuationToken,
                 logger,
                 deploymentManager.BeginDeleteComputeAsync,
                 deploymentManager.CheckDeleteComputeStatusAsync);
@@ -103,14 +101,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var result = new VirtualMachineProviderDeleteResult()
             {
                 Status = resultState,
-                ContinuationToken = resultContinuationToken,
                 RetryAfter = TimeSpan.FromSeconds(VmDeletionRetryAfterSeconds),
+                NextInput = input.BuildNextInput(resultContinuationToken),
             };
 
             // TODO:: Add correlation id
             logger
                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-               .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
+               .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
                .FluentAddValue(nameof(result.Status), result.Status.ToString())
                .AddDuration(duration)
                .LogInfo("virtual_machine_compute_provider_delete_step_complete");
@@ -118,24 +116,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger, string continuationToken = null)
+        public async Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
             string resultContinuationToken = default;
             OperationState resultState;
             AzureResourceInfo azureResourceInfo;
+
             var duration = logger.StartDuration();
 
             logger = logger.WithValues(new LogValueSet
             {
                 { nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString() },
                 { nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup },
-                { nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name},
+                { nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name },
             });
             (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderStartComputeInput>(
                 input,
-                continuationToken,
                 logger,
                 deploymentManager.BeginStartComputeAsync,
                 deploymentManager.CheckStartComputeStatusAsync);
@@ -143,14 +141,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var result = new VirtualMachineProviderStartComputeResult()
             {
                 Status = resultState,
-                ContinuationToken = resultContinuationToken,
                 RetryAfter = TimeSpan.FromSeconds(VmStartEnvRetryAfterSeconds),
+                NextInput = input.BuildNextInput(resultContinuationToken),
             };
 
             // TODO:: Add correlation id
             logger
                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-               .FluentAddValue(nameof(result.ContinuationToken), result.ContinuationToken)
+               .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
                .FluentAddValue(nameof(result.Status), result.Status.ToString())
                .AddDuration(duration)
                .LogInfo("virtual_machine_compute_provider_start_compute_step_complete");
@@ -159,14 +157,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
         private async Task<(AzureResourceInfo, OperationState, string)> ExecuteAsync<T>(
             T input,
-            string continuationToken,
             IDiagnosticsLogger logger,
             Func<T, IDiagnosticsLogger, Task<(OperationState, NextStageInput)>> beginOperation,
             Func<NextStageInput, IDiagnosticsLogger, Task<(OperationState, NextStageInput)>> checkOperationStatus)
+            where T : ContinuationInput
         {
             OperationState resultState;
             NextStageInput nextStageInput;
             string resultContinuationToken = default;
+            string continuationToken = input.ContinuationToken;
 
             if (string.IsNullOrEmpty(continuationToken))
             {

@@ -40,8 +40,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                    Task.FromResult(
                     (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), logger, null);
-            ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result, OperationState.InProgress);
+            VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), logger);
+            ValidateVirtualMachineResult(result, OperationState.InProgress);
         }
 
         [Fact]
@@ -55,8 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             string continuationToken = new NextStageInput(TrackingId, ResourceInfo).ToJson();
-            VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), logger, continuationToken);
-            ValidateVirtualMachineResult<VirtualMachineProviderCreateResult>(result, OperationState.InProgress);
+            VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput { ContinuationToken = continuationToken }, logger);
+            ValidateVirtualMachineResult(result, OperationState.InProgress);
         }
 
         [Theory]
@@ -75,10 +75,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     (outputState, deploymentStatusInput)));
 
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), logger, continuationToken);
+            VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput { ContinuationToken = continuationToken }, logger);
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);
-            Assert.Null(result.ContinuationToken);
+            Assert.Null(result.NextInput);
         }
 
         [Fact]
@@ -91,8 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                    Task.FromResult(
                        (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), logger, null);
-            ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result, OperationState.InProgress);
+            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(null), logger);
+            ValidateVirtualMachineResult(result, OperationState.InProgress);
         }
 
         [Fact]
@@ -106,8 +106,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     (OperationState.InProgress, CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             string continuationToken = new NextStageInput(TrackingId, ResourceInfo).ToJson();
-            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), logger, continuationToken);
-            ValidateVirtualMachineResult<VirtualMachineProviderStartComputeResult>(result, OperationState.InProgress);
+            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(continuationToken), logger);
+            ValidateVirtualMachineResult(result, OperationState.InProgress);
         }
 
         [Theory]
@@ -126,10 +126,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                         (outputState, deploymentStatusInput)));
 
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(), logger, continuationToken);
+            VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(continuationToken), logger);
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);
-            Assert.Null(result.ContinuationToken);
+            Assert.Null(result.NextInput);
         }
 
         [Fact]
@@ -142,8 +142,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                    Task.FromResult(
                        (OperationState.InProgress,CreateDeploymentState())));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput() { AzureResourceInfo = ResourceInfo }, logger, null);
-            ValidateVirtualMachineResult<VirtualMachineProviderDeleteResult>(result, OperationState.InProgress);
+            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput() { AzureResourceInfo = ResourceInfo }, logger);
+            ValidateVirtualMachineResult(result, OperationState.InProgress);
         }
 
         [Fact]
@@ -157,8 +157,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 .Returns(Task.FromResult(
                     (OperationState.InProgress, deploymentStatusInput)));
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput() { AzureResourceInfo= ResourceInfo }, logger, continuationToken);
-            ValidateVirtualMachineResult<VirtualMachineProviderDeleteResult>(result, OperationState.InProgress);
+            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput() { AzureResourceInfo= ResourceInfo, ContinuationToken = continuationToken }, logger);
+            ValidateVirtualMachineResult(result, OperationState.InProgress);
         }
 
         [Theory]
@@ -177,18 +177,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     (outputState, deploymentStatusInput)));
 
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
-            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput() { AzureResourceInfo = ResourceInfo }, logger, continuationToken);
+            VirtualMachineProviderDeleteResult result = await computeProvider.DeleteAsync(new VirtualMachineProviderDeleteInput() { AzureResourceInfo = ResourceInfo, ContinuationToken = continuationToken }, logger);
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);
-            Assert.Null(result.ContinuationToken);
+            Assert.Null(result.NextInput);
         }
 
         private static void ValidateVirtualMachineResult<T>(T result, OperationState expectedState) where T : ContinuationResult
         {
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);
-            Assert.NotNull(result.ContinuationToken);
-            var deploymentStatusInput = result.ContinuationToken.ToNextStageInput();
+            Assert.NotNull(result.NextInput.ContinuationToken);
+            var deploymentStatusInput = result.NextInput.ContinuationToken.ToNextStageInput();
             Assert.NotNull(deploymentStatusInput);
             Assert.Equal(ResourceInfo, deploymentStatusInput.AzureResourceInfo);
             Assert.Equal(TrackingId, deploymentStatusInput.TrackingId);
@@ -199,12 +199,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             return new NextStageInput(TrackingId, ResourceInfo);
         }
 
-        private static VirtualMachineProviderStartComputeInput CreateStartComputeInput()
+        private static VirtualMachineProviderStartComputeInput CreateStartComputeInput(string continuationToken)
         {
             return new VirtualMachineProviderStartComputeInput(
                 ResourceInfo,
                 new ShareConnectionInfo("val1", "val2", "val3", "val4"),
-                new System.Collections.Generic.Dictionary<string, string>());
+                new System.Collections.Generic.Dictionary<string, string>(),
+                continuationToken);
         }
     }
 }

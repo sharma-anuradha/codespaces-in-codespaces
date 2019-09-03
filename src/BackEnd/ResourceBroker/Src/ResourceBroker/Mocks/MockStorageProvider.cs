@@ -2,36 +2,44 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
 {
     /// <summary>
-    ///
+    /// Mock storage provider.
     /// </summary>
-    public class MockStorageProvider : IStorageProvider
+    public class MockStorageProvider : BaseMockResourceProvider, IStorageProvider
     {
-        private Random Random { get; } = new Random();
-
-        public async Task<FileShareProviderAssignResult> AssignAsync(FileShareProviderAssignInput input, IDiagnosticsLogger logger, string continuationToken = null)
+        /// <inheritdoc/>
+        public async Task<FileShareProviderAssignResult> AssignAsync(FileShareProviderAssignInput input, IDiagnosticsLogger logger)
         {
-            await Task.Delay(Random.Next(100, 1000));
+            var result = await RunAsync<FileShareProviderAssignInput, FileShareProviderAssignResult>(input, logger);
+            if (result.Status == OperationState.Succeeded)
+            {
+                result.StorageAccountKey = "MyAccountKey";
+                result.StorageAccountName = "MyAccountName";
+                result.StorageFileName = "MyFileName";
+                result.StorageShareName = "MyShareName";
+            }
 
-            return new FileShareProviderAssignResult("AccountName", "AccountKey", "ShareName", "FileName");
+            return result;
         }
 
-        public Task<FileShareProviderCreateResult> CreateAsync(FileShareProviderCreateInput input, IDiagnosticsLogger logger, string continuationToken = null)
+        /// <inheritdoc/>
+        public async Task<FileShareProviderCreateResult> CreateAsync(FileShareProviderCreateInput input, IDiagnosticsLogger logger)
         {
-            throw new System.NotImplementedException();
+            return await RunAsync<FileShareProviderCreateInput, FileShareProviderCreateResult>(input, logger);
         }
 
-        public Task<FileShareProviderDeleteResult> DeleteAsync(FileShareProviderDeleteInput input, IDiagnosticsLogger logger, string continuationToken = null)
+        /// <inheritdoc/>
+        public async Task<FileShareProviderDeleteResult> DeleteAsync(FileShareProviderDeleteInput input, IDiagnosticsLogger logger)
         {
-            throw new System.NotImplementedException();
+            return await RunAsync<FileShareProviderDeleteInput, FileShareProviderDeleteResult>(input, logger);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     /// <summary>
     /// Input for the provider delete operation.
     /// </summary>
-    public class FileShareProviderDeleteInput
+    public class FileShareProviderDeleteInput : ContinuationInput
     {
         /// <summary>
         /// Gets or sets the azure resource info.

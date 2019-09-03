@@ -9,7 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     /// <summary>
     /// Input for the provider assign operation.
     /// </summary>
-    public class FileShareProviderAssignInput
+    public class FileShareProviderAssignInput : ContinuationInput
     {
         /// <summary>
         /// Gets or sets the azure resource info.

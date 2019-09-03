@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseContinuationResult.cs" company="Microsoft">
+﻿// <copyright file="ContinuationResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,28 +7,23 @@ using System;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
     /// <summary>
-    ///
+    /// Represents the continuation result.
     /// </summary>
     public class ContinuationResult
     {
         /// <summary>
-        /// Gets / Sets the operation state.
+        /// Gets or sets the operation state.
         /// </summary>
         public OperationState Status { get; set; }
 
         /// <summary>
-        /// Gets / sets the continuation token for operation.
-        /// </summary>
-        public string ContinuationToken { get; set; }
-
-        /// <summary>
-        /// Gets / Sets the time to retry after current call.
+        /// Gets or sets the time to retry after current call.
         /// </summary>
         public TimeSpan RetryAfter { get; set; }
 
         /// <summary>
-        /// Gets / Sets the input for next operation phase.
+        /// Gets or sets the input for next operation phase.
         /// </summary>
-        public object NextInput { get; set; }
+        public ContinuationInput NextInput { get; set; }
     }
 }

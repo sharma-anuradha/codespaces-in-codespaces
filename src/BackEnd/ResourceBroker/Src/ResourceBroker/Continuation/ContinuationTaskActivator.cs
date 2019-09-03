@@ -14,16 +14,19 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
     /// <summary>
-    ///
+    /// Continuation Activator which works with the supplied message and the
+    /// available handlers to trigger the targetted handler.
     /// </summary>
     public class ContinuationTaskActivator : IContinuationTaskActivator
     {
-        private const string LogBaseName = ResourceLoggingsConstants.ContinuationTaskActivator;
+        private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskActivator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContinuationTaskActivator"/> class.
         /// </summary>
-        /// <param name="messagePump"></param>
+        /// <param name="handlers">Registered handlers in the system.</param>
+        /// <param name="messagePump">Message pump that can be used to put next 
+        /// messages onto the queue.</param>
         public ContinuationTaskActivator(
             IEnumerable<IContinuationTaskMessageHandler> handlers,
             IContinuationTaskMessagePump messagePump)
@@ -37,33 +40,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private IContinuationTaskMessagePump MessagePump { get; }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> Execute(string name, object input, IDiagnosticsLogger logger)
+        public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger)
         {
             var payload = new ResourceJobQueuePayload
             {
                 TrackingId = Guid.NewGuid().ToString(),
                 Created = DateTime.UtcNow,
                 Status = null,
-                ContinuationToken = null,
                 Input = input,
-                Metadata = null,
                 Target = name,
             };
 
-            return (await Continue(payload, logger))?.Result;
+            return logger.OperationScopeAsync(LogBaseName, async () => (await InnerContinue(payload, logger)).Result);
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationTaskMessageHandlerResult> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        public Task<ResourceJobQueuePayload> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
-            var continueFindDuration = logger
-                .FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid().ToString())
-                .FluentAddBaseValue("ContinuationTrackingId", payload.TrackingId)
-                .FluentAddValue("ContinuationIsInitial", string.IsNullOrEmpty(payload.ContinuationToken).ToString())
-                .FluentAddValue("ContinuationPreStatus", payload.Status.ToString())
-                .StartDuration();
+            return logger.OperationScopeAsync(LogBaseName, async () => (await InnerContinue(payload, logger)).NextPayload);
+        }
 
-            var result = (ContinuationTaskMessageHandlerResult)null;
+        private async Task<(ResourceJobQueuePayload NextPayload, ContinuationResult Result)> InnerContinue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        {
+            logger.FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid().ToString())
+                .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                .FluentAddValue("ContinuationPayloadIsInitial", payload.Status.HasValue.ToString())
+                .FluentAddValue("ContinuationPayloadPreStatus", payload.Status.ToString());
+            var continueFindDuration = logger.StartDuration();
+
+            var result = (ContinuationResult)null;
+            var nextPayload = (ResourceJobQueuePayload)null;
+
             var didHandle = false;
             foreach (var handler in Handlers)
             {
@@ -72,14 +79,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 {
                     logger.FluentAddValue("ContinuationHandler", handler.GetType().Name);
 
-                    var continueDuration = logger.StartDuration();
-
                     // Activate the core continuation
-                    result = await Continue(handler, payload, logger);
+                    (nextPayload, result) = await InnerContinue(handler, payload, logger);
 
-                    logger.FluentAddValue("ContinuationPostStatus", result.Result.Status.ToString())
-                        .FluentAddValue("ContinuationRetryAfter", result.Result.RetryAfter.ToString())
-                        .FluentAddValue("ContinuationIsFinal", string.IsNullOrEmpty(result.Result.ContinuationToken).ToString());
+                    // Make sure that we have a result to work for
+                    if (result != null)
+                    {
+                        logger.FluentAddValue("ContinuationPayloadPostStatus", result.Status)
+                            .FluentAddValue("ContinuationPayloadIsFinal", result.Status.IsFinial());
+                    }
 
                     didHandle = true;
                     break;
@@ -90,33 +98,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 .FluentAddValue("ContinuationFindHandleDuration", continueFindDuration.Elapsed.TotalMilliseconds.ToString())
                 .LogInfo($"{LogBaseName}-continue-complete");
 
-            return result;
+            return (nextPayload, result);
         }
 
-        private async Task<ContinuationTaskMessageHandlerResult> Continue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        private async Task<(ResourceJobQueuePayload NextPayload, ContinuationResult Result)> InnerContinue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
-            // Run the core continuation
-            var input = new ContinuationTaskMessageHandlerInput
-            {
-                Input = payload.Input,
-                Metadata = payload.Metadata,
-                Status = payload.Status,
-                ContinuationToken = payload.ContinuationToken,
-            };
-            var result = await handler.Continue(input, logger.FromExisting());
+            // Run the continuation
+            var timer = logger.TrackDuration("ContinuationHandlerDuration");
+            var result = await handler.Continue(payload.Input, logger.WithValues(new LogValueSet()));
+            timer.Dispose();
 
-            // If we have another result pending put onto queue
-            if (!string.IsNullOrEmpty(result.Result.ContinuationToken))
-            {
-                var nextPayload = payload;
-                nextPayload.ContinuationToken = result.Result.ContinuationToken;
-                nextPayload.Status = result.Result.Status;
-                nextPayload.Metadata = result.Metadata;
+            logger.FluentAddValue("ContinuationHandlerFailed", result == null);
 
-                await MessagePump.AddPayloadAsync(nextPayload, result.Result.RetryAfter, logger.FromExisting());
+            // Make sure that the handler didn't fail
+            if (result != null)
+            {
+                logger.FluentAddValue("ContinuationRetryAfter", result.RetryAfter.ToString());
+
+                // Put onto quueue if not finished
+                if (!result.Status.IsFinial())
+                {
+                    // Setup next payload
+                    payload.Input = result.NextInput;
+                    payload.Status = result.Status;
+                    payload.RetryAfter = result.RetryAfter;
+
+                    await MessagePump.AddPayloadAsync(payload, result.RetryAfter, logger.WithValues(new LogValueSet()));
+                }
             }
 
-            return result;
+            return (payload, result);
         }
     }
 }

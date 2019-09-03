@@ -94,12 +94,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             var continuationInput = new StartEnvironmentContinuationInput
             {
-                ComputeResourceId = input.ComputeResourceId,
+                ResourceId = input.ComputeResourceId,
                 EnvironmentVariables = input.EnvironmentVariables,
                 StorageResourceId = input.StorageResourceId,
             };
 
-            await ContinuationTaskActivator.StartComputeResource(continuationInput, logger);
+            await ContinuationTaskActivator.StartEnvironment(continuationInput, logger);
 
             return new EnvironmentStartResult { Successful = true };
         }

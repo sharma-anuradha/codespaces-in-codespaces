@@ -1,29 +1,9 @@
-﻿// <copyright file="ResourceLoggingConstants.cs" company="Microsoft">
+﻿// <copyright file="ResourceLoggingPropertyConstants.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 {
-    public class ResourceLoggingsConstants
-    {
-        public const string ContinuationTaskActivator = "continuation-task-activator";
-
-        /// <summary>
-        ///
-        /// </summary>
-        public const string ContinuationTaskMessagePump = "continuation-task-message-pump";
-
-        /// <summary>
-        ///
-        /// </summary>
-        public const string ContinuationTaskWorkerPoolManager = "continuation-task-worker-pool-manager";
-
-        /// <summary>
-        /// Continuation Task Worker name;
-        /// </summary>
-        public const string ContinuationTaskWorker = "continuation-task-worker";
-    }
-
     /// <summary>
     /// Logging constants for resource broker.
     /// </summary>

@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 }
 
                 // Determine the effective size of the pool
-                var unassignedCount = await RetrieveUnassignedCount(resourcePoolDefinition, logger.FromExisting());
+                var unassignedCount = await RetrieveUnassignedCount(resourcePoolDefinition, logger.WithValues(new LogValueSet()));
 
                 // Get the desiered pool target size
                 var poolTargetCount = resourcePoolDefinition.TargetCount;
@@ -154,7 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 SkuName = resourcePoolDefinition.SkuName,
             };
 
-            await ContinuationTaskActivator.CreatePooledResource(input, logger);
+            await ContinuationTaskActivator.CreateResource(input, logger);
         }
 
         private Task<int> RetrieveUnassignedCount(ResourcePoolDefinition resourceSku, IDiagnosticsLogger logger)

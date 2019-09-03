@@ -8,6 +8,10 @@ using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
+    /// <summary>
+    /// Continuation worker that gets available messages and passes them off to the activator
+    /// for processing.
+    /// </summary>
     public interface IContinuationTaskWorker : IDisposable
     {
         /// <summary>
@@ -17,10 +21,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         int ActivityLevel { get; }
 
         /// <summary>
-        ///
+        /// Runs the job that checks to see if there are any messages that need to be
+        /// processed.
         /// </summary>
-        /// <param name="logger"></param>
-        /// <returns></returns>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Returns if any message was processed.</returns>
         Task<bool> RunAsync(IDiagnosticsLogger logger);
     }
 }

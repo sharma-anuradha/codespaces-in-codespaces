@@ -60,15 +60,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
 
+            string continuationToken = null;
             var input = new FileShareProviderCreateInput()
             {
                 AzureResourceGroup = MockResourceGroup,
                 AzureLocation = MockLocation,
                 AzureSubscription = MockSubscriptionId.ToString(),
                 StorageBlobUrl = MockStorageBlobUrl,
+                ContinuationToken = continuationToken,
             };
-
-            string continuationToken = null;
 
             // 3 because there are 3 steps before we wait for the preparation to complete.
             // 1. Create Storage Account
@@ -84,12 +84,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     // At the beginning, continuation token should be null.
                     Assert.Null(continuationToken);
                 }
-                var result = await storageProvider.CreateAsync(input, logger, continuationToken);
+                var result = await storageProvider.CreateAsync(input, logger);
                 // result should not be null after each iteration
                 Assert.NotNull(result);
                 // ResourceId should not be null after each iteration
                 Assert.NotNull(result.AzureResourceInfo);
-                continuationToken = result.ContinuationToken;
+                continuationToken = result.NextInput?.ContinuationToken;
+                input = (FileShareProviderCreateInput)result.NextInput;
             }
             // After all the steps, continuation token should be null as that's how we signal completion.
             Assert.Null(continuationToken);
@@ -114,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             };
             var result = await storageProvider.DeleteAsync(input, logger);
             Assert.NotNull(result);
-            Assert.Null(result.ContinuationToken);
+            Assert.Null(result.NextInput);
         }
 
         /// <summary>
@@ -158,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             Assert.Equal(MockStorageAccountKey, result.StorageAccountKey);
             Assert.Equal(MockStorageShareName, result.StorageShareName);
             Assert.Equal(MockStorageFileName, result.StorageFileName);
-            Assert.Null(result.ContinuationToken);
+            Assert.Null(result.NextInput);
         }
 
         /// <summary>

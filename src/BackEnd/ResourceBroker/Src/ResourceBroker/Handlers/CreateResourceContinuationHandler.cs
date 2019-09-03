@@ -1,127 +1,103 @@
-﻿// <copyright file="CreateResourceContinuationHandler.cs" company="Microsoft">
+﻿// <copyright file="DeleteResourceContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
+using Microsoft.VsSaaS.Azure.Storage.Blob;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    ///
+    /// Continuation handler that manages creating of environement.
     /// </summary>
-    public abstract class CreateResourceContinuationHandler : IContinuationTaskMessageHandler
+    public class CreateResourceContinuationHandler
+        : BaseContinuationTaskMessageHandler<CreateResourceContinuationInput>, ICreateResourceContinuationHandler
     {
+        /// <summary>
+        /// Gets default target name for item on queue.
+        /// </summary>
+        public const string DefaultQueueTarget = "JobCreateResource";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CreateResourceContinuationHandler"/> class.
         /// </summary>
-        /// <param name="resourceRepository"></param>
-        /// <param name="subscriptionCatalog"></param>
-        /// <param name="mapper"></param>
+        /// <param name="computeProvider">Compute provider.</param>
+        /// <param name="storageProvider">Storatge provider.</param>
+        /// <param name="resourceRepository">Resource repository to be used.</param>
+        /// <param name="blobStorageClientProvider">Blob storage client provider.</param>
+        /// <param name="resourceBrokerSettings">Resource broker settings.</param>
         public CreateResourceContinuationHandler(
+            IComputeProvider computeProvider,
+            IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
             IAzureSubscriptionCatalog subscriptionCatalog,
-            IMapper mapper)
+            IBlobStorageClientProvider blobStorageClientProvider,
+            ResourceBrokerSettings resourceBrokerSettings)
+            : base(resourceRepository)
         {
-            ResourceRepository = resourceRepository;
+            ComputeProvider = computeProvider;
+            StorageProvider = storageProvider;
             SubscriptionCatalog = subscriptionCatalog;
-            Mapper = mapper;
+            BlobStorageClientProvider = blobStorageClientProvider;
+            ResourceBrokerSettings = resourceBrokerSettings;
         }
 
-        protected abstract string TargetName { get; }
+        /// <summary>
+        /// Gets default target name for item on queue.
+        /// </summary>
+        protected override string DefaultTarget => DefaultQueueTarget;
 
-        protected abstract ResourceType TargetType { get; }
+        /// <inheritdoc/>
+        protected override ResourceOperation Operation => ResourceOperation.Provisioning;
 
-        private IResourceRepository ResourceRepository { get; }
+        private IComputeProvider ComputeProvider { get; }
+
+        private IStorageProvider StorageProvider { get; }
 
         private IAzureSubscriptionCatalog SubscriptionCatalog { get; }
 
-        private IMapper Mapper { get; }
+        private IBlobStorageClientProvider BlobStorageClientProvider { get; }
 
-        /// <inheritdoc/>
-        public virtual bool CanHandle(ResourceJobQueuePayload payload)
+        private ResourceBrokerSettings ResourceBrokerSettings { get; }
+
+        protected override async Task<ResourceRecordRef> ObtainReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
         {
-            return payload.Target == TargetName;
-        }
-
-        /// <inheritdoc/>
-        public async Task<ContinuationTaskMessageHandlerResult> Continue(
-            ContinuationTaskMessageHandlerInput handlerInput,
-            IDiagnosticsLogger logger)
-        {
-            var input = Mapper.Map<CreateResourceContinuationInput>(handlerInput.Input);
-
-            return await Continue(input, handlerInput.ContinuationToken, logger);
-        }
-
-        private async Task<ContinuationTaskMessageHandlerResult> Continue(
-            CreateResourceContinuationInput input,
-            string continuationToken,
-            IDiagnosticsLogger logger)
-        {
-            logger.FluentAddValue("ContinuationIsInitial", string.IsNullOrEmpty(continuationToken).ToString());
-
-            // First time through we want to add the resource
-            var record = default(ResourceRecord);
-            if (continuationToken == null)
+            // If we have a reference use that
+            if (input.ResourceId.HasValue)
             {
-                // Add record to database
-                record = await CreateResourceRecordAsync(input, logger);
-            }
-            else
-            {
-                // Update record in database
-                record = await UpdateResourceRecordStatusAsync(input, logger);
+                return await base.FetchReferenceAsync(input.ResourceId.Value, logger);
             }
 
-            // Trigger core continuation
-            var result = await CreateResourceAsync(input, continuationToken, logger);
-
-            // Update record resource id database
-            record = await UpdateResourceRecordWithResultAsync(record, result, logger);
-
-            // Last time through we want to finialize the resource
-            if (string.IsNullOrEmpty(result.ContinuationToken))
-            {
-                logger.FluentAddValue("DidStatusUpdate", "true");
-
-                // Finialize record in database
-                record = await FinalizeResourceRecordAsync(input, logger);
-            }
-
-            return new ContinuationTaskMessageHandlerResult { Result = result };
+            return await CreateReferenceAsync(input, logger);
         }
 
-        protected abstract Task<ResourceCreateContinuationResult> CreateResourceAsync(
-            CreateResourceContinuationInput input,
-            string continuationToken,
-            IDiagnosticsLogger logger);
-
-        private async Task<ResourceRecord> CreateResourceRecordAsync(
-            CreateResourceContinuationInput input,
-            IDiagnosticsLogger logger)
+        private async Task<ResourceRecordRef> CreateReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("ResourceCreatedRecord", true.ToString());
-
             // Common properties
-            var id = Guid.NewGuid().ToString();
+            var id = Guid.NewGuid();
             var time = DateTime.UtcNow;
 
             // Core recrod
             var record = new ResourceRecord
             {
-                Id = id,
-                Type = TargetType,
+                Id = id.ToString(),
+                Type = input.Type,
                 IsReady = false,
                 Ready = null,
                 IsAssigned = false,
@@ -130,72 +106,98 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 Location = input.Location,
                 SkuName = input.SkuName,
             };
-            record.UpdateProvisioningStatus(OperationState.Initialized);
 
             // Update input
-            input.Id = record.Id;
-            input.ResourceGroup = $"RG-{id}";
-            input.Subscription = SubscriptionCatalog.AzureSubscriptions.FirstOrDefault().SubscriptionId;
-
-            // TODO: Update to get above info from the capacity manager
+            input.ResourceId = id;
 
             // Create the actual record
-            await ResourceRepository.CreateAsync(record, logger);
+            record = await ResourceRepository.CreateAsync(record, logger);
 
-            return record;
+            return new ResourceRecordRef(record);
         }
 
-        private async Task<ResourceRecord> UpdateResourceRecordStatusAsync(
-            CreateResourceContinuationInput input,
-            IDiagnosticsLogger logger)
+
+        /// <inheritdoc/>
+        protected override Task<ContinuationInput> BuildOperationInputAsync(CreateResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
-            // If we where in Provisioning state, update it to be so
-            var record = await ResourceRepository.GetAsync(input.Id, logger);
+            var result = (ContinuationInput)null;
 
-            // Only need to update if we have to do something
-            if (record.UpdateProvisioningStatus(OperationState.InProgress))
+            // TODO: Update to get info from the capacity manager
+            var resourceGroup = $"RG-{input.ResourceId}";
+            var subscription = SubscriptionCatalog.AzureSubscriptions.FirstOrDefault().SubscriptionId;
+
+            if (resource.Value.Type == ResourceType.ComputeVM)
             {
-                logger.FluentAddValue("ResourceStatusUpdate", true.ToString());
+                var didParseLocation = Enum.TryParse(input.Location, true, out AzureLocation azureLocation);
+                if (!didParseLocation)
+                {
+                    throw new NotSupportedException($"Provided location of '{input.Location}' is not supported.");
+                }
 
-                record = await ResourceRepository.UpdateAsync(record, logger);
+                result = new VirtualMachineProviderCreateInput
+                {
+                    AzureVmLocation = azureLocation,
+                    AzureSkuName = input.SkuName,
+                    AzureSubscription = Guid.Parse(subscription),
+                    AzureResourceGroup = resourceGroup,
+                    AzureVirtualMachineImage = "Canonical:UbuntuServer:18.04-LTS:latest",
+                };
+            }
+            else if (resource.Value.Type == ResourceType.StorageFileShare)
+            {
+                var container = BlobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
+                var blob = container.GetBlobReference(ResourceBrokerSettings.FileShareTemplateBlobName);
+                var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+                {
+                    Permissions = SharedAccessBlobPermissions.Read,
+                    SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4), // This should be plenty of time to copy the blob template into the new file share
+                });
+
+                result = new FileShareProviderCreateInput
+                {
+                    AzureLocation = input.Location,
+                    AzureSkuName = input.SkuName,
+                    AzureSubscription = subscription,
+                    AzureResourceGroup = resourceGroup,
+                    StorageBlobUrl = blob.Uri + sas,
+                };
+            }
+            else
+            {
+                throw new NotSupportedException($"Resource type is not selected - {resource.Value.Type}");
             }
 
-            return record;
+            return Task.FromResult(result);
         }
 
-        private async Task<ResourceRecord> UpdateResourceRecordWithResultAsync(
-            ResourceRecord record,
-            ResourceCreateContinuationResult result,
-            IDiagnosticsLogger logger)
+        /// <inheritdoc/>
+        protected override async Task<ContinuationResult> RunOperationAsync(ContinuationInput operationInput, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
-            // First time through we want to update the resource id
-            if (record.AzureResourceInfo == null
-                && result.AzureResourceInfo != null)
-            {
-                record.UpdateProvisioningStatus(OperationState.InProgress);
-                record.AzureResourceInfo = result.AzureResourceInfo;
+            var result = (ResourceCreateContinuationResult)null;
 
-                record = await ResourceRepository.UpdateAsync(record, logger);
+            // Run create operation
+            if (resource.Value.Type == ResourceType.ComputeVM)
+            {
+                result = await ComputeProvider.CreateAsync((VirtualMachineProviderCreateInput)operationInput, logger.WithValues(new LogValueSet()));
+            }
+            else if (resource.Value.Type == ResourceType.StorageFileShare)
+            {
+                result = await StorageProvider.CreateAsync((FileShareProviderCreateInput)operationInput, logger.WithValues(new LogValueSet()));
+            }
+            else
+            {
+                throw new NotSupportedException($"Resource type is not selected - {resource.Value.Type}");
             }
 
-            return record;
-        }
+            // Make sure we bring over the Resource info if we have it
+            if (resource.Value.AzureResourceInfo == null && result.AzureResourceInfo != null)
+            {
+                resource.Value.AzureResourceInfo = result.AzureResourceInfo;
 
-        private async Task<ResourceRecord> FinalizeResourceRecordAsync(
-            CreateResourceContinuationInput input,
-            IDiagnosticsLogger logger)
-        {
-            logger.FluentAddValue("ResourceFinalizeRecord", true.ToString());
+                resource.Value = await ResourceRepository.UpdateAsync(resource.Value, logger.WithValues(new LogValueSet()));
+            }
 
-            var record = await ResourceRepository.GetAsync(input.Id, logger);
-
-            record.IsReady = true;
-            record.Ready = DateTime.UtcNow;
-            record.UpdateProvisioningStatus(OperationState.Succeeded);
-
-            record = await ResourceRepository.UpdateAsync(record, logger);
-
-            return record;
+            return result;
         }
     }
 }
