@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
             logger.FluentAddValue("ContinuationWasHandled", didHandle.ToString())
                 .FluentAddValue("ContinuationFindHandleDuration", continueFindDuration.Elapsed.TotalMilliseconds.ToString())
-                .LogInfo($"{LogBaseName}-continue-complete");
+                .LogInfo($"{LogBaseName}_continue_complete");
 
             return (nextPayload, result);
         }

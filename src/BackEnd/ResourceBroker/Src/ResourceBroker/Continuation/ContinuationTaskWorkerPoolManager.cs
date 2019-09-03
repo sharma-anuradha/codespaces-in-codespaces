@@ -152,7 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             var worker = ServiceProvider.GetService<IContinuationTaskWorker>();
 
             logger.FluentAddBaseValue("ContinuationWorkerId", id)
-                .FluentAddValue("ContinuatioWorkerStartReason", reason);
+                .FluentAddValue("ContinuationWorkerStartReason", reason);
 
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.ContinuationTaskWorker}-run",
@@ -162,7 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
             WorkerPool.TryAdd(id, worker);
 
-            logger.LogInfo($"{LogBaseName}-start-worker");
+            logger.LogInfo($"{LogBaseName}_start_worker");
         }
 
         private void EndWorker(Guid id, string reason, IDiagnosticsLogger logger)
@@ -177,8 +177,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         {
             worker.Dispose();
 
-            logger.FluentAddValue("ContinuatioWorkerEndReason", reason)
-                .LogInfo($"{LogBaseName}-end-worker");
+            logger.FluentAddValue("ContinuationWorkerEndReason", reason)
+                .LogInfo($"{LogBaseName}_end_worker");
         }
     }
 

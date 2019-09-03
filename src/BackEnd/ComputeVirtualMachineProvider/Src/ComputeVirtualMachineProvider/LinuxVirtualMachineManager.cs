@@ -287,7 +287,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     s.AppendLine();
                 }
 
-                logger.LogError($"linux_virtual_machine_manager_check_delete_compute_error : \n {s}");
+                logger.LogErrorWithDetail("linux_virtual_machine_manager_check_delete_compute_error", s.ToString());
                 NextStageInput nextStageInput = new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1);
                 if (input.RetryAttempt < 5)
                 {

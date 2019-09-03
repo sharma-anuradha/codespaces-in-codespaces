@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             var wrappedCallback = WrapCallback(name, callback, logger);
 
-            logger.LogInfo("task-helper-run-background-loop-started");
+            logger.LogInfo("task_helper_run_background_loop_started");
 
             Task.Run(
                 async () =>
@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         }
                     }
 
-                    logger.LogInfo("task-helper-run-background-loop-exited");
+                    logger.LogInfo("task_helper_run_background_loop_exited");
                 });
         }
 
@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 }
                 catch (Exception e)
                 {
-                    logger.FluentAddValue("TaskName", name).LogException($"task-helper-run-error", e);
+                    logger.FluentAddValue("TaskName", name).LogException($"task_helper_run_error", e);
                 }
             };
         }
@@ -104,7 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 }
                 catch (Exception e)
                 {
-                    logger.LogException($"task-run-error", e);
+                    logger.LogException($"task_run_error", e);
                 }
 
                 return result;

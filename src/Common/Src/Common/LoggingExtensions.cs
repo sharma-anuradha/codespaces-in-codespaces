@@ -39,13 +39,13 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             {
                 await callback();
 
-                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogInfo($"{name}-complete");
+                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
                 errCallback?.Invoke(e);
 
-                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}-error", e);
+                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             {
                 result = await callback();
 
-                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogInfo($"{name}-complete");
+                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                     result = errCallback(e);
                 }
 
-                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}-error", e);
+                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -111,13 +111,13 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             {
                 callback();
 
-                logger.AddDuration(duration).LogInfo($"{name}-complete");
+                logger.AddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
                 errCallback?.Invoke(e);
 
-                logger.AddDuration(duration).LogException($"{name}-error", e);
+                logger.AddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -146,7 +146,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             {
                 result = callback();
 
-                logger.AddDuration(duration).LogInfo($"{name}-complete");
+                logger.AddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
@@ -155,7 +155,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                     result = errCallback(e);
                 }
 
-                logger.AddDuration(duration).LogException($"{name}-error", e);
+                logger.AddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
