@@ -22,8 +22,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             this.testContext = data;
         }
 
-        [Fact(Skip = "integration test")]
-        //[Fact]
+        [Trait("Category", "IntegrationTest")]
+        [Fact]
         public async Task Create_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
@@ -73,8 +73,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
         }
 
-        [Fact(Skip = "integration test")]
-        //[Fact]
+        [Trait("Category", "IntegrationTest")]
+        [Fact]
         public async Task Create_Multiple_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();           
@@ -104,7 +104,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
         }
 
-        [Fact(Skip = "integration test")]
+        [Trait("Category", "IntegrationTest")]
+        [Fact]
         public async Task Start_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
@@ -130,8 +131,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             await StartCompute(computeProvider, startComputeInput, logger);
         }
 
-        [Fact(Skip = "integration test")]
-        //[Fact]
+        [Trait("Category", "IntegrationTest")]
+        [Fact]
         public async Task Delete_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();

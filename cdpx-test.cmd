@@ -16,7 +16,7 @@ set DOTNET_ARGS=/v:m /p:RestorePackages=false
 :: Dotnet Test
 echo.
 echo dotnet test dirs.proj
-call dotnet test --no-build --configuration Release -p:CodeCoverage=true dirs.proj %DOTNET_ARGS%
+call dotnet test --no-build --configuration Release --filter "Category!=IntegrationTest" -p:CodeCoverage=true dirs.proj %DOTNET_ARGS%
 set EX=%ERRORLEVEL%
 
 if "%EX%" neq "0" (
