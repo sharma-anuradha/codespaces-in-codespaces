@@ -57,19 +57,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <inheritdoc/>
         public Task<ResourceJobQueuePayload> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(LogBaseName, async () => (await InnerContinue(payload, logger)).NextPayload);
+            return logger.OperationScopeAsync(LogBaseName, async () => (await InnerContinue(payload, logger)).ResultPayload);
         }
 
-        private async Task<(ResourceJobQueuePayload NextPayload, ContinuationResult Result)> InnerContinue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid().ToString())
+            logger.FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid())
                 .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
-                .FluentAddValue("ContinuationPayloadIsInitial", payload.Status.HasValue.ToString())
-                .FluentAddValue("ContinuationPayloadPreStatus", payload.Status.ToString());
+                .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
+                .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
+                .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
+                .FluentAddValue("ContinuationPayloadCreated", payload.Created)
+                .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds);
+
             var continueFindDuration = logger.StartDuration();
 
             var result = (ContinuationResult)null;
-            var nextPayload = (ResourceJobQueuePayload)null;
+            var resultPayload = (ResourceJobQueuePayload)null;
 
             var didHandle = false;
             foreach (var handler in Handlers)
@@ -80,13 +84,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     logger.FluentAddValue("ContinuationHandler", handler.GetType().Name);
 
                     // Activate the core continuation
-                    (nextPayload, result) = await InnerContinue(handler, payload, logger);
+                    (resultPayload, result) = await InnerContinue(handler, payload, logger);
 
                     // Make sure that we have a result to work for
                     if (result != null)
                     {
                         logger.FluentAddValue("ContinuationPayloadPostStatus", result.Status)
-                            .FluentAddValue("ContinuationPayloadIsFinal", result.Status.IsFinal());
+                            .FluentAddValue("ContinuationPayloadPostRetryAfter", result.RetryAfter)
+                            .FluentAddValue("ContinuationPayloadIsFinal", resultPayload.Input == null)
+                            .FluentAddValue("ContinuationHandlerToken", result.NextInput?.ContinuationToken);
                     }
 
                     didHandle = true;
@@ -94,40 +100,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 }
             }
 
-            logger.FluentAddValue("ContinuationWasHandled", didHandle.ToString())
-                .FluentAddValue("ContinuationFindHandleDuration", continueFindDuration.Elapsed.TotalMilliseconds.ToString())
-                .LogInfo($"{LogBaseName}_continue_complete");
+            logger.FluentAddValue("ContinuationWasHandled", didHandle)
+                .FluentAddValue("ContinuationFindHandleDuration", continueFindDuration.Elapsed.TotalMilliseconds);
 
-            return (nextPayload, result);
+            return (resultPayload, result);
         }
 
-        private async Task<(ResourceJobQueuePayload NextPayload, ContinuationResult Result)> InnerContinue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
+            // Result is based off the currnet
+            var resultPayload = new ResourceJobQueuePayload(payload.TrackingId, payload.Target, payload.Created);
+
             // Run the continuation
-            var timer = logger.TrackDuration("ContinuationHandlerDuration");
-            var result = await handler.Continue(payload.Input, logger.WithValues(new LogValueSet()));
-            timer.Dispose();
+            var result = await logger.TrackDurationAsync(
+                "ContinuationHandler", () => handler.Continue(payload.Input, logger.WithValues(new LogValueSet())));
 
             logger.FluentAddValue("ContinuationHandlerFailed", result == null);
 
             // Make sure that the handler didn't fail
             if (result != null)
             {
-                logger.FluentAddValue("ContinuationRetryAfter", result.RetryAfter.ToString());
+                // Setup next payload
+                resultPayload.Input = result.NextInput;
+                resultPayload.Status = result.Status;
+                resultPayload.RetryAfter = result.RetryAfter;
 
                 // Put onto quueue if not finished
                 if (!result.Status.IsFinal())
                 {
-                    // Setup next payload
-                    payload.Input = result.NextInput;
-                    payload.Status = result.Status;
-                    payload.RetryAfter = result.RetryAfter;
-
-                    await MessagePump.AddPayloadAsync(payload, result.RetryAfter, logger.WithValues(new LogValueSet()));
+                    await MessagePump.PushMessageAsync(resultPayload, result.RetryAfter, logger.WithValues(new LogValueSet()));
                 }
             }
 
-            return (payload, result);
+            return (resultPayload, result);
         }
     }
 }

@@ -3,11 +3,14 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
+using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
@@ -62,13 +65,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private async Task<bool> InnerRunAsync(IDiagnosticsLogger logger)
         {
+            var rootTimer = Stopwatch.StartNew();
             logger.FluentAddBaseValue("ContinuationWorkerRunId", Guid.NewGuid())
                 .FluentAddValue("ContinuationActivityLevel", ActivityLevel);
 
             // Get message from the queue
             var message = await MessagePump.GetMessageAsync(logger.WithValues(new LogValueSet()));
 
-            logger.FluentAddValue("ContinuationFoundMessages", message != null);
+            logger.FluentAddValue("WorkerFoundMessages", message != null);
 
             // Process messages if we can
             if (message != null)
@@ -80,9 +84,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 }
 
                 // Pull out typed message content
-                var payload = message.GetTypedPayload<ResourceJobQueuePayload>();
+                var payload = GetTypedPayload(message);
 
-                logger.FluentAddValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                logger.FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
                     .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
                     .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
                     .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
@@ -90,23 +94,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds);
 
                 // Try and handle message
-                var nextPayload = await Activator.Continue(payload, logger.WithValues(new LogValueSet()));
+                var resultPayload = await logger.TrackDurationAsync(
+                    "WorkerActivator", () => Activator.Continue(payload, logger.WithValues(new LogValueSet())));
 
-                logger.FluentAddValue("ContinuationWasHandled", nextPayload != null);
+                logger.FluentAddValue("ContinuationWasHandled", resultPayload != null);
 
                 // Deals with error case
-                if (nextPayload != null)
+                if (resultPayload != null)
                 {
-                    logger.FluentAddValue("ContinuationPayloadPostStatus", nextPayload.Status)
-                        .FluentAddValue("ContinuationPayloadPostRetryAfter", nextPayload.RetryAfter)
-                        .FluentAddValue("ContinuationPayloadIsFinal", nextPayload.Input == null);
+                    logger.FluentAddValue("ContinuationPayloadPostStatus", resultPayload.Status)
+                        .FluentAddValue("ContinuationPayloadPostRetryAfter", resultPayload.RetryAfter)
+                        .FluentAddValue("ContinuationPayloadIsFinal", resultPayload.Input == null);
                 }
 
                 // Delete message when we are done
-                await MessagePump.DeleteMessage(message, logger.WithValues(new LogValueSet()));
+                await MessagePump.DeleteMessageAsync(message, logger.WithValues(new LogValueSet()));
+
+                logger.FluentAddDuration("WorkerRun", rootTimer);
             }
             else
             {
+                logger.FluentAddDuration("WorkerRun", rootTimer);
+
                 // Tracking activity level, currently very basic
                 if (ActivityLevel > 0)
                 {
@@ -120,6 +129,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             }
 
             return !Disposed;
+        }
+
+        private ResourceJobQueuePayload GetTypedPayload(CloudQueueMessage message)
+        {
+            return JsonConvert.DeserializeObject<ResourceJobQueuePayload>(
+                message.AsString, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
         }
     }
 }

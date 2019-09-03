@@ -115,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                 CosmosDbResourceRepository.ConfigureOptions);
 
             // Register Queue Items
-            services.AddSingleton<IResourceJobQueueRepository, QueueResourceJobQueueRepository>();
+            services.AddSingleton<IResourceJobQueueRepository, StorageResourceJobQueueRepository>();
 
             // SDK provider
             services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();

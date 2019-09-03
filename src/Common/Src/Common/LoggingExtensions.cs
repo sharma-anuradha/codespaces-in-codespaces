@@ -6,7 +6,6 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 /// <summary>
 /// Construct consistent logging messages.
@@ -39,13 +38,13 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             {
                 await callback();
 
-                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogInfo($"{name}_complete");
+                logger.FluentAddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
                 errCallback?.Invoke(e);
 
-                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}_error", e);
+                logger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -74,7 +73,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             {
                 result = await callback();
 
-                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogInfo($"{name}_complete");
+                logger.FluentAddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
@@ -83,7 +82,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                     result = errCallback(e);
                 }
 
-                logger.FluentAddValue("Duration", duration.ElapsedMilliseconds).LogException($"{name}_error", e);
+                logger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -105,19 +104,19 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         public static void OperationScope(this IDiagnosticsLogger logger, string name, Action callback, Action<Exception> errCallback = default, bool swallowException = false)
         {
-            var duration = logger.StartDuration();
+            var duration = Stopwatch.StartNew();
 
             try
             {
                 callback();
 
-                logger.AddDuration(duration).LogInfo($"{name}_complete");
+                logger.FluentAddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
                 errCallback?.Invoke(e);
 
-                logger.AddDuration(duration).LogException($"{name}_error", e);
+                logger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -139,14 +138,14 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <returns>Returns the callback result.</returns>
         public static T OperationScope<T>(this IDiagnosticsLogger logger, string name, Func<T> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
         {
-            var duration = logger.StartDuration();
+            var duration = Stopwatch.StartNew();
             var result = default(T);
 
             try
             {
                 result = callback();
 
-                logger.AddDuration(duration).LogInfo($"{name}_complete");
+                logger.FluentAddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
@@ -155,7 +154,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                     result = errCallback(e);
                 }
 
-                logger.AddDuration(duration).LogException($"{name}_error", e);
+                logger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -164,6 +163,117 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
 
             return result;
+        }
+
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope will add duration to the logger.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <returns>Returns the task.</returns>
+        public static async Task TrackDurationAsync(this IDiagnosticsLogger logger, string name, Func<Task> callback)
+        {
+            var duration = Stopwatch.StartNew();
+
+            try
+            {
+                await callback();
+            }
+            finally
+            {
+                logger.FluentAddDuration(name, duration);
+            }
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope will add duration to the logger.
+        /// </summary>
+        /// <typeparam name="T">Return type.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <returns>Returns the task.</returns>
+        public static async Task<T> TrackDurationAsync<T>(this IDiagnosticsLogger logger, string name, Func<Task<T>> callback)
+        {
+            var duration = Stopwatch.StartNew();
+
+            try
+            {
+                return await callback();
+            }
+            finally
+            {
+                logger.FluentAddDuration(name, duration);
+            }
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope will add duration to the logger.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        public static void TrackDuration(this IDiagnosticsLogger logger, string name, Action callback)
+        {
+            var duration = Stopwatch.StartNew();
+
+            try
+            {
+                callback();
+            }
+            finally
+            {
+                logger.FluentAddDuration(name, duration);
+            }
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope will add duration to the logger.
+        /// </summary>
+        /// <typeparam name="T">Return type.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <returns>Returns the callback result.</returns>
+        public static T TrackDuration<T>(this IDiagnosticsLogger logger, string name, Func<T> callback)
+        {
+            var duration = Stopwatch.StartNew();
+
+            try
+            {
+                return callback();
+            }
+            finally
+            {
+                logger.FluentAddDuration(name, duration);
+            }
+        }
+
+        /// <summary>
+        /// Adds duration to the logger.
+        /// </summary>
+        /// <typeparam name="T">Type of the value.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="value">Value being set.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger FluentAddDuration(this IDiagnosticsLogger logger, Stopwatch value)
+        {
+            return logger.FluentAddValue("Duration", value.Elapsed);
+        }
+
+        /// <summary>
+        /// Adds duration to the logger.
+        /// </summary>
+        /// <typeparam name="T">Type of the value.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Name of the property that should be postfixed.</param>
+        /// <param name="value">Value being set.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger FluentAddDuration(this IDiagnosticsLogger logger, string name, Stopwatch value)
+        {
+            return logger.FluentAddValue($"{name}Duration", value.Elapsed);
         }
 
         /// <summary>
@@ -220,19 +330,6 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             where T : struct
         {
             return logger.FluentAddBaseValue(name, value.HasValue ? value.Value.ToString() : null);
-        }
-
-        /// <summary>
-        /// Starts a time when invokes and when disposed, stops the timer and adds the property.
-        /// </summary>
-        /// <param name="logger">Target logger.</param>
-        /// <param name="name">Name of the property.</param>
-        /// <returns>Disposable that terminates the timer.</returns>
-        public static IDisposable TrackDuration(this IDiagnosticsLogger logger, string name)
-        {
-            var sw = Stopwatch.StartNew();
-
-            return ActionDisposable.Create(() => logger.FluentAddValue(name, sw.ElapsedMilliseconds));
         }
 
         /// <summary>

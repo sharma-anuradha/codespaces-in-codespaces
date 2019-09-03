@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Gets default target name for item on queue.
         /// </summary>
-        public const string DefaultQueueTarget = "JobDeleteCompute";
+        public const string DefaultQueueTarget = "JobDeleteResource";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DeleteResourceContinuationHandler"/> class.

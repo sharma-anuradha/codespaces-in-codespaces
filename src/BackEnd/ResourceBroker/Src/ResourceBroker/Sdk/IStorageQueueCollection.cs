@@ -1,0 +1,50 @@
+﻿// <copyright file="IStorageQueueCollection.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Azure.Storage.Queue;
+using Microsoft.VsSaaS.Diagnostics;
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk
+{
+    /// <summary>
+    /// Core queue collection interface.
+    /// </summary>
+    public interface IStorageQueueCollection
+    {
+        /// <summary>
+        /// Adds content to the queue.
+        /// </summary>
+        /// <param name="content">Content that is being added.</param>
+        /// <param name="initialVisibilityDelay">Adds initial visibilit delay if needed.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        Task AddAsync(string content, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Pulls multiple messages from the queue.
+        /// </summary>
+        /// <param name="popCount">How many messages are requested.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Pulls single messages from the queue.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Deletes message from the queue.
+        /// </summary>
+        /// <param name="message">Target message.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        Task DeleteAsync(CloudQueueMessage message, IDiagnosticsLogger logger);
+    }
+}

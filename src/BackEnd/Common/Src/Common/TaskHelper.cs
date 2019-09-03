@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 }
                 catch (Exception e)
                 {
-                    logger.FluentAddValue("TaskName", name).LogException($"task_helper_run_error", e);
+                    logger.LogException("task_helper_error", e);
                 }
             };
         }
@@ -100,11 +100,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 try
                 {
-                    result = await callback(logger);
+                    result = await callback(logger.WithValues(new LogValueSet()));
                 }
                 catch (Exception e)
                 {
-                    logger.LogException($"task_run_error", e);
+                    logger.LogException("task_run_error", e);
                 }
 
                 return result;

@@ -6,81 +6,117 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
+    /// <summary>
+    /// Message pump which gates messages to/from the underlying queue.
+    /// </summary>
     public class ContinuationTaskMessagePump : IContinuationTaskMessagePump
     {
+        private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskMessagePump;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ContinuationTaskMessagePump"/> class.
+        /// </summary>
+        /// <param name="continuationTaskWorkerPoolManager">Targer pool manager.</param>
+        /// <param name="resourceJobQueueRepository">Underlying resourcec job queue repository.</param>
         public ContinuationTaskMessagePump(
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IResourceJobQueueRepository resourceJobQueueRepository)
         {
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             ResourceJobQueueRepository = resourceJobQueueRepository;
-            MessageCache = new ConcurrentQueue<IResourceJobQueueMessage>();
+            MessageCache = new ConcurrentQueue<CloudQueueMessage>();
         }
 
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
         private IResourceJobQueueRepository ResourceJobQueueRepository { get; }
 
-        private ConcurrentQueue<IResourceJobQueueMessage> MessageCache { get; }
+        private ConcurrentQueue<CloudQueueMessage> MessageCache { get; }
 
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public async Task<bool> TryPopulateCacheAsync(IDiagnosticsLogger logger)
+        public Task<bool> RunTryPopulateCacheAsync(IDiagnosticsLogger logger)
         {
-            var targetMessageCacheLength = ContinuationTaskWorkerPoolManager.CurrentWorkerCount;
-
-            logger.FluentAddValue("PumpCacheLevel", MessageCache.Count.ToString())
-                .FluentAddValue("PumpTargetLevel", targetMessageCacheLength.ToString());
-
-            // Only trigger work when we have something to really do
-            if (MessageCache.Count < (targetMessageCacheLength / 2))
-            {
-                logger.FluentAddValue("PumpFillDidTrigger", true.ToString());
-
-                // Fetch items
-                var items = await ResourceJobQueueRepository.GetAsync(targetMessageCacheLength - MessageCache.Count, logger.WithValues(new LogValueSet()));
-
-                logger.FluentAddValue("PumpFoundItems", items.Count().ToString());
-
-                // Add each item to the local cache
-                foreach (var item in items)
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_try_populate_cache",
+                async () =>
                 {
-                    MessageCache.Enqueue(item);
-                }
-            }
+                    var targetMessageCacheLength = ContinuationTaskWorkerPoolManager.CurrentWorkerCount;
 
-            return !Disposed;
+                    logger.FluentAddValue("PumpCacheLevel", MessageCache.Count.ToString())
+                        .FluentAddValue("PumpTargetLevel", targetMessageCacheLength.ToString());
+
+                    // Only trigger work when we have something to really do
+                    if (MessageCache.Count < (targetMessageCacheLength / 2))
+                    {
+                        logger.FluentAddValue("PumpFillDidTrigger", true.ToString());
+
+                        // Fetch items
+                        var items = await ResourceJobQueueRepository.GetAsync(targetMessageCacheLength - MessageCache.Count, logger.WithValues(new LogValueSet()));
+
+                        logger.FluentAddValue("PumpFoundItems", items.Count().ToString());
+
+                        // Add each item to the local cache
+                        foreach (var item in items)
+                        {
+                            MessageCache.Enqueue(item);
+                        }
+                    }
+
+                    return !Disposed;
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<IResourceJobQueueMessage> GetMessageAsync(IDiagnosticsLogger logger)
+        public Task<CloudQueueMessage> GetMessageAsync(IDiagnosticsLogger logger)
         {
-            // Try getting from cache and manually pull if needed. Note, doesn't really
-            // matter if a cache miss happens here, its a nice to have not a necessity.
-            if (!MessageCache.TryDequeue(out var message))
-            {
-                message = await ResourceJobQueueRepository.GetAsync(logger);
-            }
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_get_message",
+                async () =>
+                {
+                    // Try and get from cache
+                    var cacheHit = MessageCache.TryDequeue(out var message);
 
-            return message;
+                    logger.FluentAddValue("PumpCacheHit", cacheHit);
+
+                    // Try getting from cache and manually pull if needed. Note, doesn't really
+                    // matter if a cache miss happens here, its a nice to have not a necessity.
+                    if (!cacheHit)
+                    {
+                        message = await ResourceJobQueueRepository.GetAsync(logger);
+                    }
+
+                    logger.FluentAddValue("PumpFoundMessage", message != null);
+                    if (message != null)
+                    {
+                        logger.FluentAddValue("PumpDequeueCount", message.DequeueCount)
+                            .FluentAddValue("PumpExpirationTime", message.ExpirationTime)
+                            .FluentAddValue("PumpInsertionTime", message.InsertionTime)
+                            .FluentAddValue("PumpNextVisibleTime", message.NextVisibleTime);
+                    }
+
+                    return message;
+                });
         }
 
         /// <inheritdoc/>
-        public async Task DeleteMessage(IResourceJobQueueMessage message, IDiagnosticsLogger logger)
+        public async Task DeleteMessageAsync(CloudQueueMessage message, IDiagnosticsLogger logger)
         {
             await ResourceJobQueueRepository.DeleteAsync(message, logger);
         }
 
         /// <inheritdoc/>
-        public async Task AddPayloadAsync(ResourceJobQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
+        public async Task PushMessageAsync(ResourceJobQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             await ResourceJobQueueRepository.AddAsync(payload.ToJson(), initialVisibilityDelay, logger);
         }

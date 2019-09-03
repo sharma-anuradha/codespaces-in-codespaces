@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Populate continuation message cache
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.ContinuationTaskMessagePump}-try-populate-cache",
-                (childLogger) => ContinuationTaskMessagePump.TryPopulateCacheAsync(childLogger),
+                (childLogger) => ContinuationTaskMessagePump.RunTryPopulateCacheAsync(childLogger),
                 TimeSpan.FromSeconds(10));
 
             // Job: Watch Pool Size

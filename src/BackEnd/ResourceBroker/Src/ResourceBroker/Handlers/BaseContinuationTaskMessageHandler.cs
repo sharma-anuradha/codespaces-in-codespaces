@@ -67,9 +67,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="input">Base target input.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Next contiuation results.</returns>
-        protected Task<ContinuationResult> InnerContinue(ContinuationInput input, IDiagnosticsLogger logger)
+        protected async Task<ContinuationResult> InnerContinue(ContinuationInput input, IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("HandlerOperation", Operation);
+            logger.FluentAddValue("HandlerOperation", Operation)
+                .FluentAddValue("HandlerType", GetType().Name)
+                .FluentAddValue("HandlerBasePreContinuationToken", input.ContinuationToken);
 
             // Deals with invalid case
             var typedInput = input as TI;
@@ -80,7 +82,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 throw new NotSupportedException($"Provided input type does not match target input type - {typeof(TI)}");
             }
 
-            return InnerContinue(typedInput, logger);
+            logger.FluentAddValue("HandlerResourceId", typedInput.ResourceId)
+                .FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
+
+            // Core continue
+            var result = await InnerContinue(typedInput, logger);
+
+            logger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken);
+            logger.FluentAddValue("HandlerBasePostStatus", result.Status);
+            logger.FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
+
+            return result;
         }
 
         /// <summary>
@@ -91,25 +103,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <returns>Next contiuation results.</returns>
         protected virtual async Task<ContinuationResult> InnerContinue(TI input, IDiagnosticsLogger logger)
         {
-            var timer = logger.TrackDuration("HandlerObtainReferenceDuration");
-            var record = await ObtainReferenceAsync(input, logger);
-            timer.Dispose();
+            var record = await logger.TrackDurationAsync(
+                "HandlerObtainReference", () => ObtainReferenceAsync(input, logger));
 
             // If first time through, queue things up
             if (string.IsNullOrEmpty(input.ContinuationToken))
             {
-                using (logger.TrackDuration("HandlerQueueOperationDuration"))
-                {
-                    return await QueueOperationAsync(input, record, logger);
-                }
+                return await logger.TrackDurationAsync(
+                    "HandlerQueueOperation", () => QueueOperationAsync(input, record, logger));
             }
 
             // If we don't have the operation input build it
             if (input.OperationInput == null)
             {
-                timer = logger.TrackDuration("HandlerBuildOperationInputDuration");
-                input.OperationInput = await BuildOperationInputAsync(input, record, logger);
-                timer.Dispose();
+                input.OperationInput = await logger.TrackDurationAsync(
+                    "HandlerBuildOperationInput", () => BuildOperationInputAsync(input, record, logger));
 
                 // If we were not able to build operation input fail
                 if (input.OperationInput == null)
@@ -121,10 +129,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             // Run the core operation
-            using (logger.TrackDuration("HandlerRunOperationDuration"))
-            {
-                return await RunOperationAsync(input, record, logger);
-            }
+            return await logger.TrackDurationAsync(
+                "HandlerRunOperation", () => RunOperationAsync(input, record, logger));
         }
 
         /// <summary>
@@ -302,6 +308,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
                 return await FailOperationAsync(input, record, logger);
             }
+
+            logger.FluentAddValue("HandlerOperationPostContinuationToken", operationResult.NextInput?.ContinuationToken)
+                .FluentAddValue("HandlerOperationPostStatus", operationResult.Status)
+                .FluentAddValue("HandlerOperationPostRetryAfter", operationResult.RetryAfter);
 
             // Update status to reflect compute result
             await SaveStatusAsync(record, operationResult.Status, logger);

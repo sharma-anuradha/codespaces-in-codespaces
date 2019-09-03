@@ -1,4 +1,4 @@
-﻿// <copyright file="QueueCollectionBase.cs" company="Microsoft">
+﻿// <copyright file="StorageQueueCollectionBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,19 +13,19 @@ using Microsoft.VsSaaS.Diagnostics.Health;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk
 {
     /// <summary>
-    /// Provides configuration and policy for a Queue DB collection.
-    /// Ensures that the configured queue and collection exist.
+    /// Provides configuration and policy for a Queue DB collection. Ensures that
+    /// the configured queue and collection exist.
     /// </summary>
-    public abstract class QueueCollectionBase : IAsyncWarmup
+    public abstract class StorageQueueCollectionBase : IAsyncWarmup
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="QueueCollectionBase"/> class.
+        /// Initializes a new instance of the <see cref="StorageQueueCollectionBase"/> class.
         /// </summary>
         /// <param name="clientProvider">The client provider.</param>
         /// <param name="healthProvider">The health provider.</param>
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
-        public QueueCollectionBase(
+        public StorageQueueCollectionBase(
             IStorageQueueClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,

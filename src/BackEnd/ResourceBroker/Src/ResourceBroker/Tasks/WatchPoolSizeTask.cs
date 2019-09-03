@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <inheritdoc/>
         public async Task<bool> RunAsync(IDiagnosticsLogger rootLogger)
         {
-            var logger = rootLogger.FromExisting();
+            var logger = rootLogger.WithValues(new LogValueSet());
 
             // Get Currnet catalog
             var resourceUnits = await RetrieveResourceSkus();

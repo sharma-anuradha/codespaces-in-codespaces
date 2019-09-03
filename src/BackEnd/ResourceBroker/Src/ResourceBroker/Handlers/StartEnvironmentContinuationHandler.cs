@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Gets default target name for item on queue.
         /// </summary>
-        public const string DefaultQueueTarget = "JobStartCompute";
+        public const string DefaultQueueTarget = "JobStartEnvironment";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StartEnvironmentContinuationHandler"/> class.

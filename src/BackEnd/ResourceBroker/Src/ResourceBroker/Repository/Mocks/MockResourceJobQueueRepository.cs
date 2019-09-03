@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.States;
+using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -14,31 +15,29 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mocks
 {
     /// <summary>
-    ///
+    /// Mock resource job queue repository.
     /// </summary>
     public class MockResourceJobQueueRepository : IResourceJobQueueRepository
     {
+        /// <summary>
+        /// Queue name that should be used.
+        /// </summary>
         public const string QueueName = "mock-resource-job-queue";
 
         /// <summary>
-        ///
+        /// Initializes a new instance of the <see cref="MockResourceJobQueueRepository"/> class.
         /// </summary>
-        /// <param name="backgroundJobs"></param>
-        /// <param name="jobStorage"></param>
-        /// <param name="resourceRepository"></param>
-        /// <param name="loggerFactory"></param>
-        /// <param name="logValues"></param>
+        /// <param name="backgroundJobs">Background job queue to use.</param>
+        /// <param name="resourceRepository">Resource repository.</param>
+        /// <param name="logger">Target logger.</param>
         public MockResourceJobQueueRepository(
             IBackgroundJobClient backgroundJobs,
-            JobStorage jobStorage,
             IResourceRepository resourceRepository,
-            IDiagnosticsLoggerFactory loggerFactory,
-            LogValueSet logValues)
+            IDiagnosticsLogger logger)
         {
             BackgroundJobs = backgroundJobs;
-            JobStorage = jobStorage;
             ResourceRepository = resourceRepository;
-            Logger = loggerFactory.New(logValues);
+            Logger = logger;
             EnqueuedState = new EnqueuedState
                 {
                     Queue = QueueName,
@@ -47,8 +46,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         private IBackgroundJobClient BackgroundJobs { get; }
-
-        private JobStorage JobStorage { get; }
 
         private IResourceRepository ResourceRepository { get; }
 
@@ -65,18 +62,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             BackgroundJobs.Create(() => AddToQueue(id), EnqueuedState);
 
             return Task.CompletedTask;
-        }
-
-        /// <inheritdoc/>
-        public async Task<int> GetQueuedCountAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
-        {
-            await Task.Delay(Random.Next(250, 2500));
-
-            var monitor = JobStorage.GetMonitoringApi();
-
-            var count = (int)monitor.EnqueuedCount(EnqueuedState.Name);
-
-            return count;
         }
 
         /// <summary>
@@ -111,17 +96,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             await ResourceRepository.UpdateAsync(resource, Logger);
         }
 
-        public Task<IEnumerable<IResourceJobQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger)
+        public Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IResourceJobQueueMessage> GetAsync(IDiagnosticsLogger logger)
+        public Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
 
-        public Task DeleteAsync(IResourceJobQueueMessage message, IDiagnosticsLogger logger)
+        public Task DeleteAsync(CloudQueueMessage message, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

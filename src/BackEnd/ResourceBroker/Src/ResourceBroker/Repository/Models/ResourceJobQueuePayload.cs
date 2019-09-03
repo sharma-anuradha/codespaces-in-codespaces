@@ -14,6 +14,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     public class ResourceJobQueuePayload
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="ResourceJobQueuePayload"/> class.
+        /// </summary>
+        public ResourceJobQueuePayload()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResourceJobQueuePayload"/> class.
+        /// </summary>
+        /// <param name="trackingId">Tracking id for this job.</param>
+        /// <param name="target">Target handler.</param>
+        /// <param name="created">Created date/time.</param>
+        public ResourceJobQueuePayload(string trackingId, string target, DateTime created)
+        {
+            TrackingId = trackingId;
+            Created = created;
+            Target = target;
+        }
+
+        /// <summary>
         /// Gets or sets the name that the job targeting.
         /// </summary>
         public string Target { get; set; }

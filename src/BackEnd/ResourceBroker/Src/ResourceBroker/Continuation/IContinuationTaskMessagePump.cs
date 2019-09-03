@@ -4,41 +4,45 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
 {
+    /// <summary>
+    /// Message pump which gates messages to/from the underlying queue.
+    /// </summary>
     public interface IContinuationTaskMessagePump : IDisposable
     {
         /// <summary>
-        ///
+        /// Tries to populate the local cahce from the queue.
         /// </summary>
-        /// <param name="logger"></param>
-        /// <returns></returns>
-        Task<bool> TryPopulateCacheAsync(IDiagnosticsLogger logger);
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Whether the task should continue.</returns>
+        Task<bool> RunTryPopulateCacheAsync(IDiagnosticsLogger logger);
 
         /// <summary>
-        ///
+        /// Gets message from the cache if available or from the queue if needed.
         /// </summary>
-        /// <param name="logger"></param>
-        /// <returns></returns>
-        Task<IResourceJobQueueMessage> GetMessageAsync(IDiagnosticsLogger logger);
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Found message.</returns>
+        Task<CloudQueueMessage> GetMessageAsync(IDiagnosticsLogger logger);
 
         /// <summary>
-        ///
+        /// Deletes message.
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="logger"></param>
+        /// <param name="message">Message to be deleted.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task DeleteMessage(IResourceJobQueueMessage message, IDiagnosticsLogger logger);
+        Task DeleteMessageAsync(CloudQueueMessage message, IDiagnosticsLogger logger);
 
         /// <summary>
-        ///
+        /// Pushes message onto queue.
         /// </summary>
-        /// <param name="payload"></param>
-        /// <param name="logger"></param>
+        /// <param name="payload">Payload to be pushed.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task AddPayloadAsync(ResourceJobQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger);
+        Task PushMessageAsync(ResourceJobQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger);
     }
 }
