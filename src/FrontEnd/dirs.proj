@@ -8,6 +8,7 @@
     <ProjectReference Include="EnvironmentManager\dirs.proj" />
     <ProjectReference Include="FrontEndWebApi\dirs.proj" />
     <ProjectReference Include="LiveShareWorkspace\dirs.proj" />
+    <ProjectReference Include="LiveShareAuthentication\dirs.proj" />
     <ProjectReference Include="UserProfile\dirs.proj" />
   </ItemGroup>
 

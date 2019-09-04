@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\..\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing\Billing.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
     <ProjectReference Include="..\..\Src\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />

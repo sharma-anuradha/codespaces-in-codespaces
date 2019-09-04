@@ -7,6 +7,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBr
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Xunit;
 
@@ -20,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         private readonly MockClientWorkspaceRepository workspaceRepository;
         private readonly IAccountManager accountManager;
         private readonly IBillingEventManager billingEventManager;
+        private readonly MockClientAuthRepository authRepository;
         private readonly IResourceBrokerResourcesHttpContract resourceBroker;
         private readonly CloudEnvironmentManager environmentManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
@@ -46,6 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             this.accountManager = new AccountManager(this.accountRepository);
             this.billingEventManager = new BillingEventManager(this.billingEventRepository);
             this.workspaceRepository = new MockClientWorkspaceRepository();
+            this.authRepository = new MockClientAuthRepository(); 
             this.resourceBroker = new MockResourceBrokerClient();
 
             this.environmentManager = new CloudEnvironmentManager(
@@ -53,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
                 this.resourceBroker,
                 this.workspaceRepository,
                 this.accountManager,
+                this.authRepository,
                 this.billingEventManager);
         }
 

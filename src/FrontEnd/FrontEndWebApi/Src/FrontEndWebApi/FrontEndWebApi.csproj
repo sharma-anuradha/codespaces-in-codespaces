@@ -29,9 +29,10 @@
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
     <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj" />
-    <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
-    <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile\UserProfile.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile\UserProfile.csproj" />
   </ItemGroup>
 
   <ItemGroup>

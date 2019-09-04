@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <param name="callbackUri">The callback uri.</param>
         /// <param name="accessToken">The user access token.</param>
         /// <returns>A dictionary of environment variables.</returns>
-        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, Uri serviceUri, Uri callbackUri, string accessToken)
+        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, Uri serviceUri, Uri callbackUri, string accessToken, string cascadeToken)
         {
             var result = new Dictionary<string, string>();
 
@@ -43,6 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 // Variables for session bootstrap
                 new EnvVarSessionCallback(cloudEnvironment, callbackUri),
                 new EnvVarSessionToken(accessToken),
+                new EnvVarSessionCascadeToken(cascadeToken),
                 new EnvVarSessionId(cloudEnvironment),
                 
                 // Variables for personalization
@@ -363,7 +364,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     }
 
     /// <summary>
-    /// Generate the session id environment variable.
+    /// Generate the session cascade token.
+    /// </summary>
+    public class EnvVarSessionCascadeToken : EnvironmentVariableStrategy
+    {
+        private readonly string cascadeToken;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnvVarSessionCascadeToken"/> class.
+        /// </summary>
+        /// <param name="cascadeToken">The access token.</param>
+        public EnvVarSessionCascadeToken(string cascadeToken)
+            : base(null) => this.cascadeToken = cascadeToken;
+
+        /// <inheritdoc/>
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            return new Tuple<string, string>(EnvironmentVariableConstants.SessionCascadeToken, this.cascadeToken);
+        }
+    }
+
+    /// <summary>
+    /// Generate the sesison id environment variable.
     /// </summary>
     public class EnvVarSessionId : EnvironmentVariableStrategy
     {

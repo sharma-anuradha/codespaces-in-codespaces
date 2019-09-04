@@ -24,6 +24,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
@@ -156,7 +157,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     {
                         options.BaseAddress = ValidationUtil.IsRequired(appSettings.VSLiveShareApiEndpoint, nameof(appSettings.VSLiveShareApiEndpoint));
                     },
-                    appSettings.UseMocksForLocalDevelopment);
+                    appSettings.UseMocksForLocalDevelopment)
+                .AddLiveshareAuthProvider(
+                    options =>
+                    {
+                        options.BaseAddress = ValidationUtil.IsRequired(appSettings.VSLiveShareApiEndpoint, nameof(appSettings.VSLiveShareApiEndpoint));
+                    });
 
             // Add the back-end http client and specific http rest clients.
             services.AddBackEndHttpClient(

@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -30,24 +31,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
         /// <param name="accountManager">The account manager.</param>
+        /// <param name="authRepository">The Live Share authentication repository</param>
         /// <param name="billingEventManager">The billing event manager.</param>
         public CloudEnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
             IWorkspaceRepository workspaceRepository,
             IAccountManager accountManager,
+            IAuthRepository authRepository,
             IBillingEventManager billingEventManager)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             AccountManager = Requires.NotNull(accountManager, nameof(accountManager));
+            AuthRepository = Requires.NotNull(authRepository, nameof(authRepository));
             BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
 
         private IWorkspaceRepository WorkspaceRepository { get; }
+
+        private IAuthRepository AuthRepository { get; }
 
         private IResourceBrokerResourcesHttpContract ResourceBrokerClient { get; }
 
@@ -76,6 +82,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 // Validate input
                 UnauthorizedUtil.IsRequired(currentUserId);
                 UnauthorizedUtil.IsRequired(accessToken);
+
+                var cascadeToken = await AuthRepository.ExchangeToken(accessToken);
+                UnauthorizedUtil.IsRequired(cascadeToken);
+
                 ValidationUtil.IsRequired(cloudEnvironment.SkuName, nameof(cloudEnvironment.SkuName));
                 ValidationUtil.IsTrue(
                     cloudEnvironment.Location != default,
@@ -168,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 // Kick off start-compute before returning.
                 var callbackUri = new Uri(string.Format(callbackUriFormat, cloudEnvironment.Id));
-                await StartCompute(cloudEnvironment, serviceUri, callbackUri, accessToken, logger);
+                await StartCompute(cloudEnvironment, serviceUri, callbackUri, accessToken, cascadeToken, logger);
 
                 logger.AddDuration(duration)
                     .AddCloudEnvironment(cloudEnvironment)
@@ -460,6 +470,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Uri serviceUri,
             Uri callbackUri,
             string accessToken,
+            string cascadeToken,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
@@ -470,13 +481,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(callbackUri, nameof(callbackUri));
             Requires.Argument(callbackUri.IsAbsoluteUri, nameof(callbackUri), "Must be an absolute URI.");
             Requires.NotNullOrEmpty(accessToken, nameof(accessToken));
+            Requires.NotNullOrEmpty(cascadeToken, nameof(cascadeToken));
 
             // Construct the start-compute environment variables
             var environmentVariables = EnvironmentVariableGenerator.Generate(
                 cloudEnvironment,
                 serviceUri,
                 callbackUri,
-                accessToken);
+                accessToken,
+                cascadeToken);
 
             await ResourceBrokerClient.StartComputeAsync(
                 cloudEnvironment.Compute.ResourceId,

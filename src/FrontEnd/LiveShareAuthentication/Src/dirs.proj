@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="LiveShareAuthentication\LiveShareAuthentication.csproj" />
+    <ProjectReference Include="LiveShareAuthentication.Contracts\LiveShareAuthentication.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

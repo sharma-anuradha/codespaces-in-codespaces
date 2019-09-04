@@ -59,6 +59,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Billing", "Billing", "{1792
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "..\..\Common\Src\Common\Common.csproj", "{C5CC91C3-2EBD-4F8E-A957-5CF162B4C9BA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LiveShareAuthentication", "LiveShareAuthentication", "{F991780B-48E0-4DDA-A1EB-7B9F15A8B4B1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveshareAuthentication", "..\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj", "{6778C974-03E8-4A51-B5D5-A9230E0607D1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveShareAuthentication.Contracts", "..\LiveShareAuthentication\Src\LiveShareAuthentication.Contracts\LiveShareAuthentication.Contracts.csproj", "{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -309,6 +315,30 @@ Global
 		{C5CC91C3-2EBD-4F8E-A957-5CF162B4C9BA}.Release|x64.Build.0 = Release|Any CPU
 		{C5CC91C3-2EBD-4F8E-A957-5CF162B4C9BA}.Release|x86.ActiveCfg = Release|Any CPU
 		{C5CC91C3-2EBD-4F8E-A957-5CF162B4C9BA}.Release|x86.Build.0 = Release|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Debug|x64.Build.0 = Debug|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Debug|x86.Build.0 = Debug|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Release|x64.ActiveCfg = Release|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Release|x64.Build.0 = Release|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Release|x86.ActiveCfg = Release|Any CPU
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1}.Release|x86.Build.0 = Release|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Debug|x64.Build.0 = Debug|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Debug|x86.Build.0 = Debug|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Release|x64.ActiveCfg = Release|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Release|x64.Build.0 = Release|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Release|x86.ActiveCfg = Release|Any CPU
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -334,6 +364,8 @@ Global
 		{46E1261B-9C62-4483-93BD-0262D9372354} = {1792D873-3AD4-4599-B658-C19B7B8243F6}
 		{65C2BFAA-3667-4CE0-AD1D-DC2C8E856FC0} = {1792D873-3AD4-4599-B658-C19B7B8243F6}
 		{C5CC91C3-2EBD-4F8E-A957-5CF162B4C9BA} = {374EFC31-C8DA-4CAB-9AA5-C6CE61AE5E74}
+		{6778C974-03E8-4A51-B5D5-A9230E0607D1} = {F991780B-48E0-4DDA-A1EB-7B9F15A8B4B1}
+		{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE} = {F991780B-48E0-4DDA-A1EB-7B9F15A8B4B1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {08547DC8-0754-4ECF-AE09-36E37DE7F820}
