@@ -96,6 +96,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// </summary>
     public abstract class EnvironmentVariableStrategy
     {
+        private static readonly List<string> schemas = new List<string> { "http", "https" };
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentVariableStrategy"/> class.
         /// </summary>
@@ -123,8 +125,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <returns>True if valid.</returns>
         protected static bool IsValidGitUrl(string url)
         {
-            string regex = @"((^https:\/\/github.com\/([a-zA-Z0-9-_~.\/])+)((.git)*|((tree|pull|commit|releases\/tag)([a-zA-Z0-9-_~.]+)+)))$";
-            return Regex.IsMatch(url, regex);
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                if (schemas.Contains(uri.Scheme))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
