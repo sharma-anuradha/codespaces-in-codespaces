@@ -27,3 +27,4 @@ yarn-error.log*
 # vscode
 /public/static/web-standalone/
 /src/product-vscode-web.json
+/src/package-vscode-web.json

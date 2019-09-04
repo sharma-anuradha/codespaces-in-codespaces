@@ -13,6 +13,12 @@ export interface IProductJSON {
 
 export const WEB_EMBED_PRODUCT_JSON = require('./product-vscode-web.json') as IProductJSON;
 
+export interface IPackageJson {
+    version: string;
+}
+
+export const WEB_EMBED_PACKAGE_JSON = require('./package-vscode-web.json') as IPackageJson;
+
 const VSLS_PROD_API_URI = 'https://prod.liveshare.vsengsaas.visualstudio.com';
 const VSLS_DEV_API_URI = '/vsls-api';
 

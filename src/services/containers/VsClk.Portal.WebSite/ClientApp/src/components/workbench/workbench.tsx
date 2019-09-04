@@ -4,7 +4,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import './workbench.css';
 
 import { trace } from '../../utils/trace';
-import { WEB_EMBED_PRODUCT_JSON } from '../../constants';
+import { WEB_EMBED_PRODUCT_JSON, WEB_EMBED_PACKAGE_JSON } from '../../constants';
 
 import { VSLSWebSocket, IWebSocketFactory } from '../../resolvers/vslsResolver';
 import { IToken } from '../../services/authService';
@@ -72,6 +72,10 @@ class WorkbenchView extends Component<WorkbenchProps> {
                 webviewEndpoint: `http://localhost`,
                 webSocketFactory: VSLSWebSocketFactory,
                 connectionToken: WEB_EMBED_PRODUCT_JSON.commit,
+                productConfiguration: { 
+                    version  : WEB_EMBED_PACKAGE_JSON.version, 
+                    ...WEB_EMBED_PRODUCT_JSON 
+                },
             };
 
             trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
