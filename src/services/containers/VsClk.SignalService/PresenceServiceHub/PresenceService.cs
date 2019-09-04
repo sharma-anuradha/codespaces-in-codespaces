@@ -231,7 +231,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodAddSubcriptions, contactReference, FormatProvider))
             {
-                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContacts.Select(c => ToTraceText(c.Id)))} propertyNames:{string.Join(",", propertyNames)}");
+                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContacts.Select(c => FormatContactId(c.Id)))} propertyNames:{string.Join(",", propertyNames)}");
             }
 
             var result = new Dictionary<string, Dictionary<string, object>>();
@@ -299,7 +299,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodSendMessage, contactReference, FormatProvider))
             {
-                Logger.LogDebug($"targetContact:{targetContactReference.ToString(FormatProvider)} messageType:{messageType} body:{body}");
+                Logger.LogDebug($"targetContact:{targetContactReference.ToString(FormatProvider)} messageType:{messageType} body:{Format("{0:K}", body)}");
             }
 
             // Note: next line will enforce the contact who attempt to send the message to be already registered
@@ -309,7 +309,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             if (this.stubContacts.TryGetValue(targetContactReference.Id, out var stubContact) && stubContact.ResolvedContact != null)
             {
                 var resolvedContactId = stubContact.ResolvedContact.ContactId;
-                Logger.LogDebug($"ResolvedContact -> targetContactId:{ToTraceText(targetContactReference.Id)} resolvedContactId:{resolvedContactId}");
+                Logger.LogDebug($"ResolvedContact -> targetContactId:{FormatContactId(targetContactReference.Id)} resolvedContactId:{resolvedContactId}");
                 targetContactReference = new ContactReference(resolvedContactId, targetContactReference.ConnectionId);
             }
 
@@ -439,9 +439,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             return matchingPropertes.MatchProperties(contactProperties);
         }
 
-        internal string ToTraceText(string s)
+        internal string FormatContactId(string s)
         {
-            return string.Format(FormatProvider, "{0:T}", s);
+            return Format("{0:T}", s);
         }
 
         internal Contact CreateContact(string contactId)
@@ -573,7 +573,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     if (ShouldLogException(error))
                     {
-                        Logger.LogError(error, $"Failed to update contact using backplane provider:{backplaneProvider.GetType().Name} contactId:{ToTraceText(contact.ContactId)}");
+                        Logger.LogError(error, $"Failed to update contact using backplane provider:{backplaneProvider.GetType().Name} contactId:{FormatContactId(contact.ContactId)}");
                     }
                 }
             }
@@ -616,7 +616,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     if (ShouldLogException(error))
                     {
-                        Logger.LogError(error, $"Failed to get contact data entity using backplane provider:{backplaneProvider.GetType().Name} contactId:{ToTraceText(contactId)}");
+                        Logger.LogError(error, $"Failed to get contact data entity using backplane provider:{backplaneProvider.GetType().Name} contactId:{FormatContactId(contactId)}");
                     }
                 }
             }

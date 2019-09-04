@@ -25,7 +25,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly ILogger logger;
         private readonly IHubFormatProvider formatProvider;
 
-        public PresenceServiceHub(PresenceService presenceService, ILogger<PresenceServiceHub> logger, IHubFormatProvider formatProvider)
+        public PresenceServiceHub(PresenceService presenceService, ILogger<PresenceServiceHub> logger, IHubFormatProvider formatProvider = null)
         {
             this.presenceService = presenceService ?? throw new ArgumentNullException(nameof(presenceService));
             this.logger = logger;

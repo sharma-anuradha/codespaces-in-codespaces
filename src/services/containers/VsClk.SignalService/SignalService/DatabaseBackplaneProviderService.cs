@@ -23,7 +23,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             PresenceService service,
             IStartup startup,
             ILogger<DatabaseBackplaneProvider> logger,
-            IHubFormatProvider formatProvider)
+            IHubFormatProvider formatProvider = null)
             : base(warmupServices, healthStatusProviders)
         {
             this.appSettingsProvider = appSettingsProvider;

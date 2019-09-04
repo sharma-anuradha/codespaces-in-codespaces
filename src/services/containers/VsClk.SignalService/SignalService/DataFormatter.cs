@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+    /// <summary>
+    /// This class will implement IHubFormatProvider interface to properly format sensitive data
+    /// </summary>
     public class DataFormatter : IHubFormatProvider, ICustomFormatter
     {
         private const int KeySizeInBytes = 256 / 8; // 256-bit key
@@ -49,6 +52,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                     return FormatText(value.ToString());
                 case 'E':
                     return FormatEmail(value.ToString());
+                case 'K':
+                    return "<token>";
                 default:
                     return value.ToString();
             }

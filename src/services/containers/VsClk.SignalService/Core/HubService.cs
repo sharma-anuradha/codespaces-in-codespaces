@@ -35,6 +35,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public IHubContextHost[] HubContextHosts { get; }
 
+        public string Format(string format, params object[] args)
+        {
+            return string.Format(FormatProvider, format, args);
+        }
+
         /// <summary>
         /// Return all client proxies from a connection id
         /// </summary>

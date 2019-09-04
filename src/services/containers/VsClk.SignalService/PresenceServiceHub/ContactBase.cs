@@ -113,7 +113,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             using (Logger.BeginSingleScope(
                 (LoggerScopeHelpers.MethodScope, PresenceHubMethods.UpdateValues)))
             {
-                Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{Service.ToTraceText(ContactId)} notifyProperties:{notifyProperties.ConvertToString(Service.FormatProvider)}");
+                Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{Service.FormatContactId(ContactId)} notifyProperties:{notifyProperties.ConvertToString(Service.FormatProvider)}");
             }
 
             return Task.WhenAll(Clients(connectionSubscription.Item1).Select(client => client.SendAsync(
@@ -133,7 +133,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             using (Logger.BeginContactReferenceScope(PresenceHubMethods.ReceiveMessage, contactReference, Service.FormatProvider))
             {
-                Logger.LogDebug($"Notify-> fromContact:{fromContactReference.ToString(Service.FormatProvider)} messageType:{messageType} body:{body}");
+                Logger.LogDebug($"Notify-> fromContact:{fromContactReference.ToString(Service.FormatProvider)} messageType:{messageType} body:{Service.Format("{0:K}", body)}");
             }
 
             return Task.WhenAll(Clients(contactReference.ConnectionId).Select(client => client.SendAsync(PresenceHubMethods.ReceiveMessage, contactReference, fromContactReference, messageType, body, cancellationToken)));

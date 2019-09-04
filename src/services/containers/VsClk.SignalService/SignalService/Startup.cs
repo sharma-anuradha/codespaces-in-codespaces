@@ -170,8 +170,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             services.AddSingleton((srvcProvider) => new PresenceServiceOptions() { Id = serviceId });
             services.AddSingleton((srvcProvider) => new RelayServiceOptions() { Id = serviceId });
 
-            // define our IHubFormatProvider
-            services.AddSingleton<IHubFormatProvider, DataFormatter>();
+            if (appSettingsConfiguration.GetValue<bool>(nameof(AppSettings.IsPrivacyEnabled)))
+            {
+                this.logger.LogInformation("Privacy enabled...");
+                // define our IHubFormatProvider
+                services.AddSingleton<IHubFormatProvider, DataFormatter>();
+            }
 
             // SignalR support services
             services.AddSingleton<PresenceService>();
