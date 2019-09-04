@@ -14,12 +14,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected HubService(
             string serviceId,
             IEnumerable<IHubContextHost> hubContextHosts,
-            ILogger logger)
+            ILogger logger,
+            IHubFormatProvider formatProvider)
         {
             Requires.NullOrNotNullElements(hubContextHosts, nameof(hubContextHosts));
 
             HubContextHosts = hubContextHosts.Where(hCtxt => hCtxt.HubType == typeof(THub)).ToArray();
             Logger = Requires.NotNull(logger, nameof(logger));
+            FormatProvider = formatProvider;
             ServiceId = serviceId;
 
             logger.LogInformation($"Service created with id:{ServiceId}");
@@ -28,6 +30,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         public string ServiceId { get; }
 
         public ILogger Logger { get; }
+
+        public IHubFormatProvider FormatProvider { get; }
 
         public IHubContextHost[] HubContextHosts { get; }
 

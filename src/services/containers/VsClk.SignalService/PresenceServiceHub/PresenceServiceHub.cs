@@ -23,11 +23,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private readonly PresenceService presenceService;
         private readonly ILogger logger;
+        private readonly IHubFormatProvider formatProvider;
 
-        public PresenceServiceHub(PresenceService presenceService, ILogger<PresenceServiceHub> logger)
+        public PresenceServiceHub(PresenceService presenceService, ILogger<PresenceServiceHub> logger, IHubFormatProvider formatProvider)
         {
             this.presenceService = presenceService ?? throw new ArgumentNullException(nameof(presenceService));
             this.logger = logger;
+            this.formatProvider = formatProvider;
         }
 
         public Task<Dictionary<string, IDictionary<string, PropertyValue>>> GetSelfConnectionsAsync(string contactId)
@@ -115,7 +117,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var contextRegisteredContactRef = GetContextContactReference(throwIfNotFound: false);
             if (!string.IsNullOrEmpty(contextRegisteredContactRef.Id))
             {
-                this.logger.LogDebug($"OnDisconnectedAsync contextRegisteredContactRef:{contextRegisteredContactRef}");
+                this.logger.LogDebug($"OnDisconnectedAsync contextRegisteredContactRef:{contextRegisteredContactRef.ToString(this.formatProvider)}");
                 await this.presenceService.UnregisterSelfContactAsync(
                     contextRegisteredContactRef,
                     (properties) => Task.Delay(TimeSpan.FromSeconds(DisconnectSubscriptionDelaySecs)),

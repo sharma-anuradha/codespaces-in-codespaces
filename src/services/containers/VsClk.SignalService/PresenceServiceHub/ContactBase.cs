@@ -16,8 +16,6 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     internal class ContactBase
     {
-        private readonly PresenceService service;
-
         /// <summary>
         /// Map of connection Id <-> subscriptions
         /// </summary>
@@ -25,7 +23,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public ContactBase(PresenceService service, string contactId)
         {
-            this.service = Requires.NotNull(service, nameof(service));
+            Service = Requires.NotNull(service, nameof(service));
             Requires.NotNullOrEmpty(contactId, nameof(contactId));
 
             ContactId = contactId;
@@ -40,6 +38,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// If this contact has any subscription
         /// </summary>
         public bool HasSubscriptions => this.connectionSubscriptions.Count > 0;
+
+        protected PresenceService Service { get; }
 
         /// <summary>
         /// Add a subscription properties to this instance
@@ -78,7 +78,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        protected ILogger Logger => this.service.Logger;
+        protected ILogger Logger => Service.Logger;
 
         /// <summary>
         /// Return all client proxies from a connection id
@@ -87,7 +87,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <returns></returns>
         protected IEnumerable<IClientProxy> Clients(string connectionId)
         {
-            return this.service.Clients(connectionId);
+            return Service.Clients(connectionId);
         }
 
         protected Task NotifyConnectionChangedAsync(
@@ -113,7 +113,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             using (Logger.BeginSingleScope(
                 (LoggerScopeHelpers.MethodScope, PresenceHubMethods.UpdateValues)))
             {
-                Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{ContactId} notifyProperties:{notifyProperties.ConvertToString()}");
+                Logger.LogDebug($"Notify-> connectionSubscription:{connectionSubscription} selfConnectionId:{selfConnectionId} contactId:{Service.ToTraceText(ContactId)} notifyProperties:{notifyProperties.ConvertToString(Service.FormatProvider)}");
             }
 
             return Task.WhenAll(Clients(connectionSubscription.Item1).Select(client => client.SendAsync(
@@ -131,9 +131,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             object body,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(PresenceHubMethods.ReceiveMessage, contactReference))
+            using (Logger.BeginContactReferenceScope(PresenceHubMethods.ReceiveMessage, contactReference, Service.FormatProvider))
             {
-                Logger.LogDebug($"Notify-> fromContact:{fromContactReference} messageType:{messageType} body:{body}");
+                Logger.LogDebug($"Notify-> fromContact:{fromContactReference.ToString(Service.FormatProvider)} messageType:{messageType} body:{body}");
             }
 
             return Task.WhenAll(Clients(contactReference.ConnectionId).Select(client => client.SendAsync(PresenceHubMethods.ReceiveMessage, contactReference, fromContactReference, messageType, body, cancellationToken)));

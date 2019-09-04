@@ -13,14 +13,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
     /// </summary>
     internal static class DictionaryHelpers
     {
-        public static string ConvertToString(this IDictionary<string, object> properties)
+        public static string ConvertToString(this IDictionary<string, object> properties, IHubFormatProvider provider)
         {
             if (properties == null)
             {
                 return null;
             }
 
-            return string.Join("|", properties.Select(i => $"{i.Key}={i.Value}"));
+            return string.Join("|", properties.Select(i => $"{i.Key}={FormatValue(provider, i.Key, i.Value)}"));
         }
 
         public static bool MatchProperties(this IDictionary<string, object> matchingPropertes, IDictionary<string, object> allProperties)
@@ -54,6 +54,12 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             }
 
             return defaultValue;
+        }
+
+        private static string FormatValue(IHubFormatProvider provider, string propertyName,object value)
+        {
+            var format = provider?.GetPropertyFormat(propertyName);
+            return string.Format(provider, string.IsNullOrEmpty(format) ? "{0}" : $"{{0:{format}}}", value);
         }
     }
 }

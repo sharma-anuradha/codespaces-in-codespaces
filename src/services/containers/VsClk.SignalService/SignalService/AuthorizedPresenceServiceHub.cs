@@ -10,8 +10,8 @@ namespace Microsoft.VsCloudKernel.SignalService
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class AuthorizedPresenceServiceHub : PresenceServiceHub
     {
-        public AuthorizedPresenceServiceHub(PresenceService presenceService, ILogger<PresenceServiceHub> logger)
-            : base(presenceService, logger)
+        public AuthorizedPresenceServiceHub(PresenceService presenceService, ILogger<PresenceServiceHub> logger, IHubFormatProvider formatProvider)
+            : base(presenceService, logger, formatProvider)
         {
         }
 

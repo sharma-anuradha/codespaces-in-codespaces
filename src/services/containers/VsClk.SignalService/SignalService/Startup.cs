@@ -170,6 +170,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             services.AddSingleton((srvcProvider) => new PresenceServiceOptions() { Id = serviceId });
             services.AddSingleton((srvcProvider) => new RelayServiceOptions() { Id = serviceId });
 
+            // define our IHubFormatProvider
+            services.AddSingleton<IHubFormatProvider, DataFormatter>();
+
             // SignalR support services
             services.AddSingleton<PresenceService>();
             services.AddSingleton<RelayService>();

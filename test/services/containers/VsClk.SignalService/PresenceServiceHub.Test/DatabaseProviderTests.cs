@@ -30,6 +30,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                     AuthorizationKey = PrimaryKey
                 },
                 new Mock<ILogger<DatabaseBackplaneProvider>>().Object,
+                null,
                 true);
 
             await this.databaseBackplaneProvider.UpdateMetricsAsync("serviceId", null, default, default);

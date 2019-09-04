@@ -2,10 +2,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    ///  A contact reference entity
+    ///  A contact reference entity.
     /// </summary>
     public struct ContactReference
     {
@@ -17,18 +19,26 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// The contact id to refer
+        /// Gets or sets the contact id to refer.
         /// </summary>
         public string Id { get; set; }
 
         /// <summary>
-        /// The optional connection id on this contact
+        /// Gets or sets the optional connection id on this contact.
         /// </summary>
         public string ConnectionId { get; set; }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
-            return $"{{ Id:{Id} connectionId:{ConnectionId} }}";
+            return ToString(null);
+        }
+
+        public string ToString(IFormatProvider provider)
+        {
+            const string format = "{{ Id:{0:T} connectionId:{1} }}";
+
+            return string.Format(provider, format, Id, ConnectionId);
         }
     }
 }

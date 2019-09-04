@@ -24,6 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private readonly IHubProxy hubProxy;
         private readonly ConcurrentDictionary<string, RelayHubProxy> relayHubs = new ConcurrentDictionary<string, RelayHubProxy>();
+        private readonly IHubFormatProvider formatProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RelayServiceProxy"/> class.
@@ -31,9 +32,21 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="hubProxy">The hub proxy instance.</param>
         /// <param name="trace">Trace instance.</param>
         public RelayServiceProxy(IHubProxy hubProxy, TraceSource trace)
+            : this(hubProxy, trace, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RelayServiceProxy"/> class.
+        /// </summary>
+        /// <param name="hubProxy">The hub proxy instance.</param>
+        /// <param name="trace">Trace instance.</param>
+        /// <param name="formatProvider">Optional format provider.</param>
+        public RelayServiceProxy(IHubProxy hubProxy, TraceSource trace, IFormatProvider formatProvider)
         {
             this.hubProxy = Requires.NotNull(hubProxy, nameof(hubProxy));
             Requires.NotNull(trace, nameof(trace));
+            this.formatProvider = HubFormatProvider.Create(formatProvider);
 
             this.hubProxy.On(
                 RelayHubMethods.MethodReceiveData,
@@ -46,7 +59,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 var type = (string)args[3];
                 var data = (byte[])args[4];
 
-                trace.Verbose($"ReceiveData-> hubId:{hubId} from:{fromParticipantId} uniqueId:{uniqueId} type:{type} data-length:{data.Length}");
+                trace.Verbose($"ReceiveData-> hubId:{hubId} from:{fromParticipantId:T} uniqueId:{uniqueId} type:{type} data-length:{data.Length}");
                 if (this.relayHubs.TryGetValue(hubId, out var relayHubProxy))
                 {
                     relayHubProxy.OnReceiveData(fromParticipantId, uniqueId, type, data);
@@ -65,7 +78,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 var properties = (Dictionary<string, object>)args[2];
                 var changeType = (ParticipantChangeType)args[3];
 
-                trace.Verbose($"ParticipantChanged-> hubId:{hubId} participantId:{participantId} properties:{properties.ConvertToString()} changeType:{changeType}");
+                trace.Verbose($"ParticipantChanged-> hubId:{hubId} participantId:{participantId:T} properties:{properties.ConvertToString(this.formatProvider)} changeType:{changeType}");
                 if (this.relayHubs.TryGetValue(hubId, out var relayHubProxy))
                 {
                     relayHubProxy.OnParticipantChanged(participantId, properties, changeType);

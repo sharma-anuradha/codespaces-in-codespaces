@@ -25,6 +25,8 @@
       <Link>RelayServiceHub.Contracts\%(Filename)%(Extension)</Link>
     </Compile>
 
+    <Compile Include="$(ServiceRoot)\Core\IHubFormatProvider.cs" />
+    <Compile Include="$(ServiceRoot)\SignalService\FormatHelpers.cs" />
     <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
     <Compile Include="..\..\Shared\TraceSourceExtensions.cs" Link="Shared\TraceSourceExtensions.cs" />
   </ItemGroup>

@@ -45,8 +45,22 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <returns>Instance of the proxy</returns>
         public static T CreateHubProxy<T>(HubConnection hubConnection, TraceSource trace, bool useSignalRHub = false)
         {
+            return CreateHubProxy<T>(hubConnection, trace, null, useSignalRHub);
+        }
+
+        /// <summary>
+        /// Create a hub proxy of a type.
+        /// </summary>
+        /// <typeparam name="T">Type of the proxy to create.</typeparam>
+        /// <param name="hubConnection">The hub connection instance.</param>
+        /// <param name="trace">Trace instance.</param>
+        /// <param name="formatProvider">Optional format provider.</param>
+        /// <param name="useSignalRHub">If using the signalR hub</param>
+        /// <returns>Instance of the proxy</returns>
+        public static T CreateHubProxy<T>(HubConnection hubConnection, TraceSource trace, IFormatProvider formatProvider, bool useSignalRHub = false)
+        {
             var hubProxy = new HubProxy(hubConnection, useSignalRHub ? (string)typeof(T).GetField("HubName").GetValue(null) : null);
-            return (T)Activator.CreateInstance(typeof(T), hubProxy, trace);
+            return (T)Activator.CreateInstance(typeof(T), hubProxy, trace, formatProvider);
         }
 
         /// <inheritdoc/>

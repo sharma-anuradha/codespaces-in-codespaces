@@ -14,6 +14,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly PresenceService presenceService;
         private readonly IStartup startup;
         private readonly ILogger<DatabaseBackplaneProvider> logger;
+        private readonly IHubFormatProvider formatProvider;
 
         public DatabaseBackplaneProviderService(
             IList<IAsyncWarmup> warmupServices,
@@ -21,13 +22,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             IOptions<AppSettings> appSettingsProvider,
             PresenceService service,
             IStartup startup,
-            ILogger<DatabaseBackplaneProvider> logger)
+            ILogger<DatabaseBackplaneProvider> logger,
+            IHubFormatProvider formatProvider)
             : base(warmupServices, healthStatusProviders)
         {
             this.appSettingsProvider = appSettingsProvider;
             this.presenceService = service;
             this.startup = startup;
             this.logger = logger;
+            this.formatProvider = formatProvider;
         }
 
         private AppSettings AppSettings => this.appSettingsProvider.Value;
@@ -50,7 +53,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                             AuthorizationKey = authorizationKey,
                             IsProduction = !this.startup.IsDevelopmentEnv
                         },
-                        this.logger);
+                        this.logger,
+                        this.formatProvider);
                     this.presenceService.AddBackplaneProvider(databaseBackplaneProvider);
                 }
                 catch (Exception error)

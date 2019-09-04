@@ -56,19 +56,22 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private readonly DatabaseSettings databaseSettings;
         private readonly List<IChangeFeedProcessor> feedProcessors = new List<IChangeFeedProcessor>();
-        private ILogger<DatabaseBackplaneProvider> logger;
+        private readonly ILogger<DatabaseBackplaneProvider> logger;
+        private readonly IFormatProvider formatProvider;
         private DocumentCollection providerLeaseColletion;
 
         private HashSet<string> activeServices;
 
         private DatabaseBackplaneProvider(
             DatabaseSettings databaseSettings,
-            ILogger<DatabaseBackplaneProvider> logger)
+            ILogger<DatabaseBackplaneProvider> logger,
+            IFormatProvider formatProvider)
         {
             this.databaseSettings = Requires.NotNull(databaseSettings, nameof(databaseSettings));
             Requires.NotNullOrEmpty(databaseSettings.EndpointUrl, nameof(databaseSettings.EndpointUrl));
             Requires.NotNullOrEmpty(databaseSettings.AuthorizationKey, nameof(databaseSettings.AuthorizationKey));
             this.logger = Requires.NotNull(logger, nameof(logger));
+            this.formatProvider = formatProvider;
 
             // initialize document client
             Client = new DocumentClient(new Uri(databaseSettings.EndpointUrl), databaseSettings.AuthorizationKey,
@@ -83,9 +86,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             string serviceId,
             DatabaseSettings databaseSettings,
             ILogger<DatabaseBackplaneProvider> logger,
+            IFormatProvider formatProvider,
             bool deleteDabatase = false)
         {
-            var databaseBackplaneProvider = new DatabaseBackplaneProvider(databaseSettings, logger);
+            var databaseBackplaneProvider = new DatabaseBackplaneProvider(databaseSettings, logger, formatProvider);
 
             if (deleteDabatase)
             {
@@ -170,7 +174,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             using (this.logger.BeginSingleScope(
                 (LoggerScopeHelpers.MethodScope, MethodSendMessage)))
             {
-                this.logger.LogDebug($"contactId:{messageData.FromContact.Id} targetContactId:{messageData.TargetContact.Id}");
+                this.logger.LogDebug($"contactId:{ToTraceText(messageData.FromContact.Id)} targetContactId:{ToTraceText(messageData.TargetContact.Id)}");
             }
 
             var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, MessageCollectionId);
@@ -218,7 +222,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 (LoggerScopeHelpers.MethodScope, MethodUpdateContact),
                 (LoggerScopeHelpers.MethodPerfScope, (resonse.RequestLatency + contactDataDocumentInfo.Item2).Milliseconds)))
             {
-                this.logger.LogDebug($"contactId:{contactDataChanged.ContactId}");
+                this.logger.LogDebug($"contactId:{ToTraceText(contactDataChanged.ContactId)}");
             }
         }
 
@@ -269,7 +273,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 (LoggerScopeHelpers.MethodScope, MethodOnContactDocumentsChanged),
                 (LoggerScopeHelpers.MethodPerfScope, sw.ElapsedMilliseconds)))
             {
-                this.logger.LogDebug($"contactIds:{string.Join(",", docs.Select(d => d.Id))}");
+                this.logger.LogDebug($"contactIds:{string.Join(",", docs.Select(d => ToTraceText(d.Id)))}");
             }
 
         }
@@ -551,6 +555,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         private static Task<List<T>> ToListAsync<T>(IQueryable<T> query, CancellationToken token)
         {
             return ToListAsync(query.AsDocumentQuery(), token);
+        }
+
+        private string ToTraceText(string s)
+        {
+            return string.Format(this.formatProvider, "{0:T}", s);
         }
     }
     /// <summary>

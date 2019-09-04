@@ -331,7 +331,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             IEnumerable<string> affectedProperties,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodContactOnContactChanged, contactDataChanged.ContactId, contactDataChanged.ConnectionId))
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodContactOnContactChanged, contactDataChanged.ContactId, contactDataChanged.ConnectionId, Service.FormatProvider))
             {
                 Logger.LogDebug($"serviceId:{contactDataChanged.ServiceId} type:{contactDataChanged.Type}");
             }

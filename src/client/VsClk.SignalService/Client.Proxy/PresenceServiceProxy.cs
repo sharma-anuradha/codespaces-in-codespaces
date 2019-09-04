@@ -24,6 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         public const string HubName = "presenceServiceHub";
 
         private readonly IHubProxy hubProxy;
+        private readonly IHubFormatProvider formatProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PresenceServiceProxy"/> class.
@@ -31,9 +32,21 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="hubProxy">The hub proxy instance.</param>
         /// <param name="trace">Trace instance.</param>
         public PresenceServiceProxy(IHubProxy hubProxy, TraceSource trace)
+            : this(hubProxy, trace, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PresenceServiceProxy"/> class.
+        /// </summary>
+        /// <param name="hubProxy">The hub proxy instance.</param>
+        /// <param name="trace">Trace instance.</param>
+        /// <param name="formatProvider">Optional format provider.</param>
+        public PresenceServiceProxy(IHubProxy hubProxy, TraceSource trace, IFormatProvider formatProvider)
         {
             this.hubProxy = Requires.NotNull(hubProxy, nameof(hubProxy));
             Requires.NotNull(trace, nameof(trace));
+            this.formatProvider = HubFormatProvider.Create(formatProvider);
 
             this.hubProxy.On(
                 PresenceHubMethods.UpdateValues,
@@ -44,7 +57,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 var properties = (Dictionary<string, object>)args[1];
                 var targetConnectionId = (string)args[2];
 
-                trace.Verbose($"UpdateProperties-> contact:{contact} properties:{properties.ConvertToString()}");
+                trace.Verbose($"UpdateProperties-> contact:{ToString(contact)} properties:{properties.ConvertToString(this.formatProvider)}");
                 UpdateProperties?.Invoke(this, new UpdatePropertiesEventArgs(contact, properties, targetConnectionId));
                 return Task.CompletedTask;
             });
@@ -58,7 +71,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 var fromContact = (ContactReference)args[1];
                 var messageType = (string)args[2];
                 var body = (JToken)args[3];
-                trace.Verbose($"MessageReceived-> targetContact:{targetContact} fromContact:{fromContact} messageType:{messageType} body:{body}");
+                trace.Verbose($"MessageReceived-> targetContact:{ToString(targetContact)} fromContact:{ToString(fromContact)} messageType:{messageType} body:{body:K}");
                 MessageReceived?.Invoke(this, new ReceiveMessageEventArgs(targetContact, fromContact, messageType, body));
                 return Task.CompletedTask;
             });
@@ -70,7 +83,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             {
                 var contact = (ContactReference)args[0];
                 var changeType = (ConnectionChangeType)args[1];
-                trace.Verbose($"ConnectionChanged-> contact:{contact} changeType:{changeType}");
+                trace.Verbose($"ConnectionChanged-> contact:{ToString(contact)} changeType:{changeType}");
                 ConnectionChanged?.Invoke(this, new ConnectionChangedEventArgs(contact, changeType));
                 return Task.CompletedTask;
             });
@@ -159,10 +172,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             return result.ToPropertyDictionary();
         }
 
-        /// <inheritdoc/>
         private static Dictionary<string, Dictionary<string, PropertyValue>> ToConnectionsProperties(JObject jObject)
         {
             return ((IDictionary<string, JToken>)jObject).ToDictionary(kvp => kvp.Key, kvp => ((IDictionary<string, JToken>)kvp.Value).ToDictionary(kvp2 => kvp2.Key, kvp2 => kvp2.Value.ToObject<PropertyValue>()));
+        }
+
+        private string ToString(ContactReference contactReference)
+        {
+            return contactReference.ToString(this.formatProvider);
         }
     }
 }

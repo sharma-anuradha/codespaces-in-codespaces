@@ -52,7 +52,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }
 
             ++this.retries;
-            if (this.retries < 31)
+            if (this.retries < 16)
             {
                 this.pow = this.pow << 1; // m_pow = Pow(2, m_retries - 1)
             }

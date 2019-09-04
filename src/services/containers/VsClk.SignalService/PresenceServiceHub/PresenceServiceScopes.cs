@@ -23,16 +23,16 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string ContactScope = "Contact";
         public const string ConnectionScope = "Connection";
 
-        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, ContactReference contactReference)
+        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, ContactReference contactReference, IFormatProvider formatProvider)
         {
-            return BeginContactReferenceScope(logger, method, contactReference.Id, contactReference.ConnectionId);
+            return BeginContactReferenceScope(logger, method, contactReference.Id, contactReference.ConnectionId, formatProvider);
         }
 
-        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, string contactId, string connectionId)
+        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, string contactId, string connectionId, IFormatProvider formatProvider)
         {
             return logger.BeginScope(
                     (LoggerScopeHelpers.MethodScope, method),
-                    (ContactScope, contactId),
+                    (ContactScope, string.Format(formatProvider,"{0:T}", contactId)),
                     (ConnectionScope, connectionId));
         }
     }

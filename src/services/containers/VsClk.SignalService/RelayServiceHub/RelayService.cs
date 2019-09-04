@@ -25,8 +25,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         public RelayService(
             RelayServiceOptions options,
             IEnumerable<IHubContextHost> hubContextHosts,
-            ILogger<RelayService> logger)
-            : base(options.Id, hubContextHosts, logger)
+            ILogger<RelayService> logger,
+            IHubFormatProvider formatProvider = null)
+            : base(options.Id, hubContextHosts, logger, formatProvider)
         {
         }
 
@@ -68,7 +69,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             using (BeginHubScope(RelayServiceScopes.MethodJoinHub, hubId, connectionId))
             {
-                Logger.LogDebug($"properties:{properties.ConvertToString()}");
+                Logger.LogDebug($"properties:{properties.ConvertToString(FormatProvider)}");
             }
 
             var relayHub = GetRelayHub(hubId, createIfNotExists);

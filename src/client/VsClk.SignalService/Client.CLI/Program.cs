@@ -249,7 +249,7 @@ namespace LivesharePresenceClientTest
 
                 this.presenceServiceProxy.UpdateProperties += (s, e) =>
                 {
-                    Console.WriteLine($"->UpdateProperties from:{e.Contact} props:{e.Properties.ConvertToString()}");
+                    Console.WriteLine($"->UpdateProperties from:{e.Contact} props:{e.Properties.ConvertToString(null)}");
                 };
 
                 this.presenceServiceProxy.MessageReceived += (s, e) =>
@@ -282,7 +282,7 @@ namespace LivesharePresenceClientTest
                         }
 
                         var registerInfo = await this.presenceServiceProxy.RegisterSelfContactAsync(contactId, publishedProperties, CancellationToken.None);
-                        Console.WriteLine($"register info->{registerInfo.ConvertToString()}");
+                        Console.WriteLine($"register info->{registerInfo.ConvertToString(null)}");
                     }
                 };
             }
@@ -375,7 +375,7 @@ namespace LivesharePresenceClientTest
                         new ContactReference[] { new ContactReference(subscribeContactId, null) },
                         subscribeProperties,
                         CancellationToken.None);
-                    Console.WriteLine($"Add subscription for id:{subscribeContactId} properties:{string.Join(',', subscribeProperties)} result:{properties[subscribeContactId].ConvertToString()}");
+                    Console.WriteLine($"Add subscription for id:{subscribeContactId} properties:{string.Join(',', subscribeProperties)} result:{properties[subscribeContactId].ConvertToString(null)}");
                 }
                 else if (key == 'u')
                 {
@@ -402,7 +402,7 @@ namespace LivesharePresenceClientTest
                     {
                         foreach (var matchKvp in matchingContacts[0])
                         {
-                            Console.WriteLine($"Id:{matchKvp.Key} properties:{matchKvp.Value.ConvertToString()}");
+                            Console.WriteLine($"Id:{matchKvp.Key} properties:{matchKvp.Value.ConvertToString(null)}");
                         }
                     }
                 }
@@ -442,7 +442,7 @@ namespace LivesharePresenceClientTest
                     {
                         foreach (var match in searchResult)
                         {
-                            Console.WriteLine($"Id:{match.Key} properties:{match.Value.ConvertToString()}");
+                            Console.WriteLine($"Id:{match.Key} properties:{match.Value.ConvertToString(null)}");
                         }
                     }
                 }
@@ -537,7 +537,7 @@ namespace LivesharePresenceClientTest
 
                     foreach (var participant in this.currentRelayHubProxy.Participants)
                     {
-                        Console.WriteLine($"Participant id:{participant.Id} properties:{participant.Properties.ConvertToString()} isSelf:{participant.IsSelf}");
+                        Console.WriteLine($"Participant id:{participant.Id} properties:{participant.Properties.ConvertToString(null)} isSelf:{participant.IsSelf}");
                     }
 
                     this.currentRelayHubProxy.ReceiveData += (s, e) =>

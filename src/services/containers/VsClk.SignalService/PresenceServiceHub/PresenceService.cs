@@ -34,8 +34,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         public PresenceService(
             PresenceServiceOptions options,
             IEnumerable<IHubContextHost> hubContextHosts,
-            ILogger<PresenceService> logger)
-            : base(options.Id, hubContextHosts, logger)
+            ILogger<PresenceService> logger,
+            IHubFormatProvider formatProvider = null)
+            : base(options.Id, hubContextHosts, logger, formatProvider)
         {
         }
 
@@ -101,9 +102,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         public async Task RegisterSelfContactAsync(ContactReference contactRef, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
         {
             // Note: avoid telemetry for contact id's
-            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodRegisterSelfContact, contactRef))
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodRegisterSelfContact, contactRef, FormatProvider))
             {
-                Logger.LogInformation($"initialProperties:{initialProperties?.ConvertToString()}");
+                Logger.LogInformation($"initialProperties:{initialProperties?.ConvertToString(FormatProvider)}");
             }
 
             var registeredSelfContact = await GetOrCreateContactAsync(contactRef.Id, cancellationToken);
@@ -123,9 +124,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             bool useStubContact,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodRequestSubcriptions, contactRef))
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodRequestSubcriptions, contactRef, FormatProvider))
             {
-                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContactProperties.Select(d => d.ConvertToString()))} propertyNames:{string.Join(",", propertyNames)}");
+                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContactProperties.Select(d => d.ConvertToString(FormatProvider)))} propertyNames:{string.Join(",", propertyNames)}");
             }
 
             // placeholder for all our results that by default are null
@@ -228,9 +229,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             string[] propertyNames,
             CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodAddSubcriptions, contactReference))
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodAddSubcriptions, contactReference, FormatProvider))
             {
-                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContacts.Select(c => c.Id))} propertyNames:{string.Join(",", propertyNames)}");
+                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContacts.Select(c => ToTraceText(c.Id)))} propertyNames:{string.Join(",", propertyNames)}");
             }
 
             var result = new Dictionary<string, Dictionary<string, object>>();
@@ -249,11 +250,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public void RemoveSubscription(ContactReference contactReference, ContactReference[] targetContacts, CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodRemoveSubscription, contactReference))
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodRemoveSubscription, contactReference, FormatProvider))
             {
-                Logger.LogDebug($"targetContacts:{string.Join(",", targetContacts)}");
+                Logger.LogDebug($"targetContacts:{string.Join(",", targetContacts.Select(cr => cr.ToString(FormatProvider)))}");
             }
-
 
             var registeredSelfContact = GetRegisteredContact(contactReference.Id);
             registeredSelfContact.RemovedTargetContacts(contactReference.ConnectionId, targetContacts.Select(c => c.Id).ToArray());
@@ -276,9 +276,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdatePropertiesAsync(ContactReference contactReference, Dictionary<string, object> properties, CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodUpdateProperties, contactReference))
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodUpdateProperties, contactReference, FormatProvider))
             {
-                Logger.LogDebug($"properties:{properties.ConvertToString()}");
+                Logger.LogDebug($"properties:{properties.ConvertToString(FormatProvider)}");
             }
 
             var registeredSelfContact = GetRegisteredContact(contactReference.Id);
@@ -297,9 +297,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task SendMessageAsync(ContactReference contactReference, ContactReference targetContactReference, string messageType, object body, CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodSendMessage, contactReference))
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodSendMessage, contactReference, FormatProvider))
             {
-                Logger.LogDebug($"targetContact:{targetContactReference} messageType:{messageType} body:{body}");
+                Logger.LogDebug($"targetContact:{targetContactReference.ToString(FormatProvider)} messageType:{messageType} body:{body}");
             }
 
             // Note: next line will enforce the contact who attempt to send the message to be already registered
@@ -309,7 +309,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             if (this.stubContacts.TryGetValue(targetContactReference.Id, out var stubContact) && stubContact.ResolvedContact != null)
             {
                 var resolvedContactId = stubContact.ResolvedContact.ContactId;
-                Logger.LogDebug($"ResolvedContact -> targetContactId:{targetContactReference.Id} resolvedContactId:{resolvedContactId}");
+                Logger.LogDebug($"ResolvedContact -> targetContactId:{ToTraceText(targetContactReference.Id)} resolvedContactId:{resolvedContactId}");
                 targetContactReference = new ContactReference(resolvedContactId, targetContactReference.ConnectionId);
             }
 
@@ -330,7 +330,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UnregisterSelfContactAsync(ContactReference contactReference, Func<IEnumerable<string>, Task> affectedPropertiesTask, CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodUnregisterSelfContact, contactReference))
+            using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodUnregisterSelfContact, contactReference, FormatProvider))
             {
                 Logger.LogDebug($"Unregister self contact...");
             }
@@ -360,7 +360,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             using (Logger.BeginSingleScope(
                  (LoggerScopeHelpers.MethodScope, PresenceServiceScopes.MethodMatchContacts)))
             {
-                Logger.LogDebug($"matchingPropertes:[{string.Join(",", matchingPropertes.Select(a => a.ConvertToString()))}]");
+                Logger.LogDebug($"matchingPropertes:[{string.Join(",", matchingPropertes.Select(a => a.ConvertToString(FormatProvider)))}]");
             }
 
             var results = new Dictionary<string, Dictionary<string, object>>[matchingPropertes.Length];
@@ -437,6 +437,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             Dictionary<string, object> contactProperties)
         {
             return matchingPropertes.MatchProperties(contactProperties);
+        }
+
+        internal string ToTraceText(string s)
+        {
+            return string.Format(FormatProvider, "{0:T}", s);
         }
 
         internal Contact CreateContact(string contactId)
@@ -568,7 +573,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     if (ShouldLogException(error))
                     {
-                        Logger.LogError(error, $"Failed to update contact using backplane provider:{backplaneProvider.GetType().Name} contactId:{contact.ContactId}");
+                        Logger.LogError(error, $"Failed to update contact using backplane provider:{backplaneProvider.GetType().Name} contactId:{ToTraceText(contact.ContactId)}");
                     }
                 }
             }
@@ -611,7 +616,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     if (ShouldLogException(error))
                     {
-                        Logger.LogError(error, $"Failed to get contact data entity using backplane provider:{backplaneProvider.GetType().Name} contactId:{contactId}");
+                        Logger.LogError(error, $"Failed to get contact data entity using backplane provider:{backplaneProvider.GetType().Name} contactId:{ToTraceText(contactId)}");
                     }
                 }
             }
