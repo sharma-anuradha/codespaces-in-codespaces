@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
-import { Button } from 'office-ui-fabric-react/lib/Button';
+import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 
 import { signIn } from '../../actions/signIn';
@@ -29,13 +29,13 @@ class WelcomeView extends Component<WelcomeProps> {
             <div className='welcome-page'>
                 <div className='welcome-page__sign-in-buttons'>
                     <Label className='welcome-page__sign-in-label'>Something exciting</Label>
-                    <Button
+                    <DefaultButton
                         className='welcome-page__sign-in-button'
                         text='Sign up'
                         primary={true}
                         onClick={this.props.signIn}
                     />
-                    <Button
+                    <DefaultButton
                         className='welcome-page__sign-in-button'
                         text='Sign in'
                         onClick={this.props.signIn}
