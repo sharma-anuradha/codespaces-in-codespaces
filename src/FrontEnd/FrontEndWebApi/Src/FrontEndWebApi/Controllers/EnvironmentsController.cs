@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [ApiController]
     [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
     [FriendlyExceptionFilter]
-    [Route(ServiceConstants.EnvironmentsV1Route)]
+    [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName("environments_controller")]
     public class EnvironmentsController : ControllerBase /* TODO add this later IEnvironmentsHttpContract */
     {

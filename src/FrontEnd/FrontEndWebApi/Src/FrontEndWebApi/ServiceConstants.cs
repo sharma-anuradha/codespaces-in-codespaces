@@ -34,9 +34,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         public const string CurrentApiVersion = "v1";
 
         /// <summary>
-        /// The API route for the environments controller.
+        /// The default V1 route for any API controller.
         /// </summary>
-        public const string EnvironmentsV1Route = "api/v1/environments";
+        public const string ApiV1Route = "api/v1/[controller]";
 
         /// <summary>
         /// The environment variable that is set when we are running in a deployment in Azure.

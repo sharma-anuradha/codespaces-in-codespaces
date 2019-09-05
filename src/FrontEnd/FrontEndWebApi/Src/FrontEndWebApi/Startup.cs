@@ -108,14 +108,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 CommitId = appSettings.GitCommit,
             };
 
-            // For development, use the default CosmosDB region. Otherwise, when we are running in Azure,
-            // use the same region that we are deployed to.
-            string preferredCosmosDbRegion = null;
+            if (IsRunningInAzure() && appSettings.UseMocksForLocalDevelopment)
+            {
+                throw new InvalidOperationException("Cannot use mocks outside of local development");
+            }
+
+            // Add the current location provider
+            string currentLocationString = null;
             if (IsRunningInAzure())
             {
                 try
                 {
-                    preferredCosmosDbRegion = Retry
+                    currentLocationString = Retry
                         .DoAsync(async (attemptNumber) => await AzureInstanceMetadata.GetCurrentLocationAsync())
                         .GetAwaiter()
                         .GetResult();
@@ -128,13 +132,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                         { LoggingConstants.CommitId, loggingBaseValues.CommitId },
                     });
                     logger.AddExceptionInfo(e).LogError("error_querying_azure_region_from_instance_metadata");
+                    throw;
                 }
             }
 
-            if (IsRunningInAzure() && appSettings.UseMocksForLocalDevelopment)
-            {
-                throw new InvalidOperationException("Cannot use mocks outside of local development");
-            }
+            var currentLocation = IsRunningInAzure()
+                ? Enum.Parse<AzureLocation>(currentLocationString, ignoreCase: true)
+                : AzureLocation.WestUs2; // default to WestUs2 for local development
+            services.AddSingleton(new CurrentLocationProvider(currentLocation));
 
             // Add the account manager and the account management repository
             services.AddAccountManager(appSettings.UseMocksForLocalDevelopment);
@@ -209,7 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 options.HostUrl = appSettings.AzureCosmosDbHost;
                 options.AuthKey = appSettings.AzureCosmosDbAuthKey;
                 options.DatabaseId = appSettings.AzureCosmosDbDatabaseId;
-                options.PreferredLocation = preferredCosmosDbRegion;
+                options.PreferredLocation = currentLocationString;
             });
 
             // OpenAPI/swagger
