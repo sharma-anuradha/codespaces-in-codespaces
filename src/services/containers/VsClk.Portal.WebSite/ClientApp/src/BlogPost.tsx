@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
 export function BlogPost() {
     if (process.env.NODE_ENV === 'development') {
-        return <Redirect to='/environments' />;
+        return <Redirect to='/welcome' />;
     }
     useEffect(() => {
         window.location.replace(

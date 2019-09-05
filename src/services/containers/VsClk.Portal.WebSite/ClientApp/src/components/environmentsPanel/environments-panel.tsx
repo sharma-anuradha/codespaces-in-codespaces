@@ -6,13 +6,14 @@ import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 
 import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
-import { ApplicationState } from '../../reducers/rootReducer';
 
 import { EnvironmentCard } from '../environmentCard/environment-card';
 import { CreateEnvironmentPanel } from './create-environment-panel';
 
 import { createEnvironment } from '../../actions/createEnvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
+
+import { ApplicationState } from '../../reducers/rootReducer';
 
 import { clamp } from '../../utils/clamp';
 

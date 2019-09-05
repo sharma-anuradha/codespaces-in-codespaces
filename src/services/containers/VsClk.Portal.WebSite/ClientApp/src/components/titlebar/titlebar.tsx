@@ -1,27 +1,30 @@
-import React, { Component } from 'react';
-import './titlebar.css';
+import React from 'react';
+import { useSelector } from 'react-redux';
 
-import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
+import { Persona, PersonaSize } from 'office-ui-fabric-react/lib/Persona';
 import { Separator } from 'office-ui-fabric-react/lib/Separator';
 
-export interface TitleBarProps {}
+import { ApplicationState } from '../../reducers/rootReducer';
+import { defaultPhotoUrl } from '../../actions/getUserInfo';
 
-export class TitleBar extends Component<TitleBarProps> {
-    render() {
-        return (
-            <div className='vsonline-titlebar part'>
-                <div className='vsonline-titlebar__caption' aria-label='Visual Studio logo'>
-                    <div className='vsonline-titlebar__logo' />
-                    <Separator vertical className='vsonline-titlebar__separator' />
-                    <div className='vsonline-titlebar__caption-text'>Visual Studio Online</div>
-                </div>
-                <Persona
-                    className='titlebar__main-avatar'
-                    size={PersonaSize.size28}
-                    presence={PersonaPresence.online}
-                    imageUrl='https://avatars2.githubusercontent.com/u/199026?s=400&v=4'
-                />
+import './titlebar.css';
+
+export function TitleBar() {
+    const userInfo = useSelector((state: ApplicationState) => state.userInfo);
+    let photoUrl = (userInfo && userInfo.photoUrl) || defaultPhotoUrl;
+
+    return (
+        <div className='vsonline-titlebar part'>
+            <div className='vsonline-titlebar__caption' aria-label='Visual Studio logo'>
+                <div className='vsonline-titlebar__logo' />
+                <Separator vertical className='vsonline-titlebar__separator' />
+                <div className='vsonline-titlebar__caption-text'>Visual Studio Online</div>
             </div>
-        );
-    }
+            <Persona
+                className='titlebar__main-avatar'
+                size={PersonaSize.size28}
+                imageUrl={photoUrl}
+            />
+        </div>
+    );
 }

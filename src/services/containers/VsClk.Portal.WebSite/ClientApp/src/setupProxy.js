@@ -8,24 +8,20 @@ const https = require('https');
  */
 module.exports = (app) => {
     // Environment registration service
-    app.use((req, response, next) => {
+    app.use((_, response, next) => {
         response.setHeader('Service-Worker-Allowed', '/');
         next();
     });
 
+    // VSCode source maps
     app.use((req, res, next) => {
-        console.log('Handling: ', req.originalUrl);
-
         const workbenchBaseUrl = '/static/web-standalone/out/vs/workbench/';
         const sourcemapsHost = 'https://ticino.blob.core.windows.net/sourcemaps';
 
         if (req.originalUrl.startsWith(`${workbenchBaseUrl}${sourcemapsHost}`)) {
-            const request = https.get(
-                req.originalUrl.substr(workbenchBaseUrl.length),
-                (sourcemapResult) => {
-                    sourcemapResult.pipe(res);
-                }
-            );
+            https.get(req.originalUrl.substr(workbenchBaseUrl.length), (sourcemapResult) => {
+                sourcemapResult.pipe(res);
+            });
         } else {
             next();
         }

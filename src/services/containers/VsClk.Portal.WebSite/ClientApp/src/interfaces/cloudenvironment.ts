@@ -2,6 +2,8 @@ export interface CreateEnvironmentParameters {
     type?: 'cloudEnvironment' | 'staticEnvironment';
     friendlyName: string;
     gitRepositoryUrl?: string;
+    userName: string;
+    userEmail: string;
 }
 
 export enum StateInfo {

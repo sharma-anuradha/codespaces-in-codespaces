@@ -6,8 +6,14 @@ import {
     authenticated,
     test_setMockRequestFactory,
 } from '../../utils/testUtils';
-import { authService } from '../../services/authService';
+import * as Auth from '../../services/authService';
 import { defaultConfig, configurationEndpoint } from '../../services/configurationService';
+
+jest.mock('../getUserInfo', () => {
+    return {
+        getUserInfo: jest.fn().mockReturnValue({ mail: 'test@test.com', displayName: 'test' }),
+    };
+});
 
 describe('actions - init', () => {
     let store: MockStore;
@@ -17,9 +23,11 @@ describe('actions - init', () => {
     });
 
     it('succeeds', async () => {
-        jest.spyOn(authService, 'getCachedToken').mockReturnValue(
+        jest.spyOn(Auth.authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(authenticated.token)
         );
+        jest.spyOn(Auth, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
+
         test_setMockRequestFactory(
             createMockMakeRequestFactory({
                 responses: [
@@ -43,9 +51,10 @@ describe('actions - init', () => {
 
     it('uses the right configuration', async () => {
         const environmentRegistrationEndpoint = 'https://random.com/api/environment/registration';
-        jest.spyOn(authService, 'getCachedToken').mockReturnValue(
+        jest.spyOn(Auth.authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(authenticated.token)
         );
+        jest.spyOn(Auth, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
 
         const mockFetch = jest.fn().mockImplementation((url: string) => {
             if (url === configurationEndpoint) {
@@ -74,7 +83,8 @@ describe('actions - init', () => {
     });
 
     it('fails to get auth token', async () => {
-        jest.spyOn(authService, 'getCachedToken').mockReturnValue(Promise.resolve(undefined));
+        jest.spyOn(Auth.authService, 'getCachedToken').mockReturnValue(Promise.resolve(undefined));
+        jest.spyOn(Auth, 'acquireToken').mockReturnValue(Promise.resolve(undefined!));
 
         test_setMockRequestFactory(
             createMockMakeRequestFactory({
@@ -104,9 +114,10 @@ describe('actions - init', () => {
     });
 
     it('fails to fetch environments', async () => {
-        jest.spyOn(authService, 'getCachedToken').mockReturnValue(
+        jest.spyOn(Auth.authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(authenticated.token)
         );
+        jest.spyOn(Auth, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
 
         test_setMockRequestFactory(
             createMockMakeRequestFactory({

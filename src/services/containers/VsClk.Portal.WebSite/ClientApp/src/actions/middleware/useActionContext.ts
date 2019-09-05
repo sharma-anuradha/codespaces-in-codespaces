@@ -72,6 +72,10 @@ export class Context {
 type ContextFactory = () => Context;
 let contextFactory: ContextFactory = () => new Context();
 export function setContextFactory(factory: ContextFactory) {
+    if (process.env.NODE_ENV === 'test' && context) {
+        context.test_setApplicationState({});
+    }
+
     contextFactory = factory;
 
     recreateContext();
@@ -92,8 +96,10 @@ export function useActionContext() {
 export function recreateContext() {
     if (process.env.NODE_ENV === 'test' && context) {
         const makeRequest = context.makeRequest;
+        const stateOverride = (context as any).test_stateOverride;
         context = createContext();
         context.test_setMockRequestFactory(makeRequest);
+        context.test_setApplicationState(stateOverride);
 
         return context;
     }

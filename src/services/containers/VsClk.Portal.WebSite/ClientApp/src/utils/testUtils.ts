@@ -218,11 +218,15 @@ export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {
             },
             async blob(): Promise<Blob> {
                 await wait(delay);
-                throw new Error('MockResponse.arrayBuffer not implemented');
+                if (body && body instanceof Blob) {
+                    return body;
+                }
+
+                throw new Error('MockResponse.blob not implemented');
             },
             async formData(): Promise<FormData> {
                 await wait(delay);
-                throw new Error('MockResponse.arrayBuffer not implemented');
+                throw new Error('MockResponse.formData not implemented');
             },
         };
         return response;

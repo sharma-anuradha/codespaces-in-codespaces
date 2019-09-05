@@ -1,5 +1,12 @@
 import * as msal from 'msal';
+import { UserAgentApplication, AuthResponse } from 'msal';
 import jwtDecode from 'jwt-decode';
+import { trace as baseTrace } from '../utils/trace';
+
+const error = baseTrace.extend('authService:error');
+
+// tslint:disable-next-line: no-console
+error.log = console.log.bind(console);
 
 const SCOPES = ['openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'];
 
@@ -36,9 +43,9 @@ export const getTokenExpiration = (token: IToken): number => {
     return Math.floor(seconds);
 };
 
-class AuthService {
-    private clientApplication = new msal.UserAgentApplication(msalConfig);
+const clientApplication = new UserAgentApplication(msalConfig);
 
+class AuthService {
     private tokens: ITokensMemoryCache = {};
 
     public async signIn() {
@@ -46,7 +53,7 @@ class AuthService {
             scopes: SCOPES,
         };
 
-        await this.clientApplication.loginPopup(loginRequest);
+        await clientApplication.loginPopup(loginRequest);
         const token = await this.acquireToken();
 
         return token;
@@ -79,14 +86,14 @@ class AuthService {
                     return token;
                 }
             } catch (e) {
-                console.log('Parsing the LS record', e);
+                error('Parsing the LS record', e);
             }
         }
 
         try {
             return await this.acquireToken();
         } catch (e) {
-            console.log(e);
+            error(e);
         }
 
         return undefined;
@@ -111,32 +118,13 @@ class AuthService {
         };
 
         try {
-            const tokenResponse = await this.clientApplication.acquireTokenSilent(tokenRequest);
-
-            const token = this.tokenFromTokenResponse(tokenResponse);
+            const token = await acquireToken(tokenRequest.scopes);
             this.cacheToken(token);
 
             return token;
         } catch (e) {
             return undefined;
         }
-    }
-
-    private tokenFromTokenResponse(tokenResponse: msal.AuthResponse): IToken {
-        const { accessToken, account } = tokenResponse;
-
-        const jwtToken = jwtDecode(accessToken) as { exp: number };
-
-        const msTime = (jwtToken.exp - 10) * 1000;
-
-        const token = {
-            accessToken,
-            expiresOn: new Date(msTime),
-
-            account,
-        };
-
-        return token;
     }
 
     private cacheToken(token: IToken) {
@@ -152,9 +140,43 @@ class AuthService {
         localStorage.clear();
         localStorage.debug = debugSetting;
         this.tokens = {};
-        // localStorage.removeItem(LOCAL_STORAGE_KEY);
-        // this.clientApplication.logout();
     }
 }
 
 export const authService = new AuthService();
+
+export async function acquireToken(scopes: string[]) {
+    const tokenRequest = {
+        scopes,
+        authority: msalConfig.auth.authority,
+    };
+
+    let tokenResponse: AuthResponse;
+    try {
+        tokenResponse = await clientApplication.acquireTokenSilent(tokenRequest);
+    } catch (err) {
+        if (err.name === 'InteractionRequiredAuthError') {
+            tokenResponse = await clientApplication.acquireTokenPopup(tokenRequest);
+        } else {
+            throw err;
+        }
+    }
+
+    return tokenFromTokenResponse(tokenResponse);
+}
+
+function tokenFromTokenResponse(tokenResponse: AuthResponse): IToken {
+    const { accessToken, account } = tokenResponse;
+
+    const jwtToken = jwtDecode(accessToken) as { exp: number };
+    const msTime = (jwtToken.exp - 10) * 1000;
+
+    const token = {
+        accessToken,
+        expiresOn: new Date(msTime),
+
+        account,
+    };
+
+    return token;
+}

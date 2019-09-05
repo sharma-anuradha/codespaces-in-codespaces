@@ -20,14 +20,14 @@ async function request<TResult>(
     url: string,
     options: RequestInit,
     requestOptions?: undefined
-): Promise<TResult | undefined>;
+): Promise<TResult>;
 async function request<TResult>(
     url: string,
     options: RequestInit,
     requestOptions: Partial<Omit<RequestOptions, 'skipParsingResponse'>> & {
         skipParsingResponse: true;
     }
-): Promise<undefined>;
+): Promise<Response>;
 async function request<TResult>(
     url: string,
     options: RequestInit,
@@ -39,12 +39,12 @@ async function request<TResult>(
     url: string,
     options: RequestInit,
     requestOptions: Partial<RequestOptions>
-): Promise<TResult | undefined>;
+): Promise<TResult | Response>;
 async function request<TResult>(
     url: string,
     options: RequestInit,
     requestOptions: Partial<RequestOptions> = defaultRequestOptions
-): Promise<TResult | undefined> {
+): Promise<TResult | Response> {
     // Since in tests we are creating the config manually, empty url can slip
     if (process.env.NODE_ENV === 'test' && !url) {
         trace('Calling service with empty url.');
@@ -103,7 +103,7 @@ async function request<TResult>(
     }
 
     if (requestOptions.skipParsingResponse) {
-        return;
+        return response;
     }
 
     try {

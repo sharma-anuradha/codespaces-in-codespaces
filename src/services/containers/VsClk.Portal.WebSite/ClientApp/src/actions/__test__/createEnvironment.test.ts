@@ -12,12 +12,17 @@ import {
     createEnvironment,
     createEnvironmentActionType,
     createEnvironmentSuccessActionType,
-    CreateEnvironmentSuccessAction,
 } from '../createEnvironment';
+
 import { defaultConfig } from '../../services/configurationService';
 
 jest.mock('../pollEnvironment', () => {
     return { pollEnvironment: jest.fn().mockReturnValue({ type: 'mock.poll' }) };
+});
+jest.mock('../getUserInfo', () => {
+    return {
+        getUserInfo: jest.fn().mockReturnValue({ mail: 'test@test.com', displayName: 'test' }),
+    };
 });
 
 describe('createEnvironment', () => {

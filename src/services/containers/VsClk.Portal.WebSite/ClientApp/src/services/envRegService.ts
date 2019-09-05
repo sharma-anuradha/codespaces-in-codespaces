@@ -3,7 +3,6 @@ import {
     CreateEnvironmentParameters as CreateEnvironmentParametersBase,
 } from '../interfaces/cloudenvironment';
 
-import { createUniqueId } from '../dependencies';
 import { useWebClient } from '../actions/middleware/useWebClient';
 import { useActionContext } from '../actions/middleware/useActionContext';
 
@@ -47,23 +46,28 @@ export async function createEnvironment(
     }
 
     const { environmentRegistrationEndpoint } = configuration;
-    const webClient = useWebClient();
+    const {
+        friendlyName,
+        gitRepositoryUrl,
+        type = 'cloudEnvironment',
+        userEmail,
+        userName,
+    } = environment;
 
-    const { friendlyName, gitRepositoryUrl, type = 'cloudEnvironment' } = environment;
     const body = {
         type,
         friendlyName,
         seed: {
             type: gitRepositoryUrl ? 'git' : '',
             moniker: gitRepositoryUrl ? gitRepositoryUrl : '',
-            // TODO: Get git credentials for profile.
             gitConfig: {
-                userName: createUniqueId(),
-                userEmail: `test-cloudenv-${createUniqueId()}@outlook.com`,
+                userName,
+                userEmail,
             },
         },
     };
 
+    const webClient = useWebClient();
     return await webClient.post(environmentRegistrationEndpoint, body);
 }
 
