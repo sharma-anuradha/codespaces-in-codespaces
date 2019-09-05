@@ -1,4 +1,6 @@
 #!/bin/sh
+SCRIPT_PARAM_VMTOKEN=''
+echo $SCRIPT_PARAM_VMTOKEN > /.vmtoken
 echo "Updating packages ..."
 apt update
 apt upgrade -y

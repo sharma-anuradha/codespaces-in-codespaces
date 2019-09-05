@@ -7,33 +7,31 @@ using System.Text;
 
 namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 {
+    /// <summary>
+    /// Utility methods for loading certificates.
+    /// </summary>
     public class Certificates
     {
         /// <summary>
         /// Gets the private key contained in the bytes, extracts the private
         /// key, and returns it.
-        /// It supports both PEM and X509 containers in the byte array.
+        /// It supports X509 containers in the byte array.
         /// </summary>
+        /// <param name="certBytes">Raw cert bytes.</param>
+        /// <returns>Private Key.</returns>
         public static RSA GetRSAPrivateKey(byte[] certBytes)
         {
-            // try to decode the RSA private key assiming it's a PEM
-            if (RSAPrivateKeyDecoder.Decode(certBytes, out RSAParameters parameters))
-            {
-                var rsa = RSA.Create();
-                rsa.ImportParameters(parameters);
-                return rsa;
-            }
-
-            // that didn't work, so just assume we'll be loading an x509 with private key
             var cert = new X509Certificate2(certBytes);
             return cert.GetRSAPrivateKey();
         }
 
         /// <summary>
-        /// Gets the private key contained in the bytes, extracts the private
+        /// Gets the public key contained in the bytes, extracts the private
         /// key, and returns it.
-        /// It supports both PEM and X509 containers in the byte array.
+        /// It supports X509 containers in the byte array.
         /// </summary>
+        /// <param name="certBytes">Raw cert bytes.</param>
+        /// <returns>Public key.</returns>
         public static RSA GetRSAPublicKey(byte[] certBytes)
         {
             var cert = new X509Certificate2(certBytes);
@@ -43,6 +41,8 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         /// <summary>
         /// Generates a libtrust kid for the public key stored in the given file.
         /// </summary>
+        /// <param name="certBytes">Raw cert bytes.</param>
+        /// <returns>Key id for public key.</returns>
         public static string GenerateKidForPublicKey(byte[] certBytes)
         {
             return GenerateKidForPublicKey(GetRSAPublicKey(certBytes));
@@ -51,6 +51,8 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         /// <summary>
         /// Generates a libtrust kid for the provided public key.
         /// </summary>
+        /// <param name="cert">Public key.</param>
+        /// <returns>Key id for public kcy.</returns>
         public static string GenerateKidForPublicKey(RSA cert)
         {
             var rsa = cert.ExportParameters(false);
@@ -60,26 +62,26 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             // The certificate that Windows generates doesn't hash to the
             // same value that libtrust recognizes, so we regenerate a new public key
             // here so that it can be hashed to create the kid.
-            byte[] key = Asn.GenerateElementSequence(new byte[][]
+            var key = Asn.GenerateElementSequence(new byte[][]
             {
                 Asn.GenerateElementSequence(new byte[][]
                 {
                     // OID 1.2.840.113549.1.1.1: rsaEncryption
                     Asn.GenerateElementOid(new byte[] { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 }),
-                    Asn.GenerateElementNull()
+                    Asn.GenerateElementNull(),
                 }),
                 Asn.GenerateElementBitstring(
                     Asn.GenerateElementSequence(new byte[][]
                     {
                         Asn.GenerateElementInteger(rsa.Modulus),
-                        Asn.GenerateElementInteger(rsa.Exponent)
+                        Asn.GenerateElementInteger(rsa.Exponent),
                     })
-                )
+                ),
             });
 
             // https://github.com/docker/libtrust/blob/master/util.go#L194
-            byte[] sha = SHA256.Create().ComputeHash(key);
-            string b32 = Base32.ToBase32String(sha);
+            var sha = SHA256.Create().ComputeHash(key);
+            var b32 = Base32.ToBase32String(sha);
 
             var kid = new StringBuilder();
             for (int i = 0; i < 12; i++)

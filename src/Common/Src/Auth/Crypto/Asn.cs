@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             BitString = 0x03,
             Null = 0x05,
             Oid = 0x06,
-            Sequence = 0x30
+            Sequence = 0x30,
         }
 
         /// <summary>

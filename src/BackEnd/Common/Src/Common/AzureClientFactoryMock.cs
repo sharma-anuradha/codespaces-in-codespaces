@@ -30,6 +30,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return await Task.FromResult(Microsoft.Azure.Management.Fluent.Azure.Authenticate(credentials).WithSubscription(subscriptionId.ToString()));
         }
 
+        public async Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId)
+        {
+            return await GetAzureClientAsync(Guid.Parse(subscriptionId));
+        }
+
         public async Task<IComputeManagementClient> GetComputeManagementClient(Guid subscriptionId)
         {
             var credentials = SdkContext.AzureCredentialsFactory

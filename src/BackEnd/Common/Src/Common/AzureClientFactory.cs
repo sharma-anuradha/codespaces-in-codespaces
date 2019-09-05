@@ -45,23 +45,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
 
                 IServicePrincipal sp = azureSub.ServicePrincipal;
-                string azureAppId = sp.ClientId;
-                string azureAppKey = await sp.GetServicePrincipalClientSecret();
-                string azureTenant = sp.TenantId;
-                var creds = new AzureCredentialsFactory()
-                    .FromServicePrincipal(
-                        azureAppId,
-                        azureAppKey,
-                        azureTenant,
-                        AzureEnvironment.AzureGlobalCloud);
+                var azureAppId = sp.ClientId;
+                var azureAppKey = await sp.GetServicePrincipalClientSecret();
+                var azureTenant = sp.TenantId;
 
-                return Microsoft.Azure.Management.Fluent.Azure.Authenticate(creds)
-                    .WithSubscription(azureSubscriptionId);
+                return await GetAzureClientAsync(azureSubscriptionId, azureAppId, azureAppKey, azureTenant);
             }
             catch (InvalidOperationException ex)
             {
                 throw new AzureClientException(azureSubscriptionId, ex);
             }
+        }
+
+        public async Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId)
+        {
+            var creds = new AzureCredentialsFactory()
+                    .FromServicePrincipal(
+                        azureAppId,
+                        azureAppKey,
+                        azureTenantId,
+                        AzureEnvironment.AzureGlobalCloud);
+
+            return Microsoft.Azure.Management.Fluent.Azure.Authenticate(creds)
+                .WithSubscription(subscriptionId);
         }
 
         /// <inheritdoc/>

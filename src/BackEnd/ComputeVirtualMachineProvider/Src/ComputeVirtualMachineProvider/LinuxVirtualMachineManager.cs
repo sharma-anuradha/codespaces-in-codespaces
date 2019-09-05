@@ -17,6 +17,7 @@ using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
@@ -41,16 +42,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private const string DiskNameKey = "diskId";
         private const string VmNameKey = "vmName";
         private static readonly string VmTemplateJson = GetVmTemplate();
-        private static readonly string VmInitScript = GetCustomScript("vm_init.sh");
         private readonly IAzureClientFactory clientFactory;
+        private readonly IVSSaaSTokenProvider vmTokenProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LinuxVirtualMachineManager"/> class.
         /// </summary>
         /// <param name="clientFactory">Builds Azure clients.</param>
-        public LinuxVirtualMachineManager(IAzureClientFactory clientFactory)
+        /// <param name="vmTokenProvider">VM Toke provider.</param>
+        public LinuxVirtualMachineManager(IAzureClientFactory clientFactory, IVSSaaSTokenProvider vmTokenProvider)
         {
+            Requires.NotNull(clientFactory, nameof(clientFactory));
+            Requires.NotNull(vmTokenProvider, nameof(vmTokenProvider));
+
             this.clientFactory = clientFactory;
+            this.vmTokenProvider = vmTokenProvider;
         }
 
         /// <inheritdoc/>
@@ -58,11 +64,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             // create new VM resource name
             var resourceName = Guid.NewGuid().ToString();
+            var vmToken = CreateVmToken(resourceName);
+
             var parameters = new Dictionary<string, Dictionary<string, object>>()
             {
                 { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
                 { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } }, // TODO:: Make it more secure
-                { "vmSetupScript", new Dictionary<string, object>() { { Key, VmInitScript } } }, // TODO:: pipe from config, cloudinit script to deploy docker
+                { "vmSetupScript", new Dictionary<string, object>() { { Key, GetVmInitScript(vmToken) } } }, // TODO:: pipe from config, cloudinit script to deploy docker
                 { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
                 { "virtualMachineName", new Dictionary<string, object>() { { Key, resourceName} } },
                 { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
@@ -90,6 +98,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 logger.LogException("linux_virtual_machine_manager_begin_create_error", ex);
                 return (OperationState.Failed, default);
             }
+        }
+
+        private string CreateVmToken(string input)
+        {
+            return this.vmTokenProvider.Generate(input);
         }
 
         /// <inheritdoc/>
@@ -386,6 +399,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var envParams = JsonConvert.SerializeObject(input.VmInputParams);
             scriptString = scriptString.Replace("SCRIPT_PARAM_CONTAINER_ENV_VARS=''", $"SCRIPT_PARAM_CONTAINER_ENV_VARS='{envParams}'");
             return scriptString;
+        }
+
+        private string GetVmInitScript(string vmToken)
+        {
+            var initScript = GetCustomScript("vm_init.sh");
+            return initScript.Replace("SCRIPT_PARAM_VMTOKEN=''", $"SCRIPT_PARAM_VMTOKEN='{vmToken}'");
         }
 
         private static string GetEmbeddedResource(string resourceName)

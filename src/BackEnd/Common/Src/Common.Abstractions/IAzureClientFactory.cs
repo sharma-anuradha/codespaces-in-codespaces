@@ -23,6 +23,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
         Task<IAzure> GetAzureClientAsync(Guid subscriptionId);
 
         /// <summary>
+        /// Gets IAzure client, given relavant info.
+        /// </summary>
+        /// <param name="subscriptionId">Azure subscription id for the resource.</param>
+        /// <param name="azureAppId">Azure app id.</param>
+        /// <param name="azureAppKey">Azure app key.</param>
+        /// <param name="azureTenantId">Azure tenant id.</param>
+        /// <returns>Azure client.</returns>
+        Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId);
+
+        /// <summary>
         /// Get IComputeManagementClient client.
         /// </summary>
         /// <param name="subscriptionId">Azure subscription id for resource.</param>

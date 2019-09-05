@@ -52,5 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// Storage and Compute Providers.
         /// </summary>
         public bool UseMocksForResourceProviders { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether mock implementation should be used
+        /// for token providers.
+        /// </summary>
+        public bool UseMocksForTokenProviders { get; set; }
     }
 }

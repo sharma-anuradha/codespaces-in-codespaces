@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task Create_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
-            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
 
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
@@ -78,7 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task Create_Multiple_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();           
-            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
+
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
             AzureLocation location = testContext.Location;
@@ -109,7 +110,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task Start_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
-            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
+
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             var fileShareInfo = new ShareConnectionInfo("storageaccount1",
                                                        "accountkey",
@@ -137,7 +139,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             var logger = new DefaultLoggerFactory().New();
             var deleteTimer = Stopwatch.StartNew();
-            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath));
+            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
 
             var resourceName = Guid.Parse("8a1a3a88-e79f-4f8e-ac49-e7cad3d45376").ToString();

@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -205,6 +206,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Capacity Manager
             services.AddCapacityManager(
                 appSettings.UseMocksForExternalDependencies);
+
+            // Auth/Token Providers
+            // System Catalog
+            var certificateSettings = Configuration.GetSection("certificateSettings").Get<CertificateSettings>();
+            services.AddSingleton(certificateSettings);
+            services.AddVMTokenProvider(
+                appSettings);
 
             // OpenAPI/swagger services
             services.AddSwaggerGen(x =>

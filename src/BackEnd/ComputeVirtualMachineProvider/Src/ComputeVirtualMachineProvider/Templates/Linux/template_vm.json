@@ -1,7 +1,13 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "http://schema.management.azure.com/schemas/2019-03-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "adminPassword": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
     "location": {
       "type": "string"
     },
@@ -17,17 +23,11 @@
     "virtualMachineSize": {
       "type": "string"
     },
-    "adminUsername": {
-      "type": "string"
-    },
-    "adminPassword": {
-      "type": "string"
-    },
     // "customData": {
     //   "type": "secureString"
     // },
     "vmSetupScript": {
-      "type": "secureString"
+      "type": "securestring"
     }
   },
   "variables": {
@@ -140,7 +140,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2019-05-01",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
           ],
