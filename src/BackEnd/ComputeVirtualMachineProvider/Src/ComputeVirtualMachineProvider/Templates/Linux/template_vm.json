@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2019-03-01/deploymentTemplate.json#",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminPassword": {
@@ -23,9 +23,6 @@
     "virtualMachineSize": {
       "type": "string"
     },
-    // "customData": {
-    //   "type": "secureString"
-    // },
     "vmSetupScript": {
       "type": "securestring"
     }
@@ -34,7 +31,6 @@
     "diskName": "[concat(parameters('virtualMachineName'),'-disk')]",
     "nsgName": "[concat(parameters('virtualMachineName'),'-nsg')]",
     "vnetName": "[concat(parameters('virtualMachineName'),'-vnet')]",
-    "nicName": "[concat(parameters('virtualMachineName'),'-nic')]",
     "ipName": "[concat(parameters('virtualMachineName'),'-ip')]",
     "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
     "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks',variables('vnetName'))]",
@@ -140,7 +136,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2019-05-01",
+          "apiVersion": "2015-06-15",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
           ],
