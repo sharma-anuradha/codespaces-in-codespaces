@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             };
 
             // TODO:: Add correlation id
-            logger.FluentAddValue(nameof(result.AzureResourceInfo), result.AzureResourceInfo.Name)
+            logger.FluentAddValue(nameof(result.AzureResourceInfo), result.AzureResourceInfo?.Name)
                .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
                .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
                .FluentAddValue(nameof(result.Status), result.Status.ToString())
@@ -183,7 +183,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 resultContinuationToken = nextStageInput.ToJson();
             }
 
-            return (nextStageInput.AzureResourceInfo, resultState, resultContinuationToken);
+            return (nextStageInput?.AzureResourceInfo, resultState, resultContinuationToken);
         }
     }
 }

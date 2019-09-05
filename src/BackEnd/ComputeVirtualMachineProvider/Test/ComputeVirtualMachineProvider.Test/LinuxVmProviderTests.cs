@@ -55,11 +55,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Assert.NotNull(createDeploymentStatusInput.TrackingId);
             Assert.Equal(rgName, createDeploymentStatusInput.AzureResourceInfo.ResourceGroup);
             Assert.Equal(subscriptionId, createDeploymentStatusInput.AzureResourceInfo.SubscriptionId);
-
             VirtualMachineProviderCreateResult statusCheckResult = default;
             do
             {
                 await Task.Delay(500);
+                input = input.BuildNextInput(createResult.NextInput.ContinuationToken);
                 statusCheckResult = await computeProvider.CreateAsync(input, logger);
                 Assert.NotNull(statusCheckResult);
                 Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
@@ -142,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
 
-            var resourceName = Guid.Parse("8a1a3a88-e79f-4f8e-ac49-e7cad3d45376").ToString();
+            var resourceName = Guid.Parse("94207259-13b5-4753-90bc-50232f3ca2c9").ToString();
             var input = new VirtualMachineProviderDeleteInput
             {
                 AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceName),

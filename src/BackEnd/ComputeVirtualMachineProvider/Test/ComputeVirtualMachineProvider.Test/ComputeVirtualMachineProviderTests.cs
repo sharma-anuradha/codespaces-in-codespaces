@@ -45,6 +45,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         }
 
         [Fact]
+        public async Task VirtualMachine_Create_Initiate_Failed()
+        {
+            var logger = new DefaultLoggerFactory().New();
+            var deploymentManagerMoq = new Mock<IDeploymentManager>();
+            deploymentManagerMoq.Setup(x => x.BeginCreateComputeAsync(It.IsAny<VirtualMachineProviderCreateInput>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(
+                   Task.FromResult<(OperationState, NextStageInput)>(
+                    (OperationState.Failed, default)));
+            var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
+            VirtualMachineProviderCreateResult result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput(), logger);
+            Assert.NotNull(result);
+            Assert.Null(result.AzureResourceInfo);
+            Assert.Equal(OperationState.Failed, result.Status);
+            Assert.Null(result.NextInput);
+        }
+
+        [Fact]
         public async Task VirtualMachine_Continue_Create_InProgress()
         {
             var logger = new DefaultLoggerFactory().New();

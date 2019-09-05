@@ -65,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             try
             {
-                await azure.CreateIfNotExistsResourceGroupAsync(azureResourceGroup, azureRegion);
+                await azure.CreateResourceGroupIfNotExistsAsync(azureResourceGroup, azureRegion);
                 var storageAccountName = await GenerateStorageAccountName(azure, logger);
                 var storageAccount = await azure.StorageAccounts.Define(storageAccountName)
                     .WithRegion(azureRegion)

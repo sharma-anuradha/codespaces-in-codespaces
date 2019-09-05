@@ -4,4 +4,9 @@
     <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BackEnd\Common\Src\Common.Abstractions\Common.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\BackEnd\Common\Src\Common.Models\Common.Models.csproj" />
+  </ItemGroup>
+
 </Project>
