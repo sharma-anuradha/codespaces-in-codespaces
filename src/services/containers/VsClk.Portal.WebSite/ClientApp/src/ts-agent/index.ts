@@ -1,151 +1,229 @@
-import { WebClient } from './webClient';
-import { WorkspaceClient } from './workspaceClient';
-
-import * as vsls from './contracts/VSLS';
-
 import { CancellationToken } from 'vscode';
 import { SshChannel } from '@vs/vs-ssh';
+import { Disposable } from 'vscode-jsonrpc';
+
+import { WebClient } from './webClient';
+import { WorkspaceClient } from './workspaceClient';
+import * as vsls from './contracts/VSLS';
+import { SshChannelOpenner } from './sshChannelOpenner';
 
 import { trace } from '../utils/trace';
 import { Signal } from '../utils/signal';
-import { SshChannelOpenner } from './sshChannelOpenner';
 
 import { DEFAULT_EXTENSIONS, WEB_EMBED_PRODUCT_JSON, VSLS_API_URI } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 
 export class EnvConnector {
-    private isConnecting: boolean = false;
+    private initializeConnectionSignal?: Signal<any>;
+    private workspaceClient?: Signal<WorkspaceClient>;
+    private vscodeServer?: Signal<vsls.SharedServer>;
+    private vscodeServerPort?: Signal<number>;
 
-    private initializeConnectionSignal: Signal<any> = new Signal();
+    private disposables: Disposable[] = [];
+
+    constructor() {}
 
     private async startVscodeServer(workspaceClient: WorkspaceClient): Promise<number> {
-        const vscodeServerHostClient = workspaceClient.getServiceProxy<VSCodeServerHostService>(
-            VSCodeServerHostService
-        );
+        if (this.vscodeServerPort && !this.vscodeServerPort.isRejected) {
+            // This port will remain shared even if we lose connection.
+            return this.vscodeServerPort.promise;
+        }
+        this.vscodeServerPort = new Signal();
 
-        const options: VSCodeServerOptions = {
-            vsCodeCommit: WEB_EMBED_PRODUCT_JSON.commit,
-            quality: WEB_EMBED_PRODUCT_JSON.quality,
-            extensions: [...DEFAULT_EXTENSIONS],
-            telemetry: true,
-        };
+        try {
+            const vscodeServerHostClient = workspaceClient.getServiceProxy<VSCodeServerHostService>(
+                VSCodeServerHostService
+            );
 
-        trace(`Starting VSCode server: `, options);
+            const options: VSCodeServerOptions = {
+                vsCodeCommit: WEB_EMBED_PRODUCT_JSON.commit,
+                quality: WEB_EMBED_PRODUCT_JSON.quality,
+                extensions: [...DEFAULT_EXTENSIONS],
+                telemetry: true,
+            };
 
-        const remotePort = await vscodeServerHostClient.startRemoteServerAsync(options);
+            trace(`Starting VSCode server: `, options);
 
-        return remotePort;
+            const remotePort = await vscodeServerHostClient.startRemoteServerAsync(options);
+            this.vscodeServerPort.complete(remotePort);
+        } catch (err) {
+            this.vscodeServerPort.reject(err);
+        }
+
+        return this.vscodeServerPort.promise;
     }
 
     private async forwardVscodeServerPort(
         remotePort: number,
         workspaceClient: WorkspaceClient
     ): Promise<vsls.SharedServer> {
-        const serverSharingService = workspaceClient.getServiceProxy<vsls.ServerSharingService>(
-            vsls.ServerSharingService
-        );
-        const sharedServer = await serverSharingService.startSharingAsync(
-            remotePort,
-            'VSCodeServerInternal',
-            ''
-        );
-
-        return sharedServer;
-    }
-
-    public async ensureConnection(environmentInfo: ICloudEnvironment, accessToken: string) {
-        // if already `connecting` or `connected`, return the result
-        if (this.isConnecting) {
-            return await this.initializeConnectionSignal.promise;
+        if (this.vscodeServer && !this.vscodeServer.isRejected) {
+            return this.vscodeServer.promise;
         }
 
-        this.isConnecting = true;
+        this.vscodeServer = new Signal();
 
-        const { sessionId, sessionPath } = environmentInfo.connection;
+        try {
+            const serverSharingService = workspaceClient.getServiceProxy<vsls.ServerSharingService>(
+                vsls.ServerSharingService
+            );
+            serverSharingService.connection.onClose(() => {
+                trace('ServerSharingService closed.');
+                this.vscodeServer = undefined;
+            });
 
-        trace(`Live Share session id: ${sessionId}, workspace path: "${sessionPath}"`);
+            const sharedServer = await serverSharingService.startSharingAsync(
+                remotePort,
+                'VSCodeServerInternal',
+                ''
+            );
 
-        const webClient = new WebClient(VSLS_API_URI, accessToken);
+            this.vscodeServer.complete(sharedServer);
+        } catch (err) {
+            this.vscodeServer.reject(err);
+        }
 
-        const workspaceClient = new WorkspaceClient(webClient);
+        return this.vscodeServer.promise;
+    }
 
-        await workspaceClient.connect(sessionId);
-        await workspaceClient.authenticate();
-        await workspaceClient.join();
+    private async connectWorkspaceClient(
+        sessionId: string,
+        accessToken: string
+    ): Promise<WorkspaceClient> {
+        if (this.workspaceClient && !this.workspaceClient.isRejected) {
+            const workspaceClient = await this.workspaceClient.promise;
 
-        trace(`Connected to VSLS.`);
+            trace('Checking existing workspaceClient connection');
+            if (workspaceClient.sshSession && !workspaceClient.sshSession.isClosed) {
+                return workspaceClient;
+            }
 
-        const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
-            vsls.StreamManagerService
-        );
+            trace('workspaceClient connection was closed. Creating new connection.');
+        }
 
+        this.workspaceClient = new Signal();
+
+        try {
+            const webClient = new WebClient(VSLS_API_URI, accessToken);
+            const workspaceClient = new WorkspaceClient(webClient);
+
+            await workspaceClient.connect(sessionId);
+            await workspaceClient.authenticate();
+            await workspaceClient.join();
+
+            this.workspaceClient.complete(workspaceClient);
+        } catch (err) {
+            this.workspaceClient.reject(err);
+        }
+
+        return this.workspaceClient.promise;
+    }
+
+    private async getSharedVscodeServer(
+        workspaceClient: WorkspaceClient
+    ): Promise<vsls.SharedServer> {
         const port = await this.startVscodeServer(workspaceClient);
-
         trace(`Started VSCode server started on port [${port}].`);
 
         trace(`Forwarding the VSCode port [${port}].`);
-
         const vscodeServer = await this.forwardVscodeServerPort(port, workspaceClient);
 
-        trace(`Forwarded the VSCode [OK].`);
-
-        trace(`Creating the stream.`);
-
-        this.channelOpenner = workspaceClient.createServerStream(vscodeServer, streamManagerClient);
-
-        trace(`Stream created.`);
-
-        const result = {
-            sessionPath,
-            port,
-        };
-
-        this.initializeConnectionSignal.complete(result);
-
-        return result;
+        return vscodeServer;
     }
 
-    private channelOpenner!: SshChannelOpenner;
+    public cleanCachedConnection() {
+        this.initializeConnectionSignal = undefined;
+
+        this.dispose();
+    }
+
+    public async ensureConnection(
+        environmentInfo: ICloudEnvironment,
+        accessToken: string
+    ): Promise<{ sessionPath: string; port: number }> {
+        // if already `connecting` or `connected`, return the result
+        if (this.initializeConnectionSignal && !this.initializeConnectionSignal.isRejected) {
+            return await this.initializeConnectionSignal.promise;
+        }
+
+        this.initializeConnectionSignal = new Signal();
+
+        try {
+            const { sessionId, sessionPath } = environmentInfo.connection;
+
+            trace(`Live Share session id: ${sessionId}, workspace path: "${sessionPath}"`);
+            const workspaceClient = await this.connectWorkspaceClient(sessionId, accessToken);
+
+            const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
+                vsls.StreamManagerService
+            );
+            const vscodeServer = await this.getSharedVscodeServer(workspaceClient);
+
+            trace(`Creating the stream.`);
+            this.channelOpener = workspaceClient.createServerStream(
+                vscodeServer,
+                streamManagerClient
+            );
+
+            const result = {
+                sessionPath,
+                port: vscodeServer.sourcePort,
+            };
+
+            this.initializeConnectionSignal.complete(result);
+        } catch (err) {
+            trace(err);
+
+            this.initializeConnectionSignal.reject(err);
+        }
+
+        return this.initializeConnectionSignal.promise;
+    }
+
+    private channelOpener!: SshChannelOpenner;
 
     public sendHandshakeRequest(requestStr: string): Promise<SshChannel> {
-        return new Promise((resolve) => {
-            this.sendRequestInternal(requestStr, resolve);
-        });
+        trace('Sending handshake request');
+
+        return this.sendRequestInternal(requestStr);
     }
 
-    private async sendRequestInternal(
-        requestStr: string,
-        callback: (channel: SshChannel) => any
-    ): Promise<SshChannel> {
-        if (!this.channelOpenner) {
+    private async sendRequestInternal(requestStr: string): Promise<SshChannel> {
+        if (!this.channelOpener) {
             throw new Error('Initialize connection first to create the port forwarder.');
         }
 
-        trace('Openning SSH channel.');
-        const channel = await this.channelOpenner.openChannel();
+        const openedChannel = new Signal<SshChannel>();
 
-        const buf: Buffer = Buffer.from(requestStr);
+        try {
+            trace('Opening Ssh channel.');
+            const channel = await this.channelOpener.openChannel();
+            const dataReceivedHandler = channel.onDataReceived((e: Buffer) => {
+                // the first request on this channel  is for the handshake,
+                // ignore all other data messages as the consumer will set up its own listeners.
+                dataReceivedHandler.dispose();
 
-        trace(`Sending the request: \n${requestStr}\n`);
+                trace(`Response: \n${e.toString()}\n`);
+                channel.adjustWindow(e.length);
 
-        await channel.send(buf);
+                openedChannel.complete(channel);
+            });
 
-        let isOnce = false;
-        channel.onDataReceived((e: Buffer) => {
-            // the first request on this channel  is for the handshake,
-            // ignore all other data messages as the consumer will set up its own listeners.
-            if (isOnce) {
-                return;
-            }
+            this.disposables.push(dataReceivedHandler);
 
-            trace(`Response: \n${e.toString()}\n`);
+            trace(`Sending the request: \n${requestStr}\n`);
+            await channel.send(Buffer.from(requestStr));
+        } catch (err) {
+            trace('Failed to send request');
+            openedChannel.reject(err);
+        }
 
-            isOnce = true;
-            callback(channel);
-            channel.adjustWindow(e.length);
-        });
+        return openedChannel.promise;
+    }
 
-        return channel;
+    dispose() {
+        this.disposables.forEach((d) => d.dispose());
+        this.disposables = [];
     }
 }
 
@@ -156,7 +234,7 @@ export interface VSCodeServerOptions {
     telemetry: boolean;
 }
 
-// The VSCodeServerHost RPC interface is not yet autogenerated in VSLS.ts.
+// The VSCodeServerHost RPC interface is not yet auto-generated in VSLS.ts.
 export interface VSCodeServerHostService {
     startRemoteServerAsync(
         input: VSCodeServerOptions,

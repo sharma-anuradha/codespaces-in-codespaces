@@ -6,10 +6,30 @@ import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { bufferToArrayBuffer } from '../utils/bufferToArrayBuffer';
 import { trace as baseTrace } from '../utils/trace';
 
-const trace = baseTrace.extend('VSLSWebSocket:trace');
-trace.log =
+const verbose = baseTrace.extend('VSLSWebSocket:trace');
+verbose.log =
     // tslint:disable-next-line: no-console
     typeof console.debug === 'function' ? console.debug.bind(console) : console.log.bind(console);
+
+const logContent = baseTrace.extend('VSLSWebSocket:trace:content');
+logContent.log =
+    // tslint:disable-next-line: no-console
+    typeof console.debug === 'function' ? console.debug.bind(console) : console.log.bind(console);
+
+const info = baseTrace.extend('VSLSWebSocket:info');
+info.log =
+    // tslint:disable-next-line: no-console
+    console.info.bind(console);
+
+const warn = baseTrace.extend('VSLSWebSocket:warn');
+warn.log =
+    // tslint:disable-next-line: no-console
+    console.warn.bind(console);
+
+const error = baseTrace.extend('VSLSWebSocket:error');
+error.log =
+    // tslint:disable-next-line: no-console
+    console.warn.bind(console);
 
 const envConnector = new EnvConnector();
 
@@ -28,6 +48,8 @@ export interface IWebSocket {
 }
 
 export class VSLSWebSocket implements IWebSocket {
+    private id: number;
+
     private readonly _onData = new Emitter<ArrayBuffer>();
     public readonly onData: Event<ArrayBuffer> = this._onData.event;
 
@@ -37,25 +59,28 @@ export class VSLSWebSocket implements IWebSocket {
     private readonly _onClose = new Emitter<void>();
     public readonly onClose: Event<void> = this._onClose.event;
 
-    private readonly _onError = new Emitter<void>();
+    private readonly _onError = new Emitter<Error>();
     public readonly onError: Event<any> = this._onError.event;
 
     private static socketCnt: number = 0;
 
     private channel!: SshChannel;
 
+    private getWebSocketIdentifier() {
+        return `${this.id}:${this.url}`;
+    }
+
     public send(data: ArrayBuffer | ArrayBufferView) {
         const bufferData = Buffer.from(data as ArrayBuffer);
-        trace(
-            `Ssh channel [${VSLSWebSocket.socketCnt}][${
-                this.isChannelDisposed
-            }] send: \n${bufferData.toString()}\n`
-        );
+
+        verbose(`[${this.getWebSocketIdentifier()}] Ssh channel sending data.`);
+        logContent(`[${this.getWebSocketIdentifier()}]\n\n${bufferData.toString()}`);
+
         this.channel.send(bufferData);
     }
 
     public close() {
-        trace(`Ssh channel[${VSLSWebSocket.socketCnt}] closed by the VSCode shell.`);
+        info(`[${this.getWebSocketIdentifier()}] Ssh channel closed by VSCode.`);
         this.channel.session.close(
             SshDisconnectReason.byApplication,
             'Workbench requested to close the connection.'
@@ -65,19 +90,65 @@ export class VSLSWebSocket implements IWebSocket {
     private isChannelDisposed: boolean = false;
 
     constructor(
-        url: string,
+        private url: string,
         private accessToken: string,
         private environmentInfo: ICloudEnvironment
     ) {
+        this.id = VSLSWebSocket.socketCnt++;
         this.initializeChannel(url);
-        VSLSWebSocket.socketCnt++;
     }
 
-    private async initializeChannel(url: string) {
+    private async initializeChannel(url: string, retry = 3) {
         url = url.replace(/skipWebSocketFrames=false/gim, 'skipWebSocketFrames=true');
 
-        const delimiter = '\r\n';
+        let disposables = [];
 
+        try {
+            await envConnector.ensureConnection(this.environmentInfo, this.accessToken);
+            const channel = await envConnector.sendHandshakeRequest(
+                this.createHandshakeRequest(url)
+            );
+            disposables.push(channel);
+
+            disposables.unshift(
+                channel.onDataReceived((data: Buffer) => {
+                    verbose(`[${this.getWebSocketIdentifier()}] SSh channel received data.`);
+                    logContent(`[${this.getWebSocketIdentifier()}]\n\n${data.toString()}`);
+                    channel.adjustWindow(data.length);
+
+                    this._onData.fire(bufferToArrayBuffer(data));
+                })
+            );
+
+            disposables.push(
+                channel.onClosed(async () => {
+                    this.isChannelDisposed = true;
+                    verbose(`[${this.getWebSocketIdentifier()}] Ssh channel closed.`);
+
+                    this._onClose.fire();
+                })
+            );
+
+            verbose(`[${this.getWebSocketIdentifier()}] Ssh channel open.`);
+            this._onOpen.fire();
+            this.channel = channel;
+        } catch (err) {
+            error('[${this.getWebSocketIdentifier()}] Ssh channel failed to open.');
+            if (retry <= 0) {
+                this._onError.fire(err);
+
+                return;
+            }
+
+            envConnector.cleanCachedConnection();
+            disposables.forEach((d) => d.dispose());
+            disposables = [];
+
+            this.initializeChannel(url, retry - 1);
+        }
+    }
+
+    private createNonce() {
         const buffer = Buffer.alloc(16);
         for (let i = 0; i < 16; i++) {
             // This matches vscode expectations and isn't meant for security purposes.
@@ -86,34 +157,20 @@ export class VSLSWebSocket implements IWebSocket {
         }
         const nonce = buffer.toString('base64');
 
+        return nonce;
+    }
+
+    private createHandshakeRequest(url: string) {
+        const delimiter = '\r\n';
         const requestArray = [
             `GET ${url} HTTP/1.1`,
             `Connection: Upgrade`,
             `Upgrade: websocket`,
-            `Sec-WebSocket-Key: ${nonce}`,
+            `Sec-WebSocket-Key: ${this.createNonce()}`,
             delimiter,
         ];
-
         const requestString = requestArray.join(delimiter);
 
-        await envConnector.ensureConnection(this.environmentInfo, this.accessToken);
-        const channel: SshChannel = await envConnector.sendHandshakeRequest(requestString);
-
-        channel.onDataReceived((data: Buffer) => {
-            trace(`SSh channel [${VSLSWebSocket.socketCnt}] received: \n${data.toString()}\n`);
-            channel.adjustWindow(data.length);
-            this._onData.fire(bufferToArrayBuffer(data));
-        });
-
-        this._onOpen.fire();
-        trace(`**[${VSLSWebSocket.socketCnt}] Ssh channel open.`);
-
-        channel.onClosed(async () => {
-            this.isChannelDisposed = true;
-            trace(`[${VSLSWebSocket.socketCnt}] Ssh channel closed.`);
-            this._onClose.fire();
-        });
-
-        this.channel = channel;
+        return requestString;
     }
 }

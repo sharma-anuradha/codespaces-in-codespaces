@@ -6,12 +6,10 @@ import { openSshChannel } from './openSshChannel';
  * Opens SSH channel on stream.
  */
 export class SshChannelOpenner {
-    private localPortNumber: number | undefined;
-
     public constructor(
         public readonly sharedServer: vsls.SharedServer,
         private readonly sshSession: ssh.SshSession,
-        private readonly streamManagerClient: vsls.StreamManagerService,
+        private readonly streamManagerClient: vsls.StreamManagerService
     ) {}
 
     /**
@@ -20,7 +18,7 @@ export class SshChannelOpenner {
     public async openChannel(): Promise<ssh.SshChannel> {
         const streamId = await this.streamManagerClient.getStreamAsync(
             this.sharedServer.streamName,
-            this.sharedServer.streamCondition,
+            this.sharedServer.streamCondition
         );
 
         return await openSshChannel(this.sshSession, streamId);

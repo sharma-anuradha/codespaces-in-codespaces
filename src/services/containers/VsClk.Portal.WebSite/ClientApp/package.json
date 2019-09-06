@@ -5,7 +5,7 @@
   "readme": "README.md",
   "dependencies": {
     "@uifabric/fluent-theme": "^7.0.4",
-    "@vs/vs-ssh": "^1.0.63",
+    "@vs/vs-ssh": "^1.0.70",
     "cross-env": "^5.2.0",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0",
@@ -51,7 +51,7 @@
     "postinstall": "node scripts/npm/postinstall.js",
     "start": "run-p start:portal start:webpack-dev-server",
     "start:webpack-dev-server": "rimraf ./build && react-app-rewired start",
-    "start:portal": "cd .. && dotnet run --launch-profile Local",
+    "start:portal": "dotnet run --launch-profile Local --project ..",
     "start:ssl": "rimraf ./build && cross-env HTTPS=true react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",

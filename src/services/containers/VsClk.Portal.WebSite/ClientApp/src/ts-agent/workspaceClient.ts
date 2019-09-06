@@ -7,11 +7,13 @@ import { SshChannelOpenner } from './sshChannelOpenner';
 import { trace } from '../utils/trace';
 
 const packageJson = {
-    "name": "sw-port-tunnel",
-    "displayName": "Service Worker Port Tunnel",
-    "description": "Port forwarding thru the Service Worker",
-    "version": "0.1.0-dev",
+    name: 'sw-port-tunnel',
+    displayName: 'Service Worker Port Tunnel',
+    description: 'Port forwarding thru the Service Worker',
+    version: '0.1.0-dev',
 };
+
+type RpcProxyFor<T> = T & RpcProxy;
 
 export class WorkspaceClient {
     private workspaceInfo?: WorkspaceInfo;
@@ -60,7 +62,7 @@ export class WorkspaceClient {
 
         this.sshSession = new ssh.SshClientSession(
             this.socketStream,
-            new ssh.SshSessionConfiguration(),
+            new ssh.SshSessionConfiguration()
         );
 
         // The client authenticates over SSH using the workspace session token.
@@ -112,7 +114,7 @@ export class WorkspaceClient {
             this.rpcConnection.listen();
 
             const configClient = this.getServiceProxy<vsls.ConfigurationService>(
-                vsls.ConfigurationService,
+                vsls.ConfigurationService
             );
             const hostVersionInfo = await configClient.exchangeVersionsAsync(
                 {},
@@ -120,7 +122,7 @@ export class WorkspaceClient {
                     // TODO: Report VS Code applicationName / applicationVersion
                     extensionName: packageJson.name,
                     extensionVersion: packageJson.version,
-                },
+                }
             );
             trace('Host version: ' + JSON.stringify(hostVersionInfo));
         }
@@ -145,21 +147,20 @@ export class WorkspaceClient {
         }
     }
 
-    public getServiceProxy<T>(serviceInfo: vsls.ServiceInfo<T>): T {
-        return RpcProxy.create<T>(serviceInfo, this.rpcConnection!);
+    public getServiceProxy<T>(serviceInfo: vsls.ServiceInfo<T>): RpcProxyFor<T> {
+        return RpcProxy.create<T>(serviceInfo, this.rpcConnection!) as RpcProxyFor<T>;
     }
 
-    public createServerStream(server: vsls.SharedServer, streamManagerClient: vsls.StreamManagerService) {
-        return new SshChannelOpenner(
-            server,
-            this.sshSession!,
-            streamManagerClient,
-        );
+    public createServerStream(
+        server: vsls.SharedServer,
+        streamManagerClient: vsls.StreamManagerService
+    ) {
+        return new SshChannelOpenner(server, this.sshSession!, streamManagerClient);
     }
 
     public async getSharedServers(): Promise<vsls.SharedServer[]> {
         const serverSharingClient = await this.getServiceProxy<vsls.ServerSharingService>(
-            vsls.ServerSharingService,
+            vsls.ServerSharingService
         );
         const sharedServers: vsls.SharedServer[] = await serverSharingClient.getSharedServersAsync();
         let servers: vsls.SharedServer[] = [];

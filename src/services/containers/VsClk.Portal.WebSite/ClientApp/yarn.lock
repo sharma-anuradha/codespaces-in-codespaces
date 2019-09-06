@@ -1305,10 +1305,10 @@
     office-ui-fabric-react "^7.11.0"
     tslib "^1.7.1"
 
-"@vs/vs-ssh@^1.0.63":
-  version "1.0.67"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-1.0.67.tgz#c367831c9ca2a8b88d0f46a38c7aa95bbc8eed4a"
-  integrity sha1-w2eDHJyiqLiND0ajjHqpW7yO7Uo=
+"@vs/vs-ssh@^1.0.70":
+  version "1.0.70"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-1.0.70.tgz#39ee70f7af6e295a87decb7b1f73b063f27149e5"
+  integrity sha1-Oe5w969uKVqH3st7H3OwY/JxSeU=
   dependencies:
     buffer "^5.2.1"
     debug "^4.1.1"
