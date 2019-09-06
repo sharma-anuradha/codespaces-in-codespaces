@@ -75,16 +75,22 @@ export const defaultPhotoUrl = 'https://graph.microsoft.com/v1.0/me/photos/48x48
 async function fetchMyPhoto(token: IToken) {
     const webClient = useWebClient();
 
-    const response = await webClient.request(
-        defaultPhotoUrl,
-        {
-            headers: {
-                Authorization: `Bearer ${token.accessToken}`,
+    try {
+        const response = await webClient.request(
+            defaultPhotoUrl,
+            {
+                headers: {
+                    Authorization: `Bearer ${token.accessToken}`,
+                },
             },
-        },
-        { skipParsingResponse: true }
-    );
-    const imageBlob = await response.blob();
+            { skipParsingResponse: true }
+        );    
+        const imageBlob = await response.blob();
 
-    return URL.createObjectURL(imageBlob);
+        return URL.createObjectURL(imageBlob);
+    } catch (err) {
+        // If the user doesn't have an image then that returns a 404 which results in an exception.
+        // Simply return empty string here so that it shows the default image.
+        return "";
+    } 
 }
