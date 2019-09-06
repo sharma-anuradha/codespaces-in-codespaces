@@ -5,7 +5,6 @@ import {
     createMockMakeRequestFactory,
     test_setApplicationState,
     authenticated,
-    getDispatchedAction,
 } from '../../utils/testUtils';
 
 import { getUserInfo, getUserInfoActionType, getUserInfoSuccessActionType } from '../getUserInfo';
@@ -24,7 +23,7 @@ describe('getUserInfo', () => {
         };
     });
     afterEach(() => {
-        URL.createObjectURL = undefined;
+        URL.createObjectURL = undefined!;
     });
 
     it('gets user info from graph', async () => {
