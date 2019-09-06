@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
@@ -16,7 +17,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
         /// This task should not throw as it is used solely to determine when warmup has completed.
         /// Instead, if the warmup does not succeed, the implementation should report that via the IHealthProvider.
         /// </summary>
+        /// <param name="logger">Target Logger.</param>
         /// <returns>A task that completes when the service is warmed up.</returns>
-        Task WarmupCompletedAsync();
+        Task WarmupCompletedAsync(IDiagnosticsLogger logger);
     }
 }

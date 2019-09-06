@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <summary>
         /// Gets or sets the reference id.
         /// </summary>
-        public Guid? ResourceId { get; set; }
+        public Guid ResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the target input.

@@ -2,8 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Hangfire;
-using Hangfire.MemoryStorage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
@@ -92,7 +90,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             }
 
             ConfigureDataServices(services, appSettings);
-            ConfigureQueue(services, appSettings);
 
             return services;
         }
@@ -119,24 +116,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
             // SDK provider
             services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
-        }
-
-        private static void ConfigureQueue(IServiceCollection services, AppSettings appSettings)
-        {
-            // Add Hangfire services.
-            services.AddHangfire(configuration => configuration
-                .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-                .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UseMemoryStorage());
-
-            // Add the processing server as IHostedService
-            services.AddHangfireServer(configuration => configuration
-                .Queues = new string[]
-                    {
-                        MockResourceJobQueueRepository.QueueName,
-                        "background-warmup-job-queue", // TODO: Need to fix this reference somehow
-                    });
         }
     }
 }

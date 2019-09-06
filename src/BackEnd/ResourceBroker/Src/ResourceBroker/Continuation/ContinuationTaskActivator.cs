@@ -40,11 +40,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private IContinuationTaskMessagePump MessagePump { get; }
 
         /// <inheritdoc/>
-        public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger)
+        public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger, Guid? systemId = null)
         {
+            var trackingId = Guid.NewGuid();
+            if (systemId == null)
+            {
+                systemId = trackingId;
+            }
+
             var payload = new ResourceJobQueuePayload
             {
-                TrackingId = Guid.NewGuid().ToString(),
+                SystemId = systemId.ToString(),
+                TrackingId = trackingId.ToString(),
                 Created = DateTime.UtcNow,
                 Status = null,
                 Input = input,
@@ -63,6 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid())
+                .FluentAddBaseValue("ContinuationPayloadSystemId", payload.SystemId)
                 .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
                 .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
                 .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)

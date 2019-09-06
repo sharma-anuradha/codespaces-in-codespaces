@@ -53,8 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 {
                     var targetMessageCacheLength = ContinuationTaskWorkerPoolManager.CurrentWorkerCount;
 
-                    logger.FluentAddValue("PumpCacheLevel", MessageCache.Count.ToString())
-                        .FluentAddValue("PumpTargetLevel", targetMessageCacheLength.ToString());
+                    logger.FluentAddValue("PumpPreCacheLevel", MessageCache.Count)
+                        .FluentAddValue("PumpTargetLevel", targetMessageCacheLength);
 
                     // Only trigger work when we have something to really do
                     if (MessageCache.Count < (targetMessageCacheLength / 2))
@@ -73,6 +73,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         }
                     }
 
+                    logger.FluentAddValue("PumpPostCacheLevel", MessageCache.Count);
+
                     return !Disposed;
                 });
         }
@@ -84,6 +86,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 $"{LogBaseName}_get_message",
                 async () =>
                 {
+                    logger.FluentAddValue("PumpPreCacheLevel", MessageCache.Count);
+
                     // Try and get from cache
                     var cacheHit = MessageCache.TryDequeue(out var message);
 
@@ -93,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     // matter if a cache miss happens here, its a nice to have not a necessity.
                     if (!cacheHit)
                     {
-                        message = await ResourceJobQueueRepository.GetAsync(logger);
+                        message = await ResourceJobQueueRepository.GetAsync(logger.WithValues(new LogValueSet()));
                     }
 
                     logger.FluentAddValue("PumpFoundMessage", message != null);
@@ -104,6 +108,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                             .FluentAddValue("PumpInsertionTime", message.InsertionTime)
                             .FluentAddValue("PumpNextVisibleTime", message.NextVisibleTime);
                     }
+
+                    logger.FluentAddValue("PumpPostCacheLevel", MessageCache.Count);
 
                     return message;
                 });

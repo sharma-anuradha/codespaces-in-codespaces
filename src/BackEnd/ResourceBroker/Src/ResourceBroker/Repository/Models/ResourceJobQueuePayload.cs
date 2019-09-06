@@ -41,6 +41,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Gets or sets the Id that can be used for tracking.
         /// </summary>
+        public string SystemId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Id that can be used for tracking.
+        /// </summary>
         public string TrackingId { get; set; }
 
         /// <summary>

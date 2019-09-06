@@ -7,8 +7,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="$(AspNetCoreDllVersions)" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="$(AspNetCoreDllVersions)" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.7.6" />
-    <PackageReference Include="Hangfire.MemoryStorage" Version="1.6.1" />
   </ItemGroup>
 
   <ItemGroup>

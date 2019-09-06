@@ -149,6 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
             var input = new CreateResourceContinuationInput()
             {
+                ResourceId = Guid.NewGuid(),
                 Location = resourcePoolDefinition.Location,
                 Type = resourcePoolDefinition.Type,
                 SkuName = resourcePoolDefinition.SkuName,

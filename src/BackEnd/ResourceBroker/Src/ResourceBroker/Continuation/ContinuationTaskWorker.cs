@@ -43,18 +43,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <inheritdoc/>
         public int ActivityLevel { get; private set; }
 
+        /// <inheritdoc/>
+        public bool Disposed { get; private set; }
+
         private IContinuationTaskActivator Activator { get; }
 
         private IContinuationTaskMessagePump MessagePump { get; }
 
         private Random Random { get; }
 
-        private bool Disposed { get; set; }
-
         /// <inheritdoc/>
         public Task<bool> RunAsync(IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(LogBaseName, () => InnerRunAsync(logger), swallowException: true);
+            return logger.OperationScopeAsync(LogBaseName, () => InnerRunAsync(logger), (e) => true, swallowException: true);
         }
 
         /// <inheritdoc/>
@@ -86,7 +87,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 // Pull out typed message content
                 var payload = GetTypedPayload(message);
 
-                logger.FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                logger.FluentAddBaseValue("ContinuationPayloadSystemId", payload.SystemId)
+                    .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
                     .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
                     .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
                     .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)

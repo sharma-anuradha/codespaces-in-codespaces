@@ -2,11 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 {
@@ -25,16 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             this IApplicationBuilder app, IHostingEnvironment env)
         {
             Requires.NotNull(app, nameof(app));
-
-            if (env.IsDevelopment())
-            {
-                var resourceBroker = app.ApplicationServices.GetService(typeof(IResourceBroker)) as IResourceBroker;
-                if (!(resourceBroker is MockResourceBroker))
-                {
-                    // Setup dashboard
-                    app.UseHangfireDashboard();
-                }
-            }
 
             return app;
         }

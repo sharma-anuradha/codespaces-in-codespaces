@@ -4,11 +4,13 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
@@ -33,19 +35,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
+        /// <param name="serviceCollection">Service Collection.</param>
         public DeleteResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
-            IResourceRepository resourceRepository)
-            : base(resourceRepository)
+            IResourceRepository resourceRepository,
+            IServiceProvider serviceProvider)
+            : base(serviceProvider, resourceRepository)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
         }
 
-        /// <summary>
-        /// Gets default target name for item on queue.
-        /// </summary>
+        /// <inheritdoc/>
+        protected override string LogBaseName => ResourceLoggingConstants.ContinuationTaskMessageHandlerDelete;
+
+        /// <inheritdoc/>
         protected override string DefaultTarget => DefaultQueueTarget;
 
         /// <inheritdoc/>

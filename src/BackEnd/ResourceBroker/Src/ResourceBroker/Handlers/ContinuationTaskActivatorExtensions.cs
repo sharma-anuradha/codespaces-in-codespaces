@@ -30,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var target = CreateResourceContinuationHandler.DefaultQueueTarget;
 
-            return await activator.Execute(target, input, logger);
+            return await activator.Execute(target, input, logger, input.ResourceId);
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
 
-            return await activator.Execute(target, input, logger);
+            return await activator.Execute(target, input, logger, input.ResourceId);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var target = DeleteResourceContinuationHandler.DefaultQueueTarget;
 
-            return await activator.Execute(target, input, logger);
+            return await activator.Execute(target, input, logger, input.ResourceId);
         }
     }
 }

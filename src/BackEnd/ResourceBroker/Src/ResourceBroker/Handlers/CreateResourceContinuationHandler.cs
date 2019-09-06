@@ -1,17 +1,19 @@
-﻿// <copyright file="DeleteResourceContinuationHandler.cs" company="Microsoft">
+﻿// <copyright file="CreateResourceContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -40,16 +42,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
+        /// <param name="subscriptionCatalog">Subscription Catalog to be used.</param>
         /// <param name="blobStorageClientProvider">Blob storage client provider.</param>
         /// <param name="resourceBrokerSettings">Resource broker settings.</param>
+        /// <param name="serviceCollection">Service Collection.</param>
         public CreateResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
             IAzureSubscriptionCatalog subscriptionCatalog,
             IBlobStorageClientProvider blobStorageClientProvider,
-            ResourceBrokerSettings resourceBrokerSettings)
-            : base(resourceRepository)
+            ResourceBrokerSettings resourceBrokerSettings,
+            IServiceProvider serviceProvider)
+            : base(serviceProvider, resourceRepository)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
@@ -58,9 +63,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             ResourceBrokerSettings = resourceBrokerSettings;
         }
 
-        /// <summary>
-        /// Gets default target name for item on queue.
-        /// </summary>
+        /// <inheritdoc/>
+        protected override string LogBaseName => ResourceLoggingConstants.ContinuationTaskMessageHandlerCreate;
+
+        /// <inheritdoc/>
         protected override string DefaultTarget => DefaultQueueTarget;
 
         /// <inheritdoc/>
@@ -76,46 +82,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
+        /// <inheritdoc/>
         protected override async Task<ResourceRecordRef> ObtainReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
         {
             // If we have a reference use that
-            if (input.ResourceId.HasValue)
+            if (string.IsNullOrEmpty(input.ContinuationToken))
             {
-                return await base.FetchReferenceAsync(input.ResourceId.Value, logger);
+                return await CreateReferenceAsync(input, logger);
             }
 
-            return await CreateReferenceAsync(input, logger);
+            return await FetchReferenceAsync(input.ResourceId, logger);
         }
-
-        private async Task<ResourceRecordRef> CreateReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
-        {
-            // Common properties
-            var id = Guid.NewGuid();
-            var time = DateTime.UtcNow;
-
-            // Core recrod
-            var record = new ResourceRecord
-            {
-                Id = id.ToString(),
-                Type = input.Type,
-                IsReady = false,
-                Ready = null,
-                IsAssigned = false,
-                Assigned = null,
-                Created = time,
-                Location = input.Location,
-                SkuName = input.SkuName,
-            };
-
-            // Update input
-            input.ResourceId = id;
-
-            // Create the actual record
-            record = await ResourceRepository.CreateAsync(record, logger);
-
-            return new ResourceRecordRef(record);
-        }
-
 
         /// <inheritdoc/>
         protected override Task<ContinuationInput> BuildOperationInputAsync(CreateResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
@@ -198,6 +175,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             return result;
+        }
+
+        private async Task<ResourceRecordRef> CreateReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
+        {
+            // Common properties
+            var id = input.ResourceId;
+            var time = DateTime.UtcNow;
+
+            // Core recrod
+            var record = new ResourceRecord
+            {
+                Id = id.ToString(),
+                Type = input.Type,
+                IsReady = false,
+                Ready = null,
+                IsAssigned = false,
+                Assigned = null,
+                Created = time,
+                Location = input.Location,
+                SkuName = input.SkuName,
+            };
+
+            // Update input
+            input.ResourceId = id;
+
+            // Create the actual record
+            record = await ResourceRepository.CreateAsync(record, logger);
+
+            return new ResourceRecordRef(record);
         }
     }
 }

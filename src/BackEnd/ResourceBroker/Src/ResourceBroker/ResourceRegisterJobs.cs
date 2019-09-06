@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -19,10 +20,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
         /// </summary>
-        /// <param name="watchPoolSizeJob">The <see cref="WatchPoolSizeJob"/> job that
-        /// needs to be run.</param>
-        /// <param name="continuationTaskMessagePump"></param>
-        /// <param name="continuationTaskWorkerPoolManager"></param>
+        /// <param name="watchPoolSizeJob">Target Watch Pool Size Job.</param>
+        /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump</param>
+        /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public ResourceRegisterJobs(
             IWatchPoolSizeTask watchPoolSizeJob,
@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private ITaskHelper TaskHelper { get; }
 
         /// <inheritdoc/>
-        public Task WarmupCompletedAsync()
+        public Task WarmupCompletedAsync(IDiagnosticsLogger logger)
         {
             // Job: Populate continuation message cache
             TaskHelper.RunBackgroundLoop(

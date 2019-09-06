@@ -5,10 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Hangfire;
-using Hangfire.States;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
@@ -22,36 +21,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Queue name that should be used.
         /// </summary>
-        public const string QueueName = "mock-resource-job-queue";
+        public const string LogBaseName = "mock_resource_job_queue";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MockResourceJobQueueRepository"/> class.
         /// </summary>
-        /// <param name="backgroundJobs">Background job queue to use.</param>
+        /// <param name="taskHelper">Target task helper.</param>
         /// <param name="resourceRepository">Resource repository.</param>
-        /// <param name="logger">Target logger.</param>
         public MockResourceJobQueueRepository(
-            IBackgroundJobClient backgroundJobs,
-            IResourceRepository resourceRepository,
-            IDiagnosticsLogger logger)
+            ITaskHelper taskHelper,
+            IResourceRepository resourceRepository)
         {
-            BackgroundJobs = backgroundJobs;
+            TaskHelper = taskHelper;
             ResourceRepository = resourceRepository;
-            Logger = logger;
-            EnqueuedState = new EnqueuedState
-                {
-                    Queue = QueueName,
-                };
             Random = new Random();
         }
 
-        private IBackgroundJobClient BackgroundJobs { get; }
+        private ITaskHelper TaskHelper { get; }
 
         private IResourceRepository ResourceRepository { get; }
 
         private IDiagnosticsLogger Logger { get; }
-
-        private IState EnqueuedState { get; }
 
         private Random Random { get; }
 
@@ -59,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public Task AddAsync(string id, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             // TODO: Delay add to queue if needed
-            BackgroundJobs.Create(() => AddToQueue(id), EnqueuedState);
+            TaskHelper.RunBackground(LogBaseName, (childLogger) => AddToQueue(id), null, TimeSpan.FromMilliseconds(250));
 
             return Task.CompletedTask;
         }

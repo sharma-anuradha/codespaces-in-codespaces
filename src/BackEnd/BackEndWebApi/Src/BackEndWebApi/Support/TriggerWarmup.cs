@@ -5,8 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Hangfire;
-using Hangfire.States;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
@@ -16,42 +14,37 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
 {
-
+    /// <summary>
+    /// Task that manages the initial warmup of the site.
+    /// </summary>
     public class TriggerWarmup : ITriggerWarmup
     {
-        public const string QueueName = "background-warmup-job-queue";
+        private const string LogBaseName = "site-warmup";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TriggerWarmup"/> class.
         /// </summary>
-        /// <param name="healthProvider"></param>
-        /// <param name="backgroundJobs"></param>
-        /// <param name="asyncWarmupServices"></param>
-        /// <param name="asyncBackgroundWarmupServices"></param>
-        /// <param name="loggerFactory"></param>
-        /// <param name="triggerWarmupState"></param>
+        /// <param name="healthProvider">Health provider.</param>
+        /// <param name="taskHelper">Task helper.</param>
+        /// <param name="asyncWarmupServices">List of warmup services.</param>
+        /// <param name="asyncBackgroundWarmupServices">List of background warmup services.</param>
         public TriggerWarmup(
              IHealthProvider healthProvider,
-             IBackgroundJobClient backgroundJobs,
+             ITaskHelper taskHelper,
              IEnumerable<IAsyncWarmup> asyncWarmupServices,
-             IEnumerable<IAsyncBackgroundWarmup> asyncBackgroundWarmupServices,
-             IDiagnosticsLoggerFactory loggerFactory,
-             TriggerWarmupState triggerWarmupState)
+             IEnumerable<IAsyncBackgroundWarmup> asyncBackgroundWarmupServices)
         {
             HealthProvider = healthProvider;
-            BackgroundJobs = backgroundJobs;
+            TaskHelper = taskHelper;
             AsyncWarmupServices = asyncWarmupServices;
             AsyncBackgroundWarmupServices = asyncBackgroundWarmupServices;
-            Logger = loggerFactory.New();
-            EnqueuedState = new EnqueuedState
-            {
-                Queue = QueueName,
-            };
-            TriggerWarmupState = triggerWarmupState;
+            TriggerWarmupState = StatusCodes.Status503ServiceUnavailable;
             WarmupTask = new Lazy<int>(
                 () =>
                 {
-                    BackgroundJobs.Create(() => WarmupServices(), EnqueuedState);
+                    TaskHelper.RunBackground(
+                        LogBaseName,
+                        (childLogger) => childLogger.OperationScopeAsync(LogBaseName, () => WarmupServicesAsync(childLogger), swallowException: true));
                     return 1;
                 });
         }
@@ -59,19 +52,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
 
         private IHealthProvider HealthProvider { get; }
 
-        private IBackgroundJobClient BackgroundJobs { get; }
+        private ITaskHelper TaskHelper { get; }
 
         private IEnumerable<IAsyncWarmup> AsyncWarmupServices { get; }
 
         private IEnumerable<IAsyncBackgroundWarmup> AsyncBackgroundWarmupServices { get; }
 
-        private IDiagnosticsLogger Logger;
-
-        private IState EnqueuedState { get; }
-
         private Lazy<int> WarmupTask { get; set; }
 
-        private TriggerWarmupState TriggerWarmupState { get; set; }
+        private int TriggerWarmupState { get; set; }
 
         /// <inheritdoc/>
         public int Start()
@@ -79,35 +68,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
             // Trigger task to run
             var result = WarmupTask.Value;
 
-            return TriggerWarmupState.Status;
+            return TriggerWarmupState;
         }
 
-        /// <summary>
-        /// Needs to be public due to HangFire.
-        /// </summary>
-        /// <returns>Task to be executed.</returns>
-        public async Task WarmupServices()
+        private async Task WarmupServicesAsync(IDiagnosticsLogger logger)
         {
-            var duration = Logger.StartDuration();
-
             // Trigger normal service warmup
             await NormalWarmupServices(AsyncWarmupServices);
 
             if (HealthProvider.IsHealthy)
             {
-                // Log the warmup success.
-                Logger.AddDuration(duration).LogInfo("warmup");
-
                 // Trigger delay service warmup
-                DelayedWarmupServices(AsyncBackgroundWarmupServices);
+                DelayedWarmupServices(AsyncBackgroundWarmupServices, logger);
 
-                TriggerWarmupState.Status = StatusCodes.Status200OK;
+                TriggerWarmupState = StatusCodes.Status200OK;
 
                 return;
             }
 
-            // Log the warmup error.
-            Logger.AddDuration(duration).LogError("warmup_error");
+            throw new Exception("Warmup failed to complete successfully.");
         }
 
         private async Task NormalWarmupServices(IEnumerable<IAsyncWarmup> services)
@@ -115,21 +94,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
             await WarmupUtility.WhenAllWarmupCompletedAsync(services);
         }
 
-        private void DelayedWarmupServices(IEnumerable<IAsyncBackgroundWarmup> services)
+        private void DelayedWarmupServices(IEnumerable<IAsyncBackgroundWarmup> services, IDiagnosticsLogger logger)
         {
             foreach (var service in services)
             {
-                try
-                {
-                    // Spawn out the tasks and run in parallel
-                    var result = BackgroundJobs.Create(() => service.WarmupCompletedAsync(), EnqueuedState);
-                }
-                catch (Exception e)
-                {
-                    // Swallow warmup exceptions.
-                    // These should be logged by the implementation.
-                    // Failures should go to HealthProvider.MarkUnhealthy
-                }
+                // Spawn out the tasks and run in parallel
+                var logName = $"{LogBaseName}_delayed_warmup";
+                TaskHelper.RunBackground(
+                    logName,
+                    (childLogger) => childLogger.OperationScopeAsync(logName, () => service.WarmupCompletedAsync(childLogger), swallowException: true),
+                    logger);
             }
         }
     }

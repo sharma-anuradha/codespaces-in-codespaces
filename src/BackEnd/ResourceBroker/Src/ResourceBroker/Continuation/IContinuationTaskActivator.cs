@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -21,8 +22,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <param name="name">Target handler name for the job.</param>
         /// <param name="input">Input that should be passed to the handler.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="systemId">Custom tracking id if provided.</param>
         /// <returns>Result of the execution.</returns>
-        Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger);
+        Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger, Guid? systemId = null);
 
         /// <summary>
         /// Carries on the next continuation.

@@ -4,11 +4,11 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -23,16 +23,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
     public abstract class BaseContinuationTaskMessageHandler<TI> : IContinuationTaskMessageHandler
         where TI : ContinuationOperationInput
     {
-        private const string LogBaseName = ResourceLoggingConstants.BaseContinuationTaskMessageHandler;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseContinuationTaskMessageHandler{TI}"/> class.
         /// </summary>
+        /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
-        public BaseContinuationTaskMessageHandler(IResourceRepository resourceRepository)
+        public BaseContinuationTaskMessageHandler(
+            IServiceProvider serviceProvider,
+            IResourceRepository resourceRepository)
         {
+            ServiceProvider = serviceProvider;
             ResourceRepository = resourceRepository;
         }
+
+        /// <summary>
+        /// Gets the log base name.
+        /// </summary>
+        protected abstract string LogBaseName { get; }
 
         /// <summary>
         /// Gets the default Target that this handler targets.
@@ -43,6 +51,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// Gets the Operation that this handler is designed to manage.
         /// </summary>
         protected abstract ResourceOperation Operation { get; }
+
+        /// <summary>
+        /// Gets the Service Provider.
+        /// </summary>
+        protected IServiceProvider ServiceProvider { get; }
 
         /// <summary>
         /// Gets the Resource Repository.
@@ -82,8 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 throw new NotSupportedException($"Provided input type does not match target input type - {typeof(TI)}");
             }
 
-            logger.FluentAddValue("HandlerResourceId", typedInput.ResourceId)
-                .FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
+            logger.FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
 
             // Core continue
             var result = await InnerContinue(typedInput, logger);
@@ -169,15 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <returns>Reference objec to the resource.</returns>
         protected virtual async Task<ResourceRecordRef> ObtainReferenceAsync(TI input, IDiagnosticsLogger logger)
         {
-            // Ensure that we have a resource to work with
-            if (!input.ResourceId.HasValue)
-            {
-                logger.FluentAddValue("HandlerFailedToFindInputResourceId", true);
-
-                throw new NotSupportedException("Resource id hasn't been been provided when obtaining resource record.");
-            }
-
-            return await FetchReferenceAsync(input.ResourceId.Value, logger);
+            return await FetchReferenceAsync(input.ResourceId, logger);
         }
 
         /// <summary>
@@ -278,8 +282,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Update compute to deal with the fact that storage has bombed
             await SaveStatusAsync(record, OperationState.Failed, logger);
 
+            // Trigger cleanup post fail
+            await FailOperationCleanupAsync(input.ResourceId, "ProviderHandledFailure", logger);
+
             // Setup failed result
             return new ContinuationResult { Status = OperationState.Failed };
+        }
+
+        /// <summary>
+        /// Cleanup action that should run post the a failure/exception occurring.
+        /// </summary>
+        /// <param name="resourceId">Target resource that should be deleted.</param>
+        /// <param name="reason">Reason/cause for the delete.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Returns the core </returns>
+        protected async virtual Task FailOperationCleanupAsync(Guid resourceId, string reason, IDiagnosticsLogger logger)
+        {
+            var shouldTriggerDelete = Operation == ResourceOperation.Provisioning || Operation == ResourceOperation.Starting;
+
+            logger.FluentAddValue("HandlerFailCleanupTriggered", shouldTriggerDelete);
+
+            // Only delete if we aren't already deleting
+            if (shouldTriggerDelete)
+            {
+                logger.FluentAddValue("HandlerFailCleanupReason", reason);
+
+                try
+                {
+                    // Fetch instance
+                    var continuationTaskActivator = ServiceProvider.GetService<IContinuationTaskActivator>();
+
+                    // Starts the delete workflow on the resource
+                    var deleteInput = new DeleteResourceContinuationInput() { ResourceId = resourceId, Reason = reason };
+                    var deleteResult = await continuationTaskActivator.DeleteResource(deleteInput, logger.WithValues(new LogValueSet()));
+
+                    logger.FluentAddValue("HandlerFailCleanupPostState", deleteResult?.Status)
+                        .FluentAddValue("HandlerFailCleanupPostContinuationToken", deleteResult?.NextInput?.ContinuationToken);
+                }
+                catch (Exception e)
+                {
+                    logger.FluentAddValue("HandlerFailCleanupExceptionThrew", true)
+                        .FluentAddValue("HandlerFailCleanupExceptionMessage", e.Message);
+
+                    // Since we are swallowing, make sure we have a record at this level of the excpetion just in case
+                    logger.WithValues(new LogValueSet()).LogException($"{LogBaseName}_failed_cleanup_error", e);
+                }
+            }
         }
 
         /// <summary>
@@ -299,7 +347,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             await SaveStatusAsync(record, OperationState.InProgress, logger);
 
             // Run core operation
-            var operationResult = await RunOperationAsync(input.OperationInput, record, logger.WithValues(new LogValueSet()));
+            var operationResult = (ContinuationResult)null;
+            try
+            {
+                operationResult = await RunOperationAsync(input.OperationInput, record, logger.WithValues(new LogValueSet()));
+            }
+            catch (Exception e)
+            {
+                logger.FluentAddValue("HandlerOperationExceptionThrew", true)
+                    .FluentAddValue("HandlerOperationExceptionMessage", e.Message);
+
+                // Since we are swallowing, make sure we have a record at this level of the excpetion just in case
+                logger.WithValues(new LogValueSet()).LogException($"{LogBaseName}_operation_error", e);
+            }
 
             // If we didn't get a result record error
             if (operationResult == null)

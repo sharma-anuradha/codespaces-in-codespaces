@@ -87,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private Task<bool> ManageLevelAsync(IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(LogLevelBaseName, () => InnerManageLevelAsync(logger), swallowException: true);
+            return logger.OperationScopeAsync(LogLevelBaseName, () => InnerManageLevelAsync(logger), (e) => true, swallowException: true);
         }
 
         private Task<bool> InnerManageLevelAsync(IDiagnosticsLogger logger)
@@ -96,8 +96,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             var underCapacityCount = 0;
             var belowMinimumCount = 0;
             var aboveMaximumCount = 0;
+            var restartedCount = 0;
 
-            logger.FluentAddValue("ContinuationPreLevelCount", WorkerPool.Count);
+            logger.FluentAddValue("WorkerLevelPreCount", WorkerPool.Count);
 
             // Move the pool level up and down based on how active the workers are
             foreach (var entry in WorkerPool)
@@ -137,11 +138,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 }
             }
 
-            logger.FluentAddValue("ContinuationPostLevelCount", WorkerPool.Count)
-                .FluentAddValue("ContinuationOverCapacityCount", overCapacityCount)
-                .FluentAddValue("ContinuationUnderCapacityCount", underCapacityCount)
-                .FluentAddValue("ContinuationBelowMinimumCount", belowMinimumCount)
-                .FluentAddValue("ContinuationAboveMaximumCount", aboveMaximumCount);
+            // Check if any of the works have been disposed, if so remove and replace it
+            foreach (var worker in WorkerPool)
+            {
+                if (worker.Value.Disposed)
+                {
+                    restartedCount++;
+                    EndWorker(worker.Value, "DisposedRemove", logger.WithValues(new LogValueSet()));
+                    StartWorker("DisposedAdd", logger.WithValues(new LogValueSet()));
+                }
+            }
+
+            logger.FluentAddValue("WorkerLevelPostCount", WorkerPool.Count)
+                .FluentAddValue("WorkerLevelOverCapacityCount", overCapacityCount)
+                .FluentAddValue("WorkerLevelUnderCapacityCount", underCapacityCount)
+                .FluentAddValue("WorkerLevelBelowMinimumCount", belowMinimumCount)
+                .FluentAddValue("WorkerLevelAboveMaximumCount", aboveMaximumCount)
+                .FluentAddValue("WorkerLevelRestartedCount", restartedCount);
 
             return Task.FromResult(!Disposed);
         }
@@ -181,5 +194,4 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 .LogInfo($"{LogBaseName}_end_worker");
         }
     }
-
 }

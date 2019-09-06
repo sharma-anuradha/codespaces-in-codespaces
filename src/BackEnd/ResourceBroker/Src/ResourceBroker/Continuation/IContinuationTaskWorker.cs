@@ -21,6 +21,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         int ActivityLevel { get; }
 
         /// <summary>
+        /// Gets a value indicating whether the worker has been disposed.
+        /// </summary>
+        bool Disposed { get; }
+
+        /// <summary>
         /// Runs the job that checks to see if there are any messages that need to be
         /// processed.
         /// </summary>

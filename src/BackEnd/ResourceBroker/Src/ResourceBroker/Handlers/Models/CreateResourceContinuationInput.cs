@@ -1,4 +1,4 @@
-﻿// <copyright file="TrackedVirtualMachineProviderCreateInput.cs" company="Microsoft">
+﻿// <copyright file="CreateResourceContinuationInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

@@ -107,7 +107,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Common services
             services.AddSingleton<IDistributedLease, DistributedLease>();
             services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
-            services.AddSingleton<TriggerWarmupState>();
             services.AddSingleton<ITaskHelper, TaskHelper>();
 
             // Logging setup
