@@ -1,0 +1,35 @@
+{{- if .Values.pfingress.enabled -}}
+{{- $serviceName := include "service.servicename" . -}}
+{{- $servicePort := .Values.service.externalPort -}}
+{{- $ingressPath := .Values.pfingress.path -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "service.fullname" . }}-pf
+  {{ template "labels" . }}
+  annotations:
+  {{- range $key, $value := .Values.pfingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+spec:
+{{- if .Values.pfingress.tls }}
+  tls:
+  {{- range .Values.pfingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ . | quote }}
+      {{- end }}
+      secretName: {{ .secretName }}
+  {{- end }}
+{{- end }}
+  rules:
+  {{- range .Values.pfingress.hosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          - path: {{ $ingressPath }}
+            backend:
+              serviceName: {{ $serviceName}}
+              servicePort: {{ $servicePort }}
+  {{- end }}
+{{- end }}

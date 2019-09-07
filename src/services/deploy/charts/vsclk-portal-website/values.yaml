@@ -27,6 +27,12 @@ ingress:
   annotations: {}
   path: /
 
+pfingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /configuration
+  path: /(.*)
+
 appSettings:
 - ASPNETCORE_ENVIRONMENT
 - PORTAL_AppSettings__KeyVaultName
