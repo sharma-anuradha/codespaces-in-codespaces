@@ -5,6 +5,7 @@ image:
 
 ingress:
   hosts:
+    - "*.portforwarding.online.dev.core.vsengsaas.visualstudio.com"
     - online.dev.core.vsengsaas.visualstudio.com
     - vsclk-online-dev-ci-asse-tm.trafficmanager.net
     - vsclk-online-dev-ci-tm.trafficmanager.net
@@ -15,6 +16,9 @@ ingress:
     - hosts:
       - online.dev.core.vsengsaas.visualstudio.com
       secretName: ssl-cert
+    - hosts:
+      - "*.portforwarding.online.dev.core.vsengsaas.visualstudio.com"
+      secretName: portforwardssl
 
 authentication:
   audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
