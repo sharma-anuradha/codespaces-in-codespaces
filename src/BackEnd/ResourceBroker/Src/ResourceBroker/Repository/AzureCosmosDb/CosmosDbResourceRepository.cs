@@ -101,6 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     and c.type = @type
                     and c.isAssigned = @isAssigned
                     and c.isReady = @isReady
+                    and c.isDeleted = @isDeleted
                 ORDER BY c.ready",
                 new SqlParameterCollection
                 {
@@ -109,6 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     new SqlParameter { Name = "@location", Value = location.ToLowerInvariant() },
                     new SqlParameter { Name = "@isAssigned", Value = false },
                     new SqlParameter { Name = "@isReady", Value = true },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<ResourceRecord>(uri, query, feedOptions).AsDocumentQuery(), logger);
@@ -127,13 +129,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 WHERE c.skuName = @skuName
                     AND c.type = @type
                     AND c.location = @location
-                    AND c.isAssigned = @isAssigned",
+                    AND c.isAssigned = @isAssigned
+                    AND c.isDeleted = @isDeleted
+                    AND c.provisioningStatus != @provisioningStatus",
                 new SqlParameterCollection
                 {
                     new SqlParameter { Name = "@skuName", Value = skuName },
                     new SqlParameter { Name = "@type", Value = type.ToString() },
                     new SqlParameter { Name = "@location", Value = location.ToLowerInvariant() },
                     new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                    new SqlParameter { Name = "@provisioningStatus", Value = OperationState.Failed },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
