@@ -10,6 +10,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
     public class ResourceLoggingConstants
     {
         /// <summary>
+        /// Watch Pool Size Task.
+        /// </summary>
+        public const string WatchPoolSizeTask = "watch_pool_size_task";
+
+        /// <summary>
         /// Continuation Task Message Pump.
         /// </summary>
         public const string ContinuationTaskMessagePump = "continuation_task_message_pump";

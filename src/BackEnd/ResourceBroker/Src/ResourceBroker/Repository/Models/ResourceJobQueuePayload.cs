@@ -23,14 +23,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceJobQueuePayload"/> class.
         /// </summary>
+        /// <param name="systemId">System id for this job.</param>
         /// <param name="trackingId">Tracking id for this job.</param>
         /// <param name="target">Target handler.</param>
         /// <param name="created">Created date/time.</param>
-        public ResourceJobQueuePayload(string trackingId, string target, DateTime created)
+        /// <param name="stepCount">What step count we are at.</param>
+        public ResourceJobQueuePayload(string systemId, string trackingId, string target, DateTime created, int stepCount)
         {
+            SystemId = systemId;
             TrackingId = trackingId;
             Created = created;
             Target = target;
+            StepCount = stepCount;
         }
 
         /// <summary>
@@ -52,6 +56,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// Gets or sets the time the original operation was triggered.
         /// </summary>
         public DateTime Created { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current stepCount.
+        /// </summary>
+        public int StepCount { get; set; }
 
         /// <summary>
         /// Gets or sets the input thats going to be provided.

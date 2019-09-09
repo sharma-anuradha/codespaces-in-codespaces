@@ -23,7 +23,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
     public abstract class BaseContinuationTaskMessageHandler<TI> : IContinuationTaskMessageHandler
         where TI : ContinuationOperationInput
     {
-
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseContinuationTaskMessageHandler{TI}"/> class.
         /// </summary>
@@ -96,6 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             logger.FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
+            logger.FluentAddValue("HandlerResourceId", typedInput.ResourceId);
 
             // Core continue
             var result = await InnerContinue(typedInput, logger);

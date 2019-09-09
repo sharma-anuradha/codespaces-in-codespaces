@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// </summary>
     public class WatchPoolSizeTask : IWatchPoolSizeTask
     {
+        private const string LogBaseName = ResourceLoggingConstants.WatchPoolSizeTask;
         private const string ReadPoolSizeLease = nameof(ReadPoolSizeLease);
 
         /// <summary>
@@ -80,8 +81,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             {
                 // Spawn out the tasks and run in parallel
                 TaskHelper.RunBackground(
-                    "watch-pool-size-unit",
-                    (childLogger) => RunPoolCheckAsync(resourceUnit, childLogger),
+                    LogBaseName,
+                    (childLogger) => childLogger.OperationScopeAsync(
+                        LogBaseName, () => RunPoolCheckAsync(resourceUnit, childLogger), swallowException: true),
                     rootLogger);
             }
 

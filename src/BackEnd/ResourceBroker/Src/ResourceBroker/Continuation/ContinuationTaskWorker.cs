@@ -93,7 +93,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
                     .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
                     .FluentAddValue("ContinuationPayloadCreated", payload.Created)
-                    .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds);
+                    .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)
+                    .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount);
 
                 // Try and handle message
                 var resultPayload = await logger.TrackDurationAsync(
