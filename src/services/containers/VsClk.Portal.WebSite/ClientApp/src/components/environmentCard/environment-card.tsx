@@ -13,7 +13,8 @@ import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/F
 import { ILocalCloudEnvironment, StateInfo } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { environmentIsALie, isNotAvailable } from '../../utils/environmentUtils';
-
+import { createUniqueId } from '../../dependencies';
+import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
 
 export interface EnvironmentCardProps {
@@ -90,6 +91,7 @@ type ActionProps = {
 
 const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
     const [deleteDialogHidden, setDeleteDialogHidden] = useState(true);
+    const [unsucessfullUrlDialogHidden, setUnsucessfullUrlDialogHidden] = useState(true);
     return (
         <>
             <IconButton
@@ -104,7 +106,22 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
                             iconProps: { iconName: 'OpenInNewWindow' },
                             name: 'Open in VS Code',
                             disabled: environmentIsALie(environment) || isNotAvailable(environment),
-                            onClick: () => {},
+                            onClick: async () => {
+                                const url = `ms-vsliveshare.cloudenv/connect?environmentId=${encodeURIComponent(
+                                    environment.id!
+                                )}&sessionPath=${
+                                    environment.connection!.sessionPath
+                                }&correlationId=${createUniqueId()}`;
+
+                                try {
+                                    await tryOpeningUrl(`vscode://${url}`).catch(async () => {
+                                        return await tryOpeningUrl(`vscode-insiders://${url}`);
+                                    });    
+                                } catch {
+                                    setUnsucessfullUrlDialogHidden(false);
+                                }
+                                
+                            },
                         },
                         {
                             key: 'open-web',
@@ -133,6 +150,13 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
                     setDeleteDialogHidden(true);
                 }}
                 hidden={deleteDialogHidden}
+            />
+            <UnsucessfullUrlDialog
+                // tslint:disable-next-line: react-this-binding-issue
+                accept={() => {
+                    setUnsucessfullUrlDialogHidden(true);
+                }}
+                hidden={unsucessfullUrlDialogHidden}
             />
         </>
     );
@@ -168,6 +192,31 @@ function DeleteDialog({ deleteEnvironment, environment, cancel, hidden }: Delete
                     text='Delete'
                 />
                 <DefaultButton onClick={cancel} text='Cancel' />
+            </DialogFooter>
+        </Dialog>
+    );
+}
+
+type UnsucessfullUrlDialogProps = {
+    accept: () => void;
+    hidden: boolean;
+};
+
+function UnsucessfullUrlDialog({ accept, hidden }: UnsucessfullUrlDialogProps) {
+    return (
+        <Dialog
+            hidden={hidden}
+            dialogContentProps={{
+                type: DialogType.normal,
+                title: `Could not find VSCode installation.`,
+            }}
+            modalProps={{
+                isBlocking: true,
+                styles: { main: { maxWidth: 450 } },
+            }}
+        >
+            <DialogFooter>
+                <DefaultButton onClick={accept} text='Accept' />
             </DialogFooter>
         </Dialog>
     );

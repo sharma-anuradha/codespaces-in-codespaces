@@ -3201,6 +3201,11 @@ csstype@^2.2.0:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/csstype/-/csstype-2.6.6.tgz#c34f8226a94bbb10c32cc0d714afdf942291fc41"
   integrity sha1-w0+CJqlLuxDDLMDXFK/flCKR/EE=
 
+custom-protocol-check@^1.0.1:
+  version "1.0.1"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/custom-protocol-check/-/custom-protocol-check-1.0.1.tgz#7fcf210cbb8c71d2aa01f82ead8595cad8e158f2"
+  integrity sha1-f88hDLuMcdKqAfgurYWVytjhWPI=
+
 cyclist@~0.2.2:
   version "0.2.2"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/cyclist/-/cyclist-0.2.2.tgz#1b33792e11e914a2fd6d6ed6447464444e5fa640"
