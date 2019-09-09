@@ -139,7 +139,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     new SqlParameter { Name = "@location", Value = location.ToLowerInvariant() },
                     new SqlParameter { Name = "@isAssigned", Value = false },
                     new SqlParameter { Name = "@isDeleted", Value = false },
-                    new SqlParameter { Name = "@provisioningStatus", Value = OperationState.Failed },
+                    new SqlParameter { Name = "@provisioningStatus", Value = OperationState.Failed.ToString() },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
