@@ -2,17 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>Microsoft.VsCloudKernel.SignalService.DatabaseBackplaneProvider</AssemblyName>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.DocumentDatabaseProvider</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\..\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
     <Compile Include="..\..\Shared\LoggerScopeHelpers.cs" Link="Shared\LoggerScopeHelpers.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.5.1" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="2.2.7" />
   </ItemGroup>
   
   <ItemGroup>

@@ -125,14 +125,13 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
+            await FireAttemptConnectionAsync(new AttemptConnectionEventArgs(0, 0, null));
+
             await Connection.ConnectAsync(
                 async (retries, backoffTime, error) =>
                 {
                     var e = new AttemptConnectionEventArgs(retries, backoffTime, error);
-                    if (AttemptConnection != null)
-                    {
-                        await AttemptConnection.InvokeAsync(this, e);
-                    }
+                    await FireAttemptConnectionAsync(e);
 
                     return e.BackoffTimeMillisecs;
                 },
@@ -142,6 +141,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 this.traceSource,
                 cancellationToken);
             await FireConnectionStateChangedAsync();
+        }
+
+        private async Task FireAttemptConnectionAsync(AttemptConnectionEventArgs e)
+        {
+            if (AttemptConnection != null)
+            {
+                await AttemptConnection.InvokeAsync(this, e);
+            }
         }
     }
 }

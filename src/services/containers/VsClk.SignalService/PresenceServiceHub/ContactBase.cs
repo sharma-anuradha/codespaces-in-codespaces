@@ -133,7 +133,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             using (Logger.BeginContactReferenceScope(PresenceHubMethods.ReceiveMessage, contactReference, Service.FormatProvider))
             {
-                Logger.LogDebug($"Notify-> fromContact:{fromContactReference.ToString(Service.FormatProvider)} messageType:{messageType} body:{Service.Format("{0:K}", body)}");
+                Logger.LogDebug($"Notify-> fromContact:{fromContactReference.ToString(Service.FormatProvider)} messageType:{messageType} body:{Service.Format("{0:K}", body.ToString())}");
             }
 
             return Task.WhenAll(Clients(contactReference.ConnectionId).Select(client => client.SendAsync(PresenceHubMethods.ReceiveMessage, contactReference, fromContactReference, messageType, body, cancellationToken)));

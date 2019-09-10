@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
     using ConnectionProperties = IDictionary<string, PropertyValue>;
     using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
 
-    public class ScaleServiceTests
+    public class ScaleServiceTests : TestBase
     {
         private readonly Dictionary<string, IClientProxy> clientProxies1;
         private readonly Dictionary<string, IClientProxy> clientProxies2;
@@ -492,18 +492,6 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.Empty(selfConnections);
         }
 
-        private static ContactReference AsContactRef(string connectionId, string id) => new ContactReference(id, connectionId);
-        private static void AssertContactRef(string connectionId, string id, ContactReference contactReference)
-        {
-            Assert.Equal(AsContactRef(connectionId, id), contactReference);
-        }
-
-        private static void AssertContactRef(string connectionId, string id, object contactReference)
-        {
-            Assert.IsType<ContactReference>(contactReference);
-            AssertContactRef(connectionId, id, (ContactReference)contactReference);
-        }
-
         private class MockBackplaneProvider : IBackplaneProvider
         {
             private readonly Dictionary<string, ContactDataInfo> contactDataMap;
@@ -567,6 +555,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
                 contactDataInfo.UpdateConnectionProperties(contactDataChanged);
                 var contactDataInfoChanged = new ContactDataChanged<ContactDataInfo>(
+                    CreateChangeId(),
                     contactDataChanged.ServiceId,
                     contactDataChanged.ConnectionId,
                     contactDataChanged.ContactId,

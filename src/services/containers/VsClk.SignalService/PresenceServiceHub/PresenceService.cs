@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Common;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -25,6 +26,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly List<IBackplaneProvider> backplaneProviders = new List<IBackplaneProvider>();
 
         private readonly ConcurrentDictionary<string, StubContact> stubContacts = new ConcurrentDictionary<string, StubContact>();
+        private readonly ConcurrentDictionary<string, DateTime> backplaneChangesReceived = new ConcurrentDictionary<string, DateTime>();
 
         /// <summary>
         /// Map of self contact id <-> stub contact
@@ -72,8 +74,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             Logger.LogInformation($"AddBackplaneProvider type:{backplaneProvider.GetType().FullName}");
             this.backplaneProviders.Add(backplaneProvider);
-            backplaneProvider.ContactChangedAsync = OnContactChangedAsync;
-            backplaneProvider.MessageReceivedAsync = OnMessageReceivedAsync;
+            backplaneProvider.ContactChangedAsync = (contactDataChanged, affectedProperties, ct) => OnContactChangedAsync(backplaneProvider, contactDataChanged, affectedProperties, ct);
+            backplaneProvider.MessageReceivedAsync = (sourceId, messageData, ct) => OnMessageReceivedAsync(backplaneProvider, sourceId, messageData, ct);
         }
 
         public async Task UpdateBackplaneMetrics(object serviceInfo, CancellationToken cancellationToken)
@@ -299,7 +301,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodSendMessage, contactReference, FormatProvider))
             {
-                Logger.LogDebug($"targetContact:{targetContactReference.ToString(FormatProvider)} messageType:{messageType} body:{Format("{0:K}", body)}");
+                Logger.LogDebug($"targetContact:{targetContactReference.ToString(FormatProvider)} messageType:{messageType} body:{Format("{0:K}", body?.ToString())}");
             }
 
             // Note: next line will enforce the contact who attempt to send the message to be already registered
@@ -321,6 +323,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             // always attempt to notify trough the backplane 
             var messageData = new MessageData(
+                Guid.NewGuid().ToString(),
                 contactReference,
                 targetContactReference,
                 messageType,
@@ -555,19 +558,19 @@ namespace Microsoft.VsCloudKernel.SignalService
         private async Task OnContactChangedAsync(object sender, ContactChangedEventArgs e)
         {
             var contact = (Contact)sender;
+            var contactDataChanged = new ContactDataChanged<ConnectionProperties>(
+                            Guid.NewGuid().ToString(),
+                            ServiceId,
+                            e.ConectionId,
+                            contact.ContactId,
+                            e.ChangeType,
+                            e.Properties);
 
             foreach (var backplaneProvider in this.backplaneProviders)
             {
                 try
                 {
-                    await backplaneProvider.UpdateContactAsync(
-                        new ContactDataChanged<ConnectionProperties>(
-                            ServiceId,
-                            e.ConectionId,
-                            contact.ContactId,
-                            e.ChangeType,
-                            e.Properties),
-                            CancellationToken.None);
+                    await backplaneProvider.UpdateContactAsync(contactDataChanged, CancellationToken.None);
                 }
                 catch (Exception error)
                 {
@@ -655,16 +658,44 @@ namespace Microsoft.VsCloudKernel.SignalService
             return subscriptionResult;
         }
 
+        private bool IsDataChangedHandled(DataChanged dataChanged)
+        {
+            return this.backplaneChangesReceived.ContainsKey(dataChanged.ChangeId);
+        }
+
+        private void AddDataChanged(IBackplaneProvider backplaneProvider,DataChanged dataChanged)
+        {
+            // Note: next block will remove the 'stale' changes
+            var now = DateTime.Now;
+            var expiredThreshold = now.Subtract(TimeSpan.FromSeconds(60));
+            var expiredCacheItemsKeys = this.backplaneChangesReceived.Where(kvp => kvp.Value < expiredThreshold).Select(kvp => kvp.Key).ToArray();
+            if (expiredCacheItemsKeys.Length > 0)
+            {
+                Logger.LogDebug($"Remove backplane change Ids:{string.Join(",", expiredCacheItemsKeys)}");
+                foreach (var key in expiredCacheItemsKeys)
+                {
+                    this.backplaneChangesReceived.TryRemove(key, out var itemRemoved);
+                }
+            }
+
+            Logger.LogDebug($"Handle backplane provider:{backplaneProvider.GetType().Name} type:{dataChanged.GetType().Name} changed Id:{dataChanged.ChangeId}");
+            // add this data changed
+            this.backplaneChangesReceived.TryAdd(dataChanged.ChangeId, now);
+        }
+
         private async Task OnContactChangedAsync(
+            IBackplaneProvider backplaneProvider,
             ContactDataChanged<ContactDataInfo> contactDataChanged,
             string[] affectedProperties,
             CancellationToken cancellationToken)
         {
             // ignore self notifications
-            if (contactDataChanged.ServiceId == ServiceId)
+            if (contactDataChanged.ServiceId == ServiceId || IsDataChangedHandled(contactDataChanged))
             {
                 return;
             }
+
+            AddDataChanged(backplaneProvider, contactDataChanged);
 
             var contactDataProvider = ContactDataProvider.CreateContactDataProvider(contactDataChanged.Data);
 
@@ -705,15 +736,18 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         private async Task OnMessageReceivedAsync(
+            IBackplaneProvider backplaneProvider,
             string sourceId,
             MessageData messageData,
             CancellationToken cancellationToken)
         {
-            // ignore self notifications
-            if (sourceId == ServiceId)
+            // ignore self notifications and duplicated messages
+            if (sourceId == ServiceId || IsDataChangedHandled(messageData))
             {
                 return;
             }
+
+            AddDataChanged(backplaneProvider, messageData);
 
             if (Contacts.TryGetValue(messageData.TargetContact.Id, out var targetContact))
             {

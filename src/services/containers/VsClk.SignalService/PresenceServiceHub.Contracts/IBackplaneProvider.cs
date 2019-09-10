@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,13 +9,30 @@ namespace Microsoft.VsCloudKernel.SignalService
     using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
 
     /// <summary>
+    /// Base class for our data changed structures
+    /// </summary>
+    public class DataChanged
+    {
+        protected DataChanged(string changeId)
+        {
+            ChangeId = changeId;
+        }
+
+        /// <summary>
+        /// Unique change id
+        /// </summary>
+        public string ChangeId { get; }
+    }
+
+    /// <summary>
     /// Class to describe a contact change
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public sealed class ContactDataChanged<T>
+    public sealed class ContactDataChanged<T> : DataChanged
         where T : class
     {
-        public ContactDataChanged(string serviceId, string connectionId, string contactId, ContactUpdateType updateContactType, T data)
+        public ContactDataChanged(string changeId, string serviceId, string connectionId, string contactId, ContactUpdateType updateContactType, T data)
+            : base(changeId)
         {
             Requires.NotNullOrEmpty(serviceId, nameof(serviceId));
             Requires.NotNullOrEmpty(connectionId, nameof(connectionId));
@@ -30,7 +48,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public ContactDataChanged<U> Clone<U>(U data)
             where U : class
         {
-            return new ContactDataChanged<U>(ServiceId, ConnectionId, ContactId, Type, data);
+            return new ContactDataChanged<U>(ChangeId, ServiceId, ConnectionId, ContactId, Type, data);
         }
 
         public string ServiceId { get; }
@@ -43,19 +61,22 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// The message data entity
     /// </summary>
-    public class MessageData
+    public class MessageData : DataChanged
     {
         public MessageData(
+            string changeId,
             ContactReference fromContact,
             ContactReference targetContact,
             string type,
             object body)
+            : base(changeId)
         {
             FromContact = fromContact;
             TargetContact = targetContact;
             Type = type;
             Body = body;
         }
+
 
         /// <summary>
         /// The contact who want to send the message

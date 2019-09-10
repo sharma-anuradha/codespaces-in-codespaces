@@ -12,7 +12,7 @@ using Xunit;
 
 namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 {
-    public class PresenceServiceHubTests
+    public class PresenceServiceHubTests : TestBase
     {
         private readonly Dictionary<string, IClientProxy> clientProxies;
         private readonly PresenceService presenceService;
@@ -677,19 +677,6 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             notifyProperties = conn1Proxy[PresenceHubMethods.UpdateValues][1] as Dictionary<string, object>;
             Assert.Single(notifyProperties);
             Assert.Equal(true, notifyProperties["property3"]);
-        }
-
-
-        private static ContactReference AsContactRef(string connectionId, string id ) => new ContactReference(id, connectionId);
-        private static void AssertContactRef(string connectionId, string id, ContactReference contactReference)
-        {
-            Assert.Equal(AsContactRef(connectionId, id), contactReference);
-        }
-
-        private static void AssertContactRef(string connectionId, string id, object contactReference)
-        {
-            Assert.IsType<ContactReference>(contactReference);
-            AssertContactRef(connectionId, id, (ContactReference)contactReference);
         }
 
         private class CustomMatchService : PresenceService

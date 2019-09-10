@@ -46,7 +46,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         {
             this.hubProxy = Requires.NotNull(hubProxy, nameof(hubProxy));
             Requires.NotNull(trace, nameof(trace));
-            this.formatProvider = HubFormatProvider.Create(formatProvider);
+            this.formatProvider = formatProvider != null ? HubFormatProvider.Create(formatProvider) : null;
 
             this.hubProxy.On(
                 PresenceHubMethods.UpdateValues,

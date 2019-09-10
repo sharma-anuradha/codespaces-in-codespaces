@@ -39,6 +39,7 @@ appSettings:
 - AppSettings__AuthenticateProfileServiceUri
 - AppSettings__AzureCosmosDbEndpointUrl
 - AppSettings__AzureCosmosDbAuthKey
+- AppSettings__AzureRedisConnection
 - Azure__SignalR__ConnectionString
 - Azure__SignalR__ConnectionString__Secondary
 

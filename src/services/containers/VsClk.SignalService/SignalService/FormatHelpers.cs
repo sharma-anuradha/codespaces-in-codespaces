@@ -1,3 +1,7 @@
+// <copyright file="FormatHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>

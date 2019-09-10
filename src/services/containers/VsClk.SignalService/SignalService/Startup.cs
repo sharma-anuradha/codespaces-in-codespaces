@@ -164,7 +164,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // Create the Azure Cosmos backplane provider service
-            services.AddHostedService<DatabaseBackplaneProviderService>();
+            services.AddHostedService<AzureDocumentsProviderService>();
+
+            // Create the Azure Redis backplane provider service
+            services.AddHostedService<AzureRedisProviderService>();
 
             // Service options
             services.AddSingleton((srvcProvider) => new PresenceServiceOptions() { Id = serviceId });

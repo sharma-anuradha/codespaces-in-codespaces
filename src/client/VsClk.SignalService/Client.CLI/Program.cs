@@ -294,7 +294,7 @@ namespace LivesharePresenceClientTest
                     Console.WriteLine("Changing status to 'busy'");
                     var updateValues = new Dictionary<string, object>()
                         {
-                            {"status", "busy" },
+                            { "status", "busy" },
                         };
 
                     await this.presenceServiceProxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
@@ -334,7 +334,7 @@ namespace LivesharePresenceClientTest
                     Console.WriteLine("Changing status to 'available'");
                     var updateValues = new Dictionary<string, object>()
                         {
-                            {"status", "available" },
+                            { "status", "available" },
                         };
 
                     await this.presenceServiceProxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
@@ -376,6 +376,26 @@ namespace LivesharePresenceClientTest
                         subscribeProperties,
                         CancellationToken.None);
                     Console.WriteLine($"Add subscription for id:{subscribeContactId} properties:{string.Join(',', subscribeProperties)} result:{properties[subscribeContactId].ConvertToString(null)}");
+                }
+                else if (key == 'S')
+                {
+                    Console.WriteLine();
+                    Console.Write("Enter email contact:");
+                    var email = Console.ReadLine();
+                    Console.WriteLine();
+                    Console.Write($"Enter properties ({string.Join(',', subscribeProperties)}):");
+                    var line = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        subscribeProperties = line.Split(',');
+                    }
+
+                    var properties = await this.presenceServiceProxy.RequestSubcriptionsAsync(
+                        new Dictionary<string, object>[] { new Dictionary<string, object>() { { Properties.Email, email } } },
+                        subscribeProperties,
+                        useStubContact: true,
+                        CancellationToken.None);
+                    Console.WriteLine($"Request subscription properties:{properties[0].ConvertToString(null)}");
                 }
                 else if (key == 'u')
                 {
@@ -460,7 +480,7 @@ namespace LivesharePresenceClientTest
 
             protected override string HubName => "healthhub";
 
-            protected override Task HandleKeyAsync(char key) { return Task.CompletedTask; }
+            protected override Task HandleKeyAsync(char key) => Task.CompletedTask;
 
             protected override void OnHubCreated(HubClient hubClient, TraceSource traceSource)
             {

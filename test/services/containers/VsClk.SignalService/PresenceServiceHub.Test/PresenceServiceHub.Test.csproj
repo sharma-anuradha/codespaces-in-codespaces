@@ -13,7 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\DatabaseBackplaneProvider\DatabaseBackplaneProvider.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\AzureDocumentsProvider\AzureDocumentsProvider.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\AzureRedisProvider\AzureRedisProvider.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\PresenceServiceHub\PresenceServiceHub.csproj" />
   </ItemGroup>
 
