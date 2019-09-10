@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,6 +28,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         public const string AuthenticationScheme = "aadrpsaas";
 
         private const string BadTokenMessage = "jwt_bearer_bad_token";
+        private static string TenantClaimType = "http://schemas.microsoft.com/identity/claims/tenantid";
+
+        private static string Issuer { get; } = "https://sts.windows.net/";
 
         private static IEnumerable<string> DefaultAudiences { get; } = new string[]
         {
@@ -47,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                    options.TokenValidationParameters = new TokenValidationParameters
                    {
                        ValidAudiences = DefaultAudiences,
-                       ValidateIssuer = true,
+                       ValidateIssuer = false,
                        RequireExpirationTime = true,
                        ValidateLifetime = true,
                        ValidateIssuerSigningKey = true,
@@ -56,12 +60,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                    options.Events = new JwtBearerEvents
                    {
                        OnAuthenticationFailed = AuthenticationFailedAsync,
+                       OnTokenValidated = OnTokenValidated,
                    };
                });
 
             return builder;
         }
-
+        
         /// <summary>
         /// Method to be called in the event of failed authentication.
         /// </summary>
@@ -83,6 +88,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 .FluentAddValue("PrincipalIsAuthenticated", arg.Principal?.Identity.IsAuthenticated.ToString())
                 .FluentAddValue("Exception", arg.Exception.Message)
                 .LogInfo("jwt_authentication_failed");
+        }
+
+        /// <summary>
+        /// Method to be called after security token is validated.
+        /// </summary>
+        /// <param name="context">TokenValidate context.</param>
+        /// <returns>Task.</returns>
+        private static async Task OnTokenValidated(TokenValidatedContext context)
+        {
+            var identity = context.Principal;
+            var tenantClaim = identity.Claims.FirstOrDefault(j => j.Type == TenantClaimType);
+            var issuerClaim = identity.Claims.FirstOrDefault(i => i.Type == "iss");
+
+            // Construct the fully tenant qualified issuer url.
+            var issuerFull = Issuer + tenantClaim.Value + "/";
+            if (issuerClaim.Value != issuerFull)
+            {
+                // fail request
+                var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
+                logger
+                    .FluentAddValue("Scheme", context.Scheme.Name)
+                    .FluentAddValue("Audience", context.Options.Audience)
+                    .FluentAddValue("Authority", context.Options.Authority)
+                    .FluentAddValue("RequestUri", context.Request.GetDisplayUrl())
+                    .FluentAddValue("PrincipalIdentityName", context.Principal?.Identity.Name)
+                    .FluentAddValue("PrincipalIsAuthenticationType", context.Principal?.Identity.AuthenticationType)
+                    .FluentAddValue("PrincipalIsAuthenticated", context.Principal?.Identity.IsAuthenticated.ToString())
+                    .LogInfo("jwt_issuer_notmatched");
+
+                context.Fail("Issuer claim did not match expected claim");
+            }
+
+            await Task.CompletedTask;
         }
     }
 }
