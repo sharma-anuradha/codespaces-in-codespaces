@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\Common.AspNetCore\Common.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
@@ -33,9 +34,14 @@
     <ProjectReference Include="..\..\..\ScalingEngine\Src\ScalingEngine.Extensions\ScalingEngine.Extensions.csproj" />
     <ProjectReference Include="..\..\..\ScalingEngine\Src\ScalingEngine\ScalingEngine.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Extensions\StorageFileShareProvider.Extensions.csproj" />
-    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Extensions\SystemCatalog.Extensions.csproj" />
-    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog\SystemCatalog.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\..\..\Settings\**" >
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

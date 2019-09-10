@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     public class CreateResourceContinuationInput : ContinuationOperationInput
     {
         /// <summary>
-        /// Gets or sets the name of the sku.
+        /// Gets or sets the name of the Azure SKU.
         /// </summary>
         public string SkuName { get; set; }
 

@@ -5,8 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\BackEnd\Common\Src\Common.Abstractions\Common.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\BackEnd\Common\Src\Common.Models\Common.Models.csproj" />
+    <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.0" />
   </ItemGroup>
 
 </Project>

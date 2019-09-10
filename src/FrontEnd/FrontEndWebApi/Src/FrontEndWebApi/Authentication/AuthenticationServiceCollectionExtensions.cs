@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             return services;
         }
-        
+
         private static void AddVsSaaSCoreDataProtection(
             this IServiceCollection services,
             IHostingEnvironment hostEnvironment,

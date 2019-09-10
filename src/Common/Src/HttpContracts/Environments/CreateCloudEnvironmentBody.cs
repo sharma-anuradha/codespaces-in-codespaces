@@ -13,7 +13,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
     public class CreateCloudEnvironmentBody
     {
         /// <summary>
-        /// Gets or sets teh environment type.
+        /// Gets or sets the environment type.
         /// </summary>
         [Required]
         public string Type { get; set; }

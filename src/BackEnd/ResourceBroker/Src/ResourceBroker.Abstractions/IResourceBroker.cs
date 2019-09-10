@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// </summary>
         /// <param name="resourceId">The resource id token.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the resoruce was deleted.</returns>
+        /// <returns>True if the resource was deleted.</returns>
         Task<DeallocateResult> DeallocateAsync(DeallocateInput input, IDiagnosticsLogger logger);
 
         /// <summary>

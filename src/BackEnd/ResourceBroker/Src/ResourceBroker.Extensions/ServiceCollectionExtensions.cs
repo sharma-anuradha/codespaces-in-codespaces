@@ -27,26 +27,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        ///
+        /// <see cref="IServiceCollection"/> extensions for the resource broker.
         /// </summary>
-        /// <param name="services"></param>
-        /// <param name="storageAccountSettings"></param>
-        /// <param name="resourceBrokerSettings"></param>
-        /// <param name="appSettings"></param>
-        /// <returns></returns>
+        /// <param name="services">The service collection.</param>
+        /// <param name="resourceBrokerSettings">The resource broker settings.</param>
+        /// <param name="mocksSettings">The mocks settings.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddResourceBroker(
             this IServiceCollection services,
-            StorageAccountSettings storageAccountSettings,
             ResourceBrokerSettings resourceBrokerSettings,
-            AppSettings appSettings)
+            MocksSettings mocksSettings = null)
         {
             Requires.NotNull(services, nameof(services));
-            Requires.NotNull(storageAccountSettings, nameof(storageAccountSettings));
             Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
-            Requires.NotNull(appSettings, nameof(appSettings));
 
             // Short circuit things if Resource Broker is being mocked
-            if (appSettings.UseMocksForResourceBroker)
+            if (mocksSettings?.UseMocksForResourceBroker == true)
             {
                 services.AddSingleton<IResourceBroker, MockResourceBroker>();
                 return services;
@@ -81,25 +77,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<DeleteResourceContinuationHandler>());
 
             // Job Registration
+            services.AddSingleton(resourceBrokerSettings);
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
 
-            if (appSettings.UseMocksForResourceProviders)
+            if (mocksSettings?.UseMocksForResourceProviders == true)
             {
                 services.AddSingleton<IComputeProvider, MockComputeProvider>();
                 services.AddSingleton<IStorageProvider, MockStorageProvider>();
             }
 
-            ConfigureDataServices(services, appSettings);
-
+            ConfigureDataServices(services, mocksSettings);
             return services;
         }
 
         private static void ConfigureDataServices(
             IServiceCollection services,
-            AppSettings appSettings)
+            MocksSettings mocksSettings = null)
         {
             // Use the mock services if we're developing locally
-            if (appSettings.UseMocksForExternalDependencies)
+            if (mocksSettings?.UseMocksForExternalDependencies == true)
             {
                 services.AddSingleton<IResourceJobQueueRepository, MockResourceJobQueueRepository>();
                 services.AddSingleton<IResourceRepository, MockResourceRepository>();

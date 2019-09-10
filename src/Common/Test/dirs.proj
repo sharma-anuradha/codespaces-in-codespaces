@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
+    <ProjectReference Include="Common.Test\Common.Test.csproj" />
   </ItemGroup>
 
 </Project>

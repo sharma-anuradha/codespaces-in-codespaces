@@ -1,4 +1,4 @@
-﻿// <copyright file="AccountController.cs" company="Microsoft">
+﻿// <copyright file="RPAccountsController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

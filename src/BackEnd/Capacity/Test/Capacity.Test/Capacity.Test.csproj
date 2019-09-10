@@ -5,8 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog\SystemCatalog.csproj" />
     <ProjectReference Include="..\..\Src\Capacity.Contracts\Capacity.Contracts.csproj" />
     <ProjectReference Include="..\..\Src\Capacity\Capacity.csproj" />
   </ItemGroup>

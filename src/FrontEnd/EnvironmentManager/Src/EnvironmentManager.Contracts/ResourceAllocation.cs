@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// Represents a backend resource associated with a cloud environment.
     /// </summary>
     /// <remarks>
-    /// See backend resoruce broker AllocateResult.
+    /// See backend resource broker AllocateResult.
     /// </remarks>
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class ResourceAllocation

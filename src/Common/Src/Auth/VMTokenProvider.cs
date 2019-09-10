@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.KeyVault.Models;
@@ -12,8 +14,9 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.KeyVault.Fluent;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.Common.Crypto.Utilities;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
@@ -39,26 +42,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
         /// Initializes a new instance of the <see cref="VMTokenProvider"/> class.
         /// </summary>
         /// <param name="azureClientFactory">Azure client factory.</param>
+        /// <param name="servicePrincipal">The application service principal.</param>
+        /// <param name="controlPlaneInfo">The control-plane info.</param>
+        /// <param name="controlPlaneAzureResourceAccessor">Control plane resource accessor.</param>
         /// <param name="certificateSettings">Certificate settings.</param>
         /// <param name="logger">Logger.</param>
         public VMTokenProvider(
             IAzureClientFactory azureClientFactory,
+            IServicePrincipal servicePrincipal,
+            IControlPlaneInfo controlPlaneInfo,
+            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             CertificateSettings certificateSettings,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(azureClientFactory, nameof(azureClientFactory));
+            Requires.NotNull(servicePrincipal, nameof(servicePrincipal));
+            Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
+            Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));
             Requires.NotNull(certificateSettings, nameof(certificateSettings));
             this.logger = Requires.NotNull(logger, nameof(logger));
 
-            Requires.NotNullOrWhiteSpace(certificateSettings.KeyValutName, nameof(certificateSettings.KeyValutName));
             Requires.NotNullOrWhiteSpace(certificateSettings.CertificateName, nameof(certificateSettings.CertificateName));
             Requires.NotNullOrWhiteSpace(certificateSettings.Issuer, nameof(certificateSettings.Issuer));
             Requires.NotNullOrWhiteSpace(certificateSettings.Audience, nameof(certificateSettings.Audience));
-            Requires.NotNullOrWhiteSpace(certificateSettings.ClientId, nameof(certificateSettings.ClientId));
-            Requires.NotNullOrWhiteSpace(certificateSettings.ClientSecretKeyVaultSecretIdentifier, nameof(certificateSettings.ClientSecretKeyVaultSecretIdentifier));
-            Requires.NotNullOrWhiteSpace(certificateSettings.TenantId, nameof(certificateSettings.TenantId));
 
-            Task.Run(() => Init(azureClientFactory, certificateSettings, logger)).Wait();
+            Task.Run(() => Init(azureClientFactory, servicePrincipal, controlPlaneInfo, controlPlaneAzureResourceAccessor, certificateSettings, logger)).Wait();
         }
 
         /// <summary>
@@ -79,17 +87,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
             return Convert.FromBase64String(secret.Value);
         }
 
-        private async Task Init(IAzureClientFactory azureClientFactory, CertificateSettings certificateSettings, IDiagnosticsLogger logger)
+        private async Task Init(
+            IAzureClientFactory azureClientFactory,
+            IServicePrincipal servicePrincipal,
+            IControlPlaneInfo controlPlaneInfo,
+            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
+            CertificateSettings certificateSettings,
+            IDiagnosticsLogger logger)
         {
-            var appIdSecret = await ResolveKeyvaultSecret(certificateSettings.ClientSecretKeyVaultSecretIdentifier);
-            IAzure client = await azureClientFactory.GetAzureClientAsync(
-                certificateSettings.SubscriptionId,
-                certificateSettings.ClientId,
-                appIdSecret,   // TODO: janraj, write it to use John Rivard's change.
-                certificateSettings.TenantId);
+            var subscriptionId = await controlPlaneAzureResourceAccessor.GetCurrentSubscriptionIdAsync();
+            var clientSecret = await servicePrincipal.GetServicePrincipalClientSecretAsync();
 
-            var keyVaultUrl = $"https://{certificateSettings.KeyValutName}.vault.azure.net";
-            var keyVault = await client.Vaults.GetByResourceGroupAsync(certificateSettings.ResourceGroupName, certificateSettings.KeyValutName);
+            IAzure client = await azureClientFactory.GetAzureClientAsync(
+                subscriptionId,
+                servicePrincipal.ClientId,
+                clientSecret,
+                servicePrincipal.TenantId);
+
+            var keyVaultName = controlPlaneInfo.EnvironmentKeyVaultName;
+            var keyVaultResourceGroup = controlPlaneInfo.EnvironmentResourceGroupName;
+            var keyVaultUrl = $"https://{keyVaultName}.vault.azure.net";
+            var keyVault = await client.Vaults.GetByResourceGroupAsync(keyVaultResourceGroup, keyVaultName);
 
             var (primarySecretVersion, secondarySecretsVersion) = await GetPrimaryAndSecondarySecretsAsync(keyVault, keyVaultUrl, certificateSettings.CertificateName);
 
@@ -137,22 +155,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
 
             this.logger.LogInfo("primary_and_secondary_secret_versions_found");
             return (primarySecretVersion, secondarySecretVersions);
-        }
-
-        private async Task<string> ResolveKeyvaultSecret(string clientSecretKeyVaultSecretIdentifier)
-        {
-            await Task.CompletedTask;
-
-            // TODO: janraj, temporary code. remove after John Rivard's change.
-            // TODO: Temporary hack: the secret identifier is just an environment variable name where we look up the secert.
-            // TODO: Eventually we'll actually call keyvault to get the secrets.
-            var secret = Environment.GetEnvironmentVariable(clientSecretKeyVaultSecretIdentifier);
-            if (string.IsNullOrEmpty(secret))
-            {
-                throw new InvalidOperationException($"The environment variable '{clientSecretKeyVaultSecretIdentifier}' is not set.");
-            }
-
-            return secret;
         }
     }
 }

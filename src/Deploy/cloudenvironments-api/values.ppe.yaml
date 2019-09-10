@@ -2,8 +2,6 @@
 frontend-web-api:
   config:
     aspNetEnv: Staging
-    validJwtAudiences: TODO
-    databaseId: TODO
   ingress:
     hosts:
       - online-ppe.core.vsengsaas.visualstudio.com

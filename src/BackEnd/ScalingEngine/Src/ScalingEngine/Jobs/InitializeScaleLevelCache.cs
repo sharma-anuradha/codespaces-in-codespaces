@@ -8,10 +8,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
 {
@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         /// <inheritdoc/>
         public async Task WarmupCompletedAsync()
         {
-            var resourceSkus = FlattenResourceSkus(SystemCatalog.SkuCatalog.CloudEnvironmentSkus);
+            var resourceSkus = FlattenResourceSkus(SystemCatalog.SkuCatalog.CloudEnvironmentSkus.Values);
 
             await ResourceScalingBroker.UpdateResourceScaleLevels(resourceSkus);
         }

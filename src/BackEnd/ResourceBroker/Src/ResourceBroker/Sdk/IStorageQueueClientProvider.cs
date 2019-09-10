@@ -15,7 +15,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Gets the queue client for storage queue operations.
         /// </summary>
-        CloudQueueClient QueueClient { get; }
+        /// <returns>The cloud queue client instance.</returns>
+        Task<CloudQueueClient> GetQueueClientAsync();
 
         /// <summary>
         /// Gets a reference to a specific queue.

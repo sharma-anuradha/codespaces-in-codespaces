@@ -11,7 +11,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     public class AzureClientFactoryMock : IAzureClientFactory
     {

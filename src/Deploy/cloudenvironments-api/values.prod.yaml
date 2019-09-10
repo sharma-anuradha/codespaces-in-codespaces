@@ -2,8 +2,6 @@
 frontend-web-api:
   config:
     aspNetEnv: Production
-    validJwtAudiences: TODO
-    databaseId: TODO
   ingress:
     hosts:
       - online.visualstudio.com

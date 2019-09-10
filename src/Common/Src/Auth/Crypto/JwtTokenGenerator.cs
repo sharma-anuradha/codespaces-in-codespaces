@@ -9,6 +9,13 @@ using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.Diagnostics;
 
+#pragma warning disable SA1118 // Parameter should not span multiple lines
+#pragma warning disable SA1202 // Elements should be ordered by access
+#pragma warning disable SA1600 // Elements should be documented
+#pragma warning disable SA1611 // Element parameters should be documented
+#pragma warning disable SA1615 // Element return value should be documented
+#pragma warning disable SA1629 // End with a period
+
 namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 {
     /// <summary>

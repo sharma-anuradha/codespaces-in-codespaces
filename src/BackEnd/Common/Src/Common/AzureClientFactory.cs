@@ -12,8 +12,8 @@ using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 IServicePrincipal sp = azureSub.ServicePrincipal;
                 var azureAppId = sp.ClientId;
-                var azureAppKey = await sp.GetServicePrincipalClientSecret();
+                var azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
                 var azureTenant = sp.TenantId;
 
                 return await GetAzureClientAsync(azureSubscriptionId, azureAppId, azureAppKey, azureTenant);
@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 IServicePrincipal sp = azureSub.ServicePrincipal;
                 string azureAppId = sp.ClientId;
-                string azureAppKey = await sp.GetServicePrincipalClientSecret();
+                string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
                 string azureTenant = sp.TenantId;
                 var creds = new AzureCredentialsFactory()
                     .FromServicePrincipal(
@@ -118,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 IServicePrincipal sp = azureSub.ServicePrincipal;
                 string azureAppId = sp.ClientId;
-                string azureAppKey = await sp.GetServicePrincipalClientSecret();
+                string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
                 string azureTenant = sp.TenantId;
                 var creds = new AzureCredentialsFactory()
                     .FromServicePrincipal(

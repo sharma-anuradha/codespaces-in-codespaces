@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <exception cref="ValidationException"><paramref name="value"/> is null.</exception>
         public static T IsRequired<T>(T value, string name = null)
         {
-            if (value == default)
+            if (value == null)
             {
                 if (string.IsNullOrEmpty(name))
                 {

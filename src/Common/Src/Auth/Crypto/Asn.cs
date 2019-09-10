@@ -4,6 +4,13 @@
 using System;
 using System.Linq;
 
+#pragma warning disable SA1108 // Block statemens shojld not contain embedded comments
+#pragma warning disable SA1600 // Elements should be dcoumented
+#pragma warning disable SA1602 // Enumeration items should be dcoumented
+#pragma warning disable SA1611 // Element parameters should be documented
+#pragma warning disable SA1616 // Element return value should have text
+#pragma warning disable SA1629 // Documentation text should end with a period
+
 namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 {
     /// <summary>
@@ -60,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             {
                 ret[index++] = (byte)contentLength;
             }
+
             return ret;
         }
 

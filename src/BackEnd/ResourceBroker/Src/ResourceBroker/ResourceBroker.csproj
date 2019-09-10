@@ -17,7 +17,6 @@
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
-    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
     <ProjectReference Include="..\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
     <ProjectReference Include="..\ResourceBroker.Models\ResourceBroker.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />

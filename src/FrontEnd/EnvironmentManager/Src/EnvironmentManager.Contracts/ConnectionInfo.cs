@@ -34,7 +34,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets the compute target id.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "computeTargetId")]
-        [Obsolete("The front-end no longer needs to specify this")]
         public string ConnectionComputeTargetId { get; set; }
     }
 }

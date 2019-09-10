@@ -4,6 +4,8 @@
     <ProjectReference Include="Auth\Auth.csproj" />
     <ProjectReference Include="Common\Common.csproj" />
     <ProjectReference Include="HttpContracts\HttpContracts.csproj" />
+    <ProjectReference Include="Common.Contracts\Common.Contracts.csproj" />
+    <ProjectReference Include="Common.AspNetCore\Common.AspNetCore.csproj" />
   </ItemGroup>
 
 </Project>

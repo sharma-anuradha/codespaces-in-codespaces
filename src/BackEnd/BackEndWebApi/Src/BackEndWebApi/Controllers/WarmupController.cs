@@ -37,6 +37,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         public async Task<IActionResult> GetAsync()
         {
+            await Task.CompletedTask;
+
             var resultHttpStatus = TriggerWarmup.Start();
 
             return StatusCode(resultHttpStatus);

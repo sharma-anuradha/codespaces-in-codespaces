@@ -7,27 +7,24 @@ using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Settings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Swashbuckle.AspNetCore.Swagger;
@@ -37,35 +34,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
     /// <summary>
     /// Configures the ASP.NET Core pipeline for HTTP requests.
     /// </summary>
-    public class Startup
+    public class Startup : CommonStartupBase<AppSettings>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Startup"/> class.
         /// </summary>
         /// <param name="hostingEnvironment">The hosting environment for the server.</param>
         public Startup(IHostingEnvironment hostingEnvironment)
+            : base(hostingEnvironment, "BackEndWebApi")
         {
-            HostingEnvironment = hostingEnvironment;
-
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(hostingEnvironment.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.secrets.json", optional: true)
-                .AddJsonFile($"appsettings.{hostingEnvironment.EnvironmentName}.json", optional: true);
-
-            if (!IsRunningInAzure())
-            {
-                builder = builder.AddJsonFile("appsettings.Local.json", optional: true);
-            }
-
-            builder = builder.AddEnvironmentVariables();
-
-            Configuration = builder.Build();
         }
-
-        private IConfiguration Configuration { get; }
-
-        private IHostingEnvironment HostingEnvironment { get; }
 
         /// <summary>
         /// This method gets called by the runtime.
@@ -84,83 +62,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                     x.AllowInputFormatterExceptionMessages = HostingEnvironment.IsDevelopment();
                 });
 
-            // Configuration setup
-            var appSettingsConfiguration = Configuration.GetSection("AppSettings");
-            var appSettings = appSettingsConfiguration.Get<AppSettings>();
-            services.Configure<AppSettings>(appSettingsConfiguration);
-
-            var storageAccountSettingsConfiguration = Configuration.GetSection("StorageAccountSettings");
-            var storageAccountSettings = storageAccountSettingsConfiguration.Get<StorageAccountSettings>();
-            services.Configure<StorageAccountSettings>(storageAccountSettingsConfiguration);
-            services.AddSingleton(storageAccountSettings);
+            // Configuration AppSettings
+            var appSettings = ConfigureAppSettings(services);
 
             if (IsRunningInAzure())
             {
-                if (appSettings.UseMocksForExternalDependencies ||
-                    appSettings.UseMocksForResourceBroker ||
-                    appSettings.UseMocksForResourceProviders)
+                var mocksSettings = AppSettings.BackEnd.MocksSettings;
+                if (mocksSettings != null)
                 {
-                    throw new InvalidOperationException("Cannot use mocks outside of local development");
+                    if (mocksSettings.UseMocksForExternalDependencies ||
+                        mocksSettings.UseMocksForResourceBroker ||
+                        mocksSettings.UseMocksForResourceProviders)
+                    {
+                        throw new InvalidOperationException("Cannot use mocks outside of local development");
+                    }
                 }
             }
+
+            // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
+            ConfigureCommonServices(services, out var loggingBaseValues);
 
             // Common services
             services.AddSingleton<IDistributedLease, DistributedLease>();
             services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
             services.AddSingleton<ITaskHelper, TaskHelper>();
 
-            // Logging setup
-            var loggingBaseValues = new LoggingBaseValues
-            {
-                ServiceName = "BackendWebApi",
-                CommitId = appSettings.GitCommit,
-            };
-            services.AddTransient<IDiagnosticsLogger>(x =>
-            {
-                var loggerFactory = x.GetService<IDiagnosticsLoggerFactory>();
-                var logValueSet = x.GetService<LogValueSet>();
-                return loggerFactory.New(logValueSet);
-            });
-
             // VsSaaS services
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
             services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
             {
-                options.AccountKey = RequiresNotNullOrEmpty(storageAccountSettings.StorageAccountKey, nameof(storageAccountSettings.StorageAccountKey));
-                options.AccountName = RequiresNotNullOrEmpty(storageAccountSettings.StorageAccountName, nameof(storageAccountSettings.StorageAccountName));
+                var (accountName, accountKey) = ControlPlaneAzureResourceAccessor.GetStampStorageAccountAsync().Result;
+                options.AccountName = accountName;
+                options.AccountKey = accountKey;
             });
-
-            // For development, use the default CosmosDB region. Otherwise, when we are running in Azure,
-            // use the same region that we are deployed to.
-            string preferredCosmosDbRegion = null;
-            if (IsRunningInAzure())
-            {
-                try
-                {
-                    preferredCosmosDbRegion = Retry
-                        .DoAsync(async (attemptNumber) => await AzureInstanceMetadata.GetCurrentLocationAsync())
-                        .GetAwaiter()
-                        .GetResult();
-                }
-                catch (Exception e)
-                {
-                    var logger = new DefaultLoggerFactory().New(new LogValueSet()
-                    {
-                        { LoggingConstants.Service, loggingBaseValues.ServiceName },
-                        { LoggingConstants.CommitId, loggingBaseValues.CommitId },
-                    });
-                    logger.AddExceptionInfo(e).LogError("error_querying_azure_region_from_instance_metadata");
-                }
-            }
 
             services.AddDocumentDbClientProvider(options =>
             {
+                var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetStampCosmosDbAccountAsync().Result;
                 options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
                 options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
-                options.HostUrl = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbHost, nameof(appSettings.AzureCosmosDbHost));
-                options.AuthKey = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbAuthKey, nameof(appSettings.AzureCosmosDbAuthKey));
+                options.HostUrl = hostUrl;
+                options.AuthKey = authKey;
                 options.DatabaseId = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId));
-                options.PreferredLocation = preferredCosmosDbRegion;
+                options.PreferredLocation = CurrentAzureLocation.ToString();
                 options.UseMultipleWriteLocations = false;
             });
 
@@ -173,52 +117,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);
 
-            // System Catalog
-            var azureSubscriptionCatalogSettings = Configuration.GetSection("AzureSubscriptionCatalogSettings").Get<AzureSubscriptionCatalogSettings>();
-            var skuCatalogSettings = Configuration.GetSection("SkuCatalogSettings").Get<SkuCatalogSettings>();
-            services.AddSystemCatalog(
-                azureSubscriptionCatalogSettings,
-                skuCatalogSettings);
-
             // Resource Broker
-            var resourceBrokerSettingsConfiguration = Configuration.GetSection("ResourceBrokerSettings");
-            var resourceBrokerSettings = resourceBrokerSettingsConfiguration.Get<ResourceBrokerSettings>();
-            services.Configure<ResourceBrokerSettings>(resourceBrokerSettingsConfiguration);
-            services.AddSingleton(resourceBrokerSettings);
             services.AddResourceBroker(
-                storageAccountSettings,
-                resourceBrokerSettings,
-                appSettings);
+                appSettings.BackEnd.ResourceBrokerSettings,
+                appSettings.BackEnd.MocksSettings);
 
             // Scaling Engine
-            services.AddScalingEngine(
-                appSettings);
+            services.AddScalingEngine();
 
             // Compute Provider
-            services.AddComputeVirtualMachineProvider(
-                appSettings);
+            services.AddComputeVirtualMachineProvider(appSettings.BackEnd.MocksSettings);
 
             // Storage Provider
-            services.AddStorageFileShareProvider(
-                appSettings);
+            services.AddStorageFileShareProvider(appSettings.BackEnd.MocksSettings);
 
             // Capacity Manager
-            services.AddCapacityManager(
-                appSettings.UseMocksForExternalDependencies);
+            services.AddCapacityManager(appSettings.BackEnd.MocksSettings);
+
+            // Add the certificate settings.
+            services.AddSingleton(appSettings.BackEnd.CertificateSettings);
 
             // Auth/Token Providers
-            // System Catalog
-            var certificateSettings = Configuration.GetSection("certificateSettings").Get<CertificateSettings>();
-            services.AddSingleton(certificateSettings);
             services.AddVMTokenProvider(
-                appSettings);
+                appSettings.BackEnd.MocksSettings.UseMocksForResourceProviders);
 
             // OpenAPI/swagger services
             services.AddSwaggerGen(x =>
             {
                 x.SwaggerDoc("v1", new Info()
                 {
-                    Title = "BackendWebApi",
+                    Title = ServiceName,
                     Description = "Backend API for managing resources needed for Cloud Environments. This API is only exposed internally in the cluster.",
                     Version = "v1",
                 });
@@ -234,14 +162,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         /// <param name="env">The hosting environment for the server.</param>
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            ConfigureAppCommon(app);
+
             var isDevelopment = env.IsDevelopment();
 
+            // Emit the startup settings to logs for diagnostics.
+            var logger = app.ApplicationServices.GetRequiredService<IDiagnosticsLogger>();
+
             // System Components
-            app.UseSystemCatalog(env);
-            app.UseScalingEngine(env);
-            app.UseResourceBroker(env);
-            app.UseComputeVirtualMachineProvider(env);
-            app.UseStorageFileShareProvider(env);
+            try
+            {
+                app.UseSystemCatalog(env);
+                app.UseScalingEngine(env);
+                app.UseResourceBroker(env);
+                app.UseComputeVirtualMachineProvider(env);
+                app.UseStorageFileShareProvider(env);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException($"{LogMessageBase}_failed", ex);
+                throw;
+            }
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(isDevelopment);
@@ -272,11 +213,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 c.SwaggerEndpoint("/v1/swagger", "BackendWebApi API v1");
                 c.DisplayRequestDuration();
             });
-        }
 
-        private static bool IsRunningInAzure()
-        {
-            return Environment.GetEnvironmentVariable("RUNNING_IN_AZURE") == "true";
+            // Warmup!
+            var warmup = app.ApplicationServices.GetRequiredService<ITriggerWarmup>();
+            _ = warmup.Start();
         }
 
         private static string RequiresNotNullOrEmpty(string value, string paramName)

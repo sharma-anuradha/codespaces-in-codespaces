@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Src\Common.Abstractions\Common.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\SystemCatalog\Src\SystemCatalog.Abstractions\SystemCatalog.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\Common\src\Common.Contracts\Common.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

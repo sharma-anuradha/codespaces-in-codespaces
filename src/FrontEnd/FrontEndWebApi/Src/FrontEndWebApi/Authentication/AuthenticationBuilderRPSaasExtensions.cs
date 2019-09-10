@@ -21,12 +21,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
     /// </summary>
     public static class AuthenticationBuilderRPSaasExtensions
     {
+        /// <summary>
+        /// The authentication scheme for calls from RP-SaaS.
+        /// </summary>
         public const string AuthenticationScheme = "aadrpsaas";
+
         private const string BadTokenMessage = "jwt_bearer_bad_token";
 
         private static IEnumerable<string> DefaultAudiences { get; } = new string[]
         {
-            "https://management.core.windows.net/"
+            "https://management.core.windows.net/",
         };
 
         /// <summary>
@@ -62,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// Method to be called in the event of failed authentication.
         /// </summary>
         /// <param name="arg">failure context.</param>
-        /// <returns>Task</returns>
+        /// <returns>Task.</returns>
         private static async Task AuthenticationFailedAsync(AuthenticationFailedContext arg)
         {
             await Task.CompletedTask;

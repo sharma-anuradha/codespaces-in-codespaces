@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         public int TargetCount { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the sku.
+        /// Gets or sets the name of the Azure SKU.
         /// </summary>
         public string SkuName { get; set; }
 

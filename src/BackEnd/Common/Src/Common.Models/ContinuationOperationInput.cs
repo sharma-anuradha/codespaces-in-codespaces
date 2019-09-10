@@ -20,5 +20,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// Gets or sets the target input.
         /// </summary>
         public ContinuationInput OperationInput { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cloud environment SKU name.
+        /// </summary>
+        public string CloudEnvironmentSku { get; set; }
     }
 }

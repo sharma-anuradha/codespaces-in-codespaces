@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public static string GetCreateResourceUri() => ResourcesRoute;
 
         /// <summary>
-        /// Get the get resoruce uri.
+        /// Get the get resource uri.
         /// </summary>
         /// <param name="resourceId">The resource id token.</param>
         /// <returns>Uri.</returns>

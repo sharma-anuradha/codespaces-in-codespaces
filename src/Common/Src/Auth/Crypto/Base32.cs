@@ -4,6 +4,8 @@
 using System;
 using System.Text;
 
+#pragma warning disable SA1629 // Documentation text should end with a period
+
 namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 {
     /// <summary>
@@ -39,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             {
                 return null;
             }
+
             // Check if empty
             else if (bytes.Length == 0)
             {
@@ -105,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             if (outputBase32BytePosition > 0)
             {
                 // Move to the right bits
-                outputBase32Byte <<= (OutByteSize - outputBase32BytePosition);
+                outputBase32Byte <<= OutByteSize - outputBase32BytePosition;
 
                 // Drop the overflow bits
                 outputBase32Byte &= 0x1F;  // 0x1F = 00011111 in binary
@@ -129,6 +132,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             {
                 return null;
             }
+
             // Check if empty
             else if (base32String == string.Empty)
             {

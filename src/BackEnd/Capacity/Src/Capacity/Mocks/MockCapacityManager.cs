@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Mocks
 {

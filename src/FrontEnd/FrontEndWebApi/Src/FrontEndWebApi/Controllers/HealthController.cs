@@ -17,6 +17,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     {
         private IHealthProvider HealthProvider { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HealthController"/> class.
+        /// </summary>
+        /// <param name="healthProvider">The health provider.</param>
         public HealthController(
              IHealthProvider healthProvider)
         {

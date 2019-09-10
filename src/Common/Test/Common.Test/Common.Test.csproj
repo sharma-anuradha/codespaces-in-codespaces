@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\Auth\Auth.csproj" />
+    <ProjectReference Include="..\..\Src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\Src\Common.Contracts\Common.Contracts.csproj" />
+    <ProjectReference Include="..\..\Src\HttpContracts\HttpContracts.csproj" />
+  </ItemGroup>
+
+</Project>

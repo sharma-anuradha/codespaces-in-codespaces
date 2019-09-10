@@ -9,6 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -20,7 +23,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
@@ -44,22 +46,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="subscriptionCatalog">Subscription Catalog to be used.</param>
         /// <param name="blobStorageClientProvider">Blob storage client provider.</param>
+        /// <param name="capacityManager">The capacity manager.</param>
+        /// <param name="skuCatalog">The environment SKU catalog.</param>
         /// <param name="resourceBrokerSettings">Resource broker settings.</param>
         /// <param name="serviceCollection">Service Collection.</param>
         public CreateResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
-            IAzureSubscriptionCatalog subscriptionCatalog,
             IBlobStorageClientProvider blobStorageClientProvider,
+            ICapacityManager capacityManager,
+            ISkuCatalog skuCatalog,
             ResourceBrokerSettings resourceBrokerSettings,
             IServiceProvider serviceProvider)
             : base(serviceProvider, resourceRepository)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
-            SubscriptionCatalog = subscriptionCatalog;
             BlobStorageClientProvider = blobStorageClientProvider;
+            CapacityManager = capacityManager;
+            SkuCatalog = skuCatalog;
             ResourceBrokerSettings = resourceBrokerSettings;
         }
 
@@ -76,9 +82,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private IStorageProvider StorageProvider { get; }
 
-        private IAzureSubscriptionCatalog SubscriptionCatalog { get; }
-
         private IBlobStorageClientProvider BlobStorageClientProvider { get; }
+
+        private ICapacityManager CapacityManager { get; }
+
+        private ISkuCatalog SkuCatalog { get; }
 
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
@@ -95,22 +103,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <inheritdoc/>
-        protected override Task<ContinuationInput> BuildOperationInputAsync(CreateResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
+        protected override async Task<ContinuationInput> BuildOperationInputAsync(CreateResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
-            var result = (ContinuationInput)null;
+            var result = default(ContinuationInput);
 
-            // TODO: Update to get info from the capacity manager
-            var resourceGroup = $"RG-{input.ResourceId}";
-            var subscription = SubscriptionCatalog.AzureSubscriptions.FirstOrDefault().SubscriptionId;
+            // Get the resource location from the capacity manager.
+            if (!Enum.TryParse<AzureLocation>(input.Location, ignoreCase: true, out var azureLocation))
+            {
+                throw new NotSupportedException($"Provided location of '{input.Location}' is not supported.");
+            }
+
+            /*
+             * TODO: How will we track the Cloud Environment SKU in the pool manager, and not just the Azure SKU?
+            if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.SkuName, out var sku))
+            {
+                throw new SkuNotAvailableException(input.SkuName, azureLocation);
+            }
+            */
+            var sku = default(ICloudEnvironmentSku);
+            var resourceLocation = await CapacityManager.SelectAzureResourceLocation(sku, azureLocation, logger);
+            var resourceGroup = resourceLocation.ResourceGroup;
+            var subscription = resourceLocation.Subscription.SubscriptionId;
 
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
-                var didParseLocation = Enum.TryParse(input.Location, true, out AzureLocation azureLocation);
-                if (!didParseLocation)
-                {
-                    throw new NotSupportedException($"Provided location of '{input.Location}' is not supported.");
-                }
-
                 result = new VirtualMachineProviderCreateInput
                 {
                     AzureVmLocation = azureLocation,
@@ -144,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 throw new NotSupportedException($"Resource type is not selected - {resource.Value.Type}");
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
         /// <inheritdoc/>

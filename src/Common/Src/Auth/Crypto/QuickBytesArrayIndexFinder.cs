@@ -1,15 +1,22 @@
-﻿// <copyright file="QuickByteArrayIndexFinder.cs" company="Microsoft">
+﻿// <copyright file="QuickBytesArrayIndexFinder.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
+
 using System;
 using System.Text;
+
+#pragma warning disable SA1201 // Elements should appear in the correct order
+#pragma warning disable SA1202 // Elements should be ordered by access
+#pragma warning disable SA1204 // Static elements should appear before instance elements
+#pragma warning disable SA1309 // Field names should not begin with underscore
+#pragma warning disable SA1600 // Elements should be documented
+#pragma warning disable SA1611 // Element parameters should be documented
 
 namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 {
     // implements Boyer–Moore–Horspool algorithm
     // Reference: https://en.wikipedia.org/wiki/Boyer–Moore–Horspool_algorithm
     public class QuickByteArrayIndexFinder
-
     {
         private readonly int[] _skipTable = new int[256];
         private readonly string _boundary;
@@ -29,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             {
                 this._skipTable[i] = length;
             }
+
             for (var i = 0; i < length; ++i)
             {
                 this._skipTable[BoundaryBytes[i]] = Math.Max(1, length - 1 - i);
@@ -60,8 +68,10 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
                 {
                     return true;
                 }
+
                 index += GetSkipValue(lookaheadTailChar);
             }
+
             return false;
         }
 
@@ -74,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
                     return buffer1[offset1] - buffer2[offset2];
                 }
             }
+
             return 0;
         }
 

@@ -5,6 +5,11 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
+#pragma warning disable SA1600 // Elements should be documented
+#pragma warning disable SA1611 // Elements should be documented
+#pragma warning disable SA1615 // Elements should be documented
+#pragma warning disable SA1629 // Elements should be documented
+
 namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 {
     /// <summary>

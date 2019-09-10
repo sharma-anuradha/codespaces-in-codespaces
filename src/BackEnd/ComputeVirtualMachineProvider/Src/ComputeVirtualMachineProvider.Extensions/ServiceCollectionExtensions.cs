@@ -17,20 +17,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        ///
+        /// <see cref="IServiceCollection"/> extensions for the compute-virtual-machine provider.
         /// </summary>
-        /// <param name="services"></param>
-        /// <param name="appSettings"></param>
-        /// <returns></returns>
+        /// <param name="services">The service collection.</param>
+        /// <param name="mocksSettings">The mocks settings.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddComputeVirtualMachineProvider(
             this IServiceCollection services,
-            AppSettings appSettings)
+            MocksSettings mocksSettings = null)
         {
             Requires.NotNull(services, nameof(services));
-            Requires.NotNull(appSettings, nameof(appSettings));
 
             // Short circuit things if Resource Providers is being mocked
-            if (appSettings.UseMocksForResourceProviders)
+            if (mocksSettings?.UseMocksForResourceProviders == true)
             {
                 return services;
             }
@@ -40,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             services.AddSingleton<IDeploymentManager, LinuxVirtualMachineManager>();
 
             // External Service
-            if (appSettings.UseMocksForExternalDependencies)
+            if (mocksSettings?.UseMocksForExternalDependencies == true)
             {
                 // TODO: this needs to be updated
                 var clientFactoryMock = new AzureClientFactoryMock("{what_should_this_be}");

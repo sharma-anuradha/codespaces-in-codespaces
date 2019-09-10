@@ -4,8 +4,9 @@
 
 appSettings:
   - ASPNETCORE_ENVIRONMENT
-  - AppSettings__AzureCosmosDbAuthKey
   - RUNNING_IN_AZURE
+  - APPSECRETS__APPSERVICEPRINCIPALCLIENTSECRET
+  - OVERRIDE_APPSETTINGS_JSON
 
 pods:
   minReplicaCount: 3

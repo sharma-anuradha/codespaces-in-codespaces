@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common.Warmup;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions
@@ -15,18 +14,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        ///
+        /// <see cref="IServiceCollection"/> extensions for the scaling engine.
         /// </summary>
         /// <param name="services"></param>
-        /// <param name="appSettings"></param>
-        /// <returns></returns>
+        /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddScalingEngine(
-            this IServiceCollection services,
-            AppSettings appSettings)
+            this IServiceCollection services)
         {
             Requires.NotNull(services, nameof(services));
-            Requires.NotNull(appSettings, nameof(appSettings));
-
+ 
             services.AddSingleton<IAsyncWarmup, InitializeScaleLevelCache>();
 
             return services;

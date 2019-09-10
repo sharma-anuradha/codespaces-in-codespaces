@@ -3,8 +3,6 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
 {
@@ -17,17 +15,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
         /// Adds VM token provider to the collection of services.
         /// </summary>
         /// <param name="services">Service collection.</param>
-        /// <param name="appSettings">App settings.</param>
+        /// <param name="useMocksForTokenProviders">A value indicating whether to use mocks for token providers.</param>
         /// <returns>Adds VMToken povider to the list of services.</returns>
         public static IServiceCollection AddVMTokenProvider(
             this IServiceCollection services,
-            AppSettings appSettings)
+            bool useMocksForTokenProviders)
         {
             Requires.NotNull(services, nameof(services));
-            Requires.NotNull(appSettings, nameof(appSettings));
-
+ 
             // Short circuit things if Token Providers is being mocked
-            if (appSettings.UseMocksForTokenProviders)
+            if (useMocksForTokenProviders)
             {
                 return services;
             }

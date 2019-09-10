@@ -14,9 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SystemCatalog.Abstractions;
 using Moq;
 using Xunit;
 
@@ -59,7 +58,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var clientId = config["CLIENT_ID"];
             var tenantId = config["TENANT_ID"];
             var clientSecret = config["CLIENT_SECRET"];
-            return new ServicePrincipal(clientId, "ignorethis", tenantId, s => Task.FromResult(clientSecret));
+            var secretProviderMoq = new Mock<ISecretProvider>();
+            secretProviderMoq
+                .Setup(p => p.GetSecretAsync(It.IsAny<string>()))
+                .ReturnsAsync(clientSecret);
+
+            return new ServicePrincipal(clientId, "ignorethis", tenantId, secretProviderMoq.Object);
         }
 
         private static Mock<ISystemCatalog> GetMockSystemCatalog(IServicePrincipal servicePrincipal)

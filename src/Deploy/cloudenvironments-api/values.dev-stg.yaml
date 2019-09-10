@@ -1,0 +1,27 @@
+# Config for frontend
+frontend-web-api:
+  config:
+    aspNetEnv: Development
+    overrideAppSettingsJson: appsettings.dev-stg.json
+  ingress:
+    hosts:
+      - online-stg.dev.core.vsengsaas.visualstudio.com
+      - stg-online.dev.core.vsengsaas.visualstudio.com
+      - westus2-stg-online.dev.core.vsengsaas.visualstudio.com
+      - vsclk-online-dev-stg-asse-tm.trafficmanager.net
+      - vsclk-online-dev-stg-tm.trafficmanager.net
+      - vsclk-online-dev-stg-euw-tm.trafficmanager.net
+      - vsclk-online-dev-stg-use-tm.trafficmanager.net
+      - vsclk-online-dev-stg-usw2-tm.trafficmanager.net
+    tls:
+      - hosts:
+        - online-stg.dev.core.vsengsaas.visualstudio.com
+        - stg-online.dev.core.vsengsaas.visualstudio.com
+        - westus2-stg-online.dev.core.vsengsaas.visualstudio.com
+        secretName: ssl-cert
+
+# Config for backend
+backend-web-api:
+  config:
+    aspNetEnv: Development
+    overrideAppSettingsJson: appsettings.dev-stg.json

@@ -8,7 +8,6 @@
     <ProjectReference Include="ResourceBroker\dirs.proj" />
     <ProjectReference Include="ScalingEngine\dirs.proj" />
     <ProjectReference Include="StorageFileShareProvider\dirs.proj" />
-    <ProjectReference Include="SystemCatalog\dirs.proj" />
   </ItemGroup>
 
 </Project>

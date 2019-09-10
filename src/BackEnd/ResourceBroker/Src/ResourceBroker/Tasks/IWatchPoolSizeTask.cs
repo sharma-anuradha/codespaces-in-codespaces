@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     public interface IWatchPoolSizeTask : IDisposable
     {
         /// <summary>
-        /// This job, for each resource sku we have, will move through those resoruces randomly
+        /// This job, for each resource sku we have, will move through those resources randomly
         /// and in parallel. As each resource is processed, it will attempt to obtain a lock on
         /// that resource, if it can't obtain a lock, it will continue onto the next item (as its
         /// assumed another worker is successfully working on that data), if it can obtain a lock,
