@@ -31,5 +31,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         {
             return await RunAsync<VirtualMachineProviderDeleteInput, VirtualMachineProviderDeleteResult>(input, logger);
         }
+
+        /// <inheritdoc/>
+        public async Task<VirtualMachineProviderQueueResult> GetVirtualMachineInputQueueAsync(VirtualMachineProviderQueueInput input, IDiagnosticsLogger logger)
+        {
+            return await RunAsync<VirtualMachineProviderQueueInput, VirtualMachineProviderQueueResult>(input, logger);
+
+        }
     }
 }

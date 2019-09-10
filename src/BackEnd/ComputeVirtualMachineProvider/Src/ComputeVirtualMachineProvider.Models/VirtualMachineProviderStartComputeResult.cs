@@ -11,6 +11,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     /// </summary>
     public class VirtualMachineProviderStartComputeResult : ContinuationResult
     {
-
     }
 }

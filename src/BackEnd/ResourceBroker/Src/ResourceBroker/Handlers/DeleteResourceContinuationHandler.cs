@@ -5,6 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
@@ -66,9 +67,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var operationInput = (ContinuationInput)null;
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
+                var didParseLocation = Enum.TryParse(resource.Value.Location, true, out AzureLocation azureLocation);
+                if (!didParseLocation)
+                {
+                    throw new NotSupportedException($"Provided location of '{resource.Value.Location}' is not supported.");
+                }
+
                 operationInput = new VirtualMachineProviderDeleteInput
                 {
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
+                    AzureVmLocation = azureLocation,
                 };
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)

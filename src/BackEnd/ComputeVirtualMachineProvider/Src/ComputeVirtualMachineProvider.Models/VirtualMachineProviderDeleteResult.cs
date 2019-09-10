@@ -7,7 +7,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     /// <summary>
-    ///
+    /// Stores virtual machine deletion result.
     /// </summary>
     public class VirtualMachineProviderDeleteResult : ContinuationResult
     {

@@ -28,7 +28,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task Create_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
-            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
+            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
+            var azureDeploymentManager = new LinuxVirtualMachineManager(
+                clientFactory,
+                new MockTokenProvider(),
+                new MockControlPlaneAzureResourceAccssor(clientFactory));
 
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
@@ -78,8 +82,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         [Fact]
         public async Task Create_Multiple_Compute_Ok()
         {
-            var logger = new DefaultLoggerFactory().New();           
-            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
+            var logger = new DefaultLoggerFactory().New();
+            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
+            var azureDeploymentManager = new LinuxVirtualMachineManager(
+                clientFactory,
+                new MockTokenProvider(),
+                new MockControlPlaneAzureResourceAccssor(clientFactory));
 
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             Guid subscriptionId = this.testContext.SubscriptionId;
@@ -111,7 +119,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task Start_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
-            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
+            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
+            var azureDeploymentManager = new LinuxVirtualMachineManager(
+                clientFactory,
+                new MockTokenProvider(),
+                new MockControlPlaneAzureResourceAccssor(clientFactory));
 
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
             var fileShareInfo = new ShareConnectionInfo("storageaccount1",
@@ -140,13 +152,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             var logger = new DefaultLoggerFactory().New();
             var deleteTimer = Stopwatch.StartNew();
-            var azureDeploymentManager = new LinuxVirtualMachineManager(new AzureClientFactoryMock(testContext.AuthFilePath), new MockTokenProvider());
+            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
+            var azureDeploymentManager = new LinuxVirtualMachineManager(
+                clientFactory,
+                new MockTokenProvider(),
+                new MockControlPlaneAzureResourceAccssor(clientFactory));
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
 
-            var resourceName = Guid.Parse("94207259-13b5-4753-90bc-50232f3ca2c9").ToString();
+            var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
             var input = new VirtualMachineProviderDeleteInput
             {
                 AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceName),
+                AzureVmLocation = AzureLocation.WestUs2,
             };
 
             var deleteResult = await computeProvider.DeleteAsync(input, logger);
@@ -170,6 +187,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             } while (deleteStatusCheckResult.Status.Equals(OperationState.InProgress));
             timerWait.Stop();
             Console.WriteLine($"Time taken to start environment on VM {timerWait.Elapsed.TotalSeconds}");
+        }
+
+
+        [Trait("Category", "IntegrationTest")]
+        [Fact]
+        public async Task Get_Input_Queue_SasToken_Ok()
+        {
+            var logger = new DefaultLoggerFactory().New();
+            var timer = Stopwatch.StartNew();
+            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
+            var azureDeploymentManager = new LinuxVirtualMachineManager(
+                clientFactory,
+                new MockTokenProvider(),
+                new MockControlPlaneAzureResourceAccssor(clientFactory));
+            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
+
+            var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
+            var input = new VirtualMachineProviderQueueInput
+            {
+                AzureVmLocation = AzureLocation.WestUs2,
+                AzureVmName = resourceName,
+            };
+
+            var queueResult = await computeProvider.GetVirtualMachineInputQueueAsync(input, logger);
+            timer.Stop();
+            Console.WriteLine($"Time taken to get queue connection info {timer.Elapsed.TotalSeconds}");
+
+            Assert.NotNull(queueResult);
+            Assert.Equal(OperationState.Succeeded, queueResult.Status);
+            Assert.NotNull(queueResult.QueueConnectionInfo);
+            Assert.NotNull(queueResult.QueueConnectionInfo.SasToken);
+            Assert.NotNull(queueResult.QueueConnectionInfo.Url);
         }
 
         private static async Task<VirtualMachineProviderCreateResult> WaitForVMCreation(VirtualMachineProvider computeProvider, VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)

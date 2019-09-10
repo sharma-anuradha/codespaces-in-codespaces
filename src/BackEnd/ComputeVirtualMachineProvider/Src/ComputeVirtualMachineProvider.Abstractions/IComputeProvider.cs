@@ -50,5 +50,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         ///     of the create request.
         /// </returns>
         Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets virutal machine input queue connection info.
+        /// </summary>
+        /// <param name="input">Provide input to get queue details.</param>
+        /// <param name="logger">Diagnostics logger object.</param>
+        /// <returns>Virutal machine input queue sas token and url.</returns>
+        Task<VirtualMachineProviderQueueResult> GetVirtualMachineInputQueueAsync(VirtualMachineProviderQueueInput input, IDiagnosticsLogger logger);
     }
 }

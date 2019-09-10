@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseResourceCreateResult.cs" company="Microsoft">
+﻿// <copyright file="ResourceCreateContinuationResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
