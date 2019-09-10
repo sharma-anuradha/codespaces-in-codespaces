@@ -2,6 +2,7 @@
 frontend-web-api:
   config:
     aspNetEnv: Staging
+    overrideAppSettingsJson: 
   ingress:
     hosts:
       - online-ppe.core.vsengsaas.visualstudio.com
@@ -19,3 +20,4 @@ frontend-web-api:
 backend-web-api:
   config:
     aspNetEnv: Staging
+    overrideAppSettingsJson: 

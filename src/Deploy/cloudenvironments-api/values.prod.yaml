@@ -2,6 +2,7 @@
 frontend-web-api:
   config:
     aspNetEnv: Production
+    overrideAppSettingsJson: 
   ingress:
     hosts:
       - online.visualstudio.com
@@ -21,3 +22,4 @@ frontend-web-api:
 backend-web-api:
   config:
     aspNetEnv: Production
+    overrideAppSettingsJson: 
