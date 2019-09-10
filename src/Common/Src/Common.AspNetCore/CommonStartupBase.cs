@@ -228,7 +228,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             overrideAppSettingsJsonFile = Environment.GetEnvironmentVariable(OverrideAppSettingsJsonEnvironmentVariable);
 
             if (string.IsNullOrEmpty(overrideAppSettingsJsonFile) ||
-                overrideAppSettingsJsonFile.Equals("false", StringComparison.OrdinalIgnoreCase))
+                overrideAppSettingsJsonFile.Equals("\"false\"", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
