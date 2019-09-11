@@ -25,5 +25,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public SkuConfigurationSettings DefaultSkuConfiguration { get; set; } = new SkuConfigurationSettings();
+
+        /// <summary>
+        /// Gets or sets the compute image families referenced in in <see cref="CloudEnvironmentSkuSettings"/>.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public Dictionary<string, VmImageFamilySettings> ComputeImageFamilies { get; set; } = new Dictionary<string, VmImageFamilySettings>();
+
+        /// <summary>
+        /// Gets or sets the storage image families referenced in in <see cref="CloudEnvironmentSkuSettings"/>.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public Dictionary<string, ImageFamilySettings> StorageImageFamilies { get; set; } = new Dictionary<string, ImageFamilySettings>();
     }
 }

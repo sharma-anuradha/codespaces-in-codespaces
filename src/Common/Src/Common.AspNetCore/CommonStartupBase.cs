@@ -57,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 .SetBasePath(hostingEnvironment.ContentRootPath)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.json"), optional: false, reloadOnChange: true)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.secrets.json"), optional: true)
+                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.images.json"), optional: true)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.{infix}.json"), optional: false);
 
             // Get the optional override appsettings file.
@@ -196,6 +197,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Emit the startup settings to logs for diagnostics.
             var logger = app.ApplicationServices.GetRequiredService<IDiagnosticsLogger>();
             LogSettings(logger);
+
+            // Load and validate the system catelog
+            try
+            {
+                app.UseSystemCatalog(HostingEnvironment);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException($"{LogMessageBase}_failed", ex);
+                throw;
+            }
         }
 
         /// <summary>

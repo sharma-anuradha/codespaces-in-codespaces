@@ -44,11 +44,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         [JsonProperty(Required = Required.Default)]
         public string FileShareTemplateContainerName { get; set; }
         */
-
-        /// <summary>
-        /// Gets or sets a mapping of OS type to default VM image for that OS.
-        /// </summary>
-        [JsonProperty(Required = Required.Default, PropertyName = "vmImages")]
-        public Dictionary<ComputeOS, string> VMImages { get; set; } = new Dictionary<ComputeOS, string>();
     }
 }

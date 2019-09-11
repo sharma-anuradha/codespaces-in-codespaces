@@ -48,14 +48,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string ComputeSkuSize { get; }
 
         /// <summary>
-        /// Gets the default VM image for this SKU.
+        /// Gets the compute image family for this SKU.
         /// </summary>
-        string DefaultVMImage { get; }
+        IVmImageFamily ComputeImage { get; }
 
         /// <summary>
         /// Gets the Azure storage SKU name: Premium_LRS, Premium_ZRS, Standard_GRS, Standard_LRS, Standard_RAGRS, or Standard_ZRS.
         /// </summary>
         string StorageSkuName { get; }
+
+        /// <summary>
+        /// Gets the storage image family for this SKU.
+        /// </summary>
+        IStorageImageFamily StorageImage { get; }
 
         /// <summary>
         /// Gets the requested file storage size in GB.

@@ -47,6 +47,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public ComputeOS ComputeOS { get; set; }
 
         /// <summary>
+        /// Gets or sets the compute image family name.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string ComputeImageFamily { get; set; }
+
+        /// <summary>
         /// Gets or sets the Azure storage SKU name: Premium_LRS, Premium_ZRS, Standard_GRS, Standard_LRS, Standard_RAGRS, or Standard_ZRS.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
@@ -57,6 +63,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public int StorageSizeInGB { get; set; }
+
+        /// <summary>
+        /// Gets or sets the storage image family name.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string StorageImageFamily { get; set; }
 
         /// <summary>
         /// Gets or sets the number of Cloud Environment Units that will be billed for this SKU when storage is active.

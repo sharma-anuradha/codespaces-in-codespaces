@@ -13,6 +13,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 {
     public class SystemCatalogModelTests
     {
+        private static readonly string SubscriptionId = Guid.NewGuid().ToString();
+
         [Fact]
         public void Ctor_throws_if_null()
         {
@@ -95,8 +97,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal("test-sku-name-1", sku.SkuName);
                     Assert.Equal(1, sku.StorageSizeInGB);
                     Assert.Equal("test-storage-sku-name-1", sku.StorageSkuName);
-                    // Assert the default vm image
-                    Assert.Equal("default-vm-image-linux", sku.DefaultVMImage);
+                    // Assert the vm image and storage image
+                    Assert.Equal("test-compute-image-family", sku.ComputeImage.ImageFamilyName);
+                    Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
+                    Assert.Equal("test-storage-image-family", sku.StorageImage.ImageFamilyName);
+                    Assert.Equal("test-storage-image-url", sku.StorageImage.ImageName);
                     // Assert the default pool level
                     Assert.Equal(1, sku.PoolLevel);
                     // Assert the default locations
@@ -117,8 +122,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal("test-sku-name-2", sku.SkuName);
                     Assert.Equal(2, sku.StorageSizeInGB);
                     Assert.Equal("test-storage-sku-name-2", sku.StorageSkuName);
-                    // Assert the override vm image
-                    Assert.Equal("override-vm-image-linux", sku.DefaultVMImage);
+                    // Assert the vm image and storage image
+                    Assert.Equal("test-compute-image-family", sku.ComputeImage.ImageFamilyName);
+                    Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
+                    Assert.Equal("test-storage-image-family", sku.StorageImage.ImageFamilyName);
+                    Assert.Equal("test-storage-image-url", sku.StorageImage.ImageName);
                     // Assert the override pool level
                     Assert.Equal(2, sku.PoolLevel);
                     // Assert the override locations
@@ -126,17 +134,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         loc => Assert.Equal(AzureLocation.WestEurope, loc));
                 });
         }
-
-        [Fact]
-        public void SystemCatalog_MissingDefaultVMImage()
-        {
-            var skuCatalogSettings = CreateSkuCatalogSettings();
-            skuCatalogSettings.DefaultSkuConfiguration.VMImages.Clear();
-            Assert.Throws<InvalidOperationException>(() => CreateTestSystemCatalogProvider(null, skuCatalogSettings));
-            skuCatalogSettings.DefaultSkuConfiguration.VMImages.Add(ComputeOS.Windows, "windows-image"); // still doesn't have linux
-            Assert.Throws<InvalidOperationException>(() => CreateTestSystemCatalogProvider(null, skuCatalogSettings));
-        }
-
 
         [Fact]
         public async Task GetServicePrincipalClientSecret_Resolver()
@@ -191,6 +188,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         AzureLocation.WestEurope,
                         AzureLocation.WestUs2,
                     });
+            controlPlaneInfo
+                .Setup(obj => obj.EnvironmentResourceGroupName)
+                .Returns("test-environment-rg");
+            var controlPlaneResourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
+            controlPlaneResourceAccessor
+                .Setup(obj => obj.GetCurrentSubscriptionIdAsync())
+                .ReturnsAsync(() => SubscriptionId);
 
             var azureSubscriptionCatalogOptions = new AzureSubscriptionCatalogOptions
             {
@@ -199,7 +203,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             };
 
             var azureSubscriptionCatalog = new AzureSubscriptionCatalog(azureSubscriptionCatalogOptions, secretProvider.Object);
-            var skuCatalog = new SkuCatalog(skuCatalogSettings, controlPlaneInfo.Object);
+            var skuCatalog = new SkuCatalog(skuCatalogSettings, controlPlaneInfo.Object, controlPlaneResourceAccessor.Object);
             var provider = new SystemCatalogProvider(azureSubscriptionCatalog, skuCatalog);
             return provider;
         }
@@ -216,12 +220,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         AzureLocation.WestUs2,
                         AzureLocation.UaeNorth, // should get filtered out by IDataPlaneManager.GetAllDataPlaneLocations
                     },
-                    PoolSize = 1,
-                    VMImages =
+                    PoolSize = 1
+                },
+                ComputeImageFamilies = new Dictionary<string, VmImageFamilySettings>
+                {
                     {
-                        { ComputeOS.Linux, "default-vm-image-linux" },
-                        { ComputeOS.Windows, "default-vm-image-windows" },
-                    }
+                        "test-compute-image-family",
+                        new VmImageFamilySettings
+                        {
+                            ImageKind = VmImageKind.Custom,
+                            ImageName = "test-compute-image-url",
+                        }
+                    },
+                },
+                StorageImageFamilies = new Dictionary<string, ImageFamilySettings>
+                {
+                    {
+                        "test-storage-image-family",
+                        new VmImageFamilySettings
+                        {
+                            ImageName = "test-storage-image-url",
+                        }
+                    },
                 },
                 CloudEnvironmentSkuSettings =
                 {
@@ -234,10 +254,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             ComputeSkuFamily = "test-compute-sku-family-1",
                             ComputeSkuName = "test-compute-sku-name-1",
                             ComputeSkuSize = "test-compute-sku-size-1",
+                            ComputeImageFamily = "test-compute-image-family",
                             ComputeOS = ComputeOS.Linux,
                             SkuDisplayName = "test-sku-display-name-1",
                             StorageSizeInGB = 1,
                             StorageSkuName = "test-storage-sku-name-1",
+                            StorageImageFamily = "test-storage-image-family",
                         }
                     },
                     {
@@ -249,20 +271,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             ComputeSkuFamily = "test-compute-sku-family-2",
                             ComputeSkuName = "test-compute-sku-name-2",
                             ComputeSkuSize = "test-compute-sku-size-2",
+                            ComputeImageFamily = "test-compute-image-family",
                             ComputeOS = ComputeOS.Linux,
                             SkuDisplayName = "test-sku-display-name-2",
                             StorageSizeInGB = 2,
                             StorageSkuName = "test-storage-sku-name-2",
+                            StorageImageFamily = "test-storage-image-family",
                             SkuConfiguration = new SkuConfigurationSettings
                             {
                                 Locations =
                                 {
                                     AzureLocation.WestEurope
                                 },
-                                PoolSize = 2,
-                                VMImages = {
-                                    { ComputeOS.Linux, "override-vm-image-linux" }
-                                }
+                                PoolSize = 2
                             }
                         }
                     },

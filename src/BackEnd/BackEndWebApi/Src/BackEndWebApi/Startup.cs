@@ -172,7 +172,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // System Components
             try
             {
-                app.UseSystemCatalog(env);
                 app.UseScalingEngine(env);
                 app.UseResourceBroker(env);
                 app.UseComputeVirtualMachineProvider(env);
