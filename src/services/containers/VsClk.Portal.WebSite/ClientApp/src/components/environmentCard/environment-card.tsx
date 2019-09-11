@@ -114,8 +114,8 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
                                 }&correlationId=${createUniqueId()}`;
 
                                 try {
-                                    await tryOpeningUrl(`vscode://${url}`).catch(async () => {
-                                        return await tryOpeningUrl(`vscode-insiders://${url}`);
+                                    await tryOpeningUrl(`vscode-insiders://${url}`).catch(async () => {
+                                        return await tryOpeningUrl(`vscode://${url}`);
                                     });    
                                 } catch {
                                     setUnsucessfullUrlDialogHidden(false);
