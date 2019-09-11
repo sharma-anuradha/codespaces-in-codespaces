@@ -3,6 +3,7 @@
 :init
 setlocal
 set subscription=vsclk-core-dev
+set dataPlaneSubscription=vsclk-core-dev-data-usw2
 set instance=vsclk-online-dev-stg
 set stamp=%instance%-usw2
 set stamp_db=%stamp%-db
@@ -36,6 +37,9 @@ call :invoke az cosmosdb collection delete -c resources --db-name %db_name% -n %
 :delete_backend_storage
 call :invoke az storage container delete --name resource-broker-leases --account-name %stamp_storage% --auth-mode login --subscription %subscription% -o jsonc
 call :invoke az storage queue delete --name resource-job-queue --account-name %stamp_storage% --auth-mode login --subscription %subscription% -o jsonc
+
+:delete_resources
+call :invoke powershell %~dp0wipe-resources.ps1 -subscription %dataPlaneSubscription% -stamp %stamp%
 
 :done
 exit /b 0
