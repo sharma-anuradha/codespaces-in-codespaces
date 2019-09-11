@@ -230,7 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(resourceGroup, nameof(resourceGroup));
             Requires.NotNull(accountName, nameof(accountName));
 
-            var storageManagementClient = await GetStorageManagementClientAsync()
+            var storageManagementClient = await GetStorageManagementClientAsync();
             try
             {
                 var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
