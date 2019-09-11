@@ -230,20 +230,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(resourceGroup, nameof(resourceGroup));
             Requires.NotNull(accountName, nameof(accountName));
 
-            using (var storageManagementClient = await GetStorageManagementClientAsync())
+            var storageManagementClient = await GetStorageManagementClientAsync()
+            try
             {
-                try
-                {
-                    var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
-                    return (accountName, keys.Keys.First().Value);
-                }
-                catch (Exception ex)
-                {
-                    logger?.FluentAddValue(nameof(accountName), accountName)
-                        .FluentAddValue(nameof(resourceGroup), resourceGroup)
-                        .LogError("get_storage_account_error");
-                    throw;
-                }
+                var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
+                return (accountName, keys.Keys.First().Value);
+            }
+            catch (Exception ex)
+            {
+                logger?.FluentAddValue(nameof(accountName), accountName)
+                    .FluentAddValue(nameof(resourceGroup), resourceGroup)
+                    .LogError("get_storage_account_error");
+                throw;
             }
         }
 
