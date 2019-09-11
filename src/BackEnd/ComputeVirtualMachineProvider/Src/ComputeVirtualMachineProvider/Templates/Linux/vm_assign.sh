@@ -45,7 +45,7 @@ mount "$LOOP_DEVICE" /var/lib/docker -o nodev
 # Start docker again
 systemctl start docker
 
-CONTAINER_IMAGE_ID=$(docker images "vsclkapps.azurecr.io/kitchensink" --quiet)
+CONTAINER_IMAGE_ID=$(docker images --quiet)
 
 # Get the environment variables and save to file
 CONTAINER_ENVS_FILE=$(mktemp)
