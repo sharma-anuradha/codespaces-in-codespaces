@@ -266,7 +266,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             try
             {
                 await azure.StorageAccounts.DeleteByResourceGroupAsync(azureResourceInfo.ResourceGroup, azureResourceInfo.Name);
-                await azure.ResourceGroups.BeginDeleteByNameAsync(azureResourceInfo.ResourceGroup);
                 logger.LogInfo("file_share_storage_provider_helper_delete_storage_account_complete");
             }
             catch (Exception ex)

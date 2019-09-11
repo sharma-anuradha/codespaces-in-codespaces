@@ -306,13 +306,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 await Task.WhenAll(taskList);
                 var nextStageInput = new NextStageInput(CreateVmDeletionTrackingId(computeVmLocation, resourcesToBeDeleted), input.AzureResourceInfo);
                 var resultState = GetFinalState(resourcesToBeDeleted);
-
-                // TODO:: remove it when Resource Group creation logic is fixed.
-                if (resultState == OperationState.Succeeded)
-                {
-                    await azure.DeleteResourceGroupAsync(resourceGroup);
-                }
-
                 return (resultState, nextStageInput);
             }
             catch (AggregateException ex)
