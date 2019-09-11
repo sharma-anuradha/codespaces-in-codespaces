@@ -362,9 +362,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             // If we didn't get a result record error
-            if (operationResult == null)
+            if (operationResult == null
+                || operationResult.Status == OperationState.Failed
+                || operationResult.Status == OperationState.Cancelled)
             {
-                logger.FluentAddValue("HandlerFailedGetResultFromOperation", true);
+                logger.FluentAddValue("HandlerFailedGetResultFromOperation", operationResult == null);
 
                 return await FailOperationAsync(input, record, logger);
             }
