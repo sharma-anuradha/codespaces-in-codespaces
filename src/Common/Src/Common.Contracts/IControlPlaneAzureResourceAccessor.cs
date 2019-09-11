@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault.Models;
 using Microsoft.Rest.Azure;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
@@ -57,8 +58,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the stamp-level storage account used for compute job queues.
         /// </summary>
         /// <param name="computeVmLocation">The azure location of the compute vm.</param>
+        /// <param name="logger">Thelogger instance.</param>
         /// <returns>A tuple of the account name and the account key.</returns>
-        Task<(string, string)> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation);
+        Task<(string, string)> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets the stamp-level storage account used for compute vm agent images..

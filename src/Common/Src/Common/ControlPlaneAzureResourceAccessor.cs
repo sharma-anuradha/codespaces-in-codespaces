@@ -15,6 +15,8 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -153,19 +155,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             {
                 StampStorageAccount = await GetStorageAccountAsync(
                     ControlPlaneInfo.Stamp.StampResourceGroupName,
-                    ControlPlaneInfo.Stamp.StampStorageAccountName);
+                    ControlPlaneInfo.Stamp.StampStorageAccountName,
+                    default);
             }
 
             return StampStorageAccount;
         }
 
         /// <inheritdoc/>
-        public async Task<(string, string)> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation)
+        public async Task<(string, string)> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger)
         {
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForComputeQueues(computeVmLocation);
             return await GetStorageAccountAsync(
                 ControlPlaneInfo.Stamp.StampResourceGroupName,
-                storageAccountName);
+                storageAccountName,
+                logger);
         }
 
         /// <inheritdoc/>
@@ -174,7 +178,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForComputeVmAgentImages(computeVmLocation);
             return await GetStorageAccountAsync(
                 ControlPlaneInfo.Stamp.StampResourceGroupName,
-                storageAccountName);
+                storageAccountName,
+                default);
         }
 
         /// <inheritdoc/>
@@ -183,7 +188,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForStorageImages(computeStorageLocation);
             return await GetStorageAccountAsync(
                 ControlPlaneInfo.Stamp.StampResourceGroupName,
-                storageAccountName);
+                storageAccountName,
+                default);
         }
 
         /// <inheritdoc/>
@@ -219,12 +225,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return (endpoint, key);
         }
 
-        private async Task<(string, string)> GetStorageAccountAsync(string resourceGroup, string accountName)
+        private async Task<(string, string)> GetStorageAccountAsync(string resourceGroup, string accountName, IDiagnosticsLogger logger)
         {
+            Requires.NotNull(resourceGroup, nameof(resourceGroup));
+            Requires.NotNull(accountName, nameof(accountName));
+
             using (var storageManagementClient = await GetStorageManagementClientAsync())
             {
-                var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
-                return (accountName, keys.Keys.First().Value);
+                try
+                {
+                    var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
+                    return (accountName, keys.Keys.First().Value);
+                }
+                catch (Exception ex)
+                {
+                    logger?.FluentAddValue(nameof(accountName), accountName)
+                        .FluentAddValue(nameof(resourceGroup), resourceGroup)
+                        .LogError("get_storage_account_error");
+                    throw;
+                }
             }
         }
 

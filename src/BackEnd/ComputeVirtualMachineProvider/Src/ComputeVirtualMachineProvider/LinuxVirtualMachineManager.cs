@@ -105,7 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     .BeginCreateAsync();
 
                 // Create input queue
-                var queue = await GetQueueClientAsync(input.AzureVmLocation, GetQueueName(virtualMachineName));
+                var queue = await GetQueueClientAsync(input.AzureVmLocation, GetQueueName(virtualMachineName), logger);
                 var queueCreated = await queue.CreateIfNotExistsAsync();
                 if (!queueCreated)
                 {
@@ -267,8 +267,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                 taskList.Add(
                 CheckResourceStatus(
-                    (resourceName) => DeleteQueueAsync(computeVmLocation, resourceName),
-                    (resourceName) => QueueExistsAync(computeVmLocation, resourceName),
+                    (resourceName) => DeleteQueueAsync(computeVmLocation, resourceName, logger),
+                    (resourceName) => QueueExistsAync(computeVmLocation, resourceName, logger),
                     resourcesToBeDeleted,
                     QueueNameKey));
 
@@ -347,7 +347,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             try
             {
-                var queueClient = await GetQueueClientAsync(location, GetQueueName(virtualMachineName));
+                var queueClient = await GetQueueClientAsync(location, GetQueueName(virtualMachineName), logger);
                 var sas = queueClient.GetSharedAccessSignature(new SharedAccessQueuePolicy()
                 {
                     Permissions = SharedAccessQueuePermissions.Read,
@@ -482,9 +482,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return initScript.Replace("SCRIPT_PARAM_VMTOKEN=''", $"SCRIPT_PARAM_VMTOKEN='{vmToken}'");
         }
 
-        private async Task<CloudQueue> GetQueueClientAsync(AzureLocation location, string queueName)
+        private async Task<CloudQueue> GetQueueClientAsync(AzureLocation location, string queueName, IDiagnosticsLogger logger)
         {
-            var (accountName, accountKey) = await controlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeQueuesAsync(location);
+            var (accountName, accountKey) = await controlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeQueuesAsync(location, logger);
             var storageCredentials = new StorageCredentials(accountName, accountKey);
             var storageAccount = new CloudStorageAccount(storageCredentials, useHttps: true);
             var queueClient = new CloudQueueClient(storageAccount.QueueStorageUri, storageCredentials);
@@ -492,15 +492,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return queue;
         }
 
-        private async Task DeleteQueueAsync(AzureLocation location, string queueName)
+        private async Task DeleteQueueAsync(AzureLocation location, string queueName, IDiagnosticsLogger logger)
         {
-            var queue = await GetQueueClientAsync(location, queueName);
+            var queue = await GetQueueClientAsync(location, queueName, logger);
             await queue.DeleteIfExistsAsync();
         }
 
-        private async Task<object> QueueExistsAync(AzureLocation location, string queueName)
+        private async Task<object> QueueExistsAync(AzureLocation location, string queueName, IDiagnosticsLogger logger)
         {
-            var queue = await GetQueueClientAsync(location, queueName);
+            var queue = await GetQueueClientAsync(location, queueName, logger);
             var queueExists = await queue.ExistsAsync();
             return queueExists ? new object() : default;
         }
