@@ -37,6 +37,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         /// Gets or sets virtual machine image.
         /// </summary>
-        public string AzureVirtualMachineImage { get; set; } // 'Canonical:UbuntuServer:18.04-LTS:latest'
+        public string AzureVirtualMachineImage { get; set; }
     }
 }

@@ -16,6 +16,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public interface IDeploymentManager
     {
         /// <summary>
+        /// Used by clients to determine which manager to use for this input.
+        /// </summary>
+        /// <param name="info">AzureResourceInfo object.</param>
+        /// <returns>true of manager handles this input.</returns>
+        bool Accepts(AzureResourceInfo info);
+
+        /// <summary>
+        /// Used by clients to determine which manager to use for this input.
+        /// </summary>
+        /// <param name="input">Provides input to start cloud environment.</param>
+        /// <returns>true of manager handles this input.</returns>
+        bool Accepts(VirtualMachineProviderCreateInput input);
+
+        /// <summary>
         /// Kick off container setup on Azure Virtual Machine.
         /// </summary>
         /// <param name="input">Provides input to start cloud environment.</param>

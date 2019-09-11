@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Xunit;
@@ -34,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 new MockTokenProvider(),
                 new MockControlPlaneAzureResourceAccssor(clientFactory));
 
-            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
+            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
             Guid subscriptionId = this.testContext.SubscriptionId;
             AzureLocation location = testContext.Location;
             string rgName = testContext.ResourceGroupName;
@@ -89,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 new MockTokenProvider(),
                 new MockControlPlaneAzureResourceAccssor(clientFactory));
 
-            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
+            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
             Guid subscriptionId = this.testContext.SubscriptionId;
             AzureLocation location = testContext.Location;
             string rgName = testContext.ResourceGroupName;
@@ -125,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 new MockTokenProvider(),
                 new MockControlPlaneAzureResourceAccssor(clientFactory));
 
-            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
+            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
             var fileShareInfo = new ShareConnectionInfo("storageaccount1",
                                                        "accountkey",
                                                        "cloudenvdata",
@@ -157,12 +158,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 clientFactory,
                 new MockTokenProvider(),
                 new MockControlPlaneAzureResourceAccssor(clientFactory));
-            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
+            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
 
             var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
             var input = new VirtualMachineProviderDeleteInput
             {
-                AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceName),
+                AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, $"{resourceName}-lnx"),
                 AzureVmLocation = AzureLocation.WestUs2,
             };
 
@@ -201,13 +202,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 clientFactory,
                 new MockTokenProvider(),
                 new MockControlPlaneAzureResourceAccssor(clientFactory));
-            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
+            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
 
             var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
             var input = new VirtualMachineProviderQueueInput
             {
+                AzureResourceInfo = new AzureResourceInfo(Guid.NewGuid(), resourceName, $"{resourceName}-lnx"),
                 AzureVmLocation = AzureLocation.WestUs2,
-                AzureVmName = resourceName,
             };
 
             var queueResult = await computeProvider.GetVirtualMachineInputQueueAsync(input, logger);

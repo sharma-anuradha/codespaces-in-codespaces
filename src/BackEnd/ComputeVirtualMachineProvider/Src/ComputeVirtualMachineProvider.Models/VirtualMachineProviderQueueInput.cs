@@ -13,13 +13,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public class VirtualMachineProviderQueueInput : ContinuationInput
     {
         /// <summary>
+        /// Gets or sets the AzureResourceInfo
+        /// </summary>
+        public AzureResourceInfo AzureResourceInfo { get; set; }
+
+        /// <summary>
         /// Gets or sets the virtual machine location.
         /// </summary>
         public AzureLocation AzureVmLocation { get; set; }
-
-        /// <summary>
-        /// Gets or sets the virtual machine name.
-        /// </summary>
-        public string AzureVmName { get; set; }
     }
 }

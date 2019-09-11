@@ -1,9 +1,8 @@
-﻿// <copyright file="LinuxVirtualMachineManager.cs" company="Microsoft">
+﻿// <copyright file="WindowsVirtualMachineManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +10,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
-using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
@@ -30,17 +28,15 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
     /// <summary>
     /// Create, update and deletes Azure virtual machines.
     /// </summary>
-    public class LinuxVirtualMachineManager : IDeploymentManager
+    public class WindowsVirtualMachineManager : IDeploymentManager
     {
         private const string Key = "value";
-        private const string ExtensionName = "update-vm";
         private const string NicNameKey = "nicName";
         private const string NsgNameKey = "nsgName";
         private const string VnetNameKey = "vnetName";
@@ -53,12 +49,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LinuxVirtualMachineManager"/> class.
+        /// Initializes a new instance of the <see cref="WindowsVirtualMachineManager"/> class.
         /// </summary>
         /// <param name="clientFactory">Builds Azure clients.</param>
-        /// <param name="vmTokenProvider">VM Toke provider.</param>
-        public LinuxVirtualMachineManager(
-            IAzureClientFactory clientFactory,
+        public WindowsVirtualMachineManager(IAzureClientFactory clientFactory,
             IVSSaaSTokenProvider vmTokenProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
         {
@@ -71,12 +65,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             this.controlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
         }
 
-        /// <inheritdoc/>
+            /// <inheritdoc/>
         public bool Accepts(AzureResourceInfo info)
         {
             //TODO: This is a hack; we don't have the proper config info at this level. JohnRi and AnVan to work out how to get this.
             //What we really want is just a single Accepts() method that can find out the ComputeOS type
-            return !info.Name.EndsWith("-win");
+            return info.Name.EndsWith("-win");
         }
 
         /// <inheritdoc/>
@@ -84,35 +78,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             //TODO: This is a hack; we don't have the proper config info at this level. JohnRi and AnVan to work out how to get this.
             //What we really want is just a single Accepts() method that can find out the ComputeOS type
-            return input.AzureVirtualMachineImage.Contains("Ubuntu");
+            return input.AzureSkuName.Contains("-Windows-");
         }
 
         /// <inheritdoc/>
         public async Task<(OperationState, NextStageInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
         {
             // create new VM resource name
-            var virtualMachineName = $"{Guid.NewGuid().ToString()}-lnx";
-            var vmToken = CreateVmToken(virtualMachineName);
-
+            var resourceName = $"{Guid.NewGuid().ToString()}-win";
             var parameters = new Dictionary<string, Dictionary<string, object>>()
             {
+                { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
+                { "imageReferenceId", new Dictionary<string, object>() { { Key, input.AzureVirtualMachineImage} } },
+                { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
+                { "virtualMachineName", new Dictionary<string, object>() { { Key, resourceName} } },
+                { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
+                { "osDiskName", new Dictionary<string, object>() { { Key, GetOsDiskName(resourceName) } } },
+                { "networkSecurityGroupName", new Dictionary<string, object>() { { Key, GetNetworkSecurityGroupName(resourceName) } } },
+                { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(resourceName) } } },
+                { "virtualNetworkName", new Dictionary<string, object>() { { Key, GetVirtualNetworkName(resourceName) } } },
                 { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
                 { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
-                { "vmSetupScript", new Dictionary<string, object>() { { Key, GetVmInitScript(vmToken) } } },
-                { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
-                { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName} } },
-                { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
-                { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
-                { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
             };
 
-            var deploymentName = $"Create-Vm-{virtualMachineName}";
+            var deploymentName = $"Create-Vm-{resourceName}";
             try
             {
                 var azure = await clientFactory.GetAzureClientAsync(input.AzureSubscription);
                 await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
-
-                // Create virtual machine
                 var result = await azure.Deployments.Define(deploymentName)
                     .WithExistingResourceGroup(input.AzureResourceGroup)
                     .WithTemplate(VmTemplateJson)
@@ -120,20 +113,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
                     .BeginCreateAsync();
 
-                // Create input queue
-                var queue = await GetQueueClientAsync(input.AzureVmLocation, GetQueueName(virtualMachineName), logger);
-                var queueCreated = await queue.CreateIfNotExistsAsync();
-                if (!queueCreated)
-                {
-                    throw new Exception($"Failed to create queue for virtaul machine {virtualMachineName}");
-                }
-
-                var azureResourceInfo = new AzureResourceInfo(input.AzureSubscription, input.AzureResourceGroup, virtualMachineName);
+                var azureResourceInfo = new AzureResourceInfo(input.AzureSubscription, input.AzureResourceGroup, resourceName);
                 return (OperationState.InProgress, new NextStageInput(result.Name, azureResourceInfo));
             }
             catch (Exception ex)
             {
-                logger.LogException("linux_virtual_machine_manager_begin_create_error", ex);
+                logger.LogException("windows_virtual_machine_manager_begin_create_error", ex);
                 return (OperationState.Failed, default);
             }
         }
@@ -143,13 +128,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             try
             {
-                var azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
-                var deployment = await azure.Deployments.GetByResourceGroupAsync(input.AzureResourceInfo.ResourceGroup, input.TrackingId);
+                IAzure azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
+                IDeployment deployment = await azure.Deployments.GetByResourceGroupAsync(input.AzureResourceInfo.ResourceGroup, input.TrackingId);
                 return (ParseResult(deployment.ProvisioningState), new NextStageInput(input.TrackingId, input.AzureResourceInfo));
             }
             catch (Exception ex)
             {
-                logger.LogException("linux_virtual_machine_manager_check_create_compute_error", ex);
+                logger.LogException("windows_virtual_machine_manager_check_create_compute_error", ex);
                 if (input.RetryAttempt < 5)
                 {
                     return (OperationState.InProgress, new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1));
@@ -160,56 +145,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
+        /// TODO: This will be completed for https://dev.azure.com/devdiv/DevDiv/_boards/board/t/BARS%20Crew/Stories/?workitem=968262
         public async Task<(OperationState, NextStageInput)> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger)
         {
-            var privateSettings = new Hashtable();
-            privateSettings.Add("script", GetCustomScriptForVmAssign("vm_assign.sh", input));
-            var parameters = new VirtualMachineExtensionUpdate()
-            {
-                ProtectedSettings = privateSettings,
-                ForceUpdateTag = "true",
-            };
-            try
-            {
-                var computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
-                var result = await computeClient.VirtualMachineExtensions.BeginUpdateAsync(
-                    input.AzureResourceInfo.ResourceGroup,
-                    input.AzureResourceInfo.Name,
-                    ExtensionName,
-                    parameters);
-
-                return (OperationState.InProgress, new NextStageInput(result.Name, input.AzureResourceInfo));
-            }
-            catch (Exception ex)
-            {
-                logger.LogException("linux_virtual_machine_manager_begin_start_compute_error", ex);
-                return (OperationState.Failed, default);
-            }
+            await Task.Delay(0); // to silence CS1998 until actual code is implemented
+            return (OperationState.Failed, default);
         }
 
         /// <inheritdoc/>
+        /// TODO: This will be completed for https://dev.azure.com/devdiv/DevDiv/_boards/board/t/BARS%20Crew/Stories/?workitem=968262
         public async Task<(OperationState, NextStageInput)> CheckStartComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
         {
-            try
-            {
-                var computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
-                var result = await computeClient.VirtualMachineExtensions
-                .GetAsync(
-                    input.AzureResourceInfo.ResourceGroup,
-                    input.AzureResourceInfo.Name,
-                    input.TrackingId);
-                return (ParseResult(result.ProvisioningState), new NextStageInput(input.TrackingId, input.AzureResourceInfo));
-            }
-            catch (Exception ex)
-            {
-                logger.LogException("linux_virtual_machine_manager_check_start_compute_error", ex);
-                if (input.RetryAttempt < 5)
-                {
-                    return (OperationState.InProgress, new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1));
-                }
-
-                return (OperationState.Failed, default);
-            }
+            await Task.Delay(0); // to silence CS1998 until actual code is implemented
+            return (OperationState.Failed, default);
         }
 
         /// <inheritdoc/>
@@ -217,36 +165,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             try
             {
-                var vmName = input.AzureResourceInfo.Name;
-                var azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
-                var resourceGroup = input.AzureResourceInfo.ResourceGroup;
-                var linuxVM = await azure.VirtualMachines
-                                  .GetByResourceGroupAsync(resourceGroup, vmName);
+                string vmName = input.AzureResourceInfo.Name;
+                IAzure azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
+                string resourceGroup = input.AzureResourceInfo.ResourceGroup;
+                IVirtualMachine vm = await azure.VirtualMachines.GetByResourceGroupAsync(resourceGroup, vmName);
+                var resourcesToBeDeleted = new Dictionary<string, VmResourceState>();
 
-                var vmDeletionState = OperationState.Succeeded;
-                if (linuxVM != null)
+                OperationState vmDeletionState = OperationState.Succeeded;
+                if (vm != null)
                 {
-                    var computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
+                    IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
                     await computeClient.VirtualMachines.BeginDeleteAsync(resourceGroup, vmName);
                     vmDeletionState = OperationState.InProgress;
                 }
 
                 // Save resource state for continuation token.
-                var resourcesToBeDeleted = new Dictionary<string, VmResourceState>();
                 resourcesToBeDeleted.Add(VmNameKey, (vmName, vmDeletionState));
                 resourcesToBeDeleted.Add(NicNameKey, (GetNetworkInterfaceName(vmName), OperationState.NotStarted));
                 resourcesToBeDeleted.Add(NsgNameKey, (GetNetworkSecurityGroupName(vmName), OperationState.NotStarted));
-                resourcesToBeDeleted.Add(VnetNameKey, (GetVnetName(vmName), OperationState.NotStarted));
+                resourcesToBeDeleted.Add(VnetNameKey, (GetVirtualNetworkName(vmName), OperationState.NotStarted));
                 resourcesToBeDeleted.Add(DiskNameKey, (GetOsDiskName(vmName), OperationState.NotStarted));
-                resourcesToBeDeleted.Add(QueueNameKey, (GetQueueName(vmName), OperationState.NotStarted));
 
-                return (OperationState.InProgress, new NextStageInput(
-                    CreateVmDeletionTrackingId(input.AzureVmLocation, resourcesToBeDeleted),
-                    input.AzureResourceInfo));
+                return (OperationState.InProgress, new NextStageInput(JsonConvert.SerializeObject(resourcesToBeDeleted), input.AzureResourceInfo));
             }
             catch (Exception ex)
             {
-                logger.LogException("linux_virtual_machine_manager_begin_delete_error", ex);
+                logger.LogException("windows_virtual_machine_manager_begin_delete_error", ex);
                 return (OperationState.Failed, default);
             }
         }
@@ -259,16 +203,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var (computeVmLocation, resourcesToBeDeleted) = JsonConvert
                 .DeserializeObject<(AzureLocation, Dictionary<string, VmResourceState>)>(input.TrackingId);
                 string resourceGroup = input.AzureResourceInfo.ResourceGroup;
-                var azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
-                var networkClient = await clientFactory.GetNetworkManagementClient(input.AzureResourceInfo.SubscriptionId);
-                var computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
+                IAzure azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
+                INetworkManagementClient networkClient = await clientFactory.GetNetworkManagementClient(input.AzureResourceInfo.SubscriptionId);
+                IComputeManagementClient computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
 
                 if (resourcesToBeDeleted[VmNameKey].State != OperationState.Succeeded)
                 {
                     // Check if virtual machine deletion is complete
-                    var linuxVM = await azure.VirtualMachines
-                              .GetByResourceGroupAsync(resourceGroup, resourcesToBeDeleted[VmNameKey].Name);
-                    if (linuxVM != null)
+                    IVirtualMachine vm = await azure.VirtualMachines.GetByResourceGroupAsync(resourceGroup, resourcesToBeDeleted[VmNameKey].Name);
+                    if (vm != null)
                     {
                         return (OperationState.InProgress, input);
                     }
@@ -282,14 +225,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var taskList = new List<Task>();
 
                 taskList.Add(
-                CheckResourceStatus(
+                    CheckResourceStatus(
                     (resourceName) => DeleteQueueAsync(computeVmLocation, resourceName, logger),
                     (resourceName) => QueueExistsAync(computeVmLocation, resourceName, logger),
                     resourcesToBeDeleted,
                     QueueNameKey));
 
                 taskList.Add(
-                CheckResourceStatus(
+                    CheckResourceStatus(
                     (resourceName) => computeClient.Disks.BeginDeleteAsync(resourceGroup, resourceName),
                     (resourceName) => azure.Disks.GetByResourceGroupAsync(resourceGroup, resourceName),
                     resourcesToBeDeleted,
@@ -297,10 +240,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                 taskList.Add(
                     CheckResourceStatus(
-                      (resourceName) => networkClient.NetworkInterfaces.BeginDeleteAsync(resourceGroup, resourceName),
-                      (resourceName) => azure.NetworkInterfaces.GetByResourceGroupAsync(resourceGroup, resourceName),
-                      resourcesToBeDeleted,
-                      NicNameKey));
+                    (resourceName) => networkClient.NetworkInterfaces.BeginDeleteAsync(resourceGroup, resourceName),
+                    (resourceName) => azure.NetworkInterfaces.GetByResourceGroupAsync(resourceGroup, resourceName),
+                    resourcesToBeDeleted,
+                    NicNameKey));
 
                 if (resourcesToBeDeleted[NicNameKey].State == OperationState.Succeeded)
                 {
@@ -320,13 +263,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 }
 
                 await Task.WhenAll(taskList);
-                var nextStageInput = new NextStageInput(CreateVmDeletionTrackingId(computeVmLocation, resourcesToBeDeleted), input.AzureResourceInfo);
+                var nextStageInput = new NextStageInput(JsonConvert.SerializeObject(resourcesToBeDeleted), input.AzureResourceInfo);
                 var resultState = GetFinalState(resourcesToBeDeleted);
+
+                // TODO:: remove it when Resource Group creation logic is fixed.
+                if (resultState == OperationState.Succeeded)
+                {
+                    await azure.DeleteResourceGroupAsync(resourceGroup);
+                }
+
                 return (resultState, nextStageInput);
             }
             catch (AggregateException ex)
             {
-                var s = new StringBuilder();
+                StringBuilder s = new StringBuilder();
                 foreach (var e in ex.Flatten().InnerExceptions)
                 {
                     s.AppendLine("Exception type: " + e.GetType().FullName);
@@ -336,7 +286,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     s.AppendLine();
                 }
 
-                logger.LogErrorWithDetail("linux_virtual_machine_manager_check_delete_compute_error", s.ToString());
+                logger.LogError($"windows_virtual_machine_manager_check_delete_compute_error : \n {s}");
                 NextStageInput nextStageInput = new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1);
                 if (input.RetryAttempt < 5)
                 {
@@ -348,11 +298,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(
-            AzureLocation location,
-            string virtualMachineName,
-            int retryAttempCount,
-            IDiagnosticsLogger logger)
+        public async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(AzureLocation location, string virtualMachineName, int retryAttempCount, IDiagnosticsLogger logger)
         {
             try
             {
@@ -367,7 +313,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             }
             catch (Exception ex)
             {
-                logger.LogException("linux_virtual_machine_manager_get_input_queue_url_error", ex);
+                logger.LogException("windows_virtual_machine_manager_get_input_queue_url_error", ex);
                 if (retryAttempCount < 5)
                 {
                     return (OperationState.InProgress, default, retryAttempCount + 1);
@@ -393,11 +339,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
            Dictionary<string, VmResourceState> resourcesToBeDeleted,
            string resourceNameKey)
         {
-            var resourceName = resourcesToBeDeleted[resourceNameKey].Name;
-            var resourceState = resourcesToBeDeleted[resourceNameKey].State;
+            string resourceName = resourcesToBeDeleted[resourceNameKey].Name;
+            OperationState resourceState = resourcesToBeDeleted[resourceNameKey].State;
             if (resourceState == OperationState.NotStarted)
             {
-                var beginDeleteTask = deleteResourceFunc(resourceName);
+                Task beginDeleteTask = deleteResourceFunc(resourceName);
                 return beginDeleteTask.ContinueWith(
                         (task) =>
                     {
@@ -413,7 +359,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             }
             else if (resourceState == OperationState.InProgress)
             {
-                var checkStatusTask = checkResourceFunc(resourceName);
+                Task<TResult> checkStatusTask = checkResourceFunc(resourceName);
                 return checkStatusTask.ContinueWith(
                         (task) =>
                      {
@@ -444,33 +390,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return GetEmbeddedResource("template_vm.json");
         }
 
-        private static string GetCustomScript(string scriptName)
-        {
-            var scriptString = GetEmbeddedResource(scriptName);
-            return scriptString.ToBase64Encoded();
-        }
-
-        private static string GetCustomScriptForVmAssign(string scriptName, VirtualMachineProviderStartComputeInput input)
-        {
-            var scriptString = GetEmbeddedResource(scriptName);
-            scriptString = AddParamsToScript(input, scriptString);
-            return scriptString.ToBase64Encoded();
-        }
-
-        private static string AddParamsToScript(VirtualMachineProviderStartComputeInput input, string scriptString)
-        {
-            var camelCaseSerializer = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
-            var storageParams = JsonConvert.SerializeObject(input.FileShareConnection, Formatting.None, camelCaseSerializer);
-            scriptString = scriptString.Replace("SCRIPT_PARAM_STORAGE=''", $"SCRIPT_PARAM_STORAGE='{storageParams}'");
-            var envParams = JsonConvert.SerializeObject(input.VmInputParams);
-            scriptString = scriptString.Replace("SCRIPT_PARAM_CONTAINER_ENV_VARS=''", $"SCRIPT_PARAM_CONTAINER_ENV_VARS='{envParams}'");
-            return scriptString;
-        }
-
         private static string GetEmbeddedResource(string resourceName)
         {
-            var namespaceString = typeof(LinuxVirtualMachineManager).Namespace;
-            var fullResourceName = $"{namespaceString}.Templates.Linux.{resourceName}";
+            string namespaceString = typeof(WindowsVirtualMachineManager).Namespace;
+            var fullResourceName = $"{namespaceString}.Templates.Windows.{resourceName}";
             var assembly = Assembly.GetExecutingAssembly();
             using (Stream stream = assembly.GetManifestResourceStream(fullResourceName))
             using (StreamReader reader = new StreamReader(stream))
@@ -478,17 +401,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 string result = reader.ReadToEnd();
                 return result;
             }
-        }
-
-        private static string CreateVmDeletionTrackingId(AzureLocation computeVmLocation, Dictionary<string, VmResourceState> resourcesToBeDeleted)
-        {
-            return JsonConvert.SerializeObject((computeVmLocation, resourcesToBeDeleted));
-        }
-
-        private string GetVmInitScript(string vmToken)
-        {
-            var initScript = GetCustomScript("vm_init.sh");
-            return initScript.Replace("SCRIPT_PARAM_VMTOKEN=''", $"SCRIPT_PARAM_VMTOKEN='{vmToken}'");
         }
 
         private async Task<CloudQueue> GetQueueClientAsync(AzureLocation location, string queueName, IDiagnosticsLogger logger)
@@ -514,34 +426,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return queueExists ? new object() : default;
         }
 
-        private string CreateVmToken(string input)
-        {
-            return this.vmTokenProvider.Generate(input);
-        }
-
         private static string GetQueueName(string resourceName)
         {
             return $"{resourceName}-input-queue";
         }
 
-        private static string GetOsDiskName(string vmName)
+        private static string GetVirtualNetworkName(string resourceName)
         {
-            return $"{vmName}-disk";
+            return $"{resourceName}-vnet";
         }
 
-        private static string GetVnetName(string vmName)
+        private static string GetNetworkInterfaceName(string resourceName)
         {
-            return $"{vmName}-vnet";
+            return $"{resourceName}-nic";
         }
 
-        private static string GetNetworkSecurityGroupName(string vmName)
+        private static string GetNetworkSecurityGroupName(string resourceName)
         {
-            return $"{vmName}-nsg";
+            return $"{resourceName}-nsg";
         }
 
-        private static string GetNetworkInterfaceName(string vmName)
+        private static string GetOsDiskName(string resourceName)
         {
-            return $"{vmName}-nic";
+            return $"{resourceName}-disk";
         }
     }
 }

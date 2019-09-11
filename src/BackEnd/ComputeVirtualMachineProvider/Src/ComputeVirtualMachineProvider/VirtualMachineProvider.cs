@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -20,16 +22,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private const int VmCreationRetryAfterSeconds = 15;
         private const int VmDeletionRetryAfterSeconds = 5;
         private const int VmStartEnvRetryAfterSeconds = 1;
-        private readonly IDeploymentManager deploymentManager;
+        private IEnumerable<IDeploymentManager> managers = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VirtualMachineProvider"/> class.
         /// </summary>
-        /// <param name="deploymentManager">Create / Update / Delete VM.</param>
-        public VirtualMachineProvider(IDeploymentManager deploymentManager)
+        /// <param name="managers">Create / Update / Delete VM.</param>
+        public VirtualMachineProvider(IEnumerable<IDeploymentManager> managers)
         {
-            Requires.NotNull(deploymentManager, nameof(deploymentManager));
-            this.deploymentManager = deploymentManager;
+            Requires.NotNull(managers, nameof(managers));
+            this.managers = managers;
         }
 
         /// <inheritdoc/>
@@ -40,6 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             string resultContinuationToken = default;
             OperationState resultState;
             AzureResourceInfo azureResourceInfo = default;
+            var deploymentManager = managers.Single(x => x.Accepts(input));
             var duration = logger.StartDuration();
 
             logger = logger.WithValues(new LogValueSet
@@ -84,6 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             string resultContinuationToken = default;
             OperationState resultState;
             AzureResourceInfo azureResourceInfo;
+            var deploymentManager = managers.Single(x => x.Accepts(input.AzureResourceInfo));
             var duration = logger.StartDuration();
 
             logger = logger.WithValues(new LogValueSet
@@ -123,6 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(logger, nameof(logger));
             string resultContinuationToken = default;
             OperationState resultState;
+            var deploymentManager = managers.Single(x => x.Accepts(input.AzureResourceInfo));
             AzureResourceInfo azureResourceInfo;
 
             var duration = logger.StartDuration();
@@ -160,12 +165,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         public async Task<VirtualMachineProviderQueueResult> GetVirtualMachineInputQueueAsync(VirtualMachineProviderQueueInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
-            Requires.NotNull(input.AzureVmName, nameof(input.AzureVmName));
+            Requires.NotNull(input.AzureResourceInfo, nameof(input.AzureResourceInfo));
             Requires.NotNull(logger, nameof(logger));
             var duration = logger.StartDuration();
+            var deploymentManager = managers.Single(x => x.Accepts(input.AzureResourceInfo));
 
             logger = logger.WithValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString());
-            logger = logger.WithValue(nameof(input.AzureVmName), input.AzureVmName);
+            logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
 
             var result = await logger.OperationScopeAsync(
                 "virtual_machine_compute_provider_get_input_queue_connection_info_step",
@@ -174,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     var getRetryAttempt = int.TryParse(input.ContinuationToken, out int count);
                     var retryAttemptCount = getRetryAttempt ? count : 0;
                     var queueResult = await deploymentManager.GetVirtualMachineInputQueueConnectionInfoAsync(
-                        input.AzureVmLocation, input.AzureVmName, retryAttemptCount, logger);
+                        input.AzureVmLocation, input.AzureResourceInfo.Name, retryAttemptCount, logger);
                     var r = new VirtualMachineProviderQueueResult()
                     {
                         Status = queueResult.Item1,
