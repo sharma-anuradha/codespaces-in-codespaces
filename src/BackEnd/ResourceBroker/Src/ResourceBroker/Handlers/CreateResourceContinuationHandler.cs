@@ -3,19 +3,16 @@
 // </copyright>
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -44,17 +41,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="subscriptionCatalog">Subscription Catalog to be used.</param>
-        /// <param name="blobStorageClientProvider">Blob storage client provider.</param>
+        /// <param name="controlPlaneAzureResourceAccessor">the control plane resource accessor.</param>
         /// <param name="capacityManager">The capacity manager.</param>
         /// <param name="skuCatalog">The environment SKU catalog.</param>
         /// <param name="resourceBrokerSettings">Resource broker settings.</param>
-        /// <param name="serviceCollection">Service Collection.</param>
+        /// <param name="serviceProvider">Service provider.</param>
         public CreateResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
-            IBlobStorageClientProvider blobStorageClientProvider,
+            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             ICapacityManager capacityManager,
             ISkuCatalog skuCatalog,
             ResourceBrokerSettings resourceBrokerSettings,
@@ -63,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
-            BlobStorageClientProvider = blobStorageClientProvider;
+            ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             CapacityManager = capacityManager;
             SkuCatalog = skuCatalog;
             ResourceBrokerSettings = resourceBrokerSettings;
@@ -82,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private IStorageProvider StorageProvider { get; }
 
-        private IBlobStorageClientProvider BlobStorageClientProvider { get; }
+        private IControlPlaneAzureResourceAccessor ControlPlaneAzureResourceAccessor { get; }
 
         private ICapacityManager CapacityManager { get; }
 
@@ -138,7 +134,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)
             {
-                var container = BlobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
+                var blobStorageClientProvider = await GetStorageImageBlobStorageClientProvider(azureLocation);
+                var container = blobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
                 var blob = container.GetBlobReference(ResourceBrokerSettings.FileShareTemplateBlobName);
                 var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
                 {
@@ -161,6 +158,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             return result;
+        }
+
+        private async Task<IBlobStorageClientProvider> GetStorageImageBlobStorageClientProvider(AzureLocation azureLocation)
+        {
+            var (blobStorageAccountName, blobStorageAccountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForStorageImagesAsync(azureLocation);
+            var blobStorageClientOptions = new BlobStorageClientOptions
+            {
+                AccountName = blobStorageAccountName,
+                AccountKey = blobStorageAccountKey,
+            };
+            var blobStorageClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
+            return blobStorageClientProvider;
         }
 
         /// <inheritdoc/>
