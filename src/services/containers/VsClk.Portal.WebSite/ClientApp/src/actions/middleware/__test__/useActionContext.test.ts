@@ -1,6 +1,6 @@
 import { getDispatchedAction, createMockStore, MockStore } from '../../../utils/testUtils';
 import { wait } from '../../../dependencies';
-import { useActionCreator } from '../useActionCreator';
+import { useActionCreator, action } from '../useActionCreator';
 import { useDispatch } from '../useDispatch';
 
 describe('useActionContext', () => {
@@ -202,6 +202,43 @@ describe('useActionContext', () => {
 
         expect(sample1.metadata.correlationId).not.toBe(sample2.metadata.correlationId);
 
+        expect(sample1.metadata.correlationId).toBe(sample1Success.metadata.correlationId);
+        expect(sample2.metadata.correlationId).toBe(sample2Success.metadata.correlationId);
+    });
+
+    it('verify context with actions created without contextActionCreator', async () => {
+        const syncAction = () => action(`sample1`);
+        async function act() {
+            const dispatch = useDispatch();
+            const action = useActionCreator();
+            dispatch(syncAction());
+            await wait(0);
+            dispatch(action(`sample1.success`));
+        }
+        await store.dispatch(act());
+        const sample1 = getDispatchedAction(store.dispatchedActions, 'sample1');
+        const sample1Success = getDispatchedAction(store.dispatchedActions, 'sample1.success');
+        expect(sample1.metadata.correlationId).toBe(sample1Success.metadata.correlationId);
+    });
+
+    it('verify context with multiple actions created without contextActionCreator', async () => {
+        const syncAction = (num: number) => action(`sample.${num}`);
+        const syncActionSuccess = (num: number) => action(`sample.${num}.success`);
+        async function act(num: number) {
+            const dispatch = useDispatch();
+            dispatch(syncAction(num));
+            await wait(0);
+            dispatch(syncActionSuccess(num));
+        }
+        await store.dispatch(act(1));
+        await store.dispatch(act(2));
+        const sample1 = getDispatchedAction(store.dispatchedActions, 'sample.1');
+        const sample1Success = getDispatchedAction(store.dispatchedActions, 'sample.1.success');
+        const sample2 = getDispatchedAction(store.dispatchedActions, 'sample.2');
+        const sample2Success = getDispatchedAction(store.dispatchedActions, 'sample.2.success');
+        expect(sample1.metadata.correlationId).toBeDefined();
+        expect(sample2.metadata.correlationId).toBeDefined();
+        expect(sample1.metadata.correlationId).not.toBe(sample2.metadata.correlationId);
         expect(sample1.metadata.correlationId).toBe(sample1Success.metadata.correlationId);
         expect(sample2.metadata.correlationId).toBe(sample2Success.metadata.correlationId);
     });

@@ -29,10 +29,12 @@ export interface ErrorAction<
     failed: true;
 }
 
+export type Metadata = {
+    correlationId: string;
+}
+
 export type WithMetadata<T> = T & {
-    metadata: {
-        correlationId: string;
-    };
+    metadata: Metadata;
 };
 
 export type WithType<T> = T & { type: string };

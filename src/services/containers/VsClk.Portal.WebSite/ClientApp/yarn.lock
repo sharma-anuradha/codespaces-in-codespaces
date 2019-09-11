@@ -921,6 +921,69 @@
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@csstools/convert-colors/-/convert-colors-1.4.0.tgz#ad495dc41b12e75d588c6db8b9834f08fa131eb7"
   integrity sha1-rUldxBsS511YjG24uYNPCPoTHrc=
 
+"@microsoft/applicationinsights-analytics-js@2.2.2":
+  version "2.2.2"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/applicationinsights-analytics-js/-/applicationinsights-analytics-js-2.2.2.tgz#1ad8aca0b380b0b95633a505703a3e7af191b6db"
+  integrity sha1-GtisoLOAsLlWM6UFcDo+evGRtts=
+  dependencies:
+    "@microsoft/applicationinsights-common" "2.2.2"
+    "@microsoft/applicationinsights-core-js" "2.2.2"
+    tslib "^1.9.3"
+
+"@microsoft/applicationinsights-channel-js@2.2.2":
+  version "2.2.2"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/applicationinsights-channel-js/-/applicationinsights-channel-js-2.2.2.tgz#16733104a5fecc2045a625f9055ff360710c7844"
+  integrity sha1-FnMxBKX+zCBFpiX5BV/zYHEMeEQ=
+  dependencies:
+    "@microsoft/applicationinsights-common" "2.2.2"
+    "@microsoft/applicationinsights-core-js" "2.2.2"
+    tslib "^1.9.3"
+
+"@microsoft/applicationinsights-common@2.2.2":
+  version "2.2.2"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/applicationinsights-common/-/applicationinsights-common-2.2.2.tgz#654868d8212fb66478f138423a8da40fcf7881cf"
+  integrity sha1-ZUho2CEvtmR48ThCOo2kD894gc8=
+  dependencies:
+    "@microsoft/applicationinsights-core-js" "2.2.2"
+    tslib "^1.9.3"
+
+"@microsoft/applicationinsights-core-js@2.2.2":
+  version "2.2.2"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/applicationinsights-core-js/-/applicationinsights-core-js-2.2.2.tgz#e4745173b9c9d2651157d181b17948cdde02d26d"
+  integrity sha1-5HRRc7nJ0mURV9GBsXlIzd4C0m0=
+  dependencies:
+    tslib "^1.9.3"
+
+"@microsoft/applicationinsights-dependencies-js@2.2.2":
+  version "2.2.2"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/applicationinsights-dependencies-js/-/applicationinsights-dependencies-js-2.2.2.tgz#dd12e5978b097bf654aa4359ae2cb4aa8972f612"
+  integrity sha1-3RLll4sJe/ZUqkNZriy0qoly9hI=
+  dependencies:
+    "@microsoft/applicationinsights-common" "2.2.2"
+    "@microsoft/applicationinsights-core-js" "2.2.2"
+    tslib "^1.9.3"
+
+"@microsoft/applicationinsights-properties-js@2.2.2":
+  version "2.2.2"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/applicationinsights-properties-js/-/applicationinsights-properties-js-2.2.2.tgz#efae9f8f60b47528ac4219f18ed23523a396bf79"
+  integrity sha1-766fj2C0dSisQhnxjtI1I6OWv3k=
+  dependencies:
+    "@microsoft/applicationinsights-common" "2.2.2"
+    "@microsoft/applicationinsights-core-js" "2.2.2"
+    tslib "^1.9.3"
+
+"@microsoft/applicationinsights-web@^2.2.2":
+  version "2.2.2"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/applicationinsights-web/-/applicationinsights-web-2.2.2.tgz#92589480b99977b4a0abbe73f7966fa5d4309765"
+  integrity sha1-kliUgLmZd7Sgq75z95ZvpdQwl2U=
+  dependencies:
+    "@microsoft/applicationinsights-analytics-js" "2.2.2"
+    "@microsoft/applicationinsights-channel-js" "2.2.2"
+    "@microsoft/applicationinsights-common" "2.2.2"
+    "@microsoft/applicationinsights-core-js" "2.2.2"
+    "@microsoft/applicationinsights-dependencies-js" "2.2.2"
+    "@microsoft/applicationinsights-properties-js" "2.2.2"
+
 "@microsoft/load-themed-styles@^1.7.13":
   version "1.9.16"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/load-themed-styles/-/load-themed-styles-1.9.16.tgz#755e4b7ad94999f7c746100f4563dc4e7982fdc8"

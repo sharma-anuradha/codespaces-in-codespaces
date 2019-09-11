@@ -8,6 +8,7 @@ import {
     BaseAction,
     ActionWithPayload,
     ErrorAction,
+    Metadata,
 } from './types';
 
 export function useActionCreator() {
@@ -43,9 +44,7 @@ export function useActionCreator() {
 
                 return {
                     ...pureAction,
-                    metadata: {
-                        correlationId: context.__id,
-                    },
+                    metadata: createMetadataFor(action, context),
                 };
             } as AutoType<T, P, E>;
 
@@ -56,6 +55,12 @@ export function useActionCreator() {
     }
 
     return createContextAwareAction;
+}
+
+export function createMetadataFor<T>(action: T, context: Context): Metadata {    
+    return {
+        correlationId: context.__id,
+    }
 }
 
 // prettier-ignore

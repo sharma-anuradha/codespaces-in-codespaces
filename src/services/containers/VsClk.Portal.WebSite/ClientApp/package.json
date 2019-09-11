@@ -4,6 +4,7 @@
   "private": true,
   "readme": "README.md",
   "dependencies": {
+    "@microsoft/applicationinsights-web": "^2.2.2",
     "@uifabric/fluent-theme": "^7.0.4",
     "@vs/vs-ssh": "^1.0.70",
     "cross-env": "^5.2.0",

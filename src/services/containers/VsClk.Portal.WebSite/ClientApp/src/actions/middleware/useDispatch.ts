@@ -8,6 +8,7 @@ import {
     ActionWithPayloadWithContext,
 } from './types';
 import { isThenable } from '../../utils/isThenable';
+import { createMetadataFor } from './useActionCreator';
 
 export type Dispatch = ReturnType<typeof useDispatch>;
 
@@ -19,10 +20,10 @@ export function useDispatch() {
 
     type Action =
         | BaseAction
-        | BaseActionWithContext
         | ActionWithPayload
-        | ActionWithPayloadWithContext
         | ErrorAction
+        | BaseActionWithContext
+        | ActionWithPayloadWithContext
         | ErrorActionWithContext
         | Promise<unknown>
         | undefined;
@@ -32,6 +33,13 @@ export function useDispatch() {
     function customDispatch<T extends Action>(action: T) {
         if (!action) {
             return;
+        }
+
+        if (typeof action !== 'function' && !isThenable(action)) {
+            action = {
+                ...action,
+                metadata: createMetadataFor(action, context)
+            }
         }
 
         const result = context.dispatch(action);
