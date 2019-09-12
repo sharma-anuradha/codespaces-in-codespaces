@@ -37,12 +37,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 throw new InvalidOperationException($"No stamp is defined for the control-plane location '{controlPlaneLocation}'.");
             }
 
-            Stamp = new ControlPlaneStampInfo(this, controlPlaneLocation, ControlPlaneSettings.StampStorageAccountUniquePrefix, stampSettings);
+            var stampStorageAccountUniquePrefix = StampStorageAccountUniquePrefix;
+            Stamp = new ControlPlaneStampInfo(this, controlPlaneLocation, stampStorageAccountUniquePrefix, stampSettings);
 
             AllStamps = new ReadOnlyDictionary<AzureLocation, IControlPlaneStampInfo>(ControlPlaneSettings.Stamps
                 .ToDictionary(
                     item => item.Key,
-                    item => (IControlPlaneStampInfo)new ControlPlaneStampInfo(this, item.Key, ControlPlaneSettings.StampStorageAccountUniquePrefix, item.Value)));
+                    item => (IControlPlaneStampInfo)new ControlPlaneStampInfo(this, item.Key, stampStorageAccountUniquePrefix, item.Value)));
 
             // Global configuraiton validation for all stamps.
             ValidateDataPlaneLocationsHaveSingleOwningControlPlane();
@@ -74,6 +75,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public IReadOnlyDictionary<AzureLocation, IControlPlaneStampInfo> AllStamps { get; }
 
         private ControlPlaneSettings ControlPlaneSettings { get; }
+
+        /// <summary>
+        /// Gets a name like "vsodevci", "vsopperel", etc.
+        /// This doesn't use the normal prefix-service pattern because storage names would be too long.
+        /// </summary>
+        private string StampStorageAccountUniquePrefix =>
+            NotNullOrWhiteSpace(ControlPlaneSettings.StorageAccountPrefix, nameof(ControlPlaneSettings.StorageAccountPrefix)) +
+            NotNullOrWhiteSpace(ControlPlaneSettings.EnvironmentName, nameof(ControlPlaneSettings.EnvironmentName)) +
+            NotNullOrWhiteSpace(ControlPlaneSettings.InstanceName, nameof(ControlPlaneSettings.InstanceName))
+            .ToLowerInvariant();
 
         /// <inheritdoc/>
         public bool TryGetSubscriptionId(out string subscriptonId)

@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public class ControlPlaneStampSettings
     {
         /// <summary>
-        /// Gets or sets the stamp name.
+        /// Gets or sets the stamp name, e.g., "usw2".
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string StampName { get; set; }

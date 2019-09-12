@@ -36,6 +36,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public string ServiceName { get; set; }
 
         /// <summary>
+        /// Gets or sets storage account prefix.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string StorageAccountPrefix { get; set; }
+
+        /// <summary>
         /// Gets or sets the environment name.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
@@ -52,12 +58,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string DnsHostName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the stamp storage account unique prefix.
-        /// </summary>
-        [JsonProperty(Required = Required.Always)]
-        public string StampStorageAccountUniquePrefix { get; set; }
 
         /// <summary>
         /// Gets or sets the control-plane stamps.
