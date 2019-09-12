@@ -70,7 +70,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             //TODO: This is a hack; we don't have the proper config info at this level. JohnRi and AnVan to work out how to get this.
             //What we really want is just a single Accepts() method that can find out the ComputeOS type
-            return info.Name.EndsWith("-win");
+
+            // For delete, the resource name may never be set if the resource failed to create in Azure. In this case,
+            // assume the windows manager is NOT able to handle the delete.
+            return info.Name?.EndsWith("-win") ?? false;
         }
 
         /// <inheritdoc/>
