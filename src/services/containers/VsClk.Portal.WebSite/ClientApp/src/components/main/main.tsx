@@ -7,19 +7,8 @@ import { TitleBar } from '../titlebar/titlebar';
 import { Navigation } from '../navigation/navigation';
 
 import { EnvironmentsPanel } from '../environmentsPanel/environments-panel';
-import { amdConfig } from '../../amd/amdConfig';
 
 export class Main extends Component {
-    componentDidMount() {
-        this.initializeWorkbenchFetching();
-    }
-
-    private initializeWorkbenchFetching() {
-        if (amdConfig()) {
-            AMDLoader.global.require(['vs/workbench/workbench.web.api'], (_: any) => {});
-        }
-    }
-
     render() {
         return (
             <div className='ms-Grid main'>

@@ -9,7 +9,6 @@ import { WEB_EMBED_PRODUCT_JSON, WEB_EMBED_PACKAGE_JSON } from '../../constants'
 import { VSLSWebSocket, IWebSocketFactory } from '../../resolvers/vslsResolver';
 import { IToken } from '../../services/authService';
 
-import { amdConfig } from '../../amd/amdConfig';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { isEnvironmentAvailable } from '../../utils/environmentUtils';
@@ -18,8 +17,6 @@ export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
 }
-
-amdConfig();
 
 class WorkbenchView extends Component<WorkbenchProps> {
     // Since we have external scripts running outside of react scope,
