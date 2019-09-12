@@ -39,9 +39,11 @@ appSettings:
 - AppSettings__AuthenticateProfileServiceUri
 - AppSettings__AzureCosmosDbEndpointUrl
 - AppSettings__AzureCosmosDbAuthKey
-- AppSettings__AzureRedisConnection
 - Azure__SignalR__ConnectionString
 - Azure__SignalR__ConnectionString__Secondary
+
+# add this to enable the AzureRedisConnection config
+#- AppSettings__AzureRedisConnection
 
 # override this value when another base Uri is used to connect to this app
 baseUri: https://signlr.dev.core.vsengsaas.visualstudio.com/api/signalr
