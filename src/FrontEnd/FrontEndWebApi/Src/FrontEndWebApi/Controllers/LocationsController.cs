@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
@@ -29,16 +31,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [AllowAnonymous]
     public class LocationsController : ControllerBase
     {
-        private readonly CurrentLocationProvider locationProvider;
+        private readonly ICurrentLocationProvider locationProvider;
+        private readonly IControlPlaneInfo controlPlaneInfo;
+        private readonly ISkuCatalog skuCatalog;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LocationsController"/> class.
         /// </summary>
         /// <param name="locationProvider">The current location provider.</param>
+        /// <param name="controlPlaneInfo">Control plane information.</param>
+        /// <param name="skuCatalog">SKU catalog for the current location.</param>
         public LocationsController(
-            CurrentLocationProvider locationProvider)
+            ICurrentLocationProvider locationProvider,
+            IControlPlaneInfo controlPlaneInfo,
+            ISkuCatalog skuCatalog)
         {
             this.locationProvider = locationProvider;
+            this.controlPlaneInfo = controlPlaneInfo;
+            this.skuCatalog = skuCatalog;
         }
 
         /// <summary>
@@ -54,15 +64,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             try
             {
+                var allLocations = this.controlPlaneInfo.GetAllDataPlaneLocations().ToArray();
                 var result = new LocationsResult
                 {
                     Current = locationProvider.CurrentLocation,
-                    Available = new AzureLocation[]
-                    {
-                        // TODO: IDataPlaneManager.GetAllDataPlaneLocations()
-                        AzureLocation.WestUs2,
-                        AzureLocation.WestCentralUs,
-                    },
+                    Available = allLocations,
                 };
 
                 logger.AddDuration(duration)
@@ -86,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpGet("{location}")]
         [ProducesResponseType(typeof(LocationsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public Task<IActionResult> GetLocationInfoAsync([FromRoute]string location)
+        public IActionResult GetLocationInfo([FromRoute]string location)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
@@ -95,33 +101,66 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 if (!Enum.TryParse<AzureLocation>(location, ignoreCase: true, out var azureLocation))
                 {
-                    // TODO: Also return NotFound if the location is not a supported location.
                     logger.AddDuration(duration)
                         .AddReason($"{HttpStatusCode.NotFound}")
-                        .LogError(GetType().FormatLogErrorMessage(nameof(GetLocationInfoAsync)));
-                    return Task.FromResult<IActionResult>(NotFound());
+                        .LogError(GetType().FormatLogErrorMessage(nameof(GetLocationInfo)));
+                    return NotFound();
                 }
 
-                // TODO: Redirect to the owning control plane for the requested location.
+                IControlPlaneStampInfo owningStamp;
+                try
+                {
+                    owningStamp = this.controlPlaneInfo.GetOwningControlPlaneStamp(azureLocation);
+                }
+                catch (NotSupportedException)
+                {
+                    // The requested location is not a known/supported location.
+                    return NotFound();
+                }
+
+                if (owningStamp.Location != this.locationProvider.CurrentLocation)
+                {
+                    return RedirectToLocation(owningStamp);
+                }
+
+                var skus = this.skuCatalog.CloudEnvironmentSkus.Values
+                    .Where((sku) => sku.SkuLocations.Contains(azureLocation))
+                    .Select((sku) => new SkuInfoResult
+                    {
+                        Name = sku.SkuName,
+                        DisplayName = sku.SkuDisplayName,
+                        OS = sku.ComputeOS.ToString(),
+                    })
+                    .ToArray();
                 var result = new LocationInfoResult
                 {
-                    Skus = new string[]
-                    {
-                        // TODO: Get list of SKUs available at the location.
-                    },
+                    Skus = skus,
                 };
 
                 logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetLocationInfoAsync)));
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetLocationInfo)));
 
-                return Task.FromResult<IActionResult>(Ok(result));
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetLocationInfoAsync)), ex.Message);
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetLocationInfo)), ex.Message);
                 throw;
             }
+        }
+
+        private IActionResult RedirectToLocation(IControlPlaneStampInfo owningStamp)
+        {
+            // Return a 307 to the location-specific hostname for the owning location.
+            var builder = new UriBuilder()
+            {
+                Host = owningStamp.DnsHostName,
+                Path = Request.Path,
+                Query = Request.QueryString.Value,
+                Scheme = Uri.UriSchemeHttps,
+            };
+            return new RedirectResult(builder.ToString(), permanent: false, preserveMethod: true);
         }
     }
 }

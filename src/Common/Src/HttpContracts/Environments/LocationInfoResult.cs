@@ -15,6 +15,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets a list of all SKUs available at the location.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "skus")]
-        public string[] Skus { get; set; }
+        public SkuInfoResult[] Skus { get; set; }
     }
 }
