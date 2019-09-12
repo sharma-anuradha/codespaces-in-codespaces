@@ -132,9 +132,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     //TODO: This is a hack; we don't have the proper config info at this level. JohnRi and AnVan to work out how to get this.
                     //What we really need is ComputeOS type and the machine image passed in from config.
                     //NOTE that we need this same info on all the VirtualMachineProvider*Input classes, so that we can determine which provider to call.
-                    AzureVirtualMachineImage = input.SkuName.Contains("Linux") ?
-                        "Canonical:UbuntuServer:18.04-LTS:latest" :
-                        "/subscriptions/86642df6-843e-4610-a956-fdd497102261/resourceGroups/vm-images/providers/Microsoft.Compute/images/NexusWinBase",
+                    AzureVirtualMachineImage = "Canonical:UbuntuServer:18.04-LTS:latest",
                 };
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)
