@@ -81,8 +81,10 @@ export class VSLSWebSocket implements IWebSocket {
 
     public close() {
         info(`[${this.getWebSocketIdentifier()}] Ssh channel closed by VSCode.`);
-        this.channel.session.close(
-            SshDisconnectReason.byApplication,
+        // Since we have real navigation, the sockets will be disposed.
+        // TODO: Add disposing of sessions.
+        this.channel.close(
+            // SshDisconnectReason.byApplication,
             'Workbench requested to close the connection.'
         );
     }
@@ -110,7 +112,7 @@ export class VSLSWebSocket implements IWebSocket {
             );
             disposables.push(channel);
 
-            disposables.unshift(
+            disposables.push(
                 channel.onDataReceived((data: Buffer) => {
                     verbose(`[${this.getWebSocketIdentifier()}] SSh channel received data.`);
                     logContent(`[${this.getWebSocketIdentifier()}]\n\n${data.toString()}`);
@@ -133,7 +135,7 @@ export class VSLSWebSocket implements IWebSocket {
             this._onOpen.fire();
             this.channel = channel;
         } catch (err) {
-            error('[${this.getWebSocketIdentifier()}] Ssh channel failed to open.');
+            error(`[${this.getWebSocketIdentifier()}] Ssh channel failed to open.`);
             if (retry <= 0) {
                 this._onError.fire(err);
 
