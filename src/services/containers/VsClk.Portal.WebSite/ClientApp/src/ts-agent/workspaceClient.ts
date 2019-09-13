@@ -4,7 +4,15 @@ import * as ssh from '@vs/vs-ssh';
 import { RpcProxy } from './RpcProxy';
 import { WebClient, WorkspaceInfo, WorkspaceAccess } from './webClient';
 import { SshChannelOpenner } from './sshChannelOpenner';
-import { trace } from '../utils/trace';
+import { trace as baseTrace } from '../utils/trace';
+import {
+    EnvironmentConfigurationService,
+    environmentConfigurationService,
+} from './contracts/services';
+import { BrowserSyncService } from './services/browserSyncService';
+import { GitCredentialService } from './services/gitCredentialService';
+
+const info = baseTrace.extend('workspace-client:info');
 
 const packageJson = {
     name: 'sw-port-tunnel',
@@ -72,7 +80,7 @@ export class WorkspaceClient {
         this.sshSession.onAuthenticating((e) => {
             // At this point the SSH protocol has already validated that the server holds
             // the private key that corresponds to the public key in e.key. So we just need
-            // to check if the public key matches one of the host keys publised for the workspace.
+            // to check if the public key matches one of the host keys published for the workspace.
             e.authenticationPromise = this.authenticateServer(e.key!);
         });
 
@@ -124,7 +132,7 @@ export class WorkspaceClient {
                     extensionVersion: packageJson.version,
                 }
             );
-            trace('Host version: ' + JSON.stringify(hostVersionInfo));
+            info('Host version: ' + JSON.stringify(hostVersionInfo));
         }
 
         this.workspaceClient = this.getServiceProxy<vsls.WorkspaceService>(vsls.WorkspaceService);
@@ -134,6 +142,27 @@ export class WorkspaceClient {
             connectionMode: vsls.ConnectionMode.Local, // Note "local" connection mode is correct when talking to remote service.
             joiningUserSessionToken: this.workspaceAccess.sessionToken,
         });
+
+        // Expose credential service
+        const gitCredentialService = new GitCredentialService(
+            this.workspaceClient,
+            this.rpcConnection
+        );
+        await gitCredentialService.shareService();
+
+        const browserSyncService = new BrowserSyncService(this);
+        await browserSyncService.init();
+    }
+
+    public async invokeEnvironmentConfiguration() {
+        const environmentConfiguration = await this.getServiceProxy<
+            EnvironmentConfigurationService
+        >(environmentConfigurationService);
+        try {
+            await environmentConfiguration.configureEnvironmentAsync();
+        } catch (e) {
+            info('Configure Environments failed to respond. ', e);
+        }
     }
 
     public async disconnect(): Promise<void> {

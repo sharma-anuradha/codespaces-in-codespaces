@@ -1,16 +1,20 @@
-import { CancellationToken } from 'vscode';
 import { SshChannel } from '@vs/vs-ssh';
 import { Disposable } from 'vscode-jsonrpc';
 
 import { WebClient } from './webClient';
 import { WorkspaceClient } from './workspaceClient';
 import * as vsls from './contracts/VSLS';
+import {
+    VSCodeServerHostService,
+    VSCodeServerOptions,
+    vsCodeServerHostService,
+} from './contracts/services';
 import { SshChannelOpenner } from './sshChannelOpenner';
 
 import { trace } from '../utils/trace';
 import { Signal } from '../utils/signal';
 
-import { DEFAULT_EXTENSIONS, WEB_EMBED_PRODUCT_JSON, VSLS_API_URI } from '../constants';
+import { DEFAULT_EXTENSIONS, VSLS_API_URI, vscodeConfig } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 
 export class EnvConnector {
@@ -32,12 +36,12 @@ export class EnvConnector {
 
         try {
             const vscodeServerHostClient = workspaceClient.getServiceProxy<VSCodeServerHostService>(
-                VSCodeServerHostService
+                vsCodeServerHostService
             );
 
             const options: VSCodeServerOptions = {
-                vsCodeCommit: WEB_EMBED_PRODUCT_JSON.commit,
-                quality: WEB_EMBED_PRODUCT_JSON.quality,
+                vsCodeCommit: vscodeConfig.commit,
+                quality: vscodeConfig.quality,
                 extensions: [...DEFAULT_EXTENSIONS],
                 telemetry: true,
             };
@@ -110,6 +114,7 @@ export class EnvConnector {
             await workspaceClient.connect(sessionId);
             await workspaceClient.authenticate();
             await workspaceClient.join();
+            await workspaceClient.invokeEnvironmentConfiguration();
 
             this.workspaceClient.complete(workspaceClient);
         } catch (err) {
@@ -226,27 +231,3 @@ export class EnvConnector {
         this.disposables = [];
     }
 }
-
-export interface VSCodeServerOptions {
-    vsCodeCommit: string;
-    quality: string;
-    extensions: string[];
-    telemetry: boolean;
-}
-
-// The VSCodeServerHost RPC interface is not yet auto-generated in VSLS.ts.
-export interface VSCodeServerHostService {
-    startRemoteServerAsync(
-        input: VSCodeServerOptions,
-        cancellationToken?: CancellationToken
-    ): Promise<number>;
-
-    exportLogsAsync(): Promise<string>;
-}
-
-// tslint:disable-next-line: variable-name
-export const VSCodeServerHostService: vsls.ServiceInfo<VSCodeServerHostService> = {
-    name: 'IVSCodeServerHostService',
-    methods: ['startRemoteServer', 'exportLogs'],
-    events: [],
-};

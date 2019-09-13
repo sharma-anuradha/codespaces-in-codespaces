@@ -1,7 +1,7 @@
 import { SshChannel, SshDisconnectReason } from '@vs/vs-ssh';
 import { Event, Emitter } from 'vscode-jsonrpc';
 
-import { EnvConnector } from '../ts-agent';
+import { EnvConnector } from '../ts-agent/envConnector';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { bufferToArrayBuffer } from '../utils/bufferToArrayBuffer';
 import { trace as baseTrace } from '../utils/trace';

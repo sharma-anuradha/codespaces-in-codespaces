@@ -1,20 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
-import Modal from 'react-modal';
-import './index.css';
+
 import { App } from './app';
-import * as serviceWorker from './serviceWorker';
+import { store } from './store/store';
 
-import { configureStore } from './store/configureStore';
-
+import './index.css';
 import { initializeIcons } from '@uifabric/icons';
-
-// We are not sure if we want to go with the theme yet.
-// import { loadTheme } from 'office-ui-fabric-react/lib/Styling';
-// import { theme } from './theme/theme';
-
-// loadTheme(theme);
+import * as serviceWorker from './serviceWorker';
 
 initializeIcons();
 
@@ -26,10 +19,6 @@ if (process.env.NODE_ENV === 'development') {
 } else {
     localStorage.debug = '';
 }
-
-Modal.setAppElement('body');
-
-const store = configureStore();
 
 ReactDOM.render(
     <BrowserRouter basename={baseUrl || ''}>

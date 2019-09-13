@@ -43,6 +43,14 @@ export const getTokenExpiration = (token: IToken): number => {
     return Math.floor(seconds);
 };
 
+function ensureTokenFormat(token: any) {
+    if (typeof token.expiresOn === 'string') {
+        token.expiresOn = new Date(token.expiresOn);
+    }
+
+    return token;
+}
+
 const clientApplication = new UserAgentApplication(msalConfig);
 
 class AuthService {
@@ -68,7 +76,7 @@ class AuthService {
                 if (expiresIn <= 1800) {
                     this.acquireToken();
                 }
-                return token;
+                return ensureTokenFormat(token);
             }
         }
 
@@ -83,7 +91,7 @@ class AuthService {
                     if (expiresIn <= 3000) {
                         this.acquireToken();
                     }
-                    return token;
+                    return ensureTokenFormat(token);
                 }
             } catch (e) {
                 error('Parsing the LS record', e);

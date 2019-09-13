@@ -4,7 +4,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import './workbench.css';
 
 import { trace } from '../../utils/trace';
-import { WEB_EMBED_PRODUCT_JSON, WEB_EMBED_PACKAGE_JSON } from '../../constants';
+import { vscodeConfig } from '../../constants';
 
 import { VSLSWebSocket, IWebSocketFactory } from '../../resolvers/vslsResolver';
 import { IToken } from '../../services/authService';
@@ -12,6 +12,7 @@ import { IToken } from '../../services/authService';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { isEnvironmentAvailable } from '../../utils/environmentUtils';
+import { credentialsProvider } from '../../services/credentialsProvider';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
@@ -68,11 +69,8 @@ class WorkbenchView extends Component<WorkbenchProps> {
                 remoteAuthority: `localhost`,
                 webviewEndpoint: `http://localhost`,
                 webSocketFactory: VSLSWebSocketFactory,
-                connectionToken: WEB_EMBED_PRODUCT_JSON.commit,
-                productConfiguration: { 
-                    version  : WEB_EMBED_PACKAGE_JSON.version, 
-                    ...WEB_EMBED_PRODUCT_JSON 
-                },
+                connectionToken: vscodeConfig.commit,
+                credentialsProvider,
             };
 
             trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
@@ -85,10 +83,6 @@ class WorkbenchView extends Component<WorkbenchProps> {
     render() {
         return (
             <div className='vsonline-workbench'>
-                <meta
-                    id='vscode-remote-product-configuration'
-                    data-settings={JSON.stringify(WEB_EMBED_PRODUCT_JSON)}
-                />
                 <div
                     id='workbench'
                     style={{ height: '100%' }}

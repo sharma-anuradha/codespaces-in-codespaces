@@ -3,6 +3,6 @@
 //
 
 import * as debug from 'debug';
-import { PACKAGE_JSON } from '../constants';
+import { packageName } from '../constants';
 
-export const trace = debug.default(PACKAGE_JSON.name);
+export const trace = debug.default(packageName);
