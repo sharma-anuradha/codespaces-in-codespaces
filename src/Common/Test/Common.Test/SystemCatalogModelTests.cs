@@ -180,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 .ReturnsAsync(() => TestSecretValue);
             var controlPlaneInfo = new Mock<IControlPlaneInfo>();
             controlPlaneInfo
-                .Setup(obj => obj.GetAllDataPlaneLocations())
+                .Setup(obj => obj.Stamp.DataPlaneLocations)
                 .Returns(
                     new[] {
                         AzureLocation.EastUs,

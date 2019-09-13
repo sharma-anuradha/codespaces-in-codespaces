@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
@@ -37,9 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         public void AppSettings_SkuCatalog(string environmentName, string overrideName)
         {
             var appSettings = LoadAppSettings(environmentName, overrideName);
-            var controlPlaneInfo = new Mock<IControlPlaneInfo>().Object;
+            var controlPlaneInfo = new Mock<IControlPlaneInfo>();
+            controlPlaneInfo.Setup(obj => obj.Stamp.DataPlaneLocations).Returns(new List<AzureLocation>());
             var controlPlaneAzureResourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>().Object;
-            var skuCatalog = new SkuCatalog(appSettings.SkuCatalogSettings, controlPlaneInfo, controlPlaneAzureResourceAccessor);
+            var skuCatalog = new SkuCatalog(appSettings.SkuCatalogSettings, controlPlaneInfo.Object, controlPlaneAzureResourceAccessor);
             Assert.NotNull(skuCatalog);
             foreach (var item in skuCatalog.CloudEnvironmentSkus)
             {

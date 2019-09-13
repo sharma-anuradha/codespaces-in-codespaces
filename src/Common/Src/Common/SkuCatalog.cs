@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));
 
             // Get the supported azure locations
-            var dataPlaneLocations = new HashSet<AzureLocation>(controlPlaneInfo.GetAllDataPlaneLocations());
+            var dataPlaneLocations = new HashSet<AzureLocation>(controlPlaneInfo.Stamp.DataPlaneLocations);
 
             // Get the default configuration for all skus.
             var defaultSkuConfiguration = skuCatalogSettings.DefaultSkuConfiguration;
