@@ -113,6 +113,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private string MakeStorageAccountName(string kind, AzureLocation azureLocation)
         {
             Requires.Argument(kind.Length <= 2, nameof(kind), $"The storage kind '{kind}' must not be longer than 2 characters.");
+
+            if (!DataPlaneLocations.Contains(azureLocation))
+            {
+                throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{this.StampResourceGroupName}'");
+            }
+
             var regionCode = StorageAccountRegionCodes[azureLocation];
             var accountName = $"{StorageAccountUniquePrefix}-{ControlPlaneStampSettings.StampName}-{kind}-{regionCode}".Replace("-", string.Empty).ToLowerInvariant();
             if (accountName.Length > AzureStorageAccountNameLengthMax)
