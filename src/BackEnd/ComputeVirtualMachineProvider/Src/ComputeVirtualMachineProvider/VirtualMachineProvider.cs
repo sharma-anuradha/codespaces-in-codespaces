@@ -42,7 +42,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             string resultContinuationToken = default;
             OperationState resultState;
             AzureResourceInfo azureResourceInfo = default;
-            var deploymentManager = managers.Single(x => x.Accepts(input));
+
+            // Get depliment manager to be used
+            var acceptsDeploymentManager = managers.Where(x => x.Accepts(input));
+            if (acceptsDeploymentManager == null || acceptsDeploymentManager.Count() != 1)
+            {
+                throw new NotSupportedException($"One and only one deployment manager is allowed to process create request.");
+            }
+
+            var deploymentManager = acceptsDeploymentManager.First();
+
             var duration = logger.StartDuration();
 
             logger = logger.WithValues(new LogValueSet

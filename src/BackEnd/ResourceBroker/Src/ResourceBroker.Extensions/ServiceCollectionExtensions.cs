@@ -50,10 +50,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
             // Core services
             services.AddSingleton<IResourceBroker, ResourceBroker>();
-            services.AddSingleton<IResourcePool, ResourcePool>();
-            services.AddSingleton<ResourceScalingBroker>();
-            services.AddSingleton<IResourceScalingBroker>(x => x.GetRequiredService<ResourceScalingBroker>());
-            services.AddSingleton<IResourceScalingStore>(x => x.GetRequiredService<ResourceScalingBroker>());
+            services.AddSingleton<IResourcePoolManager, ResourcePoolManager>();
+            services.AddSingleton<ResourcePoolDefinitionStore>();
+            services.AddSingleton<IResourceScalingHandler>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
+            services.AddSingleton<IResourcePoolDefinitionStore>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
 
             // Continuation
             services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();
@@ -79,6 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
+            services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {

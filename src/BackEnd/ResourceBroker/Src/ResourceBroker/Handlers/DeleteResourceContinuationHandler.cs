@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -36,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="serviceCollection">Service Collection.</param>
+        /// <param name="serviceProvider">Service Provider.</param>
         public DeleteResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
@@ -88,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
             else
             {
-                throw new NotSupportedException($"Resource type is not selected - {resource.Value.Type}");
+                throw new NotSupportedException($"Resource type is not supported - {resource.Value.Type}");
             }
 
             return Task.FromResult(operationInput);
@@ -99,18 +100,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var result = (ContinuationResult)null;
 
-            // Run create operation
-            if (resource.Value.Type == ResourceType.ComputeVM)
+            logger.FluentAddValue("HandlerResourceHasAzureResourceInfo", resource.Value.AzureResourceInfo != null);
+
+            // Return success if AzureResourceInfo is null as it means there is nothing to do
+            if (resource.Value.AzureResourceInfo == null)
             {
-                result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)operationInput, logger.WithValues(new LogValueSet()));
+                result = new ContinuationResult() { Status = OperationState.Succeeded };
             }
-            else if (resource.Value.Type == ResourceType.StorageFileShare)
+
+            // Run create operation if we have something to do
+            if (result == null)
             {
-                result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)operationInput, logger.WithValues(new LogValueSet()));
-            }
-            else
-            {
-                throw new NotSupportedException($"Resource type is not selected - {resource.Value.Type}");
+                if (resource.Value.Type == ResourceType.ComputeVM)
+                {
+                    result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)operationInput, logger.WithValues(new LogValueSet()));
+                }
+                else if (resource.Value.Type == ResourceType.StorageFileShare)
+                {
+                    result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)operationInput, logger.WithValues(new LogValueSet()));
+                }
+                else
+                {
+                    throw new NotSupportedException($"Resource type is not supported - {resource.Value.Type}");
+                }
             }
 
             return result;
@@ -128,7 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 var deleted = await ResourceRepository.DeleteAsync(input.ResourceId.ToString(), logger.WithValues(new LogValueSet()));
                 if (!deleted)
                 {
-                    return await FailOperationAsync(input, record, logger);
+                    return await FailOperationAsync(input, record, "HandlerResourceRepositoryDeleteFailed", logger);
                 }
             }
 

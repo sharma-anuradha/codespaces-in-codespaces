@@ -96,6 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
             logger.FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
             logger.FluentAddValue("HandlerResourceId", typedInput.ResourceId);
+            logger.FluentAddValue("HandlerTriggerSource", typedInput.Reason);
 
             // Core continue
             var result = await InnerContinue(typedInput, logger);
@@ -136,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 {
                     logger.FluentAddValue("HandlerFailedBuildOperationInput", true);
 
-                    return await FailOperationAsync(input, record, logger);
+                    return await FailOperationAsync(input, record, "PostBuildOperationInputFailed", logger);
                 }
             }
 
@@ -207,37 +208,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Saves status update on a record.
         /// </summary>
+        /// <param name="input">Target input.</param>
         /// <param name="record">Referene to target resource.</param>
         /// <param name="state">Target state that we want to move to.</param>
+        /// <param name="trigger">Trigger that caused the action.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returned task.</returns>
-        protected async Task SaveStatusAsync(ResourceRecordRef record, OperationState state, IDiagnosticsLogger logger)
+        protected async Task<bool> SaveStatusAsync(
+            TI input,
+            ResourceRecordRef record,
+            OperationState state,
+            string trigger,
+            IDiagnosticsLogger logger)
         {
             var stateChanged = false;
 
             // Determin what needs to be updated
             if (Operation == ResourceOperation.Starting)
             {
-                stateChanged = record.Value.UpdateStartingStatus(state);
+                record.Value.StartingReason = input.Reason;
+                stateChanged = record.Value.UpdateStartingStatus(state, trigger);
             }
             else if (Operation == ResourceOperation.Deleting)
             {
-                stateChanged = record.Value.UpdateDeletingStatus(state);
+                record.Value.DeletingReason = input.Reason;
+                stateChanged = record.Value.UpdateDeletingStatus(state, trigger);
             }
             else if (Operation == ResourceOperation.Provisioning)
             {
-                stateChanged = record.Value.UpdateProvisioningStatus(state);
+                record.Value.ProvisioningReason = input.Reason;
+                stateChanged = record.Value.UpdateProvisioningStatus(state, trigger);
             }
             else
             {
-                throw new NotSupportedException($"Operation type is not selected - {Operation}");
+                throw new NotSupportedException($"Operation type is not supported - {Operation}");
             }
 
             // Only need to update things if something has changed
             if (stateChanged)
             {
                 record.Value = await ResourceRepository.UpdateAsync(record.Value, logger.WithValues(new LogValueSet()));
+
+                // Trigger cleanup post fail
+                if (state == OperationState.Failed)
+                {
+                    await FailOperationCleanupAsync(record, trigger, logger);
+                }
             }
+
+            return stateChanged;
         }
 
         /// <summary>
@@ -254,7 +273,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IDiagnosticsLogger logger)
         {
             // Update status
-            await SaveStatusAsync(record, OperationState.Initialized, logger);
+            await SaveStatusAsync(input, record, OperationState.Initialized, "QueueOperation", logger);
 
             // Build desired result setting up continuation
             input.ContinuationToken = BuildContinuationToken(input);
@@ -272,18 +291,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// </summary>
         /// <param name="input">Target input.</param>
         /// <param name="record">Referene to target resource.</param>
+        /// <param name="trigger">Trigger that caused the action.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Fail continuation result.</returns>
         protected virtual async Task<ContinuationResult> FailOperationAsync(
             TI input,
             ResourceRecordRef record,
+            string trigger,
             IDiagnosticsLogger logger)
         {
             // Update compute to deal with the fact that storage has bombed
-            await SaveStatusAsync(record, OperationState.Failed, logger);
-
-            // Trigger cleanup post fail
-            await FailOperationCleanupAsync(input.ResourceId, "ProviderHandledFailure", logger);
+            await SaveStatusAsync(input, record, OperationState.Failed, trigger, logger);
 
             // Setup failed result
             return new ContinuationResult { Status = OperationState.Failed };
@@ -292,11 +310,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Cleanup action that should run post the a failure/exception occurring.
         /// </summary>
-        /// <param name="resourceId">Target resource that should be deleted.</param>
-        /// <param name="reason">Reason/cause for the delete.</param>
+        /// <param name="record">Target record that should be deleted.</param>
+        /// <param name="trigger">Reason/cause for the delete.</param>
         /// <param name="logger">Target logger.</param>
-        /// <returns>Returns the core </returns>
-        protected async virtual Task FailOperationCleanupAsync(Guid resourceId, string reason, IDiagnosticsLogger logger)
+        /// <returns>Returns the core task.</returns>
+        protected async virtual Task FailOperationCleanupAsync(ResourceRecordRef record, string trigger, IDiagnosticsLogger logger)
         {
             var shouldTriggerDelete = Operation == ResourceOperation.Provisioning || Operation == ResourceOperation.Starting;
 
@@ -305,7 +323,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Only delete if we aren't already deleting
             if (shouldTriggerDelete)
             {
-                logger.FluentAddValue("HandlerFailCleanupReason", reason);
+                logger.FluentAddValue("HandlerFailCleanupTrigger", trigger);
 
                 try
                 {
@@ -313,8 +331,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     var continuationTaskActivator = ServiceProvider.GetService<IContinuationTaskActivator>();
 
                     // Starts the delete workflow on the resource
-                    var deleteInput = new DeleteResourceContinuationInput() { ResourceId = resourceId, Reason = reason };
-                    var deleteResult = await continuationTaskActivator.DeleteResource(deleteInput, logger.WithValues(new LogValueSet()));
+                    var deleteResult = await continuationTaskActivator.DeleteResource(
+                        Guid.Parse(record.Value.Id), trigger, logger.WithValues(new LogValueSet()));
 
                     logger.FluentAddValue("HandlerFailCleanupPostState", deleteResult?.Status)
                         .FluentAddValue("HandlerFailCleanupPostContinuationToken", deleteResult?.NextInput?.ContinuationToken);
@@ -344,9 +362,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IDiagnosticsLogger logger)
         {
             // Update status to reflect that we are in progress
-            await SaveStatusAsync(record, OperationState.InProgress, logger);
+            await SaveStatusAsync(input, record, OperationState.InProgress, "PreRunOperation", logger);
 
             // Run core operation
+            var threwException = false;
             var operationResult = (ContinuationResult)null;
             try
             {
@@ -359,6 +378,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
                 // Since we are swallowing, make sure we have a record at this level of the excpetion just in case
                 logger.WithValues(new LogValueSet()).LogException($"{LogBaseName}_operation_error", e);
+
+                threwException = true;
             }
 
             // If we didn't get a result record error
@@ -366,26 +387,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 || operationResult.Status == OperationState.Failed
                 || operationResult.Status == OperationState.Cancelled)
             {
-                logger.FluentAddValue("HandlerFailedGetResultFromOperation", operationResult == null);
+                var failTrigger = threwException ? "Exception" : (operationResult == null ? "ResultNull" : operationResult.Status.ToString());
 
-                return await FailOperationAsync(input, record, logger);
+                logger.FluentAddValue("HandlerFailedGetResultFromOperationException", threwException)
+                    .FluentAddValue("HandlerFailedGetResultFromOperation", operationResult == null);
+
+                return await FailOperationAsync(input, record, $"PostRunOperation{failTrigger}", logger);
             }
-
-            logger.FluentAddValue("HandlerOperationPostContinuationToken", operationResult.NextInput?.ContinuationToken)
-                .FluentAddValue("HandlerOperationPostStatus", operationResult.Status)
-                .FluentAddValue("HandlerOperationPostRetryAfter", operationResult.RetryAfter);
-
-            // Update status to reflect compute result
-            await SaveStatusAsync(record, operationResult.Status, logger);
-
-            // Build desired result setting up next input
-            input.OperationInput = operationResult.NextInput;
-            return new ContinuationResult
+            else
             {
-                Status = operationResult.Status,
-                RetryAfter = operationResult.RetryAfter,
-                NextInput = input,
-            };
+                logger.FluentAddValue("HandlerOperationPostContinuationToken", operationResult.NextInput?.ContinuationToken)
+                    .FluentAddValue("HandlerOperationPostStatus", operationResult.Status)
+                    .FluentAddValue("HandlerOperationPostRetryAfter", operationResult.RetryAfter);
+
+                // Update status to reflect compute result
+                await SaveStatusAsync(input, record, operationResult.Status, "PostRunOperation", logger);
+
+                // Build desired result setting up next input
+                input.OperationInput = operationResult.NextInput;
+                return new ContinuationResult
+                {
+                    Status = operationResult.Status,
+                    RetryAfter = operationResult.RetryAfter,
+                    NextInput = input,
+                };
+            }
         }
     }
 }

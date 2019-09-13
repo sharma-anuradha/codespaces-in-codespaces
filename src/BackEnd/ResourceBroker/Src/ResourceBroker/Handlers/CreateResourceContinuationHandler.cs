@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
@@ -40,20 +41,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// </summary>
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
-        /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="controlPlaneAzureResourceAccessor">the control plane resource accessor.</param>
         /// <param name="capacityManager">The capacity manager.</param>
-        /// <param name="skuCatalog">The environment SKU catalog.</param>
         /// <param name="resourceBrokerSettings">Resource broker settings.</param>
+        /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service provider.</param>
         public CreateResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
-            IResourceRepository resourceRepository,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             ICapacityManager capacityManager,
-            ISkuCatalog skuCatalog,
             ResourceBrokerSettings resourceBrokerSettings,
+            IResourceRepository resourceRepository,
             IServiceProvider serviceProvider)
             : base(serviceProvider, resourceRepository)
         {
@@ -61,7 +60,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             StorageProvider = storageProvider;
             ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             CapacityManager = capacityManager;
-            SkuCatalog = skuCatalog;
             ResourceBrokerSettings = resourceBrokerSettings;
         }
 
@@ -82,8 +80,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private ICapacityManager CapacityManager { get; }
 
-        private ISkuCatalog SkuCatalog { get; }
-
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
         /// <inheritdoc/>
@@ -103,12 +99,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var result = default(ContinuationInput);
 
-            // Get the resource location from the capacity manager.
-            if (!Enum.TryParse<AzureLocation>(input.Location, ignoreCase: true, out var azureLocation))
-            {
-                throw new NotSupportedException($"Provided location of '{input.Location}' is not supported.");
-            }
-
             /*
              * TODO: How will we track the Cloud Environment SKU in the pool manager, and not just the Azure SKU?
             if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.SkuName, out var sku))
@@ -117,62 +107,66 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
             */
             var sku = default(ICloudEnvironmentSku);
-            var resourceLocation = await CapacityManager.SelectAzureResourceLocation(sku, azureLocation, logger);
+
+            // Get Resource Group and Subscription Id
+            var resourceLocation = await CapacityManager.SelectAzureResourceLocation(sku, input.ResourcePoolDetails.Location, logger);
             var resourceGroup = resourceLocation.ResourceGroup;
             var subscription = resourceLocation.Subscription.SubscriptionId;
 
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
-                result = new VirtualMachineProviderCreateInput
+                // Ensure that the details type is correct
+                if (input.ResourcePoolDetails is ResourcePoolComputeDetails computeDetails)
                 {
-                    AzureVmLocation = azureLocation,
-                    AzureSkuName = input.SkuName,
-                    AzureSubscription = Guid.Parse(subscription),
-                    AzureResourceGroup = resourceGroup,
-                    //TODO: This is a hack; we don't have the proper config info at this level. JohnRi and AnVan to work out how to get this.
-                    //What we really need is ComputeOS type and the machine image passed in from config.
-                    //NOTE that we need this same info on all the VirtualMachineProvider*Input classes, so that we can determine which provider to call.
-                    AzureVirtualMachineImage = "Canonical:UbuntuServer:18.04-LTS:latest",
-                };
+                    result = new VirtualMachineProviderCreateInput
+                    {
+                        AzureVmLocation = computeDetails.Location,
+                        AzureSkuName = computeDetails.SkuName,
+                        AzureSubscription = Guid.Parse(subscription),
+                        AzureResourceGroup = resourceGroup,
+                        AzureVirtualMachineImage = computeDetails.ImageName,
+                    };
+                }
+                else
+                {
+                    throw new NotSupportedException($"Pool compute details type is not selected - {input.ResourcePoolDetails.GetType()}");
+                }
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)
             {
-                var blobStorageClientProvider = await GetStorageImageBlobStorageClientProvider(azureLocation);
-                var container = blobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
-                var blob = container.GetBlobReference(ResourceBrokerSettings.FileShareTemplateBlobName);
-                var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+                // Ensure that the details type is correct
+                if (input.ResourcePoolDetails is ResourcePoolStorageDetails storageDetails)
                 {
-                    Permissions = SharedAccessBlobPermissions.Read,
-                    SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4), // This should be plenty of time to copy the blob template into the new file share
-                });
+                    // Get storage SAS token
+                    var blobStorageClientProvider = await GetStorageImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
+                    var container = blobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
+                    var blob = container.GetBlobReference(storageDetails.ImageName);
+                    var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+                    {
+                        Permissions = SharedAccessBlobPermissions.Read,
+                        SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4), // This should be plenty of time to copy the blob template into the new file share
+                    });
 
-                result = new FileShareProviderCreateInput
+                    result = new FileShareProviderCreateInput
+                    {
+                        AzureLocation = storageDetails.Location.ToString().ToLowerInvariant(),
+                        AzureSkuName = storageDetails.SkuName,
+                        AzureSubscription = subscription,
+                        AzureResourceGroup = resourceGroup,
+                        StorageBlobUrl = blob.Uri + sas,
+                    };
+                }
+                else
                 {
-                    AzureLocation = input.Location,
-                    AzureSkuName = input.SkuName,
-                    AzureSubscription = subscription,
-                    AzureResourceGroup = resourceGroup,
-                    StorageBlobUrl = blob.Uri + sas,
-                };
+                    throw new NotSupportedException($"Pool storage details type is not selected - {input.ResourcePoolDetails.GetType()}");
+                }
             }
             else
             {
-                throw new NotSupportedException($"Resource type is not selected - {resource.Value.Type}");
+                throw new NotSupportedException($"Resource type is not supported - {resource.Value.Type}");
             }
 
             return result;
-        }
-
-        private async Task<IBlobStorageClientProvider> GetStorageImageBlobStorageClientProvider(AzureLocation azureLocation)
-        {
-            var (blobStorageAccountName, blobStorageAccountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForStorageImagesAsync(azureLocation);
-            var blobStorageClientOptions = new BlobStorageClientOptions
-            {
-                AccountName = blobStorageAccountName,
-                AccountKey = blobStorageAccountKey,
-            };
-            var blobStorageClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
-            return blobStorageClientProvider;
         }
 
         /// <inheritdoc/>
@@ -221,8 +215,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 IsAssigned = false,
                 Assigned = null,
                 Created = time,
-                Location = input.Location,
-                SkuName = input.SkuName,
+                Location = input.ResourcePoolDetails.Location.ToString().ToLowerInvariant(),
+                SkuName = input.ResourcePoolDetails.SkuName,
+                PoolReference = new ResourcePoolDefinitionRecord
+                {
+                    Code = input.ResourcePoolDetails.GetPoolDefinition(),
+                    VersionCode = input.ResourcePoolDetails.GetPoolVersionDefinition(),
+                },
             };
 
             // Update input
@@ -232,6 +231,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             record = await ResourceRepository.CreateAsync(record, logger);
 
             return new ResourceRecordRef(record);
+        }
+
+        private async Task<IBlobStorageClientProvider> GetStorageImageBlobStorageClientProvider(AzureLocation azureLocation)
+        {
+            var (blobStorageAccountName, blobStorageAccountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForStorageImagesAsync(azureLocation);
+            var blobStorageClientOptions = new BlobStorageClientOptions
+            {
+                AccountName = blobStorageAccountName,
+                AccountKey = blobStorageAccountKey,
+            };
+            var blobStorageClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
+            return blobStorageClientProvider;
         }
     }
 }

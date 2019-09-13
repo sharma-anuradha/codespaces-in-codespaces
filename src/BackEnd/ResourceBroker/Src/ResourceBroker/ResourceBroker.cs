@@ -6,13 +6,14 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
@@ -22,6 +23,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     /// </summary>
     public class ResourceBroker : IResourceBroker
     {
+        private const string LogBaseName = ResourceLoggingConstants.ResourceBroker;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceBroker"/> class.
         /// </summary>
@@ -29,8 +32,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="startComputeTask">Start compute task that should be used.</param>
         /// <param name="mapper">Mapper that should be used.</param>
         public ResourceBroker(
-            IResourcePool resourcePool,
-            IResourceScalingStore resourceScalingStore,
+            IResourcePoolManager resourcePool,
+            IResourcePoolDefinitionStore resourceScalingStore,
             IContinuationTaskActivator continuationTaskActivator,
             IMapper mapper)
         {
@@ -40,36 +43,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
 
-        private IResourcePool ResourcePool { get; }
+        private IResourcePoolManager ResourcePool { get; }
 
-        private IResourceScalingStore ResourceScalingStore { get; }
+        private IResourcePoolDefinitionStore ResourceScalingStore { get; }
 
         private IContinuationTaskActivator ContinuationTaskActivator { get; }
 
         private IMapper Mapper { get; }
 
         /// <inheritdoc/>
-        public async Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
+        public Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
         {
             // Setting up logger
-            logger = logger.WithValues(new LogValueSet
+            logger.FluentAddBaseValue("ResourceLocation", input.Location.ToString())
+                .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
+                .FluentAddBaseValue("ResourceType", input.Type.ToString());
+
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_allocate",
+                async () =>
                 {
-                    { ResourceLoggingPropertyConstants.ResourceLocation, input.Location },
-                    { ResourceLoggingPropertyConstants.ResourceSkuName, input.SkuName },
-                    { ResourceLoggingPropertyConstants.ResourceType, input.Type.ToString() },
+                    // Map logical sku to resource sku
+                    var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
+
+                    logger.FluentAddBaseValue("ResourceResourceSkuName", resourceSku.Details.SkuName);
+
+                    // Try and get item from the pool
+                    var item = await ResourcePool.TryGetAsync(resourceSku.Details.GetPoolDefinition(), logger.WithValues(new LogValueSet()));
+                    if (item == null)
+                    {
+                        throw new OutOfCapacityException(input.SkuName, input.Type, input.Location.ToString().ToLowerInvariant());
+                    }
+
+                    return Mapper.Map<AllocateResult>(item);
                 });
-
-            // Map logical sku to resource sku
-            var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
-
-            // Try and get item from the pool
-            var item = await ResourcePool.TryGetAsync(resourceSku, input.Type, input.Location, logger);
-            if (item == null)
-            {
-                throw new OutOfCapacityException(input.SkuName, input.Type, input.Location);
-            }
-
-            return Mapper.Map<AllocateResult>(item);
         }
 
         /// <inheritdoc/>
@@ -77,12 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             DeallocateInput input,
             IDiagnosticsLogger logger)
         {
-            var continuationInput = new DeleteResourceContinuationInput
-            {
-                ResourceId = input.ResourceId,
-            };
-
-            await ContinuationTaskActivator.DeleteResource(continuationInput, logger);
+            await ContinuationTaskActivator.DeleteResource(input.ResourceId, input.Trigger, logger);
 
             return new DeallocateResult { Successful = true };
         }
@@ -92,24 +94,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             EnvironmentStartInput input,
             IDiagnosticsLogger logger)
         {
-            var continuationInput = new StartEnvironmentContinuationInput
-            {
-                ResourceId = input.ComputeResourceId,
-                EnvironmentVariables = input.EnvironmentVariables,
-                StorageResourceId = input.StorageResourceId,
-            };
-
-            await ContinuationTaskActivator.StartEnvironment(continuationInput, logger);
+            await ContinuationTaskActivator.StartEnvironment(
+                input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, logger);
 
             return new EnvironmentStartResult { Successful = true };
         }
 
-        private async Task<string> MapLogicalSkuToResourceSku(string skuName, ResourceType type, string location)
+        private async Task<ResourcePool> MapLogicalSkuToResourceSku(string skuName, ResourceType type, AzureLocation location)
         {
-            var resources = await ResourceScalingStore.RetrieveLatestScaleLevels();
+            var resources = await ResourceScalingStore.RetrieveDefinitions();
 
             var resourceSku = resources
-                .Where(x => x.Location == location
+                .Where(x => x.Details.Location == location
                     && x.Type == type
                     && x.EnvironmentSkus.Contains(skuName));
 
@@ -123,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 throw new ArgumentException($"More than one Sku resource match was found. SkuName = {skuName}, Type = {type}, Location = {location}");
             }
 
-            return resourceSku.Single().SkuName;
+            return resourceSku.Single();
         }
     }
 }

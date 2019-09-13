@@ -11,9 +11,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     /// </summary>
     public class DeleteResourceContinuationInput : ContinuationOperationInput
     {
-        /// <summary>
-        /// Gets or sets the reason why the delete is occurring.
-        /// </summary>
-        public string Reason { get; set; }
     }
 }

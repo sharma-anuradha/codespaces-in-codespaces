@@ -12,30 +12,23 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
     /// <summary>
-    ///
+    /// Store which provides access to the Resource Pool Deginitions.
     /// </summary>
-    public class ResourceScalingBroker : IResourceScalingBroker, IResourceScalingStore
+    public class ResourcePoolDefinitionStore : IResourcePoolDefinitionStore, IResourceScalingHandler
     {
-        public ResourceScalingBroker(IMapper mapper)
-        {
-            Mapper = mapper;
-        }
-
-        private IMapper Mapper { get; }
-
-        private IEnumerable<ResourcePoolDefinition> ResourceScaleLevels { get; set; }
+        private IEnumerable<ResourcePool> ResourceScaleLevels { get; set; }
 
         /// <inheritdoc/>
-        public Task<ScalingResult> UpdateResourceScaleLevels(IEnumerable<ScalingInput> scalingInputs)
+        public Task<ScalingResult> UpdateResourceScaleLevels(ScalingInput scalingInputs)
         {
             // Persist the result
-            ResourceScaleLevels = Mapper.Map<IEnumerable<ResourcePoolDefinition>>(scalingInputs);
+            ResourceScaleLevels = scalingInputs.Pools;
 
             return Task.FromResult(new ScalingResult());
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<ResourcePoolDefinition>> RetrieveLatestScaleLevels()
+        public Task<IEnumerable<ResourcePool>> RetrieveDefinitions()
         {
             // If we don't have a result, wait a short time to see if it comes
             if (ResourceScaleLevels == null)

@@ -26,12 +26,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings
         [JsonProperty(Required = Required.Always)]
         [Obsolete("This property will be moved to the sku catalog.", false)]
         public string FileShareTemplateContainerName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the blob name of the template blob used for populating initial file shares.
-        /// </summary>
-        [JsonProperty(Required = Required.Always)]
-        [Obsolete("This property will be moved to the sku catalog.", false)]
-        public string FileShareTemplateBlobName { get; set; } 
     }
 }

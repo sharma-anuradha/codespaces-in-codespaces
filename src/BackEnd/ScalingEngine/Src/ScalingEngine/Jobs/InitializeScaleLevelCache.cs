@@ -28,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         /// once scaling levels have been computed.</param>
         public InitializeScaleLevelCache(
             ISystemCatalog systemCatalog,
-            IResourceScalingBroker resourceScalingBroker)
+            IResourceScalingHandler resourceScalingBroker)
         {
             SystemCatalog = systemCatalog;
             ResourceScalingBroker = resourceScalingBroker;
@@ -36,17 +36,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
 
         private ISystemCatalog SystemCatalog { get; }
 
-        private IResourceScalingBroker ResourceScalingBroker { get; }
+        private IResourceScalingHandler ResourceScalingBroker { get; }
 
         /// <inheritdoc/>
         public async Task WarmupCompletedAsync()
         {
             var resourceSkus = FlattenResourceSkus(SystemCatalog.SkuCatalog.CloudEnvironmentSkus.Values);
 
-            await ResourceScalingBroker.UpdateResourceScaleLevels(resourceSkus);
+            await ResourceScalingBroker.UpdateResourceScaleLevels(new ScalingInput() { Pools = resourceSkus });
         }
 
-        private IList<ScalingInput> FlattenResourceSkus(IEnumerable<ICloudEnvironmentSku> cloudEnvironmentSku)
+        private IList<ResourcePool> FlattenResourceSkus(IEnumerable<ICloudEnvironmentSku> cloudEnvironmentSku)
         {
             /*
             Phase 0 (input):
@@ -172,38 +172,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             // Flatten out list so we have one sku per target region
             var flatEnvironmentSkus = cloudEnvironmentSku
                 .SelectMany(x => x.SkuLocations
-                    .Select(y => new FlatComputeItem { Location = y, Environment = x }));
+                    .Select(y => new FlatComputeItem
+                    {
+                        Location = y,
+                        Environment = x,
+                        ComputeDetails = new ResourcePoolComputeDetails() { OS = x.ComputeOS, ImageFamilyName = x.ComputeImage.ImageFamilyName, ImageName = x.ComputeImage.GetCurrentImageUrl(y), Location = y, SkuName = x.ComputeSkuName },
+                        StorageDetails = new ResourcePoolStorageDetails() { SizeInGB = x.StorageSizeInGB, ImageFamilyName = x.StorageImage.ImageFamilyName, ImageName = x.StorageImage.ImageName, Location = y, SkuName = x.StorageSkuName },
+                    }));
 
             // Calculate the distinct storage skus that are needed in each region
-            var storageSkus = flatEnvironmentSkus
-                .GroupBy(x => new { SkuName = x.Environment.StorageSkuName, Location = x.Location })
-                .Select(x => BuildScalingInput(x, ResourceType.StorageFileShare, y => y.Environment.StorageSkuName));
+            var storageSkusGroup = flatEnvironmentSkus
+                .GroupBy(x => x.StorageDetails.GetPoolDefinition());
+            var storageSkus = storageSkusGroup.Select(
+                x => BuildScalingInput(x, ResourceType.StorageFileShare, y => y.StorageDetails));
 
             // Calculate the distinct compute skus that are needed in each region
-            var computeSkus = flatEnvironmentSkus
-                .GroupBy(x => new { SkuName = x.Environment.ComputeSkuName, Location = x.Location })
-                .Select(x => BuildScalingInput(x, ResourceType.ComputeVM, y => y.Environment.ComputeSkuName));
+            var computeSkusGroup = flatEnvironmentSkus
+                .GroupBy(x => x.ComputeDetails.GetPoolDefinition());
+            var computeSkus = computeSkusGroup.Select(
+                x => BuildScalingInput(x, ResourceType.ComputeVM, y => y.ComputeDetails));
 
             // Merge lists back together
-            var resourceSkus = new List<ScalingInput>(storageSkus).Concat(computeSkus).ToList();
+            var resourceSkus = new List<ResourcePool>(storageSkus).Concat(computeSkus).ToList();
 
             return resourceSkus;
         }
 
-        private ScalingInput BuildScalingInput(
+        private ResourcePool BuildScalingInput(
             IEnumerable<FlatComputeItem> distinctList,
             ResourceType resourceType,
-            Func<FlatComputeItem, string> skuNameCallback)
+            Func<FlatComputeItem, ResourcePoolResourceDetails> detailCallback)
         {
             var environments = distinctList.Select(y => y.Environment);
             var target = distinctList.FirstOrDefault();
-            return new ScalingInput
+            var details = detailCallback(target);
+            return new ResourcePool
             {
                 TargetCount = distinctList.Select(y => y.Environment.PoolLevel).Sum(),
-                SkuName = skuNameCallback(target),
-                Location = target.Location.ToString().ToLowerInvariant(),
                 Type = resourceType,
                 EnvironmentSkus = distinctList.Select(y => y.Environment.SkuName),
+                Details = details,
             };
         }
 
@@ -212,6 +220,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             public AzureLocation Location { get; set; }
 
             public ICloudEnvironmentSku Environment { get; set; }
-        }
+
+            public ResourcePoolStorageDetails StorageDetails { get; set; }
+
+            public ResourcePoolComputeDetails ComputeDetails { get; set; }
+    }
     }
 }

@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// <summary>
         /// Deallocate a resource.
         /// </summary>
-        /// <param name="resourceId">The resource id token.</param>
+        /// <param name="input">The deallocate input.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource was deleted.</returns>
         Task<DeallocateResult> DeallocateAsync(DeallocateInput input, IDiagnosticsLogger logger);
@@ -34,7 +34,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// </summary>
         /// <param name="input">Input for the environment to be started.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <param name="continuationToken">Token used to continue the task.</param>
         /// <returns>A task.</returns>
         Task<EnvironmentStartResult> StartComputeAsync(
             EnvironmentStartInput input,

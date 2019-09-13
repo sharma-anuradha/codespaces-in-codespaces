@@ -2,12 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -89,25 +91,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             options.LogPreconditionFailedErrorsAsWarnings = true;
         }
 
-        /// <inheritdoc/>
-        public async Task<ResourceRecord> GetUnassignedResourceAsync(
-            string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
+        public async Task<ResourceRecord> GetPoolReadyUnassignedAsync(string poolCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
-                @"SELECT TOP 1 * 
-                FROM c
-                WHERE c.skuName = @skuName
-                    and c.location = @location
-                    and c.type = @type
-                    and c.isAssigned = @isAssigned
-                    and c.isReady = @isReady
-                    and c.isDeleted = @isDeleted
-                ORDER BY c.ready",
+                @"SELECT TOP 1 *
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isReady = @isReady
+                    AND c.isDeleted = @isDeleted",
                 new SqlParameterCollection
                 {
-                    new SqlParameter { Name = "@skuName", Value = skuName },
-                    new SqlParameter { Name = "@type", Value = type.ToString() },
-                    new SqlParameter { Name = "@location", Value = location.ToLowerInvariant() },
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
                     new SqlParameter { Name = "@isAssigned", Value = false },
                     new SqlParameter { Name = "@isReady", Value = true },
                     new SqlParameter { Name = "@isDeleted", Value = false },
@@ -121,25 +116,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <inheritdoc/>
-        public async Task<int> GetUnassignedCountAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
+        public async Task<int> GetPoolUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
                 @"SELECT VALUE COUNT(1) 
                 FROM c 
-                WHERE c.skuName = @skuName
-                    AND c.type = @type
-                    AND c.location = @location
+                WHERE c.poolReference.code = @poolCode
                     AND c.isAssigned = @isAssigned
                     AND c.isDeleted = @isDeleted
-                    AND c.provisioningStatus != @provisioningStatus",
+                    AND c.provisioningStatus != @provisioningStatusFailed
+                    AND c.provisioningStatus != @provisioningStatusCancelled",
                 new SqlParameterCollection
                 {
-                    new SqlParameter { Name = "@skuName", Value = skuName },
-                    new SqlParameter { Name = "@type", Value = type.ToString() },
-                    new SqlParameter { Name = "@location", Value = location.ToLowerInvariant() },
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
                     new SqlParameter { Name = "@isAssigned", Value = false },
                     new SqlParameter { Name = "@isDeleted", Value = false },
-                    new SqlParameter { Name = "@provisioningStatus", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@provisioningStatusFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@provisioningStatusCancelled", Value = OperationState.Cancelled.ToString() },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
@@ -147,6 +140,197 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             var count = items.FirstOrDefault();
 
             return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolReadyUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1) 
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isReady = @isReady
+                    AND c.isDeleted = @isDeleted",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isReady", Value = true },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var count = items.FirstOrDefault();
+
+            return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolUnassignedVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1) 
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND c.poolReference.versionCode = @poolVersionCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isDeleted = @isDeleted
+                    AND c.provisioningStatus != @provisioningStatusFailed
+                    AND c.provisioningStatus != @provisioningStatusCancelled",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@poolVersionCode", Value = poolVersionCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                    new SqlParameter { Name = "@provisioningStatusFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@provisioningStatusCancelled", Value = OperationState.Cancelled.ToString() },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var count = items.FirstOrDefault();
+
+            return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolReadyUnassignedVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1) 
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND c.poolReference.versionCode = @poolVersionCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isReady = @isReady
+                    AND c.isDeleted = @isDeleted",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@poolVersionCode", Value = poolVersionCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isReady", Value = true },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var count = items.FirstOrDefault();
+
+            return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolUnassignedNotVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1) 
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND c.poolReference.versionCode != @poolVersionCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isDeleted = @isDeleted
+                    AND c.provisioningStatus != @provisioningStatusFailed
+                    AND c.provisioningStatus != @provisioningStatusCancelled",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@poolVersionCode", Value = poolVersionCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                    new SqlParameter { Name = "@provisioningStatusFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@provisioningStatusCancelled", Value = OperationState.Cancelled.ToString() },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var count = items.FirstOrDefault();
+
+            return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolReadyUnassignedNotVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1) 
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND c.poolReference.versionCode != @poolVersionCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isReady = @isReady
+                    AND c.isDeleted = @isDeleted",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@poolVersionCode", Value = poolVersionCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isReady", Value = true },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var count = items.FirstOrDefault();
+
+            return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>> GetPoolUnassignedAsync(string poolCode, int count, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c.id
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isDeleted = @isDeleted
+                    AND c.provisioningStatus != @provisioningStatusFailed
+                    AND c.provisioningStatus != @provisioningStatusCancelled",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@count", Value = count },
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                    new SqlParameter { Name = "@provisioningStatusFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@provisioningStatusCancelled", Value = OperationState.Cancelled.ToString() },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<string>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return items;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>> GetPoolUnassignedNotVersionAsync(string poolCode, string poolVersionCode, int count, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c.id
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND c.poolReference.versionCode != @poolVersionCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isDeleted = @isDeleted
+                    AND c.provisioningStatus != @provisioningStatusFailed
+                    AND c.provisioningStatus != @provisioningStatusCancelled",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@count", Value = count },
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@poolVersionCode", Value = poolVersionCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                    new SqlParameter { Name = "@provisioningStatusFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@provisioningStatusCancelled", Value = OperationState.Cancelled.ToString() },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<string>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return items;
         }
     }
 }

@@ -20,23 +20,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
         /// </summary>
-        /// <param name="watchPoolSizeJob">Target Watch Pool Size Job.</param>
-        /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump</param>
-        /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager</param>
+        /// <param name="watchPoolSizeJob">Target watch pool size job.</param>
+        /// <param name="watchPoolVersionTask">Target watch pool version job.</param>
+        /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
+        /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public ResourceRegisterJobs(
             IWatchPoolSizeTask watchPoolSizeJob,
+            IWatchPoolVersionTask watchPoolVersionTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             ITaskHelper taskHelper)
         {
             WatchPoolSizeJob = watchPoolSizeJob;
+            WatchPoolVersionTask = watchPoolVersionTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
         }
 
         private IWatchPoolSizeTask WatchPoolSizeJob { get; }
+
+        private IWatchPoolVersionTask WatchPoolVersionTask { get; }
 
         private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
@@ -49,20 +54,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             // Job: Populate continuation message cache
             TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.ContinuationTaskMessagePump}-try-populate-cache",
+                $"{ResourceLoggingConstants.ContinuationTaskMessagePump}_run_try_populate_cache",
                 (childLogger) => ContinuationTaskMessagePump.RunTryPopulateCacheAsync(childLogger),
                 TimeSpan.FromSeconds(10));
 
+            // Job: Continuation Task Worker Pool Manager
+            TaskHelper.RunBackground(
+                $"{ResourceLoggingConstants.ContinuationTaskWorkerPoolManager}_start",
+                (childLogger) => ContinuationTaskWorkerPoolManager.StartAsync(childLogger));
+
             // Job: Watch Pool Size
             TaskHelper.RunBackgroundLoop(
-                "watch-pool-size",
+                $"{ResourceLoggingConstants.WatchPoolSizeTask}_run",
                 (childLogger) => WatchPoolSizeJob.RunAsync(childLogger),
                 TimeSpan.FromMinutes(1));
 
-            // Job: Continuation Task Worker Pool Manager
-            TaskHelper.RunBackground(
-                $"{ResourceLoggingConstants.ContinuationTaskWorkerPoolManager}-start",
-                (childLogger) => ContinuationTaskWorkerPoolManager.StartAsync(childLogger));
+            // Job: Watch Pool Version
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchPoolVersionTask}_run",
+                (childLogger) => WatchPoolVersionTask.RunAsync(childLogger),
+                TimeSpan.FromMinutes(1));
 
             return Task.CompletedTask;
         }

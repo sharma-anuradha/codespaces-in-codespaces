@@ -9,8 +9,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Moq;
@@ -18,43 +16,40 @@ using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 {
-    public class ResourcePoolTests
+    public class ResourcePoolManagerTests
     {
-        private const string DefaultLocation = "USW2";
-        private const string DefaultResourceSkuName = "LargeVm";
-        private const ResourceType DefaultType = ResourceType.ComputeVM;
+        private const string DefaultPoolCode = "123ABC";
 
         [Fact]
         public void Ctor_throws_if_null()
         {
             var resourceRepository = new Mock<IResourceRepository>().Object;
 
-            Assert.Throws<ArgumentNullException>(() => new ResourcePool(null));
+            Assert.Throws<ArgumentNullException>(() => new ResourcePoolManager(null));
         }
 
         [Fact]
         public void Ctor_ok()
         {
             var resourceRepository = new Mock<IResourceRepository>().Object;
-            var pool = new ResourcePool(resourceRepository);
+            var pool = new ResourcePoolManager(resourceRepository);
             Assert.NotNull(pool);
         }
 
         [Fact()]
-        public async void ResourcePool_WhenHasCapacity_ReturnsResource()
+        public async void ResourcePoolManager_WhenHasCapacity_ReturnsResource()
         {
             var rawResult = BuildResourceRecord();
-            var input = BuildAllocateInput();
 
             var logger = new Mock<IDiagnosticsLogger>();
-            logger.Setup(l => l.WithValue(It.IsAny<string>(), It.IsAny<string>())).Returns(logger.Object);
+            logger.Setup(l => l.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
             var repository = new Mock<IResourceRepository>();
-            repository.Setup(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger.Object))
+            repository.Setup(x => x.GetPoolReadyUnassignedAsync(DefaultPoolCode, logger.Object))
                 .Returns(Task.FromResult(rawResult));
 
-            var provider = new ResourcePool(repository.Object);
+            var provider = new ResourcePoolManager(repository.Object);
 
-            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger.Object);
+            var result = await provider.TryGetAsync(DefaultPoolCode, logger.Object);
 
             Assert.NotNull(result);
             Assert.True(result.IsAssigned);
@@ -64,37 +59,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         [Fact()]
         public async void ResourceBroker_WhenHasNoCapacity_ReturnsNull()
         {
-            var input = BuildAllocateInput();
-
             var logger = new Mock<IDiagnosticsLogger>();
-            logger.Setup(l => l.WithValue(It.IsAny<string>(), It.IsAny<string>())).Returns(logger.Object);
+            logger.Setup(l => l.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
             var repository = new Mock<IResourceRepository>();
-            repository.Setup(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, It.IsAny<IDiagnosticsLogger>()))
+            repository.Setup(x => x.GetPoolReadyUnassignedAsync(DefaultPoolCode, It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((ResourceRecord)null));
 
-            var provider = new ResourcePool(repository.Object);
+            var provider = new ResourcePoolManager(repository.Object);
 
-            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger.Object);
+            var result = await provider.TryGetAsync(DefaultPoolCode, logger.Object);
 
             Assert.Null(result);
         }
 
         [Fact()]
-        public async void ResourcePool_WhenHasDeadlockCanStillFindCapacity_ReturnsResource()
+        public async void ResourcePoolManager_WhenHasDeadlockCanStillFindCapacity_ReturnsResource()
         {
             var rawResult1 = BuildResourceRecord();
             var rawResult2 = BuildResourceRecord();
             var rawResult3 = BuildResourceRecord();
-            var input = BuildAllocateInput();
 
             var exception = CreateDocumentClientException(new Error(), HttpStatusCode.PreconditionFailed);
 
             var mockLogger = new Mock<IDiagnosticsLogger>();
             var logger = mockLogger.Object;
-            mockLogger.Setup(l => l.WithValue(It.IsAny<string>(), It.IsAny<string>())).Returns(logger);
+            mockLogger.Setup(l => l.WithValues(It.IsAny<LogValueSet>())).Returns(logger);
             var repository = new Mock<IResourceRepository>();
             repository
-                .SetupSequence(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger))
+                .SetupSequence(x => x.GetPoolReadyUnassignedAsync(DefaultPoolCode, logger))
                 .Returns(Task.FromResult(rawResult1))
                 .Returns(Task.FromResult(rawResult2))
                 .Returns(Task.FromResult(rawResult3));
@@ -108,9 +100,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 .Setup(x => x.UpdateAsync(rawResult3, logger))
                 .Returns(Task.FromResult(rawResult3));
 
-            var provider = new ResourcePool(repository.Object);
+            var provider = new ResourcePoolManager(repository.Object);
 
-            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger);
+            var result = await provider.TryGetAsync(DefaultPoolCode, logger);
 
             Assert.NotNull(result);
             Assert.True(result.IsAssigned);
@@ -118,21 +110,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         }
 
         [Fact()]
-        public async void ResourcePool_WhenHasDeadlockAndRetriesExhausted_ReturnsResource()
+        public async void ResourcePoolManager_WhenHasDeadlockAndRetriesExhausted_ReturnsResource()
         {
             var rawResult1 = BuildResourceRecord();
             var rawResult2 = BuildResourceRecord();
             var rawResult3 = BuildResourceRecord();
-            var input = BuildAllocateInput();
 
             var exception = CreateDocumentClientException(new Error(), HttpStatusCode.PreconditionFailed);
 
             var mockLogger = new Mock<IDiagnosticsLogger>();
             var logger = mockLogger.Object;
-            mockLogger.Setup(l => l.WithValue(It.IsAny<string>(), It.IsAny<string>())).Returns(logger);
+            mockLogger.Setup(l => l.WithValues(It.IsAny<LogValueSet>())).Returns(logger);
             var repository = new Mock<IResourceRepository>();
             repository
-                .SetupSequence(x => x.GetUnassignedResourceAsync(DefaultResourceSkuName, DefaultType, DefaultLocation, logger))
+                .SetupSequence(x => x.GetPoolReadyUnassignedAsync(DefaultPoolCode, logger))
                 .Returns(Task.FromResult(rawResult1))
                 .Returns(Task.FromResult(rawResult2))
                 .Returns(Task.FromResult(rawResult3));
@@ -146,9 +137,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 .Setup(x => x.UpdateAsync(rawResult3, logger))
                 .Throws(exception);
 
-            var provider = new ResourcePool(repository.Object);
+            var provider = new ResourcePoolManager(repository.Object);
 
-            var result = await provider.TryGetAsync(input.SkuName, input.Type, input.Location, logger);
+            var result = await provider.TryGetAsync(DefaultPoolCode, logger);
 
             Assert.Null(result);
         }
@@ -166,28 +157,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             return (DocumentClientException)documentClientExceptionInstance;
         }
 
-
-        private AllocateInput BuildAllocateInput()
-        {
-            return new AllocateInput
-            {
-                Location = DefaultLocation,
-                SkuName = DefaultResourceSkuName,
-                Type = DefaultType
-            };
-        }
-
         private ResourceRecord BuildResourceRecord()
         {
-            return new ResourceRecord
-            {
-                SkuName = DefaultResourceSkuName,
-                Type = DefaultType,
-                AzureResourceInfo = null,
-                Created = DateTime.UtcNow,
-                IsAssigned = false,
-                Assigned = DateTime.UtcNow
-            };
+            return new ResourceRecord();
         }
     }
 }

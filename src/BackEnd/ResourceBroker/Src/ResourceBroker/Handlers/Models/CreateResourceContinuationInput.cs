@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -14,19 +15,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     public class CreateResourceContinuationInput : ContinuationOperationInput
     {
         /// <summary>
-        /// Gets or sets the name of the Azure SKU.
+        /// Gets or sets the details of pool.
         /// </summary>
-        public string SkuName { get; set; }
+        public ResourcePoolResourceDetails ResourcePoolDetails { get; set; }
 
         /// <summary>
-        /// Gets or sets the resource type.
+        /// Gets or sets the pool type.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public ResourceType Type { get; set; }
-
-        /// <summary>
-        /// Gets or sets the location of the resource.
-        /// </summary>
-        public string Location { get; set; }
     }
 }

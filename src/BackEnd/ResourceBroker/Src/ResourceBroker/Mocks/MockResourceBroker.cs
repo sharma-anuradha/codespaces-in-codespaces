@@ -27,7 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         public Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
         {
             var now = DateTime.UtcNow;
-            var location = (AzureLocation)Enum.Parse(typeof(AzureLocation), input.Location);
             var resourceId = Guid.NewGuid();
             return Task.FromResult(new AllocateResult
             {

@@ -4,12 +4,10 @@
 
 using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -35,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="serviceCollection">Service Collection.</param>
+        /// <param name="serviceProvider">Service Provider.</param>
         public StartEnvironmentContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
@@ -63,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override async Task<ContinuationInput> BuildOperationInputAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
         {
-            var storageResult = await AssignStorageAsync(input.StorageResourceId, logger);
+            var storageResult = await AssignStorageAsync(input, input.StorageResourceId, logger);
             if (storageResult.Status != OperationState.Succeeded)
             {
                 return null;
@@ -86,13 +84,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             return await ComputeProvider.StartComputeAsync((VirtualMachineProviderStartComputeInput)operationInput, logger.WithValues(new LogValueSet()));
         }
 
-        private async Task<FileShareProviderAssignResult> AssignStorageAsync(Guid storageId, IDiagnosticsLogger logger)
+        private async Task<FileShareProviderAssignResult> AssignStorageAsync(StartEnvironmentContinuationInput input, Guid storageId, IDiagnosticsLogger logger)
         {
             // Fetch storage reference
             var storage = await FetchReferenceAsync(storageId, logger);
 
             // Update storage to be inprogress
-            await SaveStatusAsync(storage, OperationState.Initialized, logger);
+            await SaveStatusAsync(input, storage, OperationState.Initialized, "PreAssignStorage", logger);
 
             // Get file share connection info for target share
             var fileShareProviderAssignInput = new FileShareProviderAssignInput
@@ -102,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, logger);
 
             // Update storage to be completed
-            await SaveStatusAsync(storage, storageResult.Status, logger);
+            await SaveStatusAsync(input, storage, storageResult.Status, "PostAssignStorage", logger);
 
             return storageResult;
         }

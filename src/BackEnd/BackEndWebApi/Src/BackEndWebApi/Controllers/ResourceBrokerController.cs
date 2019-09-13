@@ -241,23 +241,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             var result = await ResourceBroker.AllocateAsync(
                 new ResourceBroker.Models.AllocateInput
                 {
-                    Location = requestBody.Location.ToString().ToLowerInvariant(),
+                    Location = requestBody.Location,
                     SkuName = requestBody.SkuName,
                     Type = (Common.Models.ResourceType)requestBody.Type,
                 },
-                logger);
-
-            if (!Enum.TryParse<AzureLocation>(result.Location, ignoreCase: true, out var location))
-            {
-                throw new InvalidOperationException($"Invalid {nameof(AzureLocation)}: {result.Location}");
-            }
+                logger.WithValues(new LogValueSet()));
 
             return new ResourceBrokerResource
             {
                 Type = requestBody.Type,
                 SkuName = result.SkuName,
                 ResourceId = result.Id,
-                Location = location,
+                Location = result.Location,
                 Created = result.Created,
             };
         }
@@ -271,7 +266,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <inheritdoc/>
         async Task<bool> IResourceBrokerResourcesHttpContract.DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            return (await ResourceBroker.DeallocateAsync(new DeallocateInput { ResourceId = resourceId }, logger)).Successful;
+            return (await ResourceBroker.DeallocateAsync(new DeallocateInput { ResourceId = resourceId, Trigger = "FrontEndDeleteResourceService" }, logger.WithValues(new LogValueSet()))).Successful;
         }
 
         /// <inheritdoc/>
@@ -291,10 +286,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                     ComputeResourceId = computeResourceId,
                     StorageResourceId = startComputeRequestBody.StorageResourceId,
                     EnvironmentVariables = startComputeRequestBody.EnvironmentVariables,
+                    Trigger = "FrontEndStartComputeService",
                 };
 
                 // Call the resource broker to start the compute.
-                var result = await ResourceBroker.StartComputeAsync(input, logger);
+                var result = await ResourceBroker.StartComputeAsync(input, logger.WithValues(new LogValueSet()));
 
                 logger.AddDuration(duration)
                     .AddResourceId(computeResourceId)

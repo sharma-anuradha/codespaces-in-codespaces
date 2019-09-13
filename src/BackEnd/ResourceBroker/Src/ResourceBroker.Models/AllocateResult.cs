@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
@@ -30,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// <summary>
         /// Gets or sets the target Location.
         /// </summary>
-        public string Location { get; set; }
+        public AzureLocation Location { get; set; }
 
         /// <summary>
         /// Gets or sets the Allocated Resource Info.

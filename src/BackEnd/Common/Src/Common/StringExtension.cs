@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -17,6 +19,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(value);
             return Convert.ToBase64String(plainTextBytes);
+        }
+
+        public static string GetDeterministicHashCode(this string value)
+        {
+            var sb = new StringBuilder();
+            using (var hash = SHA1.Create())
+            {
+                var result = hash.ComputeHash(Encoding.UTF8.GetBytes(value));
+                foreach (var b in result)
+                {
+                    _ = sb.Append(b.ToString("x2"));
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }

@@ -26,5 +26,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// Gets or sets the compute environment variables.
         /// </summary>
         public IDictionary<string, string> EnvironmentVariables { get; set; }
+
+        /// <summary>
+        /// Gets or sets the operation trigger.
+        /// </summary>
+        public string Trigger { get; set; }
     }
 }

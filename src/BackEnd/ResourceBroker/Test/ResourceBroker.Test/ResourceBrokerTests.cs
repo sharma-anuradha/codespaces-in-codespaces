@@ -13,13 +13,15 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
+using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 {
     public class ResourceBrokerTests
     {
-        private const string DefaultLocation = "EastUS";
-        private const string WestLocation = "WestUS2";
+        private string DefaultPoolCode = "PoolCode";
+        private const AzureLocation DefaultLocation = AzureLocation.EastUs;
+        private const AzureLocation WestLocation = AzureLocation.WestUs2;
         private const string DefaultResourceSkuName = "LargeVm";
         private const string DefaultLogicalSkuName = "Large";
         private const string StorageResourceSkuName = "LargeVm";
@@ -33,8 +35,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         [Fact]
         public void Ctor_throws_if_null()
         {
-            var resourcePool = new Mock<IResourcePool>().Object;
-            var resourceScalingStore = new Mock<IResourceScalingStore>().Object;
+            var resourcePool = new Mock<IResourcePoolManager>().Object;
+            var resourceScalingStore = new Mock<IResourcePoolDefinitionStore>().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
             var mapper = new Mock<IMapper>().Object;
 
@@ -48,8 +50,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         [Fact]
         public void Ctor_ok()
         {
-            var resourcePool = new Mock<IResourcePool>().Object;
-            var resourceScalingStore = new Mock<IResourceScalingStore>().Object;
+            var resourcePool = new Mock<IResourcePoolManager>().Object;
+            var resourceScalingStore = new Mock<IResourcePoolDefinitionStore>().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
             var mapper = new Mock<IMapper>().Object;
             var provider = new ResourceBroker(resourcePool, resourceScalingStore, continuationTaskActivator, mapper);
@@ -62,12 +64,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var input = BuildAllocateInput();
             var rawResult = BuildResourceRecord();
 
+            var scalingStore = BuildResourceScalingStore();
             var mapper = BuildMapper();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
-            var resourcePool = new Mock<IResourcePool>();
-            resourcePool.Setup(x => x.TryGetAsync(DefaultResourceSkuName, input.Type, input.Location, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(rawResult));
-            var scalingStore = BuildResourceScalingStore();
+            var resourcePool = new Mock<IResourcePoolManager>();
+            resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(rawResult));
 
             var provider = new ResourceBroker(resourcePool.Object, scalingStore.Object, continuationTaskActivator, mapper);
 
@@ -84,12 +86,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildAllocateInput();
 
+            var scalingStore = BuildResourceScalingStore();
             var mapper = BuildMapper();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
-            var resourcePool = new Mock<IResourcePool>();
-            resourcePool.Setup(x => x.TryGetAsync(DefaultResourceSkuName, input.Type, input.Location, logger)).Returns(Task.FromResult((ResourceRecord)null));
-            var scalingStore = BuildResourceScalingStore();
+            var resourcePool = new Mock<IResourcePoolManager>();
+            resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, logger)).Returns(Task.FromResult((ResourceRecord)null));
 
             var provider = new ResourceBroker(resourcePool.Object, scalingStore.Object, continuationTaskActivator, mapper);
 
@@ -101,32 +103,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildAllocateInput();
 
+            var scalingStore = BuildResourceScalingStore(true);
             var mapper = BuildMapper();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
-            var resourcePool = new Mock<IResourcePool>();
-            resourcePool.Setup(x => x.TryGetAsync(DefaultResourceSkuName, input.Type, input.Location, logger)).Returns(Task.FromResult((ResourceRecord)null));
-            var scalingStore = BuildResourceScalingStore(true);
-
+            var resourcePool = new Mock<IResourcePoolManager>();
+            resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, logger)).Returns(Task.FromResult((ResourceRecord)null));
+            
             var provider = new ResourceBroker(resourcePool.Object, scalingStore.Object, continuationTaskActivator, mapper);
 
             Assert.ThrowsAsync<ArgumentException>(async () => await provider.AllocateAsync(input, logger));
         }
 
-        private Mock<IResourceScalingStore> BuildResourceScalingStore(bool populateEmpty = false)
+        private Mock<IResourcePoolDefinitionStore> BuildResourceScalingStore(bool populateEmpty = false)
         {
-            var definition = new List<ResourcePoolDefinition>();
+            var definition = new List<ResourcePool>();
             if (!populateEmpty)
             {
-                definition.Add(new ResourcePoolDefinition { Location = DefaultLocation, SkuName = DefaultResourceSkuName, TargetCount = 10, Type = DefaultType, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
-                definition.Add(new ResourcePoolDefinition { Location = DefaultLocation, SkuName = StorageResourceSkuName, TargetCount = 10, Type = ResourceType.StorageFileShare, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
-                definition.Add(new ResourcePoolDefinition { Location = WestLocation, SkuName = DefaultResourceSkuName, TargetCount = 10, Type = DefaultType, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
-            };
+                definition.Add(new ResourcePool { Details = new ResourcePoolComputeDetails { Location = DefaultLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
+                definition.Add(new ResourcePool { Details = new ResourcePoolStorageDetails { Location = DefaultLocation, SkuName = StorageResourceSkuName }, Type = ResourceType.StorageFileShare, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
+                definition.Add(new ResourcePool { Details = new ResourcePoolComputeDetails { Location = WestLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
 
-            var resourceScalingStore = new Mock<IResourceScalingStore>();
+                DefaultPoolCode = definition[0].Details.GetPoolDefinition();
+            }
+            else
+            {
+                DefaultPoolCode = "PoolCode";
+            }
+
+            var resourceScalingStore = new Mock<IResourcePoolDefinitionStore>();
             resourceScalingStore
-                .Setup(x => x.RetrieveLatestScaleLevels())
-                .Returns(Task.FromResult((IEnumerable<ResourcePoolDefinition>)definition));
+                .Setup(x => x.RetrieveDefinitions())
+                .Returns(Task.FromResult((IEnumerable<ResourcePool>)definition));
 
             return resourceScalingStore;
         }

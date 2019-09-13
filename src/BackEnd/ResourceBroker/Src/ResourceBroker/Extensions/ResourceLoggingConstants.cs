@@ -10,9 +10,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
     public class ResourceLoggingConstants
     {
         /// <summary>
+        /// Resource Broker.
+        /// </summary>
+        public const string ResourceBroker = "resource_broker";
+
+        /// <summary>
+        /// Resource Pool Manager.
+        /// </summary>
+        public const string ResourcePoolManager = "resource_pool_manager";
+
+        /// <summary>
         /// Watch Pool Size Task.
         /// </summary>
         public const string WatchPoolSizeTask = "watch_pool_size_task";
+
+        /// <summary>
+        /// Watch pool size task.
+        /// </summary>
+        public const string WatchPoolVersionTask = "watch_pool_version_task";
 
         /// <summary>
         /// Continuation Task Message Pump.
@@ -33,11 +48,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Continuation Task Activator name.
         /// </summary>
         public const string ContinuationTaskActivator = "continuation_task_activator";
-
-        /// <summary>
-        /// Base Continuation Task Message Handler name.
-        /// </summary>
-        public const string BaseContinuationTaskMessageHandler = "base_continuation_task_message_handler";
 
         /// <summary>
         /// Start Continuation Task Message Handler name.

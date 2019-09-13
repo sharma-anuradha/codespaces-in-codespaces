@@ -12,6 +12,7 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -24,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     public class MockResourceRepository : IResourceRepository
     {
         /// <summary>
-        ///
+        /// Initializes a new instance of the <see cref="MockResourceRepository"/> class.
         /// </summary>
         public MockResourceRepository()
         {
@@ -37,33 +38,145 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             = new ConcurrentDictionary<string, ResourceRecord>();
 
         /// <inheritdoc/>
-        public async Task<ResourceRecord> GetUnassignedResourceAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
-        {
-            await Task.Delay(Random.Next(100, 1000));
-
-            var items = Store
-                .Select(x => x.Value)
-                .Where(x => x.SkuName == skuName
-                    && x.Type == type
-                    && x.Location == location
-                    && x.IsAssigned == false)
-                .OrderBy(x => x.Ready);
-
-            return items.FirstOrDefault();
-        }
-
-        /// <inheritdoc/>
-        public async Task<int> GetUnassignedCountAsync(string skuName, ResourceType type, string location, IDiagnosticsLogger logger)
+        public async Task<ResourceRecord> GetPoolReadyUnassignedAsync(string poolCode, IDiagnosticsLogger logger)
         {
             await Task.Delay(Random.Next(100, 1000));
 
             return Store
                 .Select(x => x.Value)
-                .Where(x => x.SkuName == skuName
-                    && x.Type == type
-                    && x.Location == location
-                    && x.IsAssigned == false)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.IsAssigned == false
+                    && x.IsReady == true
+                    && x.IsDeleted == false)
+                .FirstOrDefault();
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.IsAssigned == false
+                    && x.IsDeleted == false
+                    && x.ProvisioningStatus != OperationState.Failed
+                    && x.ProvisioningStatus != OperationState.Cancelled)
                 .Count();
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolReadyUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.IsAssigned == false
+                    && x.IsReady == true
+                    && x.IsDeleted == false
+                    && x.ProvisioningStatus != OperationState.Failed
+                    && x.ProvisioningStatus != OperationState.Cancelled)
+                .Count();
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolUnassignedVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.PoolReference.VersionCode == poolVersionCode
+                    && x.IsAssigned == false
+                    && x.IsDeleted == false
+                    && x.ProvisioningStatus != OperationState.Failed
+                    && x.ProvisioningStatus != OperationState.Cancelled)
+                .Count();
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolReadyUnassignedVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.PoolReference.VersionCode == poolVersionCode
+                    && x.IsAssigned == false
+                    && x.IsReady == true
+                    && x.IsDeleted == false
+                    && x.ProvisioningStatus != OperationState.Failed
+                    && x.ProvisioningStatus != OperationState.Cancelled)
+                .Count();
+        }
+
+        public async Task<int> GetPoolUnassignedNotVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.PoolReference.VersionCode != poolVersionCode
+                    && x.IsAssigned == false
+                    && x.IsDeleted == false
+                    && x.ProvisioningStatus != OperationState.Failed
+                    && x.ProvisioningStatus != OperationState.Cancelled)
+                .Count();
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolReadyUnassignedNotVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.PoolReference.VersionCode != poolVersionCode
+                    && x.IsAssigned == false
+                    && x.IsReady == true
+                    && x.IsDeleted == false
+                    && x.ProvisioningStatus != OperationState.Failed
+                    && x.ProvisioningStatus != OperationState.Cancelled)
+                .Count();
+        }
+
+        public async Task<IEnumerable<string>> GetPoolUnassignedAsync(string poolCode, int count, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.IsAssigned == false
+                    && x.IsDeleted == false
+                    && x.ProvisioningStatus != OperationState.Failed
+                    && x.ProvisioningStatus != OperationState.Cancelled)
+                .Select(x => x.Id)
+                .Take(count);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>> GetPoolUnassignedNotVersionAsync(string poolCode, string poolVersionCode, int count, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                    && x.PoolReference.VersionCode != poolVersionCode
+                    && x.IsAssigned == false
+                    && x.IsDeleted == false
+                    && x.ProvisioningStatus != OperationState.Failed
+                    && x.ProvisioningStatus != OperationState.Cancelled)
+                .Select(x => x.Id)
+                .Take(count);
         }
 
         /// <inheritdoc/>

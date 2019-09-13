@@ -12,17 +12,17 @@ using Newtonsoft.Json.Converters;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
     /// <summary>
-    /// 
+    /// Resource record.
     /// </summary>
     public class ResourceRecord : TaggedEntity
     {
         /// <summary>
-        /// 
+        /// Gets or sets the resource sku name.
         /// </summary>
         public string SkuName { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the resource type.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public ResourceType Type { get; set; }
@@ -38,93 +38,116 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public string Location { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets a value indicating whether record is ready.
         /// </summary>
         public bool IsReady { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the ready date.
         /// </summary>
         public DateTime? Ready { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets a value indicating whether record is assigned.
         /// </summary>
         public bool IsAssigned { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the assigned date.
         /// </summary>
         public DateTime? Assigned { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the created date.
         /// </summary>
         public DateTime Created { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the pool reference details.
+        /// </summary>
+        public ResourcePoolDefinitionRecord PoolReference { get; set; }
+
+        /// <summary>
+        /// Gets or sets the provisioning reason.
+        /// </summary>
+        public string ProvisioningReason { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Provisioning Status.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? ProvisioningStatus { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the Provisioning Status Changed date.
         /// </summary>
         public DateTime? ProvisioningStatusChanged { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the Provisioning Status Changes.
         /// </summary>
         public IList<OperationStateChanges> ProvisioningStatusChanges { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the starting reason.
+        /// </summary>
+        public string StartingReason { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Starting Status.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? StartingStatus { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the Starting Status Changed date.
         /// </summary>
         public DateTime? StartingStatusChanged { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the Starting Status Changes.
         /// </summary>
         public IList<OperationStateChanges> StartingStatusChanges { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets a value indicating whether record is deleted.
         /// </summary>
         public bool IsDeleted { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the starting reason.
+        /// </summary>
+        public string DeletingReason { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Deleting Status.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? DeletingStatus { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the Deleting Status Changed date.
         /// </summary>
         public DateTime? DeletingStatusChanged { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the Deleting Status Changes.
         /// </summary>
         public IList<OperationStateChanges> DeletingStatusChanges { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the Properties.
         /// </summary>
         public dynamic Properties { get; set; }
 
         /// <summary>
-        /// 
+        /// Updates the provisioning status.
         /// </summary>
-        /// <param name="newState"></param>
-        public bool UpdateProvisioningStatus(OperationState newState, DateTime? newTime = null)
+        /// <param name="newState">Target new state.</param>
+        /// <param name="trigger">Trigger that caused the action.</param>
+        /// <param name="newTime">Time if that is being set.</param>
+        /// <returns>Returns if the update occured.</returns>
+        public bool UpdateProvisioningStatus(OperationState newState, string trigger, DateTime? newTime = null)
         {
             if (ProvisioningStatus == newState)
             {
@@ -143,6 +166,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             {
                 Status = newState,
                 Time = time,
+                Trigger = trigger,
             });
 
             if (newState == OperationState.Succeeded)
@@ -155,10 +179,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <summary>
-        /// 
+        /// Updates the starting status.
         /// </summary>
-        /// <param name="newState"></param>
-        public bool UpdateStartingStatus(OperationState newState, DateTime? newTime = null)
+        /// <param name="newState">Target new state.</param>
+        /// <param name="trigger">Trigger that caused the action.</param>
+        /// <param name="newTime">Time if that is being set.</param>
+        /// <returns>Returns if the update occured.</returns>
+        public bool UpdateStartingStatus(OperationState newState, string trigger, DateTime? newTime = null)
         {
             if (StartingStatus.HasValue && StartingStatus.Value == newState)
             {
@@ -177,16 +204,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             {
                 Status = newState,
                 Time = time,
+                Trigger = trigger,
             });
 
             return true;
         }
 
         /// <summary>
-        /// 
+        /// Updates the deleting status.
         /// </summary>
-        /// <param name="newState"></param>
-        public bool UpdateDeletingStatus(OperationState newState, DateTime? newTime = null)
+        /// <param name="newState">Target new state.</param>
+        /// <param name="trigger">Trigger that caused the action.</param>
+        /// <param name="newTime">Time if that is being set.</param>
+        /// <returns>Returns if the update occured.</returns>
+        public bool UpdateDeletingStatus(OperationState newState, string trigger, DateTime? newTime = null)
         {
             if (DeletingStatus.HasValue && DeletingStatus.Value == newState)
             {
@@ -205,6 +236,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             {
                 Status = newState,
                 Time = time,
+                Trigger = trigger,
             });
 
             if (newState == OperationState.Initialized)

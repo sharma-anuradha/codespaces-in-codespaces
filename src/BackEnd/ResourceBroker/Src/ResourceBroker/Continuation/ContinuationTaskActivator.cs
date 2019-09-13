@@ -117,8 +117,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
-            // Result is based off the currnet
-            var resultPayload = new ResourceJobQueuePayload(payload.SystemId, payload.TrackingId, payload.Target, payload.Created, payload.StepCount++);
+            // Result is based off the current
+            var resultPayload = new ResourceJobQueuePayload(payload.SystemId, payload.TrackingId, payload.Target, payload.Created, payload.StepCount + 1);
 
             // Run the continuation
             var result = (ContinuationResult)null;

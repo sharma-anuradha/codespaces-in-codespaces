@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public static void AddResourceBroker(this IMapperConfigurationExpression cfg)
         {
             cfg.CreateMap<ResourceRecord, AllocateResult>();
-            cfg.CreateMap<ScalingInput, ResourcePoolDefinition>();
+            cfg.CreateMap<ResourcePool, ResourcePool>();
             cfg.CreateMap<FileShareProviderAssignResult, ShareConnectionInfo>();
             cfg.CreateMap<VirtualMachineProviderStartComputeResult, EnvironmentStartResult>();
         }
