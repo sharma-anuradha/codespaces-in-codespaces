@@ -9,7 +9,6 @@ import {
     EnvironmentConfigurationService,
     environmentConfigurationService,
 } from './contracts/services';
-import { BrowserSyncService } from './services/browserSyncService';
 import { GitCredentialService } from './services/gitCredentialService';
 
 const info = baseTrace.extend('workspace-client:info');
@@ -23,7 +22,7 @@ const packageJson = {
 
 type RpcProxyFor<T> = T & RpcProxy;
 
-export class WorkspaceClient {
+export class WorkspaceClient implements rpc.Disposable {
     private workspaceInfo?: WorkspaceInfo;
     private workspaceAccess?: WorkspaceAccess;
     private socketStream?: ssh.Stream;
@@ -149,9 +148,6 @@ export class WorkspaceClient {
             this.rpcConnection
         );
         await gitCredentialService.shareService();
-
-        const browserSyncService = new BrowserSyncService(this);
-        await browserSyncService.init();
     }
 
     public async invokeEnvironmentConfiguration() {
@@ -174,6 +170,10 @@ export class WorkspaceClient {
             this.sessionInfo = undefined;
             await workspaceClient!.unjoinWorkspaceAsync(sessionInfo.id!);
         }
+    }
+
+    dispose(): void {
+        this.disconnect();
     }
 
     public getServiceProxy<T>(serviceInfo: vsls.ServiceInfo<T>): RpcProxyFor<T> {

@@ -16,6 +16,7 @@ import { Signal } from '../utils/signal';
 
 import { DEFAULT_EXTENSIONS, VSLS_API_URI, vscodeConfig } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
+import { BrowserSyncService } from './services/browserSyncService';
 
 export class EnvConnector {
     private initializeConnectionSignal?: Signal<any>;
@@ -115,6 +116,9 @@ export class EnvConnector {
             await workspaceClient.authenticate();
             await workspaceClient.join();
             await workspaceClient.invokeEnvironmentConfiguration();
+
+            const browserSyncService = new BrowserSyncService(workspaceClient);
+            await browserSyncService.init();
 
             this.workspaceClient.complete(workspaceClient);
         } catch (err) {

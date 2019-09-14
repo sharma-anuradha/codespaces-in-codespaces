@@ -28,3 +28,7 @@ yarn-error.log*
 /public/static/web-standalone/
 /src/product-vscode-web.json
 /src/package-vscode-web.json
+
+# service worker
+/public/static-assets-worker.js
+/public/static-assets-worker.js.map

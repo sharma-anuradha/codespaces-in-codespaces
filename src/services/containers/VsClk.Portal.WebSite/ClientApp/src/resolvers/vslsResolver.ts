@@ -1,4 +1,4 @@
-import { SshChannel, SshDisconnectReason } from '@vs/vs-ssh';
+import { SshChannel } from '@vs/vs-ssh';
 import { Event, Emitter } from 'vscode-jsonrpc';
 
 import { EnvConnector } from '../ts-agent/envConnector';
@@ -31,7 +31,7 @@ error.log =
     // tslint:disable-next-line: no-console
     console.warn.bind(console);
 
-const envConnector = new EnvConnector();
+export const envConnector = new EnvConnector();
 
 export interface IWebSocketFactory {
     create(url: string): IWebSocket;
@@ -89,8 +89,6 @@ export class VSLSWebSocket implements IWebSocket {
         );
     }
 
-    private isChannelDisposed: boolean = false;
-
     constructor(
         private url: string,
         private accessToken: string,
@@ -107,6 +105,7 @@ export class VSLSWebSocket implements IWebSocket {
 
         try {
             await envConnector.ensureConnection(this.environmentInfo, this.accessToken);
+
             const channel = await envConnector.sendHandshakeRequest(
                 this.createHandshakeRequest(url)
             );
@@ -124,7 +123,6 @@ export class VSLSWebSocket implements IWebSocket {
 
             disposables.push(
                 channel.onClosed(async () => {
-                    this.isChannelDisposed = true;
                     verbose(`[${this.getWebSocketIdentifier()}] Ssh channel closed.`);
 
                     this._onClose.fire();

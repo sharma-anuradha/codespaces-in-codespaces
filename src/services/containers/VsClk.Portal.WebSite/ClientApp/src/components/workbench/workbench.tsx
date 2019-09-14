@@ -6,13 +6,16 @@ import './workbench.css';
 import { trace } from '../../utils/trace';
 import { vscodeConfig } from '../../constants';
 
-import { VSLSWebSocket, IWebSocketFactory } from '../../resolvers/vslsResolver';
+import { VSLSWebSocket, IWebSocketFactory, envConnector } from '../../resolvers/vslsResolver';
 import { IToken } from '../../services/authService';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { isEnvironmentAvailable } from '../../utils/environmentUtils';
 import { credentialsProvider } from '../../services/credentialsProvider';
+import { resourceUriProviderFactory } from '../../common/vscode-url-utils';
+import { postServiceWorkerMessage } from '../../common/post-message';
+import { authenticateMessageType, disconnectCloudEnv } from '../../common/service-worker-messages';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
@@ -33,7 +36,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
         this.mountWorkbench(environmentInfo);
     }
 
-    async componentDidMount() {
+    componentDidMount() {
         const { environmentInfo } = this.props;
         if (!isEnvironmentAvailable(environmentInfo)) {
             return;
@@ -49,9 +52,37 @@ class WorkbenchView extends Component<WorkbenchProps> {
 
         this.workbenchMounted = true;
 
+        const { accessToken } = this.props.token!;
+
+        // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
+        const connection = envConnector.ensureConnection(environmentInfo, accessToken);
+        const resourceUriProvider = resourceUriProviderFactory(
+            environmentInfo.connection.sessionId,
+            connection
+        );
+
+        postServiceWorkerMessage({
+            type: authenticateMessageType,
+            payload: {
+                accessToken,
+                sessionId: environmentInfo.connection.sessionId,
+            },
+        });
+
+        const listener = () => {
+            window.removeEventListener('beforeunload', listener);
+
+            postServiceWorkerMessage({
+                type: disconnectCloudEnv,
+                payload: {
+                    sessionId: environmentInfo.connection.sessionId,
+                },
+            });
+        };
+        window.addEventListener('beforeunload', listener);
+
         AMDLoader.global.require(['vs/workbench/workbench.web.api'], (workbench: any) => {
             const { sessionPath } = environmentInfo.connection;
-            const { accessToken } = this.props.token!;
 
             const VSLSWebSocketFactory: IWebSocketFactory = {
                 create(url: string) {
@@ -71,6 +102,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
                 webSocketFactory: VSLSWebSocketFactory,
                 connectionToken: vscodeConfig.commit,
                 credentialsProvider,
+                resourceUriProvider,
             };
 
             trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);

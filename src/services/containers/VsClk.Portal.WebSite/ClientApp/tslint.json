@@ -21,6 +21,10 @@
         "no-unnecessary-local-variable": false,
         "no-backbone-get-set-outside-model": false,
         "no-unused-variable": true,
-        "mocha-no-side-effect-code": false
+        "mocha-no-side-effect-code": false,
+        "no-suspicious-comment": false,
+        "export-name": false,
+        "import-name": false,
+        "object-literal-shorthand": true
     }
 }

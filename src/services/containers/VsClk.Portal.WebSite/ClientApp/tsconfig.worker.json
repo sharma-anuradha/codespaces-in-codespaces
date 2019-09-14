@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "esnext",
     "lib": [
       "dom",
       "dom.iterable",
@@ -14,14 +14,14 @@
     "strict": true,
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
+    "module": "esnext",    
+    "isolatedModules": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
     "jsx": "preserve",
     "experimentalDecorators": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "sourceMap": true
   },
   "include": [
     "src"
