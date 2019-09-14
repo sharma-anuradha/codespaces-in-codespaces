@@ -52,7 +52,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.Configure<AppSettings>(appSettingsConfiguration);
             services.AddSingleton(appSettings);
             AppSettings = appSettings;
-
+            
             //ConfigureAuthentication(services, appSettings);
 
             // Forwarded headers
@@ -169,7 +169,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             }
 
 
-            if (env.IsDevelopment())
+            if (env.IsDevelopment() || AppSettings.IsLocal)
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -203,7 +203,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
-                if (env.IsDevelopment() && AppSettings.IsLocal)
+                if (AppSettings.IsLocal)
                 {
                     // For development purposes, uncomment out if you want dotnet to load your react dev server, otherwise run 'yarn start' inside ClientApp
                     // spa.UseReactDevelopmentServer(npmScript: "start");

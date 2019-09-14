@@ -35,6 +35,9 @@ pfingress:
 
 appSettings:
 - ASPNETCORE_ENVIRONMENT
+- PORTAL_AppSettings__AesKey
+- PORTAL_AppSettings__AesIV
+- PORTAL_AppSettings__Domain
 - PORTAL_AppSettings__KeyVaultName
 - PORTAL_AppSettings__AuthRedirectUrl
 - PORTAL_AppSettings__VsClkRedisConnectionString

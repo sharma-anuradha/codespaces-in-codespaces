@@ -1,89 +1,102 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.AspNetCore.Authentication;
-//using Microsoft.AspNetCore.Authorization;
-//using Microsoft.AspNetCore.Authentication.Cookies;
-//using Microsoft.VsCloudKernel.Services.Portal.WebSite.Extensions;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http;
 
-//namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
-//{
-//    public class AuthController : Controller
-//    {
-//        private AppSettings AppSettings { get; }
+namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
+{
+   public class AuthController : Controller
+   {
+       private static AppSettings AppSettings { get; set; }
 
-//        public AuthController(
-//            AppSettings appSettings)
-//        {
-//            AppSettings = appSettings;
-//        }
+       public AuthController(
+           AppSettings appSettings)
+       {
+           AppSettings = appSettings;
+       }
 
-//        [HttpPost("~/signin")]
-//        public async Task<IActionResult> SignIn([FromForm] string provider)
-//        {
-//            // Note: the "provider" parameter corresponds to the external
-//            // authentication provider choosen by the user agent.
-//            if (string.IsNullOrWhiteSpace(provider))
-//            {
-//                return BadRequest();
-//            }
+       public class AuthPFPayload
+       {
+           public string cascadeToken { get; set; }
+       }
 
-//            if (!await HttpContext.IsProviderSupportedAsync(provider))
-//            {
-//                return BadRequest();
-//            }
+       public static string PortForwarderCookieName = "vso-pf";
+       public static int PortForwarderCookieExpirationDays = 2;
 
-//            // Instruct the middleware corresponding to the requested external identity
-//            // provider to redirect the user agent to its own authorization endpoint.
-//            // Note: the authenticationScheme parameter must match the value configured in Startup.cs
-//            return Challenge(new AuthenticationProperties { RedirectUri = "/" }, provider);
-//        }
+       [HttpPost("~/authenticate-port-forwarder")]
+       public async Task<IActionResult> AuthenticatePortForwarder([FromBody] AuthPFPayload bodyPayload)
+       {
+           if (string.IsNullOrEmpty(AppSettings.AesKey)
+                || string.IsNullOrEmpty(AppSettings.AesIV)
+                || string.IsNullOrEmpty(AppSettings.Domain)
+            )
+            {
+                return BadRequest("AesKey, AesIV or Domain keys are not found in the app settings.");
+            }
 
-//        [HttpGet("~/signin")]
-//        public async Task<IActionResult> SignInDefault()
-//        {
+            if (
+               string.IsNullOrWhiteSpace(bodyPayload.cascadeToken)
+            )
+            {
+                return BadRequest();
+            }
 
-//            // Instruct the middleware corresponding to the requested external identity
-//            // provider to redirect the user agent to its own authorization endpoint.
-//            // Note: the authenticationScheme parameter must match the value configured in Startup.cs
-//            return Challenge(new AuthenticationProperties { RedirectUri = "/" }, "Microsoft");
-//        }
+            var cookiePayload = new CookiePayload {
+               CascadeToken = bodyPayload.cascadeToken,
+               Id = Guid.NewGuid().ToString(),
+               TimeStamp = DateTime.Now.ToLongDateString()
+            };
+
+            var cookiePayloadString = JsonConvert.SerializeObject(cookiePayload);
+            var encryptedCookie = AesEncryptor.EncryptStringToBytes_Aes(cookiePayloadString, AppSettings.AesKey, AppSettings.AesIV);
+
+            CookieOptions option = new CookieOptions();  
+
+            option.Path = "/";
+            option.Domain = $"{AppSettings.Domain}";
+            option.HttpOnly = true;
+            option.Secure = true;
+            option.SameSite = SameSiteMode.Lax;
+            option.Expires = DateTime.Now.AddDays(PortForwarderCookieExpirationDays);
+
+            Response.Cookies.Append(PortForwarderCookieName, encryptedCookie, option);
+
+            return Ok();
+       }
+
+       [HttpPost("~/signout-port-forwarder")]
+       public async Task<IActionResult> SignOutPortForwarder()
+       {
+            Response.Cookies.Delete(PortForwarderCookieName);
+
+            return Ok();
+       }
+
+       public static CookiePayload DecryptCookie(string encryptedCookie)
+       {
+           try {
+                var decryptedCookie = AesEncryptor.DecryptStringFromHex_Aes(encryptedCookie, AppSettings.AesKey, AppSettings.AesIV);
+                var payload = JsonConvert.DeserializeObject<CookiePayload>(decryptedCookie);
+
+                return payload;
+           } catch (Exception)
+           {
+               return null;
+           }
+       }
 
 
-//        [Authorize]
-//        [HttpGet("~/api/authorize")]
-//        public async Task<UserToken> Authorize()
-//        {
-//            var userToken = new UserToken();
-//            if (User.Identity.IsAuthenticated)
-//            {
-//                string accessToken = await HttpContext.GetTokenAsync("access_token");
-//                string idToken = await HttpContext.GetTokenAsync("id_token");
-//                userToken.AccessToken = accessToken;
-//                userToken.IdToken = idToken;
-//                userToken.Name = User.Identity.Name;
-//            }
-//            return userToken;
-//        }
+       public class CookiePayload
+       {
+           [JsonProperty("cascadeToken")]
+           public string CascadeToken { get; set; }
+           
+           [JsonProperty("timeStamp")]
+           public string TimeStamp { get; set; }
 
-//        [HttpGet("~/signout"), HttpPost("~/signout")]
-//        public IActionResult SignOut()
-//        {
-//            // Instruct the cookies middleware to delete the local cookie created
-//            // when the user agent is redirected from the external identity provider
-//            // after a successful authentication flow (e.g Google or Facebook).
-//            return SignOut(new AuthenticationProperties { RedirectUri = "/" },
-//                CookieAuthenticationDefaults.AuthenticationScheme);
-//        }
-
-
-//        public class UserToken
-//        {
-//            public string AccessToken { get; set; }
-//            public string IdToken { get; set; }
-//            public string Name { get; set; }
-//        }
-//    }
-//}
+           [JsonProperty("id")]
+           public string Id { get; set; }
+       }
+    }
+}
