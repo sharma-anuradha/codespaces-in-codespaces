@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             return builder;
         }
-        
+
         /// <summary>
         /// Method to be called in the event of failed authentication.
         /// </summary>

@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 .FluentAddValue("PrincipalIsAuthenticationType", arg.Principal?.Identity.AuthenticationType)
                 .FluentAddValue("PrincipalIsAuthenticated", arg.Principal?.Identity.IsAuthenticated.ToString())
                 .FluentAddValue("Exception", arg.Exception.Message)
-                .LogInfo("jwt_authentication_failed");
+                .LogWarning("jwt_authentication_failed");
         }
 
         private static async Task TokenValidatedAsync(TokenValidatedContext context)

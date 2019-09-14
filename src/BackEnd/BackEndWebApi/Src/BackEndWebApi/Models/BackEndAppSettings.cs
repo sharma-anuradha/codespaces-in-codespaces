@@ -23,12 +23,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models
         public ResourceBrokerSettings ResourceBrokerSettings { get; set; } = new ResourceBrokerSettings();
 
         /// <summary>
-        /// Gets or sets the certificate settings.
-        /// </summary>
-        [JsonProperty(Required = Required.Default)]
-        public CertificateSettings CertificateSettings { get; set; } = new CertificateSettings();
-
-        /// <summary>
         /// Gets or sets the mocks settings.
         /// </summary>
         [JsonProperty(Required = Required.Default)]

@@ -24,13 +24,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             _ = useMockCloudEnvironmentRepository;
 
-#if DEBUG
             if (useMockCloudEnvironmentRepository)
             {
                 services.AddSingleton<IBillingEventRepository, MockBillingEventRepository>();
             }
             else
-#endif
             {
                 services.AddDocumentDbCollection<BillingEvent, IBillingEventRepository, BillingEventRepository>(BillingEventRepository.ConfigureOptions);
             }

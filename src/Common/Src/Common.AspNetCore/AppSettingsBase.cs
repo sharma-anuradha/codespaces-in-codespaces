@@ -49,5 +49,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public DataPlaneSettings DataPlaneSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the certificate settings.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public CertificateSettings CertificateSettings { get; set; }
     }
 }

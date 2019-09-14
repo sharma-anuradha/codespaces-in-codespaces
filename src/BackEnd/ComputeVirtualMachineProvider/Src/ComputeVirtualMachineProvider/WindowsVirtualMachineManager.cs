@@ -19,7 +19,6 @@ using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
@@ -45,27 +44,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private const string VmNameKey = "vmName";
         private static readonly string VmTemplateJson = GetVmTemplate();
         private readonly IAzureClientFactory clientFactory;
-        private readonly IVSSaaSTokenProvider vmTokenProvider;
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WindowsVirtualMachineManager"/> class.
         /// </summary>
         /// <param name="clientFactory">Builds Azure clients.</param>
+        /// <param name="controlPlaneAzureResourceAccessor">Control plane azure accessor.</param>
         public WindowsVirtualMachineManager(IAzureClientFactory clientFactory,
-            IVSSaaSTokenProvider vmTokenProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
         {
             Requires.NotNull(clientFactory, nameof(clientFactory));
-            Requires.NotNull(vmTokenProvider, nameof(vmTokenProvider));
             Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));
 
             this.clientFactory = clientFactory;
-            this.vmTokenProvider = vmTokenProvider;
             this.controlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
         }
 
-            /// <inheritdoc/>
+         /// <inheritdoc/>
         public bool Accepts(AzureResourceInfo info)
         {
             // For delete, the resource name may never be set if the resource failed to create in Azure. In this case,

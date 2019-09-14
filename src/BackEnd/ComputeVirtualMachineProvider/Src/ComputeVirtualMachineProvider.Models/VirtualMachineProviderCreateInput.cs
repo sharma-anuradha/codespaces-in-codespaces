@@ -15,6 +15,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public class VirtualMachineProviderCreateInput : ContinuationInput
     {
         /// <summary>
+        /// Gets or sets the vmtoken.
+        /// </summary>
+        public string VMToken { get; set; }
+
+        /// <summary>
         /// Gets or sets virtual machine subscription.
         /// </summary>
         public Guid AzureSubscription { get; set; }

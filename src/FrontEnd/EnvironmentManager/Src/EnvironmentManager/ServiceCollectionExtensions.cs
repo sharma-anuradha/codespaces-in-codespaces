@@ -25,15 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             this IServiceCollection services,
             bool useMockCloudEnvironmentRepository)
         {
-            _ = useMockCloudEnvironmentRepository;
-
-#if DEBUG
             if (useMockCloudEnvironmentRepository)
             {
                 services.AddSingleton<ICloudEnvironmentRepository, MockCloudEnvironmentRepository>();
             }
             else
-#endif
             {
                 services.AddDocumentDbCollection<CloudEnvironment, ICloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
             }

@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -109,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<Microsoft.Rest.Azure.IPage<SecretItem>> GetKeyValutSecretVersionsAsync(string secretName)
+        public async Task<IEnumerable<SecretItem>> GetKeyVaultSecretVersionsAsync(string secretName)
         {
             using (var keyVaultClient = await GetKeyVaultClientAsync())
             {

@@ -49,7 +49,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
                 });
         }
 
-
         private IHealthProvider HealthProvider { get; }
 
         private ITaskHelper TaskHelper { get; }

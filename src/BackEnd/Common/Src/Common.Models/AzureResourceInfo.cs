@@ -39,17 +39,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         }
 
         /// <summary>
-        /// Gets the subscription id.
+        /// Gets or sets the subscription id.
         /// </summary>
         public Guid SubscriptionId { get; set; }
 
         /// <summary>
-        /// Gets the resource group name.
+        /// Gets or sets the resource group name.
         /// </summary>
         public string ResourceGroup { get; set; }
 
         /// <summary>
-        /// Gets the resource name.
+        /// Gets or sets the resource name.
         /// </summary>
         public string Name { get; set; }
 

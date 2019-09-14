@@ -11,4 +11,8 @@
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\BackEnd\Common\Src\Common.Models\Common.Models.csproj" />
+  </ItemGroup>
+
 </Project>

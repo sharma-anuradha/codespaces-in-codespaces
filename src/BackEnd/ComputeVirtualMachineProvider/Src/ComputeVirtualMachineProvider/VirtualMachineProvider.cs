@@ -30,8 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <param name="managers">Create / Update / Delete VM.</param>
         public VirtualMachineProvider(IEnumerable<IDeploymentManager> managers)
         {
-            Requires.NotNull(managers, nameof(managers));
-            this.managers = managers;
+            this.managers = Requires.NotNull(managers, nameof(managers));
         }
 
         /// <inheritdoc/>

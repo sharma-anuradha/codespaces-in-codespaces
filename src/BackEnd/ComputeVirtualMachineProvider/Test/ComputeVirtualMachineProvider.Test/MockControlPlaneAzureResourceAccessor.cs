@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault.Models;
-using Microsoft.Rest.Azure;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -12,11 +10,11 @@ using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Test
 {
-    public class MockControlPlaneAzureResourceAccssor : IControlPlaneAzureResourceAccessor
+    public class MockControlPlaneAzureResourceAccessor : IControlPlaneAzureResourceAccessor
     {
         private IAzureClientFactory clientFactory;
 
-        public MockControlPlaneAzureResourceAccssor(IAzureClientFactory clientFactory)
+        public MockControlPlaneAzureResourceAccessor(IAzureClientFactory clientFactory)
         {
             this.clientFactory = clientFactory;
         }
@@ -31,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             throw new NotImplementedException();
         }
 
-        public Task<IPage<SecretItem>> GetKeyValutSecretVersionsAsync(string secretName)
+        public Task<IEnumerable<SecretItem>> GetKeyVaultSecretVersionsAsync(string secretName)
         {
             throw new NotImplementedException();
         }

@@ -43,6 +43,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             return StatusCode(resultHttpStatus);
         }
-
     }
 }

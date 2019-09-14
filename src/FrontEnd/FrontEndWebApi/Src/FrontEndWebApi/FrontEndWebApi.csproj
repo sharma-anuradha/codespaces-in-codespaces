@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common.AspNetCore\Common.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj" />
@@ -44,7 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\..\..\Settings\**" >
+    <Content Include="..\..\..\..\Settings\**">
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>

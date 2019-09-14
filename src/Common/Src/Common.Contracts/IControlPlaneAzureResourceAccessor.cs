@@ -2,9 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault.Models;
-using Microsoft.Rest.Azure;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 
@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// </summary>
         /// <param name="secretName">The secret name.</param>
         /// <returns>Enumerable versions of the secret.</returns>
-        Task<IPage<SecretItem>> GetKeyValutSecretVersionsAsync(string secretName);
+        Task<IEnumerable<SecretItem>> GetKeyVaultSecretVersionsAsync(string secretName);
 
         /// <summary>
         /// Gets the instance-level cosmos db account.

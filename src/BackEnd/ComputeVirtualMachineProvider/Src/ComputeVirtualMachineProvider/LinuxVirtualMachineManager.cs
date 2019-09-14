@@ -49,25 +49,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private const string VmNameKey = "vmName";
         private static readonly string VmTemplateJson = GetVmTemplate();
         private readonly IAzureClientFactory clientFactory;
-        private readonly IVSSaaSTokenProvider vmTokenProvider;
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LinuxVirtualMachineManager"/> class.
         /// </summary>
         /// <param name="clientFactory">Builds Azure clients.</param>
-        /// <param name="vmTokenProvider">VM Toke provider.</param>
+        /// <param name="vmTokenProvider">VM Token provider.</param>
+        /// <param name="controlPlaneAzureResourceAccessor">Control plane azure resource accessor.</param>
         public LinuxVirtualMachineManager(
             IAzureClientFactory clientFactory,
-            IVSSaaSTokenProvider vmTokenProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
         {
             Requires.NotNull(clientFactory, nameof(clientFactory));
-            Requires.NotNull(vmTokenProvider, nameof(vmTokenProvider));
             Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));
 
             this.clientFactory = clientFactory;
-            this.vmTokenProvider = vmTokenProvider;
             this.controlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
         }
 
@@ -82,8 +79,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <inheritdoc/>
         public bool Accepts(VirtualMachineProviderCreateInput input)
         {
-            //TODO: This is a hack; we don't have the proper config info at this level. JohnRi and AnVan to work out how to get this.
-            //What we really want is just a single Accepts() method that can find out the ComputeOS type
+            // TODO: This is a hack; we don't have the proper config info at this level. JohnRi and AnVan to work out how to get this.
+            // What we really want is just a single Accepts() method that can find out the ComputeOS type
             return input.AzureVirtualMachineImage.Contains("Ubuntu");
         }
 
@@ -92,15 +89,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             // create new VM resource name
             var virtualMachineName = $"{Guid.NewGuid().ToString()}-lnx";
-            var vmToken = CreateVmToken(virtualMachineName);
 
             var parameters = new Dictionary<string, Dictionary<string, object>>()
             {
                 { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
                 { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
-                { "vmSetupScript", new Dictionary<string, object>() { { Key, GetVmInitScript(vmToken) } } },
+                { "vmSetupScript", new Dictionary<string, object>() { { Key, GetVmInitScript(input.VMToken) } } },
                 { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
-                { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName} } },
+                { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName } } },
                 { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
                 { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
                 { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
@@ -512,11 +508,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var queue = await GetQueueClientAsync(location, queueName, logger);
             var queueExists = await queue.ExistsAsync();
             return queueExists ? new object() : default;
-        }
-
-        private string CreateVmToken(string input)
-        {
-            return this.vmTokenProvider.Generate(input);
         }
 
         private static string GetQueueName(string resourceName)

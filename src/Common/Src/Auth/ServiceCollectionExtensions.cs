@@ -3,6 +3,8 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Common.Warmup;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Jobs;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
 {
@@ -12,27 +14,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds VM token provider to the collection of services.
+        /// Adds VM token provider and dependencies to the collection of services.
         /// </summary>
         /// <param name="services">Service collection.</param>
-        /// <param name="useMocksForTokenProviders">A value indicating whether to use mocks for token providers.</param>
-        /// <returns>Adds VMToken povider to the list of services.</returns>
+        /// <returns>Collection of services along with vm token provider.</returns>
         public static IServiceCollection AddVMTokenProvider(
-            this IServiceCollection services,
-            bool useMocksForTokenProviders)
+            this IServiceCollection services)
         {
             Requires.NotNull(services, nameof(services));
- 
-            // Short circuit things if Token Providers is being mocked
-            if (useMocksForTokenProviders)
-            {
-                return services;
-            }
 
-            // Core services
-            services.AddSingleton<IVSSaaSTokenProvider, VMTokenProvider>();
+            return services
+                .AddCommonServices()
+                .AddSingleton<IVirtualMachineTokenProvider, VirtualMachineTokenProvider>();
+        }
 
-            return services;
+        /// <summary>
+        /// Adds VM token validator and dependencies to the collection of services.
+        /// </summary>
+        /// <param name="services">Service collection.</param>
+        /// <returns>Collection of services along with vm token validator.</returns>
+        public static IServiceCollection AddVMTokenValidator(
+            this IServiceCollection services)
+        {
+            Requires.NotNull(services, nameof(services));
+
+            return services
+                .AddCommonServices()
+                .AddSingleton<IVirtualMachineTokenValidator, VirtualMachineTokenValidator>();
+        }
+
+        private static IServiceCollection AddCommonServices(
+            this IServiceCollection services)
+        {
+            return services
+                .AddSingleton<ICertificateProvider, CertificateProvider>()
+                .AddSingleton<IAsyncWarmup, InitializeCertificateProvider>();
         }
     }
 }

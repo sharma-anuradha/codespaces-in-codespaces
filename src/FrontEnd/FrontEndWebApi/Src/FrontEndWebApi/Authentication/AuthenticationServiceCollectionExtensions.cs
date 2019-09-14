@@ -5,6 +5,9 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using StackExchange.Redis;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -43,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             services.AddAuthentication()
                 .AddVsSaaSJwtBearer(jwtBearerOptions)
                 .AddRPSaaSJwtBearer(rpSaasAuthority)
+                .AddVMTokenJwtBearer()
                 .AddVsSaaSCookieBearer();
 
             return services;

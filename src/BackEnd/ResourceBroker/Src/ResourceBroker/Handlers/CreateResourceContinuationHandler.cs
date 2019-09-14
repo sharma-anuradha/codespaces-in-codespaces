@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -46,12 +47,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="resourceBrokerSettings">Resource broker settings.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service provider.</param>
+        /// <param name="virtualMachineTokenProvider">Virtual machine token provider.</param>
         public CreateResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             ICapacityManager capacityManager,
             ResourceBrokerSettings resourceBrokerSettings,
+            IVirtualMachineTokenProvider virtualMachineTokenProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider)
             : base(serviceProvider, resourceRepository)
@@ -61,6 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             CapacityManager = capacityManager;
             ResourceBrokerSettings = resourceBrokerSettings;
+            VirtualMachineTokenProvider = virtualMachineTokenProvider;
         }
 
         /// <inheritdoc/>
@@ -81,6 +85,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private ICapacityManager CapacityManager { get; }
 
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
+
+        private IVirtualMachineTokenProvider VirtualMachineTokenProvider { get; }
 
         /// <inheritdoc/>
         protected override async Task<ResourceRecordRef> ObtainReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
@@ -118,8 +124,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 // Ensure that the details type is correct
                 if (input.ResourcePoolDetails is ResourcePoolComputeDetails computeDetails)
                 {
+                    var token = await VirtualMachineTokenProvider.GenerateAsync(resource.Value.Id, logger);
                     result = new VirtualMachineProviderCreateInput
                     {
+                        VMToken = token,
                         AzureVmLocation = computeDetails.Location,
                         AzureSkuName = computeDetails.SkuName,
                         AzureSubscription = Guid.Parse(subscription),
@@ -172,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override async Task<ContinuationResult> RunOperationAsync(ContinuationInput operationInput, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
-            var result = (ResourceCreateContinuationResult)null;
+            ResourceCreateContinuationResult result;
 
             // Run create operation
             if (resource.Value.Type == ResourceType.ComputeVM)

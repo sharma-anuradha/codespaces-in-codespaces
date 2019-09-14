@@ -32,8 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
             var azureDeploymentManager = new LinuxVirtualMachineManager(
                 clientFactory,
-                new MockTokenProvider(),
-                new MockControlPlaneAzureResourceAccssor(clientFactory));
+                new MockControlPlaneAzureResourceAccessor(clientFactory));
 
             var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
             Guid subscriptionId = this.testContext.SubscriptionId;
@@ -42,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 
             VirtualMachineProviderCreateInput input = new VirtualMachineProviderCreateInput()
             {
+                VMToken = Guid.NewGuid().ToString(),
                 AzureVmLocation = location,
                 AzureResourceGroup = rgName,
                 AzureSubscription = subscriptionId,
@@ -87,8 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
             var azureDeploymentManager = new LinuxVirtualMachineManager(
                 clientFactory,
-                new MockTokenProvider(),
-                new MockControlPlaneAzureResourceAccssor(clientFactory));
+                new MockControlPlaneAzureResourceAccessor(clientFactory));
 
             var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
             Guid subscriptionId = this.testContext.SubscriptionId;
@@ -97,6 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 
             VirtualMachineProviderCreateInput input = new VirtualMachineProviderCreateInput()
             {
+                VMToken = Guid.NewGuid().ToString(),
                 AzureVmLocation = location,
                 AzureResourceGroup = rgName,
                 AzureSubscription = subscriptionId,
@@ -123,8 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
             var azureDeploymentManager = new LinuxVirtualMachineManager(
                 clientFactory,
-                new MockTokenProvider(),
-                new MockControlPlaneAzureResourceAccssor(clientFactory));
+                new MockControlPlaneAzureResourceAccessor(clientFactory));
 
             var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
             var fileShareInfo = new ShareConnectionInfo("storageaccount1",
@@ -156,8 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
             var azureDeploymentManager = new LinuxVirtualMachineManager(
                 clientFactory,
-                new MockTokenProvider(),
-                new MockControlPlaneAzureResourceAccssor(clientFactory));
+                new MockControlPlaneAzureResourceAccessor(clientFactory));
             var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
 
             var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
@@ -200,8 +198,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
             var azureDeploymentManager = new LinuxVirtualMachineManager(
                 clientFactory,
-                new MockTokenProvider(),
-                new MockControlPlaneAzureResourceAccssor(clientFactory));
+                new MockControlPlaneAzureResourceAccessor(clientFactory));
             var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
 
             var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();

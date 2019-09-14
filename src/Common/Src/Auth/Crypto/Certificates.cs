@@ -80,8 +80,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
                     {
                         Asn.GenerateElementInteger(rsa.Modulus),
                         Asn.GenerateElementInteger(rsa.Exponent),
-                    })
-                ),
+                    })),
             });
 
             // https://github.com/docker/libtrust/blob/master/util.go#L194

@@ -1,20 +1,15 @@
 ﻿// <copyright file="JwtTokenGenerator.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.Diagnostics;
-
-#pragma warning disable SA1118 // Parameter should not span multiple lines
-#pragma warning disable SA1202 // Elements should be ordered by access
-#pragma warning disable SA1600 // Elements should be documented
-#pragma warning disable SA1611 // Element parameters should be documented
-#pragma warning disable SA1615 // Element return value should be documented
-#pragma warning disable SA1629 // End with a period
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Models;
 
 namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 {
@@ -31,74 +26,28 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         private static readonly TimeSpan TokenIssuedAtClockSkew = TimeSpan.FromMinutes(-15);
 
         /// <summary>
-        /// The libtrust kid of the private key that is used to sign issued JWTs.
+        /// Credentials that is used for signing and validating the token.
         /// </summary>
-        private readonly string primarySigningKid;
-        private readonly SecurityKey[] primarySigningKey;
-        private readonly SigningCredentials primarySigningCredentials;
-        private readonly string secondarySigningKid;
-        private readonly SecurityKey[] secondarySigningKey;
-        private readonly IDiagnosticsLogger logger;
+        private readonly Credentials primary;
+
+        /// <summary>
+        /// Credentials that are used only for validation.
+        /// </summary>
+        private readonly List<Credentials> secondaries;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JwtTokenGenerator"/> class.
         /// </summary>
-        /// <param name="primaryCertificate">Raw bytes of the primary certificate.</param>
-        /// <param name="secondaryCertificate">Raw bytes of the secondary certificate.</param>
-        /// <param name="logger">Diagnostics logger.</param>
+        /// <param name="validCertificates">Valid set of primary and secondary certificates.</param>
+        /// <param name="logger">logger.</param>
         public JwtTokenGenerator(
-            [ValidatedNotNull] byte[] primaryCertificate,
-            [ValidatedNotNull] byte[] secondaryCertificate,
-            [ValidatedNotNull] IDiagnosticsLogger logger)
+            ValidCertificates validCertificates,
+            IDiagnosticsLogger logger)
         {
-            Requires.NotNull(primaryCertificate, nameof(primaryCertificate));
-            Requires.NotNull(secondaryCertificate, nameof(secondaryCertificate));
-            this.logger = Requires.NotNull(logger, nameof(logger));
+            Requires.NotNull(validCertificates, nameof(validCertificates));
 
-            // primary key, for signing and validation
-            try
-            {
-                this.primarySigningKid = Certificates.GenerateKidForPublicKey(primaryCertificate);
-            }
-            catch (Exception e)
-            {
-                this.logger.WithValue("Exception", e.ToString()).LogError("error_read_primary_public_key");
-                throw;
-            }
-
-            try
-            {
-                var primaryKey = new RsaSecurityKey(Certificates.GetRSAPrivateKey(primaryCertificate));
-                this.primarySigningKey = new[] { primaryKey };
-                this.primarySigningCredentials = GetRsaSigningCredentials(primaryKey);
-            }
-            catch (Exception e)
-            {
-                this.logger.WithValue("Exception", e.ToString()).LogError("error_read_primary_private_key");
-                throw;
-            }
-
-            // secondary key, for validation purposes only
-            try
-            {
-                this.secondarySigningKid = Certificates.GenerateKidForPublicKey(secondaryCertificate);
-            }
-            catch (Exception e)
-            {
-                this.logger.WithValue("Exception", e.ToString()).LogError("error_read_secondary_public_key");
-                throw;
-            }
-
-            try
-            {
-                var secondaryKey = new RsaSecurityKey(Certificates.GetRSAPrivateKey(secondaryCertificate));
-                this.secondarySigningKey = new[] { secondaryKey };
-            }
-            catch (Exception e)
-            {
-                this.logger.WithValue("Exception", e.ToString()).LogError("error_read_secondary_private_key");
-                throw;
-            }
+            primary = GetCredentials(validCertificates.Primary.RawBytes, createSigningCredentials: true, logger);
+            secondaries = validCertificates.Secondaries.Select(c => GetCredentials(c.RawBytes, false, logger)).ToList();
         }
 
         /// <summary>
@@ -109,22 +58,25 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         /// <param name="subject">Subject in the JWT token.</param>
         /// <param name="customClaims">Custom claims to be added.</param>
         /// <param name="expiration">Expirate of the JWT token.</param>
+        /// <param name="logger">logger.</param>
         /// <returns>
-        /// Returns a new JwtPayload instance with the basic fields filled out. 
+        /// Returns a new JwtPayload instance with the basic fields filled out.
         /// In particular, it ensures to have an issuer, an audience, notBefore time, expires time,
         /// issuedAt time and a jti claim with a GUID.
         /// </returns>
-        public JwtPayload NewJwtPayload(string issuer, string audience, string subject, Dictionary<string, string> customClaims, DateTime expiration)
+        public JwtPayload NewJwtPayload(string issuer, string audience, string subject, Dictionary<string, string> customClaims, DateTime expiration, IDiagnosticsLogger logger)
         {
             Requires.NotNullOrWhiteSpace(issuer, nameof(issuer));
             Requires.NotNullOrWhiteSpace(audience, nameof(audience));
             Requires.NotNullOrWhiteSpace(subject, nameof(subject));
+            Requires.NotNull(logger, nameof(logger));
 
             var utcNow = DateTime.UtcNow;
             var issuedAt = utcNow.Add(TokenIssuedAtClockSkew);
             var jwtid = Guid.NewGuid().ToString();
 
-            this.logger.AddValue("jwtid", jwtid);
+            logger.AddValue("jwt_jti", jwtid);
+            logger.AddValue("jwt_sub", subject);
 
             var claims = new List<Claim>
             {
@@ -157,56 +109,13 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         /// <returns>Token created by signing the payload.</returns>
         public string WriteToken(JwtPayload payload)
         {
-            var header = new JwtHeader(this.primarySigningCredentials)
+            var header = new JwtHeader(this.primary.SigningCredentials)
             {
-                { "kid", this.primarySigningKid },
+                { "kid", this.primary.SigningKeyId },
             };
 
             var token = new JwtSecurityToken(header, payload);
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        /// <summary>
-        /// Creates a signing credential out of an RS256 key.
-        /// </summary>
-        private static SigningCredentials GetRsaSigningCredentials(RsaSecurityKey rs256key)
-        {
-            return new SigningCredentials(rs256key, "RS256");
-        }
-
-        /// <summary>
-        /// Gets the private key contained in the bytes, extracts the private
-        /// key, and creates an RsaSecurityKey instance with it.
-        /// </summary>
-        private static RsaSecurityKey GetSigningKey(byte[] certBytes)
-        {
-            return new RsaSecurityKey(Certificates.GetRSAPrivateKey(certBytes));
-        }
-
-        private static RsaSecurityKey GetSigningKey(RSA rsa)
-        {
-            return new RsaSecurityKey(rsa);
-        }
-
-        /// <summary>
-        /// Returns a set of security keys that will be used to validate a JWT token.
-        /// It only returns the keys if the kid provided matches the signing kid.
-        /// Note that this needs to be replaced by a comparison to a set of signing
-        /// kids in the future when we expand to support multiple keys.
-        /// </summary>
-        private SecurityKey[] CustomSigningKeyResolver(string tkn, SecurityToken stkn, string kid, TokenValidationParameters vp)
-        {
-            if (kid == this.primarySigningKid)
-            {
-                return this.primarySigningKey;
-            }
-
-            if (kid == this.secondarySigningKid)
-            {
-                return this.secondarySigningKey;
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -216,7 +125,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         /// <param name="issuer">Issuer of the token.</param>
         /// <param name="audience">Audience of the token.</param>
         /// <returns>Validates the JWT token and returns non-null payload if successful.</returns>
-        public JwtPayload ValidateJwt(string token, string issuer, string audience)
+        public JwtPayload GetJwtPayload(string token, string issuer, string audience)
         {
             if (string.IsNullOrEmpty(token))
             {
@@ -224,15 +133,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             }
 
             var handler = new JwtSecurityTokenHandler();
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidAudience = audience,
-                ValidIssuer = issuer,
-                RequireExpirationTime = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKeyResolver = CustomSigningKeyResolver,
-            };
+            var validationParameters = GetTokenValidationParameters(issuer, audience);
 
             try
             {
@@ -244,6 +145,90 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Gets token validation parameters.
+        /// </summary>
+        /// <param name="issuer">issuer.</param>
+        /// <param name="audience">audience.</param>
+        /// <returns>Token validation parameters.</returns>
+        public TokenValidationParameters GetTokenValidationParameters(string issuer, string audience)
+        {
+            return new TokenValidationParameters
+            {
+                ValidAudience = audience,
+                ValidIssuer = issuer,
+                RequireExpirationTime = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKeyResolver = CustomSigningKeyResolver,
+            };
+        }
+
+        /// <summary>
+        /// Creates a signing credential out of an RS256 key.
+        /// </summary>
+        private static SigningCredentials GetRsaSigningCredentials(RsaSecurityKey rs256key)
+        {
+            return new SigningCredentials(rs256key, "RS256");
+        }
+
+        /// <summary>
+        /// Returns a set of security keys that will be used to validate a JWT token.
+        /// It only returns the keys if the kid provided matches the signing kid.
+        /// </summary>
+        private SecurityKey[] CustomSigningKeyResolver(string tkn, SecurityToken stkn, string kid, TokenValidationParameters validationParameters)
+        {
+            if (kid == this.primary.SigningKeyId)
+            {
+                return this.primary.SigningKey;
+            }
+
+            return this.secondaries
+                .SingleOrDefault(s => (kid == s.SigningKeyId))
+                ?.SigningKey;
+        }
+
+        private Credentials GetCredentials(byte[] rawBytes, bool createSigningCredentials, IDiagnosticsLogger logger)
+        {
+            Credentials credentials = new Credentials();
+            try
+            {
+                credentials.SigningKeyId = Certificates.GenerateKidForPublicKey(rawBytes);
+            }
+            catch (Exception e)
+            {
+                logger.WithValue("Exception", e.ToString()).LogError("error_reading_public_key");
+                throw;
+            }
+
+            try
+            {
+                var signingKey = new RsaSecurityKey(Certificates.GetRSAPrivateKey(rawBytes));
+                credentials.SigningKey = new[] { signingKey };
+
+                if (createSigningCredentials)
+                {
+                    credentials.SigningCredentials = GetRsaSigningCredentials(signingKey);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.WithValue("Exception", e.ToString()).LogError("error_reading_private_key");
+                throw;
+            }
+
+            return credentials;
+        }
+
+        private class Credentials
+        {
+            public string SigningKeyId { get; set; }
+
+            public SecurityKey[] SigningKey { get; set; }
+
+            public SigningCredentials SigningCredentials { get; set; }
         }
     }
 }

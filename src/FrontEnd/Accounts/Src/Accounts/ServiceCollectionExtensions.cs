@@ -22,13 +22,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         {
             _ = useMockAccountRepository;
 
-#if DEBUG
             if (useMockAccountRepository)
             {
                 services.AddSingleton<IAccountRepository, MockAccountRepository>();
             }
             else
-#endif
             {
                 services.AddDocumentDbCollection<VsoAccount, IAccountRepository, AccountRepository>(AccountRepository.ConfigureOptions);
             }

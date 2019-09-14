@@ -20,7 +20,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
@@ -135,11 +134,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddCapacityManager(appSettings.BackEnd.MocksSettings);
 
             // Add the certificate settings.
-            services.AddSingleton(appSettings.BackEnd.CertificateSettings);
+            services.AddSingleton(appSettings.CertificateSettings);
 
             // Auth/Token Providers
-            services.AddVMTokenProvider(
-                appSettings.BackEnd.MocksSettings.UseMocksForResourceProviders);
+            services.AddVMTokenProvider();
 
             // OpenAPI/swagger services
             services.AddSwaggerGen(x =>

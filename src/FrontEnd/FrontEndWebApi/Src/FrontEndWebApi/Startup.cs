@@ -11,9 +11,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
-using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -126,6 +126,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Configure mappings betwen REST API models and internal models.
             services.AddModelMapper();
+
+            // Add the certificate settings.
+            services.AddSingleton(appSettings.CertificateSettings);
+
+            // VM Token validator
+            services.AddVMTokenValidator();
 
             // Custom Authentication
             // TODO why isn't this standard VS SaaS SDK Auth?

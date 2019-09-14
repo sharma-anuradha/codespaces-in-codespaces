@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />

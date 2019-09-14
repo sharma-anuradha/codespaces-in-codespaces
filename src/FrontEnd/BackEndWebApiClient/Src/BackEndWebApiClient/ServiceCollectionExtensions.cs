@@ -4,6 +4,7 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.HealthMonitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
@@ -36,15 +37,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             return services;
         }
 
-        private static void AddResourceBrokerClient(this IServiceCollection services, bool useMocks)
+        private static IServiceCollection AddResourceBrokerClient(this IServiceCollection services, bool useMocks)
         {
             if (useMocks)
             {
-                services.AddSingleton<IResourceBrokerResourcesHttpContract, MockResourceBrokerClient>();
+                return services.AddSingleton<IResourceBrokerResourcesHttpContract, MockResourceBrokerClient>();
             }
             else
             {
-                services.AddSingleton<IResourceBrokerResourcesHttpContract, HttpResourceBrokerClient>();
+                return services.AddSingleton<IResourceBrokerResourcesHttpContract, HttpResourceBrokerClient>();
             }
         }
     }

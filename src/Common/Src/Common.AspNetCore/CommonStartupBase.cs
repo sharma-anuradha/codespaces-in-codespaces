@@ -183,6 +183,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// <param name="app">The application builder.</param>
         protected void ConfigureAppCommon(IApplicationBuilder app)
         {
+            // TODO: Making the service provider globally accessible. May be there is a better way?
+            ApplicationServicesProvider.ServiceProvider = app.ApplicationServices;
+
             // Save this for configuration callbacks that require cosmos db accounts.
             ControlPlaneAzureResourceAccessor = app.ApplicationServices.GetRequiredService<IControlPlaneAzureResourceAccessor>();
 

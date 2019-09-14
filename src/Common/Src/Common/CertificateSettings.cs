@@ -30,5 +30,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string Audience { get; set; }
+
+        /// <summary>
+        /// Gets or sets mock primary certificate.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string MockPrimaryCertificate { get; set; }
+
+        /// <summary>
+        /// Gets or sets mock secondary certificate.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string MockSecondaryCertificate { get; set; }
     }
 }

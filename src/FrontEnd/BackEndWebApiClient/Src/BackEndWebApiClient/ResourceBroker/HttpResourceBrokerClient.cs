@@ -3,23 +3,18 @@
 // </copyright>
 
 using System;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
-using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker
 {
     /// <summary>
     /// An http resource broker client.
     /// </summary>
-    public class HttpResourceBrokerClient : IResourceBrokerResourcesHttpContract
+    public class HttpResourceBrokerClient : HttpClientBase, IResourceBrokerResourcesHttpContract
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpResourceBrokerClient"/> class.
@@ -27,11 +22,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         /// <param name="httpClientProvider">The backend http client provider.</param>
         public HttpResourceBrokerClient(
             ICurrentUserHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
+            : base(httpClientProvider)
         {
-            HttpClientProvider = Requires.NotNull(httpClientProvider, nameof(httpClientProvider));
         }
-
-        private IHttpClientProvider HttpClientProvider { get; }
 
         /// <inheritdoc/>
         public async Task<ResourceBrokerResource> CreateResourceAsync(CreateResourceRequestBody input, IDiagnosticsLogger logger)
@@ -70,76 +63,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
                 startComputeRequestBody,
                 logger);
             return;
-        }
-
-        // TODO: Move this into a base class, or an extension method.
-        private async Task<TResult> SendAsync<TInput, TResult>(
-            HttpMethod method,
-            string requestUri,
-            TInput input,
-            IDiagnosticsLogger logger)
-        {
-            var rawResult = await SendRawAsync(method, requestUri, input, logger);
-
-            try
-            {
-                var result = JsonConvert.DeserializeObject<TResult>(rawResult);
-
-                return result;
-            }
-            catch (Exception)
-            {
-                logger?.LogError(GetType().FormatLogErrorMessage(nameof(SendAsync)));
-                throw;
-            }
-        }
-
-        // TODO: Move this into a base class, or an extension method.
-        private async Task<string> SendRawAsync<TInput>(
-            HttpMethod method,
-            string requestUri,
-            TInput input,
-            IDiagnosticsLogger logger)
-        {
-            var httpRequestMessage = new HttpRequestMessage(method, requestUri);
-
-            // Set up logging
-            var duration = logger?.StartDuration();
-            var fullRequestUri = new UriBuilder(HttpClientProvider.HttpClient.BaseAddress)
-            {
-                Path = requestUri,
-            }.Uri;
-            logger?
-                .FluentAddValue(LoggingConstants.HttpRequestMethod, method.ToString())
-                .FluentAddValue(LoggingConstants.HttpRequestUri, fullRequestUri.ToString());
-
-            // TODO: add the correlation id header..any other interesting headers.
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-
-            var body = JsonConvert.SerializeObject(input);
-            httpRequestMessage.Content = new StringContent(body, Encoding.UTF8, "application/json");
-
-            // Send the request
-            HttpResponseMessage httpResponseMessage;
-            try
-            {
-                httpResponseMessage = await HttpClientProvider.HttpClient.SendAsync(httpRequestMessage);
-                await httpResponseMessage.ThrowIfFailedAsync();
-
-                // Get the response body
-                var resultBody = await httpResponseMessage.Content.ReadAsStringAsync();
-
-                logger?.TryAddDuration(duration);
-                logger?.LogInfo(GetType().FormatLogMessage(nameof(SendRawAsync)));
-
-                return resultBody;
-            }
-            catch (Exception)
-            {
-                logger?.TryAddDuration(duration);
-                logger?.LogError(GetType().FormatLogErrorMessage(nameof(SendRawAsync)));
-                throw;
-            }
         }
     }
 }
