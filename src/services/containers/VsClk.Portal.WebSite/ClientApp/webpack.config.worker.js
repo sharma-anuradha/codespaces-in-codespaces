@@ -4,7 +4,7 @@ const path = require('path');
 const ForkTsCheckerNotifierWebpackPlugin = require('fork-ts-checker-notifier-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
-const isDevelopment = true;
+const isDevelopment = false;
 const paths = {
     staticAssetsWorker: './src/service-worker/static-assets-worker.ts',
     tsconfig: 'tsconfig.worker.json',
