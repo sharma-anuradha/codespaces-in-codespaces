@@ -13,30 +13,28 @@ dotnet dev-certs https --trust
 
 CORS headers on environment registration enable requests from `https://localhost:3000`.
 
+When working only on the react side of the project you can start from `<projectRoot>/src/services/containers/VsClk.Portal.WebSite/ClientApp`
+
+### Set Up
+
+Required Software:
+- Node.js (v10.15.3) (https://nodejs.org/en/)
+- Yarn (https://yarnpkg.com/lang/en/)
+- .NET Core (https://dotnet.microsoft.com/download/dotnet-core/2.2)
+- (https://github.com/Microsoft/artifacts-credprovider#readmecd%20)
+
+1. [From project root] Restore dotnet dependencies (`dotnet restore <projectRoot>/dirs.proj --interactive`)
+1. [From ClientApp] Install node dependencies (`yarn`)
+1. [From ClientApp] Start the portal (`yarn start`)
+
+### Debugging .Net Portal 
 
 VSCode has the tasks set up when you open folder `<projectRoot>/src/services/containers/VsClk.Portal.WebSite`
 
-Create secrets file `<projectRoot>/src/services/containers/VsClk.Portal.WebSite/appsettings.secrets.json` with content:
-
-```json
-{
-  "AppSettings": {
-    "IsLocal": true,
-    "EnvironmentRegistrationEndpoint": "https://online.dev.core.vsengsaas.visualstudio.com/api/v1/environments"
-  }
-}
-```
-
-
 - There's .Net Core Launch (web) configuration that starts the app on port 3000. You still have to go and start the CRA server.
-- There's a build task that starts dev server SPA or:
+
 ```sh
 cd ClientApp
-yarn start
+yarn watch:client
 ```
 
-> You might need to install the dependencies for the React App - please use yarn.
-
-For local development, the application is set up to talk to local Environment Registration service on http://localhost:5000.
-
-To start the Environment registration service, you can use launch scripts in the project root folder.

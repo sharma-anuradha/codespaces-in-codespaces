@@ -55,10 +55,10 @@ class WorkbenchView extends Component<WorkbenchProps> {
         const { accessToken } = this.props.token!;
 
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
-        const connection = envConnector.ensureConnection(environmentInfo, accessToken);
+        envConnector.ensureConnection(environmentInfo, accessToken);
         const resourceUriProvider = resourceUriProviderFactory(
             environmentInfo.connection.sessionId,
-            connection
+            envConnector
         );
 
         postServiceWorkerMessage({

@@ -1,5 +1,5 @@
 import { SshChannel } from '@vs/vs-ssh';
-import { Disposable } from 'vscode-jsonrpc';
+import { Disposable, Emitter, Event } from 'vscode-jsonrpc';
 
 import { WebClient } from './webClient';
 import { WorkspaceClient } from './workspaceClient';
@@ -18,6 +18,11 @@ import { DEFAULT_EXTENSIONS, VSLS_API_URI, vscodeConfig } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { BrowserSyncService } from './services/browserSyncService';
 
+export type RemoteVSCodeServerDescription = {
+    readonly port: number;
+    connectionToken: string;
+}
+
 export class EnvConnector {
     private initializeConnectionSignal?: Signal<any>;
     private workspaceClient?: Signal<WorkspaceClient>;
@@ -25,6 +30,10 @@ export class EnvConnector {
     private vscodeServerPort?: Signal<number>;
 
     private disposables: Disposable[] = [];
+
+    private readonly _onVSCodeServerStarted = new Emitter<RemoteVSCodeServerDescription>();
+    public readonly onVSCodeServerStarted: Event<RemoteVSCodeServerDescription> = this
+        ._onVSCodeServerStarted.event;
 
     constructor() {}
 
@@ -50,6 +59,12 @@ export class EnvConnector {
             trace(`Starting VSCode server: `, options);
 
             const remotePort = await vscodeServerHostClient.startRemoteServerAsync(options);
+
+            this._onVSCodeServerStarted.fire({
+                port: remotePort,
+                connectionToken: vscodeConfig.commit,
+            });
+
             this.vscodeServerPort.complete(remotePort);
         } catch (err) {
             this.vscodeServerPort.reject(err);
@@ -116,6 +131,7 @@ export class EnvConnector {
             await workspaceClient.authenticate();
             await workspaceClient.join();
             await workspaceClient.invokeEnvironmentConfiguration();
+            await workspaceClient.registerGitCredentialService();
 
             const browserSyncService = new BrowserSyncService(workspaceClient);
             await browserSyncService.init();

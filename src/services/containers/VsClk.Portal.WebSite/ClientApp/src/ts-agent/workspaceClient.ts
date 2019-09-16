@@ -142,12 +142,6 @@ export class WorkspaceClient implements rpc.Disposable {
             joiningUserSessionToken: this.workspaceAccess.sessionToken,
         });
 
-        // Expose credential service
-        const gitCredentialService = new GitCredentialService(
-            this.workspaceClient,
-            this.rpcConnection
-        );
-        await gitCredentialService.shareService();
     }
 
     public async invokeEnvironmentConfiguration() {
@@ -159,6 +153,15 @@ export class WorkspaceClient implements rpc.Disposable {
         } catch (e) {
             info('Configure Environments failed to respond. ', e);
         }
+    }
+
+    public async registerGitCredentialService() {
+        // Expose credential service
+        const gitCredentialService = new GitCredentialService(
+            this.workspaceClient!,
+            this.rpcConnection!
+        );
+        await gitCredentialService.shareService();
     }
 
     public async disconnect(): Promise<void> {

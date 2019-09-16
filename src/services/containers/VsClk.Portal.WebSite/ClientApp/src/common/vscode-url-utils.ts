@@ -1,4 +1,5 @@
 import { vscodeConfig } from '../constants';
+import { EnvConnector } from '../ts-agent/envConnector';
 
 export type ParsedAssetRequestUrl = {
     readonly isAssetUrl: true;
@@ -101,15 +102,13 @@ export function parseRequestUrl(url: string): ParsedUrl {
     };
 }
 
-export function resourceUriProviderFactory(
-    sessionId: string,
-    connectionResolved: Promise<{ port: number }>
-) {
+export function resourceUriProviderFactory(sessionId: string, connector: EnvConnector) {
     const connectionParams: { port: number | undefined } = {
         port: undefined,
     };
 
-    connectionResolved.then(({ port }) => {
+    // The connection might get restarted and with that we might be forced to spin up a new server.
+    connector.onVSCodeServerStarted(({ port }) => {
         connectionParams.port = port;
     });
 

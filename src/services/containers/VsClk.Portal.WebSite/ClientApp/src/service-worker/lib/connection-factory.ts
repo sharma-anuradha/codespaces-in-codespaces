@@ -68,7 +68,7 @@ export class LiveShareConnection {
             liveShareUri: this.liveShareUri,
             sessionId: this.sessionId,
         };
-        this.logger.info('Getting shared server stream.', defaultArgs);
+        this.logger.verbose('Getting shared server stream.', defaultArgs);
 
         this.serverSharingService = this.workspaceClient.getServiceProxy<vsls.ServerSharingService>(
             vsls.ServerSharingService
