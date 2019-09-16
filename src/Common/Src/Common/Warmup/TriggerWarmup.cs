@@ -10,9 +10,8 @@ using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
 {
     /// <summary>
     /// Task that manages the initial warmup of the site.

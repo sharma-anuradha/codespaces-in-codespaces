@@ -6,7 +6,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -15,6 +14,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     /// </summary>
     public class TaskHelper : ITaskHelper
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TaskHelper"/> class.
+        /// </summary>
+        /// <param name="logger"></param>
         public TaskHelper(
             IDiagnosticsLogger logger)
         {

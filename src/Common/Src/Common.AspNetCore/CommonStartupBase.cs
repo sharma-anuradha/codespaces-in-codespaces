@@ -5,11 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Internal;
-using Microsoft.Azure.Management.AppService.Fluent.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common;
@@ -17,6 +14,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
@@ -69,6 +67,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Load the local file if not running in azure.
             if (!IsRunningInAzure())
             {
+                // Loading from user profile so that it will even work with git clean or a new repo.
+                var userAppSettings = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "CEDev", "appsettings.json");
+                builder.AddJsonFile(AddAppSettingsJsonFile(userAppSettings), optional: true);
+
                 builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.local.json"), optional: false);
             }
 
@@ -166,6 +168,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 var logValueSet = serviceProvider.GetService<LogValueSet>();
                 return loggerFactory.New(logValueSet);
             });
+
+            services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
+            services.AddSingleton<ITaskHelper, TaskHelper>();
         }
 
         /// <summary>
@@ -211,6 +216,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 logger.LogException($"{LogMessageBase}_failed", ex);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Starts the warm up of the service.
+        /// </summary>
+        /// <param name="app">Application builder.</param>
+        protected void Warmup(IApplicationBuilder app)
+        {
+            var warmup = app.ApplicationServices.GetRequiredService<ITriggerWarmup>();
+            warmup.Start();
         }
 
         /// <summary>

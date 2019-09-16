@@ -1,4 +1,4 @@
-// <copyright file="WarmupController.cs" company="Microsoft">
+﻿// <copyright file="WarmupController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
     /// <summary>
     /// This controller is used to warmup dependent service connections.
@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         private ITriggerWarmup TriggerWarmup { get; }
 
         /// <summary>
-        /// Status of the warmup.
+        /// Status of the warm up.
         /// </summary>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         [HttpGet]

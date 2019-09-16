@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
 {
     /// <summary>
     /// Triggers tasks that need to run on warmup.

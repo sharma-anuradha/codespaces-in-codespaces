@@ -16,9 +16,9 @@ pods:
   livenessProbePath: /health
   livenessProbeDelaySeconds: 5 
   livenessProbeDelayTimeoutSeconds:
-  readinessProbePath:
-  readinessProbeDelaySeconds:
-  readinessProbeTimeoutSeconds:
+  readinessProbePath: /warmup
+  readinessProbeDelaySeconds: 5
+  readinessProbeTimeoutSeconds: 60
   targetCpuUtilizationPercentage: 80
 
 image:

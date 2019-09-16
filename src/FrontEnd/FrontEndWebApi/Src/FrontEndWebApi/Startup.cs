@@ -242,6 +242,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 c.SwaggerEndpoint($"/api/{ServiceConstants.CurrentApiVersion}/swagger", ServiceConstants.EndpointName);
                 c.DisplayRequestDuration();
             });
+
+            Warmup(app);
         }
 
         private void ConfigureRoutes(IRouteBuilder routeBuilder)

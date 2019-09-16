@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     ///

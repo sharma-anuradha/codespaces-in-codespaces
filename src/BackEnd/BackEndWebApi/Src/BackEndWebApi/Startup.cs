@@ -15,7 +15,6 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
@@ -83,8 +82,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // Common services
             services.AddSingleton<IDistributedLease, DistributedLease>();
-            services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
-            services.AddSingleton<ITaskHelper, TaskHelper>();
 
             // VsSaaS services
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
@@ -211,9 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 c.DisplayRequestDuration();
             });
 
-            // Warmup!
-            var warmup = app.ApplicationServices.GetRequiredService<ITriggerWarmup>();
-            _ = warmup.Start();
+            Warmup(app);
         }
 
         private static string RequiresNotNullOrEmpty(string value, string paramName)

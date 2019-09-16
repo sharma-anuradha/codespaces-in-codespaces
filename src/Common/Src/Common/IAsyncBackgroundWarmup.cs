@@ -2,10 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Diagnostics;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// A service or provider that supports asynchronous background warmup.
