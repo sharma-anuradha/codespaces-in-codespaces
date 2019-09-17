@@ -5,31 +5,15 @@ import { EnvConnector } from '../ts-agent/envConnector';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { bufferToArrayBuffer } from '../utils/bufferToArrayBuffer';
 import { trace as baseTrace } from '../utils/trace';
+import { createTrace } from '../utils/createTrace';
 
-const verbose = baseTrace.extend('VSLSWebSocket:trace');
-verbose.log =
-    // tslint:disable-next-line: no-console
-    typeof console.debug === 'function' ? console.debug.bind(console) : console.log.bind(console);
+const TRACE_NAME = 'vsls-web-socket';
+const { verbose, info, error } = createTrace(TRACE_NAME);
 
-const logContent = baseTrace.extend('VSLSWebSocket:trace:content');
+const logContent = baseTrace.extend(`${TRACE_NAME}:trace:content`);
 logContent.log =
     // tslint:disable-next-line: no-console
     typeof console.debug === 'function' ? console.debug.bind(console) : console.log.bind(console);
-
-const info = baseTrace.extend('VSLSWebSocket:info');
-info.log =
-    // tslint:disable-next-line: no-console
-    console.info.bind(console);
-
-const warn = baseTrace.extend('VSLSWebSocket:warn');
-warn.log =
-    // tslint:disable-next-line: no-console
-    console.warn.bind(console);
-
-const error = baseTrace.extend('VSLSWebSocket:error');
-error.log =
-    // tslint:disable-next-line: no-console
-    console.warn.bind(console);
 
 export const envConnector = new EnvConnector();
 

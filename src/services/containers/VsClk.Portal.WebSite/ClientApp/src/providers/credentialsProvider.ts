@@ -1,5 +1,5 @@
 import { trace as baseTrace } from '../utils/trace';
-import { authService } from './authService';
+import { authService } from '../services/authService';
 
 const info = baseTrace.extend('credentials-provider:info');
 
@@ -61,11 +61,24 @@ class AADv2BrowserSyncStrategy implements IAuthStrategy {
     }
 }
 
+const GENERIC_PREFIX = 'vsonline.keytar';
+
 export class CredentialsProvider implements ICredentialsProvider {
     constructor(private strategies: IAuthStrategy[]) {}
 
+    private generateGenericLocalStorageKey(service: string, account: string) {
+        return `${GENERIC_PREFIX}.${service}.${account}`;
+    }
+
     async getPassword(service: string, account: string): Promise<string | null> {
         info('Responding to VSCode keytar-shim request.', { service, account });
+
+        // generic keytar request
+        const genericKey = this.generateGenericLocalStorageKey(service, account);
+        const password = localStorage.getItem(genericKey);
+        if (password) {
+            return password;
+        }
 
         const strategy = this.strategies.find((strategy) =>
             strategy.canHandleService(service, account)
@@ -85,10 +98,19 @@ export class CredentialsProvider implements ICredentialsProvider {
         return token;
     }
 
-    async setPassword(service: string, account: string, password: string): Promise<void> {}
+    async setPassword(service: string, account: string, password: string): Promise<void> {
+        const key = this.generateGenericLocalStorageKey(service, account);
+        localStorage.setItem(key, password);
+    }
 
     async deletePassword(service: string, account: string): Promise<boolean> {
-        return false;
+        const key = this.generateGenericLocalStorageKey(service, account);
+        const isPresent = (localStorage.getItem(key))
+            ? true
+            : false;
+
+        localStorage.removeItem(key);
+        return isPresent;
     }
 
     findPassword(service: string): Promise<string | null> {

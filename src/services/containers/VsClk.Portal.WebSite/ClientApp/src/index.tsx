@@ -13,13 +13,19 @@ initializeIcons();
 
 const baseUrl = (document.getElementById('public_url') as HTMLBaseElement).getAttribute('href');
 const rootElement = document.getElementById('root');
-if (process.env.NODE_ENV === 'development') {
-    // localStorage.debug = 'vsa-portal-webapp,vsa-portal-webapp:*';
-    localStorage.debug = 'static-assets-worker:*';
-    // localStorage.debug = 'vs-ssh,vs-ssh:*';
-} else {
-    localStorage.debug = '';
+
+localStorage.debug = '';
+
+const enableTraceFactory = (traceName: string) => {
+    return () => {
+        localStorage.debug = traceName;
+    };
 }
+
+const win = window as any;
+win.vsoEnablePortalTrace = enableTraceFactory('vsa-portal-webapp,vsa-portal-webapp:*')
+win.vsoEnableSshTrace = enableTraceFactory('vs-ssh,vs-ssh:*');
+win.vsoEnableStaticAssetsSWTrace = enableTraceFactory('static-assets-worker:*');
 
 ReactDOM.render(
     <BrowserRouter basename={baseUrl || ''}>

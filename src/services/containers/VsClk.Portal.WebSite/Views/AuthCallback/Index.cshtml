@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Visual Studio Online: Authentication Redirect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+</head>
+
+<body>
+    <style>
+        .vso-main-caption {
+            text-align: center;
+            margin-top: 5rem;
+            font-family: sans-serif;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+    </style>
+
+    <h1 class="vso-main-caption">
+        You can now close the window.
+    </h1>
+
+    <script>
+        (function redirectCallback () {
+            var url = window.location.href;
+            const queryParamsString = url.split('?')[1];
+
+            if (!queryParamsString) {
+                throw new Exception('Failed to find the redirection query params.')
+            }
+
+            const queryParams = new URLSearchParams(queryParamsString);
+
+            const nonce = queryParams.get('vso-nonce');
+
+            const itemName = `${nonce}::vsonline.redirect.url`;
+            localStorage.setItem(itemName, url);
+        })();
+    </script>
+</body>
+
+</html>

@@ -1288,9 +1288,9 @@
     "@types/node" "*"
 
 "@types/vscode@^1.36.0":
-  version "1.36.0"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/vscode/-/vscode-1.36.0.tgz#ae60242e893d9eda9a0d96d51ef56f1a3fae14ed"
-  integrity sha1-rmAkLok9ntqaDZbVHvVvGj+uFO0=
+  version "1.38.0"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/vscode/-/vscode-1.38.0.tgz#1e53953406ef662354e2e62451c3c71c9ff19a6d"
+  integrity sha1-HlOVNAbvZiNU4uYkUcPHHJ/xmm0=
 
 "@uifabric/fluent-theme@^7.0.4":
   version "7.0.4"

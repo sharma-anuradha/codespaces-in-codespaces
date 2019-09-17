@@ -12,7 +12,9 @@ import { IToken } from '../../services/authService';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { isEnvironmentAvailable } from '../../utils/environmentUtils';
-import { credentialsProvider } from '../../services/credentialsProvider';
+
+import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
+import { credentialsProvider } from '../../providers/credentialsProvider';
 import { resourceUriProviderFactory } from '../../common/vscode-url-utils';
 import { postServiceWorkerMessage } from '../../common/post-message';
 import { authenticateMessageType, disconnectCloudEnv } from '../../common/service-worker-messages';
@@ -100,6 +102,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
                 remoteAuthority: `localhost`,
                 webviewEndpoint: `http://localhost`,
                 webSocketFactory: VSLSWebSocketFactory,
+                urlCallbackProvider: new UrlCallbackProvider(),
                 connectionToken: vscodeConfig.commit,
                 credentialsProvider,
                 resourceUriProvider,
