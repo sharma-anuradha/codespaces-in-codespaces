@@ -7,10 +7,10 @@ frontend-web-api:
     hosts:
       - online.visualstudio.com
       - online.core.vsengsaas.visualstudio.com
-      - eastus-prod-rel.online.visualstudio.com
-      - westeurope-prod-rel.online.visualstudio.com
-      - westus2-prod-rel.online.visualstudio.com
-      - southeastasia-prod-rel.online.visualstudio.com
+      - eastus-prod-rel-online.core.vsengsaas.visualstudio.com
+      - westeurope-prod-rel-online.core.vsengsaas.visualstudio.com
+      - westus2-prod-rel-online.core.vsengsaas.visualstudio.com
+      - southeastasia-prod-rel-online.core.vsengsaas.visualstudio.com
       - vsclk-online-prod-rel-tm.trafficmanager.net
       - vsclk-online-prod-rel-asse-tm.trafficmanager.net
       - vsclk-online-prod-rel-euw-tm.trafficmanager.net
@@ -19,12 +19,11 @@ frontend-web-api:
     tls:
       - hosts:
         - online.visualstudio.com
-        # TODO: the below hosts are not on the SSL cert! Need to fix
         - online.core.vsengsaas.visualstudio.com
-        - eastus-prod-rel.online.visualstudio.com
-        - westeurope-prod-rel.online.visualstudio.com
-        - westus2-prod-rel.online.visualstudio.com
-        - southeastasia-prod-rel.online.visualstudio.com
+        - eastus-prod-rel-online.core.vsengsaas.visualstudio.com
+        - westeurope-prod-rel-online.core.vsengsaas.visualstudio.com
+        - westus2-prod-rel-online.core.vsengsaas.visualstudio.com
+        - southeastasia-prod-rel-online.core.vsengsaas.visualstudio.com
         secretName: ssl-cert
 
 # Config for backend

@@ -191,7 +191,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             void eastUsStamp(IControlPlaneStampInfo s)
             {
                 Assert.Equal(AzureLocation.EastUs, s.Location);
-                Assert.Equal("eastus-prod-rel.online.visualstudio.com", s.DnsHostName);
+                Assert.Equal("eastus-prod-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-prod-rel-use", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-prod-rel-use-db", s.StampCosmosDbAccountName);
                 Assert.Equal("vsclkonlineprodrelusesa", s.StampStorageAccountName);
@@ -208,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             void westEuropeStamp(IControlPlaneStampInfo s)
             {
                 Assert.Equal(AzureLocation.WestEurope, s.Location);
-                Assert.Equal("westeurope-prod-rel.online.visualstudio.com", s.DnsHostName);
+                Assert.Equal("westeurope-prod-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-prod-rel-euw", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-prod-rel-euw-db", s.StampCosmosDbAccountName);
                 Assert.Equal("vsclkonlineprodreleuwsa", s.StampStorageAccountName);
@@ -225,7 +225,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             void westUs2Stamp(IControlPlaneStampInfo s)
             {
                 Assert.Equal(AzureLocation.WestUs2, s.Location);
-                Assert.Equal("westus2-prod-rel.online.visualstudio.com", s.DnsHostName);
+                Assert.Equal("westus2-prod-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-prod-rel-usw2", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-prod-rel-usw2-db", s.StampCosmosDbAccountName);
                 Assert.Equal("vsclkonlineprodrelusw2sa", s.StampStorageAccountName);
@@ -242,7 +242,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             void southEastAsiaStamp(IControlPlaneStampInfo s)
             {
                 Assert.Equal(AzureLocation.SouthEastAsia, s.Location);
-                Assert.Equal("southeastasia-prod-rel.online.visualstudio.com", s.DnsHostName);
+                Assert.Equal("southeastasia-prod-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-prod-rel-asse", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-prod-rel-asse-db", s.StampCosmosDbAccountName);
                 Assert.Equal("vsclkonlineprodrelassesa", s.StampStorageAccountName);
