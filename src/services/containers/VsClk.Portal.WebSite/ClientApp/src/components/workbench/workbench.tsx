@@ -6,11 +6,10 @@ import './workbench.css';
 import { trace } from '../../utils/trace';
 import { vscodeConfig } from '../../constants';
 
-import { VSLSWebSocket, IWebSocketFactory, envConnector } from '../../resolvers/vslsResolver';
+import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
 import { IToken } from '../../services/authService';
 
 import { ApplicationState } from '../../reducers/rootReducer';
-import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { isEnvironmentAvailable } from '../../utils/environmentUtils';
 
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
@@ -18,6 +17,11 @@ import { credentialsProvider } from '../../providers/credentialsProvider';
 import { resourceUriProviderFactory } from '../../common/vscode-url-utils';
 import { postServiceWorkerMessage } from '../../common/post-message';
 import { authenticateMessageType, disconnectCloudEnv } from '../../common/service-worker-messages';
+
+import { vscode } from '../../utils/vscode';
+
+import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
+import { IWorkbenchConstructionOptions, IWebSocketFactory } from 'vscode-web';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
@@ -47,8 +51,14 @@ class WorkbenchView extends Component<WorkbenchProps> {
         this.mountWorkbench(environmentInfo);
     }
 
-    mountWorkbench(environmentInfo: ICloudEnvironment) {
+    async mountWorkbench(environmentInfo: ICloudEnvironment) {
         if (this.workbenchMounted) {
+            return;
+        }
+
+        await vscode.getVSCode();
+
+        if (!this.workbenchRef) {
             return;
         }
 
@@ -58,17 +68,13 @@ class WorkbenchView extends Component<WorkbenchProps> {
 
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
         envConnector.ensureConnection(environmentInfo, accessToken);
-        const resourceUriProvider = resourceUriProviderFactory(
-            environmentInfo.connection.sessionId,
-            envConnector
-        );
 
         postServiceWorkerMessage({
             type: authenticateMessageType,
             payload: {
                 accessToken,
                 sessionId: environmentInfo.connection.sessionId,
-            },
+            }
         });
 
         const listener = () => {
@@ -83,34 +89,38 @@ class WorkbenchView extends Component<WorkbenchProps> {
         };
         window.addEventListener('beforeunload', listener);
 
-        AMDLoader.global.require(['vs/workbench/workbench.web.api'], (workbench: any) => {
-            const { sessionPath } = environmentInfo.connection;
+        const resourceUriProvider = resourceUriProviderFactory(
+            environmentInfo.connection.sessionId,
+            envConnector
+        );
 
-            const VSLSWebSocketFactory: IWebSocketFactory = {
-                create(url: string) {
-                    return new VSLSWebSocket(url, accessToken, environmentInfo);
-                },
-            };
+        const { sessionPath } = environmentInfo.connection;
 
-            const config = {
-                folderUri: {
-                    $mid: 1,
-                    path: sessionPath,
-                    scheme: 'vscode-remote',
-                    authority: `localhost`,
-                },
-                remoteAuthority: `localhost`,
-                webviewEndpoint: `http://localhost`,
-                webSocketFactory: VSLSWebSocketFactory,
-                urlCallbackProvider: new UrlCallbackProvider(),
-                connectionToken: vscodeConfig.commit,
-                credentialsProvider,
-                resourceUriProvider,
-            };
+        const VSLSWebSocketFactory: IWebSocketFactory = {
+            create(url: string) {
+                return new VSLSWebSocket(url, accessToken, environmentInfo);
+            },
+        };
 
-            trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
-            workbench.create(this.workbenchRef, config);
+        const folderUri = vscode.URI.from({
+            path: sessionPath,
+            scheme: 'vscode-remote',
+            authority: `localhost`,
         });
+
+        const config: IWorkbenchConstructionOptions = {
+            folderUri,
+            remoteAuthority: `localhost`,
+            webviewEndpoint: `http://localhost`,
+            webSocketFactory: VSLSWebSocketFactory,
+            urlCallbackProvider: new UrlCallbackProvider(),
+            connectionToken: vscodeConfig.commit,
+            credentialsProvider,
+            resourceUriProvider,
+        };
+
+        trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
+        vscode.create(this.workbenchRef, config);
     }
 
     private workbenchRef: HTMLDivElement | null = null;

@@ -1,11 +1,14 @@
 import { SshChannel } from '@vs/vs-ssh';
 import { Event, Emitter } from 'vscode-jsonrpc';
 
+import { IWebSocket } from 'vscode-web';
+
 import { EnvConnector } from '../ts-agent/envConnector';
-import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { bufferToArrayBuffer } from '../utils/bufferToArrayBuffer';
 import { trace as baseTrace } from '../utils/trace';
 import { createTrace } from '../utils/createTrace';
+
+import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 
 const TRACE_NAME = 'vsls-web-socket';
 const { verbose, info, error } = createTrace(TRACE_NAME);
@@ -16,20 +19,6 @@ logContent.log =
     typeof console.debug === 'function' ? console.debug.bind(console) : console.log.bind(console);
 
 export const envConnector = new EnvConnector();
-
-export interface IWebSocketFactory {
-    create(url: string): IWebSocket;
-}
-
-export interface IWebSocket {
-    readonly onData: Event<ArrayBuffer>;
-    readonly onOpen: Event<void>;
-    readonly onClose: Event<void>;
-    readonly onError: Event<any>;
-
-    send(data: ArrayBuffer | ArrayBufferView): void;
-    close(): void;
-}
 
 export class VSLSWebSocket implements IWebSocket {
     private id: number;

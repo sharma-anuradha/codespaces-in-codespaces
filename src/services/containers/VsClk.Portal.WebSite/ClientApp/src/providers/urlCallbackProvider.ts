@@ -1,6 +1,8 @@
-import { IURLCallbackProvider } from '../interfaces/IUrlCallbackProvider';
+import { URI, IURLCallbackProvider } from 'vscode-web';
+
+import { vscode } from '../utils/vscode';
+
 import { Emitter, Event } from 'vscode-jsonrpc';
-import { IUriComponents } from '../interfaces/IUriComponents';
 
 import { getQueryParams } from '../utils/getQueryParams';
 
@@ -15,9 +17,8 @@ const VSO_NONCE_PARAM_NAME = 'vso-nonce';
 
 const LOCAL_STORAGE_KEY = 'vsonline.redirect.url';
 
-interface IOptions { [key:string]: string };
 export class UrlCallbackProvider implements IURLCallbackProvider {
-    private [callbackSymbol] = new Emitter<IUriComponents>();
+    private [callbackSymbol] = new Emitter<URI>();
 
     constructor() {
         // listen for changes to localStorage
@@ -62,13 +63,13 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
 
         // please use the https://github.com/microsoft/vscode/blob/2320972f5f1206d6e9a047e3850b4d0bee4d2e87/src/vs/base/common/uri.ts#L99
         // for the Uri format refrence
-        const protocolHandlerUri: IUriComponents = {
+        const protocolHandlerUri = vscode.URI.with({
             authority: queryParams.get(VSO_AUTHORITY_PARAM_NAME)!,
             query: this.cleanQueryFromVsoParams(queryParams).toString(),
             scheme: this.getVSCodeScheme(),
             path: queryParams.get(VSO_PATH_PARAM_NAME)!,
             fragment: ''
-        }
+        });
 
         // keeping this console in to demostrate the issue to the VSCode team
         // tslint:=next-line: no-console
@@ -93,7 +94,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         return queryParamsWithoutVSOParams;
     }
     
-    public onCallback: Event<IUriComponents> = this[callbackSymbol].event;
+    public onCallback: Event<URI> = this[callbackSymbol].event;
 
     private generateUrlCallbackParams(authority: string, path: string, query: string) {
         const nonce = randomStr();
@@ -107,7 +108,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         return params.toString();
     }
 
-    public create(options: Partial<IUriComponents>) {
+    public create(options: Partial<URI>) {
         if (!options) {
             throw new Error('No "options" set.');
         }
@@ -118,13 +119,13 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
             throw new Error('No "authority" set.');
         }
 
-        const uri: IUriComponents = {
+        const uri = vscode.URI.with({
             scheme: location.protocol.replace(/\:/g, ''),
             path: '/extension-auth-callback',
             authority: location.host,
             query: this.generateUrlCallbackParams(authority!, path, query),
             fragment: options.fragment || ''
-        }
+        })
 
         return uri;
     }

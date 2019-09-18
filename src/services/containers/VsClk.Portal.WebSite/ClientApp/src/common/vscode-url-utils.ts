@@ -1,5 +1,8 @@
+import { URI } from 'vscode-web';
+
 import { vscodeConfig } from '../constants';
 import { EnvConnector } from '../ts-agent/envConnector';
+import { vscode } from '../utils/vscode';
 
 export type ParsedAssetRequestUrl = {
     readonly isAssetUrl: true;
@@ -103,6 +106,7 @@ export function parseRequestUrl(url: string): ParsedUrl {
 }
 
 export function resourceUriProviderFactory(sessionId: string, connector: EnvConnector) {
+
     const connectionParams: { port: number | undefined } = {
         port: undefined,
     };
@@ -112,19 +116,19 @@ export function resourceUriProviderFactory(sessionId: string, connector: EnvConn
         connectionParams.port = port;
     });
 
-    return (uri: { path: string }) => {
+    return (uri: URI): URI => {
         if (!connectionParams.port) {
             throw new Error(
                 'Cannot resolve asset URLs before connection to cloud environment is established.'
             );
         }
 
-        return {
+        return vscode.URI.from({
             scheme: 'https',
             authority: window.location.host,
             // We attach vscodeRemoteResourcePathComponent at the end for easier recognizability when compared with self host.
             path: `/${assetsPathComponent}/${sessionId}/${connectionParams.port}/${vscodeRemoteResourcePathComponent}`,
             query: `path=${encodeURIComponent(uri.path)}&tkn=${vscodeConfig.commit}`,
-        };
+        });
     };
 }

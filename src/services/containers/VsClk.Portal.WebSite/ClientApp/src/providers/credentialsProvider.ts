@@ -1,15 +1,9 @@
+import { ICredentialsProvider } from 'vscode-web';
+
 import { trace as baseTrace } from '../utils/trace';
 import { authService } from '../services/authService';
 
 const info = baseTrace.extend('credentials-provider:info');
-
-export interface ICredentialsProvider {
-    getPassword(service: string, account: string): Promise<string | null>;
-    setPassword(service: string, account: string, password: string): Promise<void>;
-    deletePassword(service: string, account: string): Promise<boolean>;
-    findPassword(service: string): Promise<string | null>;
-    findCredentials(service: string): Promise<{ account: string; password: string }[]>;
-}
 
 type VSCodeAccountIToken = {
     accessToken: string;
