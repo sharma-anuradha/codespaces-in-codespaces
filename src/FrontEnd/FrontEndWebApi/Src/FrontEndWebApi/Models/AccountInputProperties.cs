@@ -9,7 +9,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     public class AccountInputProperties
     {
-        [JsonProperty(Required = Required.Default, PropertyName = "sku")]
-        public Sku Plan { get; set; }
+       
     }
 }

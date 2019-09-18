@@ -120,10 +120,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,
                     },
-                    Plan = new Sku
-                    {
-                        Name = modelInput.Properties.Plan.Name,
-                    },
                 };
 
                 await this.accountManager.CreateOrUpdateAsync(account, logger);
