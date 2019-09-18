@@ -63,7 +63,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             logger.FluentAddValue("VersionPoolDefinition", resourcePool.Details.GetPoolDefinition())
                 .FluentAddValue("VersionPoolVersioDefinition", resourcePool.Details.GetPoolVersionDefinition())
-                .FluentAddValue("VersionPoolTargetCount", resourcePool.TargetCount);
+                .FluentAddValue("VersionPoolTargetCount", resourcePool.TargetCount)
+                .FluentAddValue("VersionPoolImageFamilyName", resourcePool.Details.ImageFamilyName)
+                .FluentAddValue("VersionPoolImageName", resourcePool.Details.ImageName);
 
             // Check database for non current count
             var unassignedNotVersionCount = await GetPoolUnassignedNotVersionCountAsync(resourcePool, logger);
