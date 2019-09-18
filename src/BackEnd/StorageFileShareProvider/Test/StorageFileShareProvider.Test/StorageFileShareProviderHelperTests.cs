@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -35,6 +36,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly string azureLocationStr = "westus2";
         private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
         private static readonly string azureSubscriptionName = "ignorethis";
+        private static readonly IDictionary<string, string> resourceTags = new Dictionary<string, string>
+        {
+            {"resourceTag", "GeneratedFromTest"},
+        };
         private static readonly int PREPARE_TIMEOUT_MINS = 60;
         private static readonly int NUM_STORAGE_TO_CREATE = 1;
 
@@ -129,7 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             // Create storage accounts
             var storageAccounts = await Task.WhenAll(
                 Enumerable.Range(0, NUM_STORAGE_TO_CREATE)
-                    .Select(x => providerHelper.CreateStorageAccountAsync(azureSubscriptionId, azureLocationStr,  GetResourceGroupName(resourceGroupTestGroupGuid), logger))
+                    .Select(x => providerHelper.CreateStorageAccountAsync(azureSubscriptionId, azureLocationStr,  GetResourceGroupName(resourceGroupTestGroupGuid), resourceTags, logger))
             );
 
             try

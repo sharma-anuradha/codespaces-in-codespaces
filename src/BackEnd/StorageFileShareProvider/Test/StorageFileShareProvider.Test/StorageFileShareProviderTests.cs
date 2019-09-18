@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
@@ -26,6 +27,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly Guid MockSubscriptionId = Guid.Parse("a058a07c-dfbb-4501-82a2-fa0bb37ec166");
         private static readonly AzureResourceInfo MockAzureResourceInfo = new AzureResourceInfo(MockSubscriptionId, MockResourceGroup, MockStorageAccountName);
 
+        private static readonly IDictionary<string, string> MockResourceTags = new Dictionary<string, string>
+        {
+            {"resourceTag", "GeneratedFromTest"},
+        };
+
         [Fact]
         public void Ctor_with_bad_options()
         {
@@ -42,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             var mockCheckPrepareResults = new[] { 0.0, 0.5, 0.7, 1 };
             providerHelperMoq
-                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockAzureResourceInfo);
             providerHelperMoq
                 .Setup(x => x.CreateFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
@@ -65,7 +71,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 AzureResourceGroup = MockResourceGroup,
                 AzureLocation = MockLocation,
                 AzureSubscription = MockSubscriptionId.ToString(),
-                StorageBlobUrl = MockStorageBlobUrl
+                StorageBlobUrl = MockStorageBlobUrl,
+                ResourceTags = MockResourceTags,
             };
 
             // 3 because there are 3 steps before we wait for the preparation to complete.
@@ -111,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
-                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
                 .Throws(new Exception());
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             var input = new FileShareProviderCreateInput()
@@ -120,6 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 AzureLocation = MockLocation,
                 AzureSubscription = MockSubscriptionId.ToString(),
                 StorageBlobUrl = MockStorageBlobUrl,
+                ResourceTags = MockResourceTags,
             };
             var result = await storageProvider.CreateAsync(input, logger);
             Assert.NotNull(result);

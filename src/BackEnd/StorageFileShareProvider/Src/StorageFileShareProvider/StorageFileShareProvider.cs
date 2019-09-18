@@ -151,6 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     input.AzureSubscription,
                     input.AzureLocation,
                     input.AzureResourceGroup,
+                    input.ResourceTags,
                     logger);
                 resultResourceInfo = resourceInfo;
                 nextState = FileShareProviderCreateState.CreateFileShare;

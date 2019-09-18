@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Storage.Fluent;
@@ -49,11 +50,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             string azureSubscriptionId,
             string azureRegion,
             string azureResourceGroup,
+            IDictionary<string, string> resourceTags,
             IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(azureRegion, nameof(azureRegion));
             Requires.NotNullOrEmpty(azureResourceGroup, nameof(azureResourceGroup));
             Requires.NotNullOrEmpty(azureSubscriptionId, nameof(azureSubscriptionId));
+            Requires.NotNullOrEmpty(resourceTags, nameof(resourceTags));
 
             logger = logger.WithValues(new LogValueSet
             {
@@ -73,6 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     .WithGeneralPurposeAccountKindV2()
                     .WithOnlyHttpsTraffic()
                     .WithSku(StorageAccountSkuType.Standard_LRS)
+                    .WithTags(resourceTags)
                     .CreateAsync();
 
                 logger.FluentAddValue("AzureStorageAccountName", storageAccountName)

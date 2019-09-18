@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models
@@ -30,6 +31,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// Gets or sets the azure sku name that should be targeted.
         /// </summary>
         public string AzureSkuName { get; set; }
+
+        /// <summary>
+        /// Gets or sets resource tags that should be added to the resource.
+        /// </summary>
+        public IDictionary<string, string> ResourceTags { get; set; }
 
         /// <summary>
         /// Gets or sets the blob url used for file share preparation.
