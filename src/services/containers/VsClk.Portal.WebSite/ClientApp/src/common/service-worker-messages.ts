@@ -1,4 +1,5 @@
 import { ConnectionDetails } from './connection-details';
+import { ServiceWorkerConfiguration } from './service-worker-configuration';
 
 export const authenticateMessageType = 'cloudenv/authenticate';
 export type Connected = {
@@ -14,4 +15,10 @@ export type Disconnect = {
     };
 };
 
-export type ServiceWorkerMessage = Connected | Disconnect;
+export const configureServiceWorker = 'cloudenv/configure';
+export type Configure = {
+    type: typeof configureServiceWorker;
+    payload: ServiceWorkerConfiguration;
+};
+
+export type ServiceWorkerMessage = Connected | Disconnect | Configure;

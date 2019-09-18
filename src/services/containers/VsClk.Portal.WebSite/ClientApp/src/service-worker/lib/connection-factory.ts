@@ -4,8 +4,10 @@ import * as vsls from '../../ts-agent/contracts/VSLS';
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
 import { SshDisconnectReason } from '@vs/vs-ssh';
 import { createLogger, Logger } from './logger';
+import { ConfigurationManager } from './configuration-manager';
+import { CredentialsManager } from './credentials-manager';
 
-export class LiveShareConnection {
+export class LiveShareConnection implements Disposable {
     private serverSharingService!: vsls.ServerSharingService;
     private streamManagerClient!: vsls.StreamManagerService;
     private workspaceClient!: WorkspaceClient;
@@ -21,8 +23,8 @@ export class LiveShareConnection {
     private disposables: Disposable[] = [];
 
     constructor(
-        private readonly liveShareUri: string,
-        private accessToken: string,
+        private readonly credentialsManager: CredentialsManager,
+        private readonly configurationManager: ConfigurationManager,
         private sessionId: string
     ) {
         this.logger = createLogger(`LiveShareConnection:${sessionId.substr(0, 5)}`);
@@ -30,12 +32,22 @@ export class LiveShareConnection {
 
     async init() {
         const defaultArgs = {
-            liveShareUri: this.liveShareUri,
+            liveShareUri: this.configurationManager.configuration.liveShareEndpoint,
             sessionId: this.sessionId,
         };
         this.logger.info('Initializing live share connection', defaultArgs);
 
-        const webClient = new WebClient(this.liveShareUri, this.accessToken);
+        const credentials = this.credentialsManager.getCredentials(this.sessionId);
+
+        if (!credentials) {
+            this.logger.error('Cannot create connection. Missing credentials.', defaultArgs);
+            throw new Error('Cannot create connection. Missing credentials.');
+        }
+
+        const webClient = new WebClient(
+            this.configurationManager.configuration.liveShareEndpoint,
+            credentials.accessToken
+        );
         this.workspaceClient = new WorkspaceClient(webClient);
         this.disposables.push(this.workspaceClient);
 
@@ -53,19 +65,30 @@ export class LiveShareConnection {
             );
         }
 
-        this.logger.verbose('Connecting to live share session.', defaultArgs);
-        await this.workspaceClient.connect(this.sessionId);
-        this.logger.verbose('Authenticating live share session.', defaultArgs);
-        await this.workspaceClient.authenticate();
-        this.logger.verbose('Joining live share session.', defaultArgs);
-        await this.workspaceClient.join();
+        try {
+            this.logger.verbose('Connecting to live share session.', defaultArgs);
+            await this.workspaceClient.connect(this.sessionId);
+            this.logger.verbose('Authenticating live share session.', defaultArgs);
+            await this.workspaceClient.authenticate();
+            this.logger.verbose('Joining live share session.', defaultArgs);
+            await this.workspaceClient.join();
 
-        this.logger.info('Initialized live share session.', defaultArgs);
+            this.logger.info('Initialized live share session.', defaultArgs);
+        } catch (error) {
+            this.logger.error('Failed to create Live Share connection.', {
+                ...defaultArgs,
+                error,
+            });
+
+            this.workspaceClient.dispose();
+
+            throw error;
+        }
     }
 
     async getSharedServerStream(port: number) {
         const defaultArgs = {
-            liveShareUri: this.liveShareUri,
+            liveShareUri: this.configurationManager.configuration.liveShareEndpoint,
             sessionId: this.sessionId,
         };
         this.logger.verbose('Getting shared server stream.', defaultArgs);
@@ -105,18 +128,24 @@ export class LiveShareConnection {
 
 export class LiveShareConnectionFactory {
     private readonly logger: Logger;
-    constructor(private readonly liveShareUri: string) {
+    constructor(
+        private readonly credentialsManager: CredentialsManager,
+        private readonly configurationManager: ConfigurationManager
+    ) {
         this.logger = createLogger('LiveShareConnectionFactory');
     }
 
-    async createConnection(accessToken: string, sessionId: string) {
+    async createConnection(sessionId: string) {
         const defaultAttributes = {
             sessionId,
-            accessToken: accessToken.substr(0, 10) + '...',
         };
         this.logger.info('Creating LiveShare connection.', defaultAttributes);
 
-        const connection = new LiveShareConnection(this.liveShareUri, accessToken, sessionId);
+        const connection = new LiveShareConnection(
+            this.credentialsManager,
+            this.configurationManager,
+            sessionId
+        );
 
         try {
             await connection.init();

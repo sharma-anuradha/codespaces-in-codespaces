@@ -1,19 +1,22 @@
-import { LiveShareConnectionFactory } from './lib/connection-factory';
+import { ConfigurationManager } from './lib/configuration-manager';
 import { ConnectionManager } from './lib/connection-manager';
 import { CredentialsManager } from './lib/credentials-manager';
-import { LiveShareHttpClient } from './lib/http-client';
-import { VSLS_API_URI } from '../constants';
 import { createLogger } from './lib/logger';
+import { LiveShareConnectionFactory } from './lib/connection-factory';
+import { LiveShareHttpClient } from './lib/http-client';
+
 import {
     ServiceWorkerMessage,
     authenticateMessageType,
     disconnectCloudEnv,
+    configureServiceWorker,
 } from '../common/service-worker-messages';
 
 declare var self: ServiceWorkerGlobalScope;
 
-const connectionFactory = new LiveShareConnectionFactory(VSLS_API_URI);
 const credentialsManager = new CredentialsManager();
+const configurationManager = new ConfigurationManager();
+const connectionFactory = new LiveShareConnectionFactory(credentialsManager, configurationManager);
 const connectionManager = new ConnectionManager(connectionFactory, credentialsManager);
 const httpClient = new LiveShareHttpClient(connectionManager);
 
@@ -51,6 +54,10 @@ self.addEventListener('message', async (event) => {
         }
         case disconnectCloudEnv: {
             connectionManager.disposeConnection(message.payload);
+            return;
+        }
+        case configureServiceWorker: {
+            configurationManager.updateConfiguration(message.payload);
             return;
         }
     }

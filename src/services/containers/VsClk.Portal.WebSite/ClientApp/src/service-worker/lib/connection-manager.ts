@@ -121,9 +121,6 @@ export class ConnectionManager {
             throw new Error('Cannot create connections before credentials are set.');
         }
 
-        return this.connectionFactory.createConnection(
-            credentials.accessToken,
-            connectionRequest.sessionId
-        );
+        return this.connectionFactory.createConnection(connectionRequest.sessionId);
     }
 }
