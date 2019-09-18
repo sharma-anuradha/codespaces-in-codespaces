@@ -30,7 +30,7 @@ config:
   authRedirectUrl: https://online.visualstudio.com
   keyVaultName: vsclk-online-prod-kv
   clusterDefaultHost: online.visualstudio.com
-  environmentRegistrationEndpoint: https://online.visualstudio.com/api/environment/registration
+  environmentRegistrationEndpoint: https://online.visualstudio.com/api/v1/environments
 
 azure-secrets:
   # vsclk-core-dev
