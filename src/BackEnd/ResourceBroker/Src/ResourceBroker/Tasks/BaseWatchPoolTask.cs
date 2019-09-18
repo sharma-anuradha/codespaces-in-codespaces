@@ -82,58 +82,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// </summary>
         /// <param name="resourcePool">Current pool definition.</param>
         /// <param name="logger">Target logger.</param>
-        /// <returns></returns>
-        protected abstract Task RunPoolActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger);
+        /// <returns>Running task.</returns>
+        protected abstract Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger);
 
-        private async Task<bool> CoreRunAsync(IDiagnosticsLogger rootLogger)
+        private async Task<bool> CoreRunAsync(IDiagnosticsLogger logger)
         {
-            var logger = rootLogger.WithValues(new LogValueSet());
-
             // Get current catalog
             var resourceUnits = await RetrieveResourceSkus();
 
-            logger.FluentAddValue("CountResourceUnits", resourceUnits.Count().ToString());
+            logger.FluentAddValue("TaskCountResourceUnits", resourceUnits.Count().ToString());
 
             // Run through found resources
             foreach (var resourceUnit in resourceUnits)
             {
                 // Spawn out the tasks and run in parallel
                 TaskHelper.RunBackground(
-                    $"{LogBaseName}_run_pool_check",
+                    $"{LogBaseName}_run_unit_check",
                     (childLogger) =>
                     {
                         return childLogger.OperationScopeAsync(
-                            $"{LogBaseName}_run_pool_check",
-                            () => RunPoolCheckAsync(resourceUnit, childLogger),
+                            $"{LogBaseName}_run_unit_check",
+                            () => CoreRunUnitAsync(resourceUnit, childLogger),
                             swallowException: true);
                     },
-                    rootLogger);
+                    logger);
             }
 
             return !Disposed;
         }
 
-        private async Task RunPoolCheckAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
+        private async Task CoreRunUnitAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ActivityInstanceId", Guid.NewGuid().ToString())
-                .FluentAddBaseValue("ResourceLocation", resourcePool.Details.Location)
-                .FluentAddBaseValue("ResourceSkuName", resourcePool.Details.SkuName)
-                .FluentAddBaseValue("ResourceType", resourcePool.Type.ToString());
+            logger.FluentAddBaseValue("TaskRunId", Guid.NewGuid())
+                .FluentAddBaseValue("TaskResourceLocation", resourcePool.Details.Location.ToString())
+                .FluentAddBaseValue("TaskResourceSkuName", resourcePool.Details.SkuName)
+                .FluentAddBaseValue("TaskResourceType", resourcePool.Type.ToString());
 
             // Obtain a lease if no one else has it
             using (var lease = await ObtainLease($"{LeaseBaseName}-{resourcePool.Details.GetPoolDefinition()}"))
             {
+                logger.FluentAddValue("LeaseNotFound", lease == null);
+
                 // If we couldn't obtain a lease, move on
                 if (lease == null)
                 {
-                    logger.FluentAddValue("LeaseNotFound", true.ToString());
-
                     return;
                 }
 
                 // Executes the action that needs to be performed on the pool
                 await logger.TrackDurationAsync(
-                    "RunPoolAction", () => RunPoolActionAsync(resourcePool, logger));
+                    "RunPoolAction", () => RunActionAsync(resourcePool, logger));
             }
         }
 

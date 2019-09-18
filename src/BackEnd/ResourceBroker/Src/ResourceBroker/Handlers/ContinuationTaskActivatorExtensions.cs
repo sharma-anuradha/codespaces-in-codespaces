@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
@@ -22,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Create compute resource by invoking the continution activator.
         /// </summary>
+        /// <param name="resourceId">Target resource id.</param>
         /// <param name="activator">Target continuation activator.</param>
         /// <param name="type">Target type.</param>
         /// <param name="detials">Target detials.</param>
@@ -30,17 +32,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <returns>Resuling continuation result.</returns>
         public static async Task<ContinuationResult> CreateResource(
             this IContinuationTaskActivator activator,
+            Guid resourceId,
             ResourceType type,
             ResourcePoolResourceDetails detials,
             string trigger,
             IDiagnosticsLogger logger)
         {
+            logger.FluentAddBaseValue("ResourceId", resourceId);
 
             var input = new CreateResourceContinuationInput()
             {
                 Type = type,
                 ResourcePoolDetails = detials,
-                ResourceId = Guid.NewGuid(),
+                ResourceId = resourceId,
                 Reason = trigger,
             };
             var target = CreateResourceContinuationHandler.DefaultQueueTarget;
@@ -66,6 +70,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             string trigger,
             IDiagnosticsLogger logger)
         {
+            logger.FluentAddBaseValue("ResourceId", computeResourceId)
+                .FluentAddBaseValue("StorageResourceId", storageResourceId);
+
             var input = new StartEnvironmentContinuationInput()
             {
                 ResourceId = computeResourceId,
@@ -92,6 +99,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             string trigger,
             IDiagnosticsLogger logger)
         {
+            logger.FluentAddBaseValue("ResourceId", resourceId);
+
             var input = new DeleteResourceContinuationInput()
             {
                 ResourceId = resourceId,

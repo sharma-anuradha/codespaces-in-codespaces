@@ -37,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
+            Random = new Random();
         }
 
         private IWatchPoolSizeTask WatchPoolSizeJob { get; }
@@ -49,25 +50,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private ITaskHelper TaskHelper { get; }
 
+        private Random Random { get; }
+
         /// <inheritdoc/>
         public Task WarmupCompletedAsync(IDiagnosticsLogger logger)
         {
+            // Job: Continuation Task Worker Pool Manager
+            TaskHelper.RunBackground(
+                $"{ResourceLoggingConstants.ContinuationTaskWorkerPoolManager}_start",
+                (childLogger) => ContinuationTaskWorkerPoolManager.StartAsync(childLogger));
+
             // Job: Populate continuation message cache
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.ContinuationTaskMessagePump}_run_try_populate_cache",
                 (childLogger) => ContinuationTaskMessagePump.RunTryPopulateCacheAsync(childLogger),
                 TimeSpan.FromSeconds(10));
 
-            // Job: Continuation Task Worker Pool Manager
-            TaskHelper.RunBackground(
-                $"{ResourceLoggingConstants.ContinuationTaskWorkerPoolManager}_start",
-                (childLogger) => ContinuationTaskWorkerPoolManager.StartAsync(childLogger));
+            // Offset to help distribute inital load of recuring tasks
+            Task.Delay(Random.Next(1000, 2000));
 
             // Job: Watch Pool Size
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchPoolSizeTask}_run",
                 (childLogger) => WatchPoolSizeJob.RunAsync(childLogger),
                 TimeSpan.FromMinutes(1));
+
+            // Offset to help distribute inital load of recuring tasks
+            Task.Delay(Random.Next(5000, 7500));
 
             // Job: Watch Pool Version
             TaskHelper.RunBackgroundLoop(

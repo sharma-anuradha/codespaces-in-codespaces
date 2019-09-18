@@ -87,8 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 // Pull out typed message content
                 var payload = GetTypedPayload(message);
 
-                logger.FluentAddBaseValue("ContinuationPayloadSystemId", payload.SystemId)
-                    .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                logger.FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
                     .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
                     .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
                     .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)

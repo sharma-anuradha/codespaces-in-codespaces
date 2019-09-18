@@ -40,17 +40,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private IContinuationTaskMessagePump MessagePump { get; }
 
         /// <inheritdoc/>
-        public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger, Guid? systemId = null)
+        public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger, Guid? trackingId = null)
         {
-            var trackingId = Guid.NewGuid();
-            if (systemId == null)
-            {
-                systemId = trackingId;
-            }
+            trackingId = trackingId ?? Guid.NewGuid();
 
             var payload = new ResourceJobQueuePayload
             {
-                SystemId = systemId.ToString(),
                 TrackingId = trackingId.ToString(),
                 Created = DateTime.UtcNow,
                 Status = null,
@@ -70,7 +65,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid())
-                .FluentAddBaseValue("ContinuationPayloadSystemId", payload.SystemId)
                 .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
                 .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
                 .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
@@ -118,7 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
             // Result is based off the current
-            var resultPayload = new ResourceJobQueuePayload(payload.SystemId, payload.TrackingId, payload.Target, payload.Created, payload.StepCount + 1);
+            var resultPayload = new ResourceJobQueuePayload(payload.TrackingId, payload.Target, payload.Created, payload.StepCount + 1);
 
             // Run the continuation
             var result = (ContinuationResult)null;

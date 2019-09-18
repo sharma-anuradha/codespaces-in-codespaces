@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        protected override string LeaseBaseName => "WatchPoolSizeTaskLease";
+        protected override string LeaseBaseName => $"{nameof(WatchPoolSizeTask)}Lease";
 
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchPoolSizeTask;
@@ -57,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IResourceRepository ResourceRepository { get; }
 
         /// <inheritdoc/>
-        protected async override Task RunPoolActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
+        protected async override Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             // Determine the effective size of the pool
             var unassignedCount = await GetPoolUnassignedCountAsync(resourcePool, logger.WithValues(new LogValueSet()));
@@ -68,9 +68,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             // Get the delta of how many
             var poolDeltaCount = poolTargetCount - unassignedCount;
 
-            logger.FluentAddValue("CheckUnassignedCount", unassignedCount.ToString())
-                .FluentAddValue("CheckPoolTargetCount", poolTargetCount.ToString())
-                .FluentAddValue("CheckPoolDeltaCount", poolDeltaCount.ToString());
+            logger.FluentAddValue("TaskCheckUnassignedCount", unassignedCount.ToString())
+                .FluentAddValue("TaskCheckPoolTargetCount", poolTargetCount.ToString())
+                .FluentAddValue("TaskCheckPoolDeltaCount", poolDeltaCount.ToString());
 
             // If we have any positive delta add that many jobs to the queue for processing
             if (poolDeltaCount > 0)
@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 for (var i = 0; i < poolDeltaCount; i++)
                 {
                     TaskHelper.RunBackground(
-                        $"{LogBaseName}_create",
+                        $"{LogBaseName}_run_create",
                         (childLogger) => AddPoolItemAsync(resourcePool, i, childLogger),
                         logger);
                 }
@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 foreach (var unassignedId in unassignedIds)
                 {
                     TaskHelper.RunBackground(
-                        $"{LogBaseName}_delete",
+                        $"{LogBaseName}_run_delete",
                         (childLogger) => DeletetPoolItemAsync(Guid.Parse(unassignedId), childLogger),
                         logger);
                 }
@@ -113,17 +113,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task AddPoolItemAsync(ResourcePool resourcePool, int iteration, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ActivityInstanceIterationId", iteration.ToString());
+            var id = Guid.NewGuid();
+
+            logger.FluentAddBaseValue("TaskIterationId", iteration.ToString())
+                .FluentAddBaseValue("ResourceId", id);
 
             await ContinuationTaskActivator.CreateResource(
-                resourcePool.Type, resourcePool.Details, "WatchPoolSizeIncrease", logger);
+                id, resourcePool.Type, resourcePool.Details, "WatchPoolSizeIncrease", logger);
         }
 
         private async Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ActivityInstanceIterationId", id);
+            logger.FluentAddBaseValue("ResourceId", id);
 
-            await ContinuationTaskActivator.DeleteResource(Guid.NewGuid(), "WatchPoolSizeDecrease", logger);
+            await ContinuationTaskActivator.DeleteResource(id, "WatchPoolSizeDecrease", logger);
         }
     }
 }

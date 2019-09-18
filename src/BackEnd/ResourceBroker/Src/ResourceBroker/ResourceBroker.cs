@@ -70,10 +70,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                     // Try and get item from the pool
                     var item = await ResourcePool.TryGetAsync(resourceSku.Details.GetPoolDefinition(), logger.WithValues(new LogValueSet()));
+
+                    logger.FluentAddBaseValue("ResourceResourceAllocateFound", item != null);
+
+                    // Deal with case that it didn't exist
                     if (item == null)
                     {
                         throw new OutOfCapacityException(input.SkuName, input.Type, input.Location.ToString().ToLowerInvariant());
                     }
+
+                    logger.FluentAddBaseValue("ResourceId", item.Id);
 
                     return Mapper.Map<AllocateResult>(item);
                 });
@@ -84,6 +90,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             DeallocateInput input,
             IDiagnosticsLogger logger)
         {
+            logger.FluentAddBaseValue("ResourceId", input.ResourceId);
+
             await ContinuationTaskActivator.DeleteResource(input.ResourceId, input.Trigger, logger);
 
             return new DeallocateResult { Successful = true };
@@ -94,6 +102,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             EnvironmentStartInput input,
             IDiagnosticsLogger logger)
         {
+            logger.FluentAddBaseValue("ResourceId", input.ComputeResourceId)
+                .FluentAddBaseValue("StorageResourceId", input.StorageResourceId);
+
             await ContinuationTaskActivator.StartEnvironment(
                 input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, logger);
 

@@ -94,16 +94,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 throw new NotSupportedException($"Provided input type does not match target input type - {typeof(TI)}");
             }
 
-            logger.FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
-            logger.FluentAddValue("HandlerResourceId", typedInput.ResourceId);
-            logger.FluentAddValue("HandlerTriggerSource", typedInput.Reason);
+            logger.FluentAddBaseValue("ResourceId", typedInput.ResourceId)
+                .FluentAddValue("HandlerTriggerSource", typedInput.Reason)
+                .FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
 
             // Core continue
             var result = await InnerContinue(typedInput, logger);
 
-            logger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken);
-            logger.FluentAddValue("HandlerBasePostStatus", result.Status);
-            logger.FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
+            logger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken)
+                .FluentAddValue("HandlerBasePostStatus", result.Status)
+                .FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
 
             return result;
         }

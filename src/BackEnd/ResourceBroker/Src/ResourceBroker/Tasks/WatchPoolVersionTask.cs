@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -48,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        protected override string LeaseBaseName => "WatchPoolVersionTaskLease";
+        protected override string LeaseBaseName => $"{nameof(WatchPoolVersionTask)}Lease";
 
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchPoolVersionTask;
@@ -58,27 +59,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IResourceRepository ResourceRepository { get; }
 
         /// <inheritdoc/>
-        protected async override Task RunPoolActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
+        protected async override Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
+            logger.FluentAddValue("VersionPoolDefinition", resourcePool.Details.GetPoolDefinition())
+                .FluentAddValue("VersionPoolVersioDefinition", resourcePool.Details.GetPoolVersionDefinition())
+                .FluentAddValue("VersionPoolTargetCount", resourcePool.TargetCount);
+
             // Check database for non current count
             var unassignedNotVersionCount = await GetPoolUnassignedNotVersionCountAsync(resourcePool, logger);
+
+            logger.FluentAddValue("VersionUnassignedNotVersionCount", unassignedNotVersionCount);
+
+            // If only if we need to do something
             if (unassignedNotVersionCount > 0)
             {
                 // See how many are current ready for use in the pool
                 var readyUnassignedCount = await GetPoolReadyUnassignedCountAsync(resourcePool, logger);
+                var readyUnassignedRate = (double)readyUnassignedCount / resourcePool.TargetCount;
+
+                logger.FluentAddValue("VersionReadyUnassignedCount", readyUnassignedCount)
+                    .FluentAddValue("VersionReadyUnassignedRate", readyUnassignedRate);
 
                 // We only will do anything if the pool has 80% resources ready for actual use
-                if ((double)readyUnassignedCount / resourcePool.TargetCount >= 0.8)
+                if (readyUnassignedRate >= 0.8)
                 {
                     // Get 20% items to delete
                     var dropCount = (int)Math.Ceiling(resourcePool.TargetCount * 0.2);
                     var nonCurrentIds = await GetPoolUnassignedNotVersionAsync(resourcePool, dropCount, logger);
 
+                    logger.FluentAddValue("VersionDropCount", dropCount)
+                        .FluentAddValue("VersionDropGoundCount", nonCurrentIds.Count());
+
                     // Delete each of the items that are not current
                     foreach (var nonCurrentId in nonCurrentIds)
                     {
                         TaskHelper.RunBackground(
-                            $"{LogBaseName}_delete",
+                            $"{LogBaseName}_run_delete",
                             (childLogger) => DeletetPoolItemAsync(Guid.Parse(nonCurrentId), childLogger),
                             logger);
                     }
@@ -106,9 +122,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ActivityInstanceIterationId", id);
+            logger.FluentAddBaseValue("ResourceId", id);
 
-            await ContinuationTaskActivator.DeleteResource(id, "TaskVersionChange", logger);
+            await ContinuationTaskActivator.DeleteResource(id, "TaskVersionChange", logger.WithValues(new LogValueSet()));
         }
     }
 }
