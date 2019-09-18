@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
@@ -62,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IBillingEventManager BillingEventManager { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> CreateEnvironmentAsync(
+        public async Task<(CloudEnvironment, int)> CreateEnvironmentAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentOptions cloudEnvironmentOptions,
             Uri serviceUri,
@@ -96,9 +97,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ValidationUtil.IsTrue(
                     !environments.Any((env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)),
                     $"An environment with the friendly name already exists: {cloudEnvironment.FriendlyName}");
-                ValidationUtil.IsTrue(
-                    environments.Count() < CloudEnvironmentQuota,
-                    $"You have reached the limit of {CloudEnvironmentQuota} environments");
+
+                if (environments.Count() >= CloudEnvironmentQuota)
+                {
+                    return (null, StatusCodes.Status422UnprocessableEntity);
+                }
 
                 // TODO: Make AccountId required after clients are updated to supply it.
                 if (cloudEnvironment.AccountId != null)
@@ -149,7 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogInfo(GetType().FormatLogMessage(nameof(CreateEnvironmentAsync)));
 
-                    return cloudEnvironment;
+                    return (cloudEnvironment, StatusCodes.Status200OK);
                 }
 
                 // Allocate Storage
@@ -184,7 +187,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddCloudEnvironment(cloudEnvironment)
                     .LogInfo(GetType().FormatLogMessage(nameof(CreateEnvironmentAsync)));
 
-                return cloudEnvironment;
+                return (cloudEnvironment, StatusCodes.Status200OK);
             }
             catch (Exception ex)
             {

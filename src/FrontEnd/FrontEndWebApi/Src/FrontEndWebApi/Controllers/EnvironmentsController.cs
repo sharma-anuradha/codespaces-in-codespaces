@@ -174,6 +174,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> CreateCloudEnvironmentAsync(
             [FromBody]CreateCloudEnvironmentBody createEnvironmentInput)
@@ -243,7 +244,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                 var callbackUriFormat = callbackUriBuilder.Uri.ToString();
 
-                cloudEnvironment = await EnvironmentManager.CreateEnvironmentAsync(
+                var httpStatusCode = StatusCodes.Status409Conflict;
+                (cloudEnvironment, httpStatusCode) = await EnvironmentManager.CreateEnvironmentAsync(
                     cloudEnvironment,
                     new CloudEnvironmentOptions { CreateFileShare = createEnvironmentInput.CreateFileShare },
                     serviceUriBuilder.Uri,
@@ -261,7 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     // TODO: 409 conflict might mean that the requested session id already exists
                     // Could mean that the friendly-name is in conflict, could mean anything!
-                    return StatusCode(StatusCodes.Status409Conflict);
+                    return StatusCode(httpStatusCode);
                 }
 
                 var location = new UriBuilder(Request.GetDisplayUrl());

@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
 
         private async Task<CloudEnvironment> CreateTestEnvironmentAsync(string name = "Test")
         {
-            var testEnvironment = await this.environmentManager.CreateEnvironmentAsync(
+            var (testEnvironment, status) = await this.environmentManager.CreateEnvironmentAsync(
                 new CloudEnvironment
                 {
                     FriendlyName = name,
