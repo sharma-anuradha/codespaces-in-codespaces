@@ -30,17 +30,17 @@ ingress:
 pfingress:
   enabled: true
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /configuration
+    nginx.ingress.kubernetes.io/rewrite-target: /portforward?path=$1
   path: /(.*)
 
 appSettings:
-- ASPNETCORE_ENVIRONMENT
-- PORTAL_AppSettings__AesKey
-- PORTAL_AppSettings__AesIV
-- PORTAL_AppSettings__Domain
-- PORTAL_AppSettings__KeyVaultName
-- PORTAL_AppSettings__AuthRedirectUrl
-- PORTAL_AppSettings__VsClkRedisConnectionString
-- PORTAL_AppSettings__MicrosoftAppClientId
-- PORTAL_AppSettings__MicrosoftAppClientSecret
-- PORTAL_AppSettings__EnvironmentRegistrationEndpoint
+  - ASPNETCORE_ENVIRONMENT
+  - PORTAL_AppSettings__AesKey
+  - PORTAL_AppSettings__AesIV
+  - PORTAL_AppSettings__Domain
+  - PORTAL_AppSettings__KeyVaultName
+  - PORTAL_AppSettings__AuthRedirectUrl
+  - PORTAL_AppSettings__VsClkRedisConnectionString
+  - PORTAL_AppSettings__MicrosoftAppClientId
+  - PORTAL_AppSettings__MicrosoftAppClientSecret
+  - PORTAL_AppSettings__EnvironmentRegistrationEndpoint
