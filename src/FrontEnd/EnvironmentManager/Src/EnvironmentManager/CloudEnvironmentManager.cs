@@ -533,6 +533,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     VsoAccountInfo.TryParse(cloudEnvironment.AccountId, out account),
                     nameof(cloudEnvironment.AccountId),
                     "Invalid account ID");
+
+                account.Location = cloudEnvironment.Location;
             }
 
             var environment = new EnvironmentBillingInfo

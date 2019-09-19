@@ -35,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             Subscription = "00000000-0000-0000-0000-000000000000",
             ResourceGroup = "test-resourcegroup",
             Name = "test-account",
+            Location = AzureLocation.WestUs2
         };
 
         public EnvironmentManagerBillingTests()
