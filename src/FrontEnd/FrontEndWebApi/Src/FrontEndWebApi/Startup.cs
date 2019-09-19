@@ -95,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddBillingEventManager(frontEndAppSettings.UseMocksForLocalDevelopment);
 
             // Add the environment manager and the cloud environment repository.
-            services.AddEnvironmentManager(frontEndAppSettings.UseMocksForLocalDevelopment);
+            services.AddEnvironmentManager(frontEndAppSettings.UseMocksForLocalDevelopment || frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker);
 
             // Add the Live Share user profile and workspace providers.
             services
@@ -109,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     {
                         options.BaseAddress = ValidationUtil.IsRequired(frontEndAppSettings.VSLiveShareApiEndpoint, nameof(frontEndAppSettings.VSLiveShareApiEndpoint));
                     },
-                    appSettings.FrontEnd.UseMocksForLocalDevelopment)
+                    appSettings.FrontEnd.UseMocksForLocalDevelopment && !appSettings.FrontEnd.UseFakesForCECLIDevelopmentWithLocalDocker)
                 .AddLiveshareAuthProvider(
                     options =>
                     {
@@ -122,7 +122,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 {
                     options.BaseAddress = ValidationUtil.IsRequired(frontEndAppSettings.BackEndWebApiBaseAddress, nameof(frontEndAppSettings.BackEndWebApiBaseAddress));
                 },
-                frontEndAppSettings.UseMocksForLocalDevelopment && !frontEndAppSettings.UseBackEndForLocalDevelopment);
+                frontEndAppSettings.UseMocksForLocalDevelopment && !frontEndAppSettings.UseBackEndForLocalDevelopment,
+                frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker && !frontEndAppSettings.UseBackEndForLocalDevelopment,
+                frontEndAppSettings.UseFakesLocalDockerImage,
+                frontEndAppSettings.UseFakesPublishedCLIPath);
 
             // Configure mappings betwen REST API models and internal models.
             services.AddModelMapper();

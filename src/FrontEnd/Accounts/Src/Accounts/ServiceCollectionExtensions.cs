@@ -20,8 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         /// <returns></returns>
         public static IServiceCollection AddAccountManager(this IServiceCollection services, bool useMockAccountRepository)
         {
-            _ = useMockAccountRepository;
-
             if (useMockAccountRepository)
             {
                 services.AddSingleton<IAccountRepository, MockAccountRepository>();

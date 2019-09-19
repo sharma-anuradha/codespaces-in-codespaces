@@ -40,6 +40,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public bool UseMocksForLocalDevelopment { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to use fake local docker deployment for cloud environment development.
+        /// This would be useful mostly for CE CLI development and testing.
+        /// </summary>
+        public bool UseFakesForCECLIDevelopmentWithLocalDocker { get; set; }
+
+        /// <summary>
+        /// Gets or sets the local docker image name for development & testing.
+        /// </summary>
+        public string UseFakesLocalDockerImage { get; set; }
+
+        /// <summary>
+        /// Gets or sets the local published CLI path for development & testing.
+        /// </summary>
+        public string UseFakesPublishedCLIPath { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to call the real backend during local development instead of mocks.
         /// </summary>
         public bool UseBackEndForLocalDevelopment { get; set; }

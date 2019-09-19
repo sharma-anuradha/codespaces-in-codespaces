@@ -16,14 +16,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Add the <see cref="IBillingEventRepository"/> and <see cref="IBillingEventManager"/> to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>
-        /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository (DEBUG only).</param>
+        /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddBillingEventManager(
             this IServiceCollection services,
             bool useMockCloudEnvironmentRepository)
         {
-            _ = useMockCloudEnvironmentRepository;
-
             if (useMockCloudEnvironmentRepository)
             {
                 services.AddSingleton<IBillingEventRepository, MockBillingEventRepository>();
