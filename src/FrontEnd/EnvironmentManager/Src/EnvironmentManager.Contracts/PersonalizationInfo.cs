@@ -28,11 +28,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "dotfilesInstallCommand")]
         public string DotfilesInstallCommand { get; set; }
-
-        /// <summary>
-        /// Gets or sets the default shell.
-        /// </summary>
-        [JsonProperty(Required = Required.Default, PropertyName = "defaultShell")]
-        public string DefaultShell { get; set; }
     }
 }

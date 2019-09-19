@@ -50,7 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 new EnvDotfilesRepoUrl(cloudEnvironment),
                 new EnvDotfilesTargetPath(cloudEnvironment),
                 new EnvDotfilesInstallCommand(cloudEnvironment),
-                new EnvDefaultShell(cloudEnvironment),
             };
 
             foreach (var envStrategy in list)
@@ -490,49 +489,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             }
 
             return null;
-        }
-    }
-
-    /// <summary>
-    /// Generate the default shell environment variable.
-    /// </summary>
-    public class EnvDefaultShell : EnvironmentVariableStrategy
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EnvDefaultShell"/> class.
-        /// </summary>
-        /// <param name="cloudEnvironment">The cloud environment.</param>
-        public EnvDefaultShell(CloudEnvironment cloudEnvironment)
-            : base(cloudEnvironment)
-        {
-        }
-
-        /// <inheritdoc/>
-        public override Tuple<string, string> GetEnvironmentVariable()
-        {
-            if (CloudEnvironment.Personalization != null
-                && !string.IsNullOrWhiteSpace(CloudEnvironment.Personalization.DefaultShell)
-                && IsSupportedShell(CloudEnvironment.Personalization.DefaultShell))
-            {
-                return new Tuple<string, string>(
-                    EnvironmentVariableConstants.DefaultShell,
-                    CloudEnvironment.Personalization.DefaultShell);
-            }
-
-            return null;
-        }
-
-        private bool IsSupportedShell(string shell)
-        {
-            var availableShells = new string[]
-            {
-                "/bin/bash",
-                "/usr/bin/fish",
-                "/usr/bin/zsh",
-            };
-
-            // The value for this is programatically filled so doesn't need normalization.
-            return availableShells.Contains(shell);
         }
     }
 }
