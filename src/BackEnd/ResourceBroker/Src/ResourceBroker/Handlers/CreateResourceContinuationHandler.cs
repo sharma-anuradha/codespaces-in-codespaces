@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
@@ -154,6 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         Permissions = SharedAccessBlobPermissions.Read,
                         SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4), // This should be plenty of time to copy the blob template into the new file share
                     });
+                    var resourceTags = new Dictionary<string, string>();
 
                     result = new FileShareProviderCreateInput
                     {
@@ -162,6 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureSubscription = subscription,
                         AzureResourceGroup = resourceGroup,
                         StorageBlobUrl = blob.Uri + sas,
+                        ResourceTags = resourceTags,
                     };
                 }
                 else

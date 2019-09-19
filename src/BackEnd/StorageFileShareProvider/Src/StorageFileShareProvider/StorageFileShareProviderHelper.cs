@@ -56,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             Requires.NotNullOrEmpty(azureRegion, nameof(azureRegion));
             Requires.NotNullOrEmpty(azureResourceGroup, nameof(azureResourceGroup));
             Requires.NotNullOrEmpty(azureSubscriptionId, nameof(azureSubscriptionId));
-            Requires.NotNullOrEmpty(resourceTags, nameof(resourceTags));
+            Requires.NotNull(resourceTags, nameof(resourceTags));
 
             logger = logger.WithValues(new LogValueSet
             {
