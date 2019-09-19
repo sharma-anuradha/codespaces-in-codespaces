@@ -13,6 +13,15 @@ static_analysis_options:
     files_to_scan:
     - from: 'src\services\containers\VsClk.Portal.WebSite\ClientApp\'
       exclude:
+      - 'config\jest\cssTransform.js'
+      - 'config\jest\fileTransform.js'
+      - 'config\env.js'
+      - 'config\paths.js'
+      - 'config\webpack.config.js'
+      - 'config\webpackDevServer.config.js'
+      - 'scripts\build.js'
+      - 'scripts\start.js'
+      - 'scripts\test.js'
       - 'scripts\npm\constants.js'
       - 'scripts\npm\postinstall.js'
       - 'scripts\npm\update-vscode.js'
