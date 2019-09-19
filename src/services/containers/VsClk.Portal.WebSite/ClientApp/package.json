@@ -4,31 +4,76 @@
   "private": true,
   "readme": "README.md",
   "dependencies": {
+    "@babel/core": "7.2.2",
     "@microsoft/applicationinsights-web": "^2.2.2",
+    "@svgr/webpack": "4.1.0",
     "@uifabric/fluent-theme": "^7.0.4",
     "@vs/vs-ssh": "^1.0.70",
-    "cross-env": "^5.2.0",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-eslint": "9.0.0",
+    "babel-jest": "23.6.0",
+    "babel-loader": "8.0.5",
+    "babel-plugin-named-asset-import": "^0.3.1",
+    "babel-preset-react-app": "^7.0.2",
+    "bfj": "6.1.1",
+    "case-sensitive-paths-webpack-plugin": "2.2.0",
+    "cross-env": "^6.0.0",
+    "css-loader": "1.0.0",
     "custom-protocol-check": "^1.0.1",
     "debug": "^4.1.1",
+    "dotenv": "6.0.0",
+    "dotenv-expand": "4.2.0",
+    "eslint": "5.12.0",
+    "eslint-config-react-app": "^3.0.8",
+    "eslint-loader": "2.1.1",
+    "eslint-plugin-flowtype": "2.50.1",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-plugin-jsx-a11y": "6.1.2",
+    "eslint-plugin-react": "7.12.4",
+    "file-loader": "2.0.0",
+    "fs-extra": "7.0.1",
+    "html-webpack-plugin": "4.0.0-alpha.2",
     "http-message-parser": "^0.0.34",
+    "identity-obj-proxy": "3.0.0",
+    "jest": "23.6.0",
+    "jest-pnp-resolver": "1.0.2",
+    "jest-resolve": "23.6.0",
+    "jest-watch-typeahead": "^0.2.1",
     "jwt-decode": "^2.2.0",
+    "mini-css-extract-plugin": "0.5.0",
     "moment": "^2.24.0",
     "msal": "^1.0.2",
     "office-ui-fabric-react": "^7.14.1",
+    "optimize-css-assets-webpack-plugin": "5.0.1",
+    "pnp-webpack-plugin": "1.2.1",
+    "postcss-flexbugs-fixes": "4.1.0",
+    "postcss-loader": "3.0.0",
+    "postcss-preset-env": "6.5.0",
+    "postcss-safe-parser": "4.0.1",
     "react": "^16.8.4",
-    "react-app-rewired": "^2.1.3",
+    "react-app-polyfill": "^0.2.2",
+    "react-dev-utils": "^8.0.0",
     "react-dom": "^16.8.4",
     "react-modal": "3.8.1",
     "react-redux": "^7.1.0",
     "react-router": "4.3.1",
     "react-router-dom": "4.3.1",
-    "react-scripts": "2.1.8",
     "redux": "^4.0.4",
+    "resolve": "1.10.0",
     "rimraf": "2.6.2",
+    "sass-loader": "7.1.0",
+    "style-loader": "0.23.1",
+    "terser-webpack-plugin": "1.2.2",
     "typescript": "^3.5.3",
-    "vscode-jsonrpc": "^4.0.0"
+    "url-loader": "1.1.2",
+    "vscode-jsonrpc": "^4.0.0",
+    "webpack": "4.28.3",
+    "webpack-dev-server": "3.1.14",
+    "webpack-manifest-plugin": "2.0.4",
+    "workbox-webpack-plugin": "3.6.3"
   },
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.3.0",
     "@types/debug": "^4.1.4",
     "@types/express": "^4.17.0",
     "@types/jest": "^24.0.17",
@@ -63,16 +108,15 @@
     "watch:portal": "dotnet watch --project ../VsClk.Portal.WebSite.csproj run  --launch-profile Local",
     "watch:client": "run-p watch:service-worker watch:shell",
     "watch:service-worker": "cross-env NODE_ENV=development webpack --watch --config webpack.config.worker.js",
-    "watch:shell": "react-app-rewired start",
+    "watch:shell": "node scripts/start",
     "build": "run-s build:client",
     "build:client": "run-s build:service-worker build:spa",
-    "build:spa": "react-app-rewired build",
+    "build:spa": "node scripts/build",
     "build:service-worker": "webpack --config webpack.config.worker.js",
-    "test": "react-app-rewired test",
+    "test": "node scripts/test",
     "update-vscode": "node scripts/npm/update-vscode.js",
     "update-github-secret": "node scripts/npm/update-github-secret.js",
-    "lint": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json",
-    "test:debug": "react-app-rewired --inspect-brk test --runInBand --no-cache"
+    "lint": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -85,5 +129,55 @@
     "not ie < 11",
     "not op_mini all"
   ],
-  "vscodeCommit": "8b6e0efc0a98639085fabeb5226a516785424796"
+  "vscodeCommit": "8b6e0efc0a98639085fabeb5226a516785424796",
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/**/*.d.ts"
+    ],
+    "resolver": "jest-pnp-resolver",
+    "setupFiles": [
+      "react-app-polyfill/jsdom"
+    ],
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
+      "<rootDir>/src/**/?(*.)(spec|test).{js,jsx,ts,tsx}"
+    ],
+    "testEnvironment": "jsdom",
+    "testURL": "http://localhost",
+    "transform": {
+      "^.+\\.(js|jsx|ts|tsx)$": "<rootDir>/node_modules/babel-jest",
+      "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
+      "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
+    },
+    "transformIgnorePatterns": [
+      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|ts|tsx)$",
+      "^.+\\.module\\.(css|sass|scss)$"
+    ],
+    "moduleNameMapper": {
+      "^react-native$": "react-native-web",
+      "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy"
+    },
+    "moduleFileExtensions": [
+      "web.js",
+      "js",
+      "web.ts",
+      "ts",
+      "web.tsx",
+      "tsx",
+      "json",
+      "web.jsx",
+      "jsx",
+      "node"
+    ],
+    "watchPlugins": [
+      "/Users/pelisy/projects/devdiv/2-vsclk-core/src/services/containers/VsClk.Portal.WebSite/ClientApp/node_modules/jest-watch-typeahead/filename.js",
+      "/Users/pelisy/projects/devdiv/2-vsclk-core/src/services/containers/VsClk.Portal.WebSite/ClientApp/node_modules/jest-watch-typeahead/testname.js"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "react-app"
+    ]
+  }
 }
