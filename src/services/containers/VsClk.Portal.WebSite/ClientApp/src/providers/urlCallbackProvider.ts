@@ -63,7 +63,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
 
         // please use the https://github.com/microsoft/vscode/blob/2320972f5f1206d6e9a047e3850b4d0bee4d2e87/src/vs/base/common/uri.ts#L99
         // for the Uri format refrence
-        const protocolHandlerUri = vscode.URI.with({
+        const protocolHandlerUri = vscode.URI.from({
             authority: queryParams.get(VSO_AUTHORITY_PARAM_NAME)!,
             query: this.cleanQueryFromVsoParams(queryParams).toString(),
             scheme: this.getVSCodeScheme(),
@@ -118,14 +118,14 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         if (!authority) {
             throw new Error('No "authority" set.');
         }
-
-        const uri = vscode.URI.with({
+        
+        const uri = vscode.URI.from({
             scheme: location.protocol.replace(/\:/g, ''),
             path: '/extension-auth-callback',
             authority: location.host,
             query: this.generateUrlCallbackParams(authority!, path, query),
             fragment: options.fragment || ''
-        })
+        });
 
         return uri;
     }

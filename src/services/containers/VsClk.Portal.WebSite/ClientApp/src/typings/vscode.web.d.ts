@@ -314,11 +314,8 @@ declare module 'vscode-web' {
         query: string;
         fragment: string;
     }
-    
-    export interface URI extends UriComponents {
-    
-        isUri(thing: any): thing is URI;
-    
+
+    export interface URIInstance {
         /**
          * scheme is the 'http' part of 'http://www.msft.com/some/path?query#fragment'.
          * The part before the first colon.
@@ -345,22 +342,19 @@ declare module 'vscode-web' {
          * fragment is the 'fragment' part of 'http://www.msft.com/some/path?query#fragment'.
          */
         readonly fragment: string;
+
+        // ---- modify to new -------------------------
     
-        /**
-         * @internal
-         */
-        constructor(scheme: string, authority?: string, path?: string, query?: string, fragment?: string, _strict?: boolean): URI;
+        with(change: { scheme?: string; authority?: string | null; path?: string | null; query?: string | null; fragment?: string | null }): URI;
+
+        toJSON(): UriComponents;
     
-        /**
-         * @internal
-         */
-        constructor(components: UriComponents): URI;
-    
-        /**
-         * @internal
-         */
-        constructor(schemeOrData: string | UriComponents, authority?: string, path?: string, query?: string, fragment?: string, _strict?: boolean): URI;
-    
+        revive(data: UriComponents | URI): URI;
+        revive(data: UriComponents | URI | undefined): URI | undefined;
+        revive(data: UriComponents | URI | null): URI | null;
+        revive(data: UriComponents | URI | undefined | null): URI | undefined | null;
+        revive(data: UriComponents | URI | undefined | null): URI | undefined | null;
+
         // ---- filesystem path -----------------------
     
         /**
@@ -388,10 +382,41 @@ declare module 'vscode-web' {
          * with URIs that represent files on disk (`file` scheme).
          */
         fsPath(): string;
+
+        // ---- printing/externalize ---------------------------
     
-        // ---- modify to new -------------------------
+        /**
+         * Creates a string representation for this URI. It's guaranteed that calling
+         * `URI.parse` with the result of this function creates an URI which is equal
+         * to this URI.
+         *
+         * * The result shall *not* be used for display purposes but for externalization or transport.
+         * * The result will be encoded using the percentage encoding and encoding happens mostly
+         * ignore the scheme-specific encoding rules.
+         *
+         * @param skipEncoding Do not encode the result, default is `false`
+         */
+        toString(skipEncoding?: boolean): string;
+    }
     
-        with(change: { scheme?: string; authority?: string | null; path?: string | null; query?: string | null; fragment?: string | null }): URI;
+    export interface URI extends UriComponents {    
+        /**
+         * @internal
+         */
+        new(scheme: string, authority?: string, path?: string, query?: string, fragment?: string, _strict?: boolean): IURI;
+    
+        /**
+         * @internal
+         */
+        new(components: UriComponents): IURI;
+    
+        /**
+         * @internal
+         */
+        new(schemeOrData: string | UriComponents, authority?: string, path?: string, query?: string, fragment?: string, _strict?: boolean): IURI;
+
+        static isUri(thing: any): thing is URI;
+
         // ---- parse & validate ------------------------
     
         /**
@@ -400,7 +425,7 @@ declare module 'vscode-web' {
          *
          * @param value A string which represents an URI (see `URI#toString`).
          */
-        parse(value: string, _strict?: boolean): URI;
+        static parse(value: string, _strict?: boolean): URI;
     
         /**
          * Creates a new URI from a file system path, e.g. `c:\my\files`,
@@ -423,35 +448,11 @@ declare module 'vscode-web' {
          *
          * @param path A file system path (see `URI#fsPath`)
          */
-        file(path: string): URI;
+        static file(path: string): URI;
     
     
-        from(components: { scheme: string; authority?: string; path?: string; query?: string; fragment?: string }): URI;
-    
-        // ---- printing/externalize ---------------------------
-    
-        /**
-         * Creates a string representation for this URI. It's guaranteed that calling
-         * `URI.parse` with the result of this function creates an URI which is equal
-         * to this URI.
-         *
-         * * The result shall *not* be used for display purposes but for externalization or transport.
-         * * The result will be encoded using the percentage encoding and encoding happens mostly
-         * ignore the scheme-specific encoding rules.
-         *
-         * @param skipEncoding Do not encode the result, default is `false`
-         */
-        toString(skipEncoding?: boolean): string;
-    
-        toJSON(): UriComponents;
-    
-        revive(data: UriComponents | URI): URI;
-        revive(data: UriComponents | URI | undefined): URI | undefined;
-        revive(data: UriComponents | URI | null): URI | null;
-        revive(data: UriComponents | URI | undefined | null): URI | undefined | null;
-        revive(data: UriComponents | URI | undefined | null): URI | undefined | null;
+        static from(components: { scheme: string; authority?: string; path?: string; query?: string; fragment?: string }): URI;
     }
-
 
     export interface IWorkbenchConstructionOptions {
 

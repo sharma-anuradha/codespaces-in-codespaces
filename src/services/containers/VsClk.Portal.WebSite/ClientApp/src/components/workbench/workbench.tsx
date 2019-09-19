@@ -101,7 +101,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
                 return new VSLSWebSocket(url, accessToken, environmentInfo);
             },
         };
-
+        
         const folderUri = vscode.URI.from({
             path: sessionPath,
             scheme: 'vscode-remote',
