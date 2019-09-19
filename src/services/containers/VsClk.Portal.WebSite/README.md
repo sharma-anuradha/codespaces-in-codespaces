@@ -22,6 +22,7 @@ Required Software:
 - Yarn (https://yarnpkg.com/lang/en/)
 - .NET Core (https://dotnet.microsoft.com/download/dotnet-core/2.2)
 - (https://github.com/Microsoft/artifacts-credprovider#readmecd%20)
+- Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 1. [From project root] Restore dotnet dependencies (`dotnet restore <projectRoot>/dirs.proj --interactive`)
 1. [From ClientApp] Install node dependencies (`yarn`)
@@ -36,5 +37,29 @@ VSCode has the tasks set up when you open folder `<projectRoot>/src/services/con
 ```sh
 cd ClientApp
 yarn watch:client
+```
+
+### GitHub Auth working locally.
+
+Run `yarn update-github-secret` from ClientApp folder.
+> You have to be logged in with azure cli for the script to work.
+
+Or manually:
+
+You need to get `Local-Config-GitHubAppClientSecret` from our dev azure keyvault (`vsclk-online-dev-kv` in `vsclk-core-dev` subscription) into `appsettings.secrets.json` file in Portal.
+
+Azure Cli:
+```sh
+az keyvault secret show --name "Local-Config-GitHubAppClientSecret" --vault-name "vsclk-online-dev-kv" --sub "vsclk-core-dev"
+```
+
+Once you're done, the `appsettings.secrets.json` file should look something like this.
+
+```json
+{
+  "AppSettings": {
+    "GitHubAppClientSecret":"460b..."
+  }
+}
 ```
 

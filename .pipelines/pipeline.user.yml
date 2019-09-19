@@ -16,6 +16,7 @@ static_analysis_options:
       - 'scripts\npm\constants.js'
       - 'scripts\npm\postinstall.js'
       - 'scripts\npm\update-vscode.js'
+      - 'scripts\npm\update-github-secret.js'
       - 'scripts\npm\utils.js'
       - 'scripts\vscode\download-vscode.js'
       - 'scripts\vscode\fileUtils.js'

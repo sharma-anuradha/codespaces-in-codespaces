@@ -33,6 +33,7 @@ config:
   keyVaultName: vsclk-online-ppe-kv
   clusterDefaultHost: online-ppe.core.vsengsaas.visualstudio.com
   environmentRegistrationEndpoint: https://online-ppe.core.vsengsaas.visualstudio.com/api/v1/environments
+  githubClientId: f9230262d5d51925eb34
 
 azure-secrets:
   # vsclk-core-dev

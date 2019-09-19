@@ -14,8 +14,6 @@ initializeIcons();
 const baseUrl = (document.getElementById('public_url') as HTMLBaseElement).getAttribute('href');
 const rootElement = document.getElementById('root');
 
-localStorage.debug = '';
-
 const enableTraceFactory = (traceName: string) => {
     return () => {
         localStorage.debug = traceName;

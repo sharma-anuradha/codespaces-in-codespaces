@@ -16,10 +16,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         public string MicrosoftAppClientSecret { get; set; }
 
-        // Github account configuration
-        public string GithubAppClientId { get; set; }
+        // GitHub account configuration
+        public string GitHubAppClientId { get; set; }
 
-        public string GithubAppClientSecret { get; set; }
+        public string GitHubAppClientSecret { get; set; }
+
 
         public string EnvironmentRegistrationEndpoint { get; set; }
         public string Domain { get; set; }

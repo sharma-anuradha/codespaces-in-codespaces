@@ -35,6 +35,7 @@ config:
   keyVaultName: vsclk-online-prod-kv
   clusterDefaultHost: online.visualstudio.com
   environmentRegistrationEndpoint: https://online.visualstudio.com/api/v1/environments
+  githubClientId: 15a84bcaef36dd681c52
 
 azure-secrets:
   # vsclk-core-dev

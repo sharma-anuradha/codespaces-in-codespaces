@@ -70,6 +70,7 @@
     "build:service-worker": "webpack --config webpack.config.worker.js",
     "test": "react-app-rewired test",
     "update-vscode": "node scripts/npm/update-vscode.js",
+    "update-github-secret": "node scripts/npm/update-github-secret.js",
     "lint": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json",
     "test:debug": "react-app-rewired --inspect-brk test --runInBand --no-cache"
   },

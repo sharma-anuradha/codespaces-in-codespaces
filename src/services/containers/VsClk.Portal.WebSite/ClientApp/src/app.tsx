@@ -14,6 +14,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { BlogPost } from './BlogPost';
 import { Loader } from './components/loader/loader';
 import { ConfigurationState } from './reducers/configuration';
+import { GitHubLogin } from './components/gitHubLogin/gitHubLogin';
 
 export interface AppState {}
 
@@ -42,6 +43,7 @@ class AppRoot extends Component<AppProps, AppState> {
                     <div className='vssass'>
                         <ProtectedRoute path='/environment/:id' component={Workbench} />
                         <ProtectedRoute exact path='/environments' component={Main} />
+                        <ProtectedRoute path='/github/login' component={GitHubLogin} />
                         <Route exact path='/welcome' component={Welcome} />
                         <Route exact path='/' component={BlogPost} />
                     </div>
