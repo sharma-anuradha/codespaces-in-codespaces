@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly string azureSubscriptionName = "ignorethis";
         private static readonly IDictionary<string, string> resourceTags = new Dictionary<string, string>
         {
-            {"resourceTag", "GeneratedFromTest"},
+            {"ResourceTag", "GeneratedFromTest"},
         };
         private static readonly int PREPARE_TIMEOUT_MINS = 60;
         private static readonly int NUM_STORAGE_TO_CREATE = 1;

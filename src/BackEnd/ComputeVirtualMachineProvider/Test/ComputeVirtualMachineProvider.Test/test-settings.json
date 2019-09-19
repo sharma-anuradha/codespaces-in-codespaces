@@ -1,4 +1,4 @@
 {
-  "AZURE_AUTH_LOCATION": ".\\azureauth.properties",
+  "AZURE_AUTH_LOCATION": "azureauth.properties",
   "AZURE_SUBSCRIPTION": "86642df6-843e-4610-a956-fdd497102261"
 }

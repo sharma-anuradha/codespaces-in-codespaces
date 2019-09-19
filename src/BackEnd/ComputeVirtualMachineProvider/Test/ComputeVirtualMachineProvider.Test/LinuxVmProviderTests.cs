@@ -47,6 +47,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 AzureSubscription = subscriptionId,
                 AzureVirtualMachineImage = "Canonical.UbuntuServer.18.04-LTS.latest",
                 AzureSkuName = "Standard_F4s_v2",
+                ResourceTags = new Dictionary<string, string> {
+                    {"ResourceTag", "GeneratedFromTest"},
+                },
             };
 
             var timerCreate = Stopwatch.StartNew();

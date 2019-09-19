@@ -3,7 +3,7 @@
 // </copyright>
 
 using System;
-using System.Security.Authentication.ExtendedProtection;
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
@@ -43,5 +43,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets virtual machine image.
         /// </summary>
         public string AzureVirtualMachineImage { get; set; }
+
+        /// <summary>
+        /// Gets or sets resource tags that should be added to the resource.
+        /// </summary>
+        public IDictionary<string, string> ResourceTags { get; set; }
     }
 }

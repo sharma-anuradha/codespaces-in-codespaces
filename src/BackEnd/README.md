@@ -6,6 +6,14 @@ TODO
 
 ## Testing
 
+### Compute Provider Integration Tests
+
+Switch to the dev subscription then create an SDK auth file using Azure CLI:
+```
+az account set --subscription 86642df6-843e-4610-a956-fdd497102261
+az ad sp create-for-rbac --sdk-auth > .../bin/debug/ComputeVirtualMachineProvider.Test/azureauth.properties
+```
+
 ### Storage Provider Integration Tests
 
 Create a `appsettings.test.json` like below in the directory of the tests:

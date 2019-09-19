@@ -34,6 +34,9 @@
     },
     "adminPassword": {
       "type": "string"
+    },
+    "resourceTags": {
+      "type": "object"
     }
   },
   "variables": {
@@ -48,7 +51,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2018-10-01",
       "location": "[parameters('location')]",
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "tags": "[parameters('resourceTags')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
@@ -75,7 +78,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2019-02-01",
       "location": "[parameters('location')]",
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "tags": "[parameters('resourceTags')]",
       "properties": {
         "securityRules": []
       }
@@ -85,7 +88,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2019-02-01",
       "location": "[parameters('location')]",
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "tags": "[parameters('resourceTags')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [ "172.16.5.0/24" ]
@@ -140,7 +143,7 @@
           }
         }
       },
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "tags": "[parameters('resourceTags')]",
       "type": "Microsoft.Compute/virtualMachines"
     }
   ]

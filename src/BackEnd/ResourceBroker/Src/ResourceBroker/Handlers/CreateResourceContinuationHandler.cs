@@ -126,6 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 if (input.ResourcePoolDetails is ResourcePoolComputeDetails computeDetails)
                 {
                     var token = await VirtualMachineTokenProvider.GenerateAsync(resource.Value.Id, logger);
+                    var resourceTags = new Dictionary<string, string>();
                     result = new VirtualMachineProviderCreateInput
                     {
                         VMToken = token,
@@ -134,6 +135,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureSubscription = Guid.Parse(subscription),
                         AzureResourceGroup = resourceGroup,
                         AzureVirtualMachineImage = computeDetails.ImageName,
+                        ResourceTags = resourceTags,
                     };
                 }
                 else

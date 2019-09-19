@@ -25,6 +25,9 @@
     },
     "vmSetupScript": {
       "type": "securestring"
+    },
+    "resourceTags": {
+      "type": "object"
     }
   },
   "variables": {
@@ -42,7 +45,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2018-10-01",
       "location": "[parameters('location')]",
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "tags": "[parameters('resourceTags')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]",
         "[concat('Microsoft.Network/virtualNetworks/',variables('vnetName'))]"
@@ -69,7 +72,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2019-02-01",
       "location": "[parameters('location')]",
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "tags": "[parameters('resourceTags')]",
       "properties": {
         "securityRules": []
       }
@@ -79,7 +82,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2019-02-01",
       "location": "[parameters('location')]",
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "tags": "[parameters('resourceTags')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [ "172.16.5.0/24" ]
@@ -131,7 +134,6 @@
           "computerName": "[parameters('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
-          //"customData": "[parameters('customData')]"
         }
       },
       "resources": [
@@ -161,7 +163,7 @@
           "type": "Extensions"
         }
       ],
-      "tags": { "ResourceTag": "[parameters('virtualMachineName')]" },
+      "tags": "[parameters('resourceTags')]",
       "type": "Microsoft.Compute/virtualMachines"
     }
   ],

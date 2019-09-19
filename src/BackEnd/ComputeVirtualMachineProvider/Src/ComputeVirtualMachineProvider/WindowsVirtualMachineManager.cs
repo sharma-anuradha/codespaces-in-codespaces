@@ -82,6 +82,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             // create new VM resource name
             var resourceName = $"{Guid.NewGuid().ToString()}-win";
+
+            var resourceTags = input.ResourceTags;
+
             var parameters = new Dictionary<string, Dictionary<string, object>>()
             {
                 { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
@@ -95,6 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 { "virtualNetworkName", new Dictionary<string, object>() { { Key, GetVirtualNetworkName(resourceName) } } },
                 { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
                 { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
+                { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
             };
 
             var deploymentName = $"Create-Vm-{resourceName}";

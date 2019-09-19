@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
         private static readonly IDictionary<string, string> MockResourceTags = new Dictionary<string, string>
         {
-            {"resourceTag", "GeneratedFromTest"},
+            {"ResourceTag", "GeneratedFromTest"},
         };
 
         [Fact]
