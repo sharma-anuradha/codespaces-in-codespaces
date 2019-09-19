@@ -44,3 +44,5 @@ appSettings:
   - PORTAL_AppSettings__MicrosoftAppClientId
   - PORTAL_AppSettings__MicrosoftAppClientSecret
   - PORTAL_AppSettings__EnvironmentRegistrationEndpoint
+  - PORTAL_AppSettings__GitHubAppClientId
+  - PORTAL_AppSettings__GitHubAppClientSecret
