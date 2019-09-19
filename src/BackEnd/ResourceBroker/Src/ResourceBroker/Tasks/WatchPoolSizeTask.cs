@@ -68,9 +68,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             // Get the delta of how many
             var poolDeltaCount = poolTargetCount - unassignedCount;
 
-            logger.FluentAddValue("TaskCheckUnassignedCount", unassignedCount.ToString())
-                .FluentAddValue("TaskCheckPoolTargetCount", poolTargetCount.ToString())
-                .FluentAddValue("TaskCheckPoolDeltaCount", poolDeltaCount.ToString());
+            logger.FluentAddValue("SizeCheckUnassignedCount", unassignedCount.ToString())
+                .FluentAddValue("SizeCheckPoolTargetCount", poolTargetCount.ToString())
+                .FluentAddValue("SizeCheckPoolDeltaCount", poolDeltaCount.ToString());
 
             // If we have any positive delta add that many jobs to the queue for processing
             if (poolDeltaCount > 0)
@@ -86,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             }
             else if (poolDeltaCount < 0)
             {
+                // Get some items we can delete 
                 var unassignedIds = await GetPoolUnassignedAsync(resourcePool, poolDeltaCount * -1, logger);
 
                 // Delete each of the items that are not current
@@ -111,22 +112,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 resourcePool.Details.GetPoolDefinition(), count, logger.WithValues(new LogValueSet()));
         }
 
-        private async Task AddPoolItemAsync(ResourcePool resourcePool, int iteration, IDiagnosticsLogger logger)
+        private Task AddPoolItemAsync(ResourcePool resourcePool, int iteration, IDiagnosticsLogger logger)
         {
-            var id = Guid.NewGuid();
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run_delete",
+                async () =>
+                {
+                    var id = Guid.NewGuid();
 
-            logger.FluentAddBaseValue("TaskIterationId", iteration.ToString())
-                .FluentAddBaseValue("ResourceId", id);
+                    logger.FluentAddBaseValue("TaskJobIteration", iteration.ToString())
+                        .FluentAddBaseValue("ResourceId", id);
 
-            await ContinuationTaskActivator.CreateResource(
-                id, resourcePool.Type, resourcePool.Details, "WatchPoolSizeIncrease", logger);
+                    await ContinuationTaskActivator.CreateResource(
+                        id, resourcePool.Type, resourcePool.Details, "WatchPoolSizeIncrease", logger.WithValues(new LogValueSet()));
+                },
+                swallowException: true);
         }
 
-        private async Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
+        private Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", id);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run_delete",
+                async () =>
+                {
+                    logger.FluentAddBaseValue("ResourceId", id);
 
-            await ContinuationTaskActivator.DeleteResource(id, "WatchPoolSizeDecrease", logger);
+                    await ContinuationTaskActivator.DeleteResource(id, "WatchPoolSizeDecrease", logger.WithValues(new LogValueSet()));
+                },
+                swallowException: true);
         }
     }
 }

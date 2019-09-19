@@ -114,9 +114,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private async Task CoreRunUnitAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("TaskRunId", Guid.NewGuid())
-                .FluentAddBaseValue("TaskResourceLocation", resourcePool.Details.Location.ToString())
-                .FluentAddBaseValue("TaskResourceSkuName", resourcePool.Details.SkuName)
-                .FluentAddBaseValue("TaskResourceType", resourcePool.Type.ToString());
+                .FluentAddBaseValue("PoolLocation", resourcePool.Details.Location.ToString())
+                .FluentAddBaseValue("PoolSkuName", resourcePool.Details.SkuName)
+                .FluentAddBaseValue("PoolResourceType", resourcePool.Type.ToString())
+                .FluentAddBaseValue("PoolDefinition", resourcePool.Details.GetPoolDefinition())
+                .FluentAddBaseValue("PoolVersioDefinition", resourcePool.Details.GetPoolVersionDefinition())
+                .FluentAddBaseValue("PoolTargetCount", resourcePool.TargetCount)
+                .FluentAddBaseValue("PoolImageFamilyName", resourcePool.Details.ImageFamilyName)
+                .FluentAddBaseValue("PoolImageName", resourcePool.Details.ImageName);
 
             // Obtain a lease if no one else has it
             using (var lease = await ObtainLease($"{LeaseBaseName}-{resourcePool.Details.GetPoolDefinition()}"))

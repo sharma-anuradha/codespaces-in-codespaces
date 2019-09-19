@@ -61,12 +61,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <inheritdoc/>
         protected async override Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("VersionPoolDefinition", resourcePool.Details.GetPoolDefinition())
-                .FluentAddValue("VersionPoolVersioDefinition", resourcePool.Details.GetPoolVersionDefinition())
-                .FluentAddValue("VersionPoolTargetCount", resourcePool.TargetCount)
-                .FluentAddValue("VersionPoolImageFamilyName", resourcePool.Details.ImageFamilyName)
-                .FluentAddValue("VersionPoolImageName", resourcePool.Details.ImageName);
-
             // Check database for non current count
             var unassignedNotVersionCount = await GetPoolUnassignedNotVersionCountAsync(resourcePool, logger);
 
@@ -90,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     var nonCurrentIds = await GetPoolUnassignedNotVersionAsync(resourcePool, dropCount, logger);
 
                     logger.FluentAddValue("VersionDropCount", dropCount)
-                        .FluentAddValue("VersionDropGoundCount", nonCurrentIds.Count());
+                        .FluentAddValue("VersionDropFoundCount", nonCurrentIds.Count());
 
                     // Delete each of the items that are not current
                     foreach (var nonCurrentId in nonCurrentIds)
@@ -122,11 +116,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 resourcePool.Details.GetPoolDefinition(), resourcePool.Details.GetPoolVersionDefinition(), count, logger.WithValues(new LogValueSet()));
         }
 
-        private async Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
+        private Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", id);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run_delete",
+                async () =>
+                {
+                    logger.FluentAddBaseValue("ResourceId", id);
 
-            await ContinuationTaskActivator.DeleteResource(id, "TaskVersionChange", logger.WithValues(new LogValueSet()));
+                    await ContinuationTaskActivator.DeleteResource(id, "TaskVersionChange", logger.WithValues(new LogValueSet()));
+                },
+                swallowException: true);
         }
     }
 }
