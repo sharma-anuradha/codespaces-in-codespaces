@@ -26,6 +26,7 @@ import { IWorkbenchConstructionOptions, IWebSocketFactory } from 'vscode-web';
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
+    folder: string | null;
 }
 
 class WorkbenchView extends Component<WorkbenchProps> {
@@ -74,7 +75,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
             payload: {
                 accessToken,
                 sessionId: environmentInfo.connection.sessionId,
-            }
+            },
         });
 
         const listener = () => {
@@ -101,9 +102,9 @@ class WorkbenchView extends Component<WorkbenchProps> {
                 return new VSLSWebSocket(url, accessToken, environmentInfo);
             },
         };
-        
+
         const folderUri = vscode.URI.from({
-            path: sessionPath,
+            path: this.props.folder ? this.props.folder : sessionPath,
             scheme: 'vscode-remote',
             authority: `localhost`,
         });
@@ -146,9 +147,13 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         return e.id === props.match.params.id;
     });
 
+    const params = new URLSearchParams(props.location.search);
+    const folder = params.get('folder');
+
     return {
         token: state.authentication.token,
         environmentInfo,
+        folder,
     };
 };
 
