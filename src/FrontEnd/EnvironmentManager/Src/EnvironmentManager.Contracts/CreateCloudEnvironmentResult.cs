@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Class which encapsulates the results of cloud environment creation.
     /// </summary>
-    public class CreateCloudEnvironmentResult
+    public class CloudEnvironmentResult
     {
         /// <summary>
         /// Gets or sets the Cloud Environment object.

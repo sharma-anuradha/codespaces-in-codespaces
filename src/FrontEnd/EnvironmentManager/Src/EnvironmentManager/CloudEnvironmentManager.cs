@@ -25,8 +25,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     {
         private const int CloudEnvironmentQuota = 5;
         private const int PersistentSessionExpiresInDays = 30;
-        private const string ErrorCodeExceededQuota = "ErrorExceededQuota";
-
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CloudEnvironmentManager"/> class.
@@ -66,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IBillingEventManager BillingEventManager { get; }
 
         /// <inheritdoc/>
-        public async Task<CreateCloudEnvironmentResult> CreateEnvironmentAsync(
+        public async Task<CloudEnvironmentResult> CreateEnvironmentAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentOptions cloudEnvironmentOptions,
             Uri serviceUri,
@@ -77,9 +75,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var duration = logger.StartDuration();
 
-            var result = new CreateCloudEnvironmentResult()
+            var result = new CloudEnvironmentResult()
             {
-                ErrorCode = "Unknown",
+                ErrorCode = ErrorCodes.Unknown,
                 HttpStatusCode = StatusCodes.Status409Conflict,
             };
 
@@ -109,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 if (environments.Count() >= CloudEnvironmentQuota)
                 {
-                    result.ErrorCode = ErrorCodeExceededQuota;
+                    result.ErrorCode = ErrorCodes.ExceededQuota;
                     result.HttpStatusCode = StatusCodes.Status403Forbidden;
                     return result;
                 }
