@@ -99,6 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal("test-storage-sku-name-1", sku.StorageSkuName);
                     // Assert the vm image and storage image
                     Assert.Equal("test-compute-image-family", sku.ComputeImage.ImageFamilyName);
+                    Assert.Equal("test-compute-agent-image-family", sku.ComputeAgentImage.ImageFamilyName);
                     Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
                     Assert.Equal("test-storage-image-family", sku.StorageImage.ImageFamilyName);
                     Assert.Equal("test-storage-image-url", sku.StorageImage.ImageName);
@@ -123,6 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal(2, sku.StorageSizeInGB);
                     Assert.Equal("test-storage-sku-name-2", sku.StorageSkuName);
                     // Assert the vm image and storage image
+                    Assert.Equal("test-compute-agent-image-family", sku.ComputeAgentImage.ImageFamilyName);
                     Assert.Equal("test-compute-image-family", sku.ComputeImage.ImageFamilyName);
                     Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
                     Assert.Equal("test-storage-image-family", sku.StorageImage.ImageFamilyName);
@@ -233,6 +235,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         }
                     },
                 },
+                ComputeAgentImageFamilies = new Dictionary<string, ImageFamilySettings>
+                {
+                    {
+                        "test-compute-agent-image-family",
+                        new ImageFamilySettings
+                        {
+                            ImageName = "test-compute-image-url",
+                        }
+                    },
+                },
                 StorageImageFamilies = new Dictionary<string, ImageFamilySettings>
                 {
                     {
@@ -255,6 +267,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             ComputeSkuName = "test-compute-sku-name-1",
                             ComputeSkuSize = "test-compute-sku-size-1",
                             ComputeImageFamily = "test-compute-image-family",
+                            ComputeAgentImageFamily = "test-compute-agent-image-family",
                             ComputeOS = ComputeOS.Linux,
                             SkuDisplayName = "test-sku-display-name-1",
                             StorageSizeInGB = 1,
@@ -272,6 +285,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             ComputeSkuName = "test-compute-sku-name-2",
                             ComputeSkuSize = "test-compute-sku-size-2",
                             ComputeImageFamily = "test-compute-image-family",
+                            ComputeAgentImageFamily = "test-compute-agent-image-family",
                             ComputeOS = ComputeOS.Linux,
                             SkuDisplayName = "test-sku-display-name-2",
                             StorageSizeInGB = 2,

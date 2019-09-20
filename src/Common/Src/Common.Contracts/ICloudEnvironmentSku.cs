@@ -48,6 +48,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string ComputeSkuSize { get; }
 
         /// <summary>
+        /// Gets the compute agent image family for this SKU.
+        /// </summary>
+        IBuildArtifactImageFamily ComputeAgentImage { get; }
+
+        /// <summary>
         /// Gets the compute image family for this SKU.
         /// </summary>
         IVmImageFamily ComputeImage { get; }
@@ -60,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets the storage image family for this SKU.
         /// </summary>
-        IStorageImageFamily StorageImage { get; }
+        IBuildArtifactImageFamily StorageImage { get; }
 
         /// <summary>
         /// Gets the requested file storage size in GB.

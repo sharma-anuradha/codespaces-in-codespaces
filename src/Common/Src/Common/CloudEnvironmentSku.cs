@@ -22,6 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="computeSkuName">The azure compute sku name.</param>
         /// <param name="computeSkuSize">The azure compute sku size.</param>
         /// <param name="computeOS">The azure compute OS.</param>
+        /// <param name="computeAgentImageFamily">The default VSO Agent image for this SKU.</param>
         /// <param name="computeImageFamily">The default VM image for this SKU.</param>
         /// <param name="storageSkuName">The azure storage sku name.</param>
         /// <param name="storageImageFamily">The storage image family.</param>
@@ -37,9 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             string computeSkuName,
             string computeSkuSize,
             ComputeOS computeOS,
+            IBuildArtifactImageFamily computeAgentImageFamily,
             IVmImageFamily computeImageFamily,
             string storageSkuName,
-            IStorageImageFamily storageImageFamily,
+            IBuildArtifactImageFamily storageImageFamily,
             int storageSizeInGB,
             decimal storageCloudEnvironmentUnits,
             decimal computeCloudEnvironmentUnits,
@@ -52,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNullOrEmpty(computeSkuName, nameof(computeSkuName));
             Requires.NotNullOrEmpty(computeSkuSize, nameof(computeSkuSize));
             Requires.Argument(Enum.IsDefined(typeof(ComputeOS), computeOS), nameof(computeOS), $"The value '{computeOS}' is not a value {nameof(ComputeOS)}.");
+            Requires.NotNull(computeAgentImageFamily, nameof(computeAgentImageFamily));
             Requires.NotNull(computeImageFamily, nameof(computeImageFamily));
             Requires.NotNullOrEmpty(storageSkuName, nameof(storageSkuName));
             Requires.NotNull(storageImageFamily, nameof(storageImageFamily));
@@ -67,6 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ComputeSkuName = computeSkuName;
             ComputeSkuSize = computeSkuSize;
             ComputeOS = computeOS;
+            ComputeAgentImage = computeAgentImageFamily;
             ComputeImage = computeImageFamily;
             StorageSkuName = storageSkuName;
             StorageImage = storageImageFamily;
@@ -98,13 +102,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public ComputeOS ComputeOS { get; }
 
         /// <inheritdoc/>
+        public IBuildArtifactImageFamily ComputeAgentImage { get; }
+
+        /// <inheritdoc/>
         public IVmImageFamily ComputeImage { get; }
 
         /// <inheritdoc/>
         public string StorageSkuName { get; }
 
         /// <inheritdoc/>
-        public IStorageImageFamily StorageImage { get; }
+        public IBuildArtifactImageFamily StorageImage { get; }
 
         /// <inheritdoc/>
         public int StorageSizeInGB { get; }

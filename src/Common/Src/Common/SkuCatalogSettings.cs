@@ -33,6 +33,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public Dictionary<string, VmImageFamilySettings> ComputeImageFamilies { get; set; } = new Dictionary<string, VmImageFamilySettings>();
 
         /// <summary>
+        /// Gets or sets the compute image families referenced in in <see cref="CloudEnvironmentSkuSettings"/>.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public Dictionary<string, ImageFamilySettings> ComputeAgentImageFamilies { get; set; } = new Dictionary<string, ImageFamilySettings>();
+
+        /// <summary>
         /// Gets or sets the storage image families referenced in in <see cref="CloudEnvironmentSkuSettings"/>.
         /// </summary>
         [JsonProperty(Required = Required.Always)]

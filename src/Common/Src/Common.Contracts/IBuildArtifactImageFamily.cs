@@ -1,4 +1,4 @@
-// <copyright file="IVmImageFamily.cs" company="Microsoft">
+// <copyright file="IBuildArtifactImageFamily.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,7 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     /// <summary>
     /// Represents an instance of an image family.
     /// </summary>
-    public interface IStorageImageFamily : IImageFamily
+    public interface IBuildArtifactImageFamily : IImageFamily
     {
         /// <summary>
         /// Gets the image name for the storage image.

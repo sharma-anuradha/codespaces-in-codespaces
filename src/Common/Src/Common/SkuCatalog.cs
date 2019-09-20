@@ -110,7 +110,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     skuCatalogSettings.ComputeImageFamilies,
                     subscriptionId,
                     vmImageResourceGroup);
-                var storageImageFamily = NewStorageImageFamily(
+
+                var computeAgentImageFamily = CreateBuildArtifactImageFamily(
+                    cloudEnvironmentSettings.ComputeAgentImageFamily,
+                    skuCatalogSettings.ComputeAgentImageFamilies);
+
+                var storageImageFamily = CreateBuildArtifactImageFamily(
                     cloudEnvironmentSettings.StorageImageFamily,
                     skuCatalogSettings.StorageImageFamilies);
 
@@ -122,6 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     cloudEnvironmentSettings.ComputeSkuName,
                     cloudEnvironmentSettings.ComputeSkuSize,
                     cloudEnvironmentSettings.ComputeOS,
+                    computeAgentImageFamily,
                     computeImageFamily,
                     cloudEnvironmentSettings.StorageSkuName,
                     storageImageFamily,
@@ -163,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return imageFamily;
         }
 
-        private static IStorageImageFamily NewStorageImageFamily(
+        private static IBuildArtifactImageFamily CreateBuildArtifactImageFamily(
             string imageFamilyName,
             IDictionary<string, ImageFamilySettings> imageFamilies)
         {
@@ -172,12 +178,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 throw new NotSupportedException($"The image family name '{imageFamilyName}' is not configured.");
             }
 
-            var imageFamily = new StorageImageFamily(
+            var imageFamily = new BuildArtifactImageFamily(
                 imageFamilyName,
                 imageFamilySettings.ImageName);
 
             return imageFamily;
         }
-
     }
 }
