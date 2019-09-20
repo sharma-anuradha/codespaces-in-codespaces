@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
@@ -24,6 +25,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     {
         private const int CloudEnvironmentQuota = 5;
         private const int PersistentSessionExpiresInDays = 30;
+        private const string ErrorCodeExceededQuota = "ErrorExceededQuota";
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CloudEnvironmentManager"/> class.
@@ -63,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IBillingEventManager BillingEventManager { get; }
 
         /// <inheritdoc/>
-        public async Task<(CloudEnvironment, int)> CreateEnvironmentAsync(
+        public async Task<CreateCloudEnvironmentResult> CreateEnvironmentAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentOptions cloudEnvironmentOptions,
             Uri serviceUri,
@@ -73,6 +76,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
+
+            var result = new CreateCloudEnvironmentResult()
+            {
+                ErrorCode = "Unknown",
+                HttpStatusCode = StatusCodes.Status409Conflict,
+            };
 
             try
             {
@@ -100,7 +109,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 if (environments.Count() >= CloudEnvironmentQuota)
                 {
-                    return (null, StatusCodes.Status422UnprocessableEntity);
+                    result.ErrorCode = ErrorCodeExceededQuota;
+                    result.HttpStatusCode = StatusCodes.Status403Forbidden;
+                    return result;
                 }
 
                 // TODO: Make AccountId required after clients are updated to supply it.
@@ -152,7 +163,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogInfo(GetType().FormatLogMessage(nameof(CreateEnvironmentAsync)));
 
-                    return (cloudEnvironment, StatusCodes.Status200OK);
+                    result.CloudEnvironment = cloudEnvironment;
+                    result.HttpStatusCode = StatusCodes.Status200OK;
+                    return result;
                 }
 
                 // Allocate Storage
@@ -187,7 +200,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddCloudEnvironment(cloudEnvironment)
                     .LogInfo(GetType().FormatLogMessage(nameof(CreateEnvironmentAsync)));
 
-                return (cloudEnvironment, StatusCodes.Status200OK);
+                result.CloudEnvironment = cloudEnvironment;
+                result.HttpStatusCode = StatusCodes.Status200OK;
+                return result;
             }
             catch (Exception ex)
             {

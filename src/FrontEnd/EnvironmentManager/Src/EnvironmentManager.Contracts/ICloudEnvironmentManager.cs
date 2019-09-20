@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -42,8 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="ownerId">The owner id.</param>
         /// <param name="accessToken">The owner's access token.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>Tuple of CloudEnvironments and Http status code.</returns>
-        Task<(CloudEnvironment, int)> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, Uri serviceUri, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
+        /// <returns>Cloud environment creation result.</returns>
+        Task<CreateCloudEnvironmentResult> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, Uri serviceUri, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update the callback information for an existing environment.

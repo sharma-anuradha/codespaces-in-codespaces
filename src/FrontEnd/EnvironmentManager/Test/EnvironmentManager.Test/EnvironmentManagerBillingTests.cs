@@ -6,6 +6,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
@@ -63,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
 
         private async Task<CloudEnvironment> CreateTestEnvironmentAsync(string name = "Test")
         {
-            var (testEnvironment, status) = await this.environmentManager.CreateEnvironmentAsync(
+            var testEnvironment= await this.environmentManager.CreateEnvironmentAsync(
                 new CloudEnvironment
                 {
                     FriendlyName = name,
@@ -77,8 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
                 testUserId,
                 testAccessToken,
                 this.logger);
-            Assert.NotNull(testEnvironment);
-            return testEnvironment;
+            Assert.NotNull(testEnvironment.CloudEnvironment);
+            return testEnvironment.CloudEnvironment;
         }
 
         private async Task MakeTestEnvironmentAvailableAsync(CloudEnvironment testEnvironment)

@@ -174,7 +174,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> CreateCloudEnvironmentAsync(
             [FromBody]CreateCloudEnvironmentBody createEnvironmentInput)
@@ -244,8 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                 var callbackUriFormat = callbackUriBuilder.Uri.ToString();
 
-                var httpStatusCode = StatusCodes.Status409Conflict;
-                (cloudEnvironment, httpStatusCode) = await EnvironmentManager.CreateEnvironmentAsync(
+                var createCloudEnvironmentResult = await EnvironmentManager.CreateEnvironmentAsync(
                     cloudEnvironment,
                     new CloudEnvironmentOptions { CreateFileShare = createEnvironmentInput.CreateFileShare },
                     serviceUriBuilder.Uri,
@@ -254,7 +253,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     accessToken,
                     logger);
 
-                if (cloudEnvironment is null)
+                if (createCloudEnvironmentResult.CloudEnvironment is null)
                 {
                     // Couldn't be registered. Assume it already exists?
                     logger.AddDuration(duration)
@@ -263,18 +262,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     // TODO: 409 conflict might mean that the requested session id already exists
                     // Could mean that the friendly-name is in conflict, could mean anything!
-                    return StatusCode(httpStatusCode);
+                    return StatusCode(createCloudEnvironmentResult.HttpStatusCode, createCloudEnvironmentResult.ErrorCode);
                 }
 
                 var location = new UriBuilder(Request.GetDisplayUrl());
                 location.Path = location.Path.TrimEnd('/');
-                location.Path = $"{location.Path}/{cloudEnvironment.Id}";
+                location.Path = $"{location.Path}/{createCloudEnvironmentResult.CloudEnvironment.Id}";
 
                 logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
+                    .AddCloudEnvironment(createCloudEnvironmentResult.CloudEnvironment)
                     .LogInfo(GetType().FormatLogMessage(nameof(CreateCloudEnvironmentAsync)));
 
-                return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(cloudEnvironment));
+                return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(createCloudEnvironmentResult.CloudEnvironment));
             }
             catch (Exception ex)
             {
