@@ -40,6 +40,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
+        public string GetDNSHostName()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<(string, string)> GetInstanceCosmosDbAccountAsync()
         {
             throw new NotImplementedException();

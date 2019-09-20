@@ -51,21 +51,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         /// <param name="services">The services collection that should be configured.</param>
         public void ConfigureServices(IServiceCollection services)
         {
-            // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
-            if (HostingEnvironment.IsDevelopment())
-            {
-                services.AddCors(options =>
-                {
-                    options.AddDefaultPolicy((builder) =>
-                    {
-                        builder.WithOrigins(
-                            "https://localhost:3000")
-                            .AllowAnyHeader()
-                            .AllowAnyMethod();
-                    });
-                });
-            }
-
             // Frameworks
             services
                 .AddMvc()
@@ -87,6 +72,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
             ConfigureCommonServices(services, out var loggingBaseValues);
+
+            services.AddCors(options =>
+                {
+                    var currentDomain = $"https://{ControlPlaneAzureResourceAccessor.GetDNSHostName()}";
+                    options.AddPolicy("NonDevCORSPolicy",
+                        builder => builder
+                            .WithOrigins(currentDomain)
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                        );
+
+                    options.AddPolicy("DevCORSPolicy",
+                        builder => builder
+                            .WithOrigins(
+                                "https://localhost:3000",
+                                currentDomain
+                            )
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                        );
+                }
+            );
 
             // Add the account manager and the account management repository
             services.AddAccountManager(frontEndAppSettings.UseMocksForLocalDevelopment);
@@ -245,6 +252,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 c.SwaggerEndpoint($"/api/{ServiceConstants.CurrentApiVersion}/swagger", ServiceConstants.EndpointName);
                 c.DisplayRequestDuration();
             });
+
+            // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
+            // and the current stamp CORS for all environments
+            if (HostingEnvironment.IsDevelopment())
+            {
+                app.UseCors("DevCORSPolicy");
+            }
+            else
+            {
+                app.UseCors("NonDevCORSPolicy");
+            }
 
             Warmup(app);
         }

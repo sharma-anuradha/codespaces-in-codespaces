@@ -1,6 +1,7 @@
 import { useActionContext } from './useActionContext';
 
 import { trace as baseTrace } from '../../utils/trace';
+import { getTopLevelDomain } from '../../utils/getTopLevelDomain';
 
 const trace = baseTrace.extend('useWebClient:trace');
 // tslint:disable-next-line: no-console
@@ -92,6 +93,17 @@ async function request<TResult>(
         });
     } catch (err) {
         throw new ServiceConnectionError(err);
+    }
+
+    // if 307 from services, manually follow the redirect
+    if (response.status === 307) {
+        const redirectUrl = response.headers.get('location');
+        if (redirectUrl) {
+            // allow only vs domain redirects
+            if (getTopLevelDomain(redirectUrl) === 'visualstudio.com') {
+                return await request(redirectUrl, options, requestOptions);
+            }
+        }
     }
 
     if (response.status === 401) {
