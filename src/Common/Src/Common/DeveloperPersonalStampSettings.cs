@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="enable">True to enable developer personal stamp.</param>
         public DeveloperPersonalStampSettings(bool enable)
         {
-            DeveloperStamp = true;
+            DeveloperStamp = enable;
         }
     }
 }
