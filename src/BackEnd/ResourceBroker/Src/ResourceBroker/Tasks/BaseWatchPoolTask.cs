@@ -27,16 +27,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="resourceScalingStore">Resource scalling store.</param>
         /// <param name="distributedLease">Distributed lease.</param>
         /// <param name="taskHelper">Task helper.</param>
+        /// <param name="resourceNameBuilder">Resource name builder.</param>
         public BaseWatchPoolTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourcePoolDefinitionStore resourceScalingStore,
             IDistributedLease distributedLease,
-            ITaskHelper taskHelper)
+            ITaskHelper taskHelper,
+            IResourceNameBuilder resourceNameBuilder)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
             ResourceScalingStore = resourceScalingStore;
             DistributedLease = distributedLease;
             TaskHelper = taskHelper;
+            ResourceNameBuilder = resourceNameBuilder;
         }
 
         /// <summary>
@@ -48,6 +51,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// Gets the task ehlper.
         /// </summary>
         protected ITaskHelper TaskHelper { get; }
+
+        /// <summary>
+        /// Gets the resource name builder.
+        /// </summary>
+        protected IResourceNameBuilder ResourceNameBuilder { get; }
 
         /// <summary>
         /// Gets the base lease name.

@@ -14,14 +14,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
     public class CapacityManagerTests
     {
         [Fact]
-        public void Cotr_Throws_NullArgumentException()
+        public void Ctor_Throws_NullArgumentException()
         {
             var azureSubscriptionCatalog = new Mock<IAzureSubscriptionCatalog>().Object;
             var controlPlaneInfo = new Mock<IControlPlaneInfo>().Object;
-            _ = new CapacityManager(azureSubscriptionCatalog, controlPlaneInfo);
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureSubscriptionCatalog, null));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, controlPlaneInfo));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, null));
+            var capacitySettings = new CapacitySettings();
+            var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false));
+            _ = new CapacityManager(azureSubscriptionCatalog, controlPlaneInfo, resourceNameBuilder, capacitySettings);
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, controlPlaneInfo, resourceNameBuilder, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, null, resourceNameBuilder, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, null, null, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, null, null, null));
         }
 
         [Fact(Skip = "Skipping null arg test until resource broker can invoke SelectAzureResourceLocation with non-null.")]
@@ -29,7 +32,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
         {
             var catalog = MockAzureSubscriptionCatalog();
             var controlPlaneResourceAccessor = MockControlPlaneInfo();
-            var capacityManager = new CapacityManager(catalog, controlPlaneResourceAccessor);
+            var capacitySettings = new CapacitySettings();
+            var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false));
+
+
+            var capacityManager = new CapacityManager(catalog, controlPlaneResourceAccessor, resourceNameBuilder, capacitySettings);
             var sku = new Mock<ICloudEnvironmentSku>().Object;
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
@@ -47,7 +54,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var controlPlaneResourceAccessor = MockControlPlaneInfo();
             var sku = new Mock<ICloudEnvironmentSku>().Object;
             var logger = new Mock<IDiagnosticsLogger>().Object;
-            var capacityManager = new CapacityManager(catalog, controlPlaneResourceAccessor);
+            var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false));
+            var capacitySettings = new CapacitySettings();
+
+            var capacityManager = new CapacityManager(catalog, controlPlaneResourceAccessor, resourceNameBuilder, capacitySettings);
 
             var badLocation = AzureLocation.EastUs2Euap;
             await Assert.ThrowsAsync<SkuNotAvailableException>(() =>
@@ -70,7 +80,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var controlPlaneInfo = MockControlPlaneInfo();
             var sku = new Mock<ICloudEnvironmentSku>().Object;
             var logger = new Mock<IDiagnosticsLogger>().Object;
-            var capacityManager = new CapacityManager(catalog, controlPlaneInfo);
+            var capacitySettings = new CapacitySettings();
+            var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false));
+
+            var capacityManager = new CapacityManager(catalog, controlPlaneInfo, resourceNameBuilder, capacitySettings);
 
             var result = await capacityManager.SelectAzureResourceLocation(sku, location, logger);
             Assert.Equal(MockSubscriptionId.ToString(), result.Subscription.SubscriptionId);

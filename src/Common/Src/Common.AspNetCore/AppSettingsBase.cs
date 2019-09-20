@@ -55,5 +55,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public CertificateSettings CertificateSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether developer personal azure resources should be used.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public bool DeveloperPersonalStamp { get; set; } = false;
     }
 }

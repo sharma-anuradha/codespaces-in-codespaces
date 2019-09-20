@@ -63,6 +63,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Configuration AppSettings
             var appSettings = ConfigureAppSettings(services);
 
+            if (IsRunningInAzure() && AppSettings.DeveloperPersonalStamp)
+            {
+                throw new InvalidOperationException("Cannot use DeveloperPersonalStamp outside of local development");
+            }
+
             if (IsRunningInAzure())
             {
                 var mocksSettings = AppSettings.BackEnd.MocksSettings;
@@ -92,6 +97,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 options.AccountKey = accountKey;
             });
 
+            // Adding developer personal stamp settings and resource name builder.
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp);
+            services.AddSingleton(developerPersonalStampSettings);
+            services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
+
             services.AddDocumentDbClientProvider(options =>
             {
                 var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetStampCosmosDbAccountAsync().Result;
@@ -99,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
                 options.HostUrl = hostUrl;
                 options.AuthKey = authKey;
-                options.DatabaseId = RequiresNotNullOrEmpty(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId));
+                options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(RequiresNotNullOrEmpty(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
                 options.PreferredLocation = CurrentAzureLocation.ToString();
                 options.UseMultipleWriteLocations = false;
             });
@@ -128,7 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddStorageFileShareProvider(appSettings.BackEnd.MocksSettings);
 
             // Capacity Manager
-            services.AddCapacityManager(appSettings.BackEnd.MocksSettings);
+            services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);
 
             // Add the certificate settings.
             services.AddSingleton(appSettings.CertificateSettings);

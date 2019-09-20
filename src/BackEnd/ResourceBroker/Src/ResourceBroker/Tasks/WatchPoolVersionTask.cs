@@ -35,21 +35,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceRepository">Target resource Repository.</param>
         /// <param name="taskHelper">Target task helper.</param>
+        /// <param name="resourceNameBuilder">Resource name builder.</param>
         public WatchPoolVersionTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceRepository resourceRepository,
             IContinuationTaskActivator continuationTaskActivator,
             IResourcePoolDefinitionStore resourceScalingStore,
             IDistributedLease distributedLease,
-            ITaskHelper taskHelper)
-            : base(resourceBrokerSettings, resourceScalingStore, distributedLease, taskHelper)
+            ITaskHelper taskHelper,
+            IResourceNameBuilder resourceNameBuilder)
+            : base(resourceBrokerSettings, resourceScalingStore, distributedLease, taskHelper, resourceNameBuilder)
         {
             ContinuationTaskActivator = continuationTaskActivator;
             ResourceRepository = resourceRepository;
         }
 
         /// <inheritdoc/>
-        protected override string LeaseBaseName => $"{nameof(WatchPoolVersionTask)}Lease";
+        protected override string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchPoolVersionTask)}Lease");
 
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchPoolVersionTask;

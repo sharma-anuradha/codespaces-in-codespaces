@@ -39,15 +39,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IContinuationTaskActivator continuationTaskActivator,
             IResourcePoolDefinitionStore resourceScalingStore,
             IDistributedLease distributedLease,
-            ITaskHelper taskHelper)
-            : base(resourceBrokerSettings, resourceScalingStore, distributedLease, taskHelper)
+            ITaskHelper taskHelper,
+            IResourceNameBuilder resourceNameBuilder)
+            : base(resourceBrokerSettings, resourceScalingStore, distributedLease, taskHelper, resourceNameBuilder)
         {
             ContinuationTaskActivator = continuationTaskActivator;
             ResourceRepository = resourceRepository;
         }
 
         /// <inheritdoc/>
-        protected override string LeaseBaseName => $"{nameof(WatchPoolSizeTask)}Lease";
+        protected override string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchPoolSizeTask)}Lease");
 
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchPoolSizeTask;

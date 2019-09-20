@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
@@ -18,9 +19,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
     /// </summary>
     public class CapacityManager : ICapacityManager
     {
-        private const int MinResourceGroupNumber = 1;
-        private const int MaxResourceGroupNumber = 500;
-
         private Random Rnd { get; } = new Random();
 
         /// <summary>
@@ -28,19 +26,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// </summary>
         /// <param name="azureSubscriptionCatalog">The azure subscription catalog.</param>
         /// <param name="controlPlaneInfo">The control-plane resource accessor.</param>
+        /// <param name="resourceNameBuilder">resource name builder.</param>
+        /// <param name="capacitySettings">Capacity settings.</param>
         public CapacityManager(
             IAzureSubscriptionCatalog azureSubscriptionCatalog,
-            IControlPlaneInfo controlPlaneInfo)
+            IControlPlaneInfo controlPlaneInfo,
+            IResourceNameBuilder resourceNameBuilder,
+            CapacitySettings capacitySettings)
         {
-            Requires.NotNull(azureSubscriptionCatalog, nameof(azureSubscriptionCatalog));
-            Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
-            AzureSubscriptionCatalog = azureSubscriptionCatalog;
-            ControlPlaneInfo = controlPlaneInfo;
+            AzureSubscriptionCatalog = Requires.NotNull(azureSubscriptionCatalog, nameof(azureSubscriptionCatalog));
+            ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
+            ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
+            CapacitySettings = Requires.NotNull(capacitySettings, nameof(capacitySettings));
         }
 
         private IAzureSubscriptionCatalog AzureSubscriptionCatalog { get; }
 
-        private IControlPlaneInfo ControlPlaneInfo{ get; }
+        private IControlPlaneInfo ControlPlaneInfo { get; }
+
+        private IResourceNameBuilder ResourceNameBuilder { get; }
+
+        private CapacitySettings CapacitySettings { get; }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<AzureResourceUsage>> GetComputeUsageAsync(IAzureSubscription subscription, AzureLocation location, IDiagnosticsLogger logger)
@@ -86,19 +92,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 throw new SkuNotAvailableException(_?.SkuName ?? "unknown", location);
             }
 
+            var stampResourceGroupName = ControlPlaneInfo.Stamp.StampResourceGroupName;
+            var resourceGroupName = ResourceNameBuilder.GetResourceGroupName(stampResourceGroupName);
+
             // We'll used resource group names that match the stamp resource group, so that it will be clear which
             // stamp has allocated the data-plane resource groups. For example, production in East US would yield the name
             // vsclk-online-prod-rel-use-###
-            var stampResourceGroupName = ControlPlaneInfo.Stamp.StampResourceGroupName;
-            var resourceGroupNumber = GetRandomResourceGroupNubmer();
-            var resourceGroupName = $"{stampResourceGroupName}-{resourceGroupNumber:000}";
+            if (CapacitySettings.SpreadResourcesInGroups)
+            {
+                var resourceGroupNumber = GetRandomResourceGroupNubmer();
+                resourceGroupName = $"{resourceGroupName}-{resourceGroupNumber:000}";
+            }
 
             return new AzureResourceLocation(subscription, resourceGroupName, location);
         }
 
         private int GetRandomResourceGroupNubmer()
         {
-            return Rnd.Next(MinResourceGroupNumber, MaxResourceGroupNumber);
+            return Rnd.Next(CapacitySettings.Min, CapacitySettings.Max);
         }
     }
 }

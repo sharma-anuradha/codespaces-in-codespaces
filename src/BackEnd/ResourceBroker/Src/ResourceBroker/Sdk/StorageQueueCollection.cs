@@ -10,6 +10,7 @@ using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk
 {
@@ -25,13 +26,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk
         /// <param name="clientProvider">The client provider.</param>
         /// <param name="healthProvider">The health provider.</param>
         /// <param name="loggerFactory">The logger factory.</param>
+        /// <param name="resourceNameBuilder">The resource name builder.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public StorageQueueCollection(
             IStorageQueueClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
+            IResourceNameBuilder resourceNameBuilder,
             LogValueSet defaultLogValues)
-            : base(clientProvider, healthProvider, loggerFactory, defaultLogValues)
+            : base(clientProvider, healthProvider, loggerFactory, resourceNameBuilder, defaultLogValues)
         {
         }
 
