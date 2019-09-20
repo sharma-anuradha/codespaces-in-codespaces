@@ -217,9 +217,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             var isDevelopment = env.IsDevelopment();
 
+            // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
+            // and the current stamp CORS for all environments
             if (isDevelopment)
             {
-                app.UseCors();
+                app.UseCors("DevCORSPolicy");
+            }
+            else
+            {
+                app.UseCors("NonDevCORSPolicy");
             }
 
             // Use VS SaaS middleware.
@@ -252,17 +258,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 c.SwaggerEndpoint($"/api/{ServiceConstants.CurrentApiVersion}/swagger", ServiceConstants.EndpointName);
                 c.DisplayRequestDuration();
             });
-
-            // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
-            // and the current stamp CORS for all environments
-            if (HostingEnvironment.IsDevelopment())
-            {
-                app.UseCors("DevCORSPolicy");
-            }
-            else
-            {
-                app.UseCors("NonDevCORSPolicy");
-            }
 
             Warmup(app);
         }
