@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         {
             Min = 1;
             Max = 500;
-            SpreadResourcesInGroups = false;
+            SpreadResourcesInGroups = true;
         }
 
         /// <summary>
