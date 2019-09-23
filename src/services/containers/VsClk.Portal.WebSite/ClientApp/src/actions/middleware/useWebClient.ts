@@ -108,7 +108,7 @@ async function request<TResult>(
                 const prevUrlOrigin = new URL(url);
                 const redirectUrlOrigin = new URL(redirectUrl);
 
-                if (prevUrlOrigin !== redirectUrlOrigin) {
+                if (prevUrlOrigin.origin !== redirectUrlOrigin.origin) {
                     opts.mode = 'cors';
                 }
 
