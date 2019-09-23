@@ -56,6 +56,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public string UseFakesPublishedCLIPath { get; set; }
 
         /// <summary>
+        /// Gets or sets the forwarding url for local development & testing.
+        /// </summary>
+        public string ForwardingHostForLocalDevelopment { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to call the real backend during local development instead of mocks.
         /// </summary>
         public bool UseBackEndForLocalDevelopment { get; set; }

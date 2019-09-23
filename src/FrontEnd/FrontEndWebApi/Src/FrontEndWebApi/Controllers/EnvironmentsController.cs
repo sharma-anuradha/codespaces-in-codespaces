@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -41,28 +42,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="currentUserProvider">The current user provider.</param>
         /// <param name="controlPlaneInfo">The control-plane info.</param>
         /// <param name="currentLocationProvider">The current location provider.</param>
+        /// <param name="skuCatalog">The sku catalog.</param>
         /// <param name="mapper">The configured auto-mapper.</param>
+        /// <param name="serviceUriBuilder">The service uri builder.</param>
         public EnvironmentsController(
             ICloudEnvironmentManager environmentManager,
             ICurrentUserProvider currentUserProvider,
             IControlPlaneInfo controlPlaneInfo,
             ICurrentLocationProvider currentLocationProvider,
             ISkuCatalog skuCatalog,
-            IMapper mapper)
+            IMapper mapper,
+            IServiceUriBuilder serviceUriBuilder)
         {
-            Requires.NotNull(environmentManager, nameof(environmentManager));
-            Requires.NotNull(currentUserProvider, nameof(currentUserProvider));
-            Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
-            Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
-            Requires.NotNull(skuCatalog, nameof(skuCatalog));
-            Requires.NotNull(mapper, nameof(mapper));
-
-            EnvironmentManager = environmentManager;
-            CurrentUserProvider = currentUserProvider;
-            ControlPlaneInfo = controlPlaneInfo;
-            CurrentLocationProvider = currentLocationProvider;
-            SkuCatalog = skuCatalog;
-            Mapper = mapper;
+            EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
+            CurrentUserProvider = Requires.NotNull(currentUserProvider, nameof(currentUserProvider));
+            ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
+            CurrentLocationProvider = Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
+            SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
+            Mapper = Requires.NotNull(mapper, nameof(mapper));
+            ServiceUriBuilder = Requires.NotNull(serviceUriBuilder, nameof(serviceUriBuilder));
         }
 
         private ICloudEnvironmentManager EnvironmentManager { get; }
@@ -73,9 +71,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
         private ICurrentLocationProvider CurrentLocationProvider { get; }
 
-        private ISkuCatalog SkuCatalog { get;  }
+        private ISkuCatalog SkuCatalog { get; }
 
         private IMapper Mapper { get; }
+
+        private IServiceUriBuilder ServiceUriBuilder { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -217,37 +217,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var accessToken = CurrentUserProvider.GetBearerToken();
 
                 // Build the service URI.
-                var serviceUriBuilder = new UriBuilder(Request.GetDisplayUrl())
-                {
-                    Query = null,
-                };
-                serviceUriBuilder.Path = serviceUriBuilder.Path.TrimEnd('/');
-                if (!serviceUriBuilder.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-                {
-                    serviceUriBuilder.Scheme = Uri.UriSchemeHttps;
-                    serviceUriBuilder.Port = -1;
-                    serviceUriBuilder.Host = owningStamp.DnsHostName; // use location-specific host for callback
-                }
-
-                // Build the callback URI.
-                var callbackUriBuilder = new UriBuilder(Request.GetDisplayUrl())
-                {
-                    Query = null,
-                };
-                callbackUriBuilder.Path = $"{callbackUriBuilder.Path.TrimEnd('/')}/{{0}}/_callback";
-                if (!callbackUriBuilder.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-                {
-                    callbackUriBuilder.Scheme = Uri.UriSchemeHttps;
-                    callbackUriBuilder.Port = -1;
-                    callbackUriBuilder.Host = owningStamp.DnsHostName; // use location-specific host for callback
-                }
-
-                var callbackUriFormat = callbackUriBuilder.Uri.ToString();
+                var serviceUri = ServiceUriBuilder.GetServiceUri(Request.GetDisplayUrl(), owningStamp);
+                var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(Request.GetDisplayUrl(), owningStamp).ToString();
 
                 var createCloudEnvironmentResult = await EnvironmentManager.CreateEnvironmentAsync(
                     cloudEnvironment,
                     new CloudEnvironmentOptions { CreateFileShare = createEnvironmentInput.CreateFileShare },
-                    serviceUriBuilder.Uri,
+                    serviceUri,
                     callbackUriFormat,
                     currentUserId,
                     accessToken,

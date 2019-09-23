@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IBillingEventManager BillingEventManager { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironmentResult> CreateEnvironmentAsync(
+        public async Task<CloudEnvironmentCreationResult> CreateEnvironmentAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentOptions cloudEnvironmentOptions,
             Uri serviceUri,
@@ -75,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var duration = logger.StartDuration();
 
-            var result = new CloudEnvironmentResult()
+            var result = new CloudEnvironmentCreationResult()
             {
                 ErrorCode = ErrorCodes.Unknown,
                 HttpStatusCode = StatusCodes.Status409Conflict,

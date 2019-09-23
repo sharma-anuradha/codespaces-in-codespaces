@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\Common.Contracts\Common.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

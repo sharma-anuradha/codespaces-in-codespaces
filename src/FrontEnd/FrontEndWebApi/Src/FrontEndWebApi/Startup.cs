@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
@@ -170,12 +171,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     new[] { ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSAppIdString, nameof(frontEndAppSettings.RPSaaSAppIdString)) }));
             });
 
+            // Adding developer personal stamp settings and resource name builder.
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp);
+            services.AddSingleton(developerPersonalStampSettings);
+            services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
+
+            services.AddServiceUriBuilder(frontEndAppSettings.ForwardingHostForLocalDevelopment);
+
             services.AddDocumentDbClientProvider(options =>
             {
                 var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetInstanceCosmosDbAccountAsync().Result;
                 options.HostUrl = hostUrl;
                 options.AuthKey = authKey;
-                options.DatabaseId = Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId));
+                options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
                 options.PreferredLocation = CurrentAzureLocation.ToString();
             });
 

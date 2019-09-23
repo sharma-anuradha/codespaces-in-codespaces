@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="accessToken">The owner's access token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Cloud environment creation result.</returns>
-        Task<CloudEnvironmentResult> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, Uri serviceUri, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
+        Task<CloudEnvironmentCreationResult> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, Uri serviceUri, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update the callback information for an existing environment.
