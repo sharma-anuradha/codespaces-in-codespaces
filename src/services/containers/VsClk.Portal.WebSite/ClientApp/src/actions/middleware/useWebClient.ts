@@ -86,7 +86,6 @@ async function request<TResult>(
         const { makeRequest } = useActionContext();
 
         response = await makeRequest(url, {
-            redirect: 'error',
             ...rest,
             headers,
             body,
@@ -97,11 +96,24 @@ async function request<TResult>(
 
     // if 307 from services, manually follow the redirect
     if (response.status === 307) {
+        trace('Redirect: ', response);
         const redirectUrl = response.headers.get('location');
         if (redirectUrl) {
             // allow only vs domain redirects
             if (getTopLevelDomain(redirectUrl) === 'visualstudio.com') {
-                return await request(redirectUrl, options, requestOptions);
+                const opts: RequestInit = {
+                    ...options,
+                };
+
+                const prevUrlOrigin = new URL(url);
+                const redirectUrlOrigin = new URL(redirectUrl);
+
+                if (prevUrlOrigin !== redirectUrlOrigin) {
+                    opts.mode = 'cors';
+                }
+
+                trace('Follow redirect: ', redirectUrl, opts, requestOptions);
+                return await request(redirectUrl, opts, requestOptions);
             }
         }
     }
