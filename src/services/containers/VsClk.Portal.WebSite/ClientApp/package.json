@@ -130,7 +130,7 @@
     "not ie < 11",
     "not op_mini all"
   ],
-  "vscodeCommit": "de03947834d0bcf55093b97c292b76faa75cdebc",
+  "vscodeCommit": "9f6a745027fc7b2a12495970f64625e24f410224",
   "jest": {
     "collectCoverageFrom": [
       "src/**/*.{js,jsx,ts,tsx}",
