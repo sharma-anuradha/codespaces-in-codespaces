@@ -56,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Gets or sets the compute agent image family name.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public string ComputeAgentImageFamily { get; set; }
+        public string vmAgentImageFamily { get; set; }
 
         /// <summary>
         /// Gets or sets the Azure storage SKU name: Premium_LRS, Premium_ZRS, Standard_GRS, Standard_LRS, Standard_RAGRS, or Standard_ZRS.

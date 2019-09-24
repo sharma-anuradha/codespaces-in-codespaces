@@ -87,29 +87,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <inheritdoc/>
         public async Task<(OperationState, NextStageInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
         {
+            Requires.NotNull(input.AzureResourceGroup, nameof(input.AzureResourceGroup));
+            Requires.NotNull(input.AzureSkuName, nameof(input.AzureSkuName));
+            Requires.NotNull(input.AzureVirtualMachineImage, nameof(input.AzureVirtualMachineImage));
+            Requires.NotNull(input.VmAgentBlobUrl, nameof(input.VmAgentBlobUrl));
+            Requires.NotNull(input.VMToken, nameof(input.VMToken));
+
             // create new VM resource name
             var virtualMachineName = $"{Guid.NewGuid().ToString()}-lnx";
 
             var resourceTags = input.ResourceTags;
-
-            var parameters = new Dictionary<string, Dictionary<string, object>>()
-            {
-                { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
-                { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
-                { "vmSetupScript", new Dictionary<string, object>() { { Key, GetVmInitScript(input.VMToken) } } },
-                { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
-                { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName } } },
-                { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
-                { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
-                { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
-                { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
-            };
-
             var deploymentName = $"Create-Vm-{virtualMachineName}";
             try
             {
                 var azure = await clientFactory.GetAzureClientAsync(input.AzureSubscription);
                 await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
+
+                // Create input queue
+                string queueName = GetQueueName(virtualMachineName);
+                var queue = await GetQueueClientAsync(input.AzureVmLocation, queueName, logger);
+                var queueCreated = await queue.CreateIfNotExistsAsync();
+                if (!queueCreated)
+                {
+                    throw new VirtualMachineException($"Failed to create queue for virtual machine {virtualMachineName}");
+                }
+
+                // Get queue sas url
+                var queueResult = await GetVirtualMachineInputQueueConnectionInfoAsync(input.AzureVmLocation, virtualMachineName, 0, logger);
+                if (queueResult.Item1 != OperationState.Succeeded)
+                {
+                    throw new VirtualMachineException($"Failed to get sas token for virtaul machine input queue {queue.Uri}");
+                }
+
+                var queueConnectionInfo = queueResult.Item2;
+                string vmInItScript = GetVmInitScript(input.VMToken, input.VmAgentBlobUrl, queueConnectionInfo);
+                var parameters = new Dictionary<string, Dictionary<string, object>>()
+                {
+                    { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
+                    { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
+                    { "vmSetupScript", new Dictionary<string, object>() { { Key, vmInItScript } } },
+                    { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
+                    { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName } } },
+                    { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
+                    { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
+                    { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
+                    { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
+                };
 
                 // Create virtual machine
                 var result = await azure.Deployments.Define(deploymentName)
@@ -118,14 +141,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     .WithParameters(JsonConvert.SerializeObject(parameters))
                     .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
                     .BeginCreateAsync();
-
-                // Create input queue
-                var queue = await GetQueueClientAsync(input.AzureVmLocation, GetQueueName(virtualMachineName), logger);
-                var queueCreated = await queue.CreateIfNotExistsAsync();
-                if (!queueCreated)
-                {
-                    throw new Exception($"Failed to create queue for virtaul machine {virtualMachineName}");
-                }
 
                 var azureResourceInfo = new AzureResourceInfo(input.AzureSubscription, input.AzureResourceGroup, virtualMachineName);
                 return (OperationState.InProgress, new NextStageInput(result.Name, azureResourceInfo));
@@ -443,12 +458,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return GetEmbeddedResource("template_vm.json");
         }
 
-        private static string GetCustomScript(string scriptName)
-        {
-            var scriptString = GetEmbeddedResource(scriptName);
-            return scriptString.ToBase64Encoded();
-        }
-
         private static string GetCustomScriptForVmAssign(string scriptName, VirtualMachineProviderStartComputeInput input)
         {
             var scriptString = GetEmbeddedResource(scriptName);
@@ -484,10 +493,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return JsonConvert.SerializeObject((computeVmLocation, resourcesToBeDeleted));
         }
 
-        private string GetVmInitScript(string vmToken)
+        private string GetVmInitScript(string vmToken, string vmAgentBlobUrl, QueueConnectionInfo queueConnectionInfo)
         {
-            var initScript = GetCustomScript("vm_init.sh");
-            return initScript.Replace("SCRIPT_PARAM_VMTOKEN=''", $"SCRIPT_PARAM_VMTOKEN='{vmToken}'");
+            var initScript = GetEmbeddedResource("vm_init.sh");
+            string queueSasToken = JsonConvert.SerializeObject(queueConnectionInfo);
+            initScript = initScript
+                .Replace("SCRIPT_PARAM_VMTOKEN=''", $"SCRIPT_PARAM_VMTOKEN='{vmToken}'")
+                .Replace("SCRIPT_PARAM_VM_QUEUE_TOKEN=''", $"SCRIPT_PARAM_VM_QUEUE_TOKEN='{queueSasToken}'")
+                .Replace("SCRIPT_PARAM_VMAGENT_BLOB_URL=''", $"SCRIPT_PARAM_VMAGENT_BLOB_URL='{vmAgentBlobUrl}'");
+            return initScript.ToBase64Encoded();
         }
 
         private async Task<CloudQueue> GetQueueClientAsync(AzureLocation location, string queueName, IDiagnosticsLogger logger)

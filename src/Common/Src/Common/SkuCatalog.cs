@@ -111,9 +111,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     subscriptionId,
                     vmImageResourceGroup);
 
-                var computeAgentImageFamily = CreateBuildArtifactImageFamily(
-                    cloudEnvironmentSettings.ComputeAgentImageFamily,
-                    skuCatalogSettings.ComputeAgentImageFamilies);
+                var vmAgentImageFamily = CreateBuildArtifactImageFamily(
+                    cloudEnvironmentSettings.vmAgentImageFamily,
+                    skuCatalogSettings.vmAgentImageFamilies);
 
                 var storageImageFamily = CreateBuildArtifactImageFamily(
                     cloudEnvironmentSettings.StorageImageFamily,
@@ -127,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     cloudEnvironmentSettings.ComputeSkuName,
                     cloudEnvironmentSettings.ComputeSkuSize,
                     cloudEnvironmentSettings.ComputeOS,
-                    computeAgentImageFamily,
+                    vmAgentImageFamily,
                     computeImageFamily,
                     cloudEnvironmentSettings.StorageSkuName,
                     storageImageFamily,

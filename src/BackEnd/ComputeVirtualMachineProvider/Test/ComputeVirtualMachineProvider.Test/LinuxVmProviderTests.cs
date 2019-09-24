@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 ResourceTags = new Dictionary<string, string> {
                     {"ResourceTag", "GeneratedFromTest"},
                 },
+                VmAgentBlobUrl = testContext.Config["VM_AGENT_SOURCE_URL"],
             };
 
             var timerCreate = Stopwatch.StartNew();

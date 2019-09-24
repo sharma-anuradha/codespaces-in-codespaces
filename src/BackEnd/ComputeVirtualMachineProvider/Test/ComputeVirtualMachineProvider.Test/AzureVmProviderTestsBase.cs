@@ -10,6 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 {
     public class AzureVmProviderTestsBase : IDisposable
     {
+        public IConfigurationRoot Config { get; }
         public Guid SubscriptionId { get; }
         public string ResourceGroupName { get; }
         public AzureLocation Location { get; }
@@ -17,13 +18,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 
         public AzureVmProviderTestsBase()
         {
-            var config = new ConfigurationBuilder()
-                .AddJsonFile("test-settings.json")
+            Config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.test.json")
                 .Build();
-            SubscriptionId = Guid.Parse(config["AZURE_SUBSCRIPTION"]);
+            SubscriptionId = Guid.Parse(Config["AZURE_SUBSCRIPTION"]);
             ResourceGroupName = "test-vm-rg-001";
             Location = AzureLocation.WestUs2;
-            AuthFilePath = config["AZURE_AUTH_LOCATION"];
+            AuthFilePath = Config["AZURE_AUTH_LOCATION"];
         }
 
         public void Dispose()

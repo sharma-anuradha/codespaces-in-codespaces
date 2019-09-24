@@ -16,9 +16,11 @@
     <ProjectReference Include="..\..\Src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Update="test-settings.json">
+    <None Update="appsettings.test.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  
 </Project>

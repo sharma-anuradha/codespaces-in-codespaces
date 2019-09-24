@@ -126,6 +126,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 if (input.ResourcePoolDetails is ResourcePoolComputeDetails computeDetails)
                 {
                     var token = await VirtualMachineTokenProvider.GenerateAsync(resource.Value.Id, logger);
+                    var blobStorageClientProvider = await GetVmAgentImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
+                    var url = GetBlobUrlWithSasToken(ResourceBrokerSettings.VirtualMachineAgentContainerName, computeDetails.VmAgentImageName, blobStorageClientProvider);
                     var resourceTags = new Dictionary<string, string>();
                     result = new VirtualMachineProviderCreateInput
                     {
@@ -135,6 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureSubscription = Guid.Parse(subscription),
                         AzureResourceGroup = resourceGroup,
                         AzureVirtualMachineImage = computeDetails.ImageName,
+                        VmAgentBlobUrl = url,
                         ResourceTags = resourceTags,
                     };
                 }
@@ -150,13 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 {
                     // Get storage SAS token
                     var blobStorageClientProvider = await GetStorageImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
-                    var container = blobStorageClientProvider.GetCloudBlobContainer(ResourceBrokerSettings.FileShareTemplateContainerName);
-                    var blob = container.GetBlobReference(storageDetails.ImageName);
-                    var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
-                    {
-                        Permissions = SharedAccessBlobPermissions.Read,
-                        SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4), // This should be plenty of time to copy the blob template into the new file share
-                    });
+                    var url = GetBlobUrlWithSasToken(ResourceBrokerSettings.FileShareTemplateContainerName, storageDetails.ImageName, blobStorageClientProvider);
                     var resourceTags = new Dictionary<string, string>();
 
                     result = new FileShareProviderCreateInput
@@ -165,7 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureSkuName = storageDetails.SkuName,
                         AzureSubscription = subscription,
                         AzureResourceGroup = resourceGroup,
-                        StorageBlobUrl = blob.Uri + sas,
+                        StorageBlobUrl = url,
                         ResourceTags = resourceTags,
                     };
                 }
@@ -180,6 +177,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             return result;
+        }
+
+        private string GetBlobUrlWithSasToken(string containerName, string blobName, IBlobStorageClientProvider blobStorageClientProvider)
+        {
+            var container = blobStorageClientProvider.GetCloudBlobContainer(containerName);
+            var blob = container.GetBlobReference(blobName);
+            var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+            {
+                Permissions = SharedAccessBlobPermissions.Read,
+                SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4),
+            });
+
+            return blob.Uri + sas;
         }
 
         /// <inheritdoc/>
@@ -249,6 +259,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private async Task<IBlobStorageClientProvider> GetStorageImageBlobStorageClientProvider(AzureLocation azureLocation)
         {
             var (blobStorageAccountName, blobStorageAccountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForStorageImagesAsync(azureLocation);
+            var blobStorageClientOptions = new BlobStorageClientOptions
+            {
+                AccountName = blobStorageAccountName,
+                AccountKey = blobStorageAccountKey,
+            };
+            var blobStorageClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
+            return blobStorageClientProvider;
+        }
+
+        private async Task<IBlobStorageClientProvider> GetVmAgentImageBlobStorageClientProvider(AzureLocation azureLocation)
+        {
+            var (blobStorageAccountName, blobStorageAccountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(azureLocation);
             var blobStorageClientOptions = new BlobStorageClientOptions
             {
                 AccountName = blobStorageAccountName,

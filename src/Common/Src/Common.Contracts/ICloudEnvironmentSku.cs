@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets the compute agent image family for this SKU.
         /// </summary>
-        IBuildArtifactImageFamily ComputeAgentImage { get; }
+        IBuildArtifactImageFamily VmAgentImage { get; }
 
         /// <summary>
         /// Gets the compute image family for this SKU.

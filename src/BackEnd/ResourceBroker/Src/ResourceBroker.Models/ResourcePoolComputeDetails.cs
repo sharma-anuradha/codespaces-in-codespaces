@@ -20,12 +20,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// <summary>
         /// Gets or Sets the target Compute Agent Image.
         /// </summary>
-        public string ComputeAgentImageName { get; set; }
+        public string VmAgentImageName { get; set; }
 
         /// <summary>
         /// Gets or Sets the target Compute Agent Image Family.
         /// </summary>
-        public string ComputeAgentImageFamilyName { get; set; }
+        public string VmAgentImageFamilyName { get; set; }
 
         /// <inheritdoc/>
         public override string GetPoolDefinition()
@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// <inheritdoc/>
         public override string GetPoolVersionDefinition()
         {
-            return $"{SkuName}__{Location}__{ImageFamilyName}__{ImageName}_{ComputeAgentImageFamilyName}_{ComputeAgentImageName}".GetDeterministicHashCode();
+            return $"{SkuName}__{Location}__{ImageFamilyName}__{ImageName}_{VmAgentImageFamilyName}_{VmAgentImageName}".GetDeterministicHashCode();
         }
     }
 }
