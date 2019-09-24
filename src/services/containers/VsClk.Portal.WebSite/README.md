@@ -17,6 +17,13 @@ When working only on the react side of the project you can start from `<projectR
 
 ### Set Up
 
+Prerequisite:
+- Connect to npm feed
+  1. Open [NodeRepos](https://devdiv.visualstudio.com/DefaultCollection/OnlineServices/_packaging?_a=feed&feed=NodeRepos)
+  1. Click on 'Connect to feed', Select npm
+      - Append feed to local machine's .npmrc (%userprofile%\.npmrc) file
+      - Run the auth helper commands
+
 Required Software:
 - Node.js (v10.15.3) (https://nodejs.org/en/)
 - Yarn (https://yarnpkg.com/lang/en/)
