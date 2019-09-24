@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="location">The requested location.</param>
         /// <returns>An object result containing the <see cref="LocationInfoResult"/>.</returns>
         [HttpGet("{location}")]
-        [ProducesResponseType(typeof(LocationsResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LocationInfoResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetLocationInfo([FromRoute]string location)
         {
