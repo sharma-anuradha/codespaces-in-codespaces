@@ -8,7 +8,7 @@
             "name": "BackEnd Web Api Launch",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
+            "preLaunchTask": "buildBackEndSln",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/../../bin/debug/BackEndWebApi/Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.dll",
             "args": [],

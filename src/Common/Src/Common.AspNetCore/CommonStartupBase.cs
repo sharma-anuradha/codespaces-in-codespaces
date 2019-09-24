@@ -48,7 +48,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             CurrentAzureLocation = GetCurrentAzureLocation();
 
             // All appsettings.*.json files are loaded from this location.
-            var settingsRelativePath = IsRunningInAzure() ? string.Empty : Path.GetFullPath(Path.Combine(hostingEnvironment.ContentRootPath, @"..\..\..\..\Settings\"));
+            var dirChar = Path.DirectorySeparatorChar.ToString();
+            var settingsRelativePath = IsRunningInAzure() ? string.Empty : Path.GetFullPath(
+                Path.Combine(hostingEnvironment.ContentRootPath, "..", "..", "..", "..", $"Settings{dirChar}"));
             var infix = GetAppSettingsInfixName();
 
             var builder = new ConfigurationBuilder()
