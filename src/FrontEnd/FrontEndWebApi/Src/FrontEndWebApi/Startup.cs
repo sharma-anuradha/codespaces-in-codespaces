@@ -77,14 +77,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddCors(options =>
                 {
                     var currentDomain = $"https://{ControlPlaneAzureResourceAccessor.GetDNSHostName()}";
-                    options.AddPolicy("NonDevCORSPolicy",
+                    options.AddPolicy("ProdCORSPolicy",
                         builder => builder
                             .WithOrigins(currentDomain)
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                         );
 
-                    options.AddPolicy("DevCORSPolicy",
+                    options.AddPolicy("NonProdCORSPolicy",
                         builder => builder
                             .WithOrigins(
                                 "https://localhost:3000",
@@ -223,21 +223,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         {
             ConfigureAppCommon(app);
 
-            var isDevelopment = env.IsDevelopment();
-
+            var isProduction = env.IsProduction();
             // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
             // and the current stamp CORS for all environments
-            if (isDevelopment)
+            if (isProduction)
             {
-                app.UseCors("DevCORSPolicy");
+                app.UseCors("ProdCORSPolicy");
             }
             else
             {
-                app.UseCors("NonDevCORSPolicy");
+                app.UseCors("NonProdCORSPolicy");
             }
 
             // Use VS SaaS middleware.
-            app.UseVsSaaS(isDevelopment);
+            app.UseVsSaaS(!isProduction);
 
             // Frameworks
             app.UseMvc();
