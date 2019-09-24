@@ -15,6 +15,9 @@ call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 set NODE_VERSION=v10.15.3
 call ".pipelines\install-node.cmd" %NODE_VERSION%
 
+:: Install yarn
+call ".pipelines\install-yarn.cmd"
+
 set DOTNET_ARGS=/m /v:m
 
 :: Dotnet Restore
@@ -28,19 +31,20 @@ if "%EX%" neq "0" (
 	exit /b %EX%
 )
 
-:: NPM install and build
+:: Yarn install and build
 :: We need to copy sources to a tmp directory, call install and build, and then copy the built binaries back to our ClientApp directory
 echo.
-echo npm install and build
+call yarn --version
+echo yarn install and build
 pushd ".\src\services\containers\VsClk.Portal.WebSite\ClientApp"
 call robocopy . %tmp%\portalspabuild\ /s 
 pushd %tmp%\portalspabuild\
 echo.
-echo npm-install-project
-call npm install
+echo yarn-install-project
+call yarn install --network-timeout 1000000 --frozen-lockfile
 set EX=%ERRORLEVEL%
 if "%EX%" neq "0" (
-    echo Failed to npm-install-project correctly.
+    echo Failed to yarn-install-project correctly.
     echo .npmrc:
     type ".npmrc"
     echo %userprofile%\.npmrc:
@@ -49,12 +53,12 @@ if "%EX%" neq "0" (
 	exit /b %EX%
 )
 echo.
-echo npm-build-project
-call npm run build
+echo yarn-build-project
+call yarn build
 set EX=%ERRORLEVEL%
 if "%EX%" neq "0" (
     popd
-    echo Failed to npm-build-project correctly.
+    echo Failed to yarn-build-project correctly.
 	exit /b %EX%
 )
 popd

@@ -101,6 +101,7 @@
     "webpack-cli": "^3.3.8"
   },
   "scripts": {
+    "preinstall": "node scripts/npm/preinstall.js",
     "postinstall": "node scripts/npm/postinstall.js",
     "start": "run-p watch:portal watch:service-worker watch:shell",
     "start:portal": "dotnet run --launch-profile Local --project ..",
