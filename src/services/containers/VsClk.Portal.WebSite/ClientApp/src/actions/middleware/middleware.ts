@@ -2,12 +2,11 @@ import { Middleware } from 'redux';
 import { recreateContext, Context } from './useActionContext';
 import { unhandledAsyncError } from '../unhandledAsyncError';
 import { isThenable } from '../../utils/isThenable';
-import { trace as baseTrace } from '../../utils/trace';
-import { Dispatch, DispatchWithContext } from './types';
+import { createTrace } from '../../utils/createTrace';
+import { DispatchWithContext } from './types';
 import { ApplicationState } from '../../reducers/rootReducer';
 
-const trace = baseTrace.extend('middleware:trace');
-const warn = baseTrace.extend('middleware:warn');
+const trace = createTrace('middleware');
 
 // tslint:disable-next-line: export-name
 export type ActionContextMiddleware = Middleware<
@@ -24,16 +23,16 @@ export const actionContextMiddleware: ActionContextMiddleware = (api) => (next) 
     const context = (params[1] as Context | undefined) || recreateContext();
 
     if (action == null) {
-        trace('probably nothing to do. (this most likely should not happen?)');
+        trace.verbose('probably nothing to do. (this most likely should not happen?)');
         return;
     }
 
     // 1. Action can be a promise
     if (isThenable(action)) {
-        warn('executeAction: handling promise');
+        trace.verbose('executeAction: handling promise');
 
         let newPromise = action.then((action) => {
-            warn('executeAction: calling dispatch with action', action);
+            trace.verbose('executeAction: calling dispatch with action', action);
             if (!action) {
                 return undefined;
             }
@@ -44,7 +43,7 @@ export const actionContextMiddleware: ActionContextMiddleware = (api) => (next) 
 
         if (!context.shouldThrowFailedActionsAsErrors) {
             newPromise = newPromise.catch((err) => {
-                warn('executeAction: action failed', action);
+                trace.verbose('executeAction: action failed', action);
 
                 api.dispatch(unhandledAsyncError(err), context);
 
@@ -63,7 +62,7 @@ export const actionContextMiddleware: ActionContextMiddleware = (api) => (next) 
 
     // 2. Action can be a function that applies context to action content (e.g. correlation id, performance scenario steps, ...)
     if (typeof action === 'function') {
-        warn('executeAction: handling context aware action');
+        trace.verbose('executeAction: handling context aware action');
 
         return api.dispatch(action(context), context);
     }
@@ -73,6 +72,6 @@ export const actionContextMiddleware: ActionContextMiddleware = (api) => (next) 
         return action;
     }
 
-    warn('executeAction: executing simple action', action);
+    trace.verbose('executeAction: executing simple action', action);
     return next(action);
 };
