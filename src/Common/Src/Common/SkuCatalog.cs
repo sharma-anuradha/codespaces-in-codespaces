@@ -84,9 +84,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 }
                 else
                 {
-                    if (skuConfiguration.PoolSize.GetValueOrDefault() == default)
+                    // Compute pool size setup
+                    if (skuConfiguration.ComputePoolSize.GetValueOrDefault() == default)
                     {
-                        skuConfiguration.PoolSize = defaultSkuConfiguration.PoolSize;
+                        skuConfiguration.ComputePoolSize = defaultSkuConfiguration.ComputePoolSize;
+                    }
+
+                    // Storage pool size setup
+                    if (skuConfiguration.StoragePoolSize.GetValueOrDefault() == default)
+                    {
+                        skuConfiguration.StoragePoolSize = defaultSkuConfiguration.StoragePoolSize;
                     }
 
                     // This is a restrictive set. Defaults might be more. Only use defaults if none set.
@@ -134,7 +141,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     cloudEnvironmentSettings.StorageSizeInGB,
                     cloudEnvironmentSettings.StorageCloudEnvironmentUnits,
                     cloudEnvironmentSettings.ComputeCloudEnvironmentUnits,
-                    skuConfiguration.PoolSize.GetValueOrDefault());
+                    skuConfiguration.ComputePoolSize.GetValueOrDefault(),
+                    skuConfiguration.StoragePoolSize.GetValueOrDefault());
 
                 Skus.Add(skuName, cloudEnvironment);
             }

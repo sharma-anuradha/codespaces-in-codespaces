@@ -85,7 +85,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
              * */
             Requires.NotNull(logger, nameof(logger));
 
-            var subscription = AzureSubscriptionCatalog.AzureSubscriptions.FirstOrDefault(s => s.Locations.Contains(location));
+            var subscription = AzureSubscriptionCatalog
+                .AzureSubscriptions.Where(s => s.Locations.Contains(location)).RandomOrDefault();
             if (subscription is null)
             {
                 // TODO: add more information to this exception if possible -- why not available.

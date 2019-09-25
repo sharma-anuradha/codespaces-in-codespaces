@@ -103,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddBillingEventManager(frontEndAppSettings.UseMocksForLocalDevelopment);
 
             // Add the environment manager and the cloud environment repository.
-            services.AddEnvironmentManager(frontEndAppSettings.UseMocksForLocalDevelopment || frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker);
+            services.AddEnvironmentManager(frontEndAppSettings.EnvironmentManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment || frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker);
 
             // Add the Live Share user profile and workspace providers.
             services

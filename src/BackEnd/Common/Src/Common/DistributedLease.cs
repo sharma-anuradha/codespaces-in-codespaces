@@ -4,9 +4,12 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Timers;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -14,8 +17,8 @@ using Microsoft.WindowsAzure.Storage.Blob;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    /// Allows compnents to obtain a distribted lease lock. This allows for distributed
-    /// components to know whether another componet is working on a given resource and
+    /// Allows components to obtain a distributed lease lock. This allows for distributed
+    /// components to know whether another component is working on a given resource and
     /// either wait for it to be freed, or move on.
     /// </summary>
     public class DistributedLease : IDistributedLease
@@ -35,6 +38,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             BlobCache = new ConcurrentDictionary<string, Task<CloudBlockBlob>>();
         }
 
+        private string LogBaseName { get; } = "distributed_lease";
+
         private ConcurrentDictionary<string, Task<CloudBlockBlob>> BlobCache { get; }
 
         private Random Random { get; }
@@ -44,49 +49,75 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public async Task<IDisposable> Obtain(
             string containerName,
-            string name)
+            string name,
+            IDiagnosticsLogger logger)
         {
-            try
-            {
-                return await InnerCreate(containerName, name);
-            }
-            catch (Exception e) // TODO: Need to make sure we only catch specific exception
-            {
-            }
+            logger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
+                .FluentAddBaseValue("LeaseContainerName", containerName)
+                .FluentAddBaseValue("LeaseName", name);
 
-            return null;
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_obtain",
+                async () =>
+                {
+                    var result = default(IDisposable);
+                    try
+                    {
+                        result = await InnerCreate(containerName, name, logger);
+                    }
+                    catch (StorageException e) when (e.RequestInformation.ErrorCode == "LeaseAlreadyPresent")
+                    {
+                        logger.FluentAddValue("LeaseAlreadyPresent", true);
+                    }
+
+                    return result;
+                });
         }
 
         /// <inheritdoc/>
         public async Task<IDisposable> TryObtain(
             string containerName,
-            string name)
+            string name,
+            IDiagnosticsLogger logger)
         {
-            var tryCount = 1;
-            while (tryCount <= 3)
-            {
-                try
-                {
-                    return await InnerCreate(containerName, name);
-                }
-                catch (Exception e) // TODO: Need to make sure we only catch specific exception
-                {
-                    await Task.Delay(Random.Next(500 * tryCount, 1500 * tryCount));
-                }
-            }
+            logger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
+                .FluentAddBaseValue("LeaseContainerName", containerName)
+                .FluentAddBaseValue("LeaseName", name);
 
-            return null;
-        }
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_tryobtain",
+                async () =>
+                {
+                    var result = default(IDisposable);
+                    var tryCount = 1;
+                    while (tryCount <= 3)
+                    {
+                        try
+                        {
+                            logger.FluentAddValue("LeaseTryCount", tryCount);
 
-        private static string EnsureBlobSafeName(string name)
-        {
-            return name.Replace("_", string.Empty).ToLowerInvariant();
+                            return await InnerCreate(containerName, name, logger);
+                        }
+                        catch (StorageException e) when (e.RequestInformation.ErrorCode == "LeaseAlreadyPresent")
+                        {
+                            logger.FluentAddValue("LeaseAlreadyPresent", true)
+                                .LogWarning($"{LogBaseName}_tryobtain_locked_complete");
+
+                            await Task.Delay(Random.Next(500 * tryCount, 1500 * tryCount));
+                        }
+                    }
+
+                    return result;
+                });
         }
 
         private async Task<IDisposable> InnerCreate(
             string containerName,
-            string name)
+            string name,
+            IDiagnosticsLogger logger)
         {
+            var stopwatch = Stopwatch.StartNew();
+
             name = EnsureBlobSafeName(name);
 
             // Create blob if needed
@@ -96,8 +127,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     var container = BlobStorageClientProvider.GetCloudBlobContainer(containerName);
                     await container.CreateIfNotExistsAsync();
 
+                    // Get the blob
                     var newBlob = container.GetBlockBlobReference(name);
-                    await newBlob.UploadTextAsync("test");
+                    await newBlob.UploadTextAsync("Lock file contents. Auto-generated. Do not modify.");
 
                     return newBlob;
                 });
@@ -106,24 +138,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var id = await blob.AcquireLeaseAsync(leaseTime);
             var acc = new AccessCondition() { LeaseId = id };
 
-            // Setup disposable
             var isDisposed = false;
-            var closeCallback = ActionDisposable.Create(async () =>
-            {
-                isDisposed = true;
-                try
-                {
-                    await blob.ReleaseLeaseAsync(acc);
-                }
-                catch (Exception ex)
-                {
-                    // TODO: need to do something here
-                }
-            });
+            var timerElapsedCount = 0;
 
             // Trigger auto renewal
             var timer = new Timer(autoRenewLeaseTime.TotalMilliseconds);
-            timer.Elapsed += async (s, e) =>
+            timer.Elapsed += (s, e) =>
             {
                 if (isDisposed)
                 {
@@ -131,21 +151,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     return;
                 }
 
-                try
-                {
-                    await blob.RenewLeaseAsync(acc);
-                }
-                catch (Exception ex)
-                {
-                    // TODO: need to do something here
-                }
+                logger.FluentAddDuration("LeaseTimeFromStart", stopwatch)
+                    .FluentAddValue("LeasetRenewCount", timerElapsedCount += 1)
+                    .FluentAddValue("LeaseRenewIsDisposed", isDisposed);
 
-                timer.Stop();
-                timer.Start();
+                logger.OperationScope(
+                    $"{LogBaseName}_auto_renew",
+                    async () =>
+                    {
+                        await blob.RenewLeaseAsync(acc);
+                    },
+                    swallowException: true);
             };
             timer.Start();
 
+            // Setup disposable
+            var closeCallback = ActionDisposable.Create(() =>
+            {
+                timer.Stop();
+                isDisposed = true;
+
+                logger.OperationScope(
+                    $"{LogBaseName}_release",
+                    async () =>
+                    {
+                        logger.FluentAddDuration("LeaseTimeFromStart", stopwatch);
+
+                        // Force release lease
+                        await blob.ReleaseLeaseAsync(acc);
+                    },
+                    swallowException: true);
+            });
+
             return closeCallback;
+        }
+
+        private static string EnsureBlobSafeName(string name)
+        {
+            return name.Replace("_", string.Empty).ToLowerInvariant();
         }
     }
 }

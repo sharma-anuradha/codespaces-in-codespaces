@@ -104,7 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal("test-storage-image-family", sku.StorageImage.ImageFamilyName);
                     Assert.Equal("test-storage-image-url", sku.StorageImage.ImageName);
                     // Assert the default pool level
-                    Assert.Equal(1, sku.PoolLevel);
+                    Assert.Equal(1, sku.ComputePoolLevel);
                     // Assert the default locations
                     Assert.Collection(sku.SkuLocations,
                         loc => Assert.Equal(AzureLocation.EastUs, loc),
@@ -130,7 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal("test-storage-image-family", sku.StorageImage.ImageFamilyName);
                     Assert.Equal("test-storage-image-url", sku.StorageImage.ImageName);
                     // Assert the override pool level
-                    Assert.Equal(2, sku.PoolLevel);
+                    Assert.Equal(1, sku.ComputePoolLevel);
                     // Assert the override locations
                     Assert.Collection(sku.SkuLocations,
                         loc => Assert.Equal(AzureLocation.WestEurope, loc));
@@ -222,7 +222,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         AzureLocation.WestUs2,
                         AzureLocation.UaeNorth, // should get filtered out by IDataPlaneManager.GetAllDataPlaneLocations
                     },
-                    PoolSize = 1
+                    ComputePoolSize = 1,
+                    StoragePoolSize = 1,
                 },
                 ComputeImageFamilies = new Dictionary<string, VmImageFamilySettings>
                 {
@@ -297,7 +298,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                                 {
                                     AzureLocation.WestEurope
                                 },
-                                PoolSize = 2
+                                ComputePoolSize = 1,
+                                StoragePoolSize = 1,
                             }
                         }
                     },

@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 
@@ -23,7 +24,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// <inheritdoc/>
     public class CloudEnvironmentManager : ICloudEnvironmentManager
     {
-        private const int CloudEnvironmentQuota = 5;
         private const int PersistentSessionExpiresInDays = 30;
 
         /// <summary>
@@ -33,15 +33,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
         /// <param name="accountManager">The account manager.</param>
-        /// <param name="authRepository">The Live Share authentication repository</param>
+        /// <param name="authRepository">The Live Share authentication repository.</param>
         /// <param name="billingEventManager">The billing event manager.</param>
+        /// <param name="environmentManagerSettings">The environment manager settings.</param>
         public CloudEnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
             IWorkspaceRepository workspaceRepository,
             IAccountManager accountManager,
             IAuthRepository authRepository,
-            IBillingEventManager billingEventManager)
+            IBillingEventManager billingEventManager,
+            EnvironmentManagerSettings environmentManagerSettings)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
@@ -49,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             AccountManager = Requires.NotNull(accountManager, nameof(accountManager));
             AuthRepository = Requires.NotNull(authRepository, nameof(authRepository));
             BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
+            EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -62,6 +65,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IAccountManager AccountManager { get; }
 
         private IBillingEventManager BillingEventManager { get; }
+
+        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironmentCreationResult> CreateEnvironmentAsync(
@@ -105,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     !environments.Any((env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)),
                     $"An environment with the friendly name already exists: {cloudEnvironment.FriendlyName}");
 
-                if (environments.Count() >= CloudEnvironmentQuota)
+                if (environments.Count() >= EnvironmentManagerSettings.PerUserEnvironmentQuota)
                 {
                     result.ErrorCode = ErrorCodes.ExceededQuota;
                     result.HttpStatusCode = StatusCodes.Status403Forbidden;

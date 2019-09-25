@@ -57,7 +57,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <inheritdoc/>
         public Task StartAsync(IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(LogBaseName, () => InnerStartAsync(logger), swallowException: true);
+            return logger.OperationScopeAsync(
+                LogBaseName,
+                () => InnerStartAsync(logger),
+                (e) => Task.FromResult(!Disposed),
+                swallowException: true);
         }
 
         /// <inheritdoc/>
@@ -87,7 +91,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private Task<bool> ManageLevelAsync(IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(LogLevelBaseName, () => InnerManageLevelAsync(logger), (e) => true, swallowException: true);
+            return logger.OperationScopeAsync(
+                LogLevelBaseName,
+                () => InnerManageLevelAsync(logger),
+                (e) => !Disposed,
+                swallowException: true);
         }
 
         private Task<bool> InnerManageLevelAsync(IDiagnosticsLogger logger)

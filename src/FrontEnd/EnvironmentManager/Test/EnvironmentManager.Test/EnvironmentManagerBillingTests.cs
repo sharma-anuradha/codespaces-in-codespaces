@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Xunit;
@@ -59,7 +60,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
                 this.workspaceRepository,
                 this.accountManager,
                 this.authRepository,
-                this.billingEventManager);
+                this.billingEventManager,
+                new EnvironmentManagerSettings() { PerUserEnvironmentQuota = 5 });
         }
 
         private async Task<CloudEnvironment> CreateTestEnvironmentAsync(string name = "Test")

@@ -18,7 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb
 {
     /// <summary>
-    /// A document repository of <see cref="ExampleEntity"/>.
+    /// A document repository of <see cref="CosmosDbResourceRepository"/>.
     /// </summary>
     [DocumentDbCollectionId(CollectionName)]
     public class CosmosDbResourceRepository : DocumentDbCollection<ResourceRecord>, IResourceRepository
@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
         }
 
-        // TEMP: Map backend common and frontend commin into src/Common/Src/Common!
+        // TEMP: Map backend common and frontend common into src/Common/Src/Common!
         private static IOptionsSnapshot<TOptions> PromoteToOptionSnapshot<TOptions>(TOptions option)
             where TOptions : class, new()
         {
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             return new DirectOptionsSnapshot<TOptions>(option);
         }
 
-        // TEMP: Map backend common and frontend commin into src/Common/Src/Common!
+        // TEMP: Map backend common and frontend common into src/Common/Src/Common!
         private class DirectOptionsSnapshot<TOptions> : IOptionsSnapshot<TOptions>
             where TOptions : class, new()
         {

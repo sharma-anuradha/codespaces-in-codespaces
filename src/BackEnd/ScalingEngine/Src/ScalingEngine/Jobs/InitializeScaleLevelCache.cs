@@ -184,13 +184,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             var storageSkusGroup = flatEnvironmentSkus
                 .GroupBy(x => x.StorageDetails.GetPoolDefinition());
             var storageSkus = storageSkusGroup.Select(
-                x => BuildScalingInput(x, ResourceType.StorageFileShare, y => y.StorageDetails));
+                x => BuildScalingInput(x, ResourceType.StorageFileShare, y => y.StorageDetails, y => y.Environment.StoragePoolLevel));
 
             // Calculate the distinct compute skus that are needed in each region
             var computeSkusGroup = flatEnvironmentSkus
                 .GroupBy(x => x.ComputeDetails.GetPoolDefinition());
             var computeSkus = computeSkusGroup.Select(
-                x => BuildScalingInput(x, ResourceType.ComputeVM, y => y.ComputeDetails));
+                x => BuildScalingInput(x, ResourceType.ComputeVM, y => y.ComputeDetails, y => y.Environment.ComputePoolLevel));
 
             // Merge lists back together
             var resourceSkus = new List<ResourcePool>(storageSkus).Concat(computeSkus).ToList();
@@ -201,14 +201,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         private ResourcePool BuildScalingInput(
             IEnumerable<FlatComputeItem> distinctList,
             ResourceType resourceType,
-            Func<FlatComputeItem, ResourcePoolResourceDetails> detailCallback)
+            Func<FlatComputeItem, ResourcePoolResourceDetails> detailCallback,
+            Func<FlatComputeItem, int> poolLevelCallback)
         {
             var environments = distinctList.Select(y => y.Environment);
             var target = distinctList.FirstOrDefault();
             var details = detailCallback(target);
             return new ResourcePool
             {
-                TargetCount = distinctList.Select(y => y.Environment.PoolLevel).Sum(),
+                TargetCount = distinctList.Select(poolLevelCallback).Sum(),
                 Type = resourceType,
                 EnvironmentSkus = distinctList.Select(y => y.Environment.SkuName),
                 Details = details,

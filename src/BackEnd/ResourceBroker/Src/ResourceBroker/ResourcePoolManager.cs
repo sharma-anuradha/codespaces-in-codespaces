@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -17,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     /// <summary>
     /// Manages the underlying resource pools.
     /// </summary>
-    public class ResourcePoolManager : IResourcePoolManager
+    public class ResourcePoolManager : IResourcePoolManager, IResourcePoolSettingsHandler
     {
         private const string LogBaseName = ResourceLoggingConstants.ResourcePoolManager;
 
@@ -29,46 +30,72 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IResourceRepository resourceRepository)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
+            EnabledState = new Dictionary<string, bool>();
         }
 
         private IResourceRepository ResourceRepository { get; }
 
+        private IDictionary<string, bool> EnabledState { get; set; }
+
         /// <inheritdoc/>
-        public async Task<ResourceRecord> TryGetAsync(string poolCode, IDiagnosticsLogger rootLogger)
+        public Task UpdateResourceEnabledStateAsync(IDictionary<string, bool> enabledState)
         {
-            // Setup logging
-            var duration = rootLogger.StartDuration();
+            EnabledState = enabledState;
 
-            rootLogger.FluentAddBaseValue("PoolCode", poolCode);
+            return Task.CompletedTask;
+        }
 
-            var trys = 0;
-            var tryAgain = false;
-            var item = (ResourceRecord)null;
+        /// <inheritdoc/>
+        public bool IsPoolEnabled(string poolCode)
+        {
+            var isPoolEnabledFound = EnabledState.TryGetValue(poolCode, out var isPoolEnabled);
 
-            // Iterate around if we need to
-            while (item == null && trys < 3)
-            {
-                var logger = rootLogger.WithValues(new LogValueSet())
-                    .FluentAddBaseValue("PoolLookupTry", trys);
+            return isPoolEnabledFound ? isPoolEnabled : true;
+        }
 
-                // Conduct core operation
-                (item, tryAgain) = await logger.OperationScopeAsync(LogBaseName, () => TryGetInnerAsync(poolCode, logger));
-
-                // Break out if we don't need to try agian
-                if (!tryAgain)
+        /// <inheritdoc/>
+        public Task<ResourceRecord> TryGetAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run",
+                async () =>
                 {
-                    break;
-                }
+                    logger.FluentAddBaseValue("PoolLookupRunId", Guid.NewGuid())
+                        .FluentAddBaseValue("PoolImageFamilyName", poolCode);
 
-                trys++;
-            }
+                    var trys = 0;
+                    var tryAgain = false;
+                    var item = (ResourceRecord)null;
 
-            return item;
+                    // Iterate around if we need to
+                    while (item == null && trys < 3)
+                    {
+                        var childLogger = logger.WithValues(new LogValueSet())
+                            .FluentAddBaseValue("PoolLookupTry", trys);
+
+                        // Conduct core operation
+                        (item, tryAgain) = await childLogger.OperationScopeAsync(
+                            $"{LogBaseName}_run_try",
+                            () => TryGetInnerAsync(poolCode, childLogger));
+
+                        // Break out if we don't need to try agian
+                        if (!tryAgain)
+                        {
+                            break;
+                        }
+
+                        trys++;
+                    }
+
+                    return item;
+                });
         }
 
         private async Task<(ResourceRecord, bool)> TryGetInnerAsync(string poolCode, IDiagnosticsLogger logger)
         {
             var tryAgain = false;
+
+            logger.FluentAddBaseValue("PoolLookupAttemptRunId", Guid.NewGuid());
 
             // Get core resource record
             var item = await ResourceRepository.GetPoolReadyUnassignedAsync(poolCode, logger);

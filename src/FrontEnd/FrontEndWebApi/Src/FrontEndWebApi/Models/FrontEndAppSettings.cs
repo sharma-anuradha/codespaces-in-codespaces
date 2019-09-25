@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -81,5 +82,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// signing signature.
         /// </summary>
         public string RPSaaSAuthorityString { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Environment Manager Settings.
+        /// </summary>
+        public EnvironmentManagerSettings EnvironmentManagerSettings { get; set; }
     }
 }

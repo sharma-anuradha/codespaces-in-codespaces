@@ -27,7 +27,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Gets or sets the pool size to be maintained, e.g., 25.
         /// </summary>
         [JsonProperty(Required = Required.Default)]
-        public int? PoolSize { get; set; }
+        public int? ComputePoolSize { get; set; }
+
+        /// <summary>
+        /// Gets or sets the pool size to be maintained, e.g., 25.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public int? StoragePoolSize { get; set; }
 
         /// <summary>
         /// Gets or sets the storage blob name for the file share template.

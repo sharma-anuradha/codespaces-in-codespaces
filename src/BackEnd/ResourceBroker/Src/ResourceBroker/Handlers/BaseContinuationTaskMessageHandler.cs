@@ -223,7 +223,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var stateChanged = false;
 
-            // Determin what needs to be updated
+            // Determine what needs to be updated
             if (Operation == ResourceOperation.Starting)
             {
                 record.Value.StartingReason = input.Reason;

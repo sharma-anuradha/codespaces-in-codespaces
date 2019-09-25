@@ -51,7 +51,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
             // Core services
             services.AddSingleton<IResourceBroker, ResourceBroker>();
-            services.AddSingleton<IResourcePoolManager, ResourcePoolManager>();
+            services.AddSingleton<ResourcePoolManager>();
+            services.AddSingleton<IResourcePoolManager>(x => x.GetRequiredService<ResourcePoolManager>());
+            services.AddSingleton<IResourcePoolSettingsHandler>(x => x.GetRequiredService<ResourcePoolManager>());
             services.AddSingleton<ResourcePoolDefinitionStore>();
             services.AddSingleton<IResourceScalingHandler>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
             services.AddSingleton<IResourcePoolDefinitionStore>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
@@ -81,6 +83,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton(resourceBrokerSettings);
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
             services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
+            services.AddSingleton<IWatchPoolStateTask, WatchPoolStateTask>();
+            services.AddSingleton<IWatchPoolSettingsTask, WatchPoolSettingsTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {
@@ -107,6 +111,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
             // Register Document Db Items
             services.AddDocumentDbCollection<ResourceRecord, IResourceRepository, CosmosDbResourceRepository>(
+                CosmosDbResourceRepository.ConfigureOptions);
+            services.AddDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
+                CosmosDbResourceRepository.ConfigureOptions);
+            services.AddDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
                 CosmosDbResourceRepository.ConfigureOptions);
 
             // Register Queue Items

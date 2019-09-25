@@ -9,6 +9,7 @@ using AutoMapper;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
@@ -29,17 +30,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// Initializes a new instance of the <see cref="ResourceBroker"/> class.
         /// </summary>
         /// <param name="resourcePool">Resource pool that should be used.</param>
-        /// <param name="startComputeTask">Start compute task that should be used.</param>
+        /// <param name="resourceScalingStore">Target resource scaling store.</param>
+        /// <param name="continuationTaskActivator">Target continuation task sctivator.</param>
+        /// <param name="taskHelper">Target task helper.</param>
         /// <param name="mapper">Mapper that should be used.</param>
         public ResourceBroker(
             IResourcePoolManager resourcePool,
             IResourcePoolDefinitionStore resourceScalingStore,
             IContinuationTaskActivator continuationTaskActivator,
+            ITaskHelper taskHelper,
             IMapper mapper)
         {
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
             ResourceScalingStore = Requires.NotNull(resourceScalingStore, nameof(resourceScalingStore));
             ContinuationTaskActivator = Requires.NotNull(continuationTaskActivator, nameof(continuationTaskActivator));
+            TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
 
@@ -48,6 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IResourcePoolDefinitionStore ResourceScalingStore { get; }
 
         private IContinuationTaskActivator ContinuationTaskActivator { get; }
+
+        private ITaskHelper TaskHelper { get; }
 
         private IMapper Mapper { get; }
 
@@ -80,6 +87,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     }
 
                     logger.FluentAddBaseValue("ResourceId", item.Id);
+
+                    // Trigger auto pool create to replace assigned item
+                    TaskHelper.RunBackground(
+                        $"{LogBaseName}_run_create",
+                        (childLogger) => ContinuationTaskActivator.CreateResource(
+                            Guid.NewGuid(), resourceSku.Type, resourceSku.Details, "ResourceAssignedReplace", logger.WithValues(new LogValueSet())),
+                        logger);
 
                     return Mapper.Map<AllocateResult>(item);
                 });

@@ -83,8 +83,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         decimal ComputeCloudEnvironmentUnits { get; }
 
         /// <summary>
-        /// Gets the pool size that should be maintained.
+        /// Gets the compute pool size that should be maintained.
         /// </summary>
-        int PoolLevel { get; }
+        int ComputePoolLevel { get; }
+
+        /// <summary>
+        /// Gets the pool size that storage should be maintained.
+        /// </summary>
+        int StoragePoolLevel { get; }
     }
 }

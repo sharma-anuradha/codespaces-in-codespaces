@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -18,12 +19,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Add the <see cref="CloudEnvironmentRepository"/> and <see cref="ICloudEnvironmentManager"/> to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>
+        /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddEnvironmentManager(
             this IServiceCollection services,
+            EnvironmentManagerSettings environmentManagerSettings,
             bool useMockCloudEnvironmentRepository)
         {
+            services.AddSingleton(environmentManagerSettings);
+
             if (useMockCloudEnvironmentRepository)
             {
                 services.AddSingleton<ICloudEnvironmentRepository, MockCloudEnvironmentRepository>();

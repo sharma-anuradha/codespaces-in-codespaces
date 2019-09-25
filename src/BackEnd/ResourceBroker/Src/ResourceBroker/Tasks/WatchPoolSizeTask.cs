@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -28,23 +29,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// Initializes a new instance of the <see cref="WatchPoolSizeTask"/> class.
         /// </summary>
         /// <param name="resourceBrokerSettings">Target reesource broker settings.</param>
+        /// <param name="resourcePoolManager">Target resource pool manager.</param>
         /// <param name="continuationTaskActivator">Target continuation activator.</param>
-        /// <param name="distributedLease">Target distributed lease.</param>
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceRepository">Target resource Repository.</param>
+        /// <param name="claimedDistributedLease">Target distributed lease.</param>
         /// <param name="taskHelper">Target task helper.</param>
+        /// <param name="resourceNameBuilder">Target resource name builder.</param>
         public WatchPoolSizeTask(
             ResourceBrokerSettings resourceBrokerSettings,
+            IResourcePoolManager resourcePoolManager,
             IResourceRepository resourceRepository,
             IContinuationTaskActivator continuationTaskActivator,
             IResourcePoolDefinitionStore resourceScalingStore,
-            IDistributedLease distributedLease,
+            IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IResourceNameBuilder resourceNameBuilder)
-            : base(resourceBrokerSettings, resourceScalingStore, distributedLease, taskHelper, resourceNameBuilder)
+            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder)
         {
-            ContinuationTaskActivator = continuationTaskActivator;
+            ResourcePoolManager = resourcePoolManager;
             ResourceRepository = resourceRepository;
+            ContinuationTaskActivator = continuationTaskActivator;
         }
 
         /// <inheritdoc/>
@@ -53,9 +58,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchPoolSizeTask;
 
-        private IContinuationTaskActivator ContinuationTaskActivator { get; }
+        private IResourcePoolManager ResourcePoolManager { get; }
 
         private IResourceRepository ResourceRepository { get; }
+
+        private IContinuationTaskActivator ContinuationTaskActivator { get; }
 
         /// <inheritdoc/>
         protected async override Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
@@ -63,32 +70,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             // Determine the effective size of the pool
             var unassignedCount = await GetPoolUnassignedCountAsync(resourcePool, logger.WithValues(new LogValueSet()));
 
-            // Get the desiered pool target size
-            var poolTargetCount = resourcePool.TargetCount;
+            // Determine if the pool is currently enabled
+            var poolEnabled = ResourcePoolManager.IsPoolEnabled(resourcePool.Details.GetPoolDefinition());
 
-            // Get the delta of how many
-            var poolDeltaCount = poolTargetCount - unassignedCount;
+            logger.FluentAddValue("PoolIsEnabled", poolEnabled);
 
-            logger.FluentAddValue("SizeCheckUnassignedCount", unassignedCount.ToString())
-                .FluentAddValue("SizeCheckPoolTargetCount", poolTargetCount.ToString())
-                .FluentAddValue("SizeCheckPoolDeltaCount", poolDeltaCount.ToString());
-
-            // If we have any positive delta add that many jobs to the queue for processing
-            if (poolDeltaCount > 0)
+            // Short circuit things if we have a fail and drain the pool
+            if (!poolEnabled)
             {
-                // Add each of the times that we need to have
-                for (var i = 0; i < poolDeltaCount; i++)
-                {
-                    TaskHelper.RunBackground(
-                        $"{LogBaseName}_run_create",
-                        (childLogger) => AddPoolItemAsync(resourcePool, i, childLogger),
-                        logger);
-                }
-            }
-            else if (poolDeltaCount < 0)
-            {
-                // Get some items we can delete 
-                var unassignedIds = await GetPoolUnassignedAsync(resourcePool, poolDeltaCount * -1, logger);
+                logger.FluentAddValue("PoolDrainCount", unassignedCount);
+
+                // Get the ids of the items in the pool so that we drain them off
+                var unassignedIds = await GetPoolUnassignedAsync(resourcePool, unassignedCount, logger);
+
+                logger.FluentAddValue("PoolDrainCountFound", unassignedIds.Count());
 
                 // Delete each of the items that are not current
                 foreach (var unassignedId in unassignedIds)
@@ -97,6 +92,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         $"{LogBaseName}_run_delete",
                         (childLogger) => DeletetPoolItemAsync(Guid.Parse(unassignedId), childLogger),
                         logger);
+                }
+            }
+            else
+            {
+                // Get the desiered pool target size
+                var poolTargetCount = resourcePool.TargetCount;
+
+                // Get the delta of how many
+                var poolDeltaCount = poolTargetCount - unassignedCount;
+
+                logger.FluentAddValue("SizeCheckUnassignedCount", unassignedCount.ToString())
+                    .FluentAddValue("SizeCheckPoolTargetCount", poolTargetCount.ToString())
+                    .FluentAddValue("SizeCheckPoolDeltaCount", poolDeltaCount.ToString());
+
+                // If we have any positive delta add that many jobs to the queue for processing
+                if (poolDeltaCount > 0)
+                {
+                    // Add each of the times that we need to have
+                    for (var i = 0; i < poolDeltaCount; i++)
+                    {
+                        TaskHelper.RunBackground(
+                            $"{LogBaseName}_run_create",
+                            (childLogger) => AddPoolItemAsync(resourcePool, i, childLogger),
+                            logger);
+                    }
+                }
+                else if (poolDeltaCount < 0)
+                {
+                    // Get some items we can delete
+                    var unassignedIds = await GetPoolUnassignedAsync(resourcePool, poolDeltaCount * -1, logger);
+
+                    logger.FluentAddValue("PoolDrainCountFound", unassignedIds.Count());
+
+                    // Delete each of the items that are not current
+                    foreach (var unassignedId in unassignedIds)
+                    {
+                        TaskHelper.RunBackground(
+                            $"{LogBaseName}_run_delete",
+                            (childLogger) => DeletetPoolItemAsync(Guid.Parse(unassignedId), childLogger),
+                            logger);
+                    }
                 }
             }
         }

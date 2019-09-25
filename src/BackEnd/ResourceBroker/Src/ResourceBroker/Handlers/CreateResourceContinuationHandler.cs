@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -41,15 +42,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Initializes a new instance of the <see cref="CreateResourceContinuationHandler"/> class.
         /// </summary>
-        /// <param name="computeProvider">Compute provider.</param>
-        /// <param name="storageProvider">Storatge provider.</param>
-        /// <param name="controlPlaneAzureResourceAccessor">the control plane resource accessor.</param>
-        /// <param name="capacityManager">The capacity manager.</param>
-        /// <param name="resourceBrokerSettings">Resource broker settings.</param>
-        /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="serviceProvider">Service provider.</param>
-        /// <param name="virtualMachineTokenProvider">Virtual machine token provider.</param>
+        /// <param name="resourcePoolManager">Target resource pool manager.</param>
+        /// <param name="computeProvider">Target compute provider.</param>
+        /// <param name="storageProvider">Target storatge provider.</param>
+        /// <param name="controlPlaneAzureResourceAccessor">Target control plane resource accessor.</param>
+        /// <param name="capacityManager">Target capacity manager.</param>
+        /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
+        /// <param name="resourceRepository">Target resource repository to be used.</param>
+        /// <param name="serviceProvider">Target service provider.</param>
+        /// <param name="virtualMachineTokenProvider">Target virtual machine token provider.</param>
         public CreateResourceContinuationHandler(
+            IResourcePoolManager resourcePoolManager,
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
@@ -60,6 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IServiceProvider serviceProvider)
             : base(serviceProvider, resourceRepository)
         {
+            ResourcePoolManager = resourcePoolManager;
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
             ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
@@ -77,6 +81,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override ResourceOperation Operation => ResourceOperation.Provisioning;
 
+        private IResourcePoolManager ResourcePoolManager { get; }
+
         private IComputeProvider ComputeProvider { get; }
 
         private IStorageProvider StorageProvider { get; }
@@ -88,6 +94,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
         private IVirtualMachineTokenProvider VirtualMachineTokenProvider { get; }
+
+        /// <inheritdoc/>
+        protected override Task<ContinuationResult> QueueOperationAsync(CreateResourceContinuationInput input, ResourceRecordRef record, IDiagnosticsLogger logger)
+        {
+            // Determine if the pool is currently enabled
+            var poolEnabled = ResourcePoolManager.IsPoolEnabled(input.ResourcePoolDetails.GetPoolDefinition());
+
+            logger.FluentAddValue("HandlerIsPoolEnabled", poolEnabled);
+
+            // Short circuit things if we have a fail
+            if (!poolEnabled)
+            {
+                return Task.FromResult(new ContinuationResult() { Status = OperationState.Cancelled });
+            }
+
+            return base.QueueOperationAsync(input, record, logger);
+        }
 
         /// <inheritdoc/>
         protected override async Task<ResourceRecordRef> ObtainReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)

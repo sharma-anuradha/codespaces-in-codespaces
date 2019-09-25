@@ -31,9 +31,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// </summary>
         /// <param name="resourceBrokerSettings">Target reesource broker settings.</param>
         /// <param name="continuationTaskActivator">Target continuation activator.</param>
-        /// <param name="distributedLease">Target distributed lease.</param>
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceRepository">Target resource Repository.</param>
+        /// <param name="claimedDistributedLease">Target distributed lease.</param>
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         public WatchPoolVersionTask(
@@ -41,10 +41,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourceRepository resourceRepository,
             IContinuationTaskActivator continuationTaskActivator,
             IResourcePoolDefinitionStore resourceScalingStore,
-            IDistributedLease distributedLease,
+            IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IResourceNameBuilder resourceNameBuilder)
-            : base(resourceBrokerSettings, resourceScalingStore, distributedLease, taskHelper, resourceNameBuilder)
+            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder)
         {
             ContinuationTaskActivator = continuationTaskActivator;
             ResourceRepository = resourceRepository;

@@ -87,6 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // Common services
             services.AddSingleton<IDistributedLease, DistributedLease>();
+            services.AddSingleton<IClaimedDistributedLease, ClaimedDistributedLease>();
 
             // VsSaaS services
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);

@@ -29,7 +29,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="storageSizeInGB">The azure storage size in GB.</param>
         /// <param name="storageCloudEnvironmentUnits">The cloud environment units for this sku when active.</param>
         /// <param name="computeCloudEnvironmentUnits">The cloud environment units for this sku when inactive.</param>
-        /// <param name="poolLevel">The size of the pool that should be maintained.</param>
+        /// <param name="computePoolLevel">The size of the compute pool that should be maintained.</param>
+        /// <param name="storagePoolLevel">The size of the storage pool that should be maintained.</param>
         public CloudEnvironmentSku(
             string skuName,
             string skuDisplayName,
@@ -45,7 +46,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             int storageSizeInGB,
             decimal storageCloudEnvironmentUnits,
             decimal computeCloudEnvironmentUnits,
-            int poolLevel)
+            int computePoolLevel,
+            int storagePoolLevel)
         {
             Requires.NotNullOrEmpty(skuName, nameof(skuName));
             Requires.NotNullOrEmpty(skuDisplayName, nameof(skuDisplayName));
@@ -61,7 +63,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.Argument(storageSizeInGB > 0, nameof(storageSizeInGB), "The storage size must be greater than zero.");
             Requires.Argument(storageCloudEnvironmentUnits >= 0m, nameof(storageCloudEnvironmentUnits), "The cloud environment units must be greater than or equal to 0.");
             Requires.Argument(computeCloudEnvironmentUnits >= 0m, nameof(computeCloudEnvironmentUnits), "The cloud environment units must be greater than or equal to 0.");
-            Requires.Argument(poolLevel > 0, nameof(poolLevel), "The pool level must be greater than zero.");
+            Requires.Argument(computePoolLevel > 0, nameof(computePoolLevel), "The compute pool level must be greater than zero.");
+            Requires.Argument(storagePoolLevel > 0, nameof(storagePoolLevel), "The storage pool level must be greater than zero.");
 
             SkuName = skuName;
             SkuDisplayName = skuDisplayName;
@@ -77,7 +80,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             StorageSizeInGB = storageSizeInGB;
             StorageCloudEnvironmentUnits = storageCloudEnvironmentUnits;
             ComputeCloudEnvironmentUnits = computeCloudEnvironmentUnits;
-            PoolLevel = poolLevel;
+            ComputePoolLevel = computePoolLevel;
+            StoragePoolLevel = storagePoolLevel;
         }
 
         /// <inheritdoc/>
@@ -123,6 +127,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public decimal ComputeCloudEnvironmentUnits { get; }
 
         /// <inheritdoc/>
-        public int PoolLevel { get; }
+        public int ComputePoolLevel { get; }
+
+        /// <inheritdoc/>
+        public int StoragePoolLevel { get; }
     }
 }

@@ -22,18 +22,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="watchPoolSizeJob">Target watch pool size job.</param>
         /// <param name="watchPoolVersionTask">Target watch pool version job.</param>
+        /// <param name="watchPoolStateTask">Target watch pool state task.</param>
+        /// <param name="watchPoolSettingsTask">Target watch pool settings task.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public ResourceRegisterJobs(
             IWatchPoolSizeTask watchPoolSizeJob,
             IWatchPoolVersionTask watchPoolVersionTask,
+            IWatchPoolStateTask watchPoolStateTask,
+            IWatchPoolSettingsTask watchPoolSettingsTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             ITaskHelper taskHelper)
         {
             WatchPoolSizeJob = watchPoolSizeJob;
             WatchPoolVersionTask = watchPoolVersionTask;
+            WatchPoolStateTask = watchPoolStateTask;
+            WatchPoolSettingsTask = watchPoolSettingsTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
@@ -44,6 +50,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IWatchPoolVersionTask WatchPoolVersionTask { get; }
 
+        private IWatchPoolStateTask WatchPoolStateTask { get; }
+
+        private IWatchPoolSettingsTask WatchPoolSettingsTask { get; }
+
         private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
@@ -53,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private Random Random { get; }
 
         /// <inheritdoc/>
-        public Task WarmupCompletedAsync(IDiagnosticsLogger logger)
+        public async Task WarmupCompletedAsync(IDiagnosticsLogger logger)
         {
             // Job: Continuation Task Worker Pool Manager
             TaskHelper.RunBackground(
@@ -67,24 +77,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 TimeSpan.FromSeconds(10));
 
             // Offset to help distribute inital load of recuring tasks
-            Task.Delay(Random.Next(1000, 2000));
+            await Task.Delay(Random.Next(1000, 2000));
 
             // Job: Watch Pool Size
+            var watchPoolSizeTaskTimeSpan = TimeSpan.FromMinutes(1);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchPoolSizeTask}_run",
-                (childLogger) => WatchPoolSizeJob.RunAsync(childLogger),
-                TimeSpan.FromMinutes(1));
+                (childLogger) => WatchPoolSizeJob.RunAsync(watchPoolSizeTaskTimeSpan, childLogger),
+                watchPoolSizeTaskTimeSpan);
 
             // Offset to help distribute inital load of recuring tasks
-            Task.Delay(Random.Next(5000, 7500));
+            await Task.Delay(Random.Next(5000, 7500));
 
             // Job: Watch Pool Version
+            var watchPoolVersionTaskSpan = TimeSpan.FromMinutes(2);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchPoolVersionTask}_run",
-                (childLogger) => WatchPoolVersionTask.RunAsync(childLogger),
-                TimeSpan.FromMinutes(1));
+                (childLogger) => WatchPoolVersionTask.RunAsync(watchPoolVersionTaskSpan, childLogger),
+                watchPoolVersionTaskSpan);
 
-            return Task.CompletedTask;
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Watch Pool State
+            var watchPoolStateTaskSpan = TimeSpan.FromMinutes(2);
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchPoolStateTask}_run",
+                (childLogger) => WatchPoolStateTask.RunAsync(watchPoolStateTaskSpan, childLogger),
+                watchPoolStateTaskSpan);
+
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Watch Pool Settings
+            var watchPoolSettingsTaskSpan = TimeSpan.FromMinutes(2);
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchPoolSettingsTask}_run",
+                (childLogger) => WatchPoolSettingsTask.RunAsync(childLogger),
+                watchPoolSettingsTaskSpan);
         }
     }
 }

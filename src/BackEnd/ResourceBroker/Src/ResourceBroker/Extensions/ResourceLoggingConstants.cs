@@ -30,6 +30,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string WatchPoolVersionTask = "watch_pool_version_task";
 
         /// <summary>
+        /// Watch pool state task.
+        /// </summary>
+        public const string WatchPoolStateTask = "watch_pool_state_task";
+
+        /// <summary>
+        /// Watch pool state task.
+        /// </summary>
+        public const string WatchPoolSettingsTask = "watch_pool_settings_task";
+
+        /// <summary>
         /// Continuation Task Message Pump.
         /// </summary>
         public const string ContinuationTaskMessagePump = "continuation_task_message_pump";

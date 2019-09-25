@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -33,6 +34,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
 
             return list;
+        }
+
+        /// <summary>
+        /// Randomly pick an item in the list.
+        /// </summary>
+        /// <typeparam name="T">Type of element.</typeparam>
+        /// <param name="input">Target input.</param>
+        /// <returns>Sinlge radonly picked item.</returns>
+        public static T RandomOrDefault<T>(this IEnumerable<T> input)
+        {
+            if (!input.Any())
+            {
+                return default(T);
+            }
+
+            return input.ElementAt(rng.Next(input.Count()));
         }
     }
 }

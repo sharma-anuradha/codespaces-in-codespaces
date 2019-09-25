@@ -23,8 +23,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Create compute resource by invoking the continution activator.
         /// </summary>
-        /// <param name="resourceId">Target resource id.</param>
         /// <param name="activator">Target continuation activator.</param>
+        /// <param name="resourceId">Target resource id.</param>
         /// <param name="type">Target type.</param>
         /// <param name="detials">Target detials.</param>
         /// <param name="trigger">Trigger for operation.</param>
