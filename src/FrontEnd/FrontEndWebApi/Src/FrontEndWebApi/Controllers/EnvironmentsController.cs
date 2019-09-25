@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="environmentId">The environment id.</param>
         /// <returns>An object result containing the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet("{environmentId}")]
-        [ProducesResponseType(typeof(CloudEnvironmentCreationResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     .AddCloudEnvironment(result)
                     .LogInfo(GetType().FormatLogMessage(nameof(GetEnvironmentAsync)));
 
-                return Ok(Mapper.Map<CloudEnvironmentCreationResult>(result));
+                return Ok(Mapper.Map<CloudEnvironmentResult>(result));
             }
             catch (Exception ex)
             {
@@ -129,7 +129,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>An object result containing the list of <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet]
-        [ProducesResponseType(typeof(CloudEnvironmentCreationResult[]), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CloudEnvironmentResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ListEnvironmentsByOwnerAsync()
@@ -156,7 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     .FluentAddValue("Count", modelsRaw.Count().ToString())
                     .LogInfo(GetType().FormatLogMessage(nameof(ListEnvironmentsByOwnerAsync)));
 
-                return Ok(Mapper.Map<CloudEnvironmentCreationResult[]>(modelsRaw));
+                return Ok(Mapper.Map<CloudEnvironmentResult[]>(modelsRaw));
             }
             catch (Exception ex)
             {
@@ -172,7 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="createEnvironmentInput">The cloud environment input.</param>
         /// <returns>An object result containing the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpPost]
-        [ProducesResponseType(typeof(CloudEnvironmentCreationResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -251,7 +251,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     .AddCloudEnvironment(createCloudEnvironmentResult.CloudEnvironment)
                     .LogInfo(GetType().FormatLogMessage(nameof(CreateCloudEnvironmentAsync)));
 
-                return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentCreationResult>(createCloudEnvironmentResult.CloudEnvironment));
+                return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(createCloudEnvironmentResult.CloudEnvironment));
             }
             catch (Exception ex)
             {
@@ -340,7 +340,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="callbackBody">The callback info.</param>
         /// <returns>An object result that containts the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpPost("{environmentId}/_callback")] // TODO: This should be PATCH not POST
-        [ProducesResponseType(typeof(CloudEnvironmentCreationResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -409,7 +409,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     .AddCloudEnvironment(result)
                     .LogInfo(GetType().FormatLogMessage(nameof(UpdateEnvironmentCallbackAsync)));
 
-                return Ok(Mapper.Map<CloudEnvironmentCreationResult>(result));
+                return Ok(Mapper.Map<CloudEnvironmentResult>(result));
             }
             catch (Exception ex)
             {
