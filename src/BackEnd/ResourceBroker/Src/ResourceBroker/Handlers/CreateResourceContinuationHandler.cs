@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -47,16 +48,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Target compute provider.</param>
         /// <param name="storageProvider">Target storatge provider.</param>
         /// <param name="controlPlaneAzureResourceAccessor">Target control plane resource accessor.</param>
-        /// <param name="capacityManager">Target capacity manager.</param>
-        /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
-        /// <param name="resourceRepository">Target resource repository to be used.</param>
-        /// <param name="serviceProvider">Target service provider.</param>
-        /// <param name="virtualMachineTokenProvider">Target virtual machine token provider.</param>
+        /// <param name="computeProvider">Compute provider.</param>
+        /// <param name="storageProvider">Storatge provider.</param>
+        /// <param name="controlPlaneAzureResourceAccessor">the control plane resource accessor.</param>
+        /// <param name="controlPlaneInfo">the control plane info.</param>
+        /// <param name="capacityManager">The capacity manager.</param>
+        /// <param name="resourceBrokerSettings">Resource broker settings.</param>
+        /// <param name="resourceRepository">Resource repository to be used.</param>
+        /// <param name="serviceProvider">Service provider.</param>
+        /// <param name="virtualMachineTokenProvider">Virtual machine token provider.</param>
         public CreateResourceContinuationHandler(
             IResourcePoolManager resourcePoolManager,
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
+            IControlPlaneInfo controlPlaneInfo,
             ICapacityManager capacityManager,
             ResourceBrokerSettings resourceBrokerSettings,
             IVirtualMachineTokenProvider virtualMachineTokenProvider,
@@ -68,6 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
             ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
+            ControlPlaneInfo = controlPlaneInfo;
             CapacityManager = capacityManager;
             ResourceBrokerSettings = resourceBrokerSettings;
             VirtualMachineTokenProvider = virtualMachineTokenProvider;
@@ -89,6 +96,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IStorageProvider StorageProvider { get; }
 
         private IControlPlaneAzureResourceAccessor ControlPlaneAzureResourceAccessor { get; }
+        
+        private IControlPlaneInfo ControlPlaneInfo { get; }
 
         private ICapacityManager CapacityManager { get; }
 
@@ -148,6 +157,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     var resourceTags = new Dictionary<string, string>();
                     result = new VirtualMachineProviderCreateInput
                     {
+                        ResourceId = resource.Value.Id,
                         VMToken = token,
                         AzureVmLocation = computeDetails.Location,
                         AzureSkuName = computeDetails.SkuName,
@@ -157,6 +167,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         VmAgentBlobUrl = url,
                         ResourceTags = resourceTags,
                         ComputeOS = computeDetails.OS,
+                        FrontDnsHostName = ControlPlaneInfo.Stamp.DnsHostName,
                     };
                 }
                 else

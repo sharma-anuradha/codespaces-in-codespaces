@@ -52,6 +52,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 },
                 ComputeOS = ComputeOS.Linux,
                 VmAgentBlobUrl = testContext.Config["VM_AGENT_SOURCE_URL"],
+                ResourceId = Guid.NewGuid().ToString(),
+                FrontDnsHostName = "fontend.service.com",
             };
 
             var timerCreate = Stopwatch.StartNew();

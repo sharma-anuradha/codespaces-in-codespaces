@@ -16,6 +16,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public class VirtualMachineProviderCreateInput : ContinuationInput
     {
         /// <summary>
+        /// Gets or sets the Resource Id.
+        /// </summary>
+        public string ResourceId { get; set; }
+
+        /// <summary>
         /// Gets or sets the vmtoken.
         /// </summary>
         public string VMToken { get; set; }
@@ -59,5 +64,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets the blob url used for virtual machine agent.
         /// </summary>
         public string VmAgentBlobUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the front end service dns host name.
+        /// </summary>
+        public string FrontDnsHostName { get; set; }
     }
 }

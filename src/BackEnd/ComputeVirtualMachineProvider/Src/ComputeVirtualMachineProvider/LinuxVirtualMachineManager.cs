@@ -82,6 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input.AzureVirtualMachineImage, nameof(input.AzureVirtualMachineImage));
             Requires.NotNull(input.VmAgentBlobUrl, nameof(input.VmAgentBlobUrl));
             Requires.NotNull(input.VMToken, nameof(input.VMToken));
+            Requires.NotNull(input.ResourceId, nameof(input.ResourceId));
+            Requires.NotNull(input.FrontDnsHostName, nameof(input.FrontDnsHostName));
 
             // create new VM resource name
             var virtualMachineName = Guid.NewGuid().ToString();
@@ -107,11 +109,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var queueResult = await GetVirtualMachineInputQueueConnectionInfoAsync(input.AzureVmLocation, virtualMachineName, 0, logger);
                 if (queueResult.Item1 != OperationState.Succeeded)
                 {
-                    throw new VirtualMachineException($"Failed to get sas token for virtaul machine input queue {queue.Uri}");
+                    throw new VirtualMachineException($"Failed to get sas token for virtual machine input queue {queue.Uri}");
                 }
 
                 var queueConnectionInfo = queueResult.Item2;
-                string vmInItScript = GetVmInitScript(input.VMToken, input.VmAgentBlobUrl, queueConnectionInfo);
+                string vmInItScript = GetVmInitScript(
+                    input.VMToken,
+                    input.VmAgentBlobUrl,
+                    queueConnectionInfo,
+                    input.ResourceId,
+                    input.FrontDnsHostName);
+
                 var parameters = new Dictionary<string, Dictionary<string, object>>()
                 {
                     { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
@@ -484,14 +492,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return JsonConvert.SerializeObject((computeVmLocation, resourcesToBeDeleted));
         }
 
-        private string GetVmInitScript(string vmToken, string vmAgentBlobUrl, QueueConnectionInfo queueConnectionInfo)
+        private string GetVmInitScript(
+            string vmToken,
+            string vmAgentBlobUrl,
+            QueueConnectionInfo queueConnectionInfo,
+            string resourceId,
+            string frontEndDnsHostName)
         {
             var initScript = GetEmbeddedResource("vm_init.sh");
             string queueSasToken = JsonConvert.SerializeObject(queueConnectionInfo);
             initScript = initScript
-                .Replace("SCRIPT_PARAM_VMTOKEN=''", $"SCRIPT_PARAM_VMTOKEN='{vmToken}'")
-                .Replace("SCRIPT_PARAM_VM_QUEUE_TOKEN=''", $"SCRIPT_PARAM_VM_QUEUE_TOKEN='{queueSasToken}'")
-                .Replace("SCRIPT_PARAM_VMAGENT_BLOB_URL=''", $"SCRIPT_PARAM_VMAGENT_BLOB_URL='{vmAgentBlobUrl}'");
+                .Replace("__REPLACE_VMTOKEN__", vmToken)
+                .Replace("__REPLACE_VM_QUEUE_TOKEN__", queueSasToken)
+                .Replace("__REPLACE_VMAGENT_BLOB_URl__", vmAgentBlobUrl)
+                .Replace("__REPLACE_RESOURCEID__", resourceId)
+                .Replace("__REPLACE_FRONTEND_SERVICE_DNS_HOST_NAME__", frontEndDnsHostName);
             return initScript.ToBase64Encoded();
         }
 
