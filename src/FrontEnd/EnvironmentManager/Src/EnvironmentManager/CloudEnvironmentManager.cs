@@ -106,9 +106,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 // Validate against existing environments.
                 var environments = await CloudEnvironmentRepository.GetWhereAsync((env) => env.OwnerId == currentUserId, logger);
-                ValidationUtil.IsTrue(
-                    !environments.Any((env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)),
-                    $"An environment with the friendly name already exists: {cloudEnvironment.FriendlyName}");
+                if (environments.Any(
+                    (env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)
+                    ))
+                {
+                    result.ErrorCode = ErrorCodes.EnvironmentNameAlreadyExists;
+                    result.HttpStatusCode = StatusCodes.Status409Conflict;
+                    return result;
+                }
 
                 if (environments.Count() >= EnvironmentManagerSettings.PerUserEnvironmentQuota)
                 {

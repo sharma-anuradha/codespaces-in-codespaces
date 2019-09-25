@@ -15,6 +15,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public const string ExceededQuota = "ErrorExceededQuota";
 
         /// <summary>
+        /// Environment name specified already exists.
+        /// </summary>
+        public const string EnvironmentNameAlreadyExists = "EnvironmentNameAlreadyExists";
+
+        /// <summary>
         /// Unknown.
         /// </summary>
         public const string Unknown = "Unknown";
