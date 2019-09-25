@@ -17,6 +17,7 @@ import { credentialsProvider } from '../../providers/credentialsProvider';
 import { resourceUriProviderFactory } from '../../common/vscode-url-utils';
 import { postServiceWorkerMessage } from '../../common/post-message';
 import { authenticateMessageType, disconnectCloudEnv } from '../../common/service-worker-messages';
+import { UserDataProvider } from '../../utils/userDataProvider';
 
 import { vscode } from '../../utils/vscode';
 
@@ -96,6 +97,8 @@ class WorkbenchView extends Component<WorkbenchProps> {
         );
 
         const { sessionPath } = environmentInfo.connection;
+        const userDataProvider = new UserDataProvider();
+        await userDataProvider.initializeDBProvider();
 
         const VSLSWebSocketFactory: IWebSocketFactory = {
             create(url: string) {
@@ -118,6 +121,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
             connectionToken: vscodeConfig.commit,
             credentialsProvider,
             resourceUriProvider,
+            userDataProvider,
         };
 
         trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);

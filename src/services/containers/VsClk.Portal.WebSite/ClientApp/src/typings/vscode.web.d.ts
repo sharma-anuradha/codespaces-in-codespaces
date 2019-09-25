@@ -1,16 +1,16 @@
 declare module 'vscode-web' {
-    import * as vscodeTypes from 'vscode';
-    
+    import * as vscodeTypes from 'vscode-jsonrpc';
+
     export interface IWebSocket {
         readonly onData: vscodeTypes.Event<ArrayBuffer>;
         readonly onOpen: vscodeTypes.Event<void>;
         readonly onClose: vscodeTypes.Event<void>;
         readonly onError: vscodeTypes.Event<any>;
-    
+
         send(data: ArrayBuffer | ArrayBufferView): void;
         close(): void;
     }
-    
+
     export interface IWebSocketFactory {
         create(url: string): IWebSocket;
     }
@@ -18,9 +18,8 @@ declare module 'vscode-web' {
     export interface IUpdate {
         version: string;
     }
-    
+
     export interface IUpdateProvider {
-    
         /**
          * Should return with the `IUpdate` object if an update is
          * available or `null` otherwise to signal that there are
@@ -33,7 +32,7 @@ declare module 'vscode-web' {
         Unknown = 0,
         File = 1,
         Directory = 2,
-        SymbolicLink = 64
+        SymbolicLink = 64,
     }
 
     export interface IStat {
@@ -74,23 +73,13 @@ declare module 'vscode-web' {
         PathCaseSensitive = 1 << 10,
         Readonly = 1 << 11,
 
-        Trash = 1 << 12
-    }
-
-    /**
-     * Possible changes that can occur to a file.
-     */
-    export const enum FileChangeType {
-        UPDATED = 0,
-        ADDED = 1,
-        DELETED = 2
+        Trash = 1 << 12,
     }
 
     /**
      * Identifies a single change in a file.
      */
     export interface IFileChange {
-
         /**
          * The type of change that occurred to the file.
          */
@@ -103,7 +92,6 @@ declare module 'vscode-web' {
     }
 
     export interface IFileSystemProvider {
-
         readonly capabilities: FileSystemProviderCapabilities;
         readonly onDidChangeCapabilities: vscodeTypes.Event<void>;
 
@@ -125,8 +113,20 @@ declare module 'vscode-web' {
 
         open?(resource: URI, opts: FileOpenOptions): Promise<number>;
         close?(fd: number): Promise<void>;
-        read?(fd: number, pos: number, data: Uint8Array, offset: number, length: number): Promise<number>;
-        write?(fd: number, pos: number, data: Uint8Array, offset: number, length: number): Promise<number>;
+        read?(
+            fd: number,
+            pos: number,
+            data: Uint8Array,
+            offset: number,
+            length: number
+        ): Promise<number>;
+        write?(
+            fd: number,
+            pos: number,
+            data: Uint8Array,
+            offset: number,
+            length: number
+        ): Promise<number>;
     }
 
     export interface ICommand {
@@ -134,33 +134,32 @@ declare module 'vscode-web' {
         title: string;
         category?: string;
     }
-    
+
     export interface IConfigurationProperty {
         description: string;
         type: string | string[];
         default?: any;
     }
-    
+
     export interface IConfiguration {
-        properties: { [key: string]: IConfigurationProperty; };
+        properties: { [key: string]: IConfigurationProperty };
     }
-    
+
     export interface IDebugger {
         label?: string;
         type: string;
         runtime?: string;
     }
-    
-    
+
     export interface IGrammar {
         language: string;
     }
-    
+
     export interface IJSONValidation {
         fileMatch: string;
         url: string;
     }
-    
+
     export interface IKeyBinding {
         command: string;
         key: string;
@@ -169,49 +168,49 @@ declare module 'vscode-web' {
         linux?: string;
         win?: string;
     }
-    
+
     export interface ILanguage {
         id: string;
         extensions: string[];
         aliases: string[];
     }
-    
+
     export interface IMenu {
         command: string;
         alt?: string;
         when?: string;
         group?: string;
     }
-    
+
     export interface ISnippet {
         language: string;
     }
-    
+
     export interface ITheme {
         label: string;
     }
-    
+
     export interface IViewContainer {
         id: string;
         title: string;
     }
-    
+
     export interface IView {
         id: string;
         name: string;
     }
-    
+
     export interface IColor {
         id: string;
         description: string;
-        defaults: { light: string, dark: string, highContrast: string };
+        defaults: { light: string; dark: string; highContrast: string };
     }
-    
+
     export interface ITranslation {
         id: string;
         path: string;
     }
-    
+
     export interface ILocalization {
         languageId: string;
         languageName?: string;
@@ -219,7 +218,7 @@ declare module 'vscode-web' {
         translations: ITranslation[];
         minimalTranslations?: { [key: string]: string };
     }
-    
+
     export interface IExtensionContributions {
         commands?: ICommand[];
         configuration?: IConfiguration | IConfiguration[];
@@ -237,9 +236,9 @@ declare module 'vscode-web' {
         colors?: IColor[];
         localizations?: ILocalization[];
     }
-    
+
     export type ExtensionKind = 'ui' | 'workspace' | 'web';
-    
+
     export interface IExtensionManifest {
         readonly name: string;
         readonly displayName?: string;
@@ -256,11 +255,11 @@ declare module 'vscode-web' {
         readonly extensionPack?: string[];
         readonly extensionKind?: ExtensionKind;
         readonly contributes?: IExtensionContributions;
-        readonly repository?: { url: string; };
-        readonly bugs?: { url: string; };
+        readonly repository?: { url: string };
+        readonly bugs?: { url: string };
         readonly enableProposedApi?: boolean;
         readonly api?: string;
-        readonly scripts?: { [key: string]: string; };
+        readonly scripts?: { [key: string]: string };
     }
 
     export interface ICredentialsProvider {
@@ -272,7 +271,6 @@ declare module 'vscode-web' {
     }
 
     export interface IURLCallbackProvider {
-
         /**
          * Indicates that a Uri has been opened outside of VSCode. The Uri
          * will be forwarded to all installed Uri handlers in the system.
@@ -304,7 +302,7 @@ declare module 'vscode-web' {
         Warning,
         Error,
         Critical,
-        Off
+        Off,
     }
 
     export interface UriComponents {
@@ -321,34 +319,40 @@ declare module 'vscode-web' {
          * The part before the first colon.
          */
         readonly scheme: string;
-    
+
         /**
          * authority is the 'www.msft.com' part of 'http://www.msft.com/some/path?query#fragment'.
          * The part between the first double slashes and the next slash.
          */
         readonly authority: string;
-    
+
         /**
          * path is the '/some/path' part of 'http://www.msft.com/some/path?query#fragment'.
          */
         readonly path: string;
-    
+
         /**
          * query is the 'query' part of 'http://www.msft.com/some/path?query#fragment'.
          */
         readonly query: string;
-    
+
         /**
          * fragment is the 'fragment' part of 'http://www.msft.com/some/path?query#fragment'.
          */
         readonly fragment: string;
 
         // ---- modify to new -------------------------
-    
-        with(change: { scheme?: string; authority?: string | null; path?: string | null; query?: string | null; fragment?: string | null }): URI;
+
+        with(change: {
+            scheme?: string;
+            authority?: string | null;
+            path?: string | null;
+            query?: string | null;
+            fragment?: string | null;
+        }): URI;
 
         toJSON(): UriComponents;
-    
+
         revive(data: UriComponents | URI): URI;
         revive(data: UriComponents | URI | undefined): URI | undefined;
         revive(data: UriComponents | URI | null): URI | null;
@@ -356,7 +360,7 @@ declare module 'vscode-web' {
         revive(data: UriComponents | URI | undefined | null): URI | undefined | null;
 
         // ---- filesystem path -----------------------
-    
+
         /**
          * Returns a string representing the corresponding file system path of this URI.
          * Will handle UNC paths, normalizes windows drive letters to lower-case, and uses the
@@ -384,7 +388,7 @@ declare module 'vscode-web' {
         fsPath(): string;
 
         // ---- printing/externalize ---------------------------
-    
+
         /**
          * Creates a string representation for this URI. It's guaranteed that calling
          * `URI.parse` with the result of this function creates an URI which is equal
@@ -398,27 +402,41 @@ declare module 'vscode-web' {
          */
         toString(skipEncoding?: boolean): string;
     }
-    
-    export interface URI extends UriComponents {    
+
+    export interface URI extends UriComponents {
         /**
          * @internal
          */
-        new(scheme: string, authority?: string, path?: string, query?: string, fragment?: string, _strict?: boolean): IURI;
-    
+        new (
+            scheme: string,
+            authority?: string,
+            path?: string,
+            query?: string,
+            fragment?: string,
+            _strict?: boolean
+        ): IURI;
+
         /**
          * @internal
          */
-        new(components: UriComponents): IURI;
-    
+        new (components: UriComponents): IURI;
+
         /**
          * @internal
          */
-        new(schemeOrData: string | UriComponents, authority?: string, path?: string, query?: string, fragment?: string, _strict?: boolean): IURI;
+        new (
+            schemeOrData: string | UriComponents,
+            authority?: string,
+            path?: string,
+            query?: string,
+            fragment?: string,
+            _strict?: boolean
+        ): IURI;
 
         static isUri(thing: any): thing is URI;
 
         // ---- parse & validate ------------------------
-    
+
         /**
          * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
          * `file:///usr/home`, or `scheme:with/path`.
@@ -426,7 +444,7 @@ declare module 'vscode-web' {
          * @param value A string which represents an URI (see `URI#toString`).
          */
         static parse(value: string, _strict?: boolean): URI;
-    
+
         /**
          * Creates a new URI from a file system path, e.g. `c:\my\files`,
          * `/usr/home`, or `\\server\share\some\path`.
@@ -449,13 +467,17 @@ declare module 'vscode-web' {
          * @param path A file system path (see `URI#fsPath`)
          */
         static file(path: string): URI;
-    
-    
-        static from(components: { scheme: string; authority?: string; path?: string; query?: string; fragment?: string }): URI;
+
+        static from(components: {
+            scheme: string;
+            authority?: string;
+            path?: string;
+            query?: string;
+            fragment?: string;
+        }): URI;
     }
 
     export interface IWorkbenchConstructionOptions {
-
         /**
          * Experimental: the remote authority is the IP:PORT from where the workbench is served
          * from. It is for example being used for the websocket connections as address.
@@ -512,7 +534,7 @@ declare module 'vscode-web' {
         /**
          * Experimental: Add static extensions that cannot be uninstalled but only be disabled.
          */
-        staticExtensions?: { packageJSON: IExtensionManifest, extensionLocation: URI }[];
+        staticExtensions?: { packageJSON: IExtensionManifest; extensionLocation: URI }[];
 
         /**
          * Experimental: Support for URL callbacks.
@@ -529,12 +551,13 @@ declare module 'vscode-web' {
          */
         updateProvider?: IUpdateProvider;
     }
-
+    
     export interface IWorkbench {
         URI: URI;
         Disposable: vscodeTypes.Disposable;
         Event: vscodeTypes.Event<any>;
         LogLevel: LogLevel;
-        create: (el: HTMLElement, options: IWorkbenchConstructionOptions) => void
+        FileType: FileType;
+        create: (el: HTMLElement, options: IWorkbenchConstructionOptions) => void;
     }
 }
