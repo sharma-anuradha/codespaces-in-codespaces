@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -78,6 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 {
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
                     AzureVmLocation = azureLocation,
+                    ComputeOS = resource.Value.PoolReference.GetComputeOS(),
                 };
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)
@@ -96,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationResult> RunOperationAsync(ContinuationInput operationInput, ResourceRecordRef resource, IDiagnosticsLogger logger)
+        protected override async Task<ContinuationResult> RunOperationCoreAsync(DeleteResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
             var result = (ContinuationResult)null;
 
@@ -113,11 +116,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             {
                 if (resource.Value.Type == ResourceType.ComputeVM)
                 {
-                    result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)operationInput, logger.WithValues(new LogValueSet()));
+                    result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)input.OperationInput, logger.WithValues(new LogValueSet()));
                 }
                 else if (resource.Value.Type == ResourceType.StorageFileShare)
                 {
-                    result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)operationInput, logger.WithValues(new LogValueSet()));
+                    result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)input.OperationInput, logger.WithValues(new LogValueSet()));
                 }
                 else
                 {

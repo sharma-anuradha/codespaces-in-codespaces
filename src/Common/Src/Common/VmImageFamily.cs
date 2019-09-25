@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using Microsoft.Azure.Management.Compute.Fluent.VirtualMachine.DefinitionUnmanaged;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
@@ -18,18 +17,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="imageFamilyName">The image family name.</param>
         /// <param name="imageKind">The image kind.</param>
         /// <param name="imageName">The full image url.</param>
-        /// <param name="vmImageBaseName">The vm image base name.</param>
+        /// <param name="imageVersion">The image version.</param>
         /// <param name="vmImageSubscriptionId">The vm image subscription id.</param>
         /// <param name="vmImageResourceGroup">The vm image resource group.</param>
         public VmImageFamily(
             string imageFamilyName,
             VmImageKind imageKind,
             string imageName,
+            string imageVersion,
             string vmImageSubscriptionId,
             string vmImageResourceGroup)
         {
             Requires.NotNullOrEmpty(imageFamilyName, nameof(imageFamilyName));
             Requires.NotNullOrEmpty(imageName, nameof(imageName));
+            Requires.NotNullOrEmpty(imageVersion, nameof(imageVersion));
             if (imageKind == VmImageKind.Custom)
             {
                 Requires.NotNullOrEmpty(vmImageResourceGroup, nameof(vmImageResourceGroup));
@@ -37,8 +38,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
 
             ImageFamilyName = imageFamilyName;
-            ImageName = imageName;
             ImageKind = imageKind;
+            ImageName = imageName;
+            ImageVersion = imageVersion;
             VmImageSubscriptionId = vmImageSubscriptionId;
             VmImageResourceGroup = vmImageResourceGroup;
         }
@@ -51,6 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private string ImageName { get; }
 
+        private string ImageVersion { get; }
+
         private string VmImageSubscriptionId { get; }
 
         private string VmImageResourceGroup { get; }
@@ -61,10 +65,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             switch (ImageKind)
             {
                 case VmImageKind.Canonical:
-                    return ImageName;
+                    return $"{ImageName}:{ImageVersion}";
 
                 case VmImageKind.Custom:
-                    return $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{VmImageResourceGroup}/providers/Microsoft.Compute/images/{ImageName}.{location.ToString().ToLowerInvariant()}";
+                    return $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{VmImageResourceGroup}/providers/Microsoft.Compute/galleries/VmImages/images/{ImageName}/versions/{ImageVersion}";
 
                 default:
                     throw new NotSupportedException($"Image kind '{ImageKind}' is not supported.");

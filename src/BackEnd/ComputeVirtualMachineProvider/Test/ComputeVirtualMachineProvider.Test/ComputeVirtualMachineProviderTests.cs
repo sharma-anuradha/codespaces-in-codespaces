@@ -5,6 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
@@ -36,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var logger = new DefaultLoggerFactory().New();
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<VirtualMachineProviderCreateInput>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.BeginCreateComputeAsync(It.IsAny<VirtualMachineProviderCreateInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
@@ -53,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var logger = new DefaultLoggerFactory().New();
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<VirtualMachineProviderCreateInput>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.BeginCreateComputeAsync(It.IsAny<VirtualMachineProviderCreateInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
@@ -73,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var logger = new DefaultLoggerFactory().New();
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<VirtualMachineProviderCreateInput>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq
                 .Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<NextStageInput>(), It.IsAny<IDiagnosticsLogger>()))
@@ -97,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceInfo);
             string continuationToken = deploymentStatusInput.ToJson();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<VirtualMachineProviderCreateInput>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.CheckCreateComputeStatusAsync(It.IsAny<NextStageInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
@@ -117,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var logger = new DefaultLoggerFactory().New();
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<AzureResourceInfo>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.BeginStartComputeAsync(It.IsAny<VirtualMachineProviderStartComputeInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
@@ -134,7 +135,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var logger = new DefaultLoggerFactory().New();
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<AzureResourceInfo>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<NextStageInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
@@ -157,7 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceInfo);
             string continuationToken = deploymentStatusInput.ToJson();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<AzureResourceInfo>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<NextStageInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
@@ -177,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var logger = new DefaultLoggerFactory().New();
             var deploymentManagerMoq = new Mock<IDeploymentManager>();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<AzureResourceInfo>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.BeginDeleteComputeAsync(It.IsAny<VirtualMachineProviderDeleteInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
@@ -196,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceInfo);
             string continuationToken = deploymentStatusInput.ToJson();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<AzureResourceInfo>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<NextStageInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(
@@ -217,7 +218,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             NextStageInput deploymentStatusInput = new NextStageInput(TrackingId, ResourceInfo);
             string continuationToken = deploymentStatusInput.ToJson();
             deploymentManagerMoq
-                .Setup(x => x.Accepts(It.IsAny<AzureResourceInfo>()))
+                .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
             deploymentManagerMoq.Setup(x => x.CheckDeleteComputeStatusAsync(It.IsAny<NextStageInput>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
@@ -253,6 +254,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 ResourceInfo,
                 new ShareConnectionInfo("val1", "val2", "val3", "val4"),
                 new System.Collections.Generic.Dictionary<string, string>(),
+                ComputeOS.Linux,
                 continuationToken);
         }
     }

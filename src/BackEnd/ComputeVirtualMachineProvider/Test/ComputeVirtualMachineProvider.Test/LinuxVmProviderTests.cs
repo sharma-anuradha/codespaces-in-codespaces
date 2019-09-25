@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Xunit;
@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 ResourceTags = new Dictionary<string, string> {
                     {"ResourceTag", "GeneratedFromTest"},
                 },
+                ComputeOS = ComputeOS.Linux,
                 VmAgentBlobUrl = testContext.Config["VM_AGENT_SOURCE_URL"],
             };
 
@@ -106,6 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 AzureSubscription = subscriptionId,
                 AzureVirtualMachineImage = "Canonical.UbuntuServer.18.04-LTS.latest",
                 AzureSkuName = "Standard_F4s_v2",
+                ComputeOS = ComputeOS.Linux,
             };
 
             var timerCreate = Stopwatch.StartNew();
@@ -145,6 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     { "SESSION_TOKEN", "value2" },
                     { "SESSION_CALLBACK", "value2" }
                 },
+                ComputeOS.Linux,
                 null);
 
             await StartCompute(computeProvider, startComputeInput, logger);
@@ -165,8 +168,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
             var input = new VirtualMachineProviderDeleteInput
             {
-                AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, $"{resourceName}-lnx"),
+                AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceName),
                 AzureVmLocation = AzureLocation.WestUs2,
+                ComputeOS = ComputeOS.Linux,
             };
 
             var deleteResult = await computeProvider.DeleteAsync(input, logger);
@@ -208,8 +212,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
             var input = new VirtualMachineProviderQueueInput
             {
-                AzureResourceInfo = new AzureResourceInfo(Guid.NewGuid(), resourceName, $"{resourceName}-lnx"),
+                AzureResourceInfo = new AzureResourceInfo(Guid.NewGuid(), resourceName, resourceName),
                 AzureVmLocation = AzureLocation.WestUs2,
+                ComputeOS = ComputeOS.Linux,
             };
 
             var queueResult = await computeProvider.GetVirtualMachineInputQueueAsync(input, logger);

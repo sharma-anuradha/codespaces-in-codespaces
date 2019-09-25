@@ -69,19 +69,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public bool Accepts(AzureResourceInfo info)
+        public bool Accepts(ComputeOS computeOS)
         {
-            // For delete, the resource name may never be set if the resource failed to create in Azure. In this case,
-            // assume the linux manager is able to handle the delete.
-            return !info.Name?.EndsWith("-win") ?? true;
-        }
-
-        /// <inheritdoc/>
-        public bool Accepts(VirtualMachineProviderCreateInput input)
-        {
-            // TODO: This is a hack; we don't have the proper config info at this level. JohnRi and AnVan to work out how to get this.
-            // What we really want is just a single Accepts() method that can find out the ComputeOS type
-            return input.AzureVirtualMachineImage.Contains("Ubuntu");
+            return computeOS == ComputeOS.Linux;
         }
 
         /// <inheritdoc/>
@@ -94,10 +84,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input.VMToken, nameof(input.VMToken));
 
             // create new VM resource name
-            var virtualMachineName = $"{Guid.NewGuid().ToString()}-lnx";
+            var virtualMachineName = Guid.NewGuid().ToString();
 
             var resourceTags = input.ResourceTags;
-            var deploymentName = $"Create-Vm-{virtualMachineName}";
+
+            var deploymentName = $"Create-LinuxVm-{virtualMachineName}";
             try
             {
                 var azure = await clientFactory.GetAzureClientAsync(input.AzureSubscription);

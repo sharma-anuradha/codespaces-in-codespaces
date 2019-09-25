@@ -162,7 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="record">Referene to target resource.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target operations continuation result.</returns>
-        protected abstract Task<ContinuationResult> RunOperationAsync(ContinuationInput operationInput, ResourceRecordRef record, IDiagnosticsLogger logger);
+        protected abstract Task<ContinuationResult> RunOperationCoreAsync(TI operationInput, ResourceRecordRef record, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Build the continuation, by default will be the `input.ResourceId`.
@@ -369,7 +369,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var operationResult = (ContinuationResult)null;
             try
             {
-                operationResult = await RunOperationAsync(input.OperationInput, record, logger.WithValues(new LogValueSet()));
+                operationResult = await RunOperationCoreAsync(input, record, logger.WithValues(new LogValueSet()));
             }
             catch (Exception e)
             {

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
@@ -48,6 +49,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets resource tags that should be added to the resource.
         /// </summary>
         public IDictionary<string, string> ResourceTags { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ComputeOS.
+        /// </summary>
+        public ComputeOS ComputeOS { get; set; }
 
         /// <summary>
         /// Gets or sets the blob url used for virtual machine agent.

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -42,14 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             OperationState resultState;
             AzureResourceInfo azureResourceInfo = default;
 
-            // Get depliment manager to be used
-            var acceptsDeploymentManager = managers.Where(x => x.Accepts(input));
-            if (acceptsDeploymentManager == null || acceptsDeploymentManager.Count() != 1)
-            {
-                throw new NotSupportedException($"One and only one deployment manager is allowed to process create request.");
-            }
-
-            var deploymentManager = acceptsDeploymentManager.First();
+            var deploymentManager = SelectDeploymentManager(input.ComputeOS);
 
             var duration = logger.StartDuration();
 
@@ -95,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             string resultContinuationToken = default;
             OperationState resultState;
             AzureResourceInfo azureResourceInfo;
-            var deploymentManager = managers.Single(x => x.Accepts(input.AzureResourceInfo));
+            var deploymentManager = SelectDeploymentManager(input.ComputeOS);
             var duration = logger.StartDuration();
 
             logger = logger.WithValues(new LogValueSet
@@ -135,7 +129,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(logger, nameof(logger));
             string resultContinuationToken = default;
             OperationState resultState;
-            var deploymentManager = managers.Single(x => x.Accepts(input.AzureResourceInfo));
+            var deploymentManager = SelectDeploymentManager(input.ComputeOS);
             AzureResourceInfo azureResourceInfo;
 
             var duration = logger.StartDuration();
@@ -176,7 +170,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(input.AzureResourceInfo, nameof(input.AzureResourceInfo));
             Requires.NotNull(logger, nameof(logger));
             var duration = logger.StartDuration();
-            var deploymentManager = managers.Single(x => x.Accepts(input.AzureResourceInfo));
+            var deploymentManager = SelectDeploymentManager(input.ComputeOS);
 
             logger = logger.WithValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString());
             logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
@@ -234,6 +228,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             }
 
             return (nextStageInput?.AzureResourceInfo, resultState, resultContinuationToken);
+        }
+
+        private IDeploymentManager SelectDeploymentManager(ComputeOS computeOS)
+        {
+            var acceptsDeploymentManager = managers.Where(x => x.Accepts(computeOS));
+            if (acceptsDeploymentManager == null || acceptsDeploymentManager.Count() != 1)
+            {
+                throw new NotSupportedException($"One and only one deployment manager is allowed to process request.");
+            }
+
+            return acceptsDeploymentManager.First();
         }
     }
 }

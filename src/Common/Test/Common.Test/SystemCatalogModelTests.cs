@@ -233,6 +233,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         {
                             ImageKind = VmImageKind.Custom,
                             ImageName = "test-compute-image-url",
+                            ImageVersion = "1.0.1",
                         }
                     },
                 },

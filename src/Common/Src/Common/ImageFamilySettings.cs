@@ -2,9 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -20,5 +18,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public string ImageName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the image version.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string ImageVersion { get; set; }
     }
 }

@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
     /// <summary>
@@ -18,5 +20,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// Gets or sets the version definition code.
         /// </summary>
         public string VersionCode { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resource pool dimensions
+        /// </summary>
+        public IDictionary<string, string> Dimensions { get; set; }
     }
 }

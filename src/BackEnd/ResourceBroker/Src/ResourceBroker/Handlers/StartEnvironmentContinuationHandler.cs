@@ -5,6 +5,8 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -75,13 +77,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     storageResult.StorageShareName,
                     storageResult.StorageFileName),
                 input.EnvironmentVariables,
+                compute.Value.PoolReference.GetComputeOS(),
                 null);
         }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationResult> RunOperationAsync(ContinuationInput operationInput, ResourceRecordRef compute, IDiagnosticsLogger logger)
+        protected override async Task<ContinuationResult> RunOperationCoreAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
         {
-            return await ComputeProvider.StartComputeAsync((VirtualMachineProviderStartComputeInput)operationInput, logger.WithValues(new LogValueSet()));
+            return await ComputeProvider.StartComputeAsync((VirtualMachineProviderStartComputeInput)input.OperationInput, logger.WithValues(new LogValueSet()));
         }
 
         private async Task<FileShareProviderAssignResult> AssignStorageAsync(StartEnvironmentContinuationInput input, Guid storageId, IDiagnosticsLogger logger)

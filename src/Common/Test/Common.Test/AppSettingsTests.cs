@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
+using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 {
@@ -40,9 +41,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         {
             var appSettings = LoadAppSettings(environmentName, overrideName);
             var controlPlaneInfo = new Mock<IControlPlaneInfo>();
+            controlPlaneInfo.Setup(obj => obj.EnvironmentResourceGroupName).Returns("test-environment-rg");
             controlPlaneInfo.Setup(obj => obj.Stamp.DataPlaneLocations).Returns(new List<AzureLocation>());
-            var controlPlaneAzureResourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>().Object;
-            var skuCatalog = new SkuCatalog(appSettings.SkuCatalogSettings, controlPlaneInfo.Object, controlPlaneAzureResourceAccessor);
+            var subscriptionId = Guid.NewGuid().ToString();
+            var controlPlaneAzureResourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
+            controlPlaneAzureResourceAccessor.Setup(obj => obj.GetCurrentSubscriptionIdAsync()).Returns(Task.FromResult(subscriptionId));
+            var skuCatalog = new SkuCatalog(appSettings.SkuCatalogSettings, controlPlaneInfo.Object, controlPlaneAzureResourceAccessor.Object);
             Assert.NotNull(skuCatalog);
             foreach (var item in skuCatalog.CloudEnvironmentSkus)
             {
@@ -270,6 +274,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 l => Assert.Equal(AzureLocation.WestUs2, l));
             westUs2Stamp(controlPlaneInfo.Stamp);
             Assert.False(controlPlaneInfo.TryGetSubscriptionId(out var _));
+        }
+
+        [Fact]
+        public void AppSettings_WindowsSkus()
+        {
+            const string skuName = "smallWindowsPreview";
+            var appSettings = LoadAppSettings("dev-ci");
+            Assert.NotNull(appSettings);
+            var controlPlaneInfo = new Mock<IControlPlaneInfo>();
+            controlPlaneInfo.Setup(obj => obj.EnvironmentResourceGroupName).Returns("test-environment-rg");
+            controlPlaneInfo.Setup(obj => obj.Stamp.DataPlaneLocations).Returns(new List<AzureLocation>());
+            var subscriptionId = Guid.NewGuid().ToString();
+            var controlPlaneAzureResourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
+            controlPlaneAzureResourceAccessor.Setup(obj => obj.GetCurrentSubscriptionIdAsync()).Returns(Task.FromResult(subscriptionId));
+            var skuCatalog = new SkuCatalog(appSettings.SkuCatalogSettings, controlPlaneInfo.Object, controlPlaneAzureResourceAccessor.Object);
+            Assert.NotNull(skuCatalog);
+            Assert.Contains(skuName, skuCatalog.CloudEnvironmentSkus);
+            var environment = skuCatalog.CloudEnvironmentSkus[skuName];
+            Assert.Equal(VmImageKind.Custom, environment.ComputeImage.ImageKind);
+            Assert.Equal(ComputeOS.Windows, environment.ComputeOS);
+            Assert.Equal("Small Windows (Preview)", environment.SkuDisplayName);
         }
 
         public static AppSettingsBase LoadAppSettings(string environmentName, string overrideName = null)

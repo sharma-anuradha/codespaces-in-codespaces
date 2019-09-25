@@ -5,6 +5,7 @@
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 
@@ -18,16 +19,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         /// Used by clients to determine which manager to use for this input.
         /// </summary>
-        /// <param name="info">AzureResourceInfo object.</param>
+        /// <param name="computeOS">ComputeOS object.</param>
         /// <returns>true of manager handles this input.</returns>
-        bool Accepts(AzureResourceInfo info);
-
-        /// <summary>
-        /// Used by clients to determine which manager to use for this input.
-        /// </summary>
-        /// <param name="input">Provides input to start cloud environment.</param>
-        /// <returns>true of manager handles this input.</returns>
-        bool Accepts(VirtualMachineProviderCreateInput input);
+        bool Accepts(ComputeOS computeOS);
 
         /// <summary>
         /// Kick off container setup on Azure Virtual Machine.

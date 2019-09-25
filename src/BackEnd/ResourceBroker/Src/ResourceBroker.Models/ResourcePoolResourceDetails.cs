@@ -5,6 +5,7 @@
 using Microsoft.VsSaaS.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Collections.Generic;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
@@ -39,6 +40,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// </summary>
         /// <returns>The hash code of the pool.</returns>
         public abstract string GetPoolDefinition();
+
+        /// <summary>
+        /// Gets the collection that represents pool dimensions.
+        /// </summary>
+        /// <returns>The dimensions for the pool.</returns>
+        public abstract IDictionary<string, string> GetPoolDimensions();
 
         /// <summary>
         /// Gets the versioned hash that makes up the definition of the pool.

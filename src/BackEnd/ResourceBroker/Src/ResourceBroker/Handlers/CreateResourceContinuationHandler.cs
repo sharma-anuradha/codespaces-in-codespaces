@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -129,13 +130,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var result = default(ContinuationInput);
 
-            /*
-             * TODO: How will we track the Cloud Environment SKU in the pool manager, and not just the Azure SKU?
-            if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.SkuName, out var sku))
-            {
-                throw new SkuNotAvailableException(input.SkuName, azureLocation);
-            }
-            */
             var sku = default(ICloudEnvironmentSku);
 
             // Get Resource Group and Subscription Id
@@ -162,6 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureVirtualMachineImage = computeDetails.ImageName,
                         VmAgentBlobUrl = url,
                         ResourceTags = resourceTags,
+                        ComputeOS = computeDetails.OS,
                     };
                 }
                 else
@@ -216,18 +211,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationResult> RunOperationAsync(ContinuationInput operationInput, ResourceRecordRef resource, IDiagnosticsLogger logger)
+        protected override async Task<ContinuationResult> RunOperationCoreAsync(CreateResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
             ResourceCreateContinuationResult result;
 
             // Run create operation
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
-                result = await ComputeProvider.CreateAsync((VirtualMachineProviderCreateInput)operationInput, logger.WithValues(new LogValueSet()));
+                result = await ComputeProvider.CreateAsync((VirtualMachineProviderCreateInput)input.OperationInput, logger.WithValues(new LogValueSet()));
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)
             {
-                result = await StorageProvider.CreateAsync((FileShareProviderCreateInput)operationInput, logger.WithValues(new LogValueSet()));
+                result = await StorageProvider.CreateAsync((FileShareProviderCreateInput)input.OperationInput, logger.WithValues(new LogValueSet()));
             }
             else
             {
@@ -238,6 +233,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             if (resource.Value.AzureResourceInfo == null && result.AzureResourceInfo != null)
             {
                 resource.Value.AzureResourceInfo = result.AzureResourceInfo;
+                resource.Value.PoolReference.Dimensions = input.ResourcePoolDetails.GetPoolDimensions();
 
                 resource.Value = await ResourceRepository.UpdateAsync(resource.Value, logger.WithValues(new LogValueSet()));
             }

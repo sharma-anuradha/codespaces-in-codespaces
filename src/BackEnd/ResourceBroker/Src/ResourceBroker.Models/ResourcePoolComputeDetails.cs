@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
@@ -31,6 +32,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         public override string GetPoolDefinition()
         {
             return $"{SkuName}__{Location}__{ImageFamilyName}".GetDeterministicHashCode();
+        }
+
+        /// <inheritdoc/>
+        public override IDictionary<string, string> GetPoolDimensions()
+        {
+            return new Dictionary<string, string>
+            {
+                [ResourcePoolDimensionsKeys.ComputeOS] = OS.ToString(),
+                [ResourcePoolDimensionsKeys.SkuName] = SkuName,
+                [ResourcePoolDimensionsKeys.Location] = Location.ToString(),
+                [ResourcePoolDimensionsKeys.ImageFamilyName] = ImageFamilyName,
+                [ResourcePoolDimensionsKeys.ImageName] = ImageName,
+            };
         }
 
         /// <inheritdoc/>

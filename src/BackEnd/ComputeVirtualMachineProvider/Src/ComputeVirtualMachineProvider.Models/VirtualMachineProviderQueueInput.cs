@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
@@ -21,5 +22,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets the virtual machine location.
         /// </summary>
         public AzureLocation AzureVmLocation { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ComputeOS.
+        /// </summary>
+        public ComputeOS ComputeOS { get; set; }
     }
 }

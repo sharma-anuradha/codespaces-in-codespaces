@@ -171,6 +171,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 imageFamilyName,
                 imageFamilySettings.ImageKind,
                 imageFamilySettings.ImageName,
+                imageFamilySettings.ImageVersion,
                 vmImageSubscriptionId,
                 vmImageResourceGroup);
 
