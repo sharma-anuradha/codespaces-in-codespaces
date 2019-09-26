@@ -1,8 +1,7 @@
-// import { acquireToken, IToken } from '../services/authService';
 
 import { useDispatch } from './middleware/useDispatch';
 import { action } from './middleware/useActionCreator';
-import { IToken, acquireToken } from '../services/authService';
+import { authService, acquireToken } from '../services/authService';
 import { useWebClient } from './middleware/useWebClient';
 import { useActionContext } from './middleware/useActionContext';
 
@@ -39,43 +38,37 @@ export async function getUserInfo() {
     try {
         dispatch(getUserInfoAction());
 
-        const token = await acquireToken(['user.read']);
+        const token = await authService.getCachedToken();
+        if (token) {
+            const photoUrl = await fetchMyPhoto();
 
-        const [content, photoUrl = defaultPhotoUrl] = await Promise.all([
-            fetchMyInfo(token),
-            fetchMyPhoto(token),
-        ]);
-        const userInfo = {
-            ...content,
-            photoUrl,
-        };
+            const { idTokenClaims } = token.account;
+            const { email, preferred_username } = idTokenClaims;
 
-        dispatch(getUserInfoSuccessAction(userInfo));
+            const userInfo = {
+                displayName: token.account.name,
+                mail: email || preferred_username,
+                photoUrl,
+            };
 
-        return userInfo;
+            dispatch(getUserInfoSuccessAction(userInfo));
+
+            return userInfo;
+        } else {
+            throw new Error('Unauthenticated.');
+        }
+
     } catch (err) {
         dispatch(getUserInfoFailureAction(err));
     }
 }
 
-const graphEndpoint = 'https://graph.microsoft.com/v1.0/me';
-async function fetchMyInfo(token: IToken) {
-    const webClient = useWebClient();
-
-    const userInfo = await webClient.request<UserInfo>(graphEndpoint, {
-        headers: {
-            Authorization: `Bearer ${token.accessToken}`,
-        },
-    });
-
-    return userInfo;
-}
-
 export const defaultPhotoUrl = 'https://graph.microsoft.com/v1.0/me/photos/48x48/$value';
-async function fetchMyPhoto(token: IToken) {
-    const webClient = useWebClient();
-
+async function fetchMyPhoto() {
     try {
+        const token = await acquireToken(['user.read']);
+        const webClient = useWebClient();
+
         const response = await webClient.request(
             defaultPhotoUrl,
             {
@@ -84,13 +77,13 @@ async function fetchMyPhoto(token: IToken) {
                 },
             },
             { skipParsingResponse: true }
-        );    
+        );
         const imageBlob = await response.blob();
 
         return URL.createObjectURL(imageBlob);
     } catch (err) {
         // If the user doesn't have an image then that returns a 404 which results in an exception.
         // Simply return empty string here so that it shows the default image.
-        return "";
+        return defaultPhotoUrl;
     } 
 }

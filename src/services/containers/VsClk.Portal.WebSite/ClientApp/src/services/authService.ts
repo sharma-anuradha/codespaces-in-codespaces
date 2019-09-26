@@ -8,7 +8,7 @@ const error = baseTrace.extend('authService:error');
 // tslint:disable-next-line: no-console
 error.log = console.log.bind(console);
 
-const SCOPES = ['openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'];
+const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'];
 
 const msalConfig: msal.Configuration = {
     auth: {
@@ -172,17 +172,18 @@ export async function acquireToken(scopes: string[]) {
 
     return tokenFromTokenResponse(tokenResponse);
 }
-
 function tokenFromTokenResponse(tokenResponse: AuthResponse): IToken {
     const { accessToken, account } = tokenResponse;
 
-    const jwtToken = jwtDecode(accessToken) as { exp: number };
-    const msTime = (jwtToken.exp - 10) * 1000;
+    let msTime = 0;
+    try {
+        const jwtToken = jwtDecode(accessToken) as { exp: number };
+        msTime = (jwtToken.exp - 10) * 1000;
+    } catch {/* ignore */}
 
     const token = {
         accessToken,
         expiresOn: new Date(msTime),
-
         account,
     };
 
