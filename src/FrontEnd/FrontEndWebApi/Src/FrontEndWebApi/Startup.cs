@@ -240,7 +240,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Frameworks
             app.UseMvc();
-            app.UseMvc(ConfigureRoutes);
 
             // Swagger/OpenAPI
             app.UseSwagger(x =>
@@ -267,56 +266,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             });
 
             Warmup(app);
-        }
-
-        private void ConfigureRoutes(IRouteBuilder routeBuilder)
-        {
-            ConfigureRoutesForAccountManagementController(routeBuilder);
-        }
-
-        private void ConfigureRoutesForAccountManagementController(IRouteBuilder routeBuilder)
-        {
-            routeBuilder.MapRoute(
-                name: "OnResourceCreationValidate",
-                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate",
-                defaults: new { controller = "RPAccounts", action = nameof(RPAccountsController.OnResourceCreationValidate) },
-                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
-
-            routeBuilder.MapRoute(
-                name: "OnResourceCreationBegin",
-                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}",
-                defaults: new { controller = "RPAccounts", action = nameof(RPAccountsController.OnResourceCreationBegin) },
-                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "PUT" }) });
-
-            routeBuilder.MapRoute(
-                name: "OnResourceCreationCompleted",
-                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted",
-                defaults: new { controller = "RPAccounts", action = nameof(RPAccountsController.OnResourceCreationCompleted) },
-                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
-
-            routeBuilder.MapRoute(
-               name: "OnResourceReadValidate",
-               template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate",
-               defaults: new { controller = "RPAccounts", action = nameof(RPAccountsController.OnResourceReadValidate) },
-               constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
-
-            routeBuilder.MapRoute(
-                name: "OnResourceListGet",
-                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}",
-                defaults: new { controller = "RPAccounts", action = nameof(RPAccountsController.OnResourceListGet) },
-                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
-
-            routeBuilder.MapRoute(
-                name: "OnResourceListGetBySubscription",
-                template: "subscriptions/{subscriptionId}/providers/{providerNamespace}/{resourceType}",
-                defaults: new { controller = "RPAccounts", action = nameof(RPAccountsController.OnResourceListGetBySubscription) },
-                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "GET" }) });
-
-            routeBuilder.MapRoute(
-                name: "OnResourceDeletionValidate",
-                template: "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate",
-                defaults: new { controller = "RPAccounts", action = nameof(RPAccountsController.OnResourceDeletionValidate) },
-                constraints: new { httpMethod = new HttpMethodRouteConstraint(new[] { "POST" }) });
         }
     }
 }

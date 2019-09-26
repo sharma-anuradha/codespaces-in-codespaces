@@ -1,4 +1,4 @@
-﻿// <copyright file="RPAccountsController.cs" company="Microsoft">
+﻿// <copyright file="SubscriptionsController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -24,19 +24,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// <summary>
     /// The VSO Account api called by RPSaaS.
     /// </summary>
+    [ApiController]
     [Authorize(Policy = "RPSaaSIdentity", AuthenticationSchemes = AuthenticationBuilderRPSaasExtensions.AuthenticationScheme)]
     [FriendlyExceptionFilter]
-    [LoggingBaseName("rpaccounts_controller")]
-    public class RPAccountsController : ControllerBase
+    [Route(ServiceConstants.ApiV1Route)]
+    [LoggingBaseName("subscriptions_controller")]
+    public class SubscriptionsController : ControllerBase
     {
         private readonly IAccountManager accountManager;
 
         private readonly ICurrentUserProvider currentUserProvider;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RPAccountsController"/> class.
+        /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
-        public RPAccountsController(IAccountManager accountManager, ICurrentUserProvider currentUserProvider, IMapper mapper)
+        public SubscriptionsController(IAccountManager accountManager, ICurrentUserProvider currentUserProvider, IMapper mapper)
         {
             this.accountManager = accountManager;
             this.currentUserProvider = currentUserProvider;
@@ -46,8 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// This method will be called by RPSaaS before they create the resource in their DB to validate inputs.
         /// </summary>
         /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
-        [HttpPost]
-        [ActionName("OnResourceCreationValidate")]
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate")]
         public Task<IActionResult> OnResourceCreationValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             var logger = HttpContext.GetLogger();
@@ -84,8 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// This method will be called by RPSaaS Service before they create the resource in their DB.
         /// </summary>
         /// <returns>Returns an Http status code and a VSOAccount object</returns>
-        [HttpPut]
-        [ActionName("OnResourceCreationBegin")]
+        [HttpPut("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}")]
         public async Task<IActionResult> OnResourceCreationBegin(
             string subscriptionId,
             string resourceGroup,
@@ -150,8 +150,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// This method could be used to start billing.
         /// </summary>
         /// <returns>Returns a Http status code and message</returns>
-        [HttpPost]
-        [ActionName("OnResourceCreationCompleted")]
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted")]
         public Task<IActionResult> OnResourceCreationCompleted(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             // Do post creation processing here ex: start billing, write billing Events
@@ -163,8 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// This method will be called by RPSaaS Service before they delete the resource in their DB.
         /// </summary>
         /// <returns>Returns a Http status code and message.</returns>
-        [HttpPost]
-        [ActionName("OnResourceDeletionValidate")]
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate")]
         public async Task<IActionResult> OnResourceDeletionValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             var logger = HttpContext.GetLogger();
@@ -223,8 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Gets a list of VSO Account objects filtered by the input subscriptionID and resourceGroup.
         /// </summary>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
-        [HttpGet]
-        [ActionName("OnResourceListGet")]
+        [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}")]
         public async Task<IActionResult> OnResourceListGet(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType)
         {
             var logger = HttpContext.GetLogger();
@@ -266,8 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Gets a list of VSO Account objects filtered by the input subscriptionID.
         /// </summary>
         /// <returns>Returns an Http status code and a list of VSO Account objects filtering by subscriptionID.</returns>
-        [HttpGet]
-        [ActionName("OnResourceListGetBySubscription")]
+        [HttpGet("{subscriptionId}/providers/{providerNamespace}/{resourceType}")]
         public async Task<IActionResult> OnResourceListGetBySubscription(string subscriptionId, string providerNamespace, string resourceType)
         {
             var logger = HttpContext.GetLogger();
@@ -306,8 +302,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Gets a VSO Account object.
         /// </summary>
         /// <returns>Returns a Http status code and a VSO Account object.</returns>
-        [HttpGet]
-        [ActionName("OnResourceReadValidate")]
+        [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate")]
         public Task<IActionResult> OnResourceReadValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             // Used for pre-read validation only. The Resource is returned from RPSaaS(MetaRP) CosmosDB storage and not from here
