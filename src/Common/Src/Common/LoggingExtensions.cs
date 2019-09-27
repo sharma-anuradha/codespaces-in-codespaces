@@ -165,7 +165,6 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             return result;
         }
 
-
         /// <summary>
         /// Wraps the given operation in a logging scope will add duration to the logger.
         /// </summary>
@@ -373,7 +372,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// </summary>
         /// <param name="class">The implementation class type that emitst a logging message.</param>
         /// <param name="methodName">The method name that emits a logging mesage.</param>
-        /// <param name="isError">A value indicating whether the message represents an error or exception </param>
+        /// <param name="isError">A value indicating whether the message represents an error or exception.</param>
         /// <returns>The log message string.</returns>
         private static string FormatLogMessage(this Type @class, string methodName, bool isError = false)
         {

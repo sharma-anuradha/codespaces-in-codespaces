@@ -40,6 +40,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string ComputeSkuSize { get; set; }
 
         /// <summary>
+        /// Gets or sets the number of cores.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public int ComputeSkuCores { get; set; }
+
+        /// <summary>
         /// Gets or sets the Azure compute OS, either "Linux" or "Windows".
         /// </summary>
         [JsonProperty(Required = Required.Always)]

@@ -1,4 +1,4 @@
-﻿// <copyright file="ImageFamily.cs" company="Microsoft">
+﻿// <copyright file="VmImageFamily.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

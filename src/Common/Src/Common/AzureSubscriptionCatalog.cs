@@ -6,15 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -87,12 +81,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     servicePrincipalSettings.TenantId,
                     SecretProvider);
 
+                var computeQuotas = defaultQuotas.Compute.Combine(azureSubscriptionSettings.Quotas?.Compute);
+                var storageQuotas = defaultQuotas.Storage.Combine(azureSubscriptionSettings.Quotas?.Storage);
+                var networkQuotas = defaultQuotas.Network.Combine(azureSubscriptionSettings.Quotas?.Network);
+
                 var azureSubscription = new AzureSubscription(
                     azureSubscriptionSettings.SubscriptionId,
                     subscriptionName,
                     servicePrincipal,
                     azureSubscriptionSettings.Enabled,
-                    locations);
+                    locations,
+                    computeQuotas,
+                    storageQuotas,
+                    networkQuotas);
 
                 Subscriptions.Add(id, azureSubscription);
             }
@@ -106,20 +107,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private Dictionary<Guid, IAzureSubscription> Subscriptions { get; } = new Dictionary<Guid, IAzureSubscription>();
 
         private ISecretProvider SecretProvider { get; }
+    }
 
-        private async Task<string> ResolveKeyvaultSecret(string clientSecretName)
+#pragma warning disable SA1402 // File may only contain a single type
+    /// <summary>
+    /// Dictionary extension methods.
+    /// </summary>
+    internal static class DictionaryCombine
+    {
+        /// <summary>
+        /// Copy the first dictionary and overlay the items of the second.
+        /// </summary>
+        /// <typeparam name="TKey">The dictionary key type.</typeparam>
+        /// <typeparam name="TValue">The dictionary value type.</typeparam>
+        /// <param name="first">The first dictionary, whose items are fully copied.</param>
+        /// <param name="second">The second dictionary, whose items are copied over the first.</param>
+        /// <returns>The new dictionary.</returns>
+        public static Dictionary<TKey, TValue> Combine<TKey, TValue>(
+            this IDictionary<TKey, TValue> first,
+            IDictionary<TKey, TValue> second)
         {
-            await Task.CompletedTask;
+            var result = new Dictionary<TKey, TValue>(first);
 
-            // TODO: Temporary hack: the secret identifier is just an environment variable name where we look up the secert.
-            // TODO: Eventually we'll actually call keyvault to get the secrets.
-            var secret = Environment.GetEnvironmentVariable(clientSecretName);
-            if (string.IsNullOrEmpty(secret))
+            if (second != null)
             {
-                throw new InvalidOperationException($"The environment variable '{clientSecretName}' is not set.");
+                foreach (var item in second)
+                {
+                    result[item.Key] = item.Value;
+                }
             }
 
-            return secret;
+            return result;
         }
     }
 }

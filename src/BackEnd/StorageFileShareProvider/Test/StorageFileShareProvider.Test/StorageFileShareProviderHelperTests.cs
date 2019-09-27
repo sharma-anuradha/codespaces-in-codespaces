@@ -82,7 +82,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                         azureSubscriptionName,
                         servicePrincipal,
                         true,
-                        new[] {azureLocation})
+                        new[] {azureLocation},
+                        null,
+                        null,
+                        null)
                 });
             return catalogMoq;
         }

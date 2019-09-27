@@ -32,9 +32,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IServicePrincipal servicePrincipal,
             bool enabled,
             IReadOnlyCollection<AzureLocation> locations,
-            IReadOnlyDictionary<string, int> computeQuotas = null,
-            IReadOnlyDictionary<string, int> storageQuotas = null,
-            IReadOnlyDictionary<string, int> networkQuotas = null)
+            IReadOnlyDictionary<string, int> computeQuotas,
+            IReadOnlyDictionary<string, int> storageQuotas,
+            IReadOnlyDictionary<string, int> networkQuotas)
         {
             Requires.NotNullOrEmpty(subscriptionId, nameof(subscriptionId));
             Requires.NotNullOrEmpty(displayName, nameof(displayName));

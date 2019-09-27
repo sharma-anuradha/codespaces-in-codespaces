@@ -12,6 +12,7 @@ build=dotnet build --no-restore /m /v:minimal /fl /flp:Summary;Verbosity=Normal;
 clean=dotnet clean /m /v:quiet $*
 publish=dotnet publish --no-build /m /v:minimal /fl /flp:Verbosity=Normal;LogFile=publish.log $*
 restore=dotnet restore /m /v:quiet /fl /flp:Verbosity=Minimal;LogFile=restore.log $*
+test=dotnet test --no-restore --no-build --filter "Category!=IntegrationTest" -p:CodeCoverage=false $*
 
 ;= other shortcuts
 k=kubectl $*

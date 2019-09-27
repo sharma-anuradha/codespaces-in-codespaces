@@ -1,12 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
     <ProjectReference Include="..\Capacity.Contracts\Capacity.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Azure.Management.Compute.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.Network.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.Storage.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Mvc.Filters.Throttling" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.TelemetryProvider" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />
   </ItemGroup>
 
 </Project>

@@ -139,22 +139,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var result = default(ContinuationInput);
 
-            var sku = default(ICloudEnvironmentSku);
-
-            // Get Resource Group and Subscription Id
-            var resourceLocation = await CapacityManager.SelectAzureResourceLocation(sku, input.ResourcePoolDetails.Location, logger);
-            var resourceGroup = resourceLocation.ResourceGroup;
-            var subscription = resourceLocation.Subscription.SubscriptionId;
-
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
                 // Ensure that the details type is correct
                 if (input.ResourcePoolDetails is ResourcePoolComputeDetails computeDetails)
                 {
+                    // Set up the selection criteria and select a subscription/location.
+                    var criteria = new List<AzureResourceCriterion>
+                    {
+                        // SkuFamily must be first as the primary criterion for ordering candidate subscriptions.
+                        new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = computeDetails.SkuFamily, Required = computeDetails.Cores },
+                        new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = "cores", Required = computeDetails.Cores },
+                        new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 },
+                    };
+                    var resourceLocation = await CapacityManager.SelectAzureResourceLocation(
+                        criteria,
+                        input.ResourcePoolDetails.Location,
+                        logger);
+                    var resourceGroup = resourceLocation.ResourceGroup;
+                    var subscription = resourceLocation.Subscription.SubscriptionId;
+
                     var token = await VirtualMachineTokenProvider.GenerateAsync(resource.Value.Id, logger);
                     var blobStorageClientProvider = await GetVmAgentImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
                     var url = GetBlobUrlWithSasToken(ResourceBrokerSettings.VirtualMachineAgentContainerName, computeDetails.VmAgentImageName, blobStorageClientProvider);
                     var resourceTags = new Dictionary<string, string>();
+
                     result = new VirtualMachineProviderCreateInput
                     {
                         ResourceId = resource.Value.Id,
@@ -180,6 +189,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 // Ensure that the details type is correct
                 if (input.ResourcePoolDetails is ResourcePoolStorageDetails storageDetails)
                 {
+                    // Set up the selection criteria and select a subscription/location.
+                    var criteria = new List<AzureResourceCriterion>
+                    {
+                        new AzureResourceCriterion { ServiceType = ServiceType.Storage, Quota = "StorageAccounts", Required = 1 },
+                    };
+                    var resourceLocation = await CapacityManager.SelectAzureResourceLocation(
+                        criteria,
+                        input.ResourcePoolDetails.Location,
+                        logger);
+                    var resourceGroup = resourceLocation.ResourceGroup;
+                    var subscription = resourceLocation.Subscription.SubscriptionId;
+
                     // Get storage SAS token
                     var blobStorageClientProvider = await GetStorageImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
                     var url = GetBlobUrlWithSasToken(ResourceBrokerSettings.FileShareTemplateContainerName, storageDetails.ImageName, blobStorageClientProvider);

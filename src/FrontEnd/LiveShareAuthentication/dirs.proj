@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="Src\dirs.proj" />
-    <ProjectReference Include="Test\dirs.proj" />
   </ItemGroup>
 
 </Project>

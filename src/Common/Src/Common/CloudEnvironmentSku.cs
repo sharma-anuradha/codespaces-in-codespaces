@@ -21,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="computeSkuFamily">The azure compute sku family.</param>
         /// <param name="computeSkuName">The azure compute sku name.</param>
         /// <param name="computeSkuSize">The azure compute sku size.</param>
+        /// <param name="computeSkuCores">The number of cores.</param>
         /// <param name="computeOS">The azure compute OS.</param>
         /// <param name="vmAgentImageFamily">The default VSO Agent image for this SKU.</param>
         /// <param name="computeImageFamily">The default VM image for this SKU.</param>
@@ -38,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             string computeSkuFamily,
             string computeSkuName,
             string computeSkuSize,
+            int computeSkuCores,
             ComputeOS computeOS,
             IBuildArtifactImageFamily vmAgentImageFamily,
             IVmImageFamily computeImageFamily,
@@ -55,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NullOrNotNullElements(skuLocations, nameof(skuLocations));
             Requires.NotNullOrEmpty(computeSkuName, nameof(computeSkuName));
             Requires.NotNullOrEmpty(computeSkuSize, nameof(computeSkuSize));
+            Requires.Argument(computeSkuCores > 0, nameof(computeSkuCores), $"The {nameof(computeSkuCores)} must be greater than zero.");
             Requires.Argument(Enum.IsDefined(typeof(ComputeOS), computeOS), nameof(computeOS), $"The value '{computeOS}' is not a value {nameof(ComputeOS)}.");
             Requires.NotNull(vmAgentImageFamily, nameof(vmAgentImageFamily));
             Requires.NotNull(computeImageFamily, nameof(computeImageFamily));
@@ -72,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ComputeSkuFamily = computeSkuFamily;
             ComputeSkuName = computeSkuName;
             ComputeSkuSize = computeSkuSize;
+            ComputeSkuCores = computeSkuCores;
             ComputeOS = computeOS;
             VmAgentImage = vmAgentImageFamily;
             ComputeImage = computeImageFamily;
@@ -101,6 +105,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public string ComputeSkuSize { get; }
+
+        /// <inheritdoc/>
+        public int ComputeSkuCores { get; }
 
         /// <inheritdoc/>
         public ComputeOS ComputeOS { get; }

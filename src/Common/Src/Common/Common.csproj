@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.0" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics.Health" Version="$(VsclkSdkVersion)" />
   </ItemGroup>
 

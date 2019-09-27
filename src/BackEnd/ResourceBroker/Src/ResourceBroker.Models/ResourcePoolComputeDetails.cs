@@ -19,6 +19,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         public ComputeOS OS { get; set; }
 
         /// <summary>
+        /// Gets or sets the sku family -- used for querying quotas.
+        /// </summary>
+        public string SkuFamily { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of cores -- used for querying quotas.
+        /// </summary>
+        public int Cores { get; set; }
+
+        /// <summary>
         /// Gets or Sets the target Compute Agent Image.
         /// </summary>
         public string VmAgentImageName { get; set; }

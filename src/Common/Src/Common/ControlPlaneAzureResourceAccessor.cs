@@ -244,7 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
                 return (accountName, keys.Keys.First().Value);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 logger?.FluentAddValue(nameof(accountName), accountName)
                     .FluentAddValue(nameof(resourceGroup), resourceGroup)

@@ -4,8 +4,13 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
@@ -27,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             bool develperPersonalStamp,
             MocksSettings mocksSettings = null)
         {
+            // Capacity Settings
             if (!develperPersonalStamp)
             {
                 services.AddSingleton(new CapacitySettings());
@@ -36,14 +42,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 services.AddSingleton(CapacitySettings.CreateDeveloperCapacitySettings());
             }
 
+            // Providers and Repositories
             if (mocksSettings?.UseMocksForExternalDependencies == true)
             {
-                services.AddSingleton<ICapacityManager, MockCapacityManager>();
+                services.AddSingleton<IAzureSubscriptionCapacityProvider, MockAzureSubscriptionCapacityProvider>();
+                services.AddSingleton<ICapacityRepository, MockCapacityRepository>();
             }
             else
             {
-                services.AddSingleton<ICapacityManager, CapacityManager>();
+                services.AddSingleton<IAzureSubscriptionCapacityProvider, AzureSubscriptionCapacityProvider>();
+                services.AddDocumentDbCollection<CapacityRecord, ICapacityRepository, CachedDocumentDbCapacityRepository>(
+                    CachedDocumentDbCapacityRepository.ConfigureOptions);
+                services.TryAddSingleton<IManagedCache, InMemoryManagedCache>();
             }
+
+            // Services
+            services.AddSingleton<ICapacityManager, CapacityManager>();
+
+            // Jobs
+            services.AddSingleton<IAsyncBackgroundWarmup, CapacityManagerJobs>();
 
             return services;
         }

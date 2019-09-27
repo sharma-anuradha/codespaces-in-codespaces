@@ -48,6 +48,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string ComputeSkuSize { get; }
 
         /// <summary>
+        /// Gets the number of cores.
+        /// </summary>
+        int ComputeSkuCores { get; }
+
+        /// <summary>
         /// Gets the compute agent image family for this SKU.
         /// </summary>
         IBuildArtifactImageFamily VmAgentImage { get; }

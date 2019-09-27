@@ -133,6 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     cloudEnvironmentSettings.ComputeSkuFamily,
                     cloudEnvironmentSettings.ComputeSkuName,
                     cloudEnvironmentSettings.ComputeSkuSize,
+                    cloudEnvironmentSettings.ComputeSkuCores,
                     cloudEnvironmentSettings.ComputeOS,
                     vmAgentImageFamily,
                     computeImageFamily,

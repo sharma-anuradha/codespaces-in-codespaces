@@ -176,8 +176,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                     {
                         Location = y,
                         Environment = x,
-                        ComputeDetails = new ResourcePoolComputeDetails() { OS = x.ComputeOS, ImageFamilyName = x.ComputeImage.ImageFamilyName, ImageName = x.ComputeImage.GetCurrentImageUrl(y), VmAgentImageName = x.VmAgentImage.ImageName, VmAgentImageFamilyName = x.VmAgentImage.ImageFamilyName, Location = y, SkuName = x.ComputeSkuName },
-                        StorageDetails = new ResourcePoolStorageDetails() { SizeInGB = x.StorageSizeInGB, ImageFamilyName = x.StorageImage.ImageFamilyName, ImageName = x.StorageImage.ImageName, Location = y, SkuName = x.StorageSkuName },
+                        ComputeDetails = new ResourcePoolComputeDetails
+                        {
+                            OS = x.ComputeOS,
+                            ImageFamilyName = x.ComputeImage.ImageFamilyName,
+                            ImageName = x.ComputeImage.GetCurrentImageUrl(y),
+                            VmAgentImageName = x.VmAgentImage.ImageName,
+                            VmAgentImageFamilyName = x.VmAgentImage.ImageFamilyName,
+                            Location = y,
+                            SkuName = x.ComputeSkuName,
+                            SkuFamily = x.ComputeSkuFamily,
+                            Cores = x.ComputeSkuCores,
+                        },
+                        StorageDetails = new ResourcePoolStorageDetails
+                        {
+                            SizeInGB = x.StorageSizeInGB,
+                            ImageFamilyName = x.StorageImage.ImageFamilyName,
+                            ImageName = x.StorageImage.ImageName,
+                            Location = y,
+                            SkuName = x.StorageSkuName,
+                        },
                     }));
 
             // Calculate the distinct storage skus that are needed in each region

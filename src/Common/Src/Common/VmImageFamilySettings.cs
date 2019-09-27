@@ -20,6 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         [JsonConverter(typeof(StringEnumConverter))]
-        public VmImageKind ImageKind{ get; set; }
+        public VmImageKind ImageKind { get; set; }
     }
 }
