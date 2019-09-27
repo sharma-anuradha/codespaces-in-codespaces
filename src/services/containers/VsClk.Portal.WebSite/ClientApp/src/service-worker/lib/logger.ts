@@ -2,7 +2,9 @@ import debug from 'debug';
 
 const defaultLogger = debug.default('service-worker');
 
-debug.enable('service-worker:*');
+if (process.env.NODE_ENV === 'development') {
+    debug.enable('service-worker:*');
+}
 
 export function createLogger(namespace?: string) {
     let logger;

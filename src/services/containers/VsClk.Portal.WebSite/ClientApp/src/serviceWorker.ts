@@ -1,3 +1,5 @@
+import { parse } from 'path';
+
 // This optional code is used to register a service worker.
 // register() is not called by default.
 
@@ -57,7 +59,9 @@ export function register(config?: Config) {
     }
 }
 
-function registerValidSW(swUrl: string, config?: Config) {
+async function registerValidSW(swUrl: string, config?: Config) {
+    await unregisterOldServiceWorker(swUrl);
+
     navigator.serviceWorker
         .register(swUrl)
         .then((registration) => {
@@ -100,7 +104,8 @@ function registerValidSW(swUrl: string, config?: Config) {
         });
 }
 
-function checkValidServiceWorker(swUrl: string, config?: Config) {
+async function checkValidServiceWorker(swUrl: string, config?: Config) {
+    await unregisterOldServiceWorker(swUrl);
     // Check if the service worker can be found. If it can't reload the page.
     fetch(swUrl)
         .then((response) => {
@@ -124,6 +129,21 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
         .catch(() => {
             console.log('No internet connection found. App is running in offline mode.');
         });
+}
+
+export async function unregisterOldServiceWorker(swUrl: string) {
+    //if old service worker exists, delete and reload with new one
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    registrations.forEach((registration) => {
+        const path = new URL(registration.active!.scriptURL);
+        const { pathname } = path;
+        if (pathname != swUrl) {
+            registration.unregister().then(() => {
+                window.location.reload();
+            });
+        }
+        return;
+    });
 }
 
 export function unregister() {

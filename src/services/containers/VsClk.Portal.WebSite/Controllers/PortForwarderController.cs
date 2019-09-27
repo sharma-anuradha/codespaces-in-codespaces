@@ -16,7 +16,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         [HttpGet("~/portforward")]
-        public async Task<ActionResult> IndexAsync()
+        public async Task<ActionResult> Index()
         {
             try
             {
@@ -65,7 +65,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                         cascadeToken = cascadeToken,
                         sessionId = sessionId,
                     };
-                    ViewData["cascadeTokenPayload"] = cascadeToken;
+                    ViewData["cascadeTokenPayload"] = cookiePayload;
 
                     return View();
                 }

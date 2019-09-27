@@ -187,6 +187,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             {
                 OnPrepareResponse = (ctx) =>
                 {
+                    // TODO: Remove later.
                     ctx.Context.Response.Headers.Add("Service-Worker-Allowed", "/");
                 }
             });

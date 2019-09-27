@@ -149,15 +149,15 @@ export function isValidPort(port: number): boolean {
 }
 
 export function resourceUriProviderFactory(sessionId: string, connector: EnvConnector) {
-    let port: number | undefined = undefined;
+    let portNumber: number | undefined = undefined;
 
     // The connection might get restarted and with that we might be forced to spin up a new server.
     connector.onVSCodeServerStarted(({ port }) => {
-        port = port;
+        portNumber = port;
     });
 
     return (uri: URI): URI => {
-        if (!port) {
+        if (!portNumber) {
             throw new Error(
                 'Cannot resolve asset URLs before connection to cloud environment is established.'
             );
@@ -167,7 +167,7 @@ export function resourceUriProviderFactory(sessionId: string, connector: EnvConn
             scheme: 'https',
             authority: window.location.host,
             // We attach vscodeRemoteResourcePathComponent at the end for easier recognizability when compared with self host.
-            path: `/${assetsPathComponent}/${sessionId}/${port}/${vscodeRemoteResourcePathComponent}`,
+            path: `/${assetsPathComponent}/${sessionId}/${portNumber}/${vscodeRemoteResourcePathComponent}`,
             query: `path=${encodeURIComponent(uri.path)}&tkn=${vscodeConfig.commit}`,
         });
     };

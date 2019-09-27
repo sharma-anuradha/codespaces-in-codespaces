@@ -18,7 +18,6 @@ export class LiveShareHttpClient {
     }
 
     async fetch(request: Request): Promise<Response> {
-        debugger;
         const routingDetails = getRoutingDetails(request.url);
 
         if (!routingDetails) {
