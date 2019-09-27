@@ -21,12 +21,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         /// Initializes a new instance of the <see cref="QueueConnectionInfo"/> class.
         /// </summary>
+        /// <param name="name">Azure queue name.</param>
         /// <param name="url">Azure queue url.</param>
         /// <param name="sasToken">Azure queue sas token.</param>
-        public QueueConnectionInfo(string url, string sasToken)
+        public QueueConnectionInfo(string name, string url, string sasToken)
         {
+            Requires.NotNullOrEmpty(url, nameof(url));
+            Requires.NotNullOrEmpty(sasToken, nameof(sasToken));
+            Requires.NotNullOrEmpty(name, nameof(name));
             this.Url = url;
             this.SasToken = sasToken;
+            this.Name = name;
         }
 
         /// <summary>
@@ -38,5 +43,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets aure queue sasToken.
         /// </summary>
         public string SasToken { get; }
+
+        /// <summary>
+        /// Gets or sets the queue name.
+        /// </summary>
+        public string Name { get; }
     }
 }

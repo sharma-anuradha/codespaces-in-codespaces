@@ -372,11 +372,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var queueClient = await GetQueueClientAsync(location, GetQueueName(virtualMachineName), logger);
                 var sas = queueClient.GetSharedAccessSignature(new SharedAccessQueuePolicy()
                 {
-                    Permissions = SharedAccessQueuePermissions.Read,
-                    SharedAccessExpiryTime = DateTime.UtcNow.AddDays(10),
+                    Permissions = SharedAccessQueuePermissions.ProcessMessages,
+                    SharedAccessExpiryTime = DateTime.UtcNow.AddDays(365),
                 });
 
-                return (OperationState.Succeeded, new QueueConnectionInfo(queueClient.Uri.ToString(), sas), 0);
+                return (OperationState.Succeeded, new QueueConnectionInfo(queueClient.Name, queueClient.ServiceClient.BaseUri.ToString(), sas), 0);
             }
             catch (Exception ex)
             {
