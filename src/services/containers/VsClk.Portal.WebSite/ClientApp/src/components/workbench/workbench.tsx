@@ -14,7 +14,7 @@ import { isEnvironmentAvailable } from '../../utils/environmentUtils';
 
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { credentialsProvider } from '../../providers/credentialsProvider';
-import { resourceUriProviderFactory } from '../../common/vscode-url-utils';
+import { resourceUriProviderFactory } from '../../common/url-utils';
 import { postServiceWorkerMessage } from '../../common/post-message';
 import { authenticateMessageType, disconnectCloudEnv } from '../../common/service-worker-messages';
 import { UserDataProvider } from '../../utils/userDataProvider';
@@ -74,7 +74,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
         postServiceWorkerMessage({
             type: authenticateMessageType,
             payload: {
-                accessToken,
+                token: accessToken,
                 sessionId: environmentInfo.connection.sessionId,
             },
         });

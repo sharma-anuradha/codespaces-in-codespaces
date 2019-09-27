@@ -23,6 +23,7 @@ const httpClient = new LiveShareHttpClient(connectionManager);
 const logger = createLogger();
 
 self.addEventListener('install', () => self.skipWaiting());
+
 self.addEventListener('activate', () => {
     self.clients.matchAll({ type: 'window' }).then((windowClients) => {
         for (let client of windowClients as WindowClient[]) {
@@ -47,7 +48,7 @@ self.addEventListener('message', async (event) => {
     switch (message.type) {
         case authenticateMessageType: {
             credentialsManager.setCredentials(message.payload.sessionId, {
-                accessToken: message.payload.accessToken,
+                token: message.payload.token,
             });
             connectionManager.initializeConnection(message.payload);
             return;

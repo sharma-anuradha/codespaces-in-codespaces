@@ -46,7 +46,7 @@ export class LiveShareConnection implements Disposable {
 
         const webClient = new WebClient(
             this.configurationManager.configuration.liveShareEndpoint,
-            credentials.accessToken
+            credentials.token
         );
         this.workspaceClient = new WorkspaceClient(webClient);
         this.disposables.push(this.workspaceClient);

@@ -23,7 +23,7 @@ const enableTraceFactory = (traceName: string) => {
 const win = window as any;
 win.vsoEnablePortalTrace = enableTraceFactory('vsa-portal-webapp,vsa-portal-webapp:*')
 win.vsoEnableSshTrace = enableTraceFactory('vs-ssh,vs-ssh:*');
-win.vsoEnableStaticAssetsSWTrace = enableTraceFactory('static-assets-worker:*');
+win.vsoEnableStaticAssetsSWTrace = enableTraceFactory('service-worker:*');
 
 ReactDOM.render(
     <BrowserRouter basename={baseUrl || ''}>

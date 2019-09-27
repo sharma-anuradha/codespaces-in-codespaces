@@ -1,4 +1,4 @@
 export interface ConnectionDetails {
-    readonly accessToken: string;
+    readonly token: string;
     readonly sessionId: string;
 }

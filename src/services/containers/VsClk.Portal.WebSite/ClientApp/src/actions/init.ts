@@ -6,6 +6,7 @@ import { useDispatch } from './middleware/useDispatch';
 import { fetchConfiguration } from './fetchConfiguration';
 import { fetchEnvironments } from './fetchEnvironments';
 import { getUserInfo } from './getUserInfo';
+import { setAuthCookie } from '../utils/setAuthCookie';
 
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
@@ -19,6 +20,11 @@ export async function init() {
     try {
         await Promise.all([dispatch(fetchConfiguration()), dispatch(getAuthToken())]);
         await Promise.all([dispatch(fetchEnvironments()), dispatch(getUserInfo())]);
+        //TODO: need to implement a /signIn page and replace with this
+        const token = await getAuthToken();
+        if (token) {
+            await setAuthCookie(token.accessToken);
+        }
 
         dispatch(action(initActionSuccessType));
     } catch (err) {

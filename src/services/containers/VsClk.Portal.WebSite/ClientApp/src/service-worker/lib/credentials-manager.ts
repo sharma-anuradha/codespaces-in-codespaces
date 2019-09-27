@@ -1,5 +1,5 @@
 export interface Credentials {
-    readonly accessToken: string;
+    readonly token: string;
 }
 
 export class CredentialsManager {

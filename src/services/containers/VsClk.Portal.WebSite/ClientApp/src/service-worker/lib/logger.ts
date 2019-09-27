@@ -1,8 +1,8 @@
 import debug from 'debug';
 
-const defaultLogger = debug.default('static-assets-worker');
+const defaultLogger = debug.default('service-worker');
 
-debug.enable('static-assets-worker:*');
+debug.enable('service-worker:*');
 
 export function createLogger(namespace?: string) {
     let logger;

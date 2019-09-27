@@ -1,7 +1,7 @@
 import parseMessage from 'http-message-parser';
-
+import { SshChannel } from '@vs/vs-ssh';
 import { ConnectionManager } from './connection-manager';
-import { parseRequestUrl, ParsedAssetRequestUrl } from '../../common/vscode-url-utils';
+import { getRoutingDetails, RoutingDetails } from '../../common/url-utils';
 import { Signal } from '../../utils/signal';
 import { createLogger, Logger } from './logger';
 import { createUniqueId } from '../../dependencies';
@@ -17,15 +17,20 @@ export class LiveShareHttpClient {
         this.logger = createLogger('LiveShareHttpClient');
     }
 
-    async fetch(request: Request, preloadResponse?: Promise<any>): Promise<Response> {
-        const parsedUrl = parseRequestUrl(request.url);
+    async fetch(request: Request): Promise<Response> {
+        debugger;
+        const routingDetails = getRoutingDetails(request.url);
 
-        if (!parsedUrl.isAssetUrl) {
-            return preloadResponse || this.respondWithDefault(request);
+        if (!routingDetails) {
+            return this.respondWithDefault(request);
         }
 
-        this.logger.verbose('Fetching.', parsedUrl);
-        return this.respondWithAssetFromEnvironment(request, parsedUrl);
+        this.logger.verbose('Fetching.', routingDetails);
+        return this.respondWithAssetFromEnvironment(
+            routingDetails.sessionId!,
+            request,
+            routingDetails
+        );
     }
 
     private async respondWithDefault(request: Request): Promise<Response> {
@@ -43,31 +48,33 @@ export class LiveShareHttpClient {
     }
 
     private async respondWithAssetFromEnvironment(
+        sessionId: string,
         request: Request,
-        parsedUrl: ParsedAssetRequestUrl
+        routingDetails: RoutingDetails
     ): Promise<Response> {
         try {
             const requestId = createUniqueId();
             const channel = await this.connectionManager.getChannelFor(
                 {
                     requestId,
-                    sessionId: parsedUrl.sessionId,
+                    sessionId,
                 },
-                parsedUrl.port
+                routingDetails.port
             );
 
-            const requestString = this.createHttpRequest(request, parsedUrl);
+            const requestString = this.createHttpRequest(request, routingDetails.containerUrl);
+
             this.logger.verbose('Sending request', {
                 requestId,
-                ...parsedUrl,
+                ...routingDetails,
                 request: requestString,
             });
             channel.send(Buffer.from(requestString));
 
-            return await this.parseResponseFrom(parsedUrl, channel);
+            return await this.parseResponseFrom(routingDetails.containerUrl, channel);
         } catch (error) {
             this.logger.error('Failed to respond with asset', {
-                ...parsedUrl,
+                ...routingDetails,
                 error,
             });
         }
@@ -79,10 +86,7 @@ export class LiveShareHttpClient {
     }
 
     // tslint:disable-next-line: max-func-body-length
-    parseResponseFrom(
-        url: ParsedAssetRequestUrl,
-        channel: import('@vs/vs-ssh').SshChannel
-    ): Promise<Response> {
+    parseResponseFrom(url: URL, channel: SshChannel): Promise<Response> {
         let headerString: string | undefined;
         let responseContent: Buffer;
         let responseMetadata: ReturnType<typeof parseMessage> | undefined;
@@ -213,17 +217,19 @@ export class LiveShareHttpClient {
         return responseSignal.promise;
     }
 
-    createHttpRequest(request: Request, parsedUrl: ParsedAssetRequestUrl): string {
+    createHttpRequest(request: Request, parsedUrl: URL, connectionToken?: string): string {
         const headers: string[] = [];
         for (const [header, value] of request.headers.entries()) {
             headers.push(`${header}: ${value}`);
         }
 
-        // Add connection token as header since the server expects it to be there.
-        headers.push(`vscode-tkn: ${parsedUrl.tkn}`);
+        if (connectionToken) {
+            // Add connection token as header since the server expects it to be there.
+            headers.push(`vscode-tkn: ${connectionToken}`);
+        }
 
         const httpStringRows: string[] = [
-            `${request.method} ${parsedUrl.vscodeServerEndpoint} HTTP/1.1`,
+            `${request.method} ${parsedUrl.pathname + parsedUrl.search + parsedUrl.hash} HTTP/1.1`,
             `Host: localhost`,
             `Connection: ${request.keepalive ? 'keep-alive' : 'close'}`,
             ...headers,

@@ -6,10 +6,10 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const paths = {
-    staticAssetsWorker: './src/service-worker/static-assets-worker.ts',
+    staticAssetsWorker: './src/service-worker/service-worker.ts',
     tsconfig: 'tsconfig.worker.json',
     output: {
-        staticAssetsWorker: 'static-assets-worker.js',
+        staticAssetsWorker: 'service-worker.js',
         dir: path.resolve(__dirname, 'public'),
     },
 };
