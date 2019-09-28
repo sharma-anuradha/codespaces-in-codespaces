@@ -4,9 +4,11 @@ set -eu pipefall
 
 SCRIPT_PARAM_VMAGENT_BLOB_URL='__REPLACE_VMAGENT_BLOB_URl__'
 SCRIPT_PARAM_VMTOKEN='__REPLACE_VMTOKEN__'
-SCRIPT_PARAM_VM_QUEUE_TOKEN='__REPLACE_VM_QUEUE_TOKEN__'
 SCRIPT_PARAM_RESOURCEID='__REPLACE_RESOURCEID__'
-SCRIPT_PARAM_FRONTEND_SERVICE_BASEURI='__REPLACE_FRONTEND_SERVICE_DNS_HOST_NAME__'
+SCRIPT_PARAM_FRONTEND_DNSHOSTNAME='__REPLACE_FRONTEND_SERVICE_DNS_HOST_NAME__'
+SCRIPT_PARAM_VM_QUEUE_NAME='__REPLACE_INPUT_QUEUE_NAME__'
+SCRIPT_PARAM_VM_QUEUE_URL='__REPLACE_INPUT_QUEUE_URL__'
+SCRIPT_PARAM_VM_QUEUE_SASTOKEN='__REPLACE_INPUT_QUEUE_SASTOKEN__'
 
 echo "Updating packages ..."
 apt update || true
@@ -30,12 +32,15 @@ echo "Install vso agent ..."
 chmod +x install_vmagent.sh uninstall_vmagent.sh
 ./install_vmagent.sh
 
-echo "Add environment variarible ..."
-echo export VSOAGENT_ENVAGENTSETTINGS__INPUT_QUEUE_TOKEN=$SCRIPT_PARAM_VM_QUEUE_TOKEN >> /etc/environment
-echo export VSOAGENT_HEARTBEATSETTINGS__VMTOKEN=$SCRIPT_PARAM_VMTOKEN >> /etc/environment
-echo export VSOAGENT_HEARTBEATSETTINGS__RESOURCEID=$SCRIPT_PARAM_RESOURCEID >> /etc/environment
-echo export VSOAGENT_HEARTBEATSETTINGS__SERVICEBASEURI=$SCRIPT_PARAM_FRONTEND_SERVICE_BASEURI >> /etc/environment
-source /etc/environment
+echo "Create configuration file ..."
+echo "[ENVAGENTSETTINGS]">> /.vsonline/vsoagent/bin/config.ini
+echo "INPUTQUEUENAME=$SCRIPT_PARAM_VM_QUEUE_NAME" >> /.vsonline/vsoagent/bin/config.ini
+echo "INPUTQUEUEURL=$SCRIPT_PARAM_VM_QUEUE_URL" >> /.vsonline/vsoagent/bin/config.ini
+echo "INPUTQUEUESASTOKEN=$SCRIPT_PARAM_VM_QUEUE_SASTOKEN" >> /.vsonline/vsoagent/bin/config.ini
+echo "[HEARTBEATSETTINGS]">> /.vsonline/vsoagent/bin/config.ini
+echo "VMTOKEN=$SCRIPT_PARAM_VMTOKEN" >> /.vsonline/vsoagent/bin/config.ini
+echo "RESOURCEID=$SCRIPT_PARAM_RESOURCEID" >> /.vsonline/vsoagent/bin/config.ini
+echo "SERVICEHOSTNAME=$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" >> /.vsonline/vsoagent/bin/config.ini
 
 echo "Start vso agent"
 systemctl start vmagent.service

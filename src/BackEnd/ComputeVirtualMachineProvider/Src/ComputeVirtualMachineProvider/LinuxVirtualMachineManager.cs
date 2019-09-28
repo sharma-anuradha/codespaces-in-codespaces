@@ -500,10 +500,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             string frontEndDnsHostName)
         {
             var initScript = GetEmbeddedResource("vm_init.sh");
-            string queueSasToken = JsonConvert.SerializeObject(queueConnectionInfo);
             initScript = initScript
+                .Replace("__REPLACE_INPUT_QUEUE_NAME__", queueConnectionInfo.Name)
+                .Replace("__REPLACE_INPUT_QUEUE_URL__", queueConnectionInfo.Url)
+                .Replace("__REPLACE_INPUT_QUEUE_SASTOKEN__", queueConnectionInfo.SasToken)
                 .Replace("__REPLACE_VMTOKEN__", vmToken)
-                .Replace("__REPLACE_VM_QUEUE_TOKEN__", queueSasToken)
                 .Replace("__REPLACE_VMAGENT_BLOB_URl__", vmAgentBlobUrl)
                 .Replace("__REPLACE_RESOURCEID__", resourceId)
                 .Replace("__REPLACE_FRONTEND_SERVICE_DNS_HOST_NAME__", frontEndDnsHostName);
