@@ -107,20 +107,21 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
                             name: 'Open in VS Code',
                             disabled: environmentIsALie(environment) || isNotAvailable(environment),
                             onClick: async () => {
-                                const url = `ms-vsliveshare.cloudenv/connect?environmentId=${encodeURIComponent(
+                                const url = `ms-vsonline.vsonline/connect?environmentId=${encodeURIComponent(
                                     environment.id!
                                 )}&sessionPath=${
                                     environment.connection!.sessionPath
                                 }&correlationId=${createUniqueId()}`;
 
                                 try {
-                                    await tryOpeningUrl(`vscode-insiders://${url}`).catch(async () => {
-                                        return await tryOpeningUrl(`vscode://${url}`);
-                                    });    
+                                    await tryOpeningUrl(`vscode-insiders://${url}`).catch(
+                                        async () => {
+                                            return await tryOpeningUrl(`vscode://${url}`);
+                                        }
+                                    );
                                 } catch {
                                     setUnsucessfullUrlDialogHidden(false);
                                 }
-                                
                             },
                         },
                         {
