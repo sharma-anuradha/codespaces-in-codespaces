@@ -152,7 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private Task AddPoolItemAsync(ResourcePool resourcePool, int iteration, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_run_delete",
+                $"{LogBaseName}_run_create",
                 async () =>
                 {
                     var id = Guid.NewGuid();
