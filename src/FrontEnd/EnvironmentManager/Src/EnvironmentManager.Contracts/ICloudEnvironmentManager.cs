@@ -43,8 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="ownerId">The owner id.</param>
         /// <param name="accessToken">The owner's access token.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>Cloud environment creation result.</returns>
-        Task<CloudEnvironmentCreationResult> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, Uri serviceUri, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironmentServiceResult> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, Uri serviceUri, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update the callback information for an existing environment.
@@ -64,5 +64,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the environment was deleted, otherwise false.</returns>
         Task<bool> DeleteEnvironmentAsync(string environmentId, string ownerId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Starts a shutdown environment.
+        /// </summary>
+        /// <param name="id">The environment id.</param>
+        /// <param name="serviceUri">The service uri, to construct let cloudenv extension connect to the right service from server.</param>
+        /// <param name="callbackUriFormat">The callback uri format, to construct the callback with the new environment id.</param>
+        /// <param name="currentUserId">The current user id.</param>
+        /// <param name="accessToken">The owner's access token.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironmentServiceResult> StartEnvironmentAsync(string id, Uri serviceUri, string callbackUriFormat, string currentUserId, string accessToken, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Shuts down an environment.
+        /// </summary>
+        /// <param name="id">The environment id.</param>
+        /// <param name="currentUserId">The current user id.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironmentServiceResult> ShutdownEnvironmentAsync(string id, string currentUserId, IDiagnosticsLogger logger);
     }
 }

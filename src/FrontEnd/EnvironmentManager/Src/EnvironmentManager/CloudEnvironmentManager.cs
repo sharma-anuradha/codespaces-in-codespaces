@@ -68,8 +68,229 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
+        /// <inheritdoc />
+        public async Task<CloudEnvironmentServiceResult> ShutdownEnvironmentAsync(
+            string id,
+            string currentUserId,
+            IDiagnosticsLogger logger)
+        {
+            var duration = logger.StartDuration();
+
+            try
+            {
+                Requires.NotNull(id, nameof(id));
+                Requires.NotNull(logger, nameof(logger));
+
+                // Validate input
+                UnauthorizedUtil.IsRequired(currentUserId);
+
+                // Check if the environment exists.
+                var cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
+                if (cloudEnvironment == null)
+                {
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = null,
+                        ErrorCode = ErrorCodes.EnvironmentDoesNotExist,
+                        HttpStatusCode = StatusCodes.Status404NotFound,
+                    };
+                }
+
+                // Static Environment
+                if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                {
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentAsync)));
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        ErrorCode = ErrorCodes.ShutdownStaticEnvironment,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
+                    };
+                }
+
+                if (cloudEnvironment.State == CloudEnvironmentState.Shutdown)
+                {
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
+                }
+
+                if (cloudEnvironment.State != CloudEnvironmentState.Available &&
+                    cloudEnvironment.State != CloudEnvironmentState.Starting)
+                {
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = null,
+                        ErrorCode = ErrorCodes.EnvironmentNotAvailable,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
+                    };
+                }
+
+                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, logger);
+                var computeIdToken = cloudEnvironment.Compute?.ResourceId;
+                var connectionSessionId = cloudEnvironment.Connection.ConnectionSessionId;
+
+                cloudEnvironment.Compute = null;
+                cloudEnvironment.Connection = null;
+
+                // Update the database state.
+                await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+                // Delete the allocated resources.
+                if (computeIdToken != null)
+                {
+                    await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
+                }
+
+                // Delete the liveshare session from database.
+                await WorkspaceRepository.DeleteAsync(connectionSessionId);
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(cloudEnvironment)
+                    .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentAsync)));
+
+                return new CloudEnvironmentServiceResult
+                {
+                    CloudEnvironment = cloudEnvironment,
+                    HttpStatusCode = StatusCodes.Status200OK,
+                };
+            }
+            catch (Exception ex)
+            {
+                logger
+                    .AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ShutdownEnvironmentAsync)), ex.Message);
+
+                throw;
+            }
+        }
+
         /// <inheritdoc/>
-        public async Task<CloudEnvironmentCreationResult> CreateEnvironmentAsync(
+        public async Task<CloudEnvironmentServiceResult> StartEnvironmentAsync(
+            string id,
+            Uri serviceUri,
+            string callbackUriFormat,
+            string currentUserId,
+            string accessToken,
+            IDiagnosticsLogger logger)
+        {
+            var duration = logger.StartDuration();
+
+            try
+            {
+                Requires.NotNull(id, nameof(id));
+                Requires.NotNull(logger, nameof(logger));
+
+                // Validate input
+                UnauthorizedUtil.IsRequired(currentUserId);
+                UnauthorizedUtil.IsRequired(accessToken);
+
+                var cascadeToken = await AuthRepository.ExchangeToken(accessToken);
+                UnauthorizedUtil.IsRequired(cascadeToken);
+
+                // Check if the environment exists.
+                var cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
+                if (cloudEnvironment == null)
+                {
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = null,
+                        ErrorCode = ErrorCodes.EnvironmentDoesNotExist,
+                        HttpStatusCode = StatusCodes.Status404NotFound,
+                    };
+                }
+
+                // Static Environment
+                if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                {
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogInfo(GetType().FormatLogMessage(nameof(StartEnvironmentAsync)));
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        ErrorCode = ErrorCodes.StartStaticEnvironment,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
+                    };
+                }
+
+                if (cloudEnvironment.State == CloudEnvironmentState.Starting ||
+                    cloudEnvironment.State == CloudEnvironmentState.Available)
+                {
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
+                }
+
+                if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
+                {
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = null,
+                        ErrorCode = ErrorCodes.EnvironmentNotShutdown,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
+                    };
+                }
+
+                // Allocate Compute
+                cloudEnvironment.Compute = await AllocateCompute(cloudEnvironment, logger);
+
+                // Create the Live Share workspace
+                cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger);
+                if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
+                {
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogError(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)));
+                    throw new InvalidOperationException("Cloud not create the cloud environment workspace session.");
+                }
+
+                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, logger);
+                await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+                // Kick off start-compute before returning.
+                var callbackUri = new Uri(string.Format(callbackUriFormat, cloudEnvironment.Id));
+                await StartCompute(cloudEnvironment, serviceUri, callbackUri, accessToken, cascadeToken, logger);
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(cloudEnvironment)
+                    .LogInfo(GetType().FormatLogMessage(nameof(StartEnvironmentAsync)));
+
+                return new CloudEnvironmentServiceResult
+                {
+                    CloudEnvironment = cloudEnvironment,
+                    HttpStatusCode = StatusCodes.Status200OK,
+                };
+            }
+            catch (Exception ex)
+            {
+                logger
+                    .AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), ex.Message);
+
+                try
+                {
+                    await ShutdownEnvironmentAsync(id, currentUserId, logger);
+                }
+                catch (Exception ex2)
+                {
+                    throw new AggregateException(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), ex, ex2);
+                }
+
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<CloudEnvironmentServiceResult> CreateEnvironmentAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentOptions cloudEnvironmentOptions,
             Uri serviceUri,
@@ -80,7 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var duration = logger.StartDuration();
 
-            var result = new CloudEnvironmentCreationResult()
+            var result = new CloudEnvironmentServiceResult()
             {
                 ErrorCode = ErrorCodes.Unknown,
                 HttpStatusCode = StatusCodes.Status409Conflict,
@@ -405,7 +626,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
             }
 
-            await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId);
+            if (cloudEnvironment.Connection?.ConnectionSessionId != null)
+            {
+                await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId);
+            }
+
             await CloudEnvironmentRepository.DeleteAsync(id, logger);
 
             return true;

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -19,6 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -35,6 +37,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [LoggingBaseName("environments_controller")]
     public class EnvironmentsController : ControllerBase /* TODO add this later IEnvironmentsHttpContract */
     {
+        private const string StartEnvironmentHttpVerb = "start";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentsController"/> class.
         /// </summary>
@@ -167,6 +171,149 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
+        /// Shutdown a cloud environment.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <returns>A cloud environment.</returns>
+        [HttpGet("shutdown/{environmentId}")]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ShutdownCloudEnvironmentAsync([FromRoute] string environmentId)
+        {
+            var logger = HttpContext.GetLogger();
+            var duration = logger.StartDuration();
+
+            try
+            {
+                ValidationUtil.IsRequired(environmentId, nameof(environmentId));
+
+                var currentUserId = CurrentUserProvider.GetProfileId();
+
+                var environment = await EnvironmentManager.GetEnvironmentAsync(environmentId, currentUserId, logger);
+                if (environment == null)
+                {
+                    logger.AddDuration(duration)
+                        .AddEnvironmentId(environmentId)
+                        .AddReason($"{HttpStatusCode.NotFound}")
+                        .LogWarning(GetType().FormatLogMessage(nameof(ShutdownCloudEnvironmentAsync)));
+
+                    return NotFound();
+                }
+
+                // Reroute to correct location if needed
+                var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
+                if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
+                {
+                    return RedirectToLocation(owningStamp);
+                }
+
+                // We are in the right location, go ahead and shutdown
+                var result = await EnvironmentManager.ShutdownEnvironmentAsync(
+                    environmentId,
+                    currentUserId,
+                    logger);
+
+                if (result.CloudEnvironment == null)
+                {
+                    logger.AddDuration(duration)
+                        .AddReason($"{result.HttpStatusCode}")
+                        .LogError(GetType().FormatLogErrorMessage(nameof(ShutdownCloudEnvironmentAsync)));
+
+                    return StatusCode(result.HttpStatusCode, result.ErrorCode);
+                }
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(result.CloudEnvironment)
+                    .LogInfo(GetType().FormatLogMessage(nameof(ShutdownCloudEnvironmentAsync)));
+
+                return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result.CloudEnvironment));
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .AddEnvironmentId(environmentId)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ShutdownCloudEnvironmentAsync)), ex.Message);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Starts a shutdown environment.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <returns>A cloud environment.</returns>
+        [HttpGet("start/{environmentId}")]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> StartCloudEnvironmentAsync(
+            [FromRoute] string environmentId)
+        {
+            var logger = HttpContext.GetLogger();
+            var duration = logger.StartDuration();
+
+            try
+            {
+                var currentUserId = CurrentUserProvider.GetProfileId();
+                var cloudEnvironment = await EnvironmentManager.GetEnvironmentAsync(environmentId, currentUserId, logger);
+                if (cloudEnvironment == null)
+                {
+                    logger.AddDuration(duration)
+                        .AddEnvironmentId(environmentId)
+                        .AddReason($"{HttpStatusCode.NotFound}")
+                        .LogWarning(GetType().FormatLogMessage(nameof(StartCloudEnvironmentAsync)));
+
+                    return NotFound();
+                }
+
+                // Reroute to correct location if needed
+                var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(cloudEnvironment.Location);
+                if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
+                {
+                    return RedirectToLocation(owningStamp);
+                }
+
+                var accessToken = CurrentUserProvider.GetBearerToken();
+
+                // Build the service URI.
+                var displayUri = Request.GetDisplayUrl();
+                var requestUri = displayUri.Substring(0, displayUri.IndexOf(StartEnvironmentHttpVerb));
+                var serviceUri = ServiceUriBuilder.GetServiceUri(requestUri, owningStamp);
+                var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(requestUri, owningStamp).ToString();
+
+                var result = await EnvironmentManager.StartEnvironmentAsync(
+                                                    environmentId,
+                                                    serviceUri,
+                                                    callbackUriFormat,
+                                                    currentUserId,
+                                                    accessToken,
+                                                    logger);
+                if (result.CloudEnvironment == null)
+                {
+                    // Couldn't be registered. Assume it already exists?
+                    logger.AddDuration(duration)
+                        .AddReason($"{result.HttpStatusCode}")
+                        .LogError(GetType().FormatLogErrorMessage(nameof(StartCloudEnvironmentAsync)));
+
+                    return StatusCode(result.HttpStatusCode, result.ErrorCode);
+                }
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(result.CloudEnvironment)
+                    .LogInfo(GetType().FormatLogMessage(nameof(StartCloudEnvironmentAsync)));
+
+                return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result.CloudEnvironment));
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartCloudEnvironmentAsync)), ex.Message);
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Create a new cloud environment.
         /// </summary>
         /// <param name="createEnvironmentInput">The cloud environment input.</param>
@@ -181,7 +328,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
-            
+
             try
             {
                 var envName = createEnvironmentInput.FriendlyName.Trim();

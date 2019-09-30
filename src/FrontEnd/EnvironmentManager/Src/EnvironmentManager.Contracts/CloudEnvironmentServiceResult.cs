@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentCreationResult.cs" company="Microsoft">
+﻿// <copyright file="CloudEnvironmentServiceResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Class which encapsulates the results of cloud environment creation.
     /// </summary>
-    public class CloudEnvironmentCreationResult
+    public class CloudEnvironmentServiceResult
     {
         /// <summary>
         /// Gets or sets the Cloud Environment object.
@@ -22,6 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <summary>
         /// Gets or sets the error code for the user/client.
         /// </summary>
-        public string ErrorCode { get; set; }
+        public ErrorCodes ErrorCode { get; set; }
     }
 }

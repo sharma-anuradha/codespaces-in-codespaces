@@ -43,5 +43,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Environment is deleted. (TERMINAL STATE)
         /// </summary>
         Deleted,
+
+        /// <summary>
+        /// Environment is shutdown.
+        /// </summary>
+        Shutdown,
+
+        /// <summary>
+        /// Environment is starting.
+        /// </summary>
+        Starting,
     }
 }
