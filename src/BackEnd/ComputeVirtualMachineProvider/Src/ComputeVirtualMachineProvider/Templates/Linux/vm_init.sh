@@ -29,8 +29,8 @@ cd /.vsonline/vsoagent/bin
 wget -qO- -O tmp.zip $SCRIPT_PARAM_VMAGENT_BLOB_URL && unzip tmp.zip && rm tmp.zip
 
 echo "Install vso agent ..."
-chmod +x install_vmagent.sh uninstall_vmagent.sh
-./install_vmagent.sh
+chmod +x install_vsoagent.sh uninstall_vsoagent.sh
+./install_vsoagent.sh
 
 echo "Create configuration file ..."
 echo "[ENVAGENTSETTINGS]">> /.vsonline/vsoagent/bin/config.ini
@@ -43,7 +43,7 @@ echo "RESOURCEID=$SCRIPT_PARAM_RESOURCEID" >> /.vsonline/vsoagent/bin/config.ini
 echo "SERVICEHOSTNAME=$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" >> /.vsonline/vsoagent/bin/config.ini
 
 echo "Start vso agent"
-systemctl start vmagent.service
+systemctl start vsoagent.service
 
 echo "Check service status"
-systemctl status vmagent.service
+systemctl status vsoagent.service
