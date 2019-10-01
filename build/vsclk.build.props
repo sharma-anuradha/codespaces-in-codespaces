@@ -56,7 +56,8 @@
     <XunitRunnerVisualStudioVersion>2.4.0</XunitRunnerVisualStudioVersion>
     <XunitStaFactVersion>0.2.17</XunitStaFactVersion>
     <XunitVersion>2.4.0</XunitVersion>
-    <AzureMgmtFluentPackageVersion>1.25.0</AzureMgmtFluentPackageVersion> <!-- preferred for new projects-->
+    <AzureMgmtFluentPackageVersion>1.26.0</AzureMgmtFluentPackageVersion> <!-- preferred for new projects-->
+    <AzureResourceMgmtFluentPackageVersion>1.26.0</AzureResourceMgmtFluentPackageVersion>
     <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
   </PropertyGroup>
 

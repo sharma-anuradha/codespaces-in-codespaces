@@ -180,6 +180,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <inheritdoc/>
+        public Task<IEnumerable<ResourceRecord>> GetFailedOperationAsync(string poolCode, int count, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<IEnumerable<ResourceRecord>> GetWhereAsync(Expression<Func<ResourceRecord, bool>> where, IDiagnosticsLogger logger, Func<IEnumerable<ResourceRecord>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             throw new NotImplementedException();

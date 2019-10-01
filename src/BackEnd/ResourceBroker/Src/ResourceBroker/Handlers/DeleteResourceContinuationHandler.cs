@@ -4,7 +4,6 @@
 
 using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -13,7 +12,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -65,6 +63,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IStorageProvider StorageProvider { get; set; }
 
         /// <inheritdoc/>
+        protected override Task<ContinuationResult> QueueOperationAsync(
+            DeleteResourceContinuationInput input,
+            ResourceRecordRef record,
+            IDiagnosticsLogger logger)
+        {
+            // Increment the delete count
+            record.Value.DeleteAttemptCount++;
+
+            return base.QueueOperationAsync(input, record, logger);
+        }
+
+        /// <inheritdoc/>
         protected override Task<ContinuationInput> BuildOperationInputAsync(DeleteResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
             var operationInput = (ContinuationInput)null;
@@ -80,7 +90,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 {
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
                     AzureVmLocation = azureLocation,
-                    ComputeOS = resource.Value.PoolReference.GetComputeOS(),
                 };
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)

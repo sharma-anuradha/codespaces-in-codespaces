@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -139,6 +140,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var result = default(ContinuationInput);
 
+            var resourceTags = new Dictionary<string, string>()
+            {
+                { ResourceTagName.ResourceId, resource.Value.Id },
+                { ResourceTagName.ResourceType, resource.Value.Type.ToString() },
+            };
+
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
                 // Ensure that the details type is correct
@@ -162,7 +169,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     var token = await VirtualMachineTokenProvider.GenerateAsync(resource.Value.Id, logger);
                     var blobStorageClientProvider = await GetVmAgentImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
                     var url = GetBlobUrlWithSasToken(ResourceBrokerSettings.VirtualMachineAgentContainerName, computeDetails.VmAgentImageName, blobStorageClientProvider);
-                    var resourceTags = new Dictionary<string, string>();
+
+                    resourceTags.Add(ResourceTagName.ComputeOS, computeDetails.OS.ToString());
 
                     result = new VirtualMachineProviderCreateInput
                     {
@@ -204,7 +212,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     // Get storage SAS token
                     var blobStorageClientProvider = await GetStorageImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
                     var url = GetBlobUrlWithSasToken(ResourceBrokerSettings.FileShareTemplateContainerName, storageDetails.ImageName, blobStorageClientProvider);
-                    var resourceTags = new Dictionary<string, string>();
 
                     result = new FileShareProviderCreateInput
                     {

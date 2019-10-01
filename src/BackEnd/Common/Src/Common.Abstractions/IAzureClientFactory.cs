@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
 {
@@ -45,5 +46,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
         /// <param name="subscriptionId">Azure subscription id for resource.</param>
         /// <returns>Azure client.</returns>
         Task<INetworkManagementClient> GetNetworkManagementClient(Guid subscriptionId);
+
+        /// <summary>
+        /// Get IResourceManagementClient client.
+        /// </summary>
+        /// <param name="subscriptionId">Azure subscription id for resource.</param>
+        /// <returns>Azure client.</returns>
+        Task<IResourceManagementClient> GetResourceManagementClient(Guid subscriptionId);
     }
 }

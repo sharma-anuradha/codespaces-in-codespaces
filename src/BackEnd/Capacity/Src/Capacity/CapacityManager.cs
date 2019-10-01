@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
@@ -179,14 +180,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 subscriptionsUnderUsageThresholdByHighestLimit.FirstOrDefault() ??
                 subscriptionsByHighestAbsoluteAvailable.First();
             var stampResourceGroupName = ControlPlaneInfo.Stamp.StampResourceGroupName;
-            var resourceGroupName = ResourceNameBuilder.GetResourceGroupName(stampResourceGroupName);
+            var resourceGroupName = GetBaseResourceGroupName();
 
             // We'll used resource group names that match the stamp resource group, so that it will be clear which
             // stamp has allocated the data-plane resource groups. For example, production in East US would yield the name
             // vsclk-online-prod-rel-use-###
             if (CapacitySettings.SpreadResourcesInGroups)
             {
-                var resourceGroupNumber = GetRandomResourceGroupNubmer();
+                var resourceGroupNumber = GetRandomResourceGroupNumber();
                 resourceGroupName = $"{resourceGroupName}-{resourceGroupNumber:000}";
             }
 
@@ -202,7 +203,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             return new AzureResourceLocation(theSubscription, resourceGroupName, location);
         }
 
-        private int GetRandomResourceGroupNubmer()
+        /// <inheritdoc/>
+        public async Task<IEnumerable<IAzureResourceGroup>> SelectAllAzureResourceGroups(IAzureClientFactory azureClientFactory)
+        {
+            var results = new List<IAzureResourceGroup>();
+            var resourceGroupNamePrefix = GetBaseResourceGroupName();
+            foreach (var subscription in AzureSubscriptionCatalog.AzureSubscriptions)
+            {
+                var azure = await azureClientFactory.GetAzureClientAsync(Guid.Parse(subscription.SubscriptionId));
+                var resourceGroups = await azure.ResourceGroups.ListAsync();
+                foreach (var resourceGroup in resourceGroups)
+                {
+                    if (resourceGroup.Name.StartsWith(resourceGroupNamePrefix))
+                    {
+                        results.Add(new AzureResourceGroup(subscription, resourceGroup.Name));
+                    }
+                }
+            }
+
+            return results;
+        }
+
+        private string GetBaseResourceGroupName()
+        {
+            var stampResourceGroupName = ControlPlaneInfo.Stamp.StampResourceGroupName;
+            var resourceGroupName = ResourceNameBuilder.GetResourceGroupName(stampResourceGroupName);
+            return resourceGroupName;
+        }
+
+        private int GetRandomResourceGroupNumber()
         {
             // Handle unset or unreasonable capacity settings values.
             var min = Math.Max(1, CapacitySettings.Min);    // Min is at least 1

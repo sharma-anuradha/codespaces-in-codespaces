@@ -65,6 +65,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IContinuationTaskActivator, ContinuationTaskActivator>();
             services.AddTransient<IContinuationTaskWorker, ContinuationTaskWorker>();
 
+            // Azure
+            services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
+
             // Jobs
             services.AddSingleton<IAsyncBackgroundWarmup, ResourceRegisterJobs>();
 
@@ -78,6 +81,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<DeleteResourceContinuationHandler>();
             services.AddSingleton<IDeleteResourceContinuationHandler>(x => x.GetRequiredService<DeleteResourceContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<DeleteResourceContinuationHandler>());
+            services.AddSingleton<DeleteOrphanedResourceContinuationHandler>();
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<DeleteOrphanedResourceContinuationHandler>());
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
@@ -85,6 +90,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
             services.AddSingleton<IWatchPoolStateTask, WatchPoolStateTask>();
             services.AddSingleton<IWatchPoolSettingsTask, WatchPoolSettingsTask>();
+            services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
+            services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {

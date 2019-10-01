@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
-    /// The catalog of Azure subscriptions that are availble to the BackEnd.
+    /// The catalog of Azure subscriptions that are available to the BackEnd.
     /// </summary>
     public interface IAzureSubscriptionCatalog
     {

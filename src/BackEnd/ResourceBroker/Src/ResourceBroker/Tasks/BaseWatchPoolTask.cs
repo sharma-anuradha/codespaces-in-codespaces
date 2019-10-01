@@ -122,7 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 .FluentAddBaseValue("PoolSkuName", resourcePool.Details.SkuName)
                 .FluentAddBaseValue("PoolResourceType", resourcePool.Type.ToString())
                 .FluentAddBaseValue("PoolDefinition", resourcePool.Details.GetPoolDefinition())
-                .FluentAddBaseValue("PoolVersioDefinition", resourcePool.Details.GetPoolVersionDefinition())
+                .FluentAddBaseValue("PoolVersionDefinition", resourcePool.Details.GetPoolVersionDefinition())
                 .FluentAddBaseValue("PoolTargetCount", resourcePool.TargetCount)
                 .FluentAddBaseValue("PoolImageFamilyName", resourcePool.Details.ImageFamilyName)
                 .FluentAddBaseValue("PoolImageName", resourcePool.Details.ImageName);
@@ -153,9 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task<IEnumerable<ResourcePool>> RetrieveResourceSkus()
         {
-            var resourceUnits = (await ResourceScalingStore.RetrieveDefinitions())
-                .ToList()
-                .Shuffle();
+            var resourceUnits = (await ResourceScalingStore.RetrieveDefinitions()).Shuffle();
 
             return resourceUnits;
         }

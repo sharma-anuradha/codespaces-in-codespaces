@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -301,6 +302,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<string>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return items;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ResourceRecord>> GetFailedOperationAsync(string poolCode, int count, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c
+                FROM c 
+                WHERE c.poolReference.code = @poolCode
+                    AND (
+                           c.provisioningStatus = @operationStateFailed
+                        OR c.provisioningStatus = @operationStateCancelled
+                        OR c.startingStatus = @operationStateFailed
+                        OR c.startingStatus = @operationStateCancelled
+                        OR c.deletingStatus = @operationStateFailed
+                        OR c.deletingStatus = @operationStateCancelled
+                        OR (
+                            (c.provisioningStatus = @operationStateInitialized
+                             OR c.provisioningStatus = @operationStateInProgress
+                            ) AND c.provisioningStatusChanged <= @operationFailedTimeLimit
+                        )
+                        OR (
+                            (c.startingStatus = @operationStateInitialized
+                             OR c.startingStatus = @operationStateInProgress
+                            ) AND c.startingStatusChanged <= @operationFailedTimeLimit
+                        )
+                        OR (
+                            (c.deletingStatus = @operationStateInitialized
+                             OR c.deletingStatus = @operationStateInProgress
+                            ) AND c.deletingStatusChanged <= @operationFailedTimeLimit
+                        )
+                    )",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@count", Value = count },
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@operationStateFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@operationStateCancelled", Value = OperationState.Cancelled.ToString() },
+                    new SqlParameter { Name = "@operationStateInitialized", Value = OperationState.Initialized.ToString() },
+                    new SqlParameter { Name = "@operationStateInProgress", Value = OperationState.InProgress.ToString() },
+                    new SqlParameter { Name = "@operationFailedTimeLimit", Value = DateTime.UtcNow.AddHours(-1) },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<ResourceRecord>(uri, query, feedOptions).AsDocumentQuery(), logger);
 
             return items;
         }

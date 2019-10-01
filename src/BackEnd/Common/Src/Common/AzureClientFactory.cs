@@ -139,5 +139,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 throw new AzureClientException(azureSubscriptionId, ex);
             }
         }
+
+        /// <inheritdoc/>
+        public async Task<IResourceManagementClient> GetResourceManagementClient(Guid subscriptionId)
+        {
+            var azureSubscriptionId = subscriptionId.ToString();
+            try
+            {
+                var azureSub = systemCatalog
+                    .AzureSubscriptionCatalog
+                    .AzureSubscriptions
+                    .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
+
+                IServicePrincipal sp = azureSub.ServicePrincipal;
+                string azureAppId = sp.ClientId;
+                string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
+                string azureTenant = sp.TenantId;
+                var creds = new AzureCredentialsFactory()
+                    .FromServicePrincipal(
+                        azureAppId,
+                        azureAppKey,
+                        azureTenant,
+                        AzureEnvironment.AzureGlobalCloud);
+                var azureClient = new ResourceManagementClient(RestClient.Configure()
+                    .WithEnvironment(creds.Environment)
+                    .WithCredentials(creds)
+                    .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(creds))
+                    .Build())
+                { SubscriptionId = azureSub.SubscriptionId };
+                return azureClient;
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new AzureClientException(azureSubscriptionId, ex);
+            }
+        }
     }
 }

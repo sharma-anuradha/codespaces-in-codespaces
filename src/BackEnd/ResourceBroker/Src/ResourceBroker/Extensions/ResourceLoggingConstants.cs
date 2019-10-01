@@ -40,6 +40,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string WatchPoolSettingsTask = "watch_pool_settings_task";
 
         /// <summary>
+        /// Watch Failed Resources Task.
+        /// </summary>
+        public const string WatchFailedResourcesTask = "watch_failed_resources_task";
+
+        /// <summary>
+        /// Watch Failed Resources Task.
+        /// </summary>
+        public const string WatchOrphanedAzureResourceTask = "watch_orphaned_azure_resource_task";
+
+        /// <summary>
         /// Continuation Task Message Pump.
         /// </summary>
         public const string ContinuationTaskMessagePump = "continuation_task_message_pump";
@@ -73,5 +83,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Delete Continuation Task Message Handler name.
         /// </summary>
         public const string ContinuationTaskMessageHandlerDelete = "continuation_task_message_handler_delete";
+
+        /// <summary>
+        /// Delete Orphaned Continuation Task Message Handler name.
+        /// </summary>
+        public const string ContinuationTaskMessageHandlerDeleteOrphaned = "continuation_task_message_handler_delete_orphaned";
     }
 }

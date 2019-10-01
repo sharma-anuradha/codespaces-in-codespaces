@@ -21,8 +21,8 @@ using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -90,7 +90,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             var resourceTags = input.ResourceTags;
 
+            resourceTags.Add(ResourceTagName.ResourceName, virtualMachineName);
+
             var deploymentName = $"Create-LinuxVm-{virtualMachineName}";
+
             try
             {
                 var azure = await clientFactory.GetAzureClientAsync(input.AzureSubscription);

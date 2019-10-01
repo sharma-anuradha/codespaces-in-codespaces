@@ -62,6 +62,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return await Task.FromResult<INetworkManagementClient>(azureClient);
         }
 
+        /// <inheritdoc/>
+        public async Task<IResourceManagementClient> GetResourceManagementClient(Guid subscriptionId)
+        {
+            var credentials = SdkContext.AzureCredentialsFactory
+               .FromFile(authFile);
+            var azureClient = new ResourceManagementClient(RestClient.Configure()
+               .WithEnvironment(credentials.Environment)
+               .WithCredentials(credentials)
+               .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(credentials))
+               .Build())
+            { SubscriptionId = subscriptionId.ToString() };
+            return await Task.FromResult<IResourceManagementClient>(azureClient);
+        }
+
         //public async Task<TClient> GetManagementClient<TClient>(Guid subscriptionId)
         //{
         //    var credentials = SdkContext.AzureCredentialsFactory

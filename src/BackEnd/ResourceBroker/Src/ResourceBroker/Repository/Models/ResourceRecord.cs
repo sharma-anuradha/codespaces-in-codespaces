@@ -115,6 +115,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public bool IsDeleted { get; set; }
 
         /// <summary>
+        /// Gets or sets the count of how many times we have tried to delete the resource.
+        /// </summary>
+        public int DeleteAttemptCount { get; set; }
+
+        /// <summary>
         /// Gets or sets the starting reason.
         /// </summary>
         public string DeletingReason { get; set; }

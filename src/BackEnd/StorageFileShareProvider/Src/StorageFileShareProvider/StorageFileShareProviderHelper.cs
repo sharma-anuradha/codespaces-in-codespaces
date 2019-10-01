@@ -13,6 +13,7 @@ using Microsoft.Azure.Storage.File;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -70,6 +71,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             {
                 await azure.CreateResourceGroupIfNotExistsAsync(azureResourceGroup, azureRegion);
                 var storageAccountName = await GenerateStorageAccountName(azure, logger);
+
+                resourceTags.Add(ResourceTagName.ResourceName, storageAccountName);
+
                 var storageAccount = await azure.StorageAccounts.Define(storageAccountName)
                     .WithRegion(azureRegion)
                     .WithExistingResourceGroup(azureResourceGroup)

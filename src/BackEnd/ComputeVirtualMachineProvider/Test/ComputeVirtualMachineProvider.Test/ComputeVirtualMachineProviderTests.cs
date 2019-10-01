@@ -211,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         [InlineData(OperationState.Succeeded, OperationState.Succeeded)]
         [InlineData(OperationState.Cancelled, OperationState.Cancelled)]
         [InlineData(OperationState.Failed, OperationState.Failed)]
-        public async Task VirtualMachine_Continue_Deleteompute_Finished(OperationState outputState, OperationState expectedState)
+        public async Task VirtualMachine_Continue_DeleteCompute_Finished(OperationState outputState, OperationState expectedState)
         {
             var logger = new DefaultLoggerFactory().New();
             var deploymentManagerMoq = new Mock<IDeploymentManager>();

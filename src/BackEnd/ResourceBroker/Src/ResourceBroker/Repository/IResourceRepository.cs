@@ -32,5 +32,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
         Task<IEnumerable<string>> GetPoolUnassignedAsync(string poolCode, int count, IDiagnosticsLogger logger);
 
         Task<IEnumerable<string>> GetPoolUnassignedNotVersionAsync(string poolCode, string poolVersionCode, int count, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Fetch a list of resources that have failed. Specifically those that are in a Failed or Cancelled
+        /// state, or those that are considered to be stuck in Init or In Progress.
+        /// </summary>
+        /// <param name="poolCode">Pool Code.</param>
+        /// <param name="count">Count of how many records we want to fetch.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Returns a list of failed resource id.</returns>
+        Task<IEnumerable<ResourceRecord>> GetFailedOperationAsync(string poolCode, int count, IDiagnosticsLogger logger);
     }
 }

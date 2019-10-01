@@ -24,6 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="watchPoolVersionTask">Target watch pool version job.</param>
         /// <param name="watchPoolStateTask">Target watch pool state task.</param>
         /// <param name="watchPoolSettingsTask">Target watch pool settings task.</param>
+        /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
+        /// <param name="watchOrphanedAzureResourceTask">Target watch orphaned Azure resources job.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
@@ -32,6 +34,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchPoolVersionTask watchPoolVersionTask,
             IWatchPoolStateTask watchPoolStateTask,
             IWatchPoolSettingsTask watchPoolSettingsTask,
+            IWatchFailedResourcesTask watchFailedResourcesTask,
+            IWatchOrphanedAzureResourceTask watchOrphanedAzureResourceTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             ITaskHelper taskHelper)
@@ -40,6 +44,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             WatchPoolVersionTask = watchPoolVersionTask;
             WatchPoolStateTask = watchPoolStateTask;
             WatchPoolSettingsTask = watchPoolSettingsTask;
+            WatchFailedResourcesTask = watchFailedResourcesTask;
+            WatchOrphanedAzureResourceTask = watchOrphanedAzureResourceTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
@@ -53,6 +59,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IWatchPoolStateTask WatchPoolStateTask { get; }
 
         private IWatchPoolSettingsTask WatchPoolSettingsTask { get; }
+
+        private IWatchFailedResourcesTask WatchFailedResourcesTask { get; }
+
+        private IWatchOrphanedAzureResourceTask WatchOrphanedAzureResourceTask { get; }
 
         private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
@@ -115,6 +125,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{ResourceLoggingConstants.WatchPoolSettingsTask}_run",
                 (childLogger) => WatchPoolSettingsTask.RunAsync(childLogger),
                 watchPoolSettingsTaskSpan);
+
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Watch Failed Resources
+            var watchFailedResourcesTaskSpan = TimeSpan.FromMinutes(30);
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchFailedResourcesTask}_run",
+                (childLogger) => WatchFailedResourcesTask.RunAsync(watchFailedResourcesTaskSpan, childLogger),
+                watchFailedResourcesTaskSpan);
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Watch Orphaned Azure Resources
+            var watchOrphanedAzureResourceTaskSpan = TimeSpan.FromHours(1);
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchOrphanedAzureResourceTask}_run",
+                (childLogger) => WatchOrphanedAzureResourceTask.RunAsync(watchOrphanedAzureResourceTaskSpan, childLogger),
+                watchOrphanedAzureResourceTaskSpan);
         }
     }
 }

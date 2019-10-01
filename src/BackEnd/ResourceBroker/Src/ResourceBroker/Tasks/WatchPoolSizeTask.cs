@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 {
                     TaskHelper.RunBackground(
                         $"{LogBaseName}_run_delete",
-                        (childLogger) => DeletetPoolItemAsync(Guid.Parse(unassignedId), childLogger),
+                        (childLogger) => DeletePoolItemAsync(Guid.Parse(unassignedId), childLogger),
                         logger);
                 }
             }
@@ -130,7 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     {
                         TaskHelper.RunBackground(
                             $"{LogBaseName}_run_delete",
-                            (childLogger) => DeletetPoolItemAsync(Guid.Parse(unassignedId), childLogger),
+                            (childLogger) => DeletePoolItemAsync(Guid.Parse(unassignedId), childLogger),
                             logger);
                     }
                 }
@@ -166,14 +166,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 swallowException: true);
         }
 
-        private Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
+        private Task DeletePoolItemAsync(Guid id, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run_delete",
                 async () =>
                 {
                     logger.FluentAddBaseValue("ResourceId", id);
-
                     await ContinuationTaskActivator.DeleteResource(id, "WatchPoolSizeDecrease", logger.WithValues(new LogValueSet()));
                 },
                 swallowException: true);

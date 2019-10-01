@@ -9,31 +9,32 @@ using System.Linq;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    ///
+    /// List extension methods.
     /// </summary>
     public static class ListExtensions
     {
         private static Random rng = new Random();
 
         /// <summary>
-        ///
+        /// Shuffles the items in the IEnumerable.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="list"></param>
+        /// <typeparam name="T">Generic type.</typeparam>
+        /// <param name="list">Target list.</param>
         /// <returns>Returns shuffled list.</returns>
-        public static IList<T> Shuffle<T>(this IList<T> list)
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> list)
         {
-            var n = list.Count;
+            var l = list.ToList();
+            var n = l.Count;
             while (n > 1)
             {
                 n--;
                 var k = rng.Next(n + 1);
-                T value = list[k];
-                list[k] = list[n];
-                list[n] = value;
+                T value = l[k];
+                l[k] = l[n];
+                l[n] = value;
             }
 
-            return list;
+            return l;
         }
 
         /// <summary>
