@@ -3,22 +3,26 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    ///
+    /// Task helper library.
     /// </summary>
     public interface ITaskHelper
     {
         /// <summary>
-        ///
+        /// Runs a TRPL Task fire-and-forget style on a repeated schedule,
+        /// the right way - in the background, separate from the current
+        /// thread, with no risk of it trying to rejoin the current thread.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="callback"></param>
-        /// <param name="logger"></param>
+        /// <param name="name">Target name.</param>
+        /// <param name="callback">Target callback.</param>
+        /// <param name="schedule">Target time between runs.</param>
+        /// <param name="logger">Target logger.</param>
         void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null);
 
         /// <summary>
@@ -26,6 +30,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// background, separate from the current thread, with no risk
         /// of it trying to rejoin the current thread.
         /// </summary>
+        /// <param name="name">Target name.</param>
+        /// <param name="callback">Target callback.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="delay">Target delay till run.</param>
         void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, TimeSpan? delay = null);
 
         /// <summary>
@@ -34,6 +42,83 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// are multiple gaps in thread use that may be long.
         /// Use for example when talking to a slow webservice.
         /// </summary>
+        /// <param name="name">Target name.</param>
+        /// <param name="callback">Target callback.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="delay">Target delay till run.</param>
         void RunBackgroundLong(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, TimeSpan? delay = null);
+
+        /// <summary>
+        /// Simple, lightweight worker implementation that allows for x amount of items in an enumeration
+        /// to be worked on at once.
+        /// </summary>
+        /// <typeparam name="T">Type of the item enumerable.</typeparam>
+        /// <param name="name">Target name.</param>
+        /// <param name="list">Target list.</param>
+        /// <param name="callback">Target callback that will be once item in the enumeration.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="obtainLease">
+        /// Target lease, that if provided, will be obtained once per item in the enumeration.
+        /// </param>
+        /// <param name="concurrentLimit">Target number of concurrent workers that will run.</param>
+        /// <param name="successDelay">
+        /// Target delay, that if provided, will space out successful executions. This is intended to allow other
+        /// workers on other machines a chance to work through the items (used mainly in conjuntion with a
+        /// distributed leas).
+        /// </param>
+        /// <param name="failDelay">
+        /// Target delay, that if provided, will space out retry attempts by the workers to pick up items from the list.
+        /// </param>
+        void RunBackgroundEnumerable<T>(
+            string name,
+            IEnumerable<T> list,
+            Func<T, IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger = null,
+            Func<T, Task<IDisposable>> obtainLease = null,
+            int concurrentLimit = 3,
+            int successDelay = 250,
+            int failDelay = 100);
+
+        /// <summary>
+        /// Simple, lightweight worker implementation that allows for x amount of items in an enumeration
+        /// to be worked on at once.
+        /// </summary>
+        /// <typeparam name="T">Type of the item enumerable.</typeparam>
+        /// <param name="name">Target name.</param>
+        /// <param name="list">Target list.</param>
+        /// <param name="callback">Target callback that will be once item in the enumeration.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="obtainLease">
+        /// Target lease, that if provided, will be obtained once per item in the enumeration.
+        /// </param>
+        /// <param name="concurrentLimit">Target number of concurrent workers that will run.</param>
+        /// <param name="successDelay">
+        /// Target delay, that if provided, will space out successful executions. This is intended to allow other
+        /// workers on other machines a chance to work through the items (used mainly in conjuntion with a
+        /// distributed leas).
+        /// </param>
+        /// <param name="failDelay">
+        /// Target delay, that if provided, will space out retry attempts by the workers to pick up items from the list.
+        /// </param>
+        /// <returns>Running tasks.</returns>
+        Task RunBackgroundEnumerableAsync<T>(
+            string name,
+            IEnumerable<T> list,
+            Func<T, IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger = null,
+            Func<T, Task<IDisposable>> obtainLease = null,
+            int concurrentLimit = 3,
+            int successDelay = 250,
+            int failDelay = 100);
+
+        /// <summary>
+        /// Continues running a task until its success or timeout occurs.
+        /// </summary>
+        /// <param name="task">Target task.</param>
+        /// <param name="waitTimeSpan">Target wait time between runs.</param>
+        /// <param name="timeoutTimeSpan">Target timeout period.</param>
+        /// <param name="onTimeout">Action that runs when timeout occurs.</param>
+        /// <returns>Returns whether the task was successful.</returns>
+        Task<bool> RetryUntilSuccessOrTimeout(Func<Task<bool>> task, TimeSpan waitTimeSpan, TimeSpan timeoutTimeSpan, Action onTimeout = null);
     }
 }
