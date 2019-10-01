@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common
         /// <param name="host">Host for url requests. For example, uses ngrok to forward requests to your local machine from Azure VM.</param>
         public DeveloperSettings(bool enabled, string host)
         {
-            Enabled = true;
+            Enabled = enabled;
             ForwarderHost = host;
         }
 
