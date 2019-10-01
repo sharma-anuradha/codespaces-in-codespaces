@@ -115,7 +115,6 @@ class WorkbenchView extends Component<WorkbenchProps> {
         const config: IWorkbenchConstructionOptions = {
             folderUri,
             remoteAuthority: `localhost`,
-            webviewEndpoint: `http://localhost`,
             webSocketFactory: VSLSWebSocketFactory,
             urlCallbackProvider: new UrlCallbackProvider(),
             connectionToken: vscodeConfig.commit,
