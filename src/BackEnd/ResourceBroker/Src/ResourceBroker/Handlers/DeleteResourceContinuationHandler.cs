@@ -90,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 {
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
                     AzureVmLocation = azureLocation,
+                    ComputeOS = resource.Value.PoolReference.GetComputeOS(),
                 };
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)

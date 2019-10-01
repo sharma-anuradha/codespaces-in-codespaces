@@ -88,7 +88,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync($"{LogBaseName}_run", () => CoreRunAsync(claimSpan, logger), swallowException: true);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run",
+                async () =>
+                {
+                    await CoreRunAsync(claimSpan, logger);
+                    return !Disposed;
+                },
+                (e) => !Disposed,
+                swallowException: true);
         }
 
         /// <inheritdoc/>
