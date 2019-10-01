@@ -37,6 +37,27 @@
     },
     "resourceTags": {
       "type": "object"
+    },
+    "vmInitScriptFileUri": {
+      "type": "string"
+    },
+    "vmInitScriptStorageAccountName": {
+      "type": "string"
+    },
+    "vmInitScriptStorageAccountKey": {
+      "type": "securestring"
+    },
+    "vmAgentBlobUrl": {
+      "type": "string"
+    },
+    "vmAgentInputQueueName": {
+      "type": "string"
+    },
+    "vmAgentInputQueueUrl": {
+      "type": "string"
+    },
+    "vmAgentInputQueueSasToken": {
+      "type": "string"
     }
   },
   "variables": {
@@ -143,6 +164,37 @@
           }
         }
       },
+      "resources": [
+        {
+          "apiVersion": "2018-10-01",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "update-vm",
+          "properties": {
+            "autoUpgradeMinorVersion": true,
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'windows-vm-init.ps1 ', ' -vmAgentBlobUrl \"', parameters('vmAgentBlobUrl'), '\" -vmAgentInputQueueName \"', parameters('vmAgentInputQueueName'), '\" -vmAgentInputQueueUrl \"', parameters('vmAgentInputQueueUrl'), '\" -vmAgentInputQueueSasToken \"', parameters('vmAgentInputQueueSasToken'), '\"')]",
+              "storageAccountName": "[parameters('vmInitScriptStorageAccountName')]",
+              "storageAccountKey": "[parameters('vmInitScriptStorageAccountKey')]"
+            },
+            "publisher": "Microsoft.Compute",
+            "settings": {
+              "fileUris": [
+                "[parameters('vmInitScriptFileUri')]"
+              ],
+              "timestamp": 123456789
+            },
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.9"
+          },
+          "tags": {
+            "displayName": "update-vm"
+          },
+          "type": "extensions"
+        }
+      ],
       "tags": "[parameters('resourceTags')]",
       "type": "Microsoft.Compute/virtualMachines"
     }

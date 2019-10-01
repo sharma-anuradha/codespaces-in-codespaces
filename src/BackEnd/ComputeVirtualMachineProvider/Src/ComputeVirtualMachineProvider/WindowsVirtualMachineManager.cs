@@ -81,24 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var virtualMachineName = GetVmName();
 
             var resourceTags = input.ResourceTags;
-
             resourceTags.Add(ResourceTagName.ResourceName, virtualMachineName);
-
-            var parameters = new Dictionary<string, Dictionary<string, object>>()
-            {
-                { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
-                { "imageReferenceId", new Dictionary<string, object>() { { Key, input.AzureVirtualMachineImage} } },
-                { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
-                { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName} } },
-                { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
-                { "osDiskName", new Dictionary<string, object>() { { Key, GetOsDiskName(virtualMachineName) } } },
-                { "networkSecurityGroupName", new Dictionary<string, object>() { { Key, GetNetworkSecurityGroupName(virtualMachineName) } } },
-                { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
-                { "virtualNetworkName", new Dictionary<string, object>() { { Key, GetVirtualNetworkName(virtualMachineName) } } },
-                { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
-                { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
-                { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
-            };
 
             var deploymentName = $"Create-WindowsVm-{virtualMachineName}";
             try
@@ -114,6 +97,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 {
                     throw new VirtualMachineException($"Failed to create queue for virtual machine {virtualMachineName}");
                 }
+
+                // Get queue sas url
+                var queueResult = await GetVirtualMachineInputQueueConnectionInfoAsync(input.AzureVmLocation, virtualMachineName, 0, logger);
+                if (queueResult.Item1 != OperationState.Succeeded)
+                {
+                    throw new VirtualMachineException($"Failed to get sas token for virtual machine input queue {queue.Uri}");
+                }
+
+                // Get the queue SAS token to pass into the custom script.
+                var queueConnectionInfo = queueResult.Item2;
+
+                // Get information about the storage account to pass into the custom script.
+                var storageInfo = await controlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(input.AzureVmLocation);
+                var storageAccountName = storageInfo.Item1;
+                var storageAccountAccessKey = storageInfo.Item2;
+                var vmInitScriptFileUri = $"https://{storageAccountName}.blob.core.windows.net/windows-vm-init/windows-vm-init.ps1";
+
+                var parameters = new Dictionary<string, Dictionary<string, object>>()
+                {
+                    { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
+                    { "imageReferenceId", new Dictionary<string, object>() { { Key, input.AzureVirtualMachineImage} } },
+                    { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
+                    { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName} } },
+                    { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
+                    { "osDiskName", new Dictionary<string, object>() { { Key, GetOsDiskName(virtualMachineName) } } },
+                    { "networkSecurityGroupName", new Dictionary<string, object>() { { Key, GetNetworkSecurityGroupName(virtualMachineName) } } },
+                    { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
+                    { "virtualNetworkName", new Dictionary<string, object>() { { Key, GetVirtualNetworkName(virtualMachineName) } } },
+                    { "adminUserName", new Dictionary<string, object>() { { Key, "vsonline" } } },
+                    { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
+                    { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
+                    { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
+                    { "vmInitScriptFileUri", new Dictionary<string, object>() { { Key, vmInitScriptFileUri } } },
+                    { "vmAgentBlobUrl", new Dictionary<string, object>() { { Key, input.VmAgentBlobUrl } } },
+                    { "vmAgentInputQueueName", new Dictionary<string, object>() { { Key, queueConnectionInfo.Name } } },
+                    { "vmAgentInputQueueUrl", new Dictionary<string, object>() { { Key, queueConnectionInfo.Url } } },
+                    { "vmAgentInputQueueSasToken", new Dictionary<string, object>() { { Key, queueConnectionInfo.SasToken } } },
+                    { "vmInitScriptStorageAccountName", new Dictionary<string, object>() { { Key, storageAccountName } } },
+                    { "vmInitScriptStorageAccountKey", new Dictionary<string, object>() { { Key, storageAccountAccessKey } } },
+                };
 
                 // Create virtual machine
                 var result = await azure.Deployments.Define(deploymentName)
