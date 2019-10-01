@@ -24,6 +24,7 @@ config:
   authRedirectUrl: https://signlr-ppe.core.vsengsaas.visualstudio.com
   keyVaultName: vsclk-signlr-ppe-kv
   clusterDefaultHost: signlr-ppe.core.vsengsaas.visualstudio.com
+  clientId: "b9f2dcca-45fe-477f-b0f4-5324c3f55875"
 
 azure-secrets:
   # vsclk-core-dev

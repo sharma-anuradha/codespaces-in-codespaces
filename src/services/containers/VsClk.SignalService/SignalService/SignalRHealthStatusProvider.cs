@@ -15,6 +15,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string EchoMessage = "signalr";
         private const string MethodEchoHealthHubFailedScope = "EchoHealthHubFailed";
         private const string MethodEchoHealthHubReconnectScope = "EchoHealthHubReconnect";
+        private const string MethodEchoHealthHubOutOfCapacityScope = "EchoHealthOutOfCapacity";
 
         /// <summary>
         /// Time in minutes to perform an echo when the state is 'healthy'
@@ -88,11 +89,32 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    State = false;
-                    using (logger.BeginMethodScope(MethodEchoHealthHubFailedScope))
+                    // Note: HTTP 429 will mean the SignalR resource is out of unit capacity, we don't want to report non-healthy
+                    // in that scenario
+                    if (error.Message?.Contains("429") == true)
                     {
-                        ++this.errorCount;
-                        this.logger.LogError(error, $"Failed to connect to health hub with url:{HealthHubUrl} errorCount:{this.errorCount}");
+                        using (logger.BeginMethodScope(MethodEchoHealthHubOutOfCapacityScope))
+                        {
+                            this.logger.LogError(error, $"Azure SignalR out of capacity on url:{HealthHubUrl}");
+                        }
+                    }
+                    else
+                    {
+                        State = false;
+                        using (logger.BeginMethodScope(MethodEchoHealthHubFailedScope))
+                        {
+                            ++this.errorCount;
+                            const string HealthFailedConnectMessage = "Failed to connect to health hub with url:{0} errorCount:{1}";
+
+                            if (this.errorCount == 1)
+                            {
+                                this.logger.LogWarning(error, HealthFailedConnectMessage, HealthHubUrl, 1);
+                            }
+                            else
+                            {
+                                this.logger.LogError(error, HealthFailedConnectMessage,HealthHubUrl, this.errorCount);
+                            }
+                        }
                     }
                 }
 

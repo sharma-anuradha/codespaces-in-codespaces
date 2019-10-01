@@ -86,7 +86,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
             else
             {
-                return Task.WhenAll(targetParticipantIds.Select(id => sendTaskCallback(Clients(id))));
+                return sendTaskCallback(All(targetParticipantIds));
             }
         }
 
@@ -115,9 +115,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             return this.service.AllExcept(Id, new string[] { connectionId });
         }
 
-        private IEnumerable<IClientProxy> Clients(string connectionId)
+        private IEnumerable<IClientProxy> All(string[] connectionIds)
         {
-            return this.service.Clients(connectionId);
+            var excludedConnectionIds = this.participants.Keys.Except(connectionIds).ToArray();
+            return this.service.AllExcept(Id, excludedConnectionIds);
         }
     }
 }

@@ -111,7 +111,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             using (BeginHubScope(RelayServiceScopes.MethodSendDataHub, hubId, connectionId))
             {
                 var targetParticipantIdsStr = targetParticipantIds != null ? string.Join(",", targetParticipantIds) : "*";
-                Logger.LogDebug($"sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data.Length}");
+                Logger.LogDebug($"sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data?.Length}");
             }
 
             return GetRelayHub(hubId).SendDataAsync(connectionId, sendOption, targetParticipantIds, type, data, cancellationToken);

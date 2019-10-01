@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Azure.SignalR;
 using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.VsCloudKernel.SignalService
@@ -40,6 +43,33 @@ namespace Microsoft.VsCloudKernel.SignalService
             return
                 GetAzureSignalRConnections(configuration, ConnectionStringDefaultKey, ConnectionStringKeyPrefix).Union
                 (GetAzureSignalRConnections(configuration, ConnectionStringSecondaryKey, ConnectionStringSecondaryKeyPrefix)).Distinct();
+        }
+
+        public static ServiceEndpoint[] GetAzureSignalRServiceEndpoints(this IConfiguration configuration)
+        {
+            return GetAllAzureSignalRConnections(configuration).Select(kvp =>
+            {
+                return new ServiceEndpoint(
+                    kvp.Value,
+                    kvp.Key == ConnectionStringDefaultKey ? EndpointType.Primary : EndpointType.Secondary,
+                    kvp.Key);
+            }).ToArray();
+        }
+
+        public static async Task<ServiceEndpoint[]> GetAzureSignalRServiceEndpointsAsync(
+            this ApplicationServicePrincipal applicationServicePrincipal,
+            string keyVaultName,
+            string stamp)
+        {
+            var matchName = $"Config-SignalRConnectionString-{stamp}";
+
+            return (await applicationServicePrincipal.GetSecretItemsAsync(
+                keyVaultName,
+                name => name.StartsWith(matchName, StringComparison.InvariantCultureIgnoreCase))).
+                Select(kvp => new ServiceEndpoint(
+                                kvp.Value,
+                                kvp.Key.Length == matchName.Length ? EndpointType.Primary : EndpointType.Secondary,
+                                kvp.Key)).ToArray();
         }
 
         private static IEnumerable<KeyValuePair<string,string>> GetAzureSignalRConnections(IConfiguration configuration, string defaultKey, string keyPrefix)

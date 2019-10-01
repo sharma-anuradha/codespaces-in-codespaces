@@ -80,11 +80,20 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdateBackplaneMetrics(object serviceInfo, CancellationToken cancellationToken)
         {
+            var metrics = GetMetrics();
+            using (Logger.BeginScope(
+                    (LoggerScopeHelpers.MethodScope, PresenceServiceScopes.MethodUpdateBackplaneMetrics),
+                    (PresenceServiceScopes.TotalContactsScope, metrics.SelfCount),
+                    (PresenceServiceScopes.TotalConnectionsScope, metrics.TotalSelfCount)))
+            {
+                Logger.LogInformation($"serviceInfo:{serviceInfo}");
+            }
+
             foreach (var backplaneProvider in this.backplaneProviders)
             {
                 try
                 {
-                    await backplaneProvider.UpdateMetricsAsync(ServiceId, serviceInfo, GetMetrics(), cancellationToken);
+                    await backplaneProvider.UpdateMetricsAsync(ServiceId, serviceInfo, metrics, cancellationToken);
                 }
                 catch (Exception error)
                 {

@@ -39,8 +39,9 @@ appSettings:
 - AppSettings__AuthenticateProfileServiceUri
 - AppSettings__AzureCosmosDbEndpointUrl
 - AppSettings__AzureCosmosDbAuthKey
-- Azure__SignalR__ConnectionString
-- Azure__SignalR__ConnectionString__Secondary
+- AppSettings__KeyVaultName
+- ApplicationServicePrincipal__ClientId
+- ApplicationServicePrincipal__ClientPassword
 
 # add this to enable the AzureRedisConnection config
 #- AppSettings__AzureRedisConnection

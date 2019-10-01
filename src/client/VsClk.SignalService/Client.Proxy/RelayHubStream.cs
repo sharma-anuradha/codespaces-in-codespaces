@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +15,9 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         private readonly IRelayHubProxy relayHubProxy;
         private readonly string participantId;
         private readonly string streamId;
-        private readonly AsyncQueue<byte[]> receivedData = new AsyncQueue<byte[]>();
+        private readonly TaskCompletionSource<byte[]> firstDataTcs = new TaskCompletionSource<byte[]>();
+        private SequenceDataReader<byte[]> sequenceDataReader;
+        private int writeSequence;
 
         private CancellationTokenSource closeCts = new CancellationTokenSource();
         private byte[] overflowData;
@@ -135,11 +138,13 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
             var data = new byte[count];
             Buffer.BlockCopy(buffer, offset, data, 0, count);
+
+            var nextSequence = Interlocked.Increment(ref this.writeSequence);
             return relayHubProxy.SendDataAsync(
                 SendOption.None,
                 new string[] { participantId },
                 streamId,
-                data,
+                EncodeHubData(nextSequence, data),
                 cancellationToken);
         }
 
@@ -157,7 +162,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 {
                     try
                     {
-                        var data = await receivedData.DequeueAsync(cts.Token);
+                        var data = this.sequenceDataReader != null ? await this.sequenceDataReader.ReadNextMessageAsync(cancellationToken) : await SequenceDataReader<byte[]>.GetValueAsync(this.firstDataTcs, cancellationToken);
                         overflowData = ReturnData(data, buffer, offset, count, out totalBytes);
                     }
                     catch (OperationCanceledException ex)
@@ -182,6 +187,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             Buffer.BlockCopy(data, 0, buffer, offset, totalBytes);
             if (data.Length > count)
             {
+                System.Diagnostics.Debug.WriteLine($"overflow data length:{data.Length - count}");
+
                 byte[] array = new byte[data.Length - count];
                 Buffer.BlockCopy(data, count, array, 0, array.Length);
                 return array;
@@ -190,11 +197,45 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             return null;
         }
 
+        private static byte[] EncodeHubData(int sequence, byte[] data)
+        {
+            using (var ms = new MemoryStream())
+            {
+                var bw = new BinaryWriter(ms);
+                bw.Write(sequence);
+                bw.Write(data);
+                bw.Flush();
+                return ms.ToArray();
+            }
+        }
+
+        private static (int, byte[]) DecodeHubData(byte[] hubData)
+        {
+            using (var ms = new MemoryStream(hubData))
+            {
+                var br = new BinaryReader(ms);
+                var sequence = br.ReadInt32();
+                return (sequence, br.ReadBytes(hubData.Length - (int)ms.Position));
+            }
+        }
+
         private void OnReceiveData(object sender, ReceiveDataEventArgs e)
         {
             if (e.FromParticipant.Id == participantId && e.Type == streamId)
             {
-                this.receivedData.Enqueue(e.Data);
+                var messageInfo = DecodeHubData(e.Data);
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"->RelayHubStream.OnReceiveData uniqueId:{e.UniqueId} sequence:{messageInfo.Item1} data-length:{messageInfo.Item2.Length}");
+#endif
+                if (this.sequenceDataReader == null)
+                {
+                    this.sequenceDataReader = new SequenceDataReader<byte[]>(messageInfo.Item1);
+                    this.firstDataTcs.TrySetResult(messageInfo.Item2);
+                }
+                else
+                {
+                    this.sequenceDataReader.NextMessage(messageInfo.Item1, messageInfo.Item2);
+                }
             }
         }
 
@@ -220,6 +261,43 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             this.relayHubProxy.ReceiveData -= OnReceiveData;
             this.relayHubProxy.ParticipantChanged -= OnParticipantChanged;
             this.closeCts.Cancel();
+        }
+
+        /// <summary>
+        /// Class to retrieve messages that comes without a sequence
+        /// </summary>
+        /// <typeparam name="TValue">Type of data to read in sequence</typeparam>
+        private class SequenceDataReader<TValue>
+        {
+            private readonly ConcurrentDictionary<int, TaskCompletionSource<TValue>> messages = new ConcurrentDictionary<int, TaskCompletionSource<TValue>>();
+            private int readSequence;
+
+            public SequenceDataReader(int readSequence)
+            {
+                this.readSequence = readSequence;
+            }
+
+            public static Task<TValue> GetValueAsync(TaskCompletionSource<TValue> tcs, CancellationToken cancellationToken)
+            {
+                using (cancellationToken.Register(() => tcs.TrySetCanceled()))
+                {
+                    return tcs.Task;
+                }
+            }
+
+            public void NextMessage(int sequenceId, TValue value)
+            {
+                messages.GetOrAdd(sequenceId, (key) => new TaskCompletionSource<TValue>()).TrySetResult(value);
+            }
+
+            public async Task<TValue> ReadNextMessageAsync(CancellationToken cancellationToken)
+            {
+                var nextReadSequence = Interlocked.Increment(ref this.readSequence);
+                var tcs = messages.GetOrAdd(nextReadSequence, (key) => new TaskCompletionSource<TValue>());
+                var value = await GetValueAsync(tcs, cancellationToken);
+                messages.TryRemove(nextReadSequence, out tcs);
+                return value;
+            }
         }
     }
 }

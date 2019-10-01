@@ -1,11 +1,8 @@
-#if !DEBUG
-// Only enable Azure in Release configuration
-#define Azure_SignalR
-#endif
-
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Azure.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -53,13 +50,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Map to the health hub signalR
         /// </summary>
         internal const string HealthHubMap = "/healthhub";
-
-        public static bool AzureSignalREnabled =>
-#if Azure_SignalR
-           true;
-#else
-           false;
-#endif
 
         #region IStartup
 
@@ -190,11 +180,46 @@ namespace Microsoft.VsCloudKernel.SignalService
                 new Newtonsoft.Json.Serialization.DefaultContractResolver();
             });
 
-            if (AzureSignalREnabled && Configuration.HasAzureSignalRConnections())
+            var applicationServicePrincipal = Configuration.GetSection(nameof(ApplicationServicePrincipal)).Get<ApplicationServicePrincipal>();
+            var keyVaultName = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.KeyVaultName));
+            // if we can eventually retrieve signalR endpoints from the key vault
+            var canRetrieveKeyVaultSignalREndpoints =
+                !string.IsNullOrEmpty(applicationServicePrincipal?.ClientId) &&
+                !string.IsNullOrEmpty(applicationServicePrincipal?.ClientPassword) &&
+                !string.IsNullOrEmpty(keyVaultName) &&
+                !string.IsNullOrEmpty(stamp);
+
+            var serviceEndpoints = new List<ServiceEndpoint>();
+            // inject the list of available endpoints
+            services.AddSingleton<IList<ServiceEndpoint>>((srvcProvider) => serviceEndpoints);
+
+            if (Configuration.HasAzureSignalRConnections() || canRetrieveKeyVaultSignalREndpoints)
             {
                 this.logger.LogInformation($"Add Azure SignalR");
-                UseAzureSignalR = true;
-                signalRService.AddAzureSignalR();
+                if (canRetrieveKeyVaultSignalREndpoints)
+                {
+                    try
+                    {
+                        serviceEndpoints.AddRange(applicationServicePrincipal.GetAzureSignalRServiceEndpointsAsync(keyVaultName, stamp).Result);
+                    }
+                    catch(Exception e)
+                    {
+                        this.logger.LogError(e, $"Failed to retrieve endpoints from Azure key vault:{keyVaultName}");
+                    }
+                }
+
+                if (Configuration.HasAzureSignalRConnections() || serviceEndpoints.Count > 0)
+                {
+                    UseAzureSignalR = true;
+                    signalRService.AddAzureSignalR((serviceOptions) =>
+                    {
+                        // add the endpoints being configured by the env vars
+                        var appSettingEndpoints = Configuration.GetAzureSignalRServiceEndpoints();
+                        serviceEndpoints.AddRange(appSettingEndpoints.Where(e => serviceEndpoints.FindIndex(se => se.ConnectionString == e.ConnectionString) == -1).ToArray());
+                        // now define the combined endpoints
+                        serviceOptions.Endpoints = serviceEndpoints.ToArray();
+                    });
+                }
             }
 
             // support dispatching for universal signalR hub

@@ -22,5 +22,13 @@ namespace Microsoft.VsCloudKernel.SignalService
         public bool IsAzureDocumentsProviderEnabled { get; set; }
 
         public string AzureRedisConnection { get; set; }
+
+        public string KeyVaultName { get; set; }
+    }
+
+    public class ApplicationServicePrincipal
+    {
+        public string ClientId { get; set; }
+        public string ClientPassword { get; set; }
     }
 }

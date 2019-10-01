@@ -18,10 +18,13 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string MethodUnregisterSelfContact = "UnregisterSelfContact";
         public const string MethodMatchContacts = "MatchContacts";
         public const string MethodContactOnContactChanged = "Contact.OnContactChanged";
-        
+        public const string MethodUpdateBackplaneMetrics = "UpdateBackplaneMetrics";
 
         public const string ContactScope = "Contact";
         public const string ConnectionScope = "Connection";
+        public const string TotalContactsScope = "NumberOfContacts";
+        public const string TotalConnectionsScope = "NumberOfConnections";
+
 
         public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, ContactReference contactReference, IFormatProvider formatProvider)
         {

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.SignalR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
@@ -17,19 +19,25 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         private readonly RelayService relayService;
         private readonly HealthService healthService;
         private readonly IStartup startup;
+        private readonly IList<ServiceEndpoint> serviceEndpoints;
+
+        private IConfigurationRoot Configuration => this.startup.Configuration;
+        private ApplicationServicePrincipal ApplicationServicePrincipal => Configuration.GetSection(nameof(ApplicationServicePrincipal)).Get<ApplicationServicePrincipal>();
 
         public StatusController(
             IOptions<AppSettings> appSettingsProvider,
             PresenceService presenceService,
             RelayService relayService,
             HealthService healthService,
-            IStartup startup)
+            IStartup startup,
+            IList<ServiceEndpoint> serviceEndpoints)
         {
             this.appSettings = appSettingsProvider.Value;
             this.presenceService = presenceService;
             this.relayService = relayService;
             this.healthService = healthService;
             this.startup = startup;
+            this.serviceEndpoints = serviceEndpoints;
         }
 
         // GET: version
@@ -41,6 +49,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                 this.presenceService.ServiceId,
                 Name = "vsclk-core-signalservice",
                 this.startup.Environment,
+                ApplicationClientId = ApplicationServicePrincipal?.ClientId,
                 Health = new
                 {
                     this.healthService.State,
@@ -56,7 +65,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                     this.appSettings.IsPrivacyEnabled
                 },
                 this.startup.EnableAuthentication,
-                Startup.AzureSignalREnabled,
                 this.startup.UseAzureSignalR,
                 AzureSignalRConnections = GetAllAzureSignalRConnections(),
                 BackplaneProviderTypes = this.presenceService.BackplaneProviders.Select(f => f.GetType().Name).ToArray(),
@@ -69,7 +77,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
 
         private dynamic GetProvidersStatus()
         {
-            var dynObject = new System.Dynamic.ExpandoObject();           
+            var dynObject = new System.Dynamic.ExpandoObject();
             foreach (var item in this.healthService.GetProvidersStatus())
             {
                 dynObject.TryAdd(item.Item1.Name, item.Item2);
@@ -80,12 +88,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
 
         private object[] GetAllAzureSignalRConnections()
         {
-            return AzureSignalRHelpers.GetAllAzureSignalRConnections(this.startup.Configuration)
-                .Select(pair => new
-                {
-                    Name = pair.Key,
-                    Endpoint = GetUriFromAzureConnectionString(pair.Value)
-                }).ToArray();
+            return this.serviceEndpoints.Select(se => new
+            {
+                Name = se.Name,
+                Endpoint = se.Endpoint
+            }).ToArray();
         }
 
         private static string GetUriFromAzureConnectionString(string azureConnectionString)
