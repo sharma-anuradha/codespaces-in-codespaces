@@ -1,9 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.IO;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.StaticFiles;
+
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -16,10 +20,16 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         [HttpGet("~/portforward")]
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index([FromQuery] string path)
         {
             try
             {
+                if (path == "service-worker.js")
+                {
+                    var serviceWorker = Path.Combine(Directory.GetCurrentDirectory(),
+                            "ClientApp", "public", "service-worker.js");
+                    return PhysicalFile(serviceWorker, "application/javascript");
+                }
                 string cascadeToken;
                 string host = Request.Host.Value;
                 string sessionId = host.Split("-")[0];

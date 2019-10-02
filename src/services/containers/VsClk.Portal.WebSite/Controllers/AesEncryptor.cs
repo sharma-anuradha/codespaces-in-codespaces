@@ -23,6 +23,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             {
                 aesAlg.Key = HexStringToByteArray(aesKey);
                 aesAlg.IV = HexStringToByteArray(aesIV);
+                aesAlg.Padding = PaddingMode.PKCS7;
 
                 // Create an encryptor to perform the stream transform.
                 ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
@@ -68,6 +69,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             {
                 aesAlg.Key = HexStringToByteArray(aesKey);
                 aesAlg.IV = HexStringToByteArray(aesIV);
+                aesAlg.Padding = PaddingMode.PKCS7;
 
                 // Create a decryptor to perform the stream transform.
                 ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
