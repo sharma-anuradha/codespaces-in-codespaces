@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
@@ -18,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
@@ -105,6 +107,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add the environment manager and the cloud environment repository.
             services.AddEnvironmentManager(frontEndAppSettings.EnvironmentManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment || frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker);
 
+            // Add the billing backgroud worker
+            services.AddBillingWorker(frontEndAppSettings.UseMocksForLocalDevelopment);
+
             // Add the Live Share user profile and workspace providers.
             services
                 .AddUserProfile(
@@ -141,6 +146,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add the certificate settings.
             services.AddSingleton(appSettings.CertificateSettings);
 
+            // Add ClaimedDistributedLease
+            services.AddSingleton<IClaimedDistributedLease, ClaimedDistributedLease>();
+
             // VM Token validator
             services.AddVMTokenValidator();
 
@@ -162,6 +170,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // VS SaaS services || BUT NOT VS SaaS authentication
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
+            services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
+            {
+                var (accountName, accountKey) = ControlPlaneAzureResourceAccessor.GetStampStorageAccountAsync().Result;
+                options.AccountName = accountName;
+                options.AccountKey = accountKey;
+            });
 
             services.AddAuthorization(options =>
             {

@@ -82,8 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             StorageSkuName = storageSkuName;
             StorageImage = storageImageFamily;
             StorageSizeInGB = storageSizeInGB;
-            StorageCloudEnvironmentUnits = storageCloudEnvironmentUnits;
-            ComputeCloudEnvironmentUnits = computeCloudEnvironmentUnits;
+            StorageCloudEnvironmentUnitsPerHr = storageCloudEnvironmentUnits;
+            ComputeCloudEnvironmentUnitsPerHr = computeCloudEnvironmentUnits;
             ComputePoolLevel = computePoolLevel;
             StoragePoolLevel = storagePoolLevel;
         }
@@ -128,10 +128,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public int StorageSizeInGB { get; }
 
         /// <inheritdoc/>
-        public decimal StorageCloudEnvironmentUnits { get; }
+        public decimal StorageCloudEnvironmentUnitsPerHr { get; }
 
         /// <inheritdoc/>
-        public decimal ComputeCloudEnvironmentUnits { get; }
+        public decimal ComputeCloudEnvironmentUnitsPerHr { get; }
 
         /// <inheritdoc/>
         public int ComputePoolLevel { get; }

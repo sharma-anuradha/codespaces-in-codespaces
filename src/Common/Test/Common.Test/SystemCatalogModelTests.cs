@@ -87,8 +87,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Collection(provider.SkuCatalog.CloudEnvironmentSkus.Values,
                 sku =>
                 {
-                    Assert.Equal(1.0m, sku.StorageCloudEnvironmentUnits);
-                    Assert.Equal(10.0m, sku.ComputeCloudEnvironmentUnits);
+                    Assert.Equal(1.0m, sku.StorageCloudEnvironmentUnitsPerHr);
+                    Assert.Equal(10.0m, sku.ComputeCloudEnvironmentUnitsPerHr);
                     Assert.Equal("test-compute-sku-family-1", sku.ComputeSkuFamily);
                     Assert.Equal("test-compute-sku-name-1", sku.ComputeSkuName);
                     Assert.Equal("test-compute-sku-size-1", sku.ComputeSkuSize);
@@ -113,8 +113,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 },
                 sku =>
                 {
-                    Assert.Equal(2.0m, sku.StorageCloudEnvironmentUnits);
-                    Assert.Equal(20.0m, sku.ComputeCloudEnvironmentUnits);
+                    Assert.Equal(2.0m, sku.StorageCloudEnvironmentUnitsPerHr);
+                    Assert.Equal(20.0m, sku.ComputeCloudEnvironmentUnitsPerHr);
                     Assert.Equal("test-compute-sku-family-2", sku.ComputeSkuFamily);
                     Assert.Equal("test-compute-sku-name-2", sku.ComputeSkuName);
                     Assert.Equal("test-compute-sku-size-2", sku.ComputeSkuSize);

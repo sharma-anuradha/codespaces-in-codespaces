@@ -9,7 +9,7 @@ using System.Timers;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 
@@ -91,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // Setup blob details
             var container = BlobStorageClientProvider.GetCloudBlobContainer(containerName);
-            await container.CreateIfNotExistsAsync();
+            var result = await container.CreateIfNotExistsAsync();
 
             // Get the blob
             var blob = container.GetBlockBlobReference(name);

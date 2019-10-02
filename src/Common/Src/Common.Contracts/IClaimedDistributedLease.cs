@@ -6,7 +6,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using System;
 using System.Threading.Tasks;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
     /// Allows components to obtain a distributed lease lock. This allows for distributed

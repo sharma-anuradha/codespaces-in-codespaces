@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 
@@ -22,7 +23,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         Task<IEnumerable<VsoAccountInfo>> GetAccountsAsync(
             DateTime start,
             DateTime? end,
-            IDiagnosticsLogger logger);
+            IDiagnosticsLogger logger,
+            ICollection<AzureLocation> locations);
+
+        Task<IEnumerable<VsoAccountInfo>> GetAccountsByShardAsync(
+            DateTime start,
+            DateTime? end,
+            IDiagnosticsLogger logger,
+            ICollection<AzureLocation> locations,
+            string shard);
 
         Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
             VsoAccountInfo account,

@@ -228,12 +228,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                         Name = "one",
                         EndState = "Running",
                         Usage = new Dictionary<string, double> { [meter] = 1.1 },
+                        UserId = testEnvironment.UserId,
+                        Sku = testEnvironment.Sku
                     },
                     ["2"] = new EnvironmentUsageDetail
                     {
                         Name = "two",
                         EndState = "Suspended",
                         Usage = new Dictionary<string, double> { [meter] = 2.2 },
+                        UserId = testEnvironment.UserId,
+                        Sku = testEnvironment.Sku
                     },
                 },
                 Users = new Dictionary<string, UserUsageDetail>
@@ -305,7 +309,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
         {
             var startTime = await CreateMockBillingData(includeSummaries: true);
 
-            var accounts = (await this.manager.GetAccountsAsync(startTime, DateTime.UtcNow, logger)).ToList();
+            var accounts = (await this.manager.GetAccountsAsync(startTime, DateTime.UtcNow, logger, new AzureLocation[] { AzureLocation.WestUs2 })).ToList();
 
             Assert.Equal(2, accounts.Count);
             Assert.Contains(testAccount, accounts);
@@ -400,12 +404,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                                     Name = testEnvironment.Name,
                                     Usage = new Dictionary<string, double>(),
                                     EndState = "two",
+                                    UserId = testEnvironment.UserId,
+                                    Sku = testEnvironment.Sku
                                 },
                                 [testEnvironment2.Id] = new EnvironmentUsageDetail
                                 {
                                     Name = testEnvironment2.Name,
                                     Usage = new Dictionary<string, double>(),
                                     EndState = "three",
+                                    UserId = testEnvironment.UserId,
+                                    Sku = testEnvironment.Sku
                                 },
                             },
                             Users = new Dictionary<string, UserUsageDetail>
@@ -439,12 +447,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                                     Name = testEnvironment.Name,
                                     Usage = new Dictionary<string, double>(),
                                     EndState = "two",
+                                    UserId = testEnvironment.UserId,
+                                    Sku = testEnvironment.Sku
                                 },
                                 [testEnvironment2.Id] = new EnvironmentUsageDetail
                                 {
                                     Name = testEnvironment2.Name,
                                     Usage = new Dictionary<string, double>(),
                                     EndState = "three",
+                                    UserId = testEnvironment.UserId,
+                                    Sku = testEnvironment.Sku
                                 },
                             },
                             Users = new Dictionary<string, UserUsageDetail>

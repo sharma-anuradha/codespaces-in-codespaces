@@ -3,13 +3,17 @@
 // </copyright>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -86,15 +90,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="start">Required start time (UTC). Events before this time are ignored.</param>
         /// <param name="end">Optional end time (UTC), or null to look at all events after the start time.</param>
         /// <param name="logger">Optional logger.</param>
+        /// <param name="locations">Azure regions to search.</param>
         /// <returns>List of distinct accounts of all billing events within the specified time.</returns>
         public async Task<IEnumerable<VsoAccountInfo>> GetAccountsAsync(
             DateTime start,
             DateTime? end,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            ICollection<AzureLocation> locations)
         {
             Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
             Requires.Argument(
                 end == null || end.Value.Kind == DateTimeKind.Utc, nameof(end), "DateTime values must be UTC.");
+            Requires.NotNull(locations, nameof(locations));
+            Requires.Argument(locations.Any(), nameof(locations), "locations collection must not me empty.");
 
             var duration = logger.StartDuration();
             try
@@ -110,9 +118,66 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     where = bev => start <= bev.Time && bev.Time < end.Value;
                 }
 
-                var accounts = await this.billingEventRepository.QueryAsync(
+                // TODO: pagedcallback 200ms delay
+                var accounts = (await this.billingEventRepository.QueryAsync(
                     q => q.Where(where).Select(bev => bev.Account).Distinct(),
-                    logger);
+                    logger)).Where(a => locations.Contains(a.Location));
+
+                logger.AddDuration(duration)
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountsAsync)));
+                return accounts;
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountsAsync)), ex.Message);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Returns all accounts for which there are any billing events in a specified time range
+        /// and has a subscriptionId that begins with the shard value.
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="logger"></param>
+        /// <param name="locations"></param>
+        /// <param name="shard"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<VsoAccountInfo>> GetAccountsByShardAsync(
+            DateTime start,
+            DateTime? end,
+            IDiagnosticsLogger logger,
+            ICollection<AzureLocation> locations,
+            string shard)
+        {
+            Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
+            Requires.Argument(
+                end == null || end.Value.Kind == DateTimeKind.Utc, nameof(end), "DateTime values must be UTC.");
+            Requires.NotNull(locations, nameof(locations));
+            Requires.Argument(locations.Any(), nameof(locations), "locations collection must not me empty.");
+            Requires.NotNullOrEmpty(shard, nameof(shard));
+
+            var duration = logger.StartDuration();
+            try
+            {
+                Expression<Func<BillingEvent, bool>> where;
+                if (end == null)
+                {
+                    // Optimize common queries with no end date.
+                    where = bev => start <= bev.Time && bev.Account.Subscription.StartsWith(shard);
+                }
+                else
+                {
+                    where = bev => start <= bev.Time && bev.Time < end.Value && bev.Account.Subscription.StartsWith(shard);
+                }
+
+                // TODO: pagedcallback 200ms delay
+                // TODO: move locations.Contains() to Expression definition
+                var accounts = (await this.billingEventRepository.QueryAsync(
+                    q => q.Where(where).Select(bev => bev.Account).Distinct(),
+                    logger)).Where(t => locations.Contains(t.Location));
 
                 logger.AddDuration(duration)
                     .LogInfo(GetType().FormatLogMessage(nameof(GetAccountsAsync)));

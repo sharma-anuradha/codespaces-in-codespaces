@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -38,5 +39,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "usage")]
         public IDictionary<string, double> Usage { get; set; }
+
+        /// <summary>
+        /// The Cloud Environments (VSLS) profile ID of the user of the environment.
+        /// </summary>
+        [JsonProperty(Required = Required.Always, PropertyName = "userId")]
+        public string UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the SKU of the cloud environment.
+        /// </summary>
+        [JsonProperty(Required = Required.Always, PropertyName = "sku")]
+        public Sku Sku { get; set; }
+
     }
 }

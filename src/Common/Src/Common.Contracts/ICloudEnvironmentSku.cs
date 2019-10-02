@@ -80,12 +80,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets the number of Cloud Environment Units that will be billed for this SKU when storage is active.
         /// </summary>
-        decimal StorageCloudEnvironmentUnits { get; }
+        decimal StorageCloudEnvironmentUnitsPerHr { get; }
 
         /// <summary>
         /// Gets the number of Cloud Environment Units that will be billed for this SKU when compute is active.
         /// </summary>
-        decimal ComputeCloudEnvironmentUnits { get; }
+        decimal ComputeCloudEnvironmentUnitsPerHr { get; }
 
         /// <summary>
         /// Gets the compute pool size that should be maintained.
