@@ -128,7 +128,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     { "adminUserName", new Dictionary<string, object>() { { Key, "vsonline" } } },
                     { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
                     { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
-                    { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
                     { "vmInitScriptFileUri", new Dictionary<string, object>() { { Key, vmInitScriptFileUri } } },
                     { "vmAgentBlobUrl", new Dictionary<string, object>() { { Key, input.VmAgentBlobUrl } } },
                     { "vmAgentInputQueueName", new Dictionary<string, object>() { { Key, queueConnectionInfo.Name } } },
