@@ -8,7 +8,7 @@
     "@microsoft/applicationinsights-web": "^2.2.2",
     "@svgr/webpack": "4.1.0",
     "@uifabric/fluent-theme": "^7.0.4",
-    "@vs/vs-ssh": "^1.0.70",
+    "@vs/vs-ssh": "1.0.80",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "9.0.0",
     "babel-jest": "23.6.0",
