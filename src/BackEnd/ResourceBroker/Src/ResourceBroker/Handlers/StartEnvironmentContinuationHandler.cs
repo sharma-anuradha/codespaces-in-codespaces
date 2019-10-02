@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -69,6 +70,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 return null;
             }
 
+            var didParseLocation = Enum.TryParse(compute.Value.Location, true, out AzureLocation azureLocation);
+            if (!didParseLocation)
+            {
+                throw new NotSupportedException($"Provided location of '{compute.Value.Location}' is not supported.");
+            }
+
             return new VirtualMachineProviderStartComputeInput(
                 compute.Value.AzureResourceInfo,
                 new ShareConnectionInfo(
@@ -78,6 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     storageResult.StorageFileName),
                 input.EnvironmentVariables,
                 compute.Value.PoolReference.GetComputeOS(),
+                azureLocation,
                 null);
         }
 

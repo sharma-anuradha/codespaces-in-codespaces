@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 
         [Trait("Category", "IntegrationTest")]
         [Fact]
-        public async Task Create_Compute_Ok()
+        public async Task<AzureResourceInfo> Create_Compute_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
             AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
@@ -84,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             } while (statusCheckResult.Status.Equals(OperationState.InProgress));
             timerWait.Stop();
             Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
+            return statusCheckResult.AzureResourceInfo;
         }
 
         [Trait("Category", "IntegrationTest")]
@@ -132,27 +133,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var azureDeploymentManager = new LinuxVirtualMachineManager(
                 clientFactory,
                 new MockControlPlaneAzureResourceAccessor(clientFactory));
-
+            var prereqexsit = ValidatePrereqConfig("startCompute");
+            Assert.True(prereqexsit, "Failed, as required config is not set.");
+  
             var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
-            var fileShareInfo = new ShareConnectionInfo("storageaccount1",
-                                                       "accountkey",
+            var fileShareInfo = new ShareConnectionInfo(this.testContext.Config["FILE_STORE_ACCOUNT"],
+                                                       this.testContext.Config["FILE_STORE_KEY"],
                                                        "cloudenvdata",
                                                        "dockerlib");
-            var resourceId = Guid.Parse("47b6d3d7-26f3-4fed-9aa8-fa809b0dd3cc");
-            var azureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceId.ToString());
+
+            var vmResourceInfo = (await this.Create_Compute_Ok());
             var startComputeInput = new VirtualMachineProviderStartComputeInput(
-                azureResourceInfo,
+                vmResourceInfo,
                 fileShareInfo,
                 new Dictionary<string, string>()
-                {
-                    { "SESSION_ID", "value1" },
-                    { "SESSION_TOKEN", "value2" },
-                    { "SESSION_CALLBACK", "value2" }
-                },
+                   {
+                        { "SESSION_ID", this.testContext.Config["SESSION_ID"] },
+                        { "SESSION_TOKEN", this.testContext.Config["SESSION_TOKEN"] },
+                        { "SESSION_CALLBACK",this.testContext.Config["SESSION_CALLBACK"] },
+                   },
                 ComputeOS.Linux,
+                this.testContext.Location,
                 null);
 
-            await StartCompute(computeProvider, startComputeInput, logger);
+            var timerStartCompute = Stopwatch.StartNew();
+            VirtualMachineProviderStartComputeResult startComputeResult = await computeProvider.StartComputeAsync(startComputeInput, logger);
+            timerStartCompute.Stop();
+            Console.WriteLine($"Time taken to allocate VM {timerStartCompute.Elapsed.TotalSeconds}");
+            Assert.Equal(OperationState.Succeeded, startComputeResult.Status);
         }
 
         [Trait("Category", "IntegrationTest")]
@@ -167,10 +175,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 new MockControlPlaneAzureResourceAccessor(clientFactory));
             var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
 
-            var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
+            var vmResourceInfo = (await this.Create_Compute_Ok());
             var input = new VirtualMachineProviderDeleteInput
             {
-                AzureResourceInfo = new AzureResourceInfo(testContext.SubscriptionId, testContext.ResourceGroupName, resourceName),
+                AzureResourceInfo = vmResourceInfo,
                 AzureVmLocation = AzureLocation.WestUs2,
                 ComputeOS = ComputeOS.Linux,
             };
@@ -198,36 +206,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Console.WriteLine($"Time taken to start environment on VM {timerWait.Elapsed.TotalSeconds}");
         }
 
-
-        [Trait("Category", "IntegrationTest")]
-        [Fact]
-        public async Task Get_Input_Queue_SasToken_Ok()
+        private bool ValidatePrereqConfig(string scenario)
         {
-            var logger = new DefaultLoggerFactory().New();
-            var timer = Stopwatch.StartNew();
-            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
-            var azureDeploymentManager = new LinuxVirtualMachineManager(
-                clientFactory,
-                new MockControlPlaneAzureResourceAccessor(clientFactory));
-            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
-
-            var resourceName = Guid.Parse("5880067e-373a-49e4-9894-012945c5de30").ToString();
-            var input = new VirtualMachineProviderQueueInput
+            switch (scenario)
             {
-                AzureResourceInfo = new AzureResourceInfo(Guid.NewGuid(), resourceName, resourceName),
-                AzureVmLocation = AzureLocation.WestUs2,
-                ComputeOS = ComputeOS.Linux,
-            };
-
-            var queueResult = await computeProvider.GetVirtualMachineInputQueueAsync(input, logger);
-            timer.Stop();
-            Console.WriteLine($"Time taken to get queue connection info {timer.Elapsed.TotalSeconds}");
-
-            Assert.NotNull(queueResult);
-            Assert.Equal(OperationState.Succeeded, queueResult.Status);
-            Assert.NotNull(queueResult.QueueConnectionInfo);
-            Assert.NotNull(queueResult.QueueConnectionInfo.SasToken);
-            Assert.NotNull(queueResult.QueueConnectionInfo.Url);
+                case "startCompute":
+                    return !string.IsNullOrEmpty(this.testContext.Config["FILE_STORE_ACCOUNT"])
+                            && !string.IsNullOrEmpty(this.testContext.Config["FILE_STORE_KEY"])
+                            && !string.IsNullOrEmpty(this.testContext.Config["SESSION_ID"])
+                            && !string.IsNullOrEmpty(this.testContext.Config["SESSION_TOKEN"])
+                            && !string.IsNullOrEmpty(this.testContext.Config["SESSION_CALLBACK"]);
+                default:
+                    return true;
+            }
         }
 
         private static async Task<VirtualMachineProviderCreateResult> WaitForVMCreation(VirtualMachineProvider computeProvider, VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
@@ -246,37 +237,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 }
             } while (statusCheckResult.Status.Equals(OperationState.InProgress));
             return statusCheckResult;
-        }
-
-        private static async Task StartCompute(VirtualMachineProvider computeProvider, VirtualMachineProviderStartComputeInput startComputeInput, IDiagnosticsLogger logger)
-        {
-            var timerStartCompute = Stopwatch.StartNew();
-            VirtualMachineProviderStartComputeResult startComputeResult = await computeProvider.StartComputeAsync(startComputeInput, logger);
-            timerStartCompute.Stop();
-            Console.WriteLine($"Time taken to allocate VM {timerStartCompute.Elapsed.TotalSeconds}");
-            Assert.NotNull(startComputeResult);
-            Assert.Equal(OperationState.InProgress, startComputeResult.Status);
-            NextStageInput startComputeStatusCheckInput = startComputeResult.NextInput.ContinuationToken.ToNextStageInput();
-            Assert.NotNull(startComputeStatusCheckInput);
-            Assert.NotNull(startComputeStatusCheckInput.TrackingId);
-            Assert.NotNull(startComputeStatusCheckInput.AzureResourceInfo);
-
-            VirtualMachineProviderStartComputeResult statusCheckResult = default;
-            var timerWait = Stopwatch.StartNew();
-            do
-            {
-                await Task.Delay(500);
-                statusCheckResult = await computeProvider.StartComputeAsync(startComputeInput, logger);
-                Assert.NotNull(statusCheckResult);
-                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
-                if (statusCheckResult.Status.Equals(OperationState.InProgress))
-                {
-                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.NextInput.ContinuationToken.ToNextStageInput();
-                    Assert.NotNull(statusCheckdeploymentStatusToken);
-                }
-            } while (statusCheckResult.Status.Equals(OperationState.InProgress));
-            timerWait.Stop();
-            Console.WriteLine($"Time taken to start environment on VM {timerWait.Elapsed.TotalSeconds}");
         }
     }
 }

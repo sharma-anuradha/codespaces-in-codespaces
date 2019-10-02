@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public string SasToken { get; }
 
         /// <summary>
-        /// Gets or sets the queue name.
+        /// Gets the queue name.
         /// </summary>
         public string Name { get; }
     }

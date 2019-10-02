@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -120,13 +121,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq
                 .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
-            deploymentManagerMoq.Setup(x => x.BeginStartComputeAsync(It.IsAny<VirtualMachineProviderStartComputeInput>(), It.IsAny<IDiagnosticsLogger>()))
+            deploymentManagerMoq.Setup(x => x.StartComputeAsync(It.IsAny<VirtualMachineProviderStartComputeInput>(), It.IsAny<int>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
                    Task.FromResult(
-                       (OperationState.InProgress, CreateDeploymentState())));
+                       (OperationState.InProgress, 0)));
             var computeProvider = new VirtualMachineProvider(new[] { deploymentManagerMoq.Object });
             VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(null), logger);
-            ValidateVirtualMachineResult(result, OperationState.InProgress);
+            Assert.NotNull(result);
+            Assert.Equal(OperationState.InProgress, result.Status);
+            Assert.NotNull(result.NextInput.ContinuationToken);
         }
 
         [Fact]
@@ -137,14 +140,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq
                 .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
-            deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<NextStageInput>(), It.IsAny<IDiagnosticsLogger>()))
+            deploymentManagerMoq.Setup(x => x.StartComputeAsync(It.IsAny<VirtualMachineProviderStartComputeInput>(), It.IsAny<int>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(
-                Task.FromResult(
-                    (OperationState.InProgress, CreateDeploymentState())));
+                   Task.FromResult(
+                       (OperationState.InProgress, 0)));
             var computeProvider = new VirtualMachineProvider(new[] { deploymentManagerMoq.Object });
             string continuationToken = new NextStageInput(TrackingId, ResourceInfo).ToJson();
             VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(continuationToken), logger);
-            ValidateVirtualMachineResult(result, OperationState.InProgress);
+            Assert.NotNull(result);
+            Assert.Equal(OperationState.InProgress, result.Status);
+            Assert.NotNull(result.NextInput.ContinuationToken);
         }
 
         [Theory]
@@ -160,16 +165,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             deploymentManagerMoq
                 .Setup(x => x.Accepts(It.IsAny<ComputeOS>()))
                 .Returns(true);
-            deploymentManagerMoq.Setup(x => x.CheckStartComputeStatusAsync(It.IsAny<NextStageInput>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns(
+            deploymentManagerMoq.Setup(x => x.StartComputeAsync(It.IsAny<VirtualMachineProviderStartComputeInput>(), It.IsAny<int>(), It.IsAny<IDiagnosticsLogger>()))
+                 .Returns(
                     Task.FromResult(
-                        (outputState, deploymentStatusInput)));
+                        (outputState, 0)));
 
             var computeProvider = new VirtualMachineProvider(new[] { deploymentManagerMoq.Object });
             VirtualMachineProviderStartComputeResult result = await computeProvider.StartComputeAsync(CreateStartComputeInput(continuationToken), logger);
             Assert.NotNull(result);
             Assert.Equal(expectedState, result.Status);
-            Assert.Null(result.NextInput);
         }
 
         [Fact]
@@ -255,6 +259,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 new ShareConnectionInfo("val1", "val2", "val3", "val4"),
                 new System.Collections.Generic.Dictionary<string, string>(),
                 ComputeOS.Linux,
+                AzureLocation.WestUs2,
                 continuationToken);
         }
     }

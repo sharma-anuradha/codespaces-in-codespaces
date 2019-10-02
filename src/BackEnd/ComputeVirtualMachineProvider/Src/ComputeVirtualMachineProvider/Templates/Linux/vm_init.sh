@@ -24,7 +24,7 @@ echo "Install unzip ..."
 apt-get -yq update && apt-get install -y --no-install-recommends unzip
 
 echo "Download vso agent ..."
-mkdir -p /.vsonline/vsoagent/bin/appdata
+mkdir -p /.vsonline/vsoagent/bin
 cd /.vsonline/vsoagent/bin
 wget -qO- -O tmp.zip $SCRIPT_PARAM_VMAGENT_BLOB_URL && unzip tmp.zip && rm tmp.zip
 
@@ -43,7 +43,9 @@ echo "RESOURCEID=$SCRIPT_PARAM_RESOURCEID" >> /.vsonline/vsoagent/bin/config.ini
 echo "SERVICEHOSTNAME=$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" >> /.vsonline/vsoagent/bin/config.ini
 
 echo "Start vso agent"
-systemctl start vsoagent.service
+# Switch to daemon process until service permission issue is fixed.
+bash -c 'nohup ./vso vmagent &>/dev/null & jobs -p %1'
+#systemctl start vsoagent.service
 
 echo "Check service status"
-systemctl status vsoagent.service
+#systemctl status vsoagent.service

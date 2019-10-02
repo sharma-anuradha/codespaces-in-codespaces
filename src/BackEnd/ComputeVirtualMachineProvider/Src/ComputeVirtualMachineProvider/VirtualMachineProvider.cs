@@ -127,10 +127,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
-            string resultContinuationToken = default;
-            OperationState resultState;
-            var deploymentManager = SelectDeploymentManager(input.ComputeOS);
-            AzureResourceInfo azureResourceInfo;
+
+            // Use linux provider as this path will be same for windows and linux VMs.
+            // TODO:: move common pieces in abstract base class.
+            var deploymentManager = SelectDeploymentManager(ComputeOS.Linux);
 
             var duration = logger.StartDuration();
 
@@ -140,62 +140,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 { nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup },
                 { nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name },
             });
-            (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderStartComputeInput>(
-                input,
-                logger,
-                deploymentManager.BeginStartComputeAsync,
-                deploymentManager.CheckStartComputeStatusAsync);
 
-            var result = new VirtualMachineProviderStartComputeResult()
-            {
-                Status = resultState,
-                RetryAfter = TimeSpan.FromSeconds(VmStartEnvRetryAfterSeconds),
-                NextInput = input.BuildNextInput(resultContinuationToken),
-            };
+            var result = await logger.OperationScopeAsync(
+               "virtual_machine_compute_provider_start_compute",
+               async () =>
+               {
+                   var getRetryAttempt = int.TryParse(input.ContinuationToken, out int count);
+                   var retryAttemptCount = getRetryAttempt ? count : 0;
+                   var startComputeResult = await deploymentManager.StartComputeAsync(input, retryAttemptCount, logger);
+                   var r = new VirtualMachineProviderStartComputeResult()
+                   {
+                       Status = startComputeResult.Item1,
+                       NextInput = (startComputeResult.Item1 == OperationState.Succeeded) ? default : input.BuildNextInput(startComputeResult.Item2.ToString()),
+                   };
+                   logger.FluentAddValue(nameof(r.Status), r.Status.ToString());
+                   return r;
+               },
+               (_) => new VirtualMachineProviderStartComputeResult() { Status = OperationState.Failed },
+               swallowException: true);
 
             // TODO:: Add correlation id
             logger
-               .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-               .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
                .FluentAddValue(nameof(result.Status), result.Status.ToString())
+               .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString())
                .AddDuration(duration)
                .LogInfo("virtual_machine_compute_provider_start_compute_step_complete");
-            return result;
-        }
-
-        /// <inheritdoc/>
-        public async Task<VirtualMachineProviderQueueResult> GetVirtualMachineInputQueueAsync(VirtualMachineProviderQueueInput input, IDiagnosticsLogger logger)
-        {
-            Requires.NotNull(input, nameof(input));
-            Requires.NotNull(input.AzureResourceInfo, nameof(input.AzureResourceInfo));
-            Requires.NotNull(logger, nameof(logger));
-            var duration = logger.StartDuration();
-            var deploymentManager = SelectDeploymentManager(input.ComputeOS);
-
-            logger = logger.WithValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString());
-            logger = logger.WithValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
-
-            var result = await logger.OperationScopeAsync(
-                "virtual_machine_compute_provider_get_input_queue_connection_info_step",
-                async () =>
-                {
-                    var getRetryAttempt = int.TryParse(input.ContinuationToken, out int count);
-                    var retryAttemptCount = getRetryAttempt ? count : 0;
-                    var queueResult = await deploymentManager.GetVirtualMachineInputQueueConnectionInfoAsync(
-                        input.AzureVmLocation, input.AzureResourceInfo.Name, retryAttemptCount, logger);
-                    var r = new VirtualMachineProviderQueueResult()
-                    {
-                        Status = queueResult.Item1,
-                        QueueConnectionInfo = queueResult.Item2,
-                        NextInput = queueResult.Item1.IsFinal() ? default : input.BuildNextInput(queueResult.Item3.ToString()),
-                    };
-                    logger.FluentAddValue(nameof(r.RetryAfter), r.RetryAfter.ToString())
-                          .FluentAddValue(nameof(r.Status), r.Status.ToString());
-                    return r;
-                },
-                (_) => new VirtualMachineProviderQueueResult() { Status = OperationState.Failed },
-                swallowException: true);
-
             return result;
         }
 

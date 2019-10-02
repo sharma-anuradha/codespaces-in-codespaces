@@ -193,6 +193,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
+        /// TODO: This will be completed for https://dev.azure.com/devdiv/DevDiv/_boards/board/t/BARS%20Crew/Stories/?workitem=968262
+        public async Task<(OperationState, int)> StartComputeAsync(VirtualMachineProviderStartComputeInput input, int retryAttemptCount, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(0); // to silence CS1998 until actual code is implemented
+            return (OperationState.Failed, 0);
+        }
+
+        /// <inheritdoc/>
         public async Task<(OperationState, NextStageInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
         {
             try

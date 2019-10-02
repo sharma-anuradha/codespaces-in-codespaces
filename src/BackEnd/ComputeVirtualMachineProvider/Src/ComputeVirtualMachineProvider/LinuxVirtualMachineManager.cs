@@ -12,7 +12,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Compute.Fluent.Models;
-using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Storage;
@@ -172,6 +171,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 }
 
                 return (OperationState.Failed, default);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<(OperationState, int)> StartComputeAsync(VirtualMachineProviderStartComputeInput input, int retryAttempt, IDiagnosticsLogger logger)
+        {
+            try
+            {
+                // create queue message
+                var jobParameters = input.VmInputParams;
+                jobParameters.Add("storageAccountName", input.FileShareConnection.StorageAccountName);
+                jobParameters.Add("storageAccountKey", input.FileShareConnection.StorageAccountKey);
+                jobParameters.Add("storageShareName", input.FileShareConnection.StorageShareName);
+                jobParameters.Add("storageFileName", input.FileShareConnection.StorageFileName);
+
+                var queueMessage = new QueueMessage
+                {
+                    Command = "StartEnvironment",
+                    Parameters = jobParameters,
+                };
+
+                var message = new CloudQueueMessage(JsonConvert.SerializeObject(queueMessage));
+                var queue = await GetQueueClientAsync(input.Location, GetQueueName(input.AzureResourceInfo.Name), logger);
+
+                // post message to queue
+                queue.AddMessage(message);
+
+                return (OperationState.Succeeded, 0);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException("linux_virtual_machine_manager_start_compute_error", ex);
+
+                if (retryAttempt < 5)
+                {
+                    return (OperationState.InProgress, retryAttempt + 1);
+                }
+
+                return (OperationState.Failed, retryAttempt);
             }
         }
 

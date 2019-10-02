@@ -32,6 +32,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         Task<(OperationState, NextStageInput)> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Kick off container setup on Azure Virtual Machine.
+        /// </summary>
+        /// <param name="input">Provides input to start cloud environment.</param>
+        /// <param name="logger">Diagnostics logger object.</param>
+        /// <returns>Operation state.</returns>
+        Task<(OperationState, int)> StartComputeAsync(VirtualMachineProviderStartComputeInput input, int retryAttemptCount, IDiagnosticsLogger logger);
+
+
+        /// <summary>
         /// Check status of container creation on Azure Virtual Machine.
         /// </summary>
         /// <param name="input">Continuation object instance.</param>
