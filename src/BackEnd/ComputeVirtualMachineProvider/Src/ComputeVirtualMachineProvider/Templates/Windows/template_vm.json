@@ -160,7 +160,15 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "enableAutomaticUpdates": true,
-            "provisionVmAgent": true
+            "provisionVmAgent": true,
+            "additionalUnattendContent": [
+              {
+                "passName": "oobesystem",
+                "componentName": "Microsoft-Windows-Shell-Setup",
+                "settingName": "AutoLogon",
+                "content": "[concat('<AutoLogon><Password><Value>', parameters('adminPassword'), '</Value><PlainText>true</PlainText></Password><Enabled>true</Enabled><Username>', parameters('adminUsername'), '</Username></AutoLogon>')]"
+              }
+            ]
           }
         }
       },
@@ -175,7 +183,7 @@
           "properties": {
             "autoUpgradeMinorVersion": true,
             "protectedSettings": {
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'windows-vm-init.ps1 ', ' -vmAgentBlobUrl \"', parameters('vmAgentBlobUrl'), '\" -vmAgentInputQueueName \"', parameters('vmAgentInputQueueName'), '\" -vmAgentInputQueueUrl \"', parameters('vmAgentInputQueueUrl'), '\" -vmAgentInputQueueSasToken \"', parameters('vmAgentInputQueueSasToken'), '\"')]",
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'windows-vm-init.ps1 ', ' -vmAgentBlobUrl \"', parameters('vmAgentBlobUrl'), '\" -vmAgentInputQueueName \"', parameters('vmAgentInputQueueName'), '\" -vmAgentInputQueueUrl \"', parameters('vmAgentInputQueueUrl'), '\" -vmAgentInputQueueSasToken \"', parameters('vmAgentInputQueueSasToken'), '\" -username \"', parameters('adminUsername'), '\" -password \"', parameters('adminPassword'), '\"')]",
               "storageAccountName": "[parameters('vmInitScriptStorageAccountName')]",
               "storageAccountKey": "[parameters('vmInitScriptStorageAccountKey')]"
             },
