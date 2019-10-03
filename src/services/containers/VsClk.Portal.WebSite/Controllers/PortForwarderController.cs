@@ -5,15 +5,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.StaticFiles;
-
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
     public class PortForwarderController : Controller
     {
         private static AppSettings AppSettings { get; set; }
+
         public PortForwarderController(AppSettings appSettings)
         {
             AppSettings = appSettings;
@@ -24,12 +22,25 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         {
             try
             {
+                // Since all paths in the forwarded domain are redirected to this controller, the request for the service 
+                // worker will be as well. In that case, serve up the actual service worker.
                 if (path == "service-worker.js")
                 {
-                    var serviceWorker = Path.Combine(Directory.GetCurrentDirectory(),
-                            "ClientApp", "public", "service-worker.js");
-                    return PhysicalFile(serviceWorker, "application/javascript");
+                    string serviceWorkerPath;
+                    if (AppSettings.IsLocal)
+                    {
+                        serviceWorkerPath = Path.Combine(Directory.GetCurrentDirectory(),
+                            "ClientApp", "Public", "service-worker.js");
+                    }
+                    else
+                    {
+                        serviceWorkerPath = Path.Combine(Directory.GetCurrentDirectory(),
+                            "ClientApp", "build", "service-worker.js");
+                    }
+
+                    return PhysicalFile(serviceWorkerPath, "application/javascript");
                 }
+
                 string cascadeToken;
                 string host = Request.Host.Value;
                 string sessionId = host.Split("-")[0];
@@ -70,14 +81,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
                 if (ownerId == userId)
                 {
-                    var cookiePayload = new CookiePayload
+                    var cookiePayload = new LiveShareConnectionDetails
                     {
-                        cascadeToken = cascadeToken,
-                        sessionId = sessionId,
+                        CascadeToken = cascadeToken,
+                        SessionId = sessionId,
+                        LiveShareEndPoint = AppSettings.IsLocal ? Constants.LiveShareLocalEndPoint : Constants.LiveShareEndPoint
                     };
-                    ViewData["cascadeTokenPayload"] = cookiePayload;
 
-                    return View();
+                    return View(cookiePayload);
                 }
 
                 System.Console.WriteLine("user was not authorized for the workspace.");

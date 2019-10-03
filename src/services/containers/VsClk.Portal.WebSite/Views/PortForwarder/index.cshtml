@@ -1,7 +1,5 @@
-@using Microsoft.VsCloudKernel.Services.Portal.WebSite
-@{ 
-    var data = (CookiePayload)ViewData["cascadeTokenPayload"];
-} 
+﻿@using Microsoft.VsCloudKernel.Services.Portal.WebSite
+@model LiveShareConnectionDetails
 
 <!doctype html>
 <html lang="en">
@@ -15,34 +13,38 @@
     <p>Connecting to server...</p>
     <script>
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker
-            .register("/service-worker.js", { scope: "/" })
-            .then(reg => {
-                reg.onupdatefound = () => {
-                    const installingWorker = reg.installing;
-                    installingWorker.onstatechange = () => {
-                        console.log(installingWorker);
-                        if (installingWorker) {
-                            installingWorker.controller.postMessage({
-                                type: "cloudenv/authenticate",
-                                payload: {
-                                    token: data.cascadeToken,
-                                    sessionId: data.sessionId
-                                }
-                            });
-                        }
-                        if (installingWorker.state === "activating") {
-                            console.warn("reload");
-                            setTimeout(() => {
-                                location.reload();
-                            }, 100);
-                        }
-                    };
-                };
-            })
-            .catch(err => console.log("Service Worker not activated.", err));
+            
+            navigator.serviceWorker.register("/service-worker.js", { scope: "/" });
+            navigator.serviceWorker.ready.then(registration => {
+                
+                // Configure the LiveShare endpoint to be used by the service worker.
+                registration.active.postMessage({
+                    type: "cloudenv/configure",
+                    payload: {
+                        liveShareEndpoint: "@Model.LiveShareEndPoint",
+                        features: {
+                            useSharedConnection: false,
+                        },
+                    }
+                });
+
+                // Send credentials to the service worker.
+                registration.active.postMessage({
+                    type: "cloudenv/authenticate",
+                    payload: {
+                        token: "@Model.CascadeToken",
+                        sessionId: "@Model.SessionId"
+                    }
+                });
+
+                console.warn("reload");
+                setTimeout(() => {
+                    location.reload();
+                }, 100);
+            });
+
+            // TODO: Need to reload the page even if there are errors with some connection error message
         }
-        fetch('/service-worker.js');
     </script>
 </body>
 </html>
