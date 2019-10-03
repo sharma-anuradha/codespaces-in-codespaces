@@ -2,7 +2,7 @@ import * as vsls from './contracts/VSLS';
 import * as rpc from 'vscode-jsonrpc';
 import * as ssh from '@vs/vs-ssh';
 import { RpcProxy } from './RpcProxy';
-import { WebClient, WorkspaceInfo, WorkspaceAccess } from './webClient';
+import { ILiveShareClient, IWorkspaceInfo, IWorkspaceAccess } from './client/ILiveShareClient';
 import { SshChannelOpenner } from './sshChannelOpenner';
 import { trace as baseTrace } from '../utils/trace';
 import {
@@ -23,8 +23,8 @@ const packageJson = {
 type RpcProxyFor<T> = T & RpcProxy;
 
 export class WorkspaceClient implements rpc.Disposable {
-    private workspaceInfo?: WorkspaceInfo;
-    private workspaceAccess?: WorkspaceAccess;
+    private workspaceInfo?: IWorkspaceInfo;
+    private workspaceAccess?: IWorkspaceAccess;
     private socketStream?: ssh.Stream;
     private rpcConnection?: rpc.MessageConnection;
     private workspaceClient?: vsls.WorkspaceService;
@@ -32,14 +32,20 @@ export class WorkspaceClient implements rpc.Disposable {
 
     public sshSession?: ssh.SshClientSession;
 
-    public constructor(public readonly webClient: WebClient) {}
+    public constructor(public readonly webClient: ILiveShareClient) {}
 
-    public get serviceUri() {
-        return this.webClient.serviceUri;
+    // tslint:disable-next-line: informative-docs
+    /** internal */ get internalPortName() {
+        return 'VSCodeServerInternal';
     }
 
-    public get internalPortName() {
-        return 'VSCodeServerInternal';
+    // tslint:disable-next-line: informative-docs
+    /** internal */ getWorkspaceInfo() {
+        return this.workspaceInfo;
+    }
+
+    public getWorkspaceAccess() {
+        return this.workspaceAccess;
     }
 
     public async connect(invitationId: string): Promise<void> {
@@ -55,7 +61,7 @@ export class WorkspaceClient implements rpc.Disposable {
             throw new Error('Workspace not found: ' + invitationId);
         }
 
-        this.socketStream = await this.webClient.openConnection(this.workspaceInfo);
+        this.socketStream = await this.openConnection(this.workspaceInfo);
 
         // Prevent an old connection from being re-used.
         this.sshSession = undefined;
@@ -141,7 +147,6 @@ export class WorkspaceClient implements rpc.Disposable {
             connectionMode: vsls.ConnectionMode.Local, // Note "local" connection mode is correct when talking to remote service.
             joiningUserSessionToken: this.workspaceAccess.sessionToken,
         });
-
     }
 
     public async invokeEnvironmentConfiguration() {
@@ -202,5 +207,34 @@ export class WorkspaceClient implements rpc.Disposable {
             }
         });
         return servers;
+    }
+
+    private openConnection(workspace: IWorkspaceInfo): Promise<ssh.Stream> {
+        if (!workspace.relayLink) {
+            throw new Error('Workspace does not have a relay endpoint.');
+        }
+
+        // Reference:
+        // https://github.com/Azure/azure-relay-node/blob/7b57225365df3010163bf4b9e640868a02737eb6/hyco-ws/index.js#L107-L137
+        const relayUri =
+            workspace.relayLink.replace('sb:', 'wss:').replace('.net/', '.net:443/$hc/') +
+            '?sb-hc-action=connect&sb-hc-token=' +
+            encodeURIComponent(workspace.relaySas || '');
+
+        // There are two relay websocket implementations below:
+        //   1) Using the browser (W3C) websocket API adapter provided by the node-websocket package.
+        //      This code is kept for future compatibility with browser (VS Online) clients.
+        //   2) Using the node-websocket API directly
+        //      This enables better error diagnostic information and therefore is preferred.
+        const socket = new WebSocket(relayUri);
+        socket.binaryType = 'arraybuffer';
+        return new Promise<ssh.Stream>((resolve, reject) => {
+            socket.onopen = () => {
+                resolve(new ssh.WebSocketStream(socket));
+            };
+            socket.onerror = (e) => {
+                reject(new Error('Failed to connect to relay: ' + relayUri));
+            };
+        });
     }
 }

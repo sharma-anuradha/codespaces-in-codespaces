@@ -1,7 +1,7 @@
 import { SshChannel } from '@vs/vs-ssh';
 import { Disposable, Emitter, Event } from 'vscode-jsonrpc';
 
-import { WebClient } from './webClient';
+import { WebClient } from './client/webClient';
 import { WorkspaceClient } from './workspaceClient';
 import * as vsls from './contracts/VSLS';
 import {
@@ -17,11 +17,12 @@ import { Signal } from '../utils/signal';
 import { DEFAULT_EXTENSIONS, VSLS_API_URI, vscodeConfig } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { BrowserSyncService } from './services/browserSyncService';
+import { postServiceWorkerMessage } from '../common/post-message';
 
 export type RemoteVSCodeServerDescription = {
     readonly port: number;
     connectionToken: string;
-}
+};
 
 export class EnvConnector {
     private initializeConnectionSignal?: Signal<any>;
@@ -124,10 +125,24 @@ export class EnvConnector {
         this.workspaceClient = new Signal();
 
         try {
-            const webClient = new WebClient(VSLS_API_URI, accessToken);
+            const webClient = new WebClient(VSLS_API_URI, {
+                getToken() {
+                    return accessToken;
+                },
+            });
             const workspaceClient = new WorkspaceClient(webClient);
 
             await workspaceClient.connect(sessionId);
+
+            postServiceWorkerMessage({
+                type: 'cloudenv/update-liveshare-connection-info',
+                payload: {
+                    sessionId,
+                    workspaceInfo: workspaceClient.getWorkspaceInfo()!,
+                    workspaceAccess: workspaceClient.getWorkspaceAccess()!,
+                },
+            });
+
             await workspaceClient.authenticate();
             await workspaceClient.join();
             await workspaceClient.invokeEnvironmentConfiguration();

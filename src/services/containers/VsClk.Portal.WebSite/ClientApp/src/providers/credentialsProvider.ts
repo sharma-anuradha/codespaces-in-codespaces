@@ -1,9 +1,9 @@
 import { ICredentialsProvider } from 'vscode-web';
 
-import { trace as baseTrace } from '../utils/trace';
+import { createTrace } from '../utils/createTrace';
 import { authService } from '../services/authService';
 
-const info = baseTrace.extend('credentials-provider:info');
+const trace = createTrace('credentials-provider:info');
 
 type VSCodeAccountIToken = {
     accessToken: string;
@@ -65,7 +65,7 @@ export class CredentialsProvider implements ICredentialsProvider {
     }
 
     async getPassword(service: string, account: string): Promise<string | null> {
-        info('Responding to VSCode keytar-shim request.', { service, account });
+        trace.verbose('Responding to VSCode keytar-shim request.', { service, account });
 
         // generic keytar request
         const genericKey = this.generateGenericLocalStorageKey(service, account);
@@ -79,14 +79,14 @@ export class CredentialsProvider implements ICredentialsProvider {
         );
 
         if (!strategy) {
-            info('Cannot respond to VSCode keytar-shim request.', { service, account });
+            trace.verbose('Cannot respond to VSCode keytar-shim request.', { service, account });
 
             return null;
         }
 
         const token = await strategy.getToken(service, account);
         if (!token) {
-            info('No token available.');
+            trace.warn('No token available.');
         }
 
         return token;
@@ -99,9 +99,7 @@ export class CredentialsProvider implements ICredentialsProvider {
 
     async deletePassword(service: string, account: string): Promise<boolean> {
         const key = this.generateGenericLocalStorageKey(service, account);
-        const isPresent = (localStorage.getItem(key))
-            ? true
-            : false;
+        const isPresent = localStorage.has(key);
 
         localStorage.removeItem(key);
         return isPresent;

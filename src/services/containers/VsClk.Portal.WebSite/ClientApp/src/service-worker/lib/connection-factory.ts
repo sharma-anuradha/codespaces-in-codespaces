@@ -1,11 +1,10 @@
-import { WebClient } from '../../ts-agent/webClient';
 import { WorkspaceClient } from '../../ts-agent/workspaceClient';
 import * as vsls from '../../ts-agent/contracts/VSLS';
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
 import { SshDisconnectReason } from '@vs/vs-ssh';
 import { createLogger, Logger } from './logger';
 import { ConfigurationManager } from './configuration-manager';
-import { CredentialsManager } from './credentials-manager';
+import { ILiveShareClient } from '../../ts-agent/client/ILiveShareClient';
 
 export class LiveShareConnection implements Disposable {
     private serverSharingService!: vsls.ServerSharingService;
@@ -23,7 +22,7 @@ export class LiveShareConnection implements Disposable {
     private disposables: Disposable[] = [];
 
     constructor(
-        private readonly credentialsManager: CredentialsManager,
+        private readonly liveShareClient: ILiveShareClient,
         private readonly configurationManager: ConfigurationManager,
         private sessionId: string
     ) {
@@ -37,18 +36,7 @@ export class LiveShareConnection implements Disposable {
         };
         this.logger.info('Initializing live share connection', defaultArgs);
 
-        const credentials = this.credentialsManager.getCredentials(this.sessionId);
-
-        if (!credentials) {
-            this.logger.error('Cannot create connection. Missing credentials.', defaultArgs);
-            throw new Error('Cannot create connection. Missing credentials.');
-        }
-
-        const webClient = new WebClient(
-            this.configurationManager.configuration.liveShareEndpoint,
-            credentials.token
-        );
-        this.workspaceClient = new WorkspaceClient(webClient);
+        this.workspaceClient = new WorkspaceClient(this.liveShareClient);
         this.disposables.push(this.workspaceClient);
 
         if (this.workspaceClient.sshSession) {
@@ -129,7 +117,7 @@ export class LiveShareConnection implements Disposable {
 export class LiveShareConnectionFactory {
     private readonly logger: Logger;
     constructor(
-        private readonly credentialsManager: CredentialsManager,
+        private readonly liveShareClient: ILiveShareClient,
         private readonly configurationManager: ConfigurationManager
     ) {
         this.logger = createLogger('LiveShareConnectionFactory');
@@ -142,7 +130,7 @@ export class LiveShareConnectionFactory {
         this.logger.info('Creating LiveShare connection.', defaultAttributes);
 
         const connection = new LiveShareConnection(
-            this.credentialsManager,
+            this.liveShareClient,
             this.configurationManager,
             sessionId
         );

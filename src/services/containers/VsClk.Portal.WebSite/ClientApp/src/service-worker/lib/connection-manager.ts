@@ -1,7 +1,6 @@
 import { LiveShareConnectionFactory, LiveShareConnection } from './connection-factory';
 import { SshChannel } from '@vs/vs-ssh';
 import { Logger, createLogger } from './logger';
-import { CredentialsManager } from './credentials-manager';
 import { ConnectionDetails } from '../../common/connection-details';
 
 type ConnectionRequest = {
@@ -14,10 +13,7 @@ export class ConnectionManager {
 
     private readonly connectionStore = new Map<string, Promise<LiveShareConnection>>();
 
-    constructor(
-        private readonly connectionFactory: LiveShareConnectionFactory,
-        private readonly credentialsManager: CredentialsManager
-    ) {
+    constructor(private readonly connectionFactory: LiveShareConnectionFactory) {
         this.logger = createLogger('ConnectionManager');
     }
 
@@ -71,8 +67,8 @@ export class ConnectionManager {
         if (!this.connectionStore.has(connectionRequest.sessionId)) {
             const connection = this.createConnectionFor(connectionRequest);
 
-            this.logger.verbose('Storing connection in connectionStore.', connectionRequest);
             this.connectionStore.set(connectionRequest.sessionId, connection);
+            this.logger.verbose('Stored connection in connectionStore.', connectionRequest);
 
             connection.then(
                 (connection) => {
@@ -115,12 +111,6 @@ export class ConnectionManager {
     }
 
     private async createConnectionFor(connectionRequest: ConnectionRequest) {
-        const credentials = this.credentialsManager.getCredentials(connectionRequest.sessionId);
-
-        if (!credentials) {
-            throw new Error('Cannot create connections before credentials are set.');
-        }
-
         return this.connectionFactory.createConnection(connectionRequest.sessionId);
     }
 }

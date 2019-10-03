@@ -19,6 +19,7 @@ type ContainerRoutingDetails = {
 };
 
 type BaseRoutingDetails = {
+    readonly shouldCacheResponse: boolean;
     readonly port: number;
     readonly sessionId: string;
     readonly vscodeConnectionDetails?: VSCodeServerConnectionDetails;
@@ -84,6 +85,7 @@ function tryCreatePortForwardingRoutingDetails(
     containerUrl.host = containerDefaultHost;
 
     return {
+        shouldCacheResponse: false,
         sessionId: maybeSessionId,
         port,
         originalUrl,
@@ -136,6 +138,7 @@ export function tryCreateVSCodeAssetRoutingDetails(
     }
 
     return {
+        shouldCacheResponse: true,
         sessionId,
         port,
         originalUrl,

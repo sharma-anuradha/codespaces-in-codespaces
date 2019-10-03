@@ -1,11 +1,12 @@
-
 import { trace as baseTrace } from '../utils/trace';
 
 export const createTrace = (name: string) => {
     const verbose = baseTrace.extend(`${name}:trace`);
     verbose.log =
         // tslint:disable-next-line: no-console
-        typeof console.debug === 'function' ? console.debug.bind(console) : console.log.bind(console);
+        typeof console.debug === 'function'
+            ? console.debug.bind(console)
+            : console.log.bind(console);
 
     const info = baseTrace.extend(`${name}:info`);
     info.log =
@@ -26,6 +27,6 @@ export const createTrace = (name: string) => {
         verbose,
         info,
         warn,
-        error
-    }
-}
+        error,
+    };
+};

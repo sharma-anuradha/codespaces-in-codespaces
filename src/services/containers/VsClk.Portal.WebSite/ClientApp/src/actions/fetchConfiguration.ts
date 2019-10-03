@@ -2,9 +2,6 @@ import { getServiceConfiguration, IConfiguration } from '../services/configurati
 
 import { action } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
-import { postServiceWorkerMessage } from '../common/post-message';
-import { configureServiceWorker } from '../common/service-worker-messages';
-import { VSLS_API_URI } from '../constants';
 
 export const fetchConfigurationActionType = 'async.configuration.fetch';
 export const fetchConfigurationSuccessActionType = 'async.configuration.fetch.success';
@@ -29,14 +26,6 @@ export async function fetchConfiguration() {
     try {
         dispatch(fetchConfigurationAction());
         const configuration = await getServiceConfiguration();
-
-        // TODO: #984591 Configure live share endpoint from configuration controller.
-        postServiceWorkerMessage({
-            type: configureServiceWorker,
-            payload: {
-                liveShareEndpoint: VSLS_API_URI,
-            },
-        });
 
         dispatch(fetchConfigurationSuccessAction(configuration));
     } catch (err) {

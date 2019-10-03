@@ -1,5 +1,6 @@
 import parseMessage from 'http-message-parser';
 import { SshChannel } from '@vs/vs-ssh';
+
 import { ConnectionManager } from './connection-manager';
 import { getRoutingDetails, RoutingDetails } from '../../common/url-utils';
 import { Signal } from '../../utils/signal';
@@ -9,30 +10,12 @@ import { createUniqueId } from '../../dependencies';
 const separator = '\r\n';
 const [crByte, lfByte] = Array.from(new TextEncoder().encode(separator));
 
-// tslint:disable-next-line: export-name
-export class LiveShareHttpClient {
-    private readonly logger: Logger;
+export interface IHttpClient {
+    fetch(request: Request, preloadResponse?: Promise<any>): Promise<Response>;
+}
 
-    constructor(private readonly connectionManager: ConnectionManager) {
-        this.logger = createLogger('LiveShareHttpClient');
-    }
-
+export class PassThroughHttpClient implements IHttpClient {
     async fetch(request: Request): Promise<Response> {
-        const routingDetails = getRoutingDetails(request.url);
-
-        if (!routingDetails) {
-            return this.respondWithDefault(request);
-        }
-
-        this.logger.verbose('Fetching.', routingDetails);
-        return this.respondWithAssetFromEnvironment(
-            routingDetails.sessionId!,
-            request,
-            routingDetails
-        );
-    }
-
-    private async respondWithDefault(request: Request): Promise<Response> {
         if (request.cache === 'only-if-cached' && request.mode !== 'same-origin') {
             // https://bugs.chromium.org/p/chromium/issues/detail?id=823392
             // https://stackoverflow.com/questions/48463483/what-causes-a-failed-to-execute-fetch-on-serviceworkerglobalscope-only-if#49719964
@@ -45,9 +28,53 @@ export class LiveShareHttpClient {
         }
         return await fetch(request);
     }
+}
+
+export class LiveShareHttpClient implements IHttpClient {
+    private readonly logger: Logger;
+    private readonly basicHttpClient = new PassThroughHttpClient();
+
+    constructor(private readonly connectionManager: ConnectionManager) {
+        this.logger = createLogger('LiveShareHttpClient');
+    }
+
+    async fetch(request: Request): Promise<Response> {
+        const routingDetails = getRoutingDetails(request.url);
+
+        if (!routingDetails) {
+            return this.basicHttpClient.fetch(request);
+        }
+
+        if (!routingDetails.shouldCacheResponse) {
+            return await this.respondWithAssetFromEnvironment(request, routingDetails);
+        }
+
+        try {
+            const cache = await caches.open(routingDetails.sessionId);
+            const cachedResource = await cache.match(request);
+            if (cachedResource) {
+                this.logger.verbose('Returning cached resource.');
+                return cachedResource;
+            }
+        } catch (error) {
+            this.logger.error('Failed to get resource from cache.', { error });
+        }
+
+        const response = await this.respondWithAssetFromEnvironment(request, routingDetails);
+
+        if (response.ok) {
+            try {
+                const cache = await caches.open(routingDetails.sessionId);
+                await cache.put(request, response);
+            } catch (error) {
+                this.logger.error('Failed to store resource to cache.', { error });
+            }
+        }
+
+        return response;
+    }
 
     private async respondWithAssetFromEnvironment(
-        sessionId: string,
         request: Request,
         routingDetails: RoutingDetails
     ): Promise<Response> {
@@ -56,7 +83,7 @@ export class LiveShareHttpClient {
             const channel = await this.connectionManager.getChannelFor(
                 {
                     requestId,
-                    sessionId,
+                    sessionId: routingDetails.sessionId,
                 },
                 routingDetails.port
             );

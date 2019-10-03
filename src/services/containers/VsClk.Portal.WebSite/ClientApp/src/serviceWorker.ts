@@ -21,6 +21,7 @@ const isLocalhost = Boolean(
 );
 
 type Config = {
+    onReady?: (serviceWorker: ServiceWorker) => void;
     onSuccess?: (registration: ServiceWorkerRegistration) => void;
     onUpdate?: (registration: ServiceWorkerRegistration) => void;
 };
@@ -48,8 +49,11 @@ export function register(config?: Config) {
 
                 // Add some additional logging to localhost, pointing developers to the
                 // service worker/PWA documentation.
-                navigator.serviceWorker.ready.then(() => {
-                    console.log('Service worker ready.');
+                navigator.serviceWorker.ready.then((serviceWorkerRegistration) => {
+                    serviceWorkerRegistration.active &&
+                        config &&
+                        config.onReady &&
+                        config.onReady(serviceWorkerRegistration.active);
                 });
             } else {
                 // Is not localhost. Just register service worker

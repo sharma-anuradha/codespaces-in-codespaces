@@ -5,7 +5,12 @@ import { createLogger, Logger } from './logger';
 export class ConfigurationManager {
     private readonly logger: Logger;
 
-    private currentConfiguration: ServiceWorkerConfiguration = { liveShareEndpoint: VSLS_API_URI };
+    private currentConfiguration: ServiceWorkerConfiguration = {
+        liveShareEndpoint: VSLS_API_URI,
+        features: {
+            useSharedConnection: false,
+        },
+    };
 
     constructor() {
         this.logger = createLogger('ConfigurationManager');
@@ -15,7 +20,7 @@ export class ConfigurationManager {
         return this.currentConfiguration;
     }
 
-    updateConfiguration(configuration: ServiceWorkerConfiguration) {
+    updateConfiguration(configuration: Partial<ServiceWorkerConfiguration>) {
         this.currentConfiguration = {
             ...this.currentConfiguration,
             ...configuration,

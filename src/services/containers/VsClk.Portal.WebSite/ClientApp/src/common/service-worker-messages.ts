@@ -1,5 +1,6 @@
 import { ConnectionDetails } from './connection-details';
 import { ServiceWorkerConfiguration } from './service-worker-configuration';
+import { IWorkspaceInfo, IWorkspaceAccess } from '../ts-agent/client/ILiveShareClient';
 
 export const authenticateMessageType = 'cloudenv/authenticate';
 export type Connected = {
@@ -21,4 +22,14 @@ export type Configure = {
     payload: ServiceWorkerConfiguration;
 };
 
-export type ServiceWorkerMessage = Connected | Disconnect | Configure;
+export const updateLiveShareConnectionInfo = 'cloudenv/update-liveshare-connection-info';
+export type LiveShareConnectionInfo = {
+    type: typeof updateLiveShareConnectionInfo;
+    payload: {
+        sessionId: string;
+        workspaceInfo: IWorkspaceInfo;
+        workspaceAccess: IWorkspaceAccess;
+    };
+};
+
+export type ServiceWorkerMessage = Connected | Disconnect | Configure | LiveShareConnectionInfo;
