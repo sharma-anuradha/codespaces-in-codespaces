@@ -477,6 +477,29 @@ declare module 'vscode-web' {
         }): URI;
     }
 
+    /**
+     * A workspace to open in the workbench can either be:
+     * - a workspace file with 0-N folders (via `workspaceUri`)
+     * - a single folder (via `folderUri`)
+     * - empty (via `undefined`)
+     */
+    export type IWorkspace = { workspaceUri: URI } | { folderUri: URI } | undefined;
+
+    export interface IWorkspaceProvider {
+        /**
+         * The initial workspace to open.
+         */
+        readonly workspace: IWorkspace;
+
+        /**
+         * Asks to open a workspace in the current or a new window.
+         *
+         * @param workspace the workspace to open.
+         * @param options wether to open inside the current window or a new window.
+         */
+        open(workspace: IWorkspace, options?: { reuse?: boolean }): Promise<void>;
+    }
+
     export interface IWorkbenchConstructionOptions {
         /**
          * Experimental: the remote authority is the IP:PORT from where the workbench is served
@@ -494,6 +517,11 @@ declare module 'vscode-web' {
          * to provide full security isolation from the workbench host.
          */
         webviewEndpoint?: string;
+
+        /**
+         * Experimental: a handler for opening workspaces and providing the initial workspace.
+         */
+        workspaceProvider?: IWorkspaceProvider;
 
         /**
          * Experimental: An optional folder that is set as workspace context for the workbench.
@@ -551,7 +579,7 @@ declare module 'vscode-web' {
          */
         updateProvider?: IUpdateProvider;
     }
-    
+
     export interface IWorkbench {
         URI: URI;
         Disposable: vscodeTypes.Disposable;

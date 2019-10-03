@@ -14,6 +14,7 @@ import { isEnvironmentAvailable } from '../../utils/environmentUtils';
 
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { credentialsProvider } from '../../providers/credentialsProvider';
+import { WorkspaceProvider } from '../../providers/workspaceProvider';
 import { resourceUriProviderFactory } from '../../common/url-utils';
 import { postServiceWorkerMessage } from '../../common/post-message';
 import { authenticateMessageType, disconnectCloudEnv } from '../../common/service-worker-messages';
@@ -27,7 +28,7 @@ import { IWorkbenchConstructionOptions, IWebSocketFactory } from 'vscode-web';
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
-    folder: string | null;
+    params: URLSearchParams;
 }
 
 class WorkbenchView extends Component<WorkbenchProps> {
@@ -106,14 +107,10 @@ class WorkbenchView extends Component<WorkbenchProps> {
             },
         };
 
-        const folderUri = vscode.URI.from({
-            path: this.props.folder ? this.props.folder : sessionPath,
-            scheme: 'vscode-remote',
-            authority: `localhost`,
-        });
+        const workspaceProvider = new WorkspaceProvider(this.props.params, sessionPath);
 
         const config: IWorkbenchConstructionOptions = {
-            folderUri,
+            workspaceProvider,
             remoteAuthority: `localhost`,
             webSocketFactory: VSLSWebSocketFactory,
             urlCallbackProvider: new UrlCallbackProvider(),
@@ -151,12 +148,11 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
     });
 
     const params = new URLSearchParams(props.location.search);
-    const folder = params.get('folder');
 
     return {
         token: state.authentication.token,
         environmentInfo,
-        folder,
+        params,
     };
 };
 
