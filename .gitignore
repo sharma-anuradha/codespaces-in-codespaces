@@ -341,3 +341,5 @@ appsettings.test.json
 /.vscode/settings.json
 /src/BackEnd/ComputeVirtualMachineProvider/Test/ComputeVirtualMachineProvider.Test/.vscode/launch.json
 /src/BackEnd/ComputeVirtualMachineProvider/Test/ComputeVirtualMachineProvider.Test/.vscode/tasks.json
+
+/tools/kustolive/env
