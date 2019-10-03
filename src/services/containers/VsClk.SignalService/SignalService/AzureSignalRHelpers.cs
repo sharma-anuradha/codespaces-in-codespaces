@@ -68,7 +68,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 name => name.StartsWith(matchName, StringComparison.InvariantCultureIgnoreCase))).
                 Select(kvp => new ServiceEndpoint(
                                 kvp.Value,
-                                kvp.Key.Length == matchName.Length ? EndpointType.Primary : EndpointType.Secondary,
+                                kvp.Key.Length == matchName.Length || kvp.Key.Contains("Primary", StringComparison.InvariantCultureIgnoreCase) ? EndpointType.Primary : EndpointType.Secondary,
                                 kvp.Key)).ToArray();
         }
 
