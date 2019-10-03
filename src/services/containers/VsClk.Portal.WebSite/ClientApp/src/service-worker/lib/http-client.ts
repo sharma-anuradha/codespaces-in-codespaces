@@ -65,7 +65,7 @@ export class LiveShareHttpClient implements IHttpClient {
         if (response.ok) {
             try {
                 const cache = await caches.open(routingDetails.sessionId);
-                await cache.put(request, response);
+                await cache.put(request, response.clone());
             } catch (error) {
                 this.logger.error('Failed to store resource to cache.', { error });
             }
