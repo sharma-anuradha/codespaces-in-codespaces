@@ -8,11 +8,6 @@ frontend-web-api:
       - online-ppe.core.vsengsaas.visualstudio.com
       - westus2-ppe-rel-online.core.vsengsaas.visualstudio.com
       - southeastasia-ppe-rel-online.core.vsengsaas.visualstudio.com
-      - vsclk-online-ppe-rel-tm.trafficmanager.net
-      - vsclk-online-ppe-rel-asse-tm.trafficmanager.net
-      - vsclk-online-ppe-rel-euw-tm.trafficmanager.net
-      - vsclk-online-ppe-rel-use-tm.trafficmanager.net
-      - vsclk-online-ppe-rel-usw2-tm.trafficmanager.net
     tls:
       - hosts:
         - online-ppe.core.vsengsaas.visualstudio.com

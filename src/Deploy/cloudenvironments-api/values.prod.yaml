@@ -7,23 +7,18 @@ frontend-web-api:
     hosts:
       - online.visualstudio.com
       - online.core.vsengsaas.visualstudio.com
-      - eastus-prod-rel-online.core.vsengsaas.visualstudio.com
-      - westeurope-prod-rel-online.core.vsengsaas.visualstudio.com
-      - westus2-prod-rel-online.core.vsengsaas.visualstudio.com
-      - southeastasia-prod-rel-online.core.vsengsaas.visualstudio.com
-      - vsclk-online-prod-rel-tm.trafficmanager.net
-      - vsclk-online-prod-rel-asse-tm.trafficmanager.net
-      - vsclk-online-prod-rel-euw-tm.trafficmanager.net
-      - vsclk-online-prod-rel-use-tm.trafficmanager.net
-      - vsclk-online-prod-rel-usw2-tm.trafficmanager.net
+      - eastus.online.visualstudio.com
+      - westeurope.online.visualstudio.com
+      - westus2.online.visualstudio.com
+      - southeastasia.online.visualstudio.com
     tls:
       - hosts:
         - online.visualstudio.com
         - online.core.vsengsaas.visualstudio.com
-        - eastus-prod-rel-online.core.vsengsaas.visualstudio.com
-        - westeurope-prod-rel-online.core.vsengsaas.visualstudio.com
-        - westus2-prod-rel-online.core.vsengsaas.visualstudio.com
-        - southeastasia-prod-rel-online.core.vsengsaas.visualstudio.com
+        - eastus.online.visualstudio.com
+        - westeurope.online.visualstudio.com
+        - westus2.online.visualstudio.com
+        - southeastasia.online.visualstudio.com
         secretName: ssl-cert
 
 # Config for backend

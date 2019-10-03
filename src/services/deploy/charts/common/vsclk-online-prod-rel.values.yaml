@@ -7,23 +7,17 @@ ingress:
   hosts:
     - online.visualstudio.com
     - online.core.vsengsaas.visualstudio.com
-    - vsclk-online-prod-rel-tm.trafficmanager.net
-    - vsclk-online-prod-rel-asse-tm.trafficmanager.net
-    - vsclk-online-prod-rel-euw-tm.trafficmanager.net
-    - vsclk-online-prod-rel-use-tm.trafficmanager.net
-    - vsclk-online-prod-rel-usw2-tm.trafficmanager.net
   tls:
     - hosts:
         - online.visualstudio.com
-        - online.core.vsengsaas.visualstudio.com
       secretName: ssl-cert
 
 pfingress:
   hosts:
-    - "*.app.core.vsengsaas.visualstudio.com"
+    - "*.app.online.visualstudio.com"
   tls:
     - hosts:
-        - "*.app.core.vsengsaas.visualstudio.com"
+        - "*.app.online.visualstudio.com"
       secretName: ssl-cert
 
 authentication:
