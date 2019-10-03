@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         public FakeResourceBrokerClient(string dockerImageName, string publishedCLIPath)
         {
             this.dockerImageName = Requires.NotNull(dockerImageName, nameof(dockerImageName));
-            this.publishedCLIPath = Requires.NotNull(publishedCLIPath, nameof(publishedCLIPath));
+            this.publishedCLIPath = publishedCLIPath;
         }
 
         /// <inheritdoc/>
@@ -97,28 +97,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
                 throw new InvalidOperationException($"MockCompute: docker create failed with error code {createDockerProcess.ExitCode}");
             }
 
-            // Sanity test
-            if (!Directory.Exists(cliPublishedpath))
+            // Copy the CLI into the container if it's set
+            if (cliPublishedpath != null)
             {
-                throw new DirectoryNotFoundException($"{cliPublishedpath} not found. Make sure you publish the cli and point appsettings.Development.json at it.");
-            }
+                // Sanity test
+                if (!Directory.Exists(cliPublishedpath))
+                {
+                    throw new DirectoryNotFoundException($"{cliPublishedpath} not found. Make sure you publish the cli and point appsettings.Development.json at it.");
+                }
 
-            string cloudEnvironmentsCliExecutable = Path.Combine(cliPublishedpath, "vscloudenv");
-            if (!File.Exists(cloudEnvironmentsCliExecutable))
-            {
-                throw new FileNotFoundException($"{cloudEnvironmentsCliExecutable} not found. Publish CloudEnvironments CLI and check the output.");
-            }
-            // End sanity test
+                string vsoCliExecutable = Path.Combine(cliPublishedpath, "vsonline");
+                if (!File.Exists(vsoCliExecutable))
+                {
+                    throw new FileNotFoundException($"{vsoCliExecutable} not found. Publish VSO CLI and check the output.");
+                }
+                // End sanity test
 
-            var dockerCopyCommandLine = new StringBuilder();
-            dockerCopyCommandLine.Append("cp ");
-            dockerCopyCommandLine.Append($"{cliPublishedpath}/. "); // Added /. to copy the contents of the directory
-            dockerCopyCommandLine.Append($"{containerName}:/.cloudenv/bin ");
-            var dockerCopyProcess = Process.Start(DockerCLI, dockerCopyCommandLine.ToString());
-            dockerCopyProcess.WaitForExit();
-            if (dockerCopyProcess.ExitCode != 0)
-            {
-                throw new InvalidOperationException($"MockCompute: docker copy command failed with error code {dockerCopyProcess.ExitCode}");
+                var dockerCopyCommandLine = new StringBuilder();
+                dockerCopyCommandLine.Append("cp ");
+                dockerCopyCommandLine.Append($"{cliPublishedpath}/. "); // Added /. to copy the contents of the directory
+                dockerCopyCommandLine.Append($"{containerName}:/.vsonline/bin ");
+                var dockerCopyProcess = Process.Start(DockerCLI, dockerCopyCommandLine.ToString());
+                dockerCopyProcess.WaitForExit();
+                if (dockerCopyProcess.ExitCode != 0)
+                {
+                    throw new InvalidOperationException($"MockCompute: docker copy command failed with error code {dockerCopyProcess.ExitCode}");
+                }
             }
 
             var dockerStartCommandLine = new StringBuilder();
@@ -160,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             }
 
             createCommandLine.Append($"--name {containerName} ");
-            createCommandLine.Append($"{image} /.cloudenv/bin/vscloudenv bootstrap");
+            createCommandLine.Append($"{image} /.vsonline/bin/vso bootstrap");
             return createCommandLine.ToString();
         }
     }
