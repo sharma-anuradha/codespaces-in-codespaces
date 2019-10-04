@@ -9,8 +9,6 @@ import {
 import { configureStore } from '../store/configureStore';
 
 import {
-    createEnvironment,
-    createEnvironmentActionType,
     createEnvironmentSuccessActionType,
     CreateEnvironmentSuccessAction,
 } from '../actions/createEnvironment';

@@ -8,10 +8,12 @@ const { promisify } = require('util');
 const tar = require('tar');
 
 const { ensureDir } = require('./fileUtils');
+const { versionFilename } = require('./get-current-vscode-assets-version');
 
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
 const unlink = promisify(fs.unlink);
+const writeFile = promisify(fs.writeFile);
 
 /**
  * Downloads updated VSCode server based on commitId.
@@ -43,6 +45,18 @@ async function downloadVSCode(
         await untar(archivePath);
         console.log('Removing downloaded archive.');
         await unlink(archivePath);
+
+        console.log(`Writing ${versionFilename} file`);
+        await writeFile(
+            path.join(targetFolderPath, versionFilename),
+            JSON.stringify(
+                {
+                    commit: commitId,
+                },
+                null,
+                4
+            )
+        );
 
         console.log('Success');
     } catch (err) {

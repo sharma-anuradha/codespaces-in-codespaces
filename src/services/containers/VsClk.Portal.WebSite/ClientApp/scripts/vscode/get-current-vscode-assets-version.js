@@ -7,39 +7,40 @@ const { promisify } = require('util');
 const readFile = promisify(fs.readFile);
 const exists = promisify(fs.exists);
 
-const productFilename = 'product.json';
+const versionFilename = 'version.generated.json';
 
 /**
  * @param {string} vscodeAssetsPath
  * @returns {Promise<string|null>} commit
  */
 async function getCurrentAssetsCommit(vscodeAssetsPath) {
-    const productMetadataFilePath = path.join(vscodeAssetsPath, productFilename);
-    if (!(await exists(productMetadataFilePath))) {
-        console.error('There is no product metadata file at path:', productMetadataFilePath);
+    const versionMetadataFilePath = path.join(vscodeAssetsPath, versionFilename);
+    if (!(await exists(versionMetadataFilePath))) {
+        console.error('There is no version metadata file at path:', versionMetadataFilePath);
         return null;
     }
 
-    const fileContents = await readFile(path.join(vscodeAssetsPath, productFilename), {
+    const fileContents = await readFile(path.join(vscodeAssetsPath, versionFilename), {
         encoding: 'utf-8',
     });
 
     try {
-        const productMetadata = JSON.parse(fileContents);
+        const versionMetadata = JSON.parse(fileContents);
 
-        if (productMetadata.commit) {
-            return productMetadata.commit;
+        if (versionMetadata.commit) {
+            return versionMetadata.commit;
         } else {
-            console.warn('There is no commit in product metadata file.');
+            console.warn('There is no commit in version metadata file.');
         }
 
         return null;
     } catch (ex) {
-        console.error('Failed to read product.json file');
+        console.error(`Failed to read ${versionFilename} file`);
         return null;
     }
 }
 
 module.exports = {
     getCurrentAssetsCommit,
+    versionFilename,
 };
