@@ -6,7 +6,6 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
@@ -14,6 +13,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
@@ -35,17 +35,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private readonly IAccountManager accountManager;
         private readonly ICurrentUserProvider currentUserProvider;
         private readonly ICloudEnvironmentManager cloudEnvironmentManager;
+        private readonly string serviceUri;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
-        public SubscriptionsController(IAccountManager accountManager, 
-                                       ICurrentUserProvider currentUserProvider, 
-                                       IMapper mapperr, 
-                                       ICloudEnvironmentManager cloudEnvironmentManager)
+        public SubscriptionsController(
+            IAccountManager accountManager, 
+            ICurrentUserProvider currentUserProvider,
+            ICloudEnvironmentManager cloudEnvironmentManager,
+            CertificateSettings certificateSettings)
+
         {
             this.accountManager = accountManager;
             this.currentUserProvider = currentUserProvider;
             this.cloudEnvironmentManager = cloudEnvironmentManager;
+
+            // Obtain the service URI from the certificate settings. This is a
+            // NON-location-specific DNS name that corresponds to the service environment.
+            this.serviceUri = certificateSettings.Issuer;
         }
 
         /// <summary>
@@ -53,7 +61,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate")]
-        public IActionResult OnResourceCreationValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public IActionResult OnResourceCreationValidate(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName,
+            [FromBody] AccountResource resource)
         {
             var logger = HttpContext.GetLogger();
             try
@@ -63,11 +77,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
                 ValidationUtil.IsRequired(resourceName);
+
+                // TODO: Validate required resource.Properties.UserId.
             }
             catch (Exception ex)
             {
                 logger.LogException("Error validating Account Resource parameters before creation", ex);
                 return CreateErrorResponse("NullParameters");
+            }
+
+            if (resource.Properties != null && resource.Properties.UserId != null)
+            {
+                // TODO: Validate that the user profile exists.
             }
 
             // Required response format in case validation pass with empty body.
@@ -85,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
-            [FromBody] AccountInput modelInput)
+            [FromBody] AccountResource resource)
         {
             var logger = HttpContext.GetLogger();
 
@@ -98,11 +119,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
                 ValidationUtil.IsRequired(resourceName);
-                ValidationUtil.IsRequired(modelInput);
-                var nospacesLocation = modelInput.Location.Replace(" ", string.Empty);
+                ValidationUtil.IsRequired(resource);
+                var nospacesLocation = resource.Location.Replace(" ", string.Empty);
                 ValidationUtil.IsTrue(
                     Enum.TryParse(nospacesLocation, true, out AzureLocation location),
-                    $"Invalid location: ${modelInput.Location}");
+                    $"Invalid location: ${resource.Location}");
+
+                if (resource.Properties == null)
+                {
+                    resource.Properties = new AccountResourceProperties();
+                }
+
+                // Add a resource property indicating the service environment association.
+                resource.Properties.ServiceUri = this.serviceUri;
 
                 var account = new VsoAccount
                 {
@@ -113,12 +142,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,
                     },
+                    UserId = resource.Properties.UserId,
                 };
 
                 await this.accountManager.CreateOrUpdateAsync(account, logger);
 
                 // Required response format.
-                return CreateResponse(HttpStatusCode.OK, modelInput);
+                return CreateResponse(HttpStatusCode.OK, resource);
             }
             catch (Exception ex)
             {

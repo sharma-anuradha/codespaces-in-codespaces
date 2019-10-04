@@ -359,7 +359,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         throw new ArgumentException($"Account not found.", nameof(cloudEnvironment.AccountId));
                     }
 
-                    // TODO: Validate the calling user has contribute access to the account?
+                    // Validate the calling user is the owner of the the account (if the account has an owner).
+                    UnauthorizedUtil.IsTrue(accountDetails.UserId == null || currentUserId == accountDetails.UserId);
+
                     // TODO: Validate the account & subscription are in a good state?
                     // TODO: Check for quota on # of environments per account?
                 }
@@ -440,18 +442,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddCloudEnvironment(cloudEnvironment)
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex.Message);
 
-                try
+                if (cloudEnvironment.Id != null)
                 {
-                    /*
-                     * TODO: This won't actually cleanup properly because it relies on the workspace,
-                     * compute, and storage to have been written to the database!
-                     */
-                    // Compensating cleanup
-                    await DeleteEnvironmentAsync(cloudEnvironment.Id, currentUserId, logger);
-                }
-                catch (Exception ex2)
-                {
-                    throw new AggregateException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex, ex2);
+                    try
+                    {
+                        /*
+                         * TODO: This won't actually cleanup properly because it relies on the workspace,
+                         * compute, and storage to have been written to the database!
+                         */
+                        // Compensating cleanup
+                        await DeleteEnvironmentAsync(cloudEnvironment.Id, currentUserId, logger);
+                    }
+                    catch (Exception ex2)
+                    {
+                        throw new AggregateException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex, ex2);
+                    }
                 }
 
                 throw;

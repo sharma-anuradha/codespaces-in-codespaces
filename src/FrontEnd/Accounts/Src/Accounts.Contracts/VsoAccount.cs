@@ -16,6 +16,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         public VsoAccountInfo Account { get; set; }
 
         /// <summary>
+        /// ID of the user who created the account.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "userId")]
+        public string UserId { get; set;}
+
+        /// <summary>
         /// The billing plan selected for this account. This corresponds to the "SKU"
         /// property on the account resource.
         /// </summary>

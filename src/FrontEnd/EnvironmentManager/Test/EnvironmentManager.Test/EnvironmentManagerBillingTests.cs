@@ -39,6 +39,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             Name = "test-account",
             Location = AzureLocation.WestUs2
         };
+        private static readonly VsoAccount testVsoAccount = new VsoAccount
+        {
+            Id = "11100000-0000-0000-0000-000000000000",
+            Account = testAccount,
+        };
 
         public EnvironmentManagerBillingTests()
         {
@@ -121,6 +126,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         [Fact]
         public async Task CreateEnvironmentInitializesBillingState()
         {
+            await this.accountRepository.CreateAsync(testVsoAccount, this.logger);
+
             var testEnvironment = await CreateTestEnvironmentAsync();
 
             Assert.Collection(
@@ -132,6 +139,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         [Fact]
         public async Task UpdateEnvironmentUpdatesBillingState()
         {
+            await this.accountRepository.CreateAsync(testVsoAccount, this.logger);
             var testEnvironment = await CreateTestEnvironmentAsync();
             this.billingEventRepository.Clear();
 
@@ -146,6 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         [Fact]
         public async Task UnavailableEnvironmentUpdatesBillingState()
         {
+            await this.accountRepository.CreateAsync(testVsoAccount, this.logger);
             var testEnvironment = await CreateTestEnvironmentAsync();
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             this.billingEventRepository.Clear();
@@ -166,6 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         [Fact]
         public async Task DeleteEnvironmentUpdatesBillingState()
         {
+            await this.accountRepository.CreateAsync(testVsoAccount, this.logger);
             var testEnvironment = await CreateTestEnvironmentAsync();
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             this.billingEventRepository.Clear();

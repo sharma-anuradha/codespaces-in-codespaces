@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                 cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
                 cfg.CreateMap<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>();
                 cfg.CreateMap<EnvironmetnRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
-                cfg.CreateMap<AccountInput, VsoAccount>();
+                cfg.CreateMap<AccountResource, VsoAccount>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);

@@ -55,8 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
         public async Task GetAccount()
         {
             var original = await accountManager.CreateOrUpdateAsync(GenerateAccount("GetAccountTest"), logger);
-            var savedModelList = await accountManager.GetAsync(original.Account, logger);
-            var savedModel = savedModelList.ToList().FirstOrDefault();
+            var savedModel = await accountManager.GetAsync(original.Account, logger);
             Assert.NotNull(savedModel);
             Assert.NotNull(savedModel.Id);
             Assert.Equal(original.Account, savedModel.Account);
@@ -66,8 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
         public async Task UpdateAccount()
         {
             var original = await accountManager.CreateOrUpdateAsync(GenerateAccount("UpdateAccountTest"), logger);
-            var savedModelList = await accountManager.GetAsync(original.Account, logger);
-            var savedModel = savedModelList.ToList().FirstOrDefault();
+            var savedModel = await accountManager.GetAsync(original.Account, logger);
             savedModel.Plan = new Sku { Name = "Private" };
             var updatedModel = await accountManager.CreateOrUpdateAsync(savedModel, logger);
             Assert.NotNull(updatedModel);
@@ -82,8 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
             var result = await accountManager.DeleteAsync(savedModel.Account, logger);
             Assert.True(result);
 
-            var deletedList = await accountManager.GetAsync(savedModel.Account, logger);
-            var deleted = deletedList.FirstOrDefault();
+            var deleted = await accountManager.GetAsync(savedModel.Account, logger);
             Assert.Null(deleted);
         }
 

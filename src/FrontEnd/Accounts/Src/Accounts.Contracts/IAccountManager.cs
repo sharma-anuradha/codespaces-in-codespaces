@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
     {
         Task<VsoAccount> CreateOrUpdateAsync(VsoAccount model, IDiagnosticsLogger logger);
 
-        Task<IEnumerable<VsoAccount>> GetAsync(VsoAccountInfo account, IDiagnosticsLogger logger);
+        Task<VsoAccount> GetAsync(VsoAccountInfo account, IDiagnosticsLogger logger);
 
         Task<bool> DeleteAsync(VsoAccountInfo account, IDiagnosticsLogger logger);
 

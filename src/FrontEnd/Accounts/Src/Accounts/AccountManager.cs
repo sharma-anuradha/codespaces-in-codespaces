@@ -28,9 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         /// <returns></returns>
         public async Task<VsoAccount> CreateOrUpdateAsync(VsoAccount model, IDiagnosticsLogger logger)
         {
-            var modelList = await GetAsync(model.Account, logger);
-            var savedModel = modelList.ToList().SingleOrDefault();
-
+            var savedModel = await GetAsync(model.Account, logger);
             if (savedModel != null)
             {
                 var plan = model.Plan;
@@ -52,11 +50,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         /// <param name="account"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<VsoAccount>> GetAsync(VsoAccountInfo account, IDiagnosticsLogger logger)
+        public async Task<VsoAccount> GetAsync(VsoAccountInfo account, IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(account, nameof(VsoAccountInfo));
 
-            return await this.accountRepository.GetWhereAsync((model) => model.Account == account, logger, null);
+            var results = await this.accountRepository.GetWhereAsync((model) => model.Account == account, logger, null);
+            return results.SingleOrDefault();
         }
 
         /// <summary>
