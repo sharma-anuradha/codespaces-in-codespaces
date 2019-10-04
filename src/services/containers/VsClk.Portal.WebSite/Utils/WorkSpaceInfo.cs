@@ -8,12 +8,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
     public class WorkSpaceInfo
     {
         private static HttpClient client = new HttpClient();
-        public static AppSettings AppSettings { get; set; }
 
-        public static async Task<string> GetWorkSpaceOwner(string token, string sessionId)
+        public static async Task<string> GetWorkSpaceOwner(string token, string sessionId, string liveShareEndpoint)
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.GetAsync(Constants.LiveShareEndPoint + sessionId);
+            HttpResponseMessage response = await client.GetAsync(liveShareEndpoint + Constants.LiveShareWorkspaceRoute + sessionId);
 
             if (!response.IsSuccessStatusCode) 
             { 

@@ -80,21 +80,21 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 }
             }
 
-            var ownerId = await WorkSpaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId);
+                var ownerId = await WorkSpaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId, AppSettings.LiveShareEndpoint);
 
             if (ownerId == null || userId == null)
             {
                 return Content("userId or OwnerId is not provided.");
             }
 
-            if (ownerId == userId)
-            {
-                var cookiePayload = new LiveShareConnectionDetails
+                if (ownerId == userId)
                 {
-                    CascadeToken = cascadeToken,
-                    SessionId = sessionId,
-                    LiveShareEndPoint = AppSettings.IsLocal ? Constants.LiveShareLocalEndPoint : Constants.LiveShareEndPoint
-                };
+                    var cookiePayload = new LiveShareConnectionDetails
+                    {
+                        CascadeToken = cascadeToken,
+                        SessionId = sessionId,
+                        LiveShareEndPoint = AppSettings.LiveShareEndpoint
+                    };
 
                 return View(cookiePayload);
             }

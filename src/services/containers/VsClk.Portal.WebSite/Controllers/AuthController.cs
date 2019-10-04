@@ -40,7 +40,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return BadRequest();
             }
 
-            var cascadeToken = await AuthUtil.ExchangeToken(Constants.TokenExchangeEndpoint, bodyPayload.accessToken);
+            var cascadeToken = await AuthUtil.ExchangeToken(AppSettings.LiveShareEndpoint + Constants.LiveShareTokenExchangeRoute, bodyPayload.accessToken);
             var cookiePayload = new CookiePayload
             {
                 CascadeToken = cascadeToken,
