@@ -55,3 +55,8 @@ test:
            - 'coverage\**\*.htm'
            - 'coverage\**\*.csv'
            - 'coverage\**\*.txt'
+       - from: 'src\services\containers\VsClk.Portal.WebSite\ClientApp'
+         title: 'Portal Test Results'
+         type: 'JUnit'
+         include:
+           - 'junit.xml'

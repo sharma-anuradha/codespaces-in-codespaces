@@ -87,6 +87,7 @@ async function request<TResult>(
 
         response = await makeRequest(url, {
             ...rest,
+            credentials: 'same-origin',
             headers,
             body,
         });
@@ -168,6 +169,11 @@ function isValidRequestBody(obj: RequestInit['body'] | {}): obj is RequestInit['
 async function postRequest<TResult = object>(
     url: string,
     requestBody: RequestInit['body'] | {}
+): Promise<TResult>;
+async function postRequest<TResult = object>(
+    url: string,
+    requestBody: RequestInit['body'] | {},
+    requestOptions?: Partial<RequestOptions>
 ): Promise<TResult>;
 async function postRequest<TResult = object>(
     url: string,

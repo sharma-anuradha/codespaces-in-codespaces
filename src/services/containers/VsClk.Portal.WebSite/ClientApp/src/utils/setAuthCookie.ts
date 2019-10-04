@@ -1,13 +1,11 @@
-export async function setAuthCookie(token: string) {
-    const response = await fetch('/authenticate-port-forwarder', {
-        method: 'POST',
-        body: JSON.stringify({
-            accessToken: token,
-        }),
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'same-origin',
-    });
-    return response;
+import { useWebClient } from '../actions/middleware/useWebClient';
+
+export async function setAuthCookie(accessToken: string) {
+    const webClient = useWebClient();
+
+    await webClient.post(
+        '/authenticate-port-forwarder',
+        { accessToken },
+        { requiresAuthentication: false, skipParsingResponse: true }
+    );
 }

@@ -50,7 +50,7 @@ describe('actions - init', () => {
     });
 
     it('uses the right configuration', async () => {
-        const environmentRegistrationEndpoint = 'https://random.com/api/environment/registration';
+        const environmentRegistrationEndpoint = 'https://random.com/api/v1/environments';
         jest.spyOn(Auth.authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(authenticated.token)
         );
@@ -76,7 +76,7 @@ describe('actions - init', () => {
         await store.dispatch(init());
 
         expect(store.dispatchedActions).not.toHaveFailed();
-        expect(mockFetch).toHaveBeenLastCalledWith(
+        expect(mockFetch).toHaveBeenCalledWith(
             environmentRegistrationEndpoint,
             expect.objectContaining({ method: 'GET' })
         );

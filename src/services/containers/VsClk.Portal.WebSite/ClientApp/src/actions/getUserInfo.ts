@@ -1,4 +1,3 @@
-
 import { useDispatch } from './middleware/useDispatch';
 import { action } from './middleware/useActionCreator';
 import { authService, acquireToken } from '../services/authService';
@@ -29,7 +28,7 @@ export type GetUserInfoFailureAction = ReturnType<typeof getUserInfoFailureActio
 // Exposed - callable actions that have side-effects
 export async function getUserInfo() {
     const dispatch = useDispatch();
-    const { userInfo } = useActionContext().state;
+    const { userInfo, authentication } = useActionContext().state;
 
     if (userInfo) {
         return Promise.resolve(userInfo);
@@ -38,7 +37,7 @@ export async function getUserInfo() {
     try {
         dispatch(getUserInfoAction());
 
-        const token = await authService.getCachedToken();
+        const token = authentication.token;
         if (token) {
             const photoUrl = await fetchMyPhoto();
 
@@ -57,7 +56,6 @@ export async function getUserInfo() {
         } else {
             throw new Error('Unauthenticated.');
         }
-
     } catch (err) {
         dispatch(getUserInfoFailureAction(err));
     }
@@ -85,5 +83,5 @@ async function fetchMyPhoto() {
         // If the user doesn't have an image then that returns a 404 which results in an exception.
         // Simply return empty string here so that it shows the default image.
         return defaultPhotoUrl;
-    } 
+    }
 }

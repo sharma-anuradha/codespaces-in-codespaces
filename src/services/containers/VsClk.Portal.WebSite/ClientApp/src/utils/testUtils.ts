@@ -1,3 +1,5 @@
+import * as msal from 'msal';
+
 import { wait } from '../dependencies';
 import { ApplicationState } from '../reducers/rootReducer';
 import { BaseAction, ErrorAction, WithMetadata } from '../actions/middleware/types';
@@ -141,7 +143,9 @@ export type MockMakeRequestOptions = {
 export const authenticated = {
     token: {
         accessToken: '',
-        account: undefined!,
+        account: ({
+            idTokenClaims: { email: 'test@test.com', preferred_username: 'test' },
+        } as unknown) as msal.Account,
         expiresOn: undefined!,
     },
     isAuthenticated: true,

@@ -61,11 +61,21 @@ if "%EX%" neq "0" (
     echo Failed to yarn-build-project correctly.
 	exit /b %EX%
 )
+echo.
+echo yarn-test-project
+call yarn test:ci
+set EX=%ERRORLEVEL%
+if "%EX%" neq "0" (
+    popd
+    echo Failed to yarn-test-project correctly.
+	exit /b %EX%
+)
 popd
 
 echo.
 echo copy output files
 call robocopy %tmp%\portalspabuild\build\ .\build /s
+call robocopy %tmp%\portalspabuild\ .\ junit.xml
 popd
 
 :: Restore working directory of user so this works fine in dev box.

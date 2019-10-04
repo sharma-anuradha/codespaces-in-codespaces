@@ -33,3 +33,6 @@ package-lock.json
 # service worker
 /public/service-worker.js
 /public/service-worker.js.map
+
+# test output
+junit.xml
