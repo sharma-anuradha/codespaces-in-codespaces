@@ -180,7 +180,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             try
             {
                 // create queue message
-                var jobParameters = input.VmInputParams;
+                var jobParameters = new Dictionary<string, string>();
+                foreach (var kvp in input.VmInputParams)
+                {
+                    jobParameters.Add(kvp.Key, kvp.Value);
+                }
+
                 jobParameters.Add("storageAccountName", input.FileShareConnection.StorageAccountName);
                 jobParameters.Add("storageAccountKey", input.FileShareConnection.StorageAccountKey);
                 jobParameters.Add("storageShareName", input.FileShareConnection.StorageShareName);
