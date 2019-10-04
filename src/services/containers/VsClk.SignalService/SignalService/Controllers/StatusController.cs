@@ -91,7 +91,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             return this.serviceEndpoints.Select(se => new
             {
                 Name = se.Name,
-                Endpoint = se.Endpoint
+                Endpoint = se.Endpoint,
+                Type = se.EndpointType.ToString()
             }).ToArray();
         }
 
