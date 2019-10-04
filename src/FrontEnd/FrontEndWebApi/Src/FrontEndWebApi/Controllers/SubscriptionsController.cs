@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -13,11 +14,11 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Sku = Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Sku;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -32,16 +33,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     public class SubscriptionsController : ControllerBase
     {
         private readonly IAccountManager accountManager;
-
         private readonly ICurrentUserProvider currentUserProvider;
-
+        private readonly ICloudEnvironmentManager cloudEnvironmentManager;
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
-        public SubscriptionsController(IAccountManager accountManager, ICurrentUserProvider currentUserProvider, IMapper mapper)
+        public SubscriptionsController(IAccountManager accountManager, 
+                                       ICurrentUserProvider currentUserProvider, 
+                                       IMapper mapperr, 
+                                       ICloudEnvironmentManager cloudEnvironmentManager)
         {
             this.accountManager = accountManager;
             this.currentUserProvider = currentUserProvider;
+            this.cloudEnvironmentManager = cloudEnvironmentManager;
         }
 
         /// <summary>
@@ -49,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate")]
-        public Task<IActionResult> OnResourceCreationValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public IActionResult OnResourceCreationValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             var logger = HttpContext.GetLogger();
             try
@@ -63,22 +67,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             catch (Exception ex)
             {
                 logger.LogException("Error validating Account Resource parameters before creation", ex);
-                var rpErrorResponse = new ResourceProviderErrorResponse
-                {
-                    Error = new ResourceProviderErrorInfo
-                    {
-                        Code = "NullParameters",
-                        Message = string.Empty,
-                    },
-                    Status = "Failed",
-                };
-
-                // Required response format in case of validation failure.
-                return Task.FromResult<IActionResult>(CreateResponse(HttpStatusCode.OK, rpErrorResponse));
+                return CreateErrorResponse("NullParameters");
             }
 
             // Required response format in case validation pass with empty body.
-            return Task.FromResult<IActionResult>(new OkObjectResult(string.Empty));
+            return new OkObjectResult(string.Empty);
         }
 
         /// <summary>
@@ -130,18 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             catch (Exception ex)
             {
                 logger.LogException("Error creating Account Resource", ex);
-                var rpErrorResponse = new ResourceProviderErrorResponse
-                {
-                    Error = new ResourceProviderErrorInfo
-                    {
-                        Code = "CreateResourceFailed",
-                        Message = string.Empty,
-                    },
-                    Status = "Failed",
-                };
-
-                // Required response format in case of validation failure.
-                return CreateResponse(HttpStatusCode.BadRequest, rpErrorResponse);
+                return CreateErrorResponse("CreateResourceFailed");
             }
         }
 
@@ -151,11 +133,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns a Http status code and message</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted")]
-        public Task<IActionResult> OnResourceCreationCompleted(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public IActionResult OnResourceCreationCompleted(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             // Do post creation processing here ex: start billing, write billing Events
             // Required response format with empty body.
-            return Task.FromResult<IActionResult>(new OkObjectResult(string.Empty));
+            return new OkObjectResult(string.Empty);
         }
 
         /// <summary>
@@ -182,18 +164,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     Subscription = subscriptionId,
                 };
 
+                var environments = await cloudEnvironmentManager.GetEnvironmentsByAccountIdAsync(account.ResourceId, logger);
+                var count = environments.Count(t => t.State != CloudEnvironmentState.Deleted);
+                if (count > 0)
+                {
+                    return CreateErrorResponse("DeleteFailed", $"Account contains {count} environment(s). Delete all the environments before deleting the account.");
+                }
+
                 var response = await this.accountManager.DeleteAsync(account, logger);
                 if (!response)
                 {
-                    return CreateResponse(statusCode: HttpStatusCode.OK, new ResourceProviderErrorResponse
-                    {
-                        Error = new ResourceProviderErrorInfo
-                        {
-                            Code = "DeleteFailed",
-                            Message = string.Empty,
-                        },
-                        Status = "Failed",
-                    });
+                    return CreateErrorResponse("DeleteFailed");
                 }
 
                 // Required response format in case validation pass with empty body.
@@ -202,18 +183,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             catch (Exception ex)
             {
                 logger.LogException("Error deleting Account Resource", ex);
-                var rpErrorResponse = new ResourceProviderErrorResponse
-                {
-                    Error = new ResourceProviderErrorInfo
-                    {
-                        Code = "DeleteFailed",
-                        Message = string.Empty,
-                    },
-                    Status = "Failed",
-                };
-
-                // Required response format in case of validation failure.
-                return CreateResponse(statusCode: HttpStatusCode.OK, rpErrorResponse);
+                return CreateErrorResponse("DeleteFailed");
             }
         }
 
@@ -243,19 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             catch (Exception ex)
             {
                 logger.LogException("Error retrieving Account Resource list by Subscription and Resource Group", ex);
-
-                var rpErrorResponse = new ResourceProviderErrorResponse
-                {
-                    Error = new ResourceProviderErrorInfo
-                    {
-                        Code = "GetResourceListFailed",
-                        Message = string.Empty,
-                    },
-                    Status = "Failed",
-                };
-
-                // Required response format in case of validation failure.
-                return CreateResponse(HttpStatusCode.OK, rpErrorResponse);
+                return CreateErrorResponse("GetResourceListFailed");
             }
         }
 
@@ -283,18 +241,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             catch (Exception ex)
             {
                 logger.LogException("Error retrieving Account Resource list by Subscription", ex);
-                var rpErrorResponse = new ResourceProviderErrorResponse
-                {
-                    Error = new ResourceProviderErrorInfo
-                    {
-                        Code = "GetResourceListFailed",
-                        Message = string.Empty,
-                    },
-                    Status = "Failed",
-                };
-
-                // Required response format in case of validation failure.
-                return CreateResponse(HttpStatusCode.OK, rpErrorResponse);
+                return CreateErrorResponse("GetResourceListFailed");
             }
         }
 
@@ -303,10 +250,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns a Http status code and a VSO Account object.</returns>
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate")]
-        public Task<IActionResult> OnResourceReadValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public IActionResult OnResourceReadValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             // Used for pre-read validation only. The Resource is returned from RPSaaS(MetaRP) CosmosDB storage and not from here
-            return Task.FromResult<IActionResult>(new OkObjectResult(string.Empty));
+            return new OkObjectResult(string.Empty);
         }
 
         /// <summary>
@@ -323,6 +270,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             };
 
             return response;
+        }
+
+        /// <summary>
+        /// Creates an error response.
+        /// </summary>
+        /// <param name="statusCode">The status code.</param>
+        /// <param name="value">The value.</param>
+        private static JsonResult CreateErrorResponse(string errorCode, string errorMessage = default)
+        {
+            var errorResponse = new ResourceProviderErrorResponse
+            {
+                Error = new ResourceProviderErrorInfo
+                {
+                    Code = errorCode,
+                    Message = errorMessage,
+                },
+                Status = "Failed",
+            };
+
+            return new JsonResult(errorResponse)
+            {
+                StatusCode = (int)HttpStatusCode.OK,
+            };
         }
     }
 }

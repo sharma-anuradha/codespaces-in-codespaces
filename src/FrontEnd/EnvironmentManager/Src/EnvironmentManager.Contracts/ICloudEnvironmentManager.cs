@@ -85,5 +85,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Cloud environment service result.</returns>
         Task<CloudEnvironmentServiceResult> ShutdownEnvironmentAsync(string id, string currentUserId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Returns environments filered by the provided account resource Id.
+        /// </summary>
+        /// <param name="currentUserId"></param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByAccountIdAsync(string accountId, IDiagnosticsLogger logger);
     }
 }

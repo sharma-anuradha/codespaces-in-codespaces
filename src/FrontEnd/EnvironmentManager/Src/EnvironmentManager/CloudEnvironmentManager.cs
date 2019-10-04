@@ -587,6 +587,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
+        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByAccountIdAsync(
+            string accountId,
+            IDiagnosticsLogger logger)
+        {
+            UnauthorizedUtil.IsRequired(accountId);
+            Requires.NotNull(logger, nameof(logger));
+            return await CloudEnvironmentRepository.GetWhereAsync((cloudEnvironment) => cloudEnvironment.AccountId == accountId, logger);
+        }
+
+        /// <inheritdoc/>
         public async Task<bool> DeleteEnvironmentAsync(
             string id,
             string currentUserId,
