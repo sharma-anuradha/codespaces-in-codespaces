@@ -3,7 +3,7 @@ import { ServiceWorkerConfiguration } from './service-worker-configuration';
 import { IWorkspaceInfo, IWorkspaceAccess } from '../ts-agent/client/ILiveShareClient';
 
 export const authenticateMessageType = 'cloudenv/authenticate';
-export type Connected = {
+export type Authenticated = {
     type: typeof authenticateMessageType;
     payload: ConnectionDetails;
 };
@@ -32,4 +32,25 @@ export type LiveShareConnectionInfo = {
     };
 };
 
-export type ServiceWorkerMessage = Connected | Disconnect | Configure | LiveShareConnectionInfo;
+export const connected = 'cloudenv/connected';
+export type Connected = {
+    type: typeof connected;
+    payload: {
+        sessionId: string;
+    };
+};
+export const connectionFailed = 'cloudenv/connectionFailed';
+export type ConnectionFailed = {
+    type: typeof connectionFailed;
+    payload: {
+        sessionId: string;
+    };
+};
+
+export type ServiceWorkerMessage =
+    | Authenticated
+    | Disconnect
+    | Connected
+    | ConnectionFailed
+    | Configure
+    | LiveShareConnectionInfo;

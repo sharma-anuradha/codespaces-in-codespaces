@@ -61,14 +61,8 @@ serviceRegistry.registerFactory('HttpClient', (serviceRegistry) => {
 
 self.addEventListener('install', () => self.skipWaiting());
 
-self.addEventListener('activate', () => {
-    self.clients.matchAll({ type: 'window' }).then((windowClients) => {
-        for (let client of windowClients as WindowClient[]) {
-            // Force open pages to refresh, so that they have a chance to load the
-            // fresh navigation response from the local dev server.
-            client.navigate(client.url);
-        }
-    });
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {

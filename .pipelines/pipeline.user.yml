@@ -34,3 +34,4 @@ static_analysis_options:
       - 'src\setupProxy.js'
       - 'config-overrides.js'
       - 'webpack.config.worker.js'
+      - 'port-forwarding-dev-server.js'

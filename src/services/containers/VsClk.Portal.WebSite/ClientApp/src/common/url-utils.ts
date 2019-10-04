@@ -50,8 +50,26 @@ export function getRoutingDetails(url: string): Readonly<RoutingDetails> | undef
 
     return (
         tryCreatePortForwardingRoutingDetails(originalUrl) ||
-        tryCreateVSCodeAssetRoutingDetails(originalUrl)
+        tryCreateVSCodeAssetRoutingDetails(originalUrl) ||
+        dev_PortForwardingOverride(originalUrl) // <<- DEV PortForwarding here
     );
+}
+
+function dev_PortForwardingOverride(originalUrl: URL): Readonly<RoutingDetails> | undefined {
+    if (process.env.NODE_ENV !== 'development' || originalUrl.host !== 'localhost:4000') {
+        return undefined;
+    }
+
+    const containerUrl = new URL(originalUrl.href);
+    containerUrl.host = containerDefaultHost;
+
+    return {
+        shouldCacheResponse: false,
+        sessionId: 'YOUR_SESSION_ID', // <<- DEV PortForwarding here
+        port: 5000, // <<- DEV PortForwarding here
+        originalUrl,
+        containerUrl,
+    };
 }
 
 function tryCreatePortForwardingRoutingDetails(

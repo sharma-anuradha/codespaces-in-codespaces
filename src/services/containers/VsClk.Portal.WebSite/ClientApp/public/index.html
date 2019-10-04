@@ -2,56 +2,58 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8" />
-  <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
-  <title>Visual Studio Online</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <meta name="theme-color" content="#000000" />
-  <base id="public_url" href="%PUBLIC_URL%/" />
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/10.0.0/css/fabric.min.css" />
-  <link data-name="vs/workbench/workbench.web.api" rel="stylesheet" href="%PUBLIC_URL%/static/web-standalone/out/vs/workbench/workbench.web.api.css">
-  <!--
+    <meta charset="utf-8" />
+    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
+    <title>Visual Studio Online</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="theme-color" content="#000000" />
+    <base id="public_url" href="%PUBLIC_URL%/" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <link rel="stylesheet"
+        href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/10.0.0/css/fabric.min.css" />
+    <link data-name="vs/workbench/workbench.web.api" rel="stylesheet"
+        href="%PUBLIC_URL%/static/web-standalone/out/vs/workbench/workbench.web.api.css">
+    <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
-  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-  <link rel="prefetch" href="%PUBLIC_URL%/static/web-standalone/static/node_modules/semver-umd/lib/semver-umd.js">
-  <link rel="prefetch" href="%PUBLIC_URL%/static/web-standalone/node_modules/@microsoft/applicationinsights-web/dist/applicationinsights-web.js">
+    <link rel="prefetch" href="%PUBLIC_URL%/static/web-standalone/static/node_modules/semver-umd/lib/semver-umd.js">
+    <link rel="prefetch"
+        href="%PUBLIC_URL%/static/web-standalone/node_modules/@microsoft/applicationinsights-web/dist/applicationinsights-web.js">
 </head>
 
 <body class="monaco-shell vs-dark" aria-label="">
-  <noscript>You need to enable JavaScript to run this app.</noscript>
-  <div id="root"></div>
-  <script>
-    self.require = {
-        baseUrl: `${window.location.origin}/static/web-standalone/out`,
-        paths: {
-            'vscode-textmate': `${
-                window.location.origin
-            }/static/web-standalone/node_modules/vscode-textmate/release/main`,
-            'onigasm-umd': `${
-                window.location.origin
-            }/static/web-standalone/node_modules/onigasm-umd/release/main`,
-            xterm: `${
-                window.location.origin
-            }/static/web-standalone/node_modules/xterm/lib/xterm.js`,
-            'xterm-addon-search': `${
-                window.location.origin
-            }/static/web-standalone/node_modules/xterm-addon-search/lib/xterm-addon-search.js`,
-            'xterm-addon-web-links': `${
-                window.location.origin
-            }/static/web-standalone/node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js`,
-            'semver-umd': `${
-                window.location.origin
-            }/static/web-standalone/node_modules/semver-umd/lib/semver-umd.js`,
-            "@microsoft/applicationinsights-web":`${window.location.origin}/static/web-standalone/node_modules/@microsoft/applicationinsights-web/dist/applicationinsights-web.js`
-        },
-    };
-  </script>
-  <script src="%PUBLIC_URL%/static/web-standalone/out/vs/loader.js"></script>
-  <script src="%PUBLIC_URL%/static/web-standalone/out/vs/workbench/workbench.web.api.nls.js"></script>
-  <script defer src="%PUBLIC_URL%/static/web-standalone/out/vs/workbench/workbench.web.api.js"></script>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script>
+        self.require = {
+            baseUrl: `${window.location.origin}/static/web-standalone/out`,
+            paths: {
+                'vscode-textmate': `${
+                    window.location.origin
+                    }/static/web-standalone/node_modules/vscode-textmate/release/main`,
+                'onigasm-umd': `${
+                    window.location.origin
+                    }/static/web-standalone/node_modules/onigasm-umd/release/main`,
+                xterm: `${
+                    window.location.origin
+                    }/static/web-standalone/node_modules/xterm/lib/xterm.js`,
+                'xterm-addon-search': `${
+                    window.location.origin
+                    }/static/web-standalone/node_modules/xterm-addon-search/lib/xterm-addon-search.js`,
+                'xterm-addon-web-links': `${
+                    window.location.origin
+                    }/static/web-standalone/node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js`,
+                'semver-umd': `${
+                    window.location.origin
+                    }/static/web-standalone/node_modules/semver-umd/lib/semver-umd.js`,
+                "@microsoft/applicationinsights-web": `${window.location.origin}/static/web-standalone/node_modules/@microsoft/applicationinsights-web/dist/applicationinsights-web.js`
+            },
+        };
+    </script>
+    <script src="%PUBLIC_URL%/static/web-standalone/out/vs/loader.js"></script>
+    <script src="%PUBLIC_URL%/static/web-standalone/out/vs/workbench/workbench.web.api.nls.js"></script>
+    <script defer src="%PUBLIC_URL%/static/web-standalone/out/vs/workbench/workbench.web.api.js"></script>
 </body>
 
 </html>

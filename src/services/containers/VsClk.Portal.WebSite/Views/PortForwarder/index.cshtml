@@ -10,40 +10,73 @@
     <title>Connecting to server... </title>
 </head>
 <body>
-    <p>Connecting to server...</p>
+    <p id="user_message">Connecting to server...</p>
     <script>
-        if ("serviceWorker" in navigator) {
-            
-            navigator.serviceWorker.register("/service-worker.js", { scope: "/" });
-            navigator.serviceWorker.ready.then(registration => {
-                
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker
+                .register('/service-worker.js', { scope: '/' })
+                .catch(() => {
+                    location.replace('/error');
+                });
+
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                try {
+                    const message = event.data;
+                    if (
+                        message &&
+                        message.type === 'cloudenv/connected' &&
+                        message.payload.sessionId === '@Model.SessionId'
+                    ) {
+                        const messageElement = document.getElementById('user_message');
+                        if (messageElement) {
+                            messageElement.textContent = 'Connected to server. Refreshing page';
+                        }
+                        location.reload();
+                    }
+                    if (
+                        message &&
+                        message.type === 'cloudenv/connectionFailed' &&
+                        message.payload.sessionId === '@Model.SessionId'
+                    ) {
+                        throw new Error('Failed connecting to Visual Studio Online environment.');
+                    }
+                } catch (err) {
+                    navigator.serviceWorker.ready.then((registration) => {
+                        registration.unregister();
+
+                        location.replace('/error');
+                    });
+                }
+            });
+
+            navigator.serviceWorker.ready.then((registration) => {
+                if (!registration.active) {
+                    registration.unregister();
+
+                    location.replace('/error');
+                    return;
+                }
+
                 // Configure the LiveShare endpoint to be used by the service worker.
                 registration.active.postMessage({
-                    type: "cloudenv/configure",
+                    type: 'cloudenv/configure',
                     payload: {
-                        liveShareEndpoint: "@Model.LiveShareEndPoint",
+                        liveShareEndpoint: '@Model.LiveShareEndPoint',
                         features: {
                             useSharedConnection: false,
                         },
-                    }
+                    },
                 });
 
                 // Send credentials to the service worker.
                 registration.active.postMessage({
-                    type: "cloudenv/authenticate",
+                    type: 'cloudenv/authenticate',
                     payload: {
-                        token: "@Model.CascadeToken",
-                        sessionId: "@Model.SessionId"
-                    }
+                        token: '@Model.CascadeToken',
+                        sessionId: '@Model.SessionId',
+                    },
                 });
-
-                console.warn("reload");
-                setTimeout(() => {
-                    location.reload();
-                }, 100);
             });
-
-            // TODO: Need to reload the page even if there are errors with some connection error message
         }
     </script>
 </body>

@@ -2,6 +2,8 @@ import { LiveShareConnectionFactory, LiveShareConnection } from './connection-fa
 import { SshChannel } from '@vs/vs-ssh';
 import { Logger, createLogger } from './logger';
 import { ConnectionDetails } from '../../common/connection-details';
+import { broadcast } from './post-message-utils';
+import { connectionFailed, connected } from '../../common/service-worker-messages';
 
 type ConnectionRequest = {
     readonly requestId?: string;
@@ -17,8 +19,35 @@ export class ConnectionManager {
         this.logger = createLogger('ConnectionManager');
     }
 
-    initializeConnection(payload: ConnectionDetails) {
-        this.getConnectionFor(payload);
+    async initializeConnection(payload: ConnectionDetails) {
+        try {
+            this.logger.verbose('initializeConnection: waiting for connection', {
+                sessionId: payload.sessionId,
+            });
+            await this.getConnectionFor(payload);
+
+            this.logger.verbose('initializeConnection: broadcasting connected message', {
+                sessionId: payload.sessionId,
+            });
+            await broadcast({
+                type: connected,
+                payload: {
+                    sessionId: payload.sessionId,
+                },
+            });
+        } catch (error) {
+            this.logger.verbose('initializeConnection: failed fetching connection', {
+                error,
+                sessionId: payload.sessionId,
+            });
+
+            await broadcast({
+                type: connectionFailed,
+                payload: {
+                    sessionId: payload.sessionId,
+                },
+            });
+        }
     }
 
     async getChannelFor(connectionRequest: ConnectionRequest, port: number): Promise<SshChannel> {

@@ -70,3 +70,28 @@ Once you're done, the `appsettings.secrets.json` file should look something like
 }
 ```
 
+# Running port forwarding locally
+In ClientApp folder:
+
+As a setup step you need to export a certificate.
+
+```
+dotnet dev-certs https --export-path cert.pfx --password pass --trust
+```
+
+Run `VSO_PF_SESSION_ID=<<YourSessionID>> yarn start:pf-proxy` on mac
+
+Or on windows
+``` cmd
+set VSO_PF_SESSION_ID=<<YourSessionID>>
+yarn start:pf-proxy
+```
+
+Set up your port forwarding target in URL utils `ClientApp/src/common/url-utils.ts`
+
+There's `dev_PortForwardingOverride` function to create the routing details you need.
+
+1. Change sessionId and port in that function to target the server you want to port forward.
+2. Uncomment `// dev_PortForwardingOverride(originalUrl) ||` line in `getRoutingDetails` function
+
+Look for `// <<- DEV PortForwarding here` comments.

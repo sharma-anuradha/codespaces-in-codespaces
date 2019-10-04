@@ -14,6 +14,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             HttpResponseMessage response = await client.GetAsync(Constants.LiveShareEndPoint + sessionId);
+
+            if (!response.IsSuccessStatusCode) 
+            { 
+                return null; 
+            }
+
             HttpContent content = response.Content;
             var data = await content.ReadAsAsync<JObject>();
 

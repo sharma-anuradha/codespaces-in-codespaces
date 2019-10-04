@@ -22,7 +22,8 @@
                 "pattern": "^\\s*Now listening on:\\s+(https?://\\S+)"
             },
             "env": {
-                "ASPNETCORE_ENVIRONMENT": "Local"
+                "ASPNETCORE_ENVIRONMENT": "Local",
+                "PORTAL_AppSettings__IsLocal": "true"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
