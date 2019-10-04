@@ -582,7 +582,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
         private static string GetQueueName(string resourceName)
         {
-            return $"{resourceName}-input-queue";
+            return $"{resourceName.ToLowerInvariant()}-input-queue";
         }
 
         private static string GetOsDiskName(string vmName)
