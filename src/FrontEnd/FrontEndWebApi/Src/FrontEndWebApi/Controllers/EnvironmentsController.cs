@@ -129,14 +129,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
-        /// Lists all cloud environments belonging to the the current user.
+        /// Lists all cloud environments belonging to the the current user and environment name (optional)
         /// </summary>
         /// <returns>An object result containing the list of <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet]
         [ProducesResponseType(typeof(CloudEnvironmentResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ListEnvironmentsByOwnerAsync()
+        public async Task<IActionResult> ListEnvironmentsByOwnerAsync([FromQuery]string name)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
@@ -145,11 +145,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 var currentUserId = CurrentUserProvider.GetProfileId();
 
-                var modelsRaw = await EnvironmentManager.GetEnvironmentsByOwnerAsync(currentUserId, logger);
+                var modelsRaw = await EnvironmentManager.GetEnvironmentsByOwnerAsync(currentUserId, name, logger);
                 if (modelsRaw is null)
                 {
                     logger.AddDuration(duration)
-                        .AddReason($"{HttpStatusCode.NotFound}: no environments for current user.")
+                        .AddReason($"{HttpStatusCode.NotFound}: environments not found for the specified search criteria.")
                         .LogError(GetType().FormatLogErrorMessage(nameof(ListEnvironmentsByOwnerAsync)));
 
                     // TODO: why not return 200 with empty collection?

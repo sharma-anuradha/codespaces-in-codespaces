@@ -584,10 +584,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByOwnerAsync(
             string currentUserId,
+            string environmentName,
             IDiagnosticsLogger logger)
         {
             UnauthorizedUtil.IsRequired(currentUserId);
             Requires.NotNull(logger, nameof(logger));
+
+            if (!string.IsNullOrEmpty(environmentName))
+            {
+                return await CloudEnvironmentRepository.GetWhereAsync((cloudEnvironment) => cloudEnvironment.OwnerId == currentUserId && cloudEnvironment.FriendlyName == environmentName.Trim(), logger);
+            }
+
             return await CloudEnvironmentRepository.GetWhereAsync((cloudEnvironment) => cloudEnvironment.OwnerId == currentUserId, logger);
         }
 

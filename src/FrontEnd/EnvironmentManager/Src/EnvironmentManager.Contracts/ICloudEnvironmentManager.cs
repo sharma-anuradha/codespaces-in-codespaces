@@ -29,9 +29,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets all environments owned by the given user id.
         /// </summary>
         /// <param name="ownerId">The owner's user id.</param>
+        /// <param name="name">The environment name.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the list of <see cref="CloudEnvironment"/>.</returns>
-        Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByOwnerAsync(string ownerId, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByOwnerAsync(string ownerId, string name, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Creates a new environment.
@@ -89,9 +90,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Returns environments filered by the provided account resource Id.
         /// </summary>
-        /// <param name="currentUserId"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
+        /// <param name="accountId">The account id.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>list of CloudEnvironments.</returns>
         Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByAccountIdAsync(string accountId, IDiagnosticsLogger logger);
     }
 }
