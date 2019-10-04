@@ -15,11 +15,15 @@ export class InMemoryLiveShareClient implements ILiveShareClient, Disposable {
     });
 
     setWorkspaceInfo(invitationId: string, info: IWorkspaceInfo) {
+        invitationId = invitationId.toUpperCase();
+
         trace.verbose('setWorkspaceInfo', { invitationId });
         this.workspaceInfoRequests.setResponse(invitationId, info);
     }
 
     getWorkspaceInfo(invitationId: string): Promise<IWorkspaceInfo | null> {
+        invitationId = invitationId.toUpperCase();
+
         trace.verbose('getWorkspaceInfo', { invitationId });
 
         wait(30 * 1000).then(() => {
@@ -30,11 +34,15 @@ export class InMemoryLiveShareClient implements ILiveShareClient, Disposable {
     }
 
     setWorkspaceAccess(workspaceId: string, access: IWorkspaceAccess) {
+        workspaceId = workspaceId.toUpperCase();
+
         trace.verbose('setWorkspaceAccess', { workspaceId });
         this.workspaceAccessRequests.setResponse(workspaceId, access);
     }
 
     getWorkspaceAccess(workspaceId: string): Promise<IWorkspaceAccess | null> {
+        workspaceId = workspaceId.toUpperCase();
+
         trace.verbose('getWorkspaceAccess', { workspaceId });
 
         wait(30 * 1000).then(() => {

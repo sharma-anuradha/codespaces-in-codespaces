@@ -104,7 +104,7 @@ function tryCreatePortForwardingRoutingDetails(
 
     return {
         shouldCacheResponse: false,
-        sessionId: maybeSessionId,
+        sessionId: maybeSessionId.toUpperCase(),
         port,
         originalUrl,
         containerUrl,
