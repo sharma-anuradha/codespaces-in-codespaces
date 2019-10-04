@@ -55,6 +55,8 @@ try
     $startUpFile = "C:\Users\$username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\vsoagent.cmd"
     if (-Not (Test-Path $startUpFile))
     {
+        Add-Content $startUpFile 'C:\VisualStudio\Common7\IDE\VsRegEdit.exe set "C:\VisualStudio" HKCU FeatureFlags\ServiceBroker\LiveShareTransport Value DWORD 1'
+        Add-Content $startUpFile 'C:\VisualStudio\Common7\IDE\VsRegEdit.exe set "C:\VisualStudio" HKCU FeatureFlags\Microsoft\VisualStudio\Terminal Value DWORD 1'
         Add-Content $startUpFile "cd c:\vsonline\vsoagent\bin"
         Add-Content $startUpFile "c:\vsonline\vsoagent\bin\vso.exe vmagent"
     }
