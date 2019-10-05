@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Newtonsoft.Json;
 using Xunit;
+using UsageDictionary = System.Collections.Generic.Dictionary<string, double>;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
 {
@@ -227,7 +228,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                     {
                         Name = "one",
                         EndState = "Running",
-                        Usage = new Dictionary<string, double> { [meter] = 1.1 },
+                        Usage = new UsageDictionary { [meter] = 1.1 },
                         UserId = testEnvironment.UserId,
                         Sku = testEnvironment.Sku
                     },
@@ -235,7 +236,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                     {
                         Name = "two",
                         EndState = "Suspended",
-                        Usage = new Dictionary<string, double> { [meter] = 2.2 },
+                        Usage = new UsageDictionary { [meter] = 2.2 },
                         UserId = testEnvironment.UserId,
                         Sku = testEnvironment.Sku
                     },
@@ -244,7 +245,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                 {
                     ["test"] = new UserUsageDetail
                     {
-                        Usage = new Dictionary<string, double> { [meter] = 3.3 },
+                        Usage = new UsageDictionary { [meter] = 3.3 },
                     },
                 },
             };
@@ -255,7 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                 PeriodEnd = now,
                 Plan = "test",
                 SubscriptionState = SubscriptionStates.Registered,
-                Usage = new Dictionary<string, double> { [meter] = 3.3 },
+                Usage = new UsageDictionary { [meter] = 3.3 },
                 UsageDetail = usageDetail,
                 Emitted = false,
             };
@@ -394,7 +395,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                         PeriodEnd = summaryTime,
                         Plan = string.Empty,
                         SubscriptionState = string.Empty,
-                        Usage = new Dictionary<string, double>(),
+                        Usage = new UsageDictionary(),
                         UsageDetail = new UsageDetail
                         {
                             Environments = new Dictionary<string, EnvironmentUsageDetail>
@@ -402,7 +403,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                                 [testEnvironment.Id] = new EnvironmentUsageDetail
                                 {
                                     Name = testEnvironment.Name,
-                                    Usage = new Dictionary<string, double>(),
+                                    Usage = new UsageDictionary(),
                                     EndState = "two",
                                     UserId = testEnvironment.UserId,
                                     Sku = testEnvironment.Sku
@@ -410,7 +411,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                                 [testEnvironment2.Id] = new EnvironmentUsageDetail
                                 {
                                     Name = testEnvironment2.Name,
-                                    Usage = new Dictionary<string, double>(),
+                                    Usage = new UsageDictionary(),
                                     EndState = "three",
                                     UserId = testEnvironment.UserId,
                                     Sku = testEnvironment.Sku
@@ -420,7 +421,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                             {
                                 [testEnvironment.UserId] = new UserUsageDetail
                                 {
-                                    Usage = new Dictionary<string, double>(),
+                                    Usage = new UsageDictionary(),
                                 }
                             },
                         },
@@ -437,7 +438,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                         PeriodEnd = summaryTime,
                         Plan = string.Empty,
                         SubscriptionState = string.Empty,
-                        Usage = new Dictionary<string, double>(),
+                        Usage = new UsageDictionary(),
                         UsageDetail = new UsageDetail
                         {
                             Environments = new Dictionary<string, EnvironmentUsageDetail>
@@ -445,7 +446,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                                 [testEnvironment.Id] = new EnvironmentUsageDetail
                                 {
                                     Name = testEnvironment.Name,
-                                    Usage = new Dictionary<string, double>(),
+                                    Usage = new UsageDictionary(),
                                     EndState = "two",
                                     UserId = testEnvironment.UserId,
                                     Sku = testEnvironment.Sku
@@ -453,7 +454,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                                 [testEnvironment2.Id] = new EnvironmentUsageDetail
                                 {
                                     Name = testEnvironment2.Name,
-                                    Usage = new Dictionary<string, double>(),
+                                    Usage = new UsageDictionary(),
                                     EndState = "three",
                                     UserId = testEnvironment.UserId,
                                     Sku = testEnvironment.Sku
@@ -463,7 +464,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                             {
                                 [testEnvironment.UserId] = new UserUsageDetail
                                 {
-                                    Usage = new Dictionary<string, double>(),
+                                    Usage = new UsageDictionary(),
                                 }
                             },
                         },

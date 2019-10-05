@@ -1,6 +1,12 @@
-﻿using Microsoft.Azure.Documents;
-using Microsoft.Azure.Management.AppService.Fluent.Models;
-using Microsoft.Azure.Management.Sql.Fluent.Models;
+﻿// <copyright file="BillingService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -9,15 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
-using Newtonsoft.Json;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using UsageDictionary = System.Collections.Generic.Dictionary<string, double>;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -150,15 +148,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         private BillingSummary CalculateBillingUnits(IEnumerable<BillingEvent> events, DateTime start, DateTime end, IDiagnosticsLogger logger)
         {
-            double totalBillable = 0;
+            var totalBillable = 0.0d;
             var envUsageDetails = new Dictionary<string, EnvironmentUsageDetail>();
             var userUsageDetails = new Dictionary<string, UserUsageDetail>();
-            
+
             // Get events per environment
             var perEnvironment = events.GroupBy(b => b.Environment.Id);
             foreach (var environment in perEnvironment)
             {
-                double billable = 0;
+                var billable = 0.0d;
                 var seqEvents = environment.ToList();
                 var availableEvent = seqEvents.Where(e =>
                 ((BillingStateChange)e.Args).NewValue.Equals(AvailableEnvState, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
@@ -171,20 +169,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     if (availableEvent != null)
                     {
                         // Environment was made available during this time period
-                        billable = CalculateUnitsByTimeAndSku(availableEvent.Time, deletedEvent.Time, deletedEvent.Environment.Sku.Name);
+                        billable = CalculateActiveVsoUnitsByTimeAndSku(availableEvent.Time, deletedEvent.Time, deletedEvent.Environment.Sku.Name);
                     }
                     else
                     {
                         // Environment was made available outside this time period
                         // so use this period's start time
-                        billable = CalculateUnitsByTimeAndSku(start, deletedEvent.Time, deletedEvent.Environment.Sku.Name);
+                        billable = CalculateActiveVsoUnitsByTimeAndSku(start, deletedEvent.Time, deletedEvent.Environment.Sku.Name);
                     }
 
                     var usageDetail = new EnvironmentUsageDetail
                     {
                         Name = deletedEvent.Environment.Name,
                         EndState = DeletedEnvState,
-                        Usage = new Dictionary<string, double>
+                        Usage = new UsageDictionary
                             {
                                 { "METER", billable },
                             },
@@ -202,13 +200,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Scenario: Environment was made available during this period
                 if (availableEvent != null)
                 {
-                    billable = CalculateUnitsByTimeAndSku(availableEvent.Time, end, availableEvent.Environment.Sku.Name);
+                    billable = CalculateActiveVsoUnitsByTimeAndSku(availableEvent.Time, end, availableEvent.Environment.Sku.Name);
                     totalBillable += billable;
                     var usageDetail = new EnvironmentUsageDetail
                     {
                         Name = availableEvent.Environment.Name,
                         EndState = AvailableEnvState,
-                        Usage = new Dictionary<string, double>
+                        Usage = new UsageDictionary
                             {
                                 { "METER", billable },
                             },
@@ -228,7 +226,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 SubscriptionState = string.Empty,
                 Plan = string.Empty,
                 Emitted = false,
-                Usage = new Dictionary<string, double>
+                Usage = new UsageDictionary
                 {
                     { "METER", totalBillable },
                 },
@@ -263,15 +261,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 }
                 else if (envUsageDetail.EndState == AvailableEnvState)
                 {
-                    var billable = CalculateUnitsByTimeAndSku(start, end, environment.Value.Sku.Name);
+                    var billable = CalculateActiveVsoUnitsByTimeAndSku(start, end, environment.Value.Sku.Name);
                     var usageDetail = new EnvironmentUsageDetail
                     {
                         Name = envUsageDetail.Name,
                         EndState = AvailableEnvState,
-                        Usage = new Dictionary<string, double>
-                                    {
-                                        { "METER", billable },
-                                    },
+                        Usage = new UsageDictionary
+                        {
+                            { "METER", billable },
+                        },
                         Sku = environment.Value.Sku,
                         UserId = environment.Value.UserId,
                     };
@@ -286,6 +284,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     {
                         currentSummary.Usage.Add("METER", billable);
                     }
+
                     currentSummary.UsageDetail.Users = AggregateUserUsageDetails(currentSummary.UsageDetail.Users, billable, environment.Value.UserId);
                 }
             }
@@ -297,7 +296,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             if (currentlist.TryGetValue(userId, out UserUsageDetail userUsageDetail))
             {
-                double oldValue = 0;
+                var oldValue = 0.0d;
                 userUsageDetail.Usage.TryGetValue("METER", out oldValue);
                 userUsageDetail.Usage["METER"] = billable + oldValue;
             }
@@ -305,33 +304,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 currentlist.Add(userId, new UserUsageDetail
                 {
-                    Usage = new Dictionary<string, double> { { "METER", billable } },
+                    Usage = new UsageDictionary { { "METER", billable } },
                 });
             }
 
             return currentlist as Dictionary<string, UserUsageDetail>;
         }
 
-        private double GetSkuUnitsBySkuName(string name)
+        private decimal GetActiveVsoUnitsBySkuName(string name)
         {
-            if (SkuDictionary.ContainsKey(name))
+            if (SkuDictionary.TryGetValue(name, out var sku))
             {
-                var sku = SkuDictionary[name];
-                return (double)(sku.ComputeCloudEnvironmentUnitsPerHr + sku.StorageCloudEnvironmentUnitsPerHr);
+                return sku.GetActiveVsoUnitsPerHour();
             }
             else
             {
                 // Sku is being used on an environment that does not
                 // have a Sku Catelog record
-                return 0;
+                return 0.0m;
             }
         }
 
-        // TODO: use decimal type for calculations then convert back to double
-        private double CalculateUnitsByTimeAndSku(DateTime start, DateTime end, string sku)
+        private double CalculateActiveVsoUnitsByTimeAndSku(DateTime start, DateTime end, string sku)
         {
-            var units = GetSkuUnitsBySkuName(sku);
-            return end.Subtract(start).TotalSeconds * (units / 3600); // Convert hourly rate to seconds
+            var vsoUnitsPerHour = GetActiveVsoUnitsBySkuName(sku);
+            const decimal secondsPerHour = 3600m;
+            var vsoUnitsPerSecond = vsoUnitsPerHour / secondsPerHour;
+            var totalSeconds = (decimal)end.Subtract(start).TotalSeconds;
+            var vsoUnits = totalSeconds * vsoUnitsPerSecond;
+            return (double)vsoUnits;
         }
     }
 }
