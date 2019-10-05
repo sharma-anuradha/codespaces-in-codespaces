@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public ConnectionInfo Connection { get; set; }
 
         /// <summary>
-        /// Gets or sets the last active date and tiem.
+        /// Gets or sets the last active date and time.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "active")]
         public DateTime Active { get; set; }
@@ -119,5 +119,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </remarks>
         [JsonProperty(Required = Required.Default, PropertyName = "compute")]
         public ResourceAllocation Compute { get; set; }
+
+        /// <summary>
+        /// Gets or sets the last time the record is updated based on heartbeat.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "lastUpdatedByHeartBeat")]
+        public DateTime LastUpdatedByHeartBeat { get; set; }
     }
 }

@@ -27,6 +27,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Swagger;
@@ -200,6 +202,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
                 options.PreferredLocation = CurrentAzureLocation.ToString();
             });
+
+            // Add HeartBeat data handlers
+            services.AddHeartBeatDataHandlers();
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>

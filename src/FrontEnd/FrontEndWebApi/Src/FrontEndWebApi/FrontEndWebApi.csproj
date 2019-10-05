@@ -34,6 +34,7 @@
     <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj" />
     <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
+    <ProjectReference Include="..\..\..\Monitoring\Src\Monitoring\Monitoring.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\src\UserProfile\UserProfile.csproj" />
   </ItemGroup>

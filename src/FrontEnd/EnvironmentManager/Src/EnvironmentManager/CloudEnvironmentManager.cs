@@ -533,6 +533,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return null;
                 }
 
+                UnauthorizedUtil.IsTrue(currentUserId == cloudEnvironment.OwnerId);
+
                 // Update the new state before returning.
                 var originalState = cloudEnvironment.State;
                 var newState = originalState;
@@ -599,6 +601,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
+        public async Task<CloudEnvironment> GetEnvironmentByIdAsync(
+            string id,
+            IDiagnosticsLogger logger)
+        {
+            ValidationUtil.IsRequired(id);
+            Requires.NotNull(logger, nameof(logger));
+            return await CloudEnvironmentRepository.GetAsync(id, logger);
+        }
+
+        /// <inheritdoc />
         public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByAccountIdAsync(
             string accountId,
             IDiagnosticsLogger logger)
@@ -656,6 +668,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             await CloudEnvironmentRepository.DeleteAsync(id, logger);
 
             return true;
+        }
+
+        /// <inheritdoc />
+        public async Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger, CloudEnvironmentState newState)
+        {
+            cloudEnvironment.Updated = DateTime.UtcNow;
+            if (newState != default && newState != cloudEnvironment.State)
+            {
+                await SetEnvironmentStateAsync(cloudEnvironment, newState, logger);
+            }
+
+            return await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+        }
+
+        private async Task SetEnvironmentStateAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentState state,
+            IDiagnosticsLogger logger)
+        {
+            var oldState = cloudEnvironment.State;
+
+            VsoAccountInfo account;
+            if (cloudEnvironment.AccountId == default)
+            {
+                // Use a temporary account if the environment doesn't have one.
+                // TODO: Remove this; make the account required after clients are updated to supply it.
+                account = new VsoAccountInfo
+                {
+                    Subscription = Guid.Empty.ToString(),
+                    ResourceGroup = "none",
+                    Name = "none",
+                };
+            }
+            else
+            {
+                Requires.Argument(
+                    VsoAccountInfo.TryParse(cloudEnvironment.AccountId, out account),
+                    nameof(cloudEnvironment.AccountId),
+                    "Invalid account ID");
+
+                account.Location = cloudEnvironment.Location;
+            }
+
+            var environment = new EnvironmentBillingInfo
+            {
+                Id = cloudEnvironment.Id,
+                Name = cloudEnvironment.FriendlyName,
+                UserId = cloudEnvironment.OwnerId,
+                Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
+            };
+
+            var stateChange = new BillingStateChange
+            {
+                OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
+                NewValue = state.ToString(),
+            };
+
+            await BillingEventManager.CreateEventAsync(
+                account, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
+
+            cloudEnvironment.State = state;
         }
 
         private async Task<ConnectionInfo> CreateWorkspace(
@@ -772,59 +845,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     EnvironmentVariables = environmentVariables,
                 },
                 logger);
-        }
-
-        /// <summary>
-        /// Updates the `State` property of an environment and emits a billing event
-        /// to record the state change for billing purposes.
-        /// </summary>
-        private async Task SetEnvironmentStateAsync(
-            CloudEnvironment cloudEnvironment,
-            CloudEnvironmentState state,
-            IDiagnosticsLogger logger)
-        {
-            var oldState = cloudEnvironment.State;
-
-            VsoAccountInfo account;
-            if (cloudEnvironment.AccountId == default)
-            {
-                // Use a temporary account if the environment doesn't have one.
-                // TODO: Remove this; make the account required after clients are updated to supply it.
-                account = new VsoAccountInfo
-                {
-                    Subscription = Guid.Empty.ToString(),
-                    ResourceGroup = "none",
-                    Name = "none",
-                };
-            }
-            else
-            {
-                Requires.Argument(
-                    VsoAccountInfo.TryParse(cloudEnvironment.AccountId, out account),
-                    nameof(cloudEnvironment.AccountId),
-                    "Invalid account ID");
-
-                account.Location = cloudEnvironment.Location;
-            }
-
-            var environment = new EnvironmentBillingInfo
-            {
-                Id = cloudEnvironment.Id,
-                Name = cloudEnvironment.FriendlyName,
-                UserId = cloudEnvironment.OwnerId,
-                Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
-            };
-
-            var stateChange = new BillingStateChange
-            {
-                OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
-                NewValue = state.ToString(),
-            };
-
-            await BillingEventManager.CreateEventAsync(
-                account, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
-
-            cloudEnvironment.State = state;
         }
     }
 }

@@ -88,6 +88,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Task<CloudEnvironmentServiceResult> ShutdownEnvironmentAsync(string id, string currentUserId, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Update Environment.
+        /// </summary>
+        /// <param name="cloudEnvironment">Cloud Environemnt that needs to be updated.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="newState">New state, if the state needs to be updated.</param>
+        /// <returns>A task whose result is the updated <see cref="CloudEnvironment"/>.</returns>
+        Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger, CloudEnvironmentState newState = default);
+
+        /// <summary>
+        /// Get environment by id.
+        /// </summary>
+        /// <param name="id">The environment by id.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<CloudEnvironment> GetEnvironmentByIdAsync(string id, IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Returns environments filered by the provided account resource Id.
         /// </summary>
         /// <param name="accountId">The account id.</param>
