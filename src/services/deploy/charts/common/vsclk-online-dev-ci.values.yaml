@@ -6,6 +6,7 @@ image:
 ingress:
   hosts:
     - online.dev.core.vsengsaas.visualstudio.com
+    - vsclk-online-dev-ci-tm.trafficmanager.net
   tls:
     - hosts:
         - online.dev.core.vsengsaas.visualstudio.com

@@ -6,6 +6,7 @@ image:
 ingress:
   hosts:
     - online-ppe.core.vsengsaas.visualstudio.com
+    - vsclk-online-ppe-rel-tm.trafficmanager.net
   tls:
     - hosts:
         - online-ppe.core.vsengsaas.visualstudio.com

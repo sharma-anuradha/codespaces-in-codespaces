@@ -7,6 +7,7 @@ ingress:
   hosts:
     - online.visualstudio.com
     - online.core.vsengsaas.visualstudio.com
+    - vsclk-online-prod-rel-tm.trafficmanager.net
   tls:
     - hosts:
         - online.visualstudio.com
