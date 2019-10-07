@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 
 import { ApplicationState } from './reducers/rootReducer';
 import { Loader } from './components/loader/loader';
+import { telemetry } from './utils/telemetry';
 
 const getAuthInfo = ({
     authentication: { isAuthenticated, isAuthenticating },
@@ -20,6 +21,12 @@ type Props = {
     RouteComponentProps;
 
 const ProtectedRouteView = (props: Props) => {
+    if (props.match.path === '/environment/:id') {
+        telemetry.setCurrentEnvironmentId((props.match.params as any).id as string);
+    } else {
+        telemetry.setCurrentEnvironmentId(undefined);
+    }
+
     const { isAuthenticating, isAuthenticated, component: Component, ...rest } = props;
 
     if (isAuthenticating && !isAuthenticated) {

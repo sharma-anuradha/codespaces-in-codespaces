@@ -2,6 +2,7 @@ import { createUniqueId } from '../../dependencies';
 import { DispatchWithContext } from './types';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { MiddlewareAPI } from 'redux';
+import { TelemetryPropertyValue } from '../../utils/telemetry/types';
 
 let context: Context | undefined;
 
@@ -56,6 +57,10 @@ export class Context {
         }
 
         return this.storeApi!.dispatch(action, this);
+    }
+
+    getTelemetryProperties(): Record<string, TelemetryPropertyValue> {
+        return {};
     }
 
     clone() {

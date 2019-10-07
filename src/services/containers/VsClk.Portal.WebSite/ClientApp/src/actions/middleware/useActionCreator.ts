@@ -57,10 +57,11 @@ export function useActionCreator() {
     return createContextAwareAction;
 }
 
-export function createMetadataFor<T>(action: T, context: Context): Metadata {    
+export function createMetadataFor<T>(action: T, context: Context): Metadata {
     return {
         correlationId: context.__id,
-    }
+        telemetryProperties: context.getTelemetryProperties(),
+    };
 }
 
 // prettier-ignore

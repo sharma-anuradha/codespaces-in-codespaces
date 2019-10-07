@@ -1,5 +1,6 @@
 import { Context } from './useActionContext';
 import { AnyAction } from 'redux';
+import { TelemetryPropertyValue } from '../../utils/telemetry/types';
 
 export interface BaseAction<
     TType extends string = string,
@@ -31,7 +32,8 @@ export interface ErrorAction<
 
 export type Metadata = {
     correlationId: string;
-}
+    telemetryProperties: Record<string, TelemetryPropertyValue>;
+};
 
 export type WithMetadata<T> = T & {
     metadata: Metadata;

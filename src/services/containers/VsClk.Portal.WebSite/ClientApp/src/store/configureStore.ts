@@ -4,8 +4,15 @@ import { trace } from '../utils/trace';
 import { setContextFactory, Context } from '../actions/middleware/useActionContext';
 import { actionContextMiddleware } from '../actions/middleware/middleware';
 import { DispatchError } from '../actions/middleware/useDispatch';
-import { BaseAction, ErrorAction, DispatchWithContext, WithMetadata } from '../actions/middleware/types';
-import { telemetry, IActionTelemetryProperties } from '../utils/telemetry';
+import {
+    BaseAction,
+    ErrorAction,
+    DispatchWithContext,
+    WithMetadata,
+} from '../actions/middleware/types';
+import { telemetry } from '../utils/telemetry';
+import { ActionSuccessEvent } from '../utils/telemetry/ActionSuccessEvent';
+import { ActionErrorEvent } from '../utils/telemetry/ActionErrorEvent';
 
 const logger = (_store: unknown) => (next: Function) => (action: BaseAction | ErrorAction) => {
     trace(`dispatching ${action.type}`);
@@ -20,26 +27,26 @@ const logger = (_store: unknown) => (next: Function) => (action: BaseAction | Er
     return next(action);
 };
 
-const actionTelemetry = (store: { getState(): ApplicationState }) => (next: Function) => (action: WithMetadata< BaseAction | ErrorAction>) => {
-    let actionName = action.type;
+const actionTelemetry = (store: { getState(): ApplicationState }) => (next: Function) => (
+    action: WithMetadata<BaseAction | ErrorAction>
+) => {
     const token = store.getState().authentication.token;
+    const isInternal = !!(token && token.account.userName.includes('@microsoft.com'));
 
-    const eventProperties: IActionTelemetryProperties = {
-        action: actionName,
-        correlationId: action.metadata.correlationId,
-        isInternal: (token && token.account.userName.includes('@microsoft.com'))
-                    ? true
-                    : false
-    }
-
-    if (action.failed) {
-        telemetry.trackErrorAction(eventProperties, {})
+    if (isErrorAction(action)) {
+        telemetry.track(new ActionErrorEvent(action, isInternal));
     } else {
-        telemetry.trackSuccessAction(eventProperties, {});
+        telemetry.track(new ActionSuccessEvent(action, isInternal));
     }
 
     return next(action);
 };
+
+function isErrorAction(
+    action: WithMetadata<BaseAction | ErrorAction>
+): action is WithMetadata<ErrorAction> {
+    return action.failed;
+}
 
 let middleware = [actionContextMiddleware];
 
@@ -48,7 +55,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 if (process.env.NODE_ENV !== 'test') {
-    middleware.push(actionTelemetry)
+    middleware.push(actionTelemetry);
 }
 
 export function configureStore(preloadedState?: Partial<ApplicationState>) {

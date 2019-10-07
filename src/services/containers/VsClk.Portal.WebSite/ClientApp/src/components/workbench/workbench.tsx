@@ -25,6 +25,7 @@ import { vscode } from '../../utils/vscode';
 
 import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-web';
+import { telemetry } from '../../utils/telemetry';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
@@ -108,6 +109,20 @@ class WorkbenchView extends Component<WorkbenchProps> {
             },
         };
 
+        const resolveCommonTelemetryProperties = () => {
+            const vsoContextProperties = telemetry.getContext();
+            const keys = Object.keys(vsoContextProperties) as (keyof typeof vsoContextProperties)[];
+            return keys.reduce(
+                (commonProperties, property) => {
+                    return {
+                        ...commonProperties,
+                        [`vso_${property}`]: vsoContextProperties[property],
+                    };
+                },
+                {} as { [key: string]: any }
+            );
+        };
+
         const workspaceProvider = new WorkspaceProvider(this.props.params, sessionPath);
 
         const externalUriProvider = new ExternalUriProvider(
@@ -130,6 +145,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
             resourceUriProvider,
             userDataProvider,
             resolveExternalUri,
+            resolveCommonTelemetryProperties,
         };
 
         trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
