@@ -1,17 +1,21 @@
 import React, { Component, FormEvent, KeyboardEvent, SyntheticEvent } from 'react';
-import {
-    PrimaryButton,
-    DefaultButton,
-} from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
-import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 import { KeyCodes } from '@uifabric/utilities';
+import { GITHUB_BASE_URL, GITHUB_API_URL } from '../../constants';
+import { useWebClient } from '../../actions/middleware/useWebClient';
+import { getToken, getStoredGitHubToken } from '../../ts-agent/services/gitCredentialService';
+import { Signal } from '../../utils/signal';
 
-enum EnvironmentType {
-    Empty = 'empty',
-    GitHub = 'github',
+const validIconProp = { iconName: 'CheckMark' };
+
+enum SupportedGitServices {
+    Unknown,
+    GitHub = 'github.com',
+    BitBucket = 'bitbucket.org',
+    GitLab = 'gitlab.com',
 }
 
 export interface CreateEnvironmentPanelProps {
@@ -22,27 +26,46 @@ export interface CreateEnvironmentPanelProps {
 
 export interface CreateEnvironmentPanelState {
     environmentName?: string;
-    selectedEnvironmentType: string;
-    githubRepositoryUrl?: string;
-    githubRepositoryUrlValidationMessage?: string;
+    gitRepositoryUrl?: string;
+    gitValidationErrorMessage?: string;
+    gitValidationMessage?: string;
+    gitHubAuthenticationUrl?: string;
+    isGitUrlValid?: boolean;
+    isEnvironmentNameValid?: boolean;
 }
 
 export class CreateEnvironmentPanel extends Component<
     CreateEnvironmentPanelProps,
     CreateEnvironmentPanelState
 > {
-    private githubUrlValidationPending: boolean = false;
+    private timeout: ReturnType<typeof setTimeout> | undefined;
+
+    private validationRequest: Signal<void> | undefined;
+
+    private authenticationRequest: Signal<boolean> | undefined;
 
     public constructor(props: CreateEnvironmentPanelProps) {
         super(props);
 
-        this.state = {
-            selectedEnvironmentType: EnvironmentType.Empty,
-        };
+        this.state = {};
+    }
+
+    componentWillUnmount() {
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+        }
+
+        if (this.validationRequest) {
+            this.validationRequest.cancel();
+        }
+
+        if (this.authenticationRequest) {
+            this.authenticationRequest.cancel();
+        }
     }
 
     render() {
-        const repositoryUrlValue = this.state.githubRepositoryUrl || '';
+        const repositoryUrlValue = this.state.gitRepositoryUrl || '';
         const environmentNameValue = this.state.environmentName || '';
 
         return (
@@ -56,36 +79,27 @@ export class CreateEnvironmentPanel extends Component<
                 closeButtonAriaLabel='Close'
                 onRenderFooterContent={this.onRenderFooterContent}
             >
-                <Stack>
+                <Stack tokens={{ childrenGap: 4 }}>
                     <TextField
                         label='Environment Name'
                         placeholder='environmentNameExample'
                         onKeyDown={this.submitForm}
                         value={environmentNameValue}
                         onChange={this.environmentNameChanged}
+                        iconProps={this.state.isEnvironmentNameValid ? validIconProp : undefined}
                         autoFocus
                         required
                     />
-                    <Dropdown
-                        label='Environment Type'
-                        selectedKey={this.state.selectedEnvironmentType}
-                        onChange={this.envTypeSelectionChanged}
-                        options={[
-                            { key: EnvironmentType.Empty, text: 'Empty' },
-                            { key: EnvironmentType.GitHub, text: 'GitHub' },
-                        ]}
+                    <TextField
+                        label='Git Repository'
+                        placeholder='vsls-contrib/guestbook'
+                        onKeyDown={this.submitForm}
+                        value={repositoryUrlValue}
+                        onChange={this.githubRepositoryUrlChanged}
+                        errorMessage={this.state.gitValidationErrorMessage}
+                        iconProps={this.state.isGitUrlValid ? validIconProp : undefined}
                     />
-
-                    {this.state.selectedEnvironmentType === EnvironmentType.GitHub && (
-                        <TextField
-                            label='GitHub Repository'
-                            placeholder='vsls-contrib/guestbook'
-                            onKeyDown={this.submitForm}
-                            value={repositoryUrlValue}
-                            onChange={this.githubRepositoryUrlChanged}
-                            errorMessage={this.state.githubRepositoryUrlValidationMessage}
-                        />
-                    )}
+                    <label>{this.state.gitValidationMessage}</label>
                 </Stack>
             </Panel>
         );
@@ -99,16 +113,16 @@ export class CreateEnvironmentPanel extends Component<
                     style={{ marginRight: '.8rem' }}
                     disabled={!this.isCurrentStateValid()}
                 >
-                    Create
+                    {this.state.gitHubAuthenticationUrl ? 'Auth & Create' : 'Create'}
                 </PrimaryButton>
                 <DefaultButton onClick={this.clearForm}>Cancel</DefaultButton>
             </>
         );
     };
 
-    submitForm = (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    submitForm = async (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (event.keyCode === KeyCodes.enter) {
-            this.createEnvironment(event);
+            await this.createEnvironment(event);
         }
     };
 
@@ -118,7 +132,7 @@ export class CreateEnvironmentPanel extends Component<
         }
     };
 
-    private createEnvironment = (event: SyntheticEvent<any, any>) => {
+    private createEnvironment = async (event: SyntheticEvent<any, any>) => {
         if (!this.isCurrentStateValid()) {
             event.preventDefault();
             event.stopPropagation();
@@ -126,61 +140,49 @@ export class CreateEnvironmentPanel extends Component<
             return;
         }
 
-        const githubRepositoryUrl = this.getNormalizedGithubRepositoryUrl();
+        if (this.state.gitHubAuthenticationUrl) {
+            if (this.authenticationRequest) {
+                this.authenticationRequest.cancel();
+            }
 
-        // The environmentName will be always set here
-        this.props.onCreateEnvironment(this.state.environmentName!, githubRepositoryUrl);
+            this.authenticationRequest = Signal.from(
+                this.authenticateGitHub(this.state.gitHubAuthenticationUrl)
+            );
+            if (await this.authenticationRequest.promise) {
+                this.props.onCreateEnvironment(
+                    this.state.environmentName!,
+                    this.state.gitRepositoryUrl
+                );
 
-        this.clearForm();
-    }
+                this.clearForm();
+            } else {
+                this.setState({
+                    gitValidationErrorMessage: 'You do not have access to this repo.',
+                });
+            }
 
-    private getNormalizedGithubRepositoryUrl(): string | undefined {
-        if (this.state.selectedEnvironmentType !== EnvironmentType.GitHub) {
-            return undefined;
+            this.authenticationRequest = undefined;
+        } else {
+            this.props.onCreateEnvironment(
+                this.state.environmentName!,
+                this.state.gitRepositoryUrl
+            );
+
+            this.clearForm();
         }
-
-        if (!this.state.githubRepositoryUrl) {
-            return undefined;
-        }
-
-        const githubUrl = 'https://github.com/';
-        let repo = this.state.githubRepositoryUrl;
-        if (repo.indexOf(githubUrl) === -1) {
-            if (repo.startsWith('/')) repo = repo.substr(1, repo.length);
-            repo = githubUrl.concat(repo);
-        }
-
-        return repo;
-    }
+    };
 
     private clearForm = () => {
         this.setState({
             environmentName: undefined,
-            selectedEnvironmentType: EnvironmentType.Empty,
-            githubRepositoryUrl: undefined,
-            githubRepositoryUrlValidationMessage: undefined,
+            gitRepositoryUrl: undefined,
+            gitValidationErrorMessage: undefined,
+            gitValidationMessage: undefined,
+            gitHubAuthenticationUrl: undefined,
+            isGitUrlValid: undefined,
+            isEnvironmentNameValid: undefined,
         });
         this.props.hidePanel();
-    };
-
-    private envTypeSelectionChanged: (
-        event: FormEvent<HTMLDivElement>,
-        option?: IDropdownOption,
-        index?: number
-    ) => void = (_e, option) => {
-        if (!option) {
-            return;
-        }
-        switch (option.key) {
-            case EnvironmentType.Empty:
-            case EnvironmentType.GitHub:
-                this.setState({
-                    selectedEnvironmentType: option.key,
-                });
-                break;
-            default:
-                break;
-        }
     };
 
     private isCurrentStateValid() {
@@ -189,15 +191,12 @@ export class CreateEnvironmentPanel extends Component<
         const environmentName = this.state.environmentName && this.state.environmentName.trim();
         validationFailed = validationFailed || !environmentName || environmentName.length === 0;
 
-        if (this.state.selectedEnvironmentType === EnvironmentType.GitHub) {
-            if (
-                this.state.githubRepositoryUrlValidationMessage ||
-                !this.state.githubRepositoryUrl ||
-                this.githubUrlValidationPending ||
-                this.state.githubRepositoryUrl.length === 0
-            ) {
-                validationFailed = true;
-            }
+        if (
+            this.state.gitValidationErrorMessage ||
+            !this.state.gitRepositoryUrl ||
+            this.state.gitRepositoryUrl.length === 0
+        ) {
+            validationFailed = true;
         }
 
         return !validationFailed;
@@ -210,6 +209,16 @@ export class CreateEnvironmentPanel extends Component<
         this.setState({
             environmentName,
         });
+
+        if (environmentName) {
+            this.setState({
+                isEnvironmentNameValid: true,
+            });
+        } else {
+            this.setState({
+                isEnvironmentNameValid: undefined,
+            });
+        }
     };
 
     private githubRepositoryUrlChanged: (
@@ -217,7 +226,152 @@ export class CreateEnvironmentPanel extends Component<
         githubRepositoryUrl?: string
     ) => void = (_event, githubRepositoryUrl) => {
         this.setState({
-            githubRepositoryUrl,
+            gitRepositoryUrl: githubRepositoryUrl,
+            gitValidationErrorMessage: undefined,
+            gitValidationMessage: undefined,
+            gitHubAuthenticationUrl: undefined,
+            isGitUrlValid: undefined,
         });
+
+        if (this.validationRequest) {
+            this.validationRequest.cancel();
+        }
+
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+        }
+
+        this.timeout = setTimeout(() => {
+            if (githubRepositoryUrl) {
+                githubRepositoryUrl = githubRepositoryUrl.trim();
+                this.validationRequest = Signal.from(this.validateGitUrl(githubRepositoryUrl));
+                this.validationRequest.promise;
+                this.validationRequest = undefined;
+            }
+        }, 1000);
     };
+
+    private async validateGitUrl(githubRepositoryUrl: string) {
+        const matchTokens = this.getGitProvider(githubRepositoryUrl);
+        if (matchTokens) {
+            const gitProvider = matchTokens[0];
+            switch (gitProvider) {
+                case SupportedGitServices.BitBucket:
+                case SupportedGitServices.GitLab:
+                    if (await this.pingUrl(githubRepositoryUrl)) {
+                        this.setState({
+                            isGitUrlValid: true,
+                        });
+                    } else {
+                        this.setState({
+                            gitValidationErrorMessage:
+                                'Unable to connect to this repo. Create an empty environment.',
+                        });
+                    }
+                    break;
+                case SupportedGitServices.GitHub:
+                    const gitHubUrl = GITHUB_API_URL.concat(matchTokens[1]);
+                    if (getStoredGitHubToken()) {
+                        if (await this.authenticateGitHub(gitHubUrl)) {
+                            this.setState({
+                                isGitUrlValid: true,
+                            });
+                        } else {
+                            this.setState({
+                                gitValidationErrorMessage: 'You do not have access to this repo.',
+                            });
+                        }
+                    } else {
+                        if (await this.pingUrl(gitHubUrl)) {
+                            this.setState({
+                                isGitUrlValid: true,
+                            });
+                        } else {
+                            this.setState({
+                                gitValidationMessage: 'Private GitHub repo detected.',
+                                gitHubAuthenticationUrl: gitHubUrl,
+                            });
+                        }
+                    }
+                    break;
+                default:
+                    this.setState({
+                        gitValidationErrorMessage: 'Invalid url',
+                    });
+            }
+        } else {
+            this.setState({
+                gitValidationErrorMessage: 'Invalid url',
+            });
+        }
+    }
+
+    private async authenticateGitHub(url: string): Promise<boolean> {
+        const token = await getToken();
+        if (token && url) {
+            const webClient = useWebClient();
+
+            try {
+                await webClient.request(
+                    url,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    },
+                    { skipParsingResponse: true }
+                );
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    public async pingUrl(url: string): Promise<boolean> {
+        const webClient = useWebClient();
+        try {
+            await webClient.request(
+                url,
+                {},
+                {
+                    requiresAuthentication: false,
+                    skipParsingResponse: true,
+                }
+            );
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    private getGitProvider(repo: string): string[] | undefined {
+        repo = this.convertShortUrlToFull(repo);
+        const regex = /(https?:\/\/)?(www\.)?(github\.com|bitbucket\.org|gitlab\.com)?\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)/g;
+        const match = regex.exec(repo);
+        if (match && match.length > 4 && match[3] && match[4]) {
+            return [match[3], match[4]];
+        } else {
+            return undefined;
+        }
+    }
+
+    private convertShortUrlToFull(repo: string): string {
+        if (repo.startsWith('/')) {
+            repo = repo.substr(1, repo.length);
+        }
+        if (repo.endsWith('/')) {
+            repo = repo.substr(0, repo.length - 1);
+        }
+        const split = repo.split('/');
+        if (split.length === 2) {
+            repo = GITHUB_BASE_URL.concat(repo);
+        }
+
+        repo = repo.toLowerCase();
+
+        return repo;
+    }
 }

@@ -2,7 +2,8 @@ import * as vsls from '../contracts/VSLS';
 import * as rpc from 'vscode-jsonrpc';
 import { SharedServiceImp } from './sharedService';
 import { createUniqueId } from '../../dependencies';
-import { createTrace } from '../../utils/createTrace';
+import { createTrace, maybePii } from '../../utils/createTrace';
+import { Signal } from '../../utils/signal';
 
 const trace = createTrace('GitCredentialService');
 
@@ -68,74 +69,103 @@ export class GitCredentialService {
         this.sharedService.onRequest(credentialFunction, async ([input]: string[]) => {
             const fillRequest = parseGitCredentialsFillInput(input);
 
-            trace.info('Received git credential fill request', fillRequest);
+            trace.verbose('Received git credential fill request', maybePii(fillRequest));
 
             if (fillRequest.protocol === 'https' && fillRequest.host === 'github.com') {
                 trace.verbose('Resolving GitHub credential.');
-                let token = getStoredGitHubToken();
+                let credentials = getGitHubCredentials();
 
-                if (!token) {
-                    trace.verbose('Authenticating against GitHub.', fillRequest);
+                if (credentials) {
+                    trace.verbose('Filled credential.', maybePii(fillRequest));
 
-                    const originalState = createUniqueId();
-                    try {
-                        const result = await authenticateAgainstGitHub(originalState);
-
-                        if (result && originalState === result.state) {
-                            token = result.accessToken;
-                        } else {
-                            clearGitHubAccessTokenResponse();
-                        }
-                    } catch (err) {
-                        trace.error('Failed to acquire GitHub credentials.', err.message);
-                    }
-                }
-
-                if (token) {
-                    trace.verbose('Filled credential.', fillRequest);
-
-                    return `username=${token}\npassword=x-oauth-basic\nquit=true\n`;
+                    return credentials;
                 }
             }
 
-            trace.verbose('Failed to fill credential.', fillRequest);
+            trace.verbose('Failed to fill credential.', maybePii(fillRequest));
 
             return input;
         });
     }
 }
 
-function getStoredGitHubToken(): string | null {
+export async function getToken(): Promise<string | null> {
+    let token = getStoredGitHubToken();
+    if (!token) {
+        const originalState = createUniqueId();
+        try {
+            const result = await authenticateAgainstGitHub(originalState);
+            if (result && originalState === result.state) {
+                token = result.accessToken;
+            } else {
+                clearGitHubAccessTokenResponse();
+            }
+        } catch (err) {
+            trace.error('Failed to acquire GitHub credentials.', err.message);
+        }
+    }
+
+    return token;
+}
+
+export async function getGitHubCredentials(): Promise<string | null> {
+    let token = await getToken();
+
+    if (token) {
+        return `username=${token}\npassword=x-oauth-basic\nquit=true\n`;
+    }
+
+    return null;
+}
+
+export function getStoredGitHubToken(): string | null {
     const storedToken = getStoredGitHubAccessTokenResponse();
 
     return storedToken && storedToken.accessToken;
 }
 
+let tokenRequest: Signal<{ accessToken: string; state: string } | null> | undefined;
+
 function authenticateAgainstGitHub(
     state: string
 ): Promise<{ accessToken: string; state: string } | null> {
+    if (tokenRequest) {
+        tokenRequest.cancel();
+    }
+
+    const currentTokenRequest = new Signal<{ accessToken: string; state: string } | null>();
+    tokenRequest = currentTokenRequest;
+
     window.open(
         `${window.location.origin}/github-auth?state=${encodeURIComponent(state)}`,
         '_blank'
     );
 
-    return new Promise<{ accessToken: string; state: string } | null>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            reject(new Error('Failed to acquire GitHub credentials. Reason: timeout.'));
-        }, 5 * 60 * 1000);
+    const timeout = setTimeout(() => {
+        tokenRequest = undefined;
+        currentTokenRequest.reject(
+            new Error('Failed to acquire GitHub credentials. Reason: timeout.')
+        );
+    }, 5 * 60 * 1000);
 
-        const resolveWithToken = (event: StorageEvent) => {
+    currentTokenRequest.promise.finally(() => {
+        clearTimeout(timeout);
+    });
+
+    const resolveWithToken = (event: StorageEvent) => {
+        if (event.key === localStorageKey) {
             window.removeEventListener('storage', resolveWithToken);
 
-            if (event.key === localStorageKey) {
-                clearTimeout(timeout);
+            clearTimeout(timeout);
+            tokenRequest = undefined;
 
-                resolve(getStoredGitHubAccessTokenResponse());
-            }
-        };
+            currentTokenRequest.complete(getStoredGitHubAccessTokenResponse());
+        }
+    };
 
-        window.addEventListener('storage', resolveWithToken);
-    });
+    window.addEventListener('storage', resolveWithToken);
+
+    return currentTokenRequest.promise;
 }
 
 type GitCredentialsRequest = {

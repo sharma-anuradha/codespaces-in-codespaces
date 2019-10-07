@@ -30,3 +30,15 @@ export const createTrace = (name: string) => {
         error,
     };
 };
+
+export function maybePii<T>(val: T | undefined): T | string | undefined {
+    if (val === undefined) {
+        return undefined;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+        return val;
+    }
+
+    return `Redacted <probably pii>`;
+}
