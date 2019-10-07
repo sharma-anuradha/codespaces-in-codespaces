@@ -2,10 +2,12 @@ import { useWebClient } from '../actions/middleware/useWebClient';
 
 export interface IConfiguration {
     environmentRegistrationEndpoint: string;
+    liveShareEndpoint: string;
 }
 
 export const defaultConfig: IConfiguration = {
-    environmentRegistrationEndpoint: '/api/environment/registration',
+    environmentRegistrationEndpoint: 'https://online.visualstudio.com/api/v1/environments',
+    liveShareEndpoint: 'https://prod.liveshare.vsengsaas.visualstudio.com',
 };
 
 export const configurationEndpoint = '/configuration';

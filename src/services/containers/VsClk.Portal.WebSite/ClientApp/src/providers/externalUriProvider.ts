@@ -6,7 +6,8 @@ export class ExternalUriProvider {
     constructor(
         private readonly environmentInfo: ICloudEnvironment,
         private readonly accessToken: string,
-        private readonly connector: EnvConnector
+        private readonly connector: EnvConnector,
+        private readonly liveShareEndpoint: string
     ) {}
 
     public async resolveExternalUri(uri: URI): Promise<URI> {
@@ -15,7 +16,12 @@ export class ExternalUriProvider {
             return uri;
         }
 
-        await this.connector.ensurePortIsForwarded(this.environmentInfo, this.accessToken, port);
+        await this.connector.ensurePortIsForwarded(
+            this.environmentInfo,
+            this.accessToken,
+            port,
+            this.liveShareEndpoint
+        );
 
         uri.authority = `${this.environmentInfo.connection.sessionId}-${port}.app.${window.location.hostname}`;
         return uri;

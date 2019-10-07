@@ -86,6 +86,18 @@ module.exports = function(proxy, allowedHost) {
             },
         },
         before(app) {
+            app.use(function(req, res, next) {
+                res.header('Access-Control-Allow-Origin', '*');
+                res.header('Access-Control-Allow-Methods', '*');
+                res.header('Access-Control-Allow-Headers', '*');
+                // intercept OPTIONS method
+                if ('OPTIONS' == req.method) {
+                    req.header('cache-control', undefined);
+                    res.send(200);
+                } else {
+                    next();
+                }
+            });
             if (fs.existsSync(paths.proxySetup)) {
                 // This registers user provided middleware for proxy reasons
                 require(paths.proxySetup)(app);

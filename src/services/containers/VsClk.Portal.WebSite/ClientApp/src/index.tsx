@@ -5,13 +5,13 @@ import { initializeIcons } from '@uifabric/icons';
 
 import { App } from './app';
 import { store } from './store/store';
-import { VSLS_API_URI } from './constants';
 
 import { postServiceWorkerMessage } from './common/post-message';
 import * as serviceWorker from './serviceWorker';
 import { configureServiceWorker } from './common/service-worker-messages';
 
 import './index.css';
+import { defaultConfig } from './services/configurationService';
 
 initializeIcons();
 
@@ -44,7 +44,7 @@ serviceWorker.register({
         postServiceWorkerMessage({
             type: configureServiceWorker,
             payload: {
-                liveShareEndpoint: VSLS_API_URI,
+                liveShareEndpoint: defaultConfig.liveShareEndpoint,
                 features: {
                     useSharedConnection: true,
                 },

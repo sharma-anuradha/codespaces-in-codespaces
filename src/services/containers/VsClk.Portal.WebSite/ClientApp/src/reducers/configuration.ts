@@ -1,4 +1,4 @@
-import { IConfiguration, defaultConfig } from '../services/configurationService';
+import { IConfiguration } from '../services/configurationService';
 
 import {
     fetchConfigurationSuccessActionType,

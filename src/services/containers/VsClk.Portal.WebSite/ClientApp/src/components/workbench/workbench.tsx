@@ -26,8 +26,10 @@ import { vscode } from '../../utils/vscode';
 import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-web';
 import { telemetry } from '../../utils/telemetry';
+import { defaultConfig } from '../../services/configurationService';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
+    liveShareEndpoint: string;
     token: IToken | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
     params: URLSearchParams;
@@ -72,7 +74,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
         const { accessToken } = this.props.token!;
 
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
-        envConnector.ensureConnection(environmentInfo, accessToken);
+        envConnector.ensureConnection(environmentInfo, accessToken, this.props.liveShareEndpoint);
 
         postServiceWorkerMessage({
             type: authenticateMessageType,
@@ -103,9 +105,10 @@ class WorkbenchView extends Component<WorkbenchProps> {
         const userDataProvider = new UserDataProvider();
         await userDataProvider.initializeDBProvider();
 
+        const { liveShareEndpoint } = this.props;
         const VSLSWebSocketFactory: IWebSocketFactory = {
             create(url: string) {
-                return new VSLSWebSocket(url, accessToken, environmentInfo);
+                return new VSLSWebSocket(url, accessToken, environmentInfo, liveShareEndpoint);
             },
         };
 
@@ -128,7 +131,8 @@ class WorkbenchView extends Component<WorkbenchProps> {
         const externalUriProvider = new ExternalUriProvider(
             environmentInfo,
             accessToken,
-            envConnector
+            envConnector,
+            liveShareEndpoint
         );
 
         const resolveExternalUri = (uri: URI): Promise<URI> => {
@@ -175,12 +179,15 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         return e.id === props.match.params.id;
     });
 
+    const { liveShareEndpoint } = state.configuration || defaultConfig;
+
     const params = new URLSearchParams(props.location.search);
 
     return {
         token: state.authentication.token,
         environmentInfo,
         params,
+        liveShareEndpoint,
     };
 };
 

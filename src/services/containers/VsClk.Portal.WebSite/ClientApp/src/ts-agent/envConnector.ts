@@ -14,7 +14,7 @@ import { SshChannelOpenner } from './sshChannelOpenner';
 import { trace } from '../utils/trace';
 import { Signal } from '../utils/signal';
 
-import { DEFAULT_EXTENSIONS, VSLS_API_URI, vscodeConfig } from '../constants';
+import { DEFAULT_EXTENSIONS, vscodeConfig } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { BrowserSyncService } from './services/browserSyncService';
 import { postServiceWorkerMessage } from '../common/post-message';
@@ -35,8 +35,6 @@ export class EnvConnector {
     private readonly _onVSCodeServerStarted = new Emitter<RemoteVSCodeServerDescription>();
     public readonly onVSCodeServerStarted: Event<RemoteVSCodeServerDescription> = this
         ._onVSCodeServerStarted.event;
-
-    constructor() {}
 
     private async startVscodeServer(workspaceClient: WorkspaceClient): Promise<number> {
         if (this.vscodeServerPort && !this.vscodeServerPort.isRejected) {
@@ -109,7 +107,8 @@ export class EnvConnector {
 
     private async connectWorkspaceClient(
         sessionId: string,
-        accessToken: string
+        accessToken: string,
+        liveShareEndpoint: string
     ): Promise<WorkspaceClient> {
         if (this.workspaceClient && !this.workspaceClient.isRejected) {
             const workspaceClient = await this.workspaceClient.promise;
@@ -125,7 +124,7 @@ export class EnvConnector {
         this.workspaceClient = new Signal();
 
         try {
-            const webClient = new WebClient(VSLS_API_URI, {
+            const webClient = new WebClient(liveShareEndpoint, {
                 getToken() {
                     return accessToken;
                 },
@@ -179,7 +178,8 @@ export class EnvConnector {
 
     public async ensureConnection(
         environmentInfo: ICloudEnvironment,
-        accessToken: string
+        accessToken: string,
+        liveShareEndpoint: string
     ): Promise<{ sessionPath: string; port: number }> {
         // if already `connecting` or `connected`, return the result
         if (this.initializeConnectionSignal && !this.initializeConnectionSignal.isRejected) {
@@ -192,7 +192,11 @@ export class EnvConnector {
             const { sessionId, sessionPath } = environmentInfo.connection;
 
             trace(`Live Share session id: ${sessionId}, workspace path: "${sessionPath}"`);
-            const workspaceClient = await this.connectWorkspaceClient(sessionId, accessToken);
+            const workspaceClient = await this.connectWorkspaceClient(
+                sessionId,
+                accessToken,
+                liveShareEndpoint
+            );
 
             const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
                 vsls.StreamManagerService
@@ -223,11 +227,13 @@ export class EnvConnector {
     public async ensurePortIsForwarded(
         environmentInfo: ICloudEnvironment,
         accessToken: string,
-        port: number
+        port: number,
+        liveShareEndpoint: string
     ): Promise<void> {
         const workspaceClient = await this.connectWorkspaceClient(
             environmentInfo.connection.sessionId,
-            accessToken
+            accessToken,
+            liveShareEndpoint
         );
 
         const servers = await workspaceClient.getSharedServers();

@@ -63,9 +63,10 @@ export class VSLSWebSocket implements IWebSocket {
     }
 
     constructor(
-        private url: string,
-        private accessToken: string,
-        private environmentInfo: ICloudEnvironment
+        private readonly url: string,
+        private readonly accessToken: string,
+        private readonly environmentInfo: ICloudEnvironment,
+        private readonly liveShareEndpoint: string
     ) {
         this.id = VSLSWebSocket.socketCnt++;
         this.initializeChannel(url);
@@ -77,7 +78,11 @@ export class VSLSWebSocket implements IWebSocket {
         let disposables = [];
 
         try {
-            await envConnector.ensureConnection(this.environmentInfo, this.accessToken);
+            await envConnector.ensureConnection(
+                this.environmentInfo,
+                this.accessToken,
+                this.liveShareEndpoint
+            );
 
             const channel = await envConnector.sendHandshakeRequest(
                 this.createHandshakeRequest(url)

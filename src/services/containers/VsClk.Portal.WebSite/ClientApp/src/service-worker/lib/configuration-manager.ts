@@ -1,12 +1,12 @@
-import { VSLS_API_URI } from '../../constants';
 import { ServiceWorkerConfiguration } from '../../common/service-worker-configuration';
 import { createLogger, Logger } from './logger';
+import { defaultConfig } from '../../services/configurationService';
 
 export class ConfigurationManager {
     private readonly logger: Logger;
 
     private currentConfiguration: ServiceWorkerConfiguration = {
-        liveShareEndpoint: VSLS_API_URI,
+        liveShareEndpoint: defaultConfig.liveShareEndpoint,
         features: {
             useSharedConnection: false,
         },
