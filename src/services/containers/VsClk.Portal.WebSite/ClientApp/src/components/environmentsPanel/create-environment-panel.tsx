@@ -27,6 +27,7 @@ export interface CreateEnvironmentPanelProps {
 export interface CreateEnvironmentPanelState {
     environmentName?: string;
     gitRepositoryUrl?: string;
+    normalizedGitHubUrl?: string;
     gitValidationErrorMessage?: string;
     gitValidationMessage?: string;
     gitHubAuthenticationUrl?: string;
@@ -140,6 +141,10 @@ export class CreateEnvironmentPanel extends Component<
             return;
         }
 
+        const gitUrl = this.state.normalizedGitHubUrl
+            ? this.state.normalizedGitHubUrl
+            : this.state.gitRepositoryUrl;
+
         if (this.state.gitHubAuthenticationUrl) {
             if (this.authenticationRequest) {
                 this.authenticationRequest.cancel();
@@ -149,10 +154,7 @@ export class CreateEnvironmentPanel extends Component<
                 this.authenticateGitHub(this.state.gitHubAuthenticationUrl)
             );
             if (await this.authenticationRequest.promise) {
-                this.props.onCreateEnvironment(
-                    this.state.environmentName!,
-                    this.state.gitRepositoryUrl
-                );
+                this.props.onCreateEnvironment(this.state.environmentName!, gitUrl);
 
                 this.clearForm();
             } else {
@@ -163,10 +165,7 @@ export class CreateEnvironmentPanel extends Component<
 
             this.authenticationRequest = undefined;
         } else {
-            this.props.onCreateEnvironment(
-                this.state.environmentName!,
-                this.state.gitRepositoryUrl
-            );
+            this.props.onCreateEnvironment(this.state.environmentName!, gitUrl);
 
             this.clearForm();
         }
@@ -181,6 +180,7 @@ export class CreateEnvironmentPanel extends Component<
             gitHubAuthenticationUrl: undefined,
             isGitUrlValid: undefined,
             isEnvironmentNameValid: undefined,
+            normalizedGitHubUrl: undefined,
         });
         this.props.hidePanel();
     };
@@ -191,11 +191,7 @@ export class CreateEnvironmentPanel extends Component<
         const environmentName = this.state.environmentName && this.state.environmentName.trim();
         validationFailed = validationFailed || !environmentName || environmentName.length === 0;
 
-        if (
-            this.state.gitValidationErrorMessage ||
-            !this.state.gitRepositoryUrl ||
-            this.state.gitRepositoryUrl.length === 0
-        ) {
+        if (validationFailed || this.state.gitValidationErrorMessage) {
             validationFailed = true;
         }
 
@@ -231,6 +227,7 @@ export class CreateEnvironmentPanel extends Component<
             gitValidationMessage: undefined,
             gitHubAuthenticationUrl: undefined,
             isGitUrlValid: undefined,
+            normalizedGitHubUrl: undefined,
         });
 
         if (this.validationRequest) {
@@ -271,6 +268,9 @@ export class CreateEnvironmentPanel extends Component<
                     break;
                 case SupportedGitServices.GitHub:
                     const gitHubUrl = GITHUB_API_URL.concat(matchTokens[1]);
+                    this.setState({
+                        normalizedGitHubUrl: gitHubUrl,
+                    });
                     if (getStoredGitHubToken()) {
                         if (await this.authenticateGitHub(gitHubUrl)) {
                             this.setState({
