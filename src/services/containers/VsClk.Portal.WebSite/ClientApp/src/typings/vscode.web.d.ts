@@ -578,6 +578,16 @@ declare module 'vscode-web' {
          * Experimental: Support for update reporting.
          */
         updateProvider?: IUpdateProvider;
+
+        /**
+         * Experimental: Support adding additional properties to telemetry.
+         */
+        resolveCommonTelemetryProperties?: () => { [key: string]: any };
+
+        /**
+         * Experimental: Resolves an external uri before it is opened.
+         */
+        readonly resolveExternalUri?: (uri: URI) => Promise<URI>;
     }
 
     export interface IWorkbench {

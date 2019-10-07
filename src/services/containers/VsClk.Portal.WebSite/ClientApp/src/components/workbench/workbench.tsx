@@ -15,6 +15,7 @@ import { isEnvironmentAvailable } from '../../utils/environmentUtils';
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { credentialsProvider } from '../../providers/credentialsProvider';
 import { WorkspaceProvider } from '../../providers/workspaceProvider';
+import { ExternalUriProvider } from '../../providers/externalUriProvider';
 import { resourceUriProviderFactory } from '../../common/url-utils';
 import { postServiceWorkerMessage } from '../../common/post-message';
 import { authenticateMessageType, disconnectCloudEnv } from '../../common/service-worker-messages';
@@ -23,7 +24,7 @@ import { UserDataProvider } from '../../utils/userDataProvider';
 import { vscode } from '../../utils/vscode';
 
 import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
-import { IWorkbenchConstructionOptions, IWebSocketFactory } from 'vscode-web';
+import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-web';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: IToken | undefined;
@@ -109,6 +110,16 @@ class WorkbenchView extends Component<WorkbenchProps> {
 
         const workspaceProvider = new WorkspaceProvider(this.props.params, sessionPath);
 
+        const externalUriProvider = new ExternalUriProvider(
+            environmentInfo,
+            accessToken,
+            envConnector
+        );
+
+        const resolveExternalUri = (uri: URI): Promise<URI> => {
+            return externalUriProvider.resolveExternalUri(uri);
+        };
+
         const config: IWorkbenchConstructionOptions = {
             workspaceProvider,
             remoteAuthority: `localhost`,
@@ -118,6 +129,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
             credentialsProvider,
             resourceUriProvider,
             userDataProvider,
+            resolveExternalUri,
         };
 
         trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);

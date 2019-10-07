@@ -220,6 +220,29 @@ export class EnvConnector {
         return this.initializeConnectionSignal.promise;
     }
 
+    public async ensurePortIsForwarded(
+        environmentInfo: ICloudEnvironment,
+        accessToken: string,
+        port: number
+    ): Promise<void> {
+        const workspaceClient = await this.connectWorkspaceClient(
+            environmentInfo.connection.sessionId,
+            accessToken
+        );
+
+        const servers = await workspaceClient.getSharedServers();
+
+        if (servers.find((s) => s.sourcePort === port)) {
+            return;
+        }
+
+        const serverSharingClient = await workspaceClient.getServiceProxy<
+            vsls.ServerSharingService
+        >(vsls.ServerSharingService);
+
+        await serverSharingClient.startSharingAsync(port, `Port ${port}`, '');
+    }
+
     private channelOpener!: SshChannelOpenner;
 
     public sendHandshakeRequest(requestStr: string): Promise<SshChannel> {

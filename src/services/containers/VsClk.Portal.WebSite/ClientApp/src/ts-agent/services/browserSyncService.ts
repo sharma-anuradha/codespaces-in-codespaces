@@ -1,12 +1,15 @@
 import { SourceEventService, SourceEventArgs } from '../contracts/VSLS';
 import { WorkspaceClient } from '../workspaceClient';
 import { authService } from '../../services/authService';
+import { getAuthToken } from '../../actions/getAuthToken';
+import { setAuthCookie } from '../../utils/setAuthCookie';
 
 export enum BrowserConnectorMessages {
     ConnectToEnvironment = 'VSO_BrowserSync_ConnectToEnvironment',
     DisconnectFromEnvironment = 'VSO_BrowserSync_DisconnectFromEnvironment',
     OpenPortInBrowser = 'VSO_BrowserSync_OpenPortInBrowser',
     CopyServerUrl = 'VSO_BrowserSync_CopyServerUrl',
+    ForwardPort = 'VSO_BrowserSync_ForwardPort',
     SignOut = 'VSO_BrowserSync_SignOut',
 }
 
@@ -43,12 +46,14 @@ export class BrowserSyncService {
                 return;
             }
             case BrowserConnectorMessages.CopyServerUrl:
-                // implement the copy shared server URL logic
+            case BrowserConnectorMessages.OpenPortInBrowser:
+            case BrowserConnectorMessages.ForwardPort:
+                const token = await getAuthToken();
+                if (token === undefined) {
+                    return;
+                }
+                await setAuthCookie(token.accessToken);
                 return;
-            case BrowserConnectorMessages.OpenPortInBrowser: {
-                // implement the open shared server URL logic
-                return;
-            }
         }
     };
 }
