@@ -269,7 +269,7 @@ export class CreateEnvironmentPanel extends Component<
                 case SupportedGitServices.GitHub:
                     const gitHubUrl = GITHUB_API_URL.concat(matchTokens[1]);
                     this.setState({
-                        normalizedGitHubUrl: gitHubUrl,
+                        normalizedGitHubUrl: GITHUB_BASE_URL.concat(matchTokens[1]),
                     });
                     if (getStoredGitHubToken()) {
                         if (await this.authenticateGitHub(gitHubUrl)) {
@@ -367,7 +367,7 @@ export class CreateEnvironmentPanel extends Component<
         }
         const split = repo.split('/');
         if (split.length === 2) {
-            repo = GITHUB_BASE_URL.concat(repo);
+            repo = GITHUB_BASE_URL.concat('/').concat(repo);
         }
 
         repo = repo.toLowerCase();
