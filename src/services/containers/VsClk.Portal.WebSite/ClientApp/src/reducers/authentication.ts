@@ -1,4 +1,4 @@
-import { IToken } from '../services/authService';
+import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 
 import { ClearAuthTokenAction, clearAuthTokenActionType } from '../actions/clearAuthToken';
 import {
@@ -28,7 +28,7 @@ type AcceptedActions =
     | SignInSuccessAction;
 
 type AuthenticationState = {
-    token: IToken | undefined;
+    token: ITokenWithMsalAccount | undefined;
     isAuthenticating: boolean;
     isAuthenticated: boolean;
 };

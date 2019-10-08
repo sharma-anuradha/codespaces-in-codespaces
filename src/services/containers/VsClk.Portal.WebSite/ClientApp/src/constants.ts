@@ -28,3 +28,8 @@ export const TELEMETRY_KEY = 'AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217';
 export const GITHUB_BASE_URL = 'https://www.github.com';
 
 export const GITHUB_API_URL = 'https://api.github.com/repos';
+
+export const aadAuthorityUrl = 'https://login.microsoftonline.com/organizations';
+
+export const expirationTimeBackgroundTokenRefreshThreshold = 1800;
+

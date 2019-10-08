@@ -1,7 +1,8 @@
 import { action } from './middleware/useActionCreator';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
 
-import { authService, IToken } from '../services/authService';
+import { authService } from '../services/authService';
+import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 import { useDispatch } from './middleware/useDispatch';
 
 export const getAuthTokenActionType = 'async.authentication.getToken';
@@ -10,7 +11,7 @@ export const getAuthTokenFailureActionType = 'async.authentication.getToken.fail
 
 // Basic actions dispatched for reducers
 const getAuthTokenAction = () => action(getAuthTokenActionType);
-const getAuthTokenSuccessAction = (token: IToken) =>
+const getAuthTokenSuccessAction = (token: ITokenWithMsalAccount) =>
     action(getAuthTokenSuccessActionType, { token });
 const getAuthTokenFailureAction = (error: Error) => action(getAuthTokenFailureActionType, error);
 

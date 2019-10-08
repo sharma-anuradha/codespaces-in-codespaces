@@ -2,7 +2,8 @@ import { action } from './middleware/useActionCreator';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
 import { init } from './init';
 
-import { authService, IToken } from '../services/authService';
+import { authService } from '../services/authService';
+import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 import { useDispatch } from './middleware/useDispatch';
 
 export const signInActionType = 'async.authentication.getToken';
@@ -11,7 +12,7 @@ export const signInFailureActionType = 'async.authentication.getToken.failure';
 
 // Basic actions dispatched for reducers
 const signInAction = () => action(signInActionType);
-const signInSuccessAction = (token: IToken) => action(signInSuccessActionType, { token });
+const signInSuccessAction = (token: ITokenWithMsalAccount) => action(signInSuccessActionType, { token });
 const signInFailureAction = (error: Error) => action(signInFailureActionType, error);
 
 // Types to register with reducers

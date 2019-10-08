@@ -2,6 +2,12 @@ import * as msal from 'msal';
 import { UserAgentApplication, AuthResponse } from 'msal';
 import jwtDecode from 'jwt-decode';
 import { trace as baseTrace } from '../utils/trace';
+import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
+import { inLocalStorageJWTTokenCacheFactory } from '../cache/localstorageJWTCache';
+import { getTokenExpiration } from '../utils/getTokenExpiration';
+import { expirationTimeBackgroundTokenRefreshThreshold, aadAuthorityUrl } from '../constants';
+
+import { signOut as signOutFromArmAuthService } from './authARMService';
 
 const error = baseTrace.extend('authService:error');
 
@@ -13,7 +19,7 @@ const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed
 const msalConfig: msal.Configuration = {
     auth: {
         clientId: 'a3037261-2c94-4a2e-b53f-090f6cdd712a',
-        authority: 'https://login.microsoftonline.com/common',
+        authority: aadAuthorityUrl,
         validateAuthority: false,
         navigateToLoginRequestUrl: false,
         redirectUri: location.origin,
@@ -26,36 +32,11 @@ const msalConfig: msal.Configuration = {
 
 const LOCAL_STORAGE_KEY = 'vsonline.default.account';
 
-export interface IToken {
-    accessToken: string;
-    expiresOn: Date;
-    account: msal.Account;
-}
+export const clientApplication = new UserAgentApplication(msalConfig);
 
-interface ITokensMemoryCache {
-    [key: string]: IToken;
-}
-
-export const getTokenExpiration = (token: IToken): number => {
-    const { expiresOn } = token;
-    const seconds = (new Date(expiresOn).getTime() - Date.now()) / 1000;
-
-    return Math.floor(seconds);
-};
-
-function ensureTokenFormat(token: any) {
-    if (typeof token.expiresOn === 'string') {
-        token.expiresOn = new Date(token.expiresOn);
-    }
-
-    return token;
-}
-
-const clientApplication = new UserAgentApplication(msalConfig);
+const tokenCache = inLocalStorageJWTTokenCacheFactory();
 
 class AuthService {
-    private tokens: ITokensMemoryCache = {};
-
     public async signIn() {
         const loginRequest = {
             scopes: SCOPES,
@@ -67,37 +48,17 @@ class AuthService {
         return token;
     }
 
-    public async getCachedToken(expiration: number = 1): Promise<IToken | undefined> {
-        // get token in memory
-        for (let [_, token] of Object.entries(this.tokens)) {
-            const expiresIn = getTokenExpiration(token);
+    public async getCachedToken(expiration: number = 1800): Promise<ITokenWithMsalAccount | undefined> {
+        const cachedToken = tokenCache.getCachedToken(LOCAL_STORAGE_KEY, expiration);
 
-            if (expiresIn > expiration) {
-                if (expiresIn <= 1800) {
-                    this.acquireToken();
-                }
-                return ensureTokenFormat(token);
+        if (cachedToken) {
+            const expirationTime = getTokenExpiration(cachedToken);
+            if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
+                this.acquireToken();
             }
+            return cachedToken as ITokenWithMsalAccount;
         }
-
-        // get token in local storage
-        const lsRecord = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (lsRecord) {
-            try {
-                const token = JSON.parse(lsRecord) as IToken;
-                const expiresIn = getTokenExpiration(token);
-
-                if (expiresIn > expiration) {
-                    if (expiresIn <= 3000) {
-                        this.acquireToken();
-                    }
-                    return ensureTokenFormat(token);
-                }
-            } catch (e) {
-                error('Parsing the LS record', e);
-            }
-        }
-
+        
         try {
             return await this.acquireToken();
         } catch (e) {
@@ -107,9 +68,9 @@ class AuthService {
         return undefined;
     }
 
-    private tokenAcquirePromise: Promise<IToken | undefined> | undefined;
+    private tokenAcquirePromise: Promise<ITokenWithMsalAccount | undefined> | undefined;
 
-    private async acquireToken(): Promise<IToken | undefined> {
+    private async acquireToken(): Promise<ITokenWithMsalAccount | undefined> {
         if (!this.tokenAcquirePromise) {
             this.tokenAcquirePromise = this.acquireTokenInternal();
         }
@@ -119,7 +80,7 @@ class AuthService {
         return result;
     }
 
-    private async acquireTokenInternal(): Promise<IToken | undefined> {
+    private async acquireTokenInternal(): Promise<ITokenWithMsalAccount | undefined> {
         const tokenRequest = {
             scopes: SCOPES,
             authority: msalConfig.auth.authority,
@@ -135,25 +96,19 @@ class AuthService {
         }
     }
 
-    private cacheToken(token: IToken) {
-        const accountId = token.account.accountIdentifier;
-
-        this.tokens[accountId] = token;
-
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(token));
+    private cacheToken(token: ITokenWithMsalAccount) {
+        tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
     }
 
     public async signOut() {
-        const debugSetting = localStorage.debug;
-        localStorage.clear();
-        localStorage.debug = debugSetting;
-        this.tokens = {};
+        tokenCache.clearCache();
+        signOutFromArmAuthService();
     }
 }
 
 export const authService = new AuthService();
 
-export async function acquireToken(scopes: string[]) {
+export async function acquireToken(scopes: string[]): Promise<ITokenWithMsalAccount> {
     const tokenRequest = {
         scopes,
         authority: msalConfig.auth.authority,
@@ -172,7 +127,8 @@ export async function acquireToken(scopes: string[]) {
 
     return tokenFromTokenResponse(tokenResponse);
 }
-function tokenFromTokenResponse(tokenResponse: AuthResponse): IToken {
+
+export function tokenFromTokenResponse(tokenResponse: AuthResponse): ITokenWithMsalAccount {
     const { accessToken, account } = tokenResponse;
 
     let msTime = 0;

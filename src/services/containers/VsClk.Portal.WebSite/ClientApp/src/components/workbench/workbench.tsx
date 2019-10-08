@@ -7,7 +7,7 @@ import { trace } from '../../utils/trace';
 import { vscodeConfig } from '../../constants';
 
 import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
-import { IToken } from '../../services/authService';
+import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { isEnvironmentAvailable } from '../../utils/environmentUtils';
@@ -30,7 +30,7 @@ import { defaultConfig } from '../../services/configurationService';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareEndpoint: string;
-    token: IToken | undefined;
+    token: ITokenWithMsalAccount | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
     params: URLSearchParams;
 }
