@@ -48,7 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public Task AddAsync(string id, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             // TODO: Delay add to queue if needed
-            TaskHelper.RunBackground(LogBaseName, (childLogger) => AddToQueue(id), null, TimeSpan.FromMilliseconds(250));
+            TaskHelper.RunBackground(
+                LogBaseName, (childLogger) => AddToQueue(id), delay: TimeSpan.FromMilliseconds(250));
 
             return Task.CompletedTask;
         }

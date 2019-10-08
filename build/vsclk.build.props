@@ -51,7 +51,7 @@
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
     <SwashbuckleAspNetCorePackageVersion>4.0.1</SwashbuckleAspNetCorePackageVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
-    <VsclkSdkVersion>0.1.43</VsclkSdkVersion> <!-- used under src/services-->
+    <VsclkSdkVersion>0.1.45</VsclkSdkVersion> <!-- used under src/services-->
     <VsSaaSPackageVersion>$(VsclkSdkVersion)</VsSaaSPackageVersion> <!-- preferred for new projects-->
     <XunitRunnerVisualStudioVersion>2.4.0</XunitRunnerVisualStudioVersion>
     <XunitStaFactVersion>0.2.17</XunitStaFactVersion>

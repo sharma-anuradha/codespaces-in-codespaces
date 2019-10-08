@@ -42,10 +42,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
-                async () =>
+                async (childLogger) =>
                 {
                     // Pull out core records
-                    var records = await ResourcePoolSettingsRepository.GetWhereAsync(x => true, logger.WithValues(new LogValueSet()));
+                    var records = await ResourcePoolSettingsRepository.GetWhereAsync(x => true, childLogger.NewChildLogger());
 
                     // Pull out settings
                     var isEnabledSettings = records.ToDictionary(x => x.Id, x => x.IsEnabled);
@@ -55,8 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                     return !Disposed;
                 },
-                (e) => !Disposed,
-                swallowException: true);
+                (e) => !Disposed);
         }
 
         /// <inheritdoc/>

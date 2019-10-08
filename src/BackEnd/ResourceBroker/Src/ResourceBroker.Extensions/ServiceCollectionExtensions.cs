@@ -92,6 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IWatchPoolSettingsTask, WatchPoolSettingsTask>();
             services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
             services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
+            services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {

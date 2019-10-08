@@ -57,7 +57,75 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         {
             return logger.OperationScopeAsync(
                 LogBaseName,
-                () => InnerRunAsync(logger),
+                async (childLogger) =>
+                {
+
+                    var rootTimer = Stopwatch.StartNew();
+                    childLogger.FluentAddBaseValue("ContinuationWorkerRunId", Guid.NewGuid())
+                        .FluentAddValue("ContinuationActivityLevel", ActivityLevel);
+
+                    // Get message from the queue
+                    var message = await MessagePump.GetMessageAsync(childLogger.NewChildLogger());
+
+                    childLogger.FluentAddValue("WorkerFoundMessages", message != null);
+
+                    // Process messages if we can
+                    if (message != null)
+                    {
+                        // Tracking activity level, currently very basic
+                        if (ActivityLevel < 200)
+                        {
+                            ActivityLevel++;
+                        }
+
+                        // Pull out typed message content
+                        var payload = GetTypedPayload(message);
+
+                        childLogger.FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                            .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
+                            .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
+                            .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
+                            .FluentAddValue("ContinuationPayloadCreated", payload.Created)
+                            .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)
+                            .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount);
+
+                        // Try and handle message
+                        var resultPayload = await childLogger.TrackDurationAsync(
+                            "WorkerActivator", () => Activator.Continue(payload, childLogger.NewChildLogger()));
+
+                        childLogger.FluentAddValue("ContinuationWasHandled", resultPayload != null);
+
+                        // Deals with error case
+                        if (resultPayload != null)
+                        {
+                            childLogger.FluentAddValue("ContinuationPayloadPostStatus", resultPayload.Status)
+                                .FluentAddValue("ContinuationPayloadPostRetryAfter", resultPayload.RetryAfter)
+                                .FluentAddValue("ContinuationPayloadIsFinal", resultPayload.Input == null);
+                        }
+
+                        // Delete message when we are done
+                        await MessagePump.DeleteMessageAsync(message, childLogger.NewChildLogger());
+
+                        childLogger.FluentAddDuration("WorkerRun", rootTimer);
+                    }
+                    else
+                    {
+                        childLogger.FluentAddDuration("WorkerRun", rootTimer);
+
+                        // Tracking activity level, currently very basic
+                        if (ActivityLevel > 0)
+                        {
+                            ActivityLevel--;
+                            await Task.Delay(MissDelayTime);
+                        }
+                        else
+                        {
+                            await Task.Delay(TimeSpan.FromSeconds(Random.Next(LongMinMissDelayTime, LongMaxMissDelayTime)));
+                        }
+                    }
+
+                    return !Disposed;
+                },
                 (e) => !Disposed,
                 swallowException: true);
         }
@@ -66,75 +134,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         public void Dispose()
         {
             Disposed = true;
-        }
-
-        private async Task<bool> InnerRunAsync(IDiagnosticsLogger logger)
-        {
-            var rootTimer = Stopwatch.StartNew();
-            logger.FluentAddBaseValue("ContinuationWorkerRunId", Guid.NewGuid())
-                .FluentAddValue("ContinuationActivityLevel", ActivityLevel);
-
-            // Get message from the queue
-            var message = await MessagePump.GetMessageAsync(logger.WithValues(new LogValueSet()));
-
-            logger.FluentAddValue("WorkerFoundMessages", message != null);
-
-            // Process messages if we can
-            if (message != null)
-            {
-                // Tracking activity level, currently very basic
-                if (ActivityLevel < 200)
-                {
-                    ActivityLevel++;
-                }
-
-                // Pull out typed message content
-                var payload = GetTypedPayload(message);
-
-                logger.FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
-                    .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
-                    .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
-                    .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
-                    .FluentAddValue("ContinuationPayloadCreated", payload.Created)
-                    .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)
-                    .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount);
-
-                // Try and handle message
-                var resultPayload = await logger.TrackDurationAsync(
-                    "WorkerActivator", () => Activator.Continue(payload, logger.WithValues(new LogValueSet())));
-
-                logger.FluentAddValue("ContinuationWasHandled", resultPayload != null);
-
-                // Deals with error case
-                if (resultPayload != null)
-                {
-                    logger.FluentAddValue("ContinuationPayloadPostStatus", resultPayload.Status)
-                        .FluentAddValue("ContinuationPayloadPostRetryAfter", resultPayload.RetryAfter)
-                        .FluentAddValue("ContinuationPayloadIsFinal", resultPayload.Input == null);
-                }
-
-                // Delete message when we are done
-                await MessagePump.DeleteMessageAsync(message, logger.WithValues(new LogValueSet()));
-
-                logger.FluentAddDuration("WorkerRun", rootTimer);
-            }
-            else
-            {
-                logger.FluentAddDuration("WorkerRun", rootTimer);
-
-                // Tracking activity level, currently very basic
-                if (ActivityLevel > 0)
-                {
-                    ActivityLevel--;
-                    await Task.Delay(MissDelayTime);
-                }
-                else
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(Random.Next(LongMinMissDelayTime, LongMaxMissDelayTime)));
-                }
-            }
-
-            return !Disposed;
         }
 
         private ResourceJobQueuePayload GetTypedPayload(CloudQueueMessage message)

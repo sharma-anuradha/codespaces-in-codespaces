@@ -33,76 +33,95 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private IDiagnosticsLogger Logger { get; }
 
         /// <inheritdoc/>
-        public void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null)
+        public void RunBackgroundLoop(
+            string name,
+            Func<IDiagnosticsLogger, Task<bool>> callback,
+            TimeSpan? schedule = null,
+            IDiagnosticsLogger logger = null,
+            bool autoLogLoopOperation = false,
+            Func<Exception, bool> errLoopCallback = default)
         {
-            logger = (logger ?? Logger).WithValues(new LogValueSet())
-                .FluentAddBaseValue("TaskManagerId", Guid.NewGuid().ToString())
-                .FluentAddBaseValue("TaskName", name);
+            logger = (logger ?? Logger)
+                .FluentAddBaseValue("TaskWorkerRunId", Guid.NewGuid())
+                .FluentAddBaseValue("TaskRunTarget", name);
 
-            var wrappedCallback = WrapCallback(name, callback, logger);
-
-            logger.LogInfo("task_helper_run_background_loop_started");
-
-            Task.Run(
-                async () =>
+            RunBackground(
+                "task_helper_run_background_loop",
+                async (childLogger) =>
                 {
-                    while (await wrappedCallback())
+                    logger.LogInfo("task_helper_run_background_loop_started");
+
+                    while (await RunBackgroundLoopCore(
+                        name, callback, childLogger, autoLogLoopOperation, errLoopCallback))
                     {
                         if (schedule != null)
                         {
                             await Task.Delay(schedule.Value);
                         }
                     }
-
-                    logger.LogInfo("task_helper_run_background_loop_exited");
-                });
+                },
+                logger);
         }
 
         /// <inheritdoc/>
-        public void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, TimeSpan? delay = null)
+        public void RunBackground(
+            string name,
+            Func<IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger = null,
+            bool autoLogOperation = true,
+            Action<Exception> errCallback = default,
+            TimeSpan? delay = null)
         {
             if (delay == null)
             {
-                Task.Run(WrapCallback(name, callback, logger));
+                Task.Run(RunBackgroundCore(name, callback, logger, autoLogOperation, errCallback));
             }
             else
             {
-                Task.Delay((int)delay.Value.TotalMilliseconds).ContinueWith(x => RunBackground(name, callback, logger));
+                Task.Delay((int)delay.Value.TotalMilliseconds)
+                    .ContinueWith(x => RunBackground(name, callback, logger, autoLogOperation, errCallback));
             }
         }
 
         /// <inheritdoc/>
-        public void RunBackgroundLong(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, TimeSpan? delay = null)
+        public void RunBackgroundLong(
+            string name,
+            Func<IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger = null,
+            bool autoLogOperation = true,
+            Action<Exception> errCallback = default,
+            TimeSpan? delay = null)
         {
             if (delay == null)
             {
-                Task.Factory.StartNew(WrapCallback(name, callback, logger), TaskCreationOptions.LongRunning);
+                Task.Factory.StartNew(RunBackgroundCore(name, callback, logger, autoLogOperation, errCallback), TaskCreationOptions.LongRunning);
             }
             else
             {
-                Task.Delay((int)delay.Value.TotalMilliseconds).ContinueWith(x => RunBackgroundLong(name, callback, logger));
+                Task.Delay((int)delay.Value.TotalMilliseconds)
+                    .ContinueWith(x => RunBackgroundLong(name, callback, logger, autoLogOperation, errCallback));
             }
         }
 
         /// <inheritdoc/>
         public void RunBackgroundEnumerable<T>(
-            string name,
-            IEnumerable<T> list,
-            Func<T, IDiagnosticsLogger, Task> callback,
-            IDiagnosticsLogger logger = null,
-            Func<T, Task<IDisposable>> obtainLease = null,
-            int concurrentLimit = 3,
-            int successDelay = 250,
-            int failDelay = 100)
+           string name,
+           IEnumerable<T> list,
+           Func<T, IDiagnosticsLogger, Task> callback,
+           IDiagnosticsLogger logger = null,
+           Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
+           Action<T, Exception> errItemCallback = default,
+           int concurrentLimit = 3,
+           int successDelay = 250,
+           int failDelay = 100)
         {
-            logger.FluentAddBaseValue("IterateRunId", Guid.NewGuid())
-                .FluentAddBaseValue("IterateRunName", name);
-
+            // Trigger to run things in the background
             RunBackground(
-                "task_helper_run_background_enumerable_started",
+                "task_helper_run_background_enumerable",
                 (childLogger) => RunBackgroundEnumerableAsync(
-                    name, list, callback, childLogger, obtainLease, concurrentLimit, successDelay, failDelay),
-                logger);
+                    name, list, callback, childLogger, obtainLease, errItemCallback, concurrentLimit, successDelay, failDelay),
+                logger,
+                autoLogOperation: false);
         }
 
         /// <inheritdoc/>
@@ -111,92 +130,177 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IEnumerable<T> list,
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
-            Func<T, Task<IDisposable>> obtainLease = null,
+            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
+            Action<T, Exception> errItemCallback = default,
             int concurrentLimit = 3,
             int successDelay = 250,
             int failDelay = 100)
         {
             logger = logger ?? Logger;
 
-            logger.FluentAddBaseValue("IterateRunId", Guid.NewGuid())
-                .FluentAddBaseValue("IterateRunName", name);
-
+            // Log the main task
             return logger.OperationScopeAsync(
-                "task_helper_run_background_enumerable_started",
-                async () => await RunBackgroundEnumerableCore(
-                    name, list, callback, logger, obtainLease, concurrentLimit, successDelay, failDelay),
-                swallowException: true);
+                "task_helper_run_background_enumerable",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("TaskWorkerRunId", Guid.NewGuid())
+                        .FluentAddBaseValue("TaskRunTarget", name);
+
+                    // Trigger core runner
+                    await RunBackgroundEnumerableCore(
+                        name, list, callback, childLogger, obtainLease, errItemCallback, concurrentLimit, successDelay, failDelay);
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<bool> RetryUntilSuccessOrTimeout(Func<Task<bool>> task, TimeSpan waitTimeSpan, TimeSpan timeoutTimeSpan, Action onTimeout = null)
+        public async Task<bool> RetryUntilSuccessOrTimeout(
+            string name,
+            Func<Task<bool>> callback,
+            TimeSpan timeoutTimeSpan,
+            TimeSpan? waitTimeSpan = null,
+            IDiagnosticsLogger logger = null,
+            Action onTimeout = null)
         {
-            var timer = Stopwatch.StartNew();
-            var success = false;
-            while (!success && timer.ElapsedMilliseconds < timeoutTimeSpan.TotalMilliseconds)
-            {
-                success = await task();
+            logger = Logger ?? logger;
 
-                if (!success)
+            // Log the main task
+            return await logger.OperationScopeAsync(
+                "task_helper_run_until_success_or_timeout",
+                async (childLogger) =>
                 {
-                    await Task.Delay((int)waitTimeSpan.TotalMilliseconds);
-                }
-            }
+                    childLogger.FluentAddBaseValue("TaskRunId", Guid.NewGuid())
+                        .FluentAddBaseValue("TaskRunName", name)
+                        .FluentAddValue("TaskTimeoutTimeSpan", timeoutTimeSpan);
 
-            if (!success && onTimeout != null)
-            {
-                onTimeout();
-            }
+                    var timer = Stopwatch.StartNew();
+                    var success = false;
+                    var tryCount = 0;
 
-            return success;
+                    // Track a log statement per try
+                    do
+                    {
+                        // Log each attempt
+                        await childLogger.OperationScopeAsync(
+                            "task_helper_run_until_success_or_timeout_item",
+                            async (tryLogger) =>
+                            {
+                                tryLogger.FluentAddValue("IterateTryCount", tryCount)
+                                    .FluentAddValue("TaskTimeoutTimeSpan", timeoutTimeSpan);
+
+                                // Execute core
+                                success = await callback();
+
+                                tryLogger.FluentAddValue("IterateSuccess", success)
+                                    .FluentAddDuration("IterateTotalRun", timer);
+                            });
+
+                        // Add delay between tries
+                        if (!success && waitTimeSpan.HasValue)
+                        {
+                            await Task.Delay((int)waitTimeSpan.Value.TotalMilliseconds);
+                        }
+
+                        tryCount++;
+                    }
+                    while (!success && timer.ElapsedMilliseconds < timeoutTimeSpan.TotalMilliseconds);
+
+                    // If things weren't successful
+                    if (!success && onTimeout != null)
+                    {
+                        onTimeout();
+                    }
+
+                    logger.FluentAddValue("TaskTotalTryCount", tryCount)
+                        .FluentAddValue("TaskSuccess", success);
+
+                    return success;
+                });
         }
 
-        private Func<Task> WrapCallback(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null)
+        private Task<bool> RunBackgroundLoopCore(
+            string name,
+            Func<IDiagnosticsLogger, Task<bool>> callback,
+            IDiagnosticsLogger logger,
+            bool autoLogOperation,
+            Func<Exception, bool> errItemCallback)
         {
-            return async () =>
+            if (autoLogOperation)
             {
-                logger = logger ?? Logger;
+                return logger.OperationScopeAsync(
+                    name, callback, (e) => errItemCallback != null ? errItemCallback(e) : true, swallowException: true);
+            }
+            else
+            {
+                // In this case we only want to catch unhandled exceptions
                 try
                 {
-                    await callback(logger.WithValues(new LogValueSet()));
+                    // Trigger main callback with a new logger
+                    return callback(logger.NewChildLogger());
                 }
                 catch (Exception e)
                 {
-                    logger.LogException("task_helper_error", e);
-                }
-            };
-        }
-
-        private Func<Task<bool>> WrapCallback(string name, Func<IDiagnosticsLogger, Task<bool>> callback, IDiagnosticsLogger logger = null)
-        {
-            return async () =>
-            {
-                var result = true;
-                logger = logger ?? Logger;
-
-                try
-                {
-                    result = await callback(logger.WithValues(new LogValueSet()));
-                }
-                catch (Exception e)
-                {
+                    // Log unhandled exception
                     logger.LogException("task_run_error", e);
-                }
 
-                return result;
-            };
+                    return Task.FromResult(errItemCallback != null ? errItemCallback(e) : true);
+                }
+            }
+        }
+
+        private Func<Task> RunBackgroundCore(
+            string name,
+            Func<IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger,
+            bool autoLogOperation,
+            Action<Exception> errCallback)
+        {
+            logger = (logger ?? Logger)
+                .FluentAddBaseValue("TaskRunId", Guid.NewGuid())
+                .FluentAddBaseValue("TaskRunName", name);
+
+            if (autoLogOperation)
+            {
+                return () => logger.OperationScopeAsync(name, callback, errCallback, swallowException: true);
+            }
+            else
+            {
+                // In this case make sure we catch unhandlled exception
+                return () =>
+                {
+                    try
+                    {
+                        // Trigger main callback with a new logger
+                        return callback(logger.NewChildLogger());
+                    }
+                    catch (Exception e)
+                    {
+                        // Log unhandled exception
+                        logger.LogException("task_run_error", e);
+
+                        // Run error callback if needed
+                        if (errCallback != null)
+                        {
+                            errCallback(e);
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
+            }
         }
 
         private async Task RunBackgroundEnumerableCore<T>(
-            string name,
-            IEnumerable<T> list,
-            Func<T, IDiagnosticsLogger, Task> callback,
-            IDiagnosticsLogger logger,
-            Func<T, Task<IDisposable>> obtainLease,
-            int concurrentLimit,
-            int successDelay,
-            int failDelay)
+           string name,
+           IEnumerable<T> list,
+           Func<T, IDiagnosticsLogger, Task> callback,
+           IDiagnosticsLogger logger,
+           Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease,
+           Action<T, Exception> errItemCallback,
+           int concurrentLimit,
+           int successDelay,
+           int failDelay)
         {
+            var results = new List<TaskCompletionSource<Exception>>();
             var localLock = new object();
             var concurrentCount = 0;
             var index = 0;
@@ -209,13 +313,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 var tryCount = 0;
                 var lockAchieved = false;
 
+                // Task tracking
+                var localCompletion = new TaskCompletionSource<Exception>();
+                results.Add(localCompletion);
+
                 // Track a log statement per item
-                var outterLoopLogger = logger.WithValues(new LogValueSet());
-                await outterLoopLogger.OperationScopeAsync(
-                    "task_helper_run_background_enumerable_item_started",
-                    async () =>
+                await logger.OperationScopeAsync(
+                    "task_helper_run_background_enumerable_item",
+                    async (itemLogger) =>
                     {
-                        outterLoopLogger.FluentAddBaseValue("IterateItemRunId", Guid.NewGuid())
+                        itemLogger.FluentAddBaseValue("IterateItemRunId", Guid.NewGuid())
                             .FluentAddValue("IterateItemCount", list.Count())
                             .FluentAddValue("IterateItemIndex", index)
                             .FluentAddValue("LockConcurrentLimit", concurrentLimit)
@@ -225,12 +332,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         do
                         {
                             // Track a log statement per try
-                            var innerLoopLogger = outterLoopLogger.WithValues(new LogValueSet());
-                            await innerLoopLogger.OperationScopeAsync(
-                                "task_helper_run_background_enumerable_item_try_started",
-                                async () =>
+                            await itemLogger.OperationScopeAsync(
+                                "task_helper_run_background_enumerable_item_try",
+                                async (itemTryLogger) =>
                                 {
-                                    innerLoopLogger.FluentAddBaseValue("IterateItemRunTryId", Guid.NewGuid())
+                                    itemTryLogger.FluentAddBaseValue("IterateItemRunTryId", Guid.NewGuid())
                                         .FluentAddValue("IterateItemCount", list.Count())
                                         .FluentAddValue("IterateItemIndex", index)
                                         .FluentAddValue("LockConcurrentLimit", concurrentLimit)
@@ -250,41 +356,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                                         }
                                     }
 
-                                    innerLoopLogger.FluentAddValue("LockAchived", lockAchieved)
+                                    itemTryLogger.FluentAddValue("LockAchived", lockAchieved)
                                         .FluentAddValue("LockConcurrentPostCount", concurrentCount);
 
                                     // If we got the lock run the backgroun task
                                     if (lockAchieved)
                                     {
-                                        // Spawn work to take place in the background, this allows for the 
+                                        // Spawn work to take place in the background, this allows for the
                                         // concurrent worker limit to be achived, otherwise we would only
-                                        // be running one at time. 
+                                        // be running one at time.
                                         RunBackground(
                                             name,
                                             async (executeLogger) =>
-                                            {
-                                                await executeLogger.OperationScopeAsync(
-                                                    name,
-                                                    async () =>
+                                                {
+                                                    // Core task execution
+                                                    var didExecute = await RunBackgroundEnumerableItemCore(
+                                                        item, callback, executeLogger, obtainLease);
+
+                                                    // Pause to give some time between runs (mainly to give other
+                                                    // workers on other machines a case to work through things)
+                                                    if (didExecute && successDelay > 0)
                                                     {
-                                                        // Core task execution
-                                                        var didExecute = await RunBackgroundEnumerableCoreItem(
-                                                            name, item, callback, executeLogger, obtainLease, successDelay);
+                                                        var delayDifference = (int)(successDelay * 0.1);
+                                                        await Task.Delay(Random.Next(successDelay - delayDifference, successDelay + delayDifference));
+                                                    }
 
-                                                        // Pause to give some time between runs (mainly to give other
-                                                        // workers on other machines a case to work through things)
-                                                        if (didExecute && successDelay > 0)
-                                                        {
-                                                            var delayDifference = (int)(successDelay * 0.1);
-                                                            await Task.Delay(Random.Next(successDelay - delayDifference, successDelay + delayDifference));
-                                                        }
-                                                    },
-                                                    swallowException: true);
+                                                    // Track completion
+                                                    localCompletion.SetResult(null);
+                                                },
+                                            itemTryLogger,
+                                            errCallback: (e) =>
+                                                {
+                                                    // Track completion
+                                                    localCompletion.SetResult(e);
 
-                                                // Make sure we reduce the count, even if there was an error
-                                                concurrentCount--;
-                                            },
-                                            innerLoopLogger);
+                                                    // Execute users callback if needed
+                                                    if (errItemCallback != null)
+                                                    {
+                                                        errItemCallback(item, e);
+                                                    }
+                                                });
+
+                                        // Make sure we reduce the count, even if there was an error
+                                        concurrentCount--;
                                     }
                                     else
                                     {
@@ -302,42 +416,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         }
                         while (!lockAchieved);
 
-                        outterLoopLogger.FluentAddValue("IterateItemSuccess", lockAchieved)
-                            .FluentAddValue("LockTryCount", tryCount)
+                        itemLogger.FluentAddValue("LockTryCount", tryCount)
                             .FluentAddValue("LockConcurrentPostCount", concurrentCount);
-                    },
-                    swallowException: true);
+                    });
 
                 index++;
             }
+
+            // Exception handling
+            var exceptions = (await Task.WhenAll(results.Select(x => x.Task)))
+                .Where(x => x != null);
+
+            logger.FluentAddValue("IterateExceptionCount", exceptions.Count());
+
+            if (exceptions.Any())
+            {
+                throw new AggregateException("Run Background Enumerable items threw excpetions", exceptions);
+            }
         }
 
-        private async Task<bool> RunBackgroundEnumerableCoreItem<T>(
-            string name,
+        private async Task<bool> RunBackgroundEnumerableItemCore<T>(
             T item,
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger,
-            Func<T, Task<IDisposable>> obtainLease,
-            int successDelay)
+            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease)
         {
             var success = false;
+
+            logger.FluentAddValue("LeaseShouldObtain", obtainLease != null);
 
             // If we don't have lease, normal execute
             if (obtainLease == null)
             {
-                await callback(item, logger.WithValues(new LogValueSet()));
+                await callback(item, logger.NewChildLogger());
 
                 success = true;
             }
             else
             {
                 // Obtain lease as needed
-                using (var lease = await obtainLease(item))
+                using (var lease = await obtainLease(item, logger.NewChildLogger()))
                 {
-                    // Obnly execute if we have something to do
+                    logger.FluentAddValue("LeaseNotFound", lease == null);
+
+                    // Obnly execute if we have somethin g to do
                     if (lease != null)
                     {
-                        await callback(item, logger.WithValues(new LogValueSet()));
+                        await callback(item, logger.NewChildLogger());
 
                         success = true;
                     }

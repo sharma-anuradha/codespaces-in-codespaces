@@ -103,6 +103,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
         }
 
+        public Task ForEachAsync(Expression<Func<T, bool>> where, IDiagnosticsLogger logger, Func<T, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<T>, IDiagnosticsLogger, Task> pageResultsCallback = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task ForEachAsync<TR>(Func<IOrderedQueryable<T>, IQueryable<TR>> queryBuilder, IDiagnosticsLogger logger, Func<TR, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Clear()
         {
             this.store.Clear();

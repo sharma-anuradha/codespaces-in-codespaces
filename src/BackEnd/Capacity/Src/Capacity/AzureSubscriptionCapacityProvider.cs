@@ -162,25 +162,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             string operationName,
             Func<Task<IEnumerable<AzureResourceUsage>>> getUsageFuncAsync)
         {
+            // TODO: Target for RunBackgroundEnumerableAsync
             await logger.OperationScopeAsync(
                 operationName,
-                async () =>
+                async (childLogger) =>
                 {
                     var usages = await getUsageFuncAsync();
 
                     foreach (var usage in usages)
                     {
-                        var jobName = MakeLoggingName("update_capacity_record");
                         TaskHelper.RunBackground(
-                            jobName,
-                            async (childLogger) =>
+                            MakeLoggingName("update_capacity_record"),
+                            async (taskLogger) =>
                             {
                                 var capacityRecord = new CapacityRecord(usage);
-                                await CapacityRepository.CreateOrUpdateAsync(capacityRecord, childLogger);
-                            });
+                                await CapacityRepository.CreateOrUpdateAsync(capacityRecord, taskLogger);
+                            },
+                            childLogger);
                     }
                 },
-                null,
                 swallowException: true);
         }
 
@@ -195,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
             return await logger.OperationScopeAsync(
                 operationName,
-                async () =>
+                async (childLogger) =>
                 {
                     var result = new List<AzureResourceUsage>();
 
@@ -206,12 +206,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
                         if (desiredLimit > 0)
                         {
-                            var usage = await LoadAzureResourceUsageAsync(subscription, location, serviceType, quota, logger.FromExisting());
+                            var usage = await LoadAzureResourceUsageAsync(subscription, location, serviceType, quota, childLogger.NewChildLogger());
                             result.Add(usage);
                         }
                     }
 
-                    logger
+                    childLogger
                         .FluentAddValue(nameof(subscription), subscription.SubscriptionId)
                         .FluentAddValue(nameof(location), location.ToString())
                         .FluentAddValue(nameof(serviceType), serviceType.ToString());

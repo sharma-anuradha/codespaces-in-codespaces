@@ -57,10 +57,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         public Task<ResourceRecord> TryGetAsync(string poolCode, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_run",
-                async () =>
+                $"{LogBaseName}_try_get",
+                async (childLogger) =>
                 {
-                    logger.FluentAddBaseValue("PoolLookupRunId", Guid.NewGuid())
+                    childLogger.FluentAddBaseValue("PoolLookupRunId", Guid.NewGuid())
                         .FluentAddBaseValue("PoolImageFamilyName", poolCode);
 
                     var trys = 0;
@@ -70,13 +70,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     // Iterate around if we need to
                     while (item == null && trys < 3)
                     {
-                        var childLogger = logger.WithValues(new LogValueSet())
-                            .FluentAddBaseValue("PoolLookupTry", trys);
-
                         // Conduct core operation
-                        (item, tryAgain) = await childLogger.OperationScopeAsync(
-                            $"{LogBaseName}_run_try",
-                            () => TryGetInnerAsync(poolCode, childLogger));
+                        (item, tryAgain) = await TryGetAttemptAsync(poolCode, trys, childLogger);
 
                         // Break out if we don't need to try agian
                         if (!tryAgain)
@@ -91,41 +86,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 });
         }
 
-        private async Task<(ResourceRecord, bool)> TryGetInnerAsync(string poolCode, IDiagnosticsLogger logger)
+        private Task<(ResourceRecord, bool)> TryGetAttemptAsync(string poolCode, int trys, IDiagnosticsLogger logger)
         {
-            var tryAgain = false;
-
-            logger.FluentAddBaseValue("PoolLookupAttemptRunId", Guid.NewGuid());
-
-            // Get core resource record
-            var item = await ResourceRepository.GetPoolReadyUnassignedAsync(poolCode, logger);
-
-            logger.FluentAddValue("PoolLookupFoundItem", item != null);
-
-            // Break out if nothing is found
-            if (item != null)
-            {
-                try
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run_try",
+                async (childLogger) =>
                 {
-                    // Update core properties to indicate that its assigned
-                    item.IsAssigned = true;
-                    item.Assigned = DateTime.UtcNow;
+                    var tryAgain = false;
 
-                    // Update core resource record
-                    await ResourceRepository.UpdateAsync(item, logger);
+                    childLogger.FluentAddBaseValue("PoolLookupAttemptRunId", Guid.NewGuid())
+                        .FluentAddValue("PoolLookupAttemptTry", trys);
 
-                    logger.FluentAddValue("PoolLookupUpdateConflict", false);
-                }
-                catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
-                {
-                    logger.FluentAddValue("PoolLookupUpdateConflict", true);
+                    // Get core resource record
+                    var item = await ResourceRepository.GetPoolReadyUnassignedAsync(poolCode, childLogger);
 
-                    item = null;
-                    tryAgain = true;
-                }
-            }
+                    childLogger.FluentAddValue("PoolLookupFoundItem", item != null);
 
-            return (item, tryAgain);
+                    // Break out if nothing is found
+                    if (item != null)
+                    {
+                        try
+                        {
+                            // Update core properties to indicate that its assigned
+                            item.IsAssigned = true;
+                            item.Assigned = DateTime.UtcNow;
+
+                            // Update core resource record
+                            await ResourceRepository.UpdateAsync(item, childLogger);
+
+                            childLogger.FluentAddValue("PoolLookupUpdateConflict", false);
+                        }
+                        catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
+                        {
+                            childLogger.FluentAddValue("PoolLookupUpdateConflict", true);
+
+                            item = null;
+                            tryAgain = true;
+                        }
+                    }
+
+                    return (item, tryAgain);
+                });
+
         }
     }
 }

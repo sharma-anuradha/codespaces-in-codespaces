@@ -48,12 +48,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk
         {
             await logger.OperationScopeAsync(
                 $"azurequeue_{LoggingDocumentName}_create",
-                async () =>
+                async (childLogger) =>
                 {
                     var queue = await GetQueueAsync();
                     var message = new CloudQueueMessage(content);
 
-                    logger.FluentAddValue("QueueVisibilityDelay", initialVisibilityDelay);
+                    childLogger.FluentAddValue("QueueVisibilityDelay", initialVisibilityDelay);
 
                     await queue.AddMessageAsync(message, null, initialVisibilityDelay, null, null);
                 });
@@ -64,17 +64,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk
         {
             return await logger.OperationScopeAsync(
                 $"azurequeue_{LoggingDocumentName}_get",
-                async () =>
+                async (childLogger) =>
                 {
                     var queue = await GetQueueAsync();
                     var timeout = TimeSpan.FromMinutes(5);
 
-                    logger.FluentAddValue("QueuePopCount", popCount)
+                    childLogger.FluentAddValue("QueuePopCount", popCount)
                         .FluentAddValue("QueueVisibilityTimeout", timeout);
 
                     var results = await queue.GetMessagesAsync(popCount, timeout, null, null);
 
-                    logger.FluentAddValue("QueueFoundItems", results.Count());
+                    childLogger.FluentAddValue("QueueFoundItems", results.Count());
 
                     return results;
                 });
@@ -91,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk
         {
             await logger.OperationScopeAsync(
                 $"azurequeue_{LoggingDocumentName}_delete",
-                async () =>
+                async (childLogger) =>
                 {
                     var queue = await GetQueueAsync();
 

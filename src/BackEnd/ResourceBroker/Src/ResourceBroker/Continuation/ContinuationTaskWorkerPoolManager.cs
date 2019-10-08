@@ -55,13 +55,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public Task StartAsync(IDiagnosticsLogger logger)
+        public async Task StartAsync(IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            await logger.OperationScopeAsync(
                 LogBaseName,
-                () => InnerStartAsync(logger),
-                (e) => Task.FromResult(!Disposed),
-                swallowException: true);
+                (childLogger) =>
+                {
+                    logger.FluentAddValue("ContinuationStartLevel", TargetWorkerCount);
+
+                    // Spawn other worker threads
+                    for (var i = 0; i < TargetWorkerCount; i++)
+                    {
+                        StartWorker("InitialStart", childLogger);
+                    }
+
+                    return Task.CompletedTask;
+                });
+
+            // Trigger message level runner
+            // NOTE: I don't love that this is managed in this class, but given the
+            //       internal knowlege this worker needs of the WorkerPool, we have
+            //       few other options.
+            TaskHelper.RunBackgroundLoop(
+                LogLevelBaseName,
+                (childLogger) => ManageLevelAsync(childLogger),
+                TimeSpan.FromSeconds(30),
+                logger);
         }
 
         /// <inheritdoc/>
@@ -70,136 +89,127 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             Disposed = true;
         }
 
-        private Task InnerStartAsync(IDiagnosticsLogger logger)
+        private async Task<bool> ManageLevelAsync(IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("ContinuationStartLevel", TargetWorkerCount);
+            return await logger.OperationScopeAsync(
+                LogBaseName,
+                (childLogger) =>
+                {
+                    var overCapacityCount = 0;
+                    var underCapacityCount = 0;
+                    var belowMinimumCount = 0;
+                    var aboveMaximumCount = 0;
+                    var restartedCount = 0;
 
-            // Spawn other worker threads
-            for (var i = 0; i < TargetWorkerCount; i++)
-            {
-                StartWorker("InitialStart", logger.WithValues(new LogValueSet()));
-            }
+                    logger.FluentAddValue("WorkerLevelPreCount", WorkerPool.Count);
 
-            // Trigger message level runner
-            TaskHelper.RunBackgroundLoop(
-                LogLevelBaseName,
-                (childLogger) => ManageLevelAsync(childLogger),
-                TimeSpan.FromSeconds(30));
+                    // Move the pool level up and down based on how active the workers are
+                    foreach (var entry in WorkerPool)
+                    {
+                        var worker = entry.Value;
+                        if (worker.ActivityLevel < 25
+                            && WorkerPool.Count > MinWorkerCount)
+                        {
+                            overCapacityCount++;
+                            EndWorker(entry.Key, "OverCapacity", logger);
+                        }
+                        else if (worker.ActivityLevel > 175
+                            && WorkerPool.Count < MaxWorkerCount)
+                        {
+                            underCapacityCount++;
+                            StartWorker("UnderCapacity", logger);
+                        }
+                    }
 
-            return Task.CompletedTask;
-        }
+                    if (WorkerPool.Count < MinWorkerCount)
+                    {
+                        // Make sure that we have at lease the number of levels that we want
+                        for (var i = WorkerPool.Count - 1; i < TargetWorkerCount; i++)
+                        {
+                            belowMinimumCount++;
+                            StartWorker("BelowMinimum", logger);
+                        }
+                    }
+                    else if (WorkerPool.Count > MaxWorkerCount)
+                    {
+                        // Note, this should never happen, probably don't need to have this
+                        var workers = WorkerPool.Take(MaxWorkerCount - WorkerPool.Count);
+                        foreach (var worker in workers)
+                        {
+                            aboveMaximumCount++;
+                            EndWorker(worker.Key, "AboveMaximum", logger);
+                        }
+                    }
 
-        private Task<bool> ManageLevelAsync(IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                LogLevelBaseName,
-                () => InnerManageLevelAsync(logger),
+                    // Check if any of the works have been disposed, if so remove and replace it
+                    foreach (var worker in WorkerPool)
+                    {
+                        if (worker.Value.Disposed)
+                        {
+                            restartedCount++;
+                            EndWorker(worker.Key, "DisposedRemove", logger);
+                            StartWorker("DisposedAdd", logger);
+                        }
+                    }
+
+                    logger.FluentAddValue("WorkerLevelPostCount", WorkerPool.Count)
+                        .FluentAddValue("WorkerLevelOverCapacityCount", overCapacityCount)
+                        .FluentAddValue("WorkerLevelUnderCapacityCount", underCapacityCount)
+                        .FluentAddValue("WorkerLevelBelowMinimumCount", belowMinimumCount)
+                        .FluentAddValue("WorkerLevelAboveMaximumCount", aboveMaximumCount)
+                        .FluentAddValue("WorkerLevelRestartedCount", restartedCount);
+
+                    return Task.FromResult(!Disposed);
+                },
                 (e) => !Disposed,
                 swallowException: true);
         }
 
-        private Task<bool> InnerManageLevelAsync(IDiagnosticsLogger logger)
-        {
-            var overCapacityCount = 0;
-            var underCapacityCount = 0;
-            var belowMinimumCount = 0;
-            var aboveMaximumCount = 0;
-            var restartedCount = 0;
-
-            logger.FluentAddValue("WorkerLevelPreCount", WorkerPool.Count);
-
-            // Move the pool level up and down based on how active the workers are
-            foreach (var entry in WorkerPool)
-            {
-                var worker = entry.Value;
-                if (worker.ActivityLevel < 25
-                    && WorkerPool.Count > MinWorkerCount)
-                {
-                    overCapacityCount++;
-                    EndWorker(entry.Key, "OverCapacity", logger.WithValues(new LogValueSet()));
-                }
-                else if (worker.ActivityLevel > 175
-                    && WorkerPool.Count < MaxWorkerCount)
-                {
-                    underCapacityCount++;
-                    StartWorker("UnderCapacity", logger.WithValues(new LogValueSet()));
-                }
-            }
-
-            if (WorkerPool.Count < MinWorkerCount)
-            {
-                // Make sure that we have at lease the number of levels that we want
-                for (var i = WorkerPool.Count - 1; i < TargetWorkerCount; i++)
-                {
-                    belowMinimumCount++;
-                    StartWorker("BelowMinimum", logger.WithValues(new LogValueSet()));
-                }
-            }
-            else if (WorkerPool.Count > MaxWorkerCount)
-            {
-                // Note, this should never happen, probably don't need to have this
-                var workers = WorkerPool.Take(MaxWorkerCount - WorkerPool.Count);
-                foreach (var worker in workers)
-                {
-                    aboveMaximumCount++;
-                    EndWorker(worker.Value, "AboveMaximum", logger.WithValues(new LogValueSet()));
-                }
-            }
-
-            // Check if any of the works have been disposed, if so remove and replace it
-            foreach (var worker in WorkerPool)
-            {
-                if (worker.Value.Disposed)
-                {
-                    restartedCount++;
-                    EndWorker(worker.Value, "DisposedRemove", logger.WithValues(new LogValueSet()));
-                    StartWorker("DisposedAdd", logger.WithValues(new LogValueSet()));
-                }
-            }
-
-            logger.FluentAddValue("WorkerLevelPostCount", WorkerPool.Count)
-                .FluentAddValue("WorkerLevelOverCapacityCount", overCapacityCount)
-                .FluentAddValue("WorkerLevelUnderCapacityCount", underCapacityCount)
-                .FluentAddValue("WorkerLevelBelowMinimumCount", belowMinimumCount)
-                .FluentAddValue("WorkerLevelAboveMaximumCount", aboveMaximumCount)
-                .FluentAddValue("WorkerLevelRestartedCount", restartedCount);
-
-            return Task.FromResult(!Disposed);
-        }
-
         private void StartWorker(string reason, IDiagnosticsLogger logger)
         {
-            var id = Guid.NewGuid();
-            var worker = ServiceProvider.GetService<IContinuationTaskWorker>();
+            logger.OperationScope(
+                $"{LogBaseName}_start_worker",
+                (childLogger) =>
+                {
+                    // Create worker
+                    var id = Guid.NewGuid();
+                    var worker = ServiceProvider.GetService<IContinuationTaskWorker>();
 
-            logger.FluentAddBaseValue("ContinuationWorkerId", id)
-                .FluentAddValue("ContinuationWorkerStartReason", reason);
+                    logger.FluentAddBaseValue("ContinuationWorkerId", id)
+                        .FluentAddValue("ContinuationWorkerStartReason", reason);
 
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.ContinuationTaskWorker}-run",
-                async (childLogger) => await worker.RunAsync(childLogger),
-                null,
-                logger);
+                    // Spin worker up in the backround
+                    TaskHelper.RunBackgroundLoop(
+                        $"{ResourceLoggingConstants.ContinuationTaskWorker}-run",
+                        (taskLogger) => worker.RunAsync(taskLogger),
+                        null,
+                        childLogger);
 
-            WorkerPool.TryAdd(id, worker);
-
-            logger.LogInfo($"{LogBaseName}_start_worker");
+                    // Add to worker store
+                    WorkerPool.TryAdd(id, worker);
+                });
         }
 
         private void EndWorker(Guid id, string reason, IDiagnosticsLogger logger)
         {
-            if (WorkerPool.TryRemove(id, out var worker))
-            {
-                EndWorker(worker, reason, logger);
-            }
-        }
+            logger.OperationScope(
+                $"{LogBaseName}_end_worker",
+                (childLogger) =>
+                {
+                    logger.FluentAddBaseValue("ContinuationWorkerId", id)
+                        .FluentAddValue("ContinuationWorkerEndReason", reason);
 
-        private void EndWorker(IContinuationTaskWorker worker, string reason, IDiagnosticsLogger logger)
-        {
-            worker.Dispose();
+                    // Remove from worker store
+                    var didRemove = WorkerPool.TryRemove(id, out var worker);
 
-            logger.FluentAddValue("ContinuationWorkerEndReason", reason)
-                .LogInfo($"{LogBaseName}_end_worker");
+                    // Only dispose if we need to
+                    if (worker != null && !worker.Disposed)
+                    {
+                        worker.Dispose();
+                    }
+
+                    logger.FluentAddBaseValue("ContinuationWorkerRemoved", didRemove);
+                });
         }
     }
 }

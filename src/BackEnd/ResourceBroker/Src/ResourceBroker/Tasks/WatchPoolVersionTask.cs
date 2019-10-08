@@ -104,32 +104,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private Task<int> GetPoolReadyUnassignedCountAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             return ResourceRepository.GetPoolReadyUnassignedCountAsync(
-                resourcePool.Details.GetPoolDefinition(), logger.WithValues(new LogValueSet()));
+                resourcePool.Details.GetPoolDefinition(), logger.NewChildLogger());
         }
 
         private Task<int> GetPoolUnassignedNotVersionCountAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             return ResourceRepository.GetPoolUnassignedNotVersionCountAsync(
-                resourcePool.Details.GetPoolDefinition(), resourcePool.Details.GetPoolVersionDefinition(), logger.WithValues(new LogValueSet()));
+                resourcePool.Details.GetPoolDefinition(), resourcePool.Details.GetPoolVersionDefinition(), logger.NewChildLogger());
         }
 
         private Task<IEnumerable<string>> GetPoolUnassignedNotVersionAsync(ResourcePool resourcePool, int count, IDiagnosticsLogger logger)
         {
             return ResourceRepository.GetPoolUnassignedNotVersionAsync(
-                resourcePool.Details.GetPoolDefinition(), resourcePool.Details.GetPoolVersionDefinition(), count, logger.WithValues(new LogValueSet()));
+                resourcePool.Details.GetPoolDefinition(), resourcePool.Details.GetPoolVersionDefinition(), count, logger.NewChildLogger());
         }
 
-        private Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
+        private async Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_run_delete",
-                async () =>
-                {
-                    logger.FluentAddBaseValue("ResourceId", id);
+            logger.FluentAddBaseValue("ResourceId", id);
 
-                    await ContinuationTaskActivator.DeleteResource(id, "TaskVersionChange", logger.WithValues(new LogValueSet()));
-                },
-                swallowException: true);
+            await ContinuationTaskActivator.DeleteResource(id, "TaskVersionChange", logger.NewChildLogger());
         }
     }
 }

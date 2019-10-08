@@ -79,22 +79,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
-                async () =>
+                async (childLogger) =>
                 {
                     // Get current catalog
                     var resourceUnits = await RetrieveResourceSkus();
 
-                    logger.FluentAddValue("TaskCountResourceUnits", resourceUnits.Count().ToString());
+                    childLogger.FluentAddValue("TaskCountResourceUnits", resourceUnits.Count().ToString());
 
-                    // Run through found resources
-                    foreach (var resourceUnit in resourceUnits)
-                    {
-                        // Spawn out the tasks and run in parallel
-                        TaskHelper.RunBackground(
-                            $"{LogBaseName}_run_unit_check",
-                            (childLogger) => RunPoolAsync(resourceUnit, claimSpan, childLogger),
-                            logger);
-                    }
+                    // Run through found resources in the background
+                    TaskHelper.RunBackgroundEnumerable(
+                        $"{LogBaseName}_run_unit_check",
+                        resourceUnits,
+                        (resourceUnit, itemLogger) => CoreRunPoolAsync(resourceUnit, claimSpan, itemLogger),
+                        childLogger,
+                        (resourceUnit, itemLogger) => ObtainLease($"{LeaseBaseName}-{resourceUnit.Details.GetPoolDefinition()}", claimSpan, itemLogger));
 
                     return !Disposed;
                 },
@@ -116,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <returns>Running task.</returns>
         protected abstract Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger);
 
-        private Task RunPoolAsync(ResourcePool resourcePool, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private async Task CoreRunPoolAsync(ResourcePool resourcePool, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("TaskRunId", Guid.NewGuid())
                 .FluentAddBaseValue("PoolLocation", resourcePool.Details.Location.ToString())
@@ -128,28 +126,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 .FluentAddBaseValue("PoolImageFamilyName", resourcePool.Details.ImageFamilyName)
                 .FluentAddBaseValue("PoolImageName", resourcePool.Details.ImageName);
 
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_run_unit_check",
-                async () =>
-                {
-                    // Obtain a lease if no one else has it
-                    using (var lease = await ObtainLease($"{LeaseBaseName}-{resourcePool.Details.GetPoolDefinition()}", claimSpan, logger))
-                    {
-                        logger.FluentAddValue("LeaseNotFound", lease == null);
-
-                        // If we couldn't obtain a lease, move on
-                        if (lease == null)
-                        {
-                            return;
-                        }
-
-                        // Executes the action that needs to be performed on the pool
-                        await logger.TrackDurationAsync(
-                            "RunPoolAction", () => RunActionAsync(resourcePool, logger));
-                    }
-                },
-                (e) => Task.FromResult(!Disposed),
-                swallowException: true);
+            // Executes the action that needs to be performed on the pool
+            await logger.TrackDurationAsync(
+                "RunPoolAction", () => RunActionAsync(resourcePool, logger));
         }
 
         private async Task<IEnumerable<ResourcePool>> RetrieveResourceSkus()
@@ -162,10 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return await ClaimedDistributedLease.Obtain(
-                ResourceBrokerSettings.LeaseContainerName,
-                leaseName,
-                claimSpan,
-                logger.WithValues(new LogValueSet()));
+                ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }
 }

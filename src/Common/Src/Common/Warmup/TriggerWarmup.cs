@@ -43,7 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
                 {
                     TaskHelper.RunBackground(
                         LogBaseName,
-                        (childLogger) => childLogger.OperationScopeAsync(LogBaseName, () => WarmupServicesAsync(childLogger), swallowException: true));
+                        (childLogger) => WarmupServicesAsync(childLogger));
+
                     return 1;
                 });
         }
@@ -97,10 +98,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
             foreach (var service in services)
             {
                 // Spawn out the tasks and run in parallel
-                var logName = $"{LogBaseName}_delayed_warmup";
                 TaskHelper.RunBackground(
-                    logName,
-                    (childLogger) => childLogger.OperationScopeAsync(logName, () => service.WarmupCompletedAsync(childLogger), swallowException: true),
+                    $"{LogBaseName}_delayed_warmup",
+                    (childLogger) => {
+                        childLogger.FluentAddValue("ServiceName", service.GetType().Name);
+
+                        return service.WarmupCompletedAsync(childLogger);
+                    },
                     logger);
             }
         }

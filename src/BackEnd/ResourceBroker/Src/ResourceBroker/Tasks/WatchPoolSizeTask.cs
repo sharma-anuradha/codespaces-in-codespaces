@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         protected async override Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             // Determine the effective size of the pool
-            var unassignedCount = await GetPoolUnassignedCountAsync(resourcePool, logger.WithValues(new LogValueSet()));
+            var unassignedCount = await GetPoolUnassignedCountAsync(resourcePool, logger.NewChildLogger());
 
             // Determine if the pool is currently enabled
             var poolEnabled = ResourcePoolManager.IsPoolEnabled(resourcePool.Details.GetPoolDefinition());
@@ -141,42 +141,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private Task<int> GetPoolUnassignedCountAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             return ResourceRepository.GetPoolUnassignedCountAsync(
-                resourcePool.Details.GetPoolDefinition(), logger.WithValues(new LogValueSet()));
+                resourcePool.Details.GetPoolDefinition(), logger.NewChildLogger());
         }
 
         private Task<IEnumerable<string>> GetPoolUnassignedAsync(ResourcePool resourcePool, int count, IDiagnosticsLogger logger)
         {
             return ResourceRepository.GetPoolUnassignedAsync(
-                resourcePool.Details.GetPoolDefinition(), count, logger.WithValues(new LogValueSet()));
+                resourcePool.Details.GetPoolDefinition(), count, logger.NewChildLogger());
         }
 
-        private Task AddPoolItemAsync(ResourcePool resourcePool, int iteration, IDiagnosticsLogger logger)
+        private async Task AddPoolItemAsync(ResourcePool resourcePool, int iteration, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_run_create",
-                async () =>
-                {
-                    var id = Guid.NewGuid();
+            var id = Guid.NewGuid();
 
-                    logger.FluentAddBaseValue("TaskJobIteration", iteration.ToString())
-                        .FluentAddBaseValue("ResourceId", id);
+            logger.FluentAddBaseValue("TaskJobIteration", iteration.ToString())
+                .FluentAddBaseValue("ResourceId", id);
 
-                    await ContinuationTaskActivator.CreateResource(
-                        id, resourcePool.Type, resourcePool.Details, "WatchPoolSizeIncrease", logger.WithValues(new LogValueSet()));
-                },
-                swallowException: true);
+            await ContinuationTaskActivator.CreateResource(
+                id, resourcePool.Type, resourcePool.Details, "WatchPoolSizeIncrease", logger.NewChildLogger());
         }
 
-        private Task DeletePoolItemAsync(Guid id, IDiagnosticsLogger logger)
+        private async Task DeletePoolItemAsync(Guid id, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_run_delete",
-                async () =>
-                {
-                    logger.FluentAddBaseValue("ResourceId", id);
-                    await ContinuationTaskActivator.DeleteResource(id, "WatchPoolSizeDecrease", logger.WithValues(new LogValueSet()));
-                },
-                swallowException: true);
+            logger.FluentAddBaseValue("ResourceId", id);
+
+            await ContinuationTaskActivator.DeleteResource(id, "WatchPoolSizeDecrease", logger.NewChildLogger());
         }
     }
 }

@@ -124,6 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 monitorCapacityInterval *= 0.1;
             }
 
+            // TODO: Candidate for RunBackgroundEnumerableAsync usage
             // Update the compute capacity
             foreach (var (subscription, location) in computeSubscriptionLocations)
             {
@@ -131,6 +132,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 UpdateAzureResourceUsageBackgroundLoop(subscription, location, ServiceType.Compute, updateCapacityInterval, logger);
             }
 
+            // TODO: Candidate for RunBackgroundEnumerableAsync usage
             // Update the storage capacity
             foreach (var (subscription, location) in storageSubscriptionLocations)
             {
@@ -138,6 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 UpdateAzureResourceUsageBackgroundLoop(subscription, location, ServiceType.Storage, updateCapacityInterval, logger);
             }
 
+            // TODO: Candidate for RunBackgroundEnumerableAsync usage
             // Update the network capacity
             foreach (var (subscription, location) in networkSubscriptionLocations)
             {
@@ -145,6 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 UpdateAzureResourceUsageBackgroundLoop(subscription, location, ServiceType.Network, updateCapacityInterval, logger);
             }
 
+            // TODO: Candidate for RunBackgroundEnumerableAsync usage
             // Monitor all capacity
             var subscriptionLocationGroups = subscriptionLocations.GroupBy(item => item.location);
             foreach (var subscriptionLocationGroup in subscriptionLocationGroups)
@@ -188,16 +192,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
             TaskHelper.RunBackgroundLoop(
                 UpdateCapacityLoopName,
-                async (childLogger) =>
-                {
-                    await UpdateAzureResourceUsageAsync(subscription, location, serviceType, childLogger);
-                    return true;
-                },
+                (childLogger) => UpdateAzureResourceUsageAsync(subscription, location, serviceType, childLogger),
                 updateInterval,
                 logger);
         }
 
-        private async Task UpdateAzureResourceUsageAsync(
+        private async Task<bool> UpdateAzureResourceUsageAsync(
             IAzureSubscription subscription,
             AzureLocation location,
             ServiceType serviceType,
@@ -215,22 +215,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             {
                 if (lease != null)
                 {
-                    logger.OperationScope(
-                        UpdateCapacityOperationName,
-                        () =>
-                        {
-                            TaskHelper.RunBackground(
-                                UpdateCapacityTaskName,
-                                async (childLogger) =>
-                                {
-                                    await AzureSubscriptionCapacityProvider.UpdateAzureResourceUsageAsync(subscription, location, serviceType, childLogger);
-                                },
-                                logger);
-                        },
-                        null,
-                        swallowException: true);
+                    TaskHelper.RunBackground(
+                        UpdateCapacityTaskName,
+                        (childLogger) => AzureSubscriptionCapacityProvider.UpdateAzureResourceUsageAsync(subscription, location, serviceType, childLogger),
+                        logger);
                 }
             }
+
+            return true;
         }
 
         private void MonitorAzureResourceUsageBackgroundLoop(
@@ -252,16 +244,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
             TaskHelper.RunBackgroundLoop(
                 MonitorCapacityLoopName,
-                async (childLogger) =>
-                {
-                    await MonitorAzureResourceUsageAsync(location, subscriptions, serviceType, childLogger);
-                    return true;
-                },
+                (childLogger) => MonitorAzureResourceUsageAsync(location, subscriptions, serviceType, childLogger),
                 monitorInterval,
                 logger);
         }
 
-        private async Task MonitorAzureResourceUsageAsync(
+        private async Task<bool> MonitorAzureResourceUsageAsync(
             AzureLocation location,
             IEnumerable<IAzureSubscription> subscriptions,
             ServiceType serviceType,
@@ -279,22 +267,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             {
                 if (lease != null)
                 {
-                    logger.OperationScope(
-                        MonitorCapacityOperationName,
-                        () =>
-                        {
-                            TaskHelper.RunBackground(
-                                MonitorCapacityTaskName,
-                                async (childLogger) =>
-                                {
-                                    await MonitorAzureResourceUsageInnerAsync(location, subscriptions, serviceType, childLogger);
-                                },
-                                logger);
-                        },
-                        null,
-                        swallowException: true);
+                    TaskHelper.RunBackground(
+                        MonitorCapacityTaskName,
+                        (childLogger) => MonitorAzureResourceUsageInnerAsync(location, subscriptions, serviceType, childLogger),
+                        logger);
                 }
             }
+
+            return true;
         }
 
         private async Task MonitorAzureResourceUsageInnerAsync(

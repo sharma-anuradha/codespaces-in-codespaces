@@ -66,109 +66,124 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         protected async override Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             var records = await ResourceRepository.GetFailedOperationAsync(
-                resourcePool.Details.GetPoolDefinition(), RequestedItems, logger);
+                resourcePool.Details.GetPoolDefinition(), RequestedItems, logger.NewChildLogger());
 
             logger.FluentAddValue("TaskRequestedItems", RequestedItems)
                 .FluentAddValue("TaskFoundItems", records.Count());
 
             foreach (var record in records)
             {
-                await logger.OperationScopeAsync(
-                    $"{LogBaseName}_run_fail_cleanup",
-                    () => RunFailCleanupAsync(record, logger.WithValues(new LogValueSet())),
-                    swallowException: true);
+                await RunFailCleanupAsync(record, logger);
             }
         }
 
-        private async Task RunFailCleanupAsync(ResourceRecord record, IDiagnosticsLogger logger)
+        private async Task RunFailCleanupAsync(ResourceRecord record, IDiagnosticsLogger loogger)
         {
-            logger.FluentAddBaseValue("TaskFailedItemRunId", Guid.NewGuid())
-                .FluentAddBaseValue("ResourceId", record.Id);
-
-            // Record the reason why this one is being deleted
-            var didFailStatus = false;
-            if (record.ProvisioningStatus == OperationState.Failed
-                || record.ProvisioningStatus == OperationState.Cancelled
-                || record.StartingStatus == OperationState.Failed
-                || record.StartingStatus == OperationState.Cancelled
-                || record.DeletingStatus == OperationState.Failed
-                || record.DeletingStatus == OperationState.Cancelled)
-            {
-                didFailStatus = true;
-            }
-
-            logger.FluentAddValue("TaskFailedStatusItem", didFailStatus)
-                .FluentAddValue("TaskFailedStalledItem", !didFailStatus);
-
-            // Record which operation it failed on
-            var didFailProvisioning = false;
-            var didFailStarting = false;
-            var didFailDeleting = false;
-            if (record.ProvisioningStatus == OperationState.Failed
-                || record.ProvisioningStatus == OperationState.Cancelled
-                || ((record.ProvisioningStatus == OperationState.Initialized
-                        || record.ProvisioningStatus == OperationState.InProgress)
-                    && record.ProvisioningStatusChanged <= DateTime.UtcNow.AddHours(-1)))
-            {
-                didFailProvisioning = true;
-            }
-            else if (record.StartingStatus == OperationState.Failed
-                || record.StartingStatus == OperationState.Cancelled
-                || ((record.StartingStatus == OperationState.Initialized
-                        || record.StartingStatus == OperationState.InProgress)
-                    && record.StartingStatusChanged <= DateTime.UtcNow.AddHours(-1)))
-            {
-                didFailStarting = true;
-            }
-            else if (record.DeletingStatus == OperationState.Failed
-                || record.DeletingStatus == OperationState.Cancelled
-                || ((record.DeletingStatus == OperationState.Initialized
-                        || record.DeletingStatus == OperationState.InProgress)
-                    && record.DeletingStatusChanged <= DateTime.UtcNow.AddHours(-1)))
-            {
-                didFailDeleting = true;
-            }
-
-            logger.FluentAddValue("TaskDidFailProvisioning", didFailProvisioning)
-                .FluentAddValue("TaskDidFailStarting", didFailStarting)
-                .FluentAddValue("TaskDidFailDeleting", didFailDeleting);
-
-            // Delete assuming we have something to do
-            if (didFailProvisioning || didFailStarting || didFailDeleting)
-            {
-                logger.FluentAddValue("DeleteAttemptCount", record.DeleteAttemptCount);
-                logger.LogWarning($"{LogBaseName}_stale_resource_found");
-
-                // If we have already tried to delete 3 times, this time just delete the record
-                if (record.DeleteAttemptCount >= 3)
+            await loogger.OperationScopeAsync(
+                $"{LogBaseName}_run_fail_cleanup",
+                async (childLogger) =>
                 {
-                    // Just delete the record, don't run through continuation
-                    await ResourceRepository.DeleteAsync(record.Id, logger.WithValues(new LogValueSet()));
-                    return;
-                }
 
-                // Kickoff delete continuation
-                TaskHelper.RunBackground(
-                    $"{LogBaseName}_delete",
-                    (childLogger) => DeleteResourceItemAsync(Guid.Parse(record.Id), childLogger),
-                    logger);
-            }
-            else
-            {
-                throw new Exception("Unexpected resource state while attempting to clean up resource.");
-            }
-        }
+                    childLogger.FluentAddBaseValue("TaskFailedItemRunId", Guid.NewGuid())
+                        .FluentAddBaseValue("ResourceId", record.Id);
 
-        private Task DeleteResourceItemAsync(Guid id, IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_run_delete",
-                async () =>
-                {
-                    logger.FluentAddBaseValue("ResourceId", id);
-                    await ContinuationTaskActivator.DeleteResource(id, "WatchFailedResourcesTask", logger.WithValues(new LogValueSet()));
+                    // Record the reason why this one is being deleted
+                    var didFailStatus = false;
+                    if (record.ProvisioningStatus == OperationState.Failed
+                        || record.ProvisioningStatus == OperationState.Cancelled
+                        || record.StartingStatus == OperationState.Failed
+                        || record.StartingStatus == OperationState.Cancelled
+                        || record.DeletingStatus == OperationState.Failed
+                        || record.DeletingStatus == OperationState.Cancelled)
+                    {
+                        didFailStatus = true;
+                    }
+
+                    childLogger.FluentAddValue("TaskFailedStatusItem", didFailStatus)
+                        .FluentAddValue("TaskFailedStalledItem", !didFailStatus);
+
+                    // Record which operation it failed on
+                    var reason = "";
+                    var didFailProvisioning = false;
+                    var didFailStarting = false;
+                    var didFailDeleting = false;
+                    if (record.ProvisioningStatus == OperationState.Failed
+                        || record.ProvisioningStatus == OperationState.Cancelled
+                        || ((record.ProvisioningStatus == OperationState.Initialized
+                                || record.ProvisioningStatus == OperationState.InProgress)
+                            && record.ProvisioningStatusChanged <= DateTime.UtcNow.AddHours(-1)))
+                    {
+                        didFailProvisioning = true;
+                        reason = "FailProvisioning";
+                    }
+                    else if (record.StartingStatus == OperationState.Failed
+                        || record.StartingStatus == OperationState.Cancelled
+                        || ((record.StartingStatus == OperationState.Initialized
+                                || record.StartingStatus == OperationState.InProgress)
+                            && record.StartingStatusChanged <= DateTime.UtcNow.AddHours(-1)))
+                    {
+                        didFailStarting = true;
+                        reason = "FailStarting";
+                    }
+                    else if (record.DeletingStatus == OperationState.Failed
+                        || record.DeletingStatus == OperationState.Cancelled
+                        || ((record.DeletingStatus == OperationState.Initialized
+                                || record.DeletingStatus == OperationState.InProgress)
+                            && record.DeletingStatusChanged <= DateTime.UtcNow.AddHours(-1)))
+                    {
+                        didFailDeleting = true;
+                        reason = "FailDeleting";
+                    }
+
+                    childLogger.FluentAddValue("TaskDidFailProvisioning", didFailProvisioning)
+                        .FluentAddValue("TaskDidFailStarting", didFailStarting)
+                        .FluentAddValue("TaskDidFailDeleting", didFailDeleting)
+                        .FluentAddValue("TaskDidFailReason", reason);
+
+                    // Delete assuming we have something to do
+                    if (didFailProvisioning || didFailStarting || didFailDeleting)
+                    {
+                        childLogger.FluentAddValue("DeleteAttemptCount", record.DeleteAttemptCount);
+                        childLogger.LogWarning($"{LogBaseName}_stale_resource_found");
+
+                        // If we have already tried to delete 3 times, this time just delete the record
+                        if (record.DeleteAttemptCount >= 3)
+                        {
+                            // Just delete the record, don't run through continuation
+                            await childLogger.OperationScopeAsync(
+                                $"{LogBaseName}_delete_record",
+                                (deleteLogger) => DeleteResourceAsync(record.Id, reason, deleteLogger));
+
+                            return;
+                        }
+
+                        // Kickoff delete continuation
+                        TaskHelper.RunBackground(
+                            $"{LogBaseName}_delete",
+                            (taskLogger) => DeleteResourceItemAsync(Guid.Parse(record.Id), taskLogger),
+                            childLogger);
+                    }
+                    else
+                    {
+                        throw new Exception("Unexpected resource state while attempting to clean up resource.");
+                    }
                 },
                 swallowException: true);
+        }
+
+        private async Task DeleteResourceAsync(string id, string reason, IDiagnosticsLogger logger)
+        {
+            logger.FluentAddBaseValue("ResourceId", id)
+                .FluentAddBaseValue("OperationReason", reason);
+
+            // Since we don't have the azyre resource, we are just goignt to delete this record
+            await ResourceRepository.DeleteAsync(id, logger.NewChildLogger());
+        }
+
+        private async Task DeleteResourceItemAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            logger.FluentAddBaseValue("ResourceId", id);
+            await ContinuationTaskActivator.DeleteResource(id, "WatchFailedResourcesTask", logger.NewChildLogger());
         }
     }
 }

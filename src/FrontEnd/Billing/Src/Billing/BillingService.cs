@@ -116,13 +116,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         private async Task BeginAccountCalculations(VsoAccountInfo account, DateTime start, DateTime end, IDiagnosticsLogger logger)
         {
-            logger.AddAccount(account);
-            logger.FluentAddBaseValue("startCalculationTime", start);
-            logger.FluentAddBaseValue("endCalculationTime", end);
+            logger.AddAccount(account)
+                .FluentAddBaseValue("startCalculationTime", start)
+                .FluentAddBaseValue("endCalculationTime", end);
 
             await logger.OperationScopeAsync(
                 $"{billingWorkerLogBase}-begin-account-calculations",
-                async () =>
+                async (childLogger) =>
                 {
                     var summaryEvents = await billingEventManager.GetAccountEventsAsync(account, start, end, new string[] { billingEventType }, logger);
                     BillingEvent latestSummary = new BillingEvent();

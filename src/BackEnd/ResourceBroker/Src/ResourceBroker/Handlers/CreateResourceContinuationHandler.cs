@@ -32,7 +32,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// Continuation handler that manages creating of environement.
+    /// Continuation handler that manages creating of environment.
     /// </summary>
     public class CreateResourceContinuationHandler
         : BaseContinuationTaskMessageHandler<CreateResourceContinuationInput>, ICreateResourceContinuationHandler

@@ -70,7 +70,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         public Task<ContinuationResult> Continue(ContinuationInput input, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(LogBaseName, () => InnerContinue(input, logger));
+            return logger.OperationScopeAsync(
+                LogBaseName,
+                (childLogger) => InnerContinue(input, childLogger));
         }
 
         /// <summary>

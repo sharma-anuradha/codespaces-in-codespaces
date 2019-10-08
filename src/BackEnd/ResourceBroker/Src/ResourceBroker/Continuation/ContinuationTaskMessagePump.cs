@@ -49,22 +49,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_try_populate_cache",
-                async () =>
+                async (childLogger) =>
                 {
                     var targetMessageCacheLength = ContinuationTaskWorkerPoolManager.CurrentWorkerCount;
 
-                    logger.FluentAddValue("PumpPreCacheLevel", MessageCache.Count)
+                    childLogger.FluentAddValue("PumpPreCacheLevel", MessageCache.Count)
                         .FluentAddValue("PumpTargetLevel", targetMessageCacheLength);
 
                     // Only trigger work when we have something to really do
                     if (MessageCache.Count < (targetMessageCacheLength / 2))
                     {
-                        logger.FluentAddValue("PumpFillDidTrigger", true.ToString());
+                        childLogger.FluentAddValue("PumpFillDidTrigger", true.ToString());
 
                         // Fetch items
-                        var items = await ResourceJobQueueRepository.GetAsync(targetMessageCacheLength - MessageCache.Count, logger.WithValues(new LogValueSet()));
+                        var items = await ResourceJobQueueRepository.GetAsync(targetMessageCacheLength - MessageCache.Count, childLogger.WithValues(new LogValueSet()));
 
-                        logger.FluentAddValue("PumpFoundItems", items.Count().ToString());
+                        childLogger.FluentAddValue("PumpFoundItems", items.Count().ToString());
 
                         // Add each item to the local cache
                         foreach (var item in items)
@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         }
                     }
 
-                    logger.FluentAddValue("PumpPostCacheLevel", MessageCache.Count);
+                    childLogger.FluentAddValue("PumpPostCacheLevel", MessageCache.Count);
 
                     return !Disposed;
                 });
@@ -84,32 +84,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_get_message",
-                async () =>
+                async (childLogger) =>
                 {
-                    logger.FluentAddValue("PumpPreCacheLevel", MessageCache.Count);
+                    childLogger.FluentAddValue("PumpPreCacheLevel", MessageCache.Count);
 
                     // Try and get from cache
                     var cacheHit = MessageCache.TryDequeue(out var message);
 
-                    logger.FluentAddValue("PumpCacheHit", cacheHit);
+                    childLogger.FluentAddValue("PumpCacheHit", cacheHit);
 
                     // Try getting from cache and manually pull if needed. Note, doesn't really
                     // matter if a cache miss happens here, its a nice to have not a necessity.
                     if (!cacheHit)
                     {
-                        message = await ResourceJobQueueRepository.GetAsync(logger.WithValues(new LogValueSet()));
+                        message = await ResourceJobQueueRepository.GetAsync(childLogger.WithValues(new LogValueSet()));
                     }
 
-                    logger.FluentAddValue("PumpFoundMessage", message != null);
+                    childLogger.FluentAddValue("PumpFoundMessage", message != null);
                     if (message != null)
                     {
-                        logger.FluentAddValue("PumpDequeueCount", message.DequeueCount)
+                        childLogger.FluentAddValue("PumpDequeueCount", message.DequeueCount)
                             .FluentAddValue("PumpExpirationTime", message.ExpirationTime)
                             .FluentAddValue("PumpInsertionTime", message.InsertionTime)
                             .FluentAddValue("PumpNextVisibleTime", message.NextVisibleTime);
                     }
 
-                    logger.FluentAddValue("PumpPostCacheLevel", MessageCache.Count);
+                    childLogger.FluentAddValue("PumpPostCacheLevel", MessageCache.Count);
 
                     return message;
                 });

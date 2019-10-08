@@ -22,7 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     {
         private const int VmCreationRetryAfterSeconds = 15;
         private const int VmDeletionRetryAfterSeconds = 5;
-        private const int VmStartEnvRetryAfterSeconds = 1;
         private IEnumerable<IDeploymentManager> managers = null;
 
         /// <summary>
@@ -35,137 +34,131 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<VirtualMachineProviderCreateResult> CreateAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
+        public Task<VirtualMachineProviderCreateResult> CreateAsync(
+            VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
-            string resultContinuationToken = default;
-            OperationState resultState;
-            AzureResourceInfo azureResourceInfo = default;
 
-            var deploymentManager = SelectDeploymentManager(input.ComputeOS);
+            return logger.OperationScopeAsync(
+                "virtual_machine_compute_provider_create_step_complete",
+                async (childLogger) =>
+                {
+                    string resultContinuationToken = default;
+                    OperationState resultState;
+                    AzureResourceInfo azureResourceInfo = default;
 
-            var duration = logger.StartDuration();
+                    var deploymentManager = SelectDeploymentManager(input.ComputeOS);
 
-            logger = logger.WithValues(new LogValueSet
-            {
-                { nameof(input.AzureSubscription), input.AzureSubscription.ToString() },
-                { nameof(input.AzureVmLocation), input.AzureVmLocation.ToString() },
-                { nameof(input.AzureResourceGroup), input.AzureResourceGroup },
-                { nameof(input.AzureSkuName), input.AzureSkuName },
-                { nameof(input.AzureVirtualMachineImage), input.AzureVirtualMachineImage },
-            });
+                    childLogger.FluentAddBaseValue(nameof(input.AzureSubscription), input.AzureSubscription.ToString())
+                        .FluentAddBaseValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString())
+                        .FluentAddBaseValue(nameof(input.AzureResourceGroup), input.AzureResourceGroup)
+                        .FluentAddBaseValue(nameof(input.AzureSkuName), input.AzureSkuName)
+                        .FluentAddBaseValue(nameof(input.AzureVirtualMachineImage), input.AzureVirtualMachineImage);
 
-            (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync(
-                input,
-                logger,
-                deploymentManager.BeginCreateComputeAsync,
-                deploymentManager.CheckCreateComputeStatusAsync);
+                    (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync(
+                        input,
+                        childLogger,
+                        deploymentManager.BeginCreateComputeAsync,
+                        deploymentManager.CheckCreateComputeStatusAsync);
 
-            var result = new VirtualMachineProviderCreateResult()
-            {
-                AzureResourceInfo = azureResourceInfo,
-                Status = resultState,
-                RetryAfter = TimeSpan.FromSeconds(VmCreationRetryAfterSeconds),
-                NextInput = input.BuildNextInput(resultContinuationToken),
-            };
+                    var result = new VirtualMachineProviderCreateResult()
+                    {
+                        AzureResourceInfo = azureResourceInfo,
+                        Status = resultState,
+                        RetryAfter = TimeSpan.FromSeconds(VmCreationRetryAfterSeconds),
+                        NextInput = input.BuildNextInput(resultContinuationToken),
+                    };
 
-            // TODO:: Add correlation id
-            logger.FluentAddValue(nameof(result.AzureResourceInfo), result.AzureResourceInfo?.Name)
-               .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-               .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
-               .FluentAddValue(nameof(result.Status), result.Status.ToString())
-               .AddDuration(duration)
-               .LogInfo("virtual_machine_compute_provider_create_step_complete");
+                    // TODO:: Add correlation id
+                    childLogger.FluentAddValue(nameof(result.AzureResourceInfo), result.AzureResourceInfo?.Name)
+                       .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+                       .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
+                       .FluentAddValue(nameof(result.Status), result.Status.ToString());
 
-            return result;
+                    return result;
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
+        public Task<VirtualMachineProviderDeleteResult> DeleteAsync(
+            VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
-            string resultContinuationToken = default;
-            OperationState resultState;
-            AzureResourceInfo azureResourceInfo;
-            var deploymentManager = SelectDeploymentManager(input.ComputeOS);
-            var duration = logger.StartDuration();
 
-            logger = logger.WithValues(new LogValueSet
-            {
-                { nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString() },
-                { nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup },
-                { nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name },
-                { nameof(input.AzureVmLocation), input.AzureVmLocation.ToString() },
-            });
-            (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderDeleteInput>(
-                input,
-                logger,
-                deploymentManager.BeginDeleteComputeAsync,
-                deploymentManager.CheckDeleteComputeStatusAsync);
+            return logger.OperationScopeAsync(
+                "virtual_machine_compute_provider_delete_step_complete",
+                async (childLogger) =>
+                {
+                    string resultContinuationToken = default;
+                    OperationState resultState;
+                    AzureResourceInfo azureResourceInfo;
+                    var deploymentManager = SelectDeploymentManager(input.ComputeOS);
+                    var duration = childLogger.StartDuration();
 
-            var result = new VirtualMachineProviderDeleteResult()
-            {
-                Status = resultState,
-                RetryAfter = TimeSpan.FromSeconds(VmDeletionRetryAfterSeconds),
-                NextInput = input.BuildNextInput(resultContinuationToken),
-            };
+                    childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString())
+                        .FluentAddBaseValue(nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup)
+                        .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name)
+                        .FluentAddBaseValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString());
 
-            // TODO:: Add correlation id
-            logger
-               .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-               .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
-               .FluentAddValue(nameof(result.Status), result.Status.ToString())
-               .AddDuration(duration)
-               .LogInfo("virtual_machine_compute_provider_delete_step_complete");
-            return result;
+                    (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderDeleteInput>(
+                        input,
+                        childLogger,
+                        deploymentManager.BeginDeleteComputeAsync,
+                        deploymentManager.CheckDeleteComputeStatusAsync);
+
+                    var result = new VirtualMachineProviderDeleteResult()
+                    {
+                        Status = resultState,
+                        RetryAfter = TimeSpan.FromSeconds(VmDeletionRetryAfterSeconds),
+                        NextInput = input.BuildNextInput(resultContinuationToken),
+                    };
+
+                    // TODO:: Add correlation id
+                    childLogger
+                       .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+                       .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
+                       .FluentAddValue(nameof(result.Status), result.Status.ToString());
+
+                    return result;
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger)
+        public Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(
+            VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
 
-            // Use linux provider as this path will be same for windows and linux VMs.
-            // TODO:: move common pieces in abstract base class.
-            var deploymentManager = SelectDeploymentManager(ComputeOS.Linux);
+            return logger.OperationScopeAsync(
+                "virtual_machine_compute_provider_start_compute_step_complete",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString())
+                        .FluentAddBaseValue(nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup)
+                        .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
 
-            var duration = logger.StartDuration();
+                    // Use linux provider as this path will be same for windows and linux VMs.
+                    // TODO:: move common pieces in abstract base class.
+                    var deploymentManager = SelectDeploymentManager(ComputeOS.Linux);
 
-            logger = logger.WithValues(new LogValueSet
-            {
-                { nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString() },
-                { nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup },
-                { nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name },
-            });
+                    var getRetryAttempt = int.TryParse(input.ContinuationToken, out int count);
+                    var retryAttemptCount = getRetryAttempt ? count : 0;
+                    var startComputeResult = await deploymentManager.StartComputeAsync(input, retryAttemptCount, childLogger.NewChildLogger());
+                    var result = new VirtualMachineProviderStartComputeResult()
+                    {
+                        Status = startComputeResult.Item1,
+                        NextInput = (startComputeResult.Item1 == OperationState.Succeeded) ? default : input.BuildNextInput(startComputeResult.Item2.ToString()),
+                    };
 
-            var result = await logger.OperationScopeAsync(
-               "virtual_machine_compute_provider_start_compute",
-               async () =>
-               {
-                   var getRetryAttempt = int.TryParse(input.ContinuationToken, out int count);
-                   var retryAttemptCount = getRetryAttempt ? count : 0;
-                   var startComputeResult = await deploymentManager.StartComputeAsync(input, retryAttemptCount, logger);
-                   var r = new VirtualMachineProviderStartComputeResult()
-                   {
-                       Status = startComputeResult.Item1,
-                       NextInput = (startComputeResult.Item1 == OperationState.Succeeded) ? default : input.BuildNextInput(startComputeResult.Item2.ToString()),
-                   };
-                   logger.FluentAddValue(nameof(r.Status), r.Status.ToString());
-                   return r;
-               },
-               (_) => new VirtualMachineProviderStartComputeResult() { Status = OperationState.Failed },
-               swallowException: true);
+                    // TODO:: Add correlation id
+                    childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
+                       .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
 
-            // TODO:: Add correlation id
-            logger
-               .FluentAddValue(nameof(result.Status), result.Status.ToString())
-               .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString())
-               .AddDuration(duration)
-               .LogInfo("virtual_machine_compute_provider_start_compute_step_complete");
-            return result;
+                    return result;
+                });
         }
 
         private async Task<(AzureResourceInfo, OperationState, string)> ExecuteAsync<T>(

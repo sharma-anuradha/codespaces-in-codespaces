@@ -47,27 +47,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private IBlobStorageClientProvider BlobStorageClientProvider { get; }
 
         /// <inheritdoc/>
-        public async Task<IDisposable> Obtain(
+        public Task<IDisposable> Obtain(
             string containerName,
             string name,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
-                .FluentAddBaseValue("LeaseContainerName", containerName)
-                .FluentAddBaseValue("LeaseName", name);
-
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_obtain",
-                async () =>
+                async (childLogger) =>
                 {
+                    childLogger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
+                        .FluentAddBaseValue("LeaseContainerName", containerName)
+                        .FluentAddBaseValue("LeaseName", name);
+
                     var result = default(IDisposable);
                     try
                     {
-                        result = await InnerCreate(containerName, name, logger);
+                        result = await InnerCreate(containerName, name, childLogger);
                     }
                     catch (StorageException e) when (e.RequestInformation.ErrorCode == "LeaseAlreadyPresent")
                     {
-                        logger.FluentAddValue("LeaseAlreadyPresent", true);
+                        childLogger.FluentAddValue("LeaseAlreadyPresent", true);
                     }
 
                     return result;
@@ -80,27 +80,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             string name,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
-                .FluentAddBaseValue("LeaseContainerName", containerName)
-                .FluentAddBaseValue("LeaseName", name);
-
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_tryobtain",
-                async () =>
+                async (childLogger) =>
                 {
+                    childLogger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
+                        .FluentAddBaseValue("LeaseContainerName", containerName)
+                        .FluentAddBaseValue("LeaseName", name);
+
                     var result = default(IDisposable);
                     var tryCount = 1;
                     while (tryCount <= 3)
                     {
                         try
                         {
-                            logger.FluentAddValue("LeaseTryCount", tryCount);
+                            childLogger.FluentAddValue("LeaseTryCount", tryCount);
 
-                            return await InnerCreate(containerName, name, logger);
+                            return await InnerCreate(containerName, name, childLogger);
                         }
                         catch (StorageException e) when (e.RequestInformation.ErrorCode == "LeaseAlreadyPresent")
                         {
-                            logger.FluentAddValue("LeaseAlreadyPresent", true)
+                            childLogger.FluentAddValue("LeaseAlreadyPresent", true)
                                 .LogWarning($"{LogBaseName}_tryobtain_locked_complete");
 
                             await Task.Delay(Random.Next(500 * tryCount, 1500 * tryCount));
@@ -157,10 +157,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 logger.OperationScope(
                     $"{LogBaseName}_auto_renew",
-                    async () =>
-                    {
-                        await blob.RenewLeaseAsync(acc);
-                    },
+                    (childLogger) => blob.RenewLeaseAsync(acc),
                     swallowException: true);
             };
             timer.Start();
@@ -173,12 +170,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 logger.OperationScope(
                     $"{LogBaseName}_release",
-                    async () =>
+                    (childLogger) =>
                     {
-                        logger.FluentAddDuration("LeaseTimeFromStart", stopwatch);
+                        childLogger.FluentAddDuration("LeaseTimeFromStart", stopwatch);
 
                         // Force release lease
-                        await blob.ReleaseLeaseAsync(acc);
+                        return blob.ReleaseLeaseAsync(acc);
                     },
                     swallowException: true);
             });

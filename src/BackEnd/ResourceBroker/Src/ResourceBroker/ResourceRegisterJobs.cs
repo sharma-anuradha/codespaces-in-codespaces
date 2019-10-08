@@ -36,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchPoolSettingsTask watchPoolSettingsTask,
             IWatchFailedResourcesTask watchFailedResourcesTask,
             IWatchOrphanedAzureResourceTask watchOrphanedAzureResourceTask,
+            IWatchOrphanedSystemResourceTask watchOrphanedSystemResourceTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             ITaskHelper taskHelper)
@@ -46,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             WatchPoolSettingsTask = watchPoolSettingsTask;
             WatchFailedResourcesTask = watchFailedResourcesTask;
             WatchOrphanedAzureResourceTask = watchOrphanedAzureResourceTask;
+            WatchOrphanedSystemResourceTask = watchOrphanedSystemResourceTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
@@ -64,6 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IWatchOrphanedAzureResourceTask WatchOrphanedAzureResourceTask { get; }
 
+        private IWatchOrphanedSystemResourceTask WatchOrphanedSystemResourceTask { get; }
+
         private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
@@ -78,7 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Continuation Task Worker Pool Manager
             TaskHelper.RunBackground(
                 $"{ResourceLoggingConstants.ContinuationTaskWorkerPoolManager}_start",
-                (childLogger) => ContinuationTaskWorkerPoolManager.StartAsync(childLogger));
+                (childLogger) => ContinuationTaskWorkerPoolManager.StartAsync(childLogger),
+                autoLogOperation: false);
 
             // Job: Populate continuation message cache
             TaskHelper.RunBackgroundLoop(
@@ -129,21 +134,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             await Task.Delay(Random.Next(5000, 7500));
 
             // Job: Watch Failed Resources
-            var watchFailedResourcesTaskSpan = TimeSpan.FromMinutes(30);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchFailedResourcesTask}_run",
-                (childLogger) => WatchFailedResourcesTask.RunAsync(watchFailedResourcesTaskSpan, childLogger),
-                watchFailedResourcesTaskSpan);
+                (childLogger) => WatchFailedResourcesTask.RunAsync(TimeSpan.FromMinutes(30), childLogger),
+                TimeSpan.FromMinutes(5));
 
             // Offset to help distribute inital load of recurring tasks
             await Task.Delay(Random.Next(5000, 7500));
 
             // Job: Watch Orphaned Azure Resources
-            var watchOrphanedAzureResourceTaskSpan = TimeSpan.FromHours(1);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedAzureResourceTask}_run",
-                (childLogger) => WatchOrphanedAzureResourceTask.RunAsync(watchOrphanedAzureResourceTaskSpan, childLogger),
-                watchOrphanedAzureResourceTaskSpan);
+                (childLogger) => WatchOrphanedAzureResourceTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                TimeSpan.FromMinutes(10));
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Watch Orphaned Azure Resources
+            var watchOrphanedSystemResourceTaskSpan = TimeSpan.FromHours(2);
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchOrphanedSystemResourceTask}_run",
+                (childLogger) => WatchOrphanedSystemResourceTask.RunAsync(TimeSpan.FromHours(2), childLogger),
+                TimeSpan.FromMinutes(20));
         }
     }
 }

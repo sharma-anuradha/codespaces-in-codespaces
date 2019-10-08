@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
             if (cloudEnvironment.State == CloudEnvironmentState.Deleted)
             {
-                throw new Exception($"Monitoring update recieved for a deleted environement {inputEnvironmentId}");
+                throw new Exception($"Monitoring update recieved for a deleted environment {inputEnvironmentId}");
             }
         }
 

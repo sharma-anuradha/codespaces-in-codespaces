@@ -141,6 +141,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public IList<OperationStateChanges> DeletingStatusChanges { get; set; }
 
         /// <summary>
+        /// Gets or sets the current state of the Keep Alives.
+        /// </summary>
+        public ResourceKeepAliveRecord KeepAlives { get; set; }
+
+        /// <summary>
         /// Gets or sets the Properties.
         /// </summary>
         public dynamic Properties { get; set; }

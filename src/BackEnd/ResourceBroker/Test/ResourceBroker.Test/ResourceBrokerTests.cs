@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var scalingStore = BuildResourceScalingStore();
             var mapper = BuildMapper();
             var taskHelper = new Mock<ITaskHelper>().Object;
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = BuildLogger().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(rawResult));
@@ -94,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var scalingStore = BuildResourceScalingStore();
             var mapper = BuildMapper();
             var taskHelper = new Mock<ITaskHelper>().Object;
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = BuildLogger().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, logger)).Returns(Task.FromResult((ResourceRecord)null));
@@ -112,7 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var scalingStore = BuildResourceScalingStore(true);
             var mapper = BuildMapper();
             var taskHelper = new Mock<ITaskHelper>().Object;
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = BuildLogger().Object;
             var continuationTaskActivator = new Mock<IContinuationTaskActivator>().Object;
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, logger)).Returns(Task.FromResult((ResourceRecord)null));
@@ -144,6 +144,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 .Returns(Task.FromResult((IEnumerable<ResourcePool>)definition));
 
             return resourceScalingStore;
+        }
+
+        private Mock<IDiagnosticsLogger> BuildLogger()
+        {
+            var logger = new Mock<IDiagnosticsLogger>();
+            logger.Setup(x => x.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
+            return logger;
         }
 
         private AllocateInput BuildAllocateInput()

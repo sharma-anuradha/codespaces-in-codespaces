@@ -20,6 +20,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string ResourcePoolManager = "resource_pool_manager";
 
         /// <summary>
+        /// Watch Continuation Task Worker Pool.
+        /// </summary>
+        public const string WatchContinuationTaskWorkerPool = "watch_continuation_task_worker_pool";
+
+        /// <summary>
         /// Watch Pool Size Task.
         /// </summary>
         public const string WatchPoolSizeTask = "watch_pool_size_task";
@@ -45,9 +50,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string WatchFailedResourcesTask = "watch_failed_resources_task";
 
         /// <summary>
-        /// Watch Failed Resources Task.
+        /// Watch Orphaned Azure Resource Task.
         /// </summary>
         public const string WatchOrphanedAzureResourceTask = "watch_orphaned_azure_resource_task";
+
+        /// <summary>
+        /// Watch Orphaned System Resource Task.
+        /// </summary>
+        public const string WatchOrphanedSystemResourceTask = "watch_orphaned_system_resource_task";
 
         /// <summary>
         /// Continuation Task Message Pump.

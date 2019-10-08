@@ -53,13 +53,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 Target = name,
             };
 
-            return logger.OperationScopeAsync(LogBaseName, async () => (await InnerContinue(payload, logger)).Result);
+            return logger.OperationScopeAsync(
+                LogBaseName,
+                async (childLogger) => (await InnerContinue(payload, childLogger)).Result);
         }
 
         /// <inheritdoc/>
         public Task<ResourceJobQueuePayload> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(LogBaseName, async () => (await InnerContinue(payload, logger)).ResultPayload);
+            return logger.OperationScopeAsync(
+                LogBaseName,
+                async (childLogger) => (await InnerContinue(payload, childLogger)).ResultPayload);
         }
 
         private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)

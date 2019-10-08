@@ -20,7 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// Continuation handler that manages starting of environement.
+    /// Continuation handler that manages starting of environment.
     /// </summary>
     public class StartEnvironmentContinuationHandler
         : BaseContinuationTaskMessageHandler<StartEnvironmentContinuationInput>, IStartEnvironmentContinuationHandler

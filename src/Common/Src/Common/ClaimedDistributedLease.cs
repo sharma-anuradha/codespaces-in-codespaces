@@ -47,15 +47,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             TimeSpan timeSpan,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
-                .FluentAddBaseValue("LeaseContainerName", containerName)
-                .FluentAddBaseValue("LeaseName", name)
-                .FluentAddBaseValue("LeaseClaimTimeSpan", timeSpan);
-
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_obtain",
-                () =>
+                (childLogger) =>
                 {
+                    childLogger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
+                        .FluentAddBaseValue("LeaseContainerName", containerName)
+                        .FluentAddBaseValue("LeaseName", name)
+                        .FluentAddBaseValue("LeaseClaimTimeSpan", timeSpan);
+
                     // If you set the schedule to be once per hour, it will round the current time, such as 5:43:20 AM,
                     // to the beginning of the hour, 5:00:00 AM. Likewise, if you set the schedule for every 20 minutes,
                     // it would change the current time of 5:43:20 AM to the start time of 5:40:00: AM.
@@ -68,11 +68,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                     try
                     {
-                        return InnerCreate(containerName, name, claimDateTime, logger);
+                        return InnerCreate(containerName, name, claimDateTime, childLogger);
                     }
                     catch (StorageException e) when (e.RequestInformation.ErrorCode == "LeaseAlreadyPresent")
                     {
-                        logger.FluentAddValue("LeaseAlreadyPresent", true);
+                        childLogger.FluentAddValue("LeaseAlreadyPresent", true);
                     }
 
                     return null;
@@ -154,10 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 logger.OperationScope(
                     $"{LogBaseName}_auto_renew",
-                    async () =>
-                    {
-                        await blob.RenewLeaseAsync(acc);
-                    },
+                    (childLogger) => blob.RenewLeaseAsync(acc),
                     swallowException: true);
             };
             timer.Start();
@@ -170,9 +167,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 logger.OperationScope(
                     $"{LogBaseName}_release",
-                    async () =>
+                    async (childLogger) =>
                     {
-                        logger.FluentAddDuration("LeaseTimeFromStart", stopwatch)
+                        childLogger.FluentAddDuration("LeaseTimeFromStart", stopwatch)
                             .FluentAddValue("LeaseCurrentTime", DateTime.UtcNow);
 
                         // Touch file so that we can check LMT for the period logic

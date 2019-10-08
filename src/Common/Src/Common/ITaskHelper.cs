@@ -23,7 +23,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="callback">Target callback.</param>
         /// <param name="schedule">Target time between runs.</param>
         /// <param name="logger">Target logger.</param>
-        void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null);
+        /// <param name="autoLogLoopOperation">
+        /// Whether the task execution of each item should be auto logged.
+        /// </param>
+        /// <param name="errLoopCallback">
+        /// Callback which will trigger when erros happen on execution of each item.
+        /// </param>
+        void RunBackgroundLoop(
+            string name,
+            Func<IDiagnosticsLogger, Task<bool>> callback,
+            TimeSpan? schedule = null,
+            IDiagnosticsLogger logger = null,
+            bool autoLogLoopOperation = false,
+            Func<Exception, bool> errLoopCallback = default);
 
         /// <summary>
         /// Runs a TPL Task fire-and-forget style, the right way - in the
@@ -33,8 +45,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="name">Target name.</param>
         /// <param name="callback">Target callback.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="autoLogOperation">Whether the task execution should be auto logged.</param>
+        /// <param name="errCallback">Callback that will get executed on error.</param>
         /// <param name="delay">Target delay till run.</param>
-        void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, TimeSpan? delay = null);
+        void RunBackground(
+            string name,
+            Func<IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger = null,
+            bool autoLogOperation = true,
+            Action<Exception> errCallback = default,
+            TimeSpan? delay = null);
 
         /// <summary>
         /// Runs a task fire-and-forget style and notifies the TPL that this
@@ -45,8 +65,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="name">Target name.</param>
         /// <param name="callback">Target callback.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="autoLogOperation">Whether the task execution should be auto logged.</param>
+        /// <param name="errCallback">Callback that will get executed on error.</param>
         /// <param name="delay">Target delay till run.</param>
-        void RunBackgroundLong(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, TimeSpan? delay = null);
+        void RunBackgroundLong(
+            string name,
+            Func<IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger = null,
+            bool autoLogOperation = true,
+            Action<Exception> errCallback = default,
+            TimeSpan? delay = null);
 
         /// <summary>
         /// Simple, lightweight worker implementation that allows for x amount of items in an enumeration
@@ -60,6 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="obtainLease">
         /// Target lease, that if provided, will be obtained once per item in the enumeration.
         /// </param>
+        /// <param name="errItemCallback">Callback that will be run on execution of each item.</param>
         /// <param name="concurrentLimit">Target number of concurrent workers that will run.</param>
         /// <param name="successDelay">
         /// Target delay, that if provided, will space out successful executions. This is intended to allow other
@@ -74,7 +103,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IEnumerable<T> list,
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
-            Func<T, Task<IDisposable>> obtainLease = null,
+            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
+            Action<T, Exception> errItemCallback = default,
             int concurrentLimit = 3,
             int successDelay = 250,
             int failDelay = 100);
@@ -91,6 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="obtainLease">
         /// Target lease, that if provided, will be obtained once per item in the enumeration.
         /// </param>
+        /// <param name="errItemCallback">Callback that will be run on execution of each item.</param>
         /// <param name="concurrentLimit">Target number of concurrent workers that will run.</param>
         /// <param name="successDelay">
         /// Target delay, that if provided, will space out successful executions. This is intended to allow other
@@ -106,7 +137,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IEnumerable<T> list,
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
-            Func<T, Task<IDisposable>> obtainLease = null,
+            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
+            Action<T, Exception> errItemCallback = default,
             int concurrentLimit = 3,
             int successDelay = 250,
             int failDelay = 100);
@@ -114,11 +146,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <summary>
         /// Continues running a task until its success or timeout occurs.
         /// </summary>
-        /// <param name="task">Target task.</param>
-        /// <param name="waitTimeSpan">Target wait time between runs.</param>
+        /// <param name="name">Target name.</param>
+        /// <param name="callback">Target task.</param>
         /// <param name="timeoutTimeSpan">Target timeout period.</param>
+        /// <param name="waitTimeSpan">Target wait time between runs.</param>
+        /// <param name="logger">Target logger.</param>
         /// <param name="onTimeout">Action that runs when timeout occurs.</param>
         /// <returns>Returns whether the task was successful.</returns>
-        Task<bool> RetryUntilSuccessOrTimeout(Func<Task<bool>> task, TimeSpan waitTimeSpan, TimeSpan timeoutTimeSpan, Action onTimeout = null);
+        Task<bool> RetryUntilSuccessOrTimeout(
+            string name,
+            Func<Task<bool>> callback,
+            TimeSpan timeoutTimeSpan,
+            TimeSpan? waitTimeSpan = null,
+            IDiagnosticsLogger logger = null,
+            Action onTimeout = null);
     }
 }

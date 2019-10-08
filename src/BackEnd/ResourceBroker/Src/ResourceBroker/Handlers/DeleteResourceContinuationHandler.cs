@@ -21,7 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// Continuation handler that manages starting of environement.
+    /// Continuation handler that manages starting of environment.
     /// </summary>
     public class DeleteResourceContinuationHandler
         : BaseContinuationTaskMessageHandler<DeleteResourceContinuationInput>, IDeleteResourceContinuationHandler
@@ -150,7 +150,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Make sure we bring over the Resource info if we have it
             if (result.Status == OperationState.Succeeded)
             {
-                var deleted = await ResourceRepository.DeleteAsync(input.ResourceId.ToString(), logger.WithValues(new LogValueSet()));
+                var deleted = await logger.OperationScopeAsync(
+                    $"{LogBaseName}_delete_record",
+                    (childLogger) => DeleteResourceAsync(input.ResourceId.ToString(), childLogger));
+
                 if (!deleted)
                 {
                     return await FailOperationAsync(input, record, "HandlerResourceRepositoryDeleteFailed", logger);
@@ -158,6 +161,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             return result;
+        }
+
+        private async Task<bool> DeleteResourceAsync(string id, IDiagnosticsLogger logger)
+        {
+            logger.FluentAddBaseValue("ResourceId", id)
+                .FluentAddBaseValue("OperationReason", "DeleteResourceContinuation");
+
+            // Since we don't have the azyre resource, we are just goignt to delete this record
+            return await ResourceRepository.DeleteAsync(id, logger.NewChildLogger());
         }
     }
 }

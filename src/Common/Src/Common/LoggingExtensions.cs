@@ -21,6 +21,16 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
     public static class LoggingExtensions
     {
         /// <summary>
+        /// Generates a new child logger based off the parent.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>New child logger.</returns>
+        public static IDiagnosticsLogger NewChildLogger(this IDiagnosticsLogger logger)
+        {
+            return logger.WithValues(new LogValueSet());
+        }
+
+        /// <summary>
         /// Wraps the given operation in a logging scope which will catch and log exceptions
         /// as well as the successful completeion of the operation.
         /// </summary>
@@ -28,23 +38,24 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="name">Base name of the operaiton scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
          /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
-        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        /// <param name="swallowException">Whether any exceptions should be swallowed.</param>
         /// <returns>Returns the task.</returns>
-        public static async Task OperationScopeAsync(this IDiagnosticsLogger logger, string name, Func<Task> callback, Action<Exception> errCallback = default, bool swallowException = false)
+        public static async Task OperationScopeAsync(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task> callback, Action<Exception> errCallback = default, bool swallowException = false)
         {
+            var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
 
             try
             {
-                await callback();
+                await callback(childLogger);
 
-                logger.FluentAddDuration(duration).LogInfo($"{name}_complete");
+                childLogger.FluentAddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
                 errCallback?.Invoke(e);
 
-                logger.FluentAddDuration(duration).LogException($"{name}_error", e);
+                childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -64,16 +75,17 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the task.</returns>
-        public static async Task<T> OperationScopeAsync<T>(this IDiagnosticsLogger logger, string name, Func<Task<T>> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
+        public static async Task<T> OperationScopeAsync<T>(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task<T>> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
         {
+            var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
             var result = default(T);
 
             try
             {
-                result = await callback();
+                result = await callback(childLogger);
 
-                logger.FluentAddDuration(duration).LogInfo($"{name}_complete");
+                childLogger.FluentAddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
@@ -82,7 +94,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                     result = errCallback(e);
                 }
 
-                logger.FluentAddDuration(duration).LogException($"{name}_error", e);
+                childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -102,21 +114,22 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="callback">Callback that should be executed.</param>
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
-        public static void OperationScope(this IDiagnosticsLogger logger, string name, Action callback, Action<Exception> errCallback = default, bool swallowException = false)
+        public static void OperationScope(this IDiagnosticsLogger logger, string name, Action<IDiagnosticsLogger> callback, Action<Exception> errCallback = default, bool swallowException = false)
         {
+            var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
 
             try
             {
-                callback();
+                callback(childLogger);
 
-                logger.FluentAddDuration(duration).LogInfo($"{name}_complete");
+                childLogger.FluentAddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
                 errCallback?.Invoke(e);
 
-                logger.FluentAddDuration(duration).LogException($"{name}_error", e);
+                childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {
@@ -136,16 +149,17 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the callback result.</returns>
-        public static T OperationScope<T>(this IDiagnosticsLogger logger, string name, Func<T> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
+        public static T OperationScope<T>(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, T> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
         {
+            var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
             var result = default(T);
 
             try
             {
-                result = callback();
+                result = callback(childLogger);
 
-                logger.FluentAddDuration(duration).LogInfo($"{name}_complete");
+                childLogger.FluentAddDuration(duration).LogInfo($"{name}_complete");
             }
             catch (Exception e)
             {
@@ -154,7 +168,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                     result = errCallback(e);
                 }
 
-                logger.FluentAddDuration(duration).LogException($"{name}_error", e);
+                childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
                 if (!swallowException)
                 {

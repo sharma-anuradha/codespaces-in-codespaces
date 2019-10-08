@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="activator">Target continuation activator.</param>
         /// <param name="computeResourceId">Target compute resource id.</param>
         /// <param name="storageResourceId">Target storage resource id.</param>
-        /// <param name="environmentVariables">Input environement variables for the compute.</param>
+        /// <param name="environmentVariables">Input environment variables for the compute.</param>
         /// <param name="trigger">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>

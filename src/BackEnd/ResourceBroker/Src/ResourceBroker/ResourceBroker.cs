@@ -61,24 +61,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
         {
-            // Setting up logger
-            logger.FluentAddBaseValue("ResourceLocation", input.Location.ToString())
-                .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
-                .FluentAddBaseValue("ResourceType", input.Type.ToString());
-
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate",
-                async () =>
+                async (childLogger) =>
                 {
+                    // Setting up logger
+                    childLogger.FluentAddBaseValue("ResourceLocation", input.Location.ToString())
+                        .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
+                        .FluentAddBaseValue("ResourceType", input.Type.ToString());
+
                     // Map logical sku to resource sku
                     var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
 
-                    logger.FluentAddBaseValue("ResourceResourceSkuName", resourceSku.Details.SkuName);
+                    childLogger.FluentAddBaseValue("ResourceResourceSkuName", resourceSku.Details.SkuName);
 
                     // Try and get item from the pool
-                    var item = await ResourcePool.TryGetAsync(resourceSku.Details.GetPoolDefinition(), logger.WithValues(new LogValueSet()));
+                    var item = await ResourcePool.TryGetAsync(
+                        resourceSku.Details.GetPoolDefinition(), logger.NewChildLogger());
 
-                    logger.FluentAddBaseValue("ResourceResourceAllocateFound", item != null);
+                    childLogger.FluentAddBaseValue("ResourceResourceAllocateFound", item != null);
 
                     // Deal with case that it didn't exist
                     if (item == null)
@@ -86,43 +87,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         throw new OutOfCapacityException(input.SkuName, input.Type, input.Location.ToString().ToLowerInvariant());
                     }
 
-                    logger.FluentAddBaseValue("ResourceId", item.Id);
+                    childLogger.FluentAddBaseValue("ResourceId", item.Id);
 
                     // Trigger auto pool create to replace assigned item
                     TaskHelper.RunBackground(
                         $"{LogBaseName}_run_create",
-                        (childLogger) => ContinuationTaskActivator.CreateResource(
-                            Guid.NewGuid(), resourceSku.Type, resourceSku.Details, "ResourceAssignedReplace", logger.WithValues(new LogValueSet())),
-                        logger);
+                        (taskLogger) => ContinuationTaskActivator.CreateResource(
+                            Guid.NewGuid(), resourceSku.Type, resourceSku.Details, "ResourceAssignedReplace", taskLogger),
+                        childLogger,
+                        autoLogOperation: false);
 
                     return Mapper.Map<AllocateResult>(item);
                 });
         }
 
         /// <inheritdoc/>
-        public async Task<DeallocateResult> DeallocateAsync(
+        public Task<DeallocateResult> DeallocateAsync(
             DeallocateInput input,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", input.ResourceId);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_deallocate",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("ResourceId", input.ResourceId);
 
-            await ContinuationTaskActivator.DeleteResource(input.ResourceId, input.Trigger, logger);
+                    await ContinuationTaskActivator.DeleteResource(
+                        input.ResourceId, input.Trigger, childLogger.NewChildLogger());
 
-            return new DeallocateResult { Successful = true };
+                    return new DeallocateResult { Successful = true };
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<EnvironmentStartResult> StartComputeAsync(
+        public Task<EnvironmentStartResult> StartComputeAsync(
             EnvironmentStartInput input,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", input.ComputeResourceId)
-                .FluentAddBaseValue("StorageResourceId", input.StorageResourceId);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_start_compute",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("ResourceId", input.ComputeResourceId)
+                        .FluentAddBaseValue("StorageResourceId", input.StorageResourceId);
 
-            await ContinuationTaskActivator.StartEnvironment(
-                input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, logger);
+                    await ContinuationTaskActivator.StartEnvironment(
+                        input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, childLogger.NewChildLogger());
 
-            return new EnvironmentStartResult { Successful = true };
+                    return new EnvironmentStartResult { Successful = true };
+                });
         }
 
         private async Task<ResourcePool> MapLogicalSkuToResourceSku(string skuName, ResourceType type, AzureLocation location)

@@ -68,22 +68,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var poolVersionCode = resourcePool.Details.GetPoolVersionDefinition();
 
             // Pulls out the interesting data
-            var poolUnassignedCount = await ResourceRepository.GetPoolUnassignedCountAsync(poolCode, logger);
+            var poolUnassignedCount = await ResourceRepository.GetPoolUnassignedCountAsync(poolCode, logger.WithValues(new LogValueSet()));
             logger.FluentAddValue("PoolUnassignedCount", poolUnassignedCount);
 
-            var poolUnassignedVersionCount = await ResourceRepository.GetPoolUnassignedVersionCountAsync(poolCode, poolVersionCode, logger);
+            var poolUnassignedVersionCount = await ResourceRepository.GetPoolUnassignedVersionCountAsync(poolCode, poolVersionCode, logger.WithValues(new LogValueSet()));
             logger.FluentAddValue("PoolUnassignedVersionCount", poolUnassignedVersionCount);
 
-            var poolUnassignedNotVersionCount = await ResourceRepository.GetPoolUnassignedNotVersionCountAsync(poolCode, poolVersionCode, logger);
+            var poolUnassignedNotVersionCount = await ResourceRepository.GetPoolUnassignedNotVersionCountAsync(poolCode, poolVersionCode, logger.WithValues(new LogValueSet()));
             logger.FluentAddValue("PoolUnassignedNotVersionCount", poolUnassignedNotVersionCount);
 
-            var poolReadyUnassignedCount = await ResourceRepository.GetPoolReadyUnassignedCountAsync(poolCode, logger);
+            var poolReadyUnassignedCount = await ResourceRepository.GetPoolReadyUnassignedCountAsync(poolCode, logger.WithValues(new LogValueSet()));
             logger.FluentAddValue("PoolReadyUnassignedCount", poolReadyUnassignedCount);
 
-            var poolReadyUnassignedVersionCount = await ResourceRepository.GetPoolReadyUnassignedVersionCountAsync(poolCode, poolVersionCode, logger);
+            var poolReadyUnassignedVersionCount = await ResourceRepository.GetPoolReadyUnassignedVersionCountAsync(poolCode, poolVersionCode, logger.WithValues(new LogValueSet()));
             logger.FluentAddValue("PoolReadyUnassignedVersionCount", poolReadyUnassignedVersionCount);
 
-            var poolReadyUnassignedNotVersionCount = await ResourceRepository.GetPoolReadyUnassignedNotVersionCountAsync(poolCode, poolVersionCode, logger);
+            var poolReadyUnassignedNotVersionCount = await ResourceRepository.GetPoolReadyUnassignedNotVersionCountAsync(poolCode, poolVersionCode, logger.WithValues(new LogValueSet()));
             logger.FluentAddValue("PoolReadyUnassignedNotVersionCount", poolReadyUnassignedNotVersionCount);
 
             var isAtTargetCount = poolUnassignedVersionCount == resourcePool.TargetCount;
