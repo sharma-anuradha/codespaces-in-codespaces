@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -38,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Guid subscriptionId = this.testContext.SubscriptionId;
             AzureLocation location = testContext.Location;
             string rgName = testContext.ResourceGroupName;
-
+            string blobUrl = UploadToBlobStorage();
             VirtualMachineProviderCreateInput input = new VirtualMachineProviderCreateInput()
             {
                 VMToken = Guid.NewGuid().ToString(),
@@ -51,9 +52,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     {"ResourceTag", "GeneratedFromTest"},
                 },
                 ComputeOS = ComputeOS.Linux,
-                VmAgentBlobUrl = testContext.Config["VM_AGENT_SOURCE_URL"],
+                VmAgentBlobUrl = blobUrl,
                 ResourceId = Guid.NewGuid().ToString(),
-                FrontDnsHostName = "fontend.service.com",
+                FrontDnsHostName = "frontend.service.com",
             };
 
             var timerCreate = Stopwatch.StartNew();
@@ -124,6 +125,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
         }
 
+        public string UploadToBlobStorage()
+        {
+            var config = this.testContext.Config;
+            var accountName = config["STORAGE_ACCOUNT_NAME"];
+            var keyValue = config["STORAGE_KEY"];
+
+            var creds = new Microsoft.Azure.Storage.Auth.StorageCredentials(accountName, keyValue);
+            var blobStorageUri = new Uri($"https://{accountName}.blob.core.windows.net");
+            var blobClient = new CloudBlobClient(blobStorageUri, creds);
+            var container = blobClient.GetContainerReference("vsoagent");
+            var blob = container.GetBlockBlobReference(config["VSO_AGENT_ZIP_FILE_NAME"]);
+            blob.UploadFromFile(config["VSO_AGENT_ZIP_FILE_PATH"]);
+            var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+            {
+                Permissions = SharedAccessBlobPermissions.Read,
+                SharedAccessExpiryTime = DateTime.UtcNow.AddDays(7),
+            });
+
+            string blobUrl = blob.Uri + sas;
+            return blobUrl;
+        }
+
         [Trait("Category", "IntegrationTest")]
         [Fact]
         public async Task Start_Compute_Ok()
@@ -148,9 +171,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 fileShareInfo,
                 new Dictionary<string, string>()
                    {
+                        { "CLOUDENV_ENVIRONMENT_ID", this.testContext.Config["SESSION_ID"] },
                         { "SESSION_ID", this.testContext.Config["SESSION_ID"] },
                         { "SESSION_TOKEN", this.testContext.Config["SESSION_TOKEN"] },
+                        { "SESSION_CASCADE_TOKEN", this.testContext.Config["SESSION_CASCADE_TOKEN"] },
                         { "SESSION_CALLBACK",this.testContext.Config["SESSION_CALLBACK"] },
+                        { "GIT_CONFIG_USER_NAME", "anu sharma" },
+                        { "GIT_CONFIG_USER_EMAIL", "anush@microsoft.com" },
                    },
                 ComputeOS.Linux,
                 this.testContext.Location,

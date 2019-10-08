@@ -79,16 +79,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <param name="logger">Diagnostics logger object.</param>
         /// <returns>Operation state and Continuation object.</returns>
         Task<(OperationState, NextStageInput)> CheckDeleteComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Get virtual machine input Url with Sas token with read permission.
-        /// </summary>
-        /// <param name="location">Virtual machine location.</param>
-        /// <param name="virtualMachineName">Virtual machine name.</param>
-        /// <param name="retryAttempCount">Retries attempted for this operation.</param>
-        /// <param name="logger">Diagnostics logger object.</param>
-        /// <returns>Virutal machine input queue sas token and url.</returns>
-        Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(
-            AzureLocation location, string virtualMachineName, int retryAttempCount, IDiagnosticsLogger logger);
     }
 }

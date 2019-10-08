@@ -5,8 +5,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,11 +46,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private const string NsgNameKey = "nsgName";
         private const string VnetNameKey = "vnetName";
         private const string DiskNameKey = "diskId";
-        private const string QueueNameKey = "queueName";
+        private const string InputQueueNameKey = "inputQueueName";
+        private const string OutputQueueNameKey = "outputQueueName";
         private const string VmNameKey = "vmName";
         private static readonly string VmTemplateJson = GetVmTemplate();
         private readonly IAzureClientFactory clientFactory;
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
+        private bool useOutputQueue;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LinuxVirtualMachineManager"/> class.
@@ -65,6 +69,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             this.clientFactory = clientFactory;
             this.controlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
+            SetUseOutputQueueFlag();
+        }
+
+        [Conditional("DEBUG")]
+        private void SetUseOutputQueueFlag()
+        {
+            this.useOutputQueue = true;
         }
 
         /// <inheritdoc/>
@@ -99,28 +110,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
 
                 // Create input queue
-                string queueName = GetQueueName(virtualMachineName);
-                var queue = await GetQueueClientAsync(input.AzureVmLocation, queueName, logger);
-                var queueCreated = await queue.CreateIfNotExistsAsync();
-                if (!queueCreated)
-                {
-                    throw new VirtualMachineException($"Failed to create queue for virtual machine {virtualMachineName}");
-                }
+                string inputQueueName = GetInputQueueName(virtualMachineName);
+                QueueConnectionInfo inputQueueConnectionInfo = await CreateQueue(input, logger, virtualMachineName, inputQueueName);
 
-                // Get queue sas url
-                var queueResult = await GetVirtualMachineInputQueueConnectionInfoAsync(input.AzureVmLocation, virtualMachineName, 0, logger);
-                if (queueResult.Item1 != OperationState.Succeeded)
-                {
-                    throw new VirtualMachineException($"Failed to get sas token for virtual machine input queue {queue.Uri}");
-                }
-
-                var queueConnectionInfo = queueResult.Item2;
-                string vmInItScript = GetVmInitScript(
-                    input.VMToken,
-                    input.VmAgentBlobUrl,
-                    queueConnectionInfo,
-                    input.ResourceId,
-                    input.FrontDnsHostName);
+                string vmInItScript = await GetVmInitScriptAsync(
+                        virtualMachineName,
+                        input,
+                        inputQueueConnectionInfo,
+                        logger);
 
                 var parameters = new Dictionary<string, Dictionary<string, object>>()
                 {
@@ -198,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 };
 
                 var message = new CloudQueueMessage(JsonConvert.SerializeObject(queueMessage));
-                var queue = await GetQueueClientAsync(input.Location, GetQueueName(input.AzureResourceInfo.Name), logger);
+                var queue = await GetQueueClientAsync(input.Location, GetInputQueueName(input.AzureResourceInfo.Name), logger);
 
                 // post message to queue
                 queue.AddMessage(message);
@@ -297,7 +294,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 resourcesToBeDeleted.Add(NsgNameKey, (GetNetworkSecurityGroupName(vmName), OperationState.NotStarted));
                 resourcesToBeDeleted.Add(VnetNameKey, (GetVnetName(vmName), OperationState.NotStarted));
                 resourcesToBeDeleted.Add(DiskNameKey, (GetOsDiskName(vmName), OperationState.NotStarted));
-                resourcesToBeDeleted.Add(QueueNameKey, (GetQueueName(vmName), OperationState.NotStarted));
+                resourcesToBeDeleted.Add(InputQueueNameKey, (GetInputQueueName(vmName), OperationState.NotStarted));
+                AddOutputQueue(vmName, resourcesToBeDeleted);
 
                 return (OperationState.InProgress, new NextStageInput(
                     CreateVmDeletionTrackingId(input.AzureVmLocation, resourcesToBeDeleted),
@@ -345,7 +343,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     (resourceName) => DeleteQueueAsync(computeVmLocation, resourceName, logger),
                     (resourceName) => QueueExistsAync(computeVmLocation, resourceName, logger),
                     resourcesToBeDeleted,
-                    QueueNameKey));
+                    InputQueueNameKey));
+
+                DeleteOutputQueue(logger, computeVmLocation, resourcesToBeDeleted, taskList);
 
                 taskList.Add(
                 CheckResourceStatus(
@@ -406,16 +406,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             }
         }
 
-        /// <inheritdoc/>
-        public async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(
+        [Conditional("DEBUG")]
+        private void AddOutputQueue(string vmName, Dictionary<string, VmResourceState> resourcesToBeDeleted)
+        {
+            resourcesToBeDeleted.Add(OutputQueueNameKey, (GetOutputQueueName(vmName), OperationState.NotStarted));
+        }
+
+        [Conditional("DEBUG")]
+        private void DeleteOutputQueue(IDiagnosticsLogger logger, AzureLocation computeVmLocation, Dictionary<string, VmResourceState> resourcesToBeDeleted, List<Task> taskList)
+        {
+            taskList.Add(
+            CheckResourceStatus(
+               (resourceName) => DeleteQueueAsync(computeVmLocation, resourceName, logger),
+               (resourceName) => QueueExistsAync(computeVmLocation, resourceName, logger),
+               resourcesToBeDeleted,
+               OutputQueueNameKey));
+        }
+
+        private async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(
             AzureLocation location,
-            string virtualMachineName,
+            string queueName,
             int retryAttempCount,
             IDiagnosticsLogger logger)
         {
             try
             {
-                var queueClient = await GetQueueClientAsync(location, GetQueueName(virtualMachineName), logger);
+                var queueClient = await GetQueueClientAsync(location, queueName, logger);
                 var sas = queueClient.GetSharedAccessSignature(new SharedAccessQueuePolicy()
                 {
                     Permissions = SharedAccessQueuePermissions.ProcessMessages,
@@ -434,6 +450,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                 return (OperationState.Failed, default, 0);
             }
+        }
+
+        private async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineOutputQueueConnectionInfoAsync(
+           AzureLocation location,
+           string queueName,
+           int retryAttempCount,
+           IDiagnosticsLogger logger)
+        {
+            try
+            {
+                var queueClient = await GetQueueClientAsync(location, queueName, logger);
+                var sas = queueClient.GetSharedAccessSignature(new SharedAccessQueuePolicy()
+                {
+                    Permissions = SharedAccessQueuePermissions.Add,
+                    SharedAccessExpiryTime = DateTime.UtcNow.AddDays(365),
+                });
+
+                return (OperationState.Succeeded, new QueueConnectionInfo(queueClient.Name, queueClient.ServiceClient.BaseUri.ToString(), sas), 0);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException("linux_virtual_machine_manager_get_output_queue_url_error", ex);
+                if (retryAttempCount < 5)
+                {
+                    return (OperationState.InProgress, default, retryAttempCount + 1);
+                }
+
+                return (OperationState.Failed, default, 0);
+            }
+        }
+
+        private async Task<QueueConnectionInfo> CreateQueue(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger, string virtualMachineName, string queueName)
+        {
+            var queue = await GetQueueClientAsync(input.AzureVmLocation, queueName, logger);
+            var queueCreated = await queue.CreateIfNotExistsAsync();
+            if (!queueCreated)
+            {
+                throw new VirtualMachineException($"Failed to create queue for virtual machine {virtualMachineName}");
+            }
+
+            // Get queue sas url
+            var queueResult = queueName.EndsWith("-input-queue")
+                ? await GetVirtualMachineInputQueueConnectionInfoAsync(input.AzureVmLocation, queue.Name, 0, logger)
+                : await GetVirtualMachineOutputQueueConnectionInfoAsync(input.AzureVmLocation, queue.Name, 0, logger);
+            if (queueResult.Item1 != OperationState.Succeeded)
+            {
+                throw new VirtualMachineException($"Failed to get sas token for virtual machine input queue {queue.Uri}");
+            }
+
+            var queueConnectionInfo = queueResult.Item2;
+            return queueConnectionInfo;
         }
 
         private static OperationState GetFinalState(Dictionary<string, VmResourceState> resourcesToBeDeleted)
@@ -538,15 +605,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return JsonConvert.SerializeObject((computeVmLocation, resourcesToBeDeleted));
         }
 
-        private string GetVmInitScript(
+        private string ReplaceParams(
             string vmToken,
             string vmAgentBlobUrl,
             QueueConnectionInfo queueConnectionInfo,
             string resourceId,
-            string frontEndDnsHostName)
+            string frontEndDnsHostName,
+            string initScript)
         {
-            var initScript = GetEmbeddedResource("vm_init.sh");
-            initScript = initScript
+            return initScript
                 .Replace("__REPLACE_INPUT_QUEUE_NAME__", queueConnectionInfo.Name)
                 .Replace("__REPLACE_INPUT_QUEUE_URL__", queueConnectionInfo.Url)
                 .Replace("__REPLACE_INPUT_QUEUE_SASTOKEN__", queueConnectionInfo.SasToken)
@@ -554,7 +621,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 .Replace("__REPLACE_VMAGENT_BLOB_URl__", vmAgentBlobUrl)
                 .Replace("__REPLACE_RESOURCEID__", resourceId)
                 .Replace("__REPLACE_FRONTEND_SERVICE_DNS_HOST_NAME__", frontEndDnsHostName);
-            return initScript.ToBase64Encoded();
         }
 
         private async Task<CloudQueue> GetQueueClientAsync(AzureLocation location, string queueName, IDiagnosticsLogger logger)
@@ -580,9 +646,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return queueExists ? new object() : default;
         }
 
-        private static string GetQueueName(string resourceName)
+        private async Task<string> GetVmInitScriptAsync(
+            string virtualMachineName,
+            VirtualMachineProviderCreateInput input,
+            QueueConnectionInfo inputQueueConnectionInfo,
+            IDiagnosticsLogger logger)
         {
-            return $"{resourceName.ToLowerInvariant()}-input-queue";
+            var initScript = GetEmbeddedResource("vm_init.sh");
+            initScript = ReplaceParams(
+                input.VMToken,
+                input.VmAgentBlobUrl,
+                inputQueueConnectionInfo,
+                input.ResourceId,
+                input.FrontDnsHostName,
+                initScript);
+
+            if (useOutputQueue)
+            {
+                string outputQueueName = GetOutputQueueName(virtualMachineName);
+                QueueConnectionInfo outputQueueConnectionInfo = await CreateQueue(input, logger, virtualMachineName, outputQueueName);
+                initScript = initScript
+                                .Replace("SCRIPT_PARAM_VM_USE_OUTPUT_QUEUE=0", "SCRIPT_PARAM_VM_USE_OUTPUT_QUEUE=1")
+                                .Replace("__REPLACE_OUTPUT_QUEUE_NAME__", outputQueueConnectionInfo.Name)
+                                .Replace("__REPLACE_OUTPUT_QUEUE_URL__", outputQueueConnectionInfo.Url)
+                                .Replace("__REPLACE_OUTPUT_QUEUE_SASTOKEN__", outputQueueConnectionInfo.SasToken);
+            }
+
+            return initScript.ToBase64Encoded();
+        }
+
+        private string GetOutputQueueName(string virtualMachineName)
+        {
+            return $"{virtualMachineName}-output-queue";
+        }
+
+        private static string GetInputQueueName(string virtualMachineName)
+        {
+            return $"{virtualMachineName.ToLowerInvariant()}-input-queue";
         }
 
         private static string GetOsDiskName(string vmName)
