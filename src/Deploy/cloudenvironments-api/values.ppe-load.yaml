@@ -1,0 +1,26 @@
+# Config for frontend
+frontend-web-api:
+  config:
+    aspNetEnv: Staging
+    overrideAppSettingsJson: appsettings.ppe-load.json
+  ingress:
+    hosts:
+      - ppe-load-online.core.vsengsaas.visualstudio.com
+      - eastus-ppe-load-online.core.vsengsaas.visualstudio.com
+      - southeastasia-ppe-load-online.core.vsengsaas.visualstudio.com
+      - westeurope-ppe-load-online.core.vsengsaas.visualstudio.com
+      - westus2-ppe-load-online.core.vsengsaas.visualstudio.com
+    tls:
+      - hosts:
+        - ppe-load-online.core.vsengsaas.visualstudio.com
+        - eastus-ppe-load-online.core.vsengsaas.visualstudio.com
+        - southeastasia-ppe-load-online.core.vsengsaas.visualstudio.com
+        - westeurope-ppe-load-online.core.vsengsaas.visualstudio.com
+        - westus2-ppe-load-online.core.vsengsaas.visualstudio.com
+        secretName: ssl-cert
+
+# Config for backend
+backend-web-api:
+  config:
+    aspNetEnv: Staging
+    overrideAppSettingsJson: appsettings.ppe-load.json

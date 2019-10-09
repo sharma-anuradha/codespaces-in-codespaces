@@ -265,6 +265,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 return false;
             }
 
+            // Helm adds quotes in strange ways. Linux doesn't like them.
+            overrideAppSettingsJsonFile = overrideAppSettingsJsonFile.Trim('"');
+
             return true;
         }
 
