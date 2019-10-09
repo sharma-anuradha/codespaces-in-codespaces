@@ -32,4 +32,3 @@ export const GITHUB_API_URL = 'https://api.github.com/repos';
 export const aadAuthorityUrl = 'https://login.microsoftonline.com/organizations';
 
 export const expirationTimeBackgroundTokenRefreshThreshold = 1800;
-

@@ -19,14 +19,15 @@ enum SupportedGitServices {
 }
 
 export interface CreateEnvironmentPanelProps {
-    showPanel: boolean;
+    defaultName?: string | null;
+    defaultRepo?: string | null;
     hidePanel: () => void;
     onCreateEnvironment: (friendlyName: string, githubRepositoryUrl?: string) => void;
 }
 
 export interface CreateEnvironmentPanelState {
-    environmentName?: string;
-    gitRepositoryUrl?: string;
+    environmentName: string;
+    gitRepositoryUrl: string;
     normalizedGitHubUrl?: string;
     gitValidationErrorMessage?: string;
     gitValidationMessage?: string;
@@ -40,15 +41,16 @@ export class CreateEnvironmentPanel extends Component<
     CreateEnvironmentPanelState
 > {
     private timeout: ReturnType<typeof setTimeout> | undefined;
-
     private validationRequest: Signal<void> | undefined;
-
     private authenticationRequest: Signal<boolean> | undefined;
 
     public constructor(props: CreateEnvironmentPanelProps) {
         super(props);
 
-        this.state = {};
+        this.state = {
+            environmentName: props.defaultName || '',
+            gitRepositoryUrl: props.defaultRepo || '',
+        };
     }
 
     componentWillUnmount() {
@@ -66,12 +68,9 @@ export class CreateEnvironmentPanel extends Component<
     }
 
     render() {
-        const repositoryUrlValue = this.state.gitRepositoryUrl || '';
-        const environmentNameValue = this.state.environmentName || '';
-
         return (
             <Panel
-                isOpen={this.props.showPanel}
+                isOpen={true}
                 type={PanelType.smallFixedFar}
                 isFooterAtBottom={true}
                 onKeyDown={this.dismissPanel}
@@ -85,8 +84,9 @@ export class CreateEnvironmentPanel extends Component<
                         label='Environment Name'
                         placeholder='environmentNameExample'
                         onKeyDown={this.submitForm}
-                        value={environmentNameValue}
+                        value={this.state.environmentName}
                         onChange={this.environmentNameChanged}
+                        // tslint:disable-next-line: use-simple-attributes
                         iconProps={this.state.isEnvironmentNameValid ? validIconProp : undefined}
                         autoFocus
                         required
@@ -95,9 +95,10 @@ export class CreateEnvironmentPanel extends Component<
                         label='Git Repository'
                         placeholder='vsls-contrib/guestbook'
                         onKeyDown={this.submitForm}
-                        value={repositoryUrlValue}
-                        onChange={this.githubRepositoryUrlChanged}
+                        value={this.state.gitRepositoryUrl}
+                        onChange={this.gitRepositoryUrlChanged}
                         errorMessage={this.state.gitValidationErrorMessage}
+                        // tslint:disable-next-line: use-simple-attributes
                         iconProps={this.state.isGitUrlValid ? validIconProp : undefined}
                     />
                     <label>{this.state.gitValidationMessage}</label>
@@ -165,7 +166,7 @@ export class CreateEnvironmentPanel extends Component<
 
             this.authenticationRequest = undefined;
         } else {
-            this.props.onCreateEnvironment(this.state.environmentName!, gitUrl);
+            this.props.onCreateEnvironment(this.state.environmentName, gitUrl);
 
             this.clearForm();
         }
@@ -173,8 +174,8 @@ export class CreateEnvironmentPanel extends Component<
 
     private clearForm = () => {
         this.setState({
-            environmentName: undefined,
-            gitRepositoryUrl: undefined,
+            environmentName: '',
+            gitRepositoryUrl: '',
             gitValidationErrorMessage: undefined,
             gitValidationMessage: undefined,
             gitHubAuthenticationUrl: undefined,
@@ -200,10 +201,10 @@ export class CreateEnvironmentPanel extends Component<
 
     private environmentNameChanged: (
         event: FormEvent<HTMLInputElement | HTMLTextAreaElement>,
-        environmentName?: string
+        environmentName: string | undefined
     ) => void = (_event, environmentName) => {
         this.setState({
-            environmentName,
+            environmentName: environmentName || '',
         });
 
         if (environmentName) {
@@ -217,12 +218,12 @@ export class CreateEnvironmentPanel extends Component<
         }
     };
 
-    private githubRepositoryUrlChanged: (
+    private gitRepositoryUrlChanged: (
         event: FormEvent<HTMLInputElement | HTMLTextAreaElement>,
-        githubRepositoryUrl?: string
-    ) => void = (_event, githubRepositoryUrl) => {
+        gitRepositoryUrl?: string
+    ) => void = (_event, gitRepositoryUrl) => {
         this.setState({
-            gitRepositoryUrl: githubRepositoryUrl,
+            gitRepositoryUrl: gitRepositoryUrl || '',
             gitValidationErrorMessage: undefined,
             gitValidationMessage: undefined,
             gitHubAuthenticationUrl: undefined,
@@ -239,23 +240,22 @@ export class CreateEnvironmentPanel extends Component<
         }
 
         this.timeout = setTimeout(() => {
-            if (githubRepositoryUrl) {
-                githubRepositoryUrl = githubRepositoryUrl.trim();
-                this.validationRequest = Signal.from(this.validateGitUrl(githubRepositoryUrl));
+            if (gitRepositoryUrl) {
+                this.validationRequest = Signal.from(this.validateGitUrl(gitRepositoryUrl.trim()));
                 this.validationRequest.promise;
                 this.validationRequest = undefined;
             }
         }, 1000);
     };
 
-    private async validateGitUrl(githubRepositoryUrl: string) {
-        const matchTokens = this.getGitProvider(githubRepositoryUrl);
+    private async validateGitUrl(gitRepositoryUrl: string) {
+        const matchTokens = this.getGitProvider(gitRepositoryUrl);
         if (matchTokens) {
             const gitProvider = matchTokens[0];
             switch (gitProvider) {
                 case SupportedGitServices.BitBucket:
                 case SupportedGitServices.GitLab:
-                    if (await this.pingUrl(githubRepositoryUrl)) {
+                    if (await this.pingUrl(gitRepositoryUrl)) {
                         this.setState({
                             isGitUrlValid: true,
                         });
@@ -370,8 +370,6 @@ export class CreateEnvironmentPanel extends Component<
             repo = GITHUB_BASE_URL.concat('/').concat(repo);
         }
 
-        repo = repo.toLowerCase();
-
-        return repo;
+        return repo.toLowerCase();
     }
 }

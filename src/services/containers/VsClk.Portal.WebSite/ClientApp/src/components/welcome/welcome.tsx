@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Redirect } from 'react-router-dom';
+import { Redirect, RouteComponentProps } from 'react-router-dom';
 import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 
@@ -11,6 +11,7 @@ import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
 
 interface WelcomeProps {
+    redirectUrl: string | null;
     isAuthenticated: boolean;
     isAuthenticating: boolean;
     signIn: (...name: Parameters<typeof signIn>) => void;
@@ -22,7 +23,11 @@ class WelcomeView extends Component<WelcomeProps> {
             return <Loader message='Signing in...' />;
         }
         if (this.props.isAuthenticated) {
-            return <Redirect to='/environments' />;
+            // re directing to the create environment panel
+            return (
+                // tslint:disable-next-line: use-simple-attributes
+                <Redirect to={this.props.redirectUrl || '/environments'} />
+            );
         }
 
         return (
@@ -46,7 +51,8 @@ class WelcomeView extends Component<WelcomeProps> {
     }
 }
 
-const getAuthState = (state: ApplicationState) => ({
+const getAuthState = (state: ApplicationState, props: RouteComponentProps<{}>) => ({
+    redirectUrl: new URLSearchParams(location.search).get('redirectUrl'),
     isAuthenticated: state.authentication.isAuthenticated,
     isAuthenticating: state.authentication.isAuthenticating,
 });
@@ -60,7 +66,6 @@ export const WelcomeConnected = connect(
 )(WelcomeView);
 
 // Router cannot consume connected components properly so we wrap welcome
-
-export function Welcome() {
-    return <WelcomeConnected />;
+export function Welcome(props: WelcomeProps & RouteComponentProps<{}>) {
+    return <WelcomeConnected {...props} />;
 }

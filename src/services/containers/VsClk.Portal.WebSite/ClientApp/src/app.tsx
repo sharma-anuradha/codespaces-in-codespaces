@@ -2,11 +2,10 @@ import React, { Component } from 'react';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { connect, Provider } from 'react-redux';
 import './app.css';
-
-import { Main } from './components/main/main';
 import { Welcome } from './components/welcome/welcome';
 import { Workbench } from './components/workbench/workbench';
-
+import { EnvironmentsPanel } from './components/environments/environments';
+import { NewEnvironment } from './components/newEnvironment/newEnvironment';
 import { configureStore } from './store/configureStore';
 import { init } from './actions/init';
 import { ApplicationState } from './reducers/rootReducer';
@@ -42,9 +41,10 @@ class AppRoot extends Component<AppProps, AppState> {
                 <Router>
                     <div className='vssass'>
                         <ProtectedRoute path='/environment/:id' component={Workbench} />
-                        <ProtectedRoute exact path='/environments' component={Main} />
+                        <ProtectedRoute exact path='/environments/new' component={NewEnvironment} />
+                        <ProtectedRoute exact path='/environments' component={EnvironmentsPanel} />
                         <ProtectedRoute path='/github/login' component={GitHubLogin} />
-                        <Route exact path='/welcome' component={Welcome} />
+                        <Route path='/welcome' component={Welcome} />
                         <Route exact path='/' component={BlogPost} />
                     </div>
                 </Router>

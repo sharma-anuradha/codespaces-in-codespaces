@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Redirect, RouteComponentProps, RouteProps, withRouter } from 'react-router-dom';
+import { Route, Redirect, RouteComponentProps, RouteProps } from 'react-router-dom';
 import { connect } from 'react-redux';
 
 import { ApplicationState } from './reducers/rootReducer';
@@ -34,7 +34,16 @@ const ProtectedRouteView = (props: Props) => {
     }
 
     if (!isAuthenticating && !isAuthenticated) {
-        return <Redirect to='/welcome' />;
+        return (
+            <Redirect
+                to={{
+                    pathname: '/welcome',
+                    search: new URLSearchParams({
+                        redirectUrl: location.href.substr(location.origin.length),
+                    }).toString(),
+                }}
+            />
+        );
     }
 
     return <Component {...rest} />;
