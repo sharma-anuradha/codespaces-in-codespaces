@@ -10,7 +10,7 @@ pods:
   livenessProbePath: /health
   readinessProbePath: /warmup
   targetCpuUtilizationPercentage: 80
-  autoscaling: false
+  autoscaling: true
 
 image:
   tag:
