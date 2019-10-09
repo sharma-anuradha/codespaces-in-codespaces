@@ -113,9 +113,8 @@ export class LiveShareHttpClient implements IHttpClient {
 
     // tslint:disable-next-line: max-func-body-length
     parseResponseFrom(url: URL, channel: SshChannel): Promise<Response> {
+        let responseBuffer = new Buffer(0);
         let headerString: string | undefined;
-        let responseContent: Buffer;
-        let responseMetadata: ReturnType<typeof parseMessage> | undefined;
         const responseSignal = new Signal<Response>();
 
         channel.onDataReceived(async (buffer) => {
@@ -131,30 +130,28 @@ export class LiveShareHttpClient implements IHttpClient {
             //      Transfer-Encoding: chunked
             //
 
-            let chunk = buffer;
+            const chunkLength = buffer.byteLength;
+            responseBuffer = this.concatBuffers(responseBuffer, buffer);
 
             if (!headerString) {
                 // 2. Find first empty line separating metadata from body (2x CRLF or bytes 13, 10, 13, 10)
-                const headerStringEndIndex = chunk.findIndex(
+                const headerStringEndIndex = responseBuffer.findIndex(
                     (_, index) =>
-                        chunk[index + 0] === crByte &&
-                        chunk[index + 1] === lfByte &&
-                        chunk[index + 2] === crByte &&
-                        chunk[index + 3] === lfByte
+                        responseBuffer[index + 0] === crByte &&
+                        responseBuffer[index + 1] === lfByte &&
+                        responseBuffer[index + 2] === crByte &&
+                        responseBuffer[index + 3] === lfByte
                 );
-                const bodyStartIndex = headerStringEndIndex + 4;
 
-                headerString = chunk.slice(0, headerStringEndIndex).toString();
-                responseMetadata = parseMessage(headerString);
+                if (headerStringEndIndex > 0) {
+                    headerString = responseBuffer.slice(0, headerStringEndIndex).toString();
 
-                chunk = chunk.slice(bodyStartIndex);
+                    const bodyStartIndex = headerStringEndIndex + 4;
+                    responseBuffer = responseBuffer.slice(bodyStartIndex);
+                }
             }
 
-            responseContent = responseContent
-                ? this.concatBuffers(responseContent, chunk)
-                : this.cloneBuffer(chunk);
-
-            channel.adjustWindow(responseContent.length);
+            channel.adjustWindow(chunkLength);
         });
 
         channel.onClosed(async (e) => {
@@ -169,7 +166,7 @@ export class LiveShareHttpClient implements IHttpClient {
                 return;
             }
 
-            if (!responseMetadata) {
+            if (!headerString) {
                 this.logger.error('Failed to parse headers from the request.', {
                     url: url.href,
                 });
@@ -184,7 +181,9 @@ export class LiveShareHttpClient implements IHttpClient {
                 return;
             }
 
-            let body: Buffer | undefined = responseContent;
+            const responseMetadata = parseMessage(headerString);
+
+            let body: Buffer | undefined = responseBuffer;
 
             if (
                 responseMetadata.headers &&
