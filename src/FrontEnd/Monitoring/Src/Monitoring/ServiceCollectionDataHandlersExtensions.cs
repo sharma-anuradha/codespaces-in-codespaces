@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddHeartBeatDataHandlers(this IServiceCollection services)
         {
-            services.AddSingleton<IDataHandler, LinuxDockerStateHandler>();
+            services.AddSingleton<IDataHandler, EnvironmentDataHandler>();
             /* Add additional handlers here as needed */
 
             return services;

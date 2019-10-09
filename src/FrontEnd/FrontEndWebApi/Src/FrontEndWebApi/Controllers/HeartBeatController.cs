@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// Initializes a new instance of the <see cref="HeartBeatController"/> class.
         /// </summary>
-        /// <param name="handlers">List of handlers to process monitor states.</param>
+        /// <param name="handlers">List of handlers to process the collected data from VSOAgent.</param>
         public HeartBeatController(
             IEnumerable<IDataHandler> handlers)
         {
@@ -48,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        public async Task<IActionResult> ProcessHeartBeatAsync([FromBody] HeartBeatBody heartBeat)
+        public async Task<IActionResult> ProcessHeartBeatAsync([FromBody] HeartBeat heartBeat)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
@@ -66,29 +66,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return UnprocessableEntity();
             }
 
-            if (heartBeat.MonitorStates != null && heartBeat.MonitorStates.Length > 0)
+            if (heartBeat.CollectedDataList != null && heartBeat.CollectedDataList.Count() > 0)
             {
-                foreach (var entry in heartBeat.MonitorStates)
+                foreach (var data in heartBeat.CollectedDataList)
                 {
-                    var state = entry.Value;
-                    var handler = handlers.Where(h => h.CanProcess(state)).FirstOrDefault();
+                    var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
 
                     if (handler != default)
                     {
                         try
                         {
-                            await handler.ProcessAsync(state, heartBeat.ResourceId, logger);
+                            await handler.ProcessAsync(data, heartBeat.ResourceId, logger);
                         }
                         catch (Exception e)
                         {
                             logger.AddDuration(duration)
-                                .LogErrorWithDetail($"Processing failed for the monitor state {state.Name} received from Virtual Machine {heartBeat.ResourceId}", e.Message);
+                                .LogErrorWithDetail($"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", e.Message);
                         }
                     }
                     else
                     {
                         logger.AddDuration(duration)
-                            .LogWarning($"No handlers found for processing the monitoring state {state?.Name} received from Virtual Machine {heartBeat.ResourceId}");
+                            .LogWarning($"No handlers found for processing the data {data?.Name} received from Virtual Machine {heartBeat.ResourceId}");
                     }
                 }
             }

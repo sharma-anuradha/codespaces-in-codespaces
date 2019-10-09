@@ -16,17 +16,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         /// <summary>
         /// Check if the state can be processed by the handler.
         /// </summary>
-        /// <param name="state">Monitor State.</param>
-        /// <returns>True if the handler can process the monitor state.</returns>
-        bool CanProcess(AbstractMonitorState state);
+        /// <param name="data">Data collected by monitors, job results etc.</param>
+        /// <returns>True if the handler can process the collected data.</returns>
+        bool CanProcess(CollectedData data);
 
         /// <summary>
         /// Specific handling for the given monitor state.
         /// </summary>
-        /// <param name="state">Monitor State.</param>
-        /// <param name="vmResourceId">ID of the VM that sent this state.</param>
+        /// <param name="data">Data collected by monitors, job results etc.</param>
+        /// <param name="vmResourceId">ID of the VM that sent this data.</param>
         /// <param name="logger">IDiagnosticsLogger.</param>
         /// <returns>Task.</returns>
-        Task ProcessAsync(AbstractMonitorState state, string vmResourceId, IDiagnosticsLogger logger);
+        Task ProcessAsync(CollectedData data, string vmResourceId, IDiagnosticsLogger logger);
     }
 }

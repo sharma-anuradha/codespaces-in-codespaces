@@ -1,4 +1,4 @@
-﻿// <copyright file="PhysicalEnvironmentState.cs" company="Microsoft">
+﻿// <copyright file="VsoEnvironmentState.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
     /// Represents the current state of a Cloud Environment instance running on a Virtual Machine.
     /// </summary>
     [Flags]
-    public enum EnvironmentRunningState
+    public enum VsoEnvironmentState
     {
         /// <summary>
         /// Unknown state.
@@ -36,5 +36,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
         /// Liveshare Agent is running.
         /// </summary>
         VslsAgentRunning = 8,
+
+        /// <summary>
+        /// Liveshare relay is connected.
+        /// </summary>
+        VslsRelayConnected = 16,
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="HeartBeatBody.cs" company="Microsoft">
+﻿// <copyright file="HeartBeat.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,29 +9,32 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
 {
     /// <summary>
-    /// The REST API body of a HeartBeat message.
+    /// HeartBeat message from a VM.
     /// </summary>
-    public class HeartBeatBody
+    public class HeartBeat
     {
         /// <summary>
         /// Gets or sets uTC timestamp of the heartbeat.
         /// </summary>
+        [JsonProperty("timestamp")]
         public DateTime TimeStamp { get; set; }
 
         /// <summary>
         /// Gets or sets vSO Agent version.
         /// </summary>
+        [JsonProperty("agentVersion")]
         public string AgentVersion { get; set; }
 
         /// <summary>
         /// Gets or sets virtual Machine Resource Id.
         /// </summary>
+        [JsonProperty("resourceId")]
         public string ResourceId { get; set; }
 
         /// <summary>
-        /// Gets or sets a map of monitor states for each monitor.
+        /// Gets or sets a list of data collected and sent by the VSOAgent.
         /// </summary>
-        [JsonProperty(ItemConverterType = typeof(MonitorStateConverter))]
-        public KeyValuePair<string, AbstractMonitorState>[] MonitorStates { get; set; }
+        [JsonProperty(ItemConverterType = typeof(CollectedDataConverter), PropertyName = "collectedDataList")]
+        public IEnumerable<CollectedData> CollectedDataList { get; set; }
     }
 }
