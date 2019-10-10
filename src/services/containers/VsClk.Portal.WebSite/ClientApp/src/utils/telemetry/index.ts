@@ -1,10 +1,12 @@
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
+import { detect } from 'detect-browser';
 
 import { TELEMETRY_KEY } from '../../constants';
 import { createUniqueId } from '../../dependencies';
 import { createTrace } from '../createTrace';
 import { TelemetryEventSerializer } from './TelemetryEventSerializer';
 import { ITelemetryEvent } from './types';
+import { matchPath } from '../../routes';
 
 export interface IActionTelemetryProperties {
     action: string;
@@ -15,7 +17,16 @@ export interface IActionTelemetryProperties {
 type TelemetryContext = {
     sessionId: string;
     pageLoadId: string;
+
+    host: string;
+    path: string;
+
+    browserName: string;
+    browserVersion: string;
+    browserOS: string;
+
     environmentId?: string;
+    isInternal?: boolean;
 };
 
 class TelemetryService {
@@ -45,9 +56,19 @@ class TelemetryService {
     }
 
     initializeContext() {
+        const info = detect();
+        const pathMatch = matchPath(location.pathname);
+
         this.context = {
             sessionId: this.getSessionId(),
             pageLoadId: this.getPageLoadId(),
+
+            host: location.host,
+            path: pathMatch ? pathMatch.path : location.pathname,
+
+            browserName: (info && info.name) || '<unknown>',
+            browserVersion: (info && info.version) || '<unknown>',
+            browserOS: (info && info.os) || '<unknown>',
         };
     }
 
@@ -59,6 +80,10 @@ class TelemetryService {
 
     setCurrentEnvironmentId(id: string | undefined) {
         this.context.environmentId = id;
+    }
+
+    setIsInternal(isInternal: boolean) {
+        this.context.isInternal = isInternal;
     }
 
     private getSessionId(): string {

@@ -27,16 +27,13 @@ const logger = (_store: unknown) => (next: Function) => (action: BaseAction | Er
     return next(action);
 };
 
-const actionTelemetry = (store: { getState(): ApplicationState }) => (next: Function) => (
+const actionTelemetry = (_: { getState(): ApplicationState }) => (next: Function) => (
     action: WithMetadata<BaseAction | ErrorAction>
 ) => {
-    const token = store.getState().authentication.token;
-    const isInternal = !!(token && token.account.userName.includes('@microsoft.com'));
-
     if (isErrorAction(action)) {
-        telemetry.track(new ActionErrorEvent(action, isInternal));
+        telemetry.track(new ActionErrorEvent(action));
     } else {
-        telemetry.track(new ActionSuccessEvent(action, isInternal));
+        telemetry.track(new ActionSuccessEvent(action));
     }
 
     return next(action);

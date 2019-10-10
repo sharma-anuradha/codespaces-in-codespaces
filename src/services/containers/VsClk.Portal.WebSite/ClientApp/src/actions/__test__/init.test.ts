@@ -15,6 +15,12 @@ jest.mock('../getUserInfo', () => {
     };
 });
 
+jest.mock('../../utils/setAuthCookie', () => {
+    return {
+        setAuthCookie: jest.fn().mockReturnValue(Promise.resolve()),
+    };
+});
+
 describe('actions - init', () => {
     let store: MockStore;
 

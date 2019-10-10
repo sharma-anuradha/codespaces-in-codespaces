@@ -52,15 +52,7 @@ if "%EX%" neq "0" (
     popd
 	exit /b %EX%
 )
-echo.
-echo yarn-build-project
-call yarn build
-set EX=%ERRORLEVEL%
-if "%EX%" neq "0" (
-    popd
-    echo Failed to yarn-build-project correctly.
-	exit /b %EX%
-)
+
 echo.
 echo yarn-test-project
 call yarn test:ci
@@ -68,6 +60,16 @@ set EX=%ERRORLEVEL%
 if "%EX%" neq "0" (
     popd
     echo Failed to yarn-test-project correctly.
+	exit /b %EX%
+)
+
+echo.
+echo yarn-build-project
+call yarn build
+set EX=%ERRORLEVEL%
+if "%EX%" neq "0" (
+    popd
+    echo Failed to yarn-build-project correctly.
 	exit /b %EX%
 )
 popd

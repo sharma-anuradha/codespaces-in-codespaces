@@ -2,18 +2,16 @@ import React, { Component } from 'react';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { connect, Provider } from 'react-redux';
 import './app.css';
-import { Welcome } from './components/welcome/welcome';
-import { Workbench } from './components/workbench/workbench';
-import { EnvironmentsPanel } from './components/environments/environments';
-import { NewEnvironment } from './components/newEnvironment/newEnvironment';
 import { configureStore } from './store/configureStore';
 import { init } from './actions/init';
 import { ApplicationState } from './reducers/rootReducer';
 import { ProtectedRoute } from './ProtectedRoute';
-import { BlogPost } from './BlogPost';
 import { Loader } from './components/loader/loader';
 import { ConfigurationState } from './reducers/configuration';
-import { GitHubLogin } from './components/gitHubLogin/gitHubLogin';
+
+import { routes } from './routes';
+import { telemetry } from './utils/telemetry';
+import { ApplicationLoadEvent } from './utils/telemetry/ApplicationLoadEvent';
 
 export interface AppState {}
 
@@ -26,6 +24,9 @@ interface AppProps {
 
 class AppRoot extends Component<AppProps, AppState> {
     async componentDidMount() {
+        window.performance.measure(ApplicationLoadEvent.markName);
+        telemetry.track(new ApplicationLoadEvent());
+
         this.props.init();
     }
 
@@ -36,17 +37,19 @@ class AppRoot extends Component<AppProps, AppState> {
             return <Loader message='Fetching configuration...' />;
         }
 
+        const routeConfig = routes.map((r, i) => {
+            const { authenticated, ...props } = r;
+            return authenticated ? (
+                <ProtectedRoute {...props} key={i} />
+            ) : (
+                <Route {...props} key={i} />
+            );
+        });
+
         return (
             <Provider store={store}>
                 <Router>
-                    <div className='vssass'>
-                        <ProtectedRoute path='/environment/:id' component={Workbench} />
-                        <ProtectedRoute exact path='/environments/new' component={NewEnvironment} />
-                        <ProtectedRoute exact path='/environments' component={EnvironmentsPanel} />
-                        <ProtectedRoute path='/github/login' component={GitHubLogin} />
-                        <Route path='/welcome' component={Welcome} />
-                        <Route exact path='/' component={BlogPost} />
-                    </div>
+                    <div className='vssass'>{routeConfig}</div>
                 </Router>
             </Provider>
         );

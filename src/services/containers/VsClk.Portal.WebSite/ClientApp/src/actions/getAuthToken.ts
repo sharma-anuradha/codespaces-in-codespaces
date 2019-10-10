@@ -34,6 +34,6 @@ export async function getAuthToken() {
         dispatch(getAuthTokenSuccessAction(token));
         return token;
     } catch (err) {
-        dispatch(getAuthTokenFailureAction(err));
+        return dispatch(getAuthTokenFailureAction(err));
     }
 }

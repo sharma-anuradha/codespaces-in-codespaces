@@ -96,8 +96,10 @@ self.addEventListener('message', async (event) => {
         case configureServiceWorker: {
             const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
             if (
+                message.payload.features &&
+                message.payload.features.useSharedConnection &&
                 configurationManager.configuration.features.useSharedConnection !==
-                message.payload.features.useSharedConnection
+                    message.payload.features.useSharedConnection
             ) {
                 serviceRegistry.unregisterInstance('LiveShareClient');
                 serviceRegistry.unregisterInstance('ConnectionFactory');

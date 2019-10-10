@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
 import { initializeIcons } from '@uifabric/icons';
 
 import { App } from './app';
@@ -11,44 +10,49 @@ import * as serviceWorker from './serviceWorker';
 import { configureServiceWorker } from './common/service-worker-messages';
 
 import './index.css';
-import { defaultConfig } from './services/configurationService';
+import { BrowserRouter } from 'react-router-dom';
 
-initializeIcons();
+function startApplication() {
+    initializeIcons();
 
-const baseUrl = (document.getElementById('public_url') as HTMLBaseElement).getAttribute('href');
-const rootElement = document.getElementById('root');
+    const baseUrl = (document.getElementById('public_url') as HTMLBaseElement).getAttribute('href');
+    const rootElement = document.getElementById('root');
 
-const enableTraceFactory = (traceName: string) => {
-    return () => {
-        localStorage.debug = traceName;
+    const enableTraceFactory = (traceName: string) => {
+        return () => {
+            localStorage.debug = traceName;
+        };
     };
-};
 
-const win = window as any;
-win.vsoEnablePortalTrace = enableTraceFactory('vsa-portal-webapp,vsa-portal-webapp:*');
-win.vsoEnableSshTrace = enableTraceFactory('vs-ssh,vs-ssh:*');
-win.vsoEnableStaticAssetsSWTrace = enableTraceFactory('service-worker:*');
+    const win = window as any;
+    win.vsoEnablePortalTrace = enableTraceFactory('vsa-portal-webapp,vsa-portal-webapp:*');
+    win.vsoEnableSshTrace = enableTraceFactory('vs-ssh,vs-ssh:*');
 
-ReactDOM.render(
-    <BrowserRouter basename={baseUrl || ''}>
-        <App store={store} />
-    </BrowserRouter>,
-    rootElement
-);
+    ReactDOM.render(
+        <BrowserRouter basename={baseUrl || ''}>
+            <App store={store} />
+        </BrowserRouter>,
+        rootElement
+    );
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.register({
-    onReady() {
-        postServiceWorkerMessage({
-            type: configureServiceWorker,
-            payload: {
-                liveShareEndpoint: defaultConfig.liveShareEndpoint,
-                features: {
-                    useSharedConnection: true,
+    // If you want your app to work offline and load faster, you can change
+    // unregister() to register() below. Note this comes with some pitfalls.
+    // Learn more about service workers: https://bit.ly/CRA-PWA
+    serviceWorker.register({
+        onReady() {
+            postServiceWorkerMessage({
+                type: configureServiceWorker,
+                payload: {
+                    features: {
+                        useSharedConnection: true,
+                    },
                 },
-            },
-        });
-    },
-});
+            });
+        },
+    });
+}
+
+// Don't start application in iframe created by MSAL.
+if (window.parent === window) {
+    startApplication();
+}

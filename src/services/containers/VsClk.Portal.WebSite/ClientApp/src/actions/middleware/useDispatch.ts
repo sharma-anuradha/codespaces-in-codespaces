@@ -29,6 +29,7 @@ export function useDispatch() {
         | undefined;
 
     function customDispatch(action: void): void;
+    function customDispatch<T extends ErrorAction>(action: T): never;
     function customDispatch<T extends Action>(action: T): T;
     function customDispatch<T extends Action>(action: T) {
         if (!action) {
@@ -38,8 +39,8 @@ export function useDispatch() {
         if (typeof action !== 'function' && !isThenable(action)) {
             action = {
                 ...action,
-                metadata: createMetadataFor(action, context)
-            }
+                metadata: createMetadataFor(action, context),
+            };
         }
 
         const result = context.dispatch(action);

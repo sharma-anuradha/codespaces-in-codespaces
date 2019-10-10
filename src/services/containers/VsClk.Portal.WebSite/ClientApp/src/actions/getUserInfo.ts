@@ -1,6 +1,6 @@
 import { useDispatch } from './middleware/useDispatch';
 import { action } from './middleware/useActionCreator';
-import { authService, acquireToken } from '../services/authService';
+import { acquireToken } from '../services/authService';
 import { useWebClient } from './middleware/useWebClient';
 import { useActionContext } from './middleware/useActionContext';
 

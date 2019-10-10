@@ -51,9 +51,7 @@ const ProtectedRouteView = (props: Props) => {
 
 const AuthenticatedRoute = connect(getAuthInfo)(ProtectedRouteView);
 
-type ProtectedRouteProps = {
-    path: string;
-    exact?: boolean;
+type ProtectedRouteProps = RouteProps & {
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
 };
 

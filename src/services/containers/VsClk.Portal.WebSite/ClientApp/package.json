@@ -21,6 +21,7 @@
     "css-loader": "1.0.0",
     "custom-protocol-check": "^1.0.1",
     "debug": "^4.1.1",
+    "detect-browser": "^4.7.0",
     "dotenv": "6.0.0",
     "dotenv-expand": "4.2.0",
     "eslint": "5.12.0",
@@ -35,7 +36,7 @@
     "html-webpack-plugin": "4.0.0-alpha.2",
     "http-message-parser": "^0.0.34",
     "identity-obj-proxy": "3.0.0",
-    "jest": "23.6.0",
+    "jest": "^24.9.0",
     "jest-pnp-resolver": "1.0.2",
     "jest-resolve": "23.6.0",
     "jest-watch-typeahead": "^0.2.1",
@@ -95,6 +96,7 @@
     "nodemon": "^1.19.3",
     "npm-run-all": "^4.1.5",
     "tar": "^4.4.10",
+    "ts-jest": "^24.1.0",
     "ts-loader": "^6.1.0",
     "tslint": "5.14.0",
     "tslint-microsoft-contrib": "6.1.0",
@@ -145,13 +147,13 @@
       "react-app-polyfill/jsdom"
     ],
     "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
-      "<rootDir>/src/**/?(*.)(spec|test).{js,jsx,ts,tsx}"
+      "<rootDir>/src/**/__tests__/**/*.[jt]s?(x)",
+      "<rootDir>/src/**/*(*.)@(spec|test).[tj]s?(x)"
     ],
     "testEnvironment": "jsdom",
     "testURL": "http://localhost",
     "transform": {
-      "^.+\\.(js|jsx|ts|tsx)$": "<rootDir>/node_modules/babel-jest",
+      "^.+\\.(js|jsx|ts|tsx)$": "<rootDir>/node_modules/ts-jest",
       "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
       "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
     },
@@ -159,9 +161,15 @@
       "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|ts|tsx)$",
       "^.+\\.module\\.(css|sass|scss)$"
     ],
+    "modulePathIgnorePatterns": [
+      "[/\\\\]build[/\\\\]",
+      "[/\\\\]public[/\\\\]"
+    ],
     "moduleNameMapper": {
       "^react-native$": "react-native-web",
-      "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy"
+      "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy",
+      "office-ui-fabric-react/lib/(.+)": "office-ui-fabric-react/lib-commonjs/$1",
+      "@uifabric/fluent-theme/lib/(.+)": "@uifabric/fluent-theme/lib-commonjs/$1"
     },
     "moduleFileExtensions": [
       "web.js",

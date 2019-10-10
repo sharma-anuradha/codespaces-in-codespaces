@@ -40,7 +40,9 @@ export async function fetchConfiguration() {
                 },
             },
         });
+
+        return configuration;
     } catch (err) {
-        dispatch(fetchConfigurationFailureAction(err));
+        return dispatch(fetchConfigurationFailureAction(err));
     }
 }

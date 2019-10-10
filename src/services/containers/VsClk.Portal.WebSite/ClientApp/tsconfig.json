@@ -8,6 +8,7 @@
       "webworker"
     ],
     "allowJs": false,
+    "sourceMap": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

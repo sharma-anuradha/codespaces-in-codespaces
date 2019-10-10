@@ -7,6 +7,9 @@ import { fetchConfiguration } from './fetchConfiguration';
 import { fetchEnvironments } from './fetchEnvironments';
 import { getUserInfo } from './getUserInfo';
 import { setAuthCookie } from '../utils/setAuthCookie';
+import { telemetry } from '../utils/telemetry';
+import { postServiceWorkerMessage } from '../common/post-message';
+import { configureServiceWorker } from '../common/service-worker-messages';
 
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
@@ -18,13 +21,30 @@ export async function init() {
 
     dispatch(action(initActionType));
     try {
-        await Promise.all([dispatch(fetchConfiguration()), dispatch(getAuthToken())]);
+        const configurationPromise = fetchConfiguration().then((configuration) => {
+            postServiceWorkerMessage({
+                type: configureServiceWorker,
+                payload: {
+                    liveShareEndpoint: configuration.liveShareEndpoint,
+                },
+            });
+
+            return configuration;
+        });
+
+        const tokenPromise = getAuthToken().then((token) => {
+            const { email, preferred_username } = token.account.idTokenClaims;
+            const userEmail = email || preferred_username;
+            telemetry.setIsInternal(userEmail.includes('@microsoft.com'));
+
+            // Fire & forget
+            setAuthCookie(token.accessToken);
+
+            return token;
+        });
+
+        await Promise.all([dispatch(configurationPromise), dispatch(tokenPromise)]);
         await Promise.all([dispatch(fetchEnvironments()), dispatch(getUserInfo())]);
-        //TODO: need to implement a /signIn page and replace with this
-        const token = await getAuthToken();
-        if (token) {
-            await setAuthCookie(token.accessToken);
-        }
 
         dispatch(action(initActionSuccessType));
     } catch (err) {

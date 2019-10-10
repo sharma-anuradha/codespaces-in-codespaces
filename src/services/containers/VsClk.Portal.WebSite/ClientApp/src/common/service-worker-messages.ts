@@ -19,7 +19,7 @@ export type Disconnect = {
 export const configureServiceWorker = 'cloudenv/configure';
 export type Configure = {
     type: typeof configureServiceWorker;
-    payload: ServiceWorkerConfiguration;
+    payload: Partial<ServiceWorkerConfiguration>;
 };
 
 export const updateLiveShareConnectionInfo = 'cloudenv/update-liveshare-connection-info';

@@ -72,6 +72,6 @@ export const actionContextMiddleware: ActionContextMiddleware = (api) => (next) 
         return action;
     }
 
-    trace.verbose('executeAction: executing simple action', action);
+    trace.info('executeAction: executing simple action', action);
     return next(action);
 };
