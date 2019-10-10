@@ -62,11 +62,18 @@ try
     $startUpFile = "C:\Users\$username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\vsoagent.cmd"
     if (-Not (Test-Path $startUpFile))
     {
+        Add-Content $startUpFile 'C:\VisualStudio\Common7\IDE\DevEnv.exe /ResetSettingsFull "general.vssettings" /Command "File.Exit"'
         Add-Content $startUpFile 'C:\VisualStudio\Common7\IDE\VsRegEdit.exe set "C:\VisualStudio" HKCU FeatureFlags\ServiceBroker\LiveShareTransport Value DWORD 1'
         Add-Content $startUpFile 'C:\VisualStudio\Common7\IDE\VsRegEdit.exe set "C:\VisualStudio" HKCU FeatureFlags\Microsoft\VisualStudio\Terminal Value DWORD 1'
         Add-Content $startUpFile "cd c:\vsonline\vsoagent\bin"
         Add-Content $startUpFile "c:\vsonline\vsoagent\bin\vso.exe vmagent"
     }
+
+    # Needed for Powershell VHD commands for managing user disk.
+    Log "Enable the Hyper-V powershell module..."
+    Install-WindowsFeature -Name Hyper-V-PowerShell
+    & dism /online /enable-feature /featurename:Microsoft-Hyper-V /Quiet /NoRestart
+    & bcdedit /set hypervisorlaunchtype off
 
     # Schedule a restart to run the start up program.
     Log "Scheduling restart..."
