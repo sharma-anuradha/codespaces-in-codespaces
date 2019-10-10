@@ -18,7 +18,6 @@
     call :set_context %stamp%
     rem the helm release names are defined in the release pipeline using short names
     call :helm_delete portal
-    call :helm_delete envreg
     call :helm_delete signalr
     exit /b 0
 

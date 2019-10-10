@@ -1,15 +1,10 @@
-version: '3'
+version: "3"
 
 services:
   vsclk.portal.website:
     image: vsclk.portal.website
     build:
       context: ../../VsClk.Portal.WebSite
-      dockerfile: Dockerfile
-  vsclk.envreg.webapi:
-    image: vsclk.envreg.webapi
-    build:
-      context: ../../VsClk.EnvReg.WebApi
       dockerfile: Dockerfile
   vsclk.signalservice:
     image: vsclk.signalservice
