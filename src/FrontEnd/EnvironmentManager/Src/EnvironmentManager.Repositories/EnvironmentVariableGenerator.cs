@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -23,8 +22,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <param name="serviceUri">The service uri.</param>
         /// <param name="callbackUri">The callback uri.</param>
         /// <param name="accessToken">The user access token.</param>
+        /// <param name="cascadeToken">The cascade token for the environment.</param>
+        /// <param name="cloudEnvironmentOptions">The cloud environment options.</param>
         /// <returns>A dictionary of environment variables.</returns>
-        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, Uri serviceUri, Uri callbackUri, string accessToken, string cascadeToken)
+        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, Uri serviceUri, Uri callbackUri, string accessToken, string cascadeToken, CloudEnvironmentOptions cloudEnvironmentOptions)
         {
             var result = new Dictionary<string, string>();
 
@@ -45,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 new EnvVarSessionToken(accessToken),
                 new EnvVarSessionCascadeToken(cascadeToken),
                 new EnvVarSessionId(cloudEnvironment),
-                
+
                 // Variables for personalization
                 new EnvDotfilesRepoUrl(cloudEnvironment),
                 new EnvDotfilesTargetPath(cloudEnvironment),
@@ -58,6 +59,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 if (envVar != null)
                 {
                     result.Add(envVar.Item1, envVar.Item2);
+                }
+            }
+
+            if (cloudEnvironmentOptions != null)
+            {
+                var optionsList = new EnvironmentFeatureFlagsStrategy[]
+                {
+                new FeatureCustomContainers(cloudEnvironmentOptions),
+                new FeatureNewTerminal(cloudEnvironmentOptions),
+                };
+
+                foreach (var flag in optionsList)
+                {
+                    var flagValues = flag.GetEnvironmentVariable();
+                    if (flagValues != null)
+                    {
+                        result.Add(flagValues.Item1, flagValues.Item2);
+                    }
                 }
             }
 
@@ -489,6 +508,78 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             }
 
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Environment variables strategy for feature flags.
+    /// </summary>
+    public abstract class EnvironmentFeatureFlagsStrategy
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnvironmentFeatureFlagsStrategy"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironmentOptions">The cloud environment options.</param>
+        public EnvironmentFeatureFlagsStrategy(CloudEnvironmentOptions cloudEnvironmentOptions)
+        {
+            CloudEnvironmentOptions = cloudEnvironmentOptions;
+        }
+
+        /// <summary>
+        /// Gets the cloud environment instance.
+        /// </summary>
+        public CloudEnvironmentOptions CloudEnvironmentOptions { get; }
+
+        /// <summary>
+        /// Get the environment variable for this strategy.
+        /// </summary>
+        /// <returns>The environment variable tuple.</returns>
+        public abstract Tuple<string, string> GetEnvironmentVariable();
+    }
+
+    /// <summary>
+    /// Feature flag for custom containers functionality.
+    /// </summary>
+    public class FeatureCustomContainers : EnvironmentFeatureFlagsStrategy
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FeatureCustomContainers"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironmentOptions">THe cloud environment options.</param>
+        public FeatureCustomContainers(CloudEnvironmentOptions cloudEnvironmentOptions)
+            : base (cloudEnvironmentOptions)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            return new Tuple<string, string>(
+                    EnvironmentVariableConstants.FeatureFlagCustomContainers,
+                    CloudEnvironmentOptions.CustomContainers.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Feature flag for using the new terminal functionality.
+    /// </summary>
+    public class FeatureNewTerminal : EnvironmentFeatureFlagsStrategy
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FeatureNewTerminal"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironmentOptions">The cloud environment options.</param>
+        public FeatureNewTerminal(CloudEnvironmentOptions cloudEnvironmentOptions)
+            : base(cloudEnvironmentOptions)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            return new Tuple<string, string>(
+                    EnvironmentVariableConstants.FeatureFlagNewTerminal,
+                    CloudEnvironmentOptions.NewTerminal.ToString());
         }
     }
 }

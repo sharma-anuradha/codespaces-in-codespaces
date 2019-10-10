@@ -258,7 +258,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 // Kick off start-compute before returning.
                 var callbackUri = new Uri(string.Format(callbackUriFormat, cloudEnvironment.Id));
-                await StartCompute(cloudEnvironment, serviceUri, callbackUri, accessToken, cascadeToken, logger);
+                await StartCompute(cloudEnvironment, serviceUri, callbackUri, accessToken, cascadeToken, logger, null);
 
                 logger.AddDuration(duration)
                     .AddCloudEnvironment(cloudEnvironment)
@@ -430,7 +430,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 // Kick off start-compute before returning.
                 var callbackUri = new Uri(string.Format(callbackUriFormat, cloudEnvironment.Id));
-                await StartCompute(cloudEnvironment, serviceUri, callbackUri, accessToken, cascadeToken, logger);
+                await StartCompute(cloudEnvironment, serviceUri, callbackUri, accessToken, cascadeToken, logger, cloudEnvironmentOptions);
 
                 logger.AddDuration(duration)
                     .AddCloudEnvironment(cloudEnvironment)
@@ -858,7 +858,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Uri callbackUri,
             string accessToken,
             string cascadeToken,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            CloudEnvironmentOptions cloudEnvironmentOptions)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
             Requires.NotNull(cloudEnvironment.Compute, nameof(cloudEnvironment.Compute));
@@ -876,7 +877,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 serviceUri,
                 callbackUri,
                 accessToken,
-                cascadeToken);
+                cascadeToken,
+                cloudEnvironmentOptions);
 
             await ResourceBrokerClient.StartComputeAsync(
                 cloudEnvironment.Compute.ResourceId,

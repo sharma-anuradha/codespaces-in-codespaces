@@ -361,9 +361,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var serviceUri = ServiceUriBuilder.GetServiceUri(Request.GetDisplayUrl(), owningStamp);
                 var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(Request.GetDisplayUrl(), owningStamp).ToString();
 
+                var cloudEnvironmentOptions = new CloudEnvironmentOptions();
+                if (createEnvironmentInput.ExperimentalFeatures != null)
+                {
+                    cloudEnvironmentOptions.CustomContainers = createEnvironmentInput.ExperimentalFeatures.CustomContainers;
+                    cloudEnvironmentOptions.NewTerminal = createEnvironmentInput.ExperimentalFeatures.NewTerminal;
+                }
+
                 var createCloudEnvironmentResult = await EnvironmentManager.CreateEnvironmentAsync(
                     cloudEnvironment,
-                    new CloudEnvironmentOptions { CreateFileShare = createEnvironmentInput.CreateFileShare },
+                    cloudEnvironmentOptions,
                     serviceUri,
                     callbackUriFormat,
                     currentUserId,

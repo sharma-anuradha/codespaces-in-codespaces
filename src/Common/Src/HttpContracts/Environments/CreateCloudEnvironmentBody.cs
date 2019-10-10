@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -25,9 +26,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         public string FriendlyName { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to create a file share for this environment.
+        /// Gets or sets the experimental features requested by the client.
         /// </summary>
-        public bool CreateFileShare { get; set; }
+        public ExperimentalFeaturesBody ExperimentalFeatures { get; set; }
 
         /// <summary>
         /// Gets or sets the environment seed info.

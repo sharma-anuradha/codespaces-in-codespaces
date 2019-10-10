@@ -10,8 +10,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     public class CloudEnvironmentOptions
     {
         /// <summary>
-        /// Gets or sets a value indicating whether to create a file share for the environment.
+        /// Gets or sets a value indicating whether to use custom containers for this environment.
         /// </summary>
-        public bool CreateFileShare { get; set; }
+        public bool CustomContainers { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to use the new terminal output for this environment.
+        /// </summary>
+        public bool NewTerminal { get; set; }
     }
 }
