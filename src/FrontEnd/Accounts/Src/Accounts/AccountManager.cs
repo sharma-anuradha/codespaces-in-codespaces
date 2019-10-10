@@ -21,18 +21,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         }
 
         /// <summary>
-        /// Creates or Updates a BillingAccount.
+        /// Creates or Updates an account.
         /// </summary>
-        /// <param name="model"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
         public async Task<VsoAccount> CreateOrUpdateAsync(VsoAccount model, IDiagnosticsLogger logger)
         {
             var savedModel = await GetAsync(model.Account, logger);
             if (savedModel != null)
             {
                 var plan = model.Plan;
-                if (savedModel.Plan.Name != plan.Name)
+                if (savedModel.Plan?.Name != plan?.Name)
                 {
                     savedModel.Plan = plan;
                 }
@@ -45,11 +42,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         }
 
         /// <summary>
-        /// Retrieves an existing BillingAccount using the provided BillingAccountInfo.
+        /// Retrieves an existing account using the provided account info.
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
         public async Task<VsoAccount> GetAsync(VsoAccountInfo account, IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(account, nameof(VsoAccountInfo));
@@ -59,36 +53,70 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         }
 
         /// <summary>
-        /// Retrieves an enumerable list of BillingAccounts using the provided BillingAccountInfo .
+        /// Retrieves an enumerable list of accounts in a subscription.
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
-        public async Task<IEnumerable<VsoAccount>> GetListAsync(string subscriptionId, string resourceGroup, IDiagnosticsLogger logger)
+        /// <param name="userId">ID of the owner of the accounts to list, or null
+        /// to list accounts owned by any user.</param>
+        /// <param name="subscriptionId">ID of the subscription containing the accounts, or null
+        /// to list accounts across all a user's subscriptions. Required if userId is omitted.</param>
+        /// <param name="resourceGroup">Optional name of the resource group containing the accounts,
+        /// or null to list accounts across all resource groups in the subscription.</param>
+        public async Task<IEnumerable<VsoAccount>> ListAsync(
+            string userId,
+            string subscriptionId,
+            string resourceGroup,
+            IDiagnosticsLogger logger)
         {
-            ValidationUtil.IsRequired(subscriptionId);
-            ValidationUtil.IsRequired(resourceGroup);
+            if (userId != null)
+            {
+                if (resourceGroup != null)
+                {
+                    ValidationUtil.IsRequired(subscriptionId, nameof(subscriptionId));
 
-            return await this.accountRepository.GetWhereAsync(
-                (model) => model.Account.Subscription == subscriptionId &&
-                           model.Account.ResourceGroup == resourceGroup,
-                logger,
-                null);
-        }
+                    return await this.accountRepository.GetWhereAsync(
+                        (model) => model.UserId == userId &&
+                            model.Account.Subscription == subscriptionId &&
+                            model.Account.ResourceGroup == resourceGroup,
+                        logger,
+                        null);
+                }
+                else if (subscriptionId != null)
+                {
+                    return await this.accountRepository.GetWhereAsync(
+                        (model) => model.UserId == userId &&
+                            model.Account.Subscription == subscriptionId,
+                        logger,
+                        null);
+                }
+                else
+                {
+                    return await this.accountRepository.GetWhereAsync(
+                        (model) => model.UserId == userId, logger, null);
+                }
+            }
+            else
+            {
+                ValidationUtil.IsRequired(subscriptionId, nameof(subscriptionId));
 
-        public async Task<IEnumerable<VsoAccount>> GetListBySubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
-        {
-            ValidationUtil.IsRequired(subscriptionId);
-
-            return await this.accountRepository.GetWhereAsync((model) => model.Account.Subscription == subscriptionId, logger, null);
+                if (resourceGroup != null)
+                {
+                    return await this.accountRepository.GetWhereAsync(
+                        (model) => model.Account.Subscription == subscriptionId &&
+                            model.Account.ResourceGroup == resourceGroup,
+                        logger,
+                        null);
+                }
+                else
+                {
+                    return await this.accountRepository.GetWhereAsync(
+                        (model) => model.Account.Subscription == subscriptionId, logger, null);
+                }
+            }
         }
 
         /// <summary>
-        /// Deletes an exisitng BillingAccount using the provided BillingAccountInfo.
+        /// Deletes an exisitng account using the provided account info.
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
         public async Task<bool> DeleteAsync(VsoAccountInfo account, IDiagnosticsLogger logger)
         {
             // Find model in DB

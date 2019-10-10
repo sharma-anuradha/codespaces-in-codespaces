@@ -16,8 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
 
         Task<bool> DeleteAsync(VsoAccountInfo account, IDiagnosticsLogger logger);
 
-        Task<IEnumerable<VsoAccount>> GetListAsync(string subscriptionId, string resourceGroup, IDiagnosticsLogger logger);
-
-        Task<IEnumerable<VsoAccount>> GetListBySubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger);
+        Task<IEnumerable<VsoAccount>> ListAsync(
+            string userId, string subscriptionId, string resourceGroup, IDiagnosticsLogger logger);
     }
 }

@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -28,11 +27,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets all environments owned by the given user id.
         /// </summary>
-        /// <param name="ownerId">The owner's user id.</param>
-        /// <param name="name">The environment name.</param>
+        /// <param name="ownerId">The owner's user id. Required unless account ID is specified.</param>
+        /// <param name="name">Optional environment name to filter on.</param>
+        /// <param name="accountId">Optional account ID to filter on.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the list of <see cref="CloudEnvironment"/>.</returns>
-        Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByOwnerAsync(string ownerId, string name, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudEnvironment>> ListEnvironmentsAsync(
+            string ownerId, string name, string accountId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Creates a new environment.
@@ -42,10 +43,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="serviceUri">The service uri, to construct let cloudenv extension connect to the right service from server.</param>
         /// <param name="callbackUriFormat">The callback uri format, to construct the callback with the new environment id.</param>
         /// <param name="ownerId">The owner id.</param>
+        /// <param name="ownerProviderId">The provider id of the owner profile.</param>
         /// <param name="accessToken">The owner's access token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Cloud environment service result.</returns>
-        Task<CloudEnvironmentServiceResult> CreateEnvironmentAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, Uri serviceUri, string callbackUriFormat, string ownerId, string accessToken, IDiagnosticsLogger logger);
+        Task<CloudEnvironmentServiceResult> CreateEnvironmentAsync(
+            CloudEnvironment environmentRegistration,
+            CloudEnvironmentOptions options,
+            Uri serviceUri,
+            string callbackUriFormat,
+            string ownerId,
+            string ownerProviderId,
+            string accessToken,
+            IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update the callback information for an existing environment.
@@ -103,13 +113,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         Task<CloudEnvironment> GetEnvironmentByIdAsync(string id, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Returns environments filered by the provided account resource Id.
-        /// </summary>
-        /// <param name="accountId">The account id.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>list of CloudEnvironments.</returns>
-        Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByAccountIdAsync(string accountId, IDiagnosticsLogger logger);
     }
 }

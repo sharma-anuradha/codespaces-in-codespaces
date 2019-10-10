@@ -6,7 +6,7 @@ using Microsoft.VsSaaS.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts
 {
     /// <summary>
     /// The locations REST API result.

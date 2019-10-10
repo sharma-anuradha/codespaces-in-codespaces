@@ -83,6 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
                 testServiceUri,
                 testCallbackUriFormat,
                 testUserId,
+                testUserId,
                 testAccessToken,
                 this.logger);
             Assert.NotNull(testEnvironment.CloudEnvironment);

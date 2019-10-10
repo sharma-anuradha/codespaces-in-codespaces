@@ -4,7 +4,7 @@
 
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts
 {
     /// <summary>
     /// The location info REST API result.

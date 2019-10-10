@@ -13,7 +13,6 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
@@ -35,7 +34,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private readonly IAccountManager accountManager;
         private readonly ICurrentUserProvider currentUserProvider;
         private readonly ICloudEnvironmentManager cloudEnvironmentManager;
-        private readonly string serviceUri;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
@@ -43,17 +41,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         public SubscriptionsController(
             IAccountManager accountManager, 
             ICurrentUserProvider currentUserProvider,
-            ICloudEnvironmentManager cloudEnvironmentManager,
-            CertificateSettings certificateSettings)
+            ICloudEnvironmentManager cloudEnvironmentManager)
 
         {
             this.accountManager = accountManager;
             this.currentUserProvider = currentUserProvider;
             this.cloudEnvironmentManager = cloudEnvironmentManager;
-
-            // Obtain the service URI from the certificate settings. This is a
-            // NON-location-specific DNS name that corresponds to the service environment.
-            this.serviceUri = certificateSettings.Issuer;
         }
 
         /// <summary>
@@ -130,9 +123,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     resource.Properties = new AccountResourceProperties();
                 }
 
-                // Add a resource property indicating the service environment association.
-                resource.Properties.ServiceUri = this.serviceUri;
-
                 var account = new VsoAccount
                 {
                     Account = new VsoAccountInfo
@@ -146,6 +136,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 };
 
                 await this.accountManager.CreateOrUpdateAsync(account, logger);
+
+                // Clear the userId property so it will not be stored on the created ARM resource.
+                // It will only be saved internally by the account manager.
+                resource.Properties.UserId = null;
 
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, resource);
@@ -163,7 +157,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns a Http status code and message</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted")]
-        public IActionResult OnResourceCreationCompleted(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public IActionResult OnResourceCreationCompleted(
+            string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             // Do post creation processing here ex: start billing, write billing Events
             // Required response format with empty body.
@@ -175,7 +170,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns a Http status code and message.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate")]
-        public async Task<IActionResult> OnResourceDeletionValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public async Task<IActionResult> OnResourceDeletionValidate(
+            string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             var logger = HttpContext.GetLogger();
 
@@ -194,7 +190,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     Subscription = subscriptionId,
                 };
 
-                var environments = await cloudEnvironmentManager.GetEnvironmentsByAccountIdAsync(account.ResourceId, logger);
+                var environments = await cloudEnvironmentManager.ListEnvironmentsAsync(
+                    ownerId: null, name: null, account.ResourceId, logger);
                 var count = environments.Count(t => t.State != CloudEnvironmentState.Deleted);
                 if (count > 0)
                 {
@@ -222,7 +219,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}")]
-        public async Task<IActionResult> OnResourceListGet(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType)
+        public async Task<IActionResult> OnResourceListGet(
+            string subscriptionId, string resourceGroup, string providerNamespace, string resourceType)
         {
             var logger = HttpContext.GetLogger();
 
@@ -235,7 +233,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
 
-                var accounts = await this.accountManager.GetListAsync(subscriptionId, resourceGroup, logger);
+                var accounts = await this.accountManager.ListAsync(
+                    userId: null, subscriptionId, resourceGroup, logger);
 
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, accounts);
@@ -252,7 +251,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns an Http status code and a list of VSO Account objects filtering by subscriptionID.</returns>
         [HttpGet("{subscriptionId}/providers/{providerNamespace}/{resourceType}")]
-        public async Task<IActionResult> OnResourceListGetBySubscription(string subscriptionId, string providerNamespace, string resourceType)
+        public async Task<IActionResult> OnResourceListGetBySubscription(
+            string subscriptionId, string providerNamespace, string resourceType)
         {
             var logger = HttpContext.GetLogger();
             try
@@ -263,7 +263,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
 
-                var accounts = await this.accountManager.GetListBySubscriptionAsync(subscriptionId, logger);
+                var accounts = await this.accountManager.ListAsync(
+                    userId: null, subscriptionId, resourceGroup: null, logger);
 
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, accounts);
@@ -280,7 +281,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns a Http status code and a VSO Account object.</returns>
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate")]
-        public IActionResult OnResourceReadValidate(string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
+        public IActionResult OnResourceReadValidate(
+            string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             // Used for pre-read validation only. The Resource is returned from RPSaaS(MetaRP) CosmosDB storage and not from here
             return new OkObjectResult(string.Empty);

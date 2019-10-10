@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
 
-                    if (handler != default)
+                    if (handler != null)
                     {
                         try
                         {

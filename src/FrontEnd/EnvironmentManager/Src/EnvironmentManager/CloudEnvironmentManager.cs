@@ -296,6 +296,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Uri serviceUri,
             string callbackUriFormat,
             string currentUserId,
+            string currentUserProviderId,
             string accessToken,
             IDiagnosticsLogger logger)
         {
@@ -315,6 +316,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 // Validate input
                 UnauthorizedUtil.IsRequired(currentUserId);
+                UnauthorizedUtil.IsRequired(currentUserProviderId);
                 UnauthorizedUtil.IsRequired(accessToken);
 
                 var cascadeToken = await AuthRepository.ExchangeToken(accessToken);
@@ -326,10 +328,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     "Location is required");
 
                 // Validate against existing environments.
-                var environments = await CloudEnvironmentRepository.GetWhereAsync((env) => env.OwnerId == currentUserId, logger);
-                if (environments.Any(
-                    (env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)
-                    ))
+                var environments = await CloudEnvironmentRepository.GetWhereAsync(
+                    (env) => env.OwnerId == currentUserId, logger);
+                if (environments.Any((env) => string.Equals(
+                    env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     result.ErrorCode = ErrorCodes.EnvironmentNameAlreadyExists;
                     result.HttpStatusCode = StatusCodes.Status409Conflict;
@@ -360,7 +362,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     // Validate the calling user is the owner of the the account (if the account has an owner).
-                    UnauthorizedUtil.IsTrue(accountDetails.UserId == null || currentUserId == accountDetails.UserId);
+                    // Match on provider ID instead of profile ID because clients dont have
+                    // the profile ID when the create the account resource via ARM.
+                    UnauthorizedUtil.IsTrue(
+                        accountDetails.UserId == null || currentUserProviderId == accountDetails.UserId);
 
                     // TODO: Validate the account & subscription are in a good state?
                     // TODO: Check for quota on # of environments per account?
@@ -584,20 +589,66 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByOwnerAsync(
-            string currentUserId,
+        public async Task<IEnumerable<CloudEnvironment>> ListEnvironmentsAsync(
+            string userId,
             string environmentName,
+            string accountId,
             IDiagnosticsLogger logger)
         {
-            UnauthorizedUtil.IsRequired(currentUserId);
             Requires.NotNull(logger, nameof(logger));
 
-            if (!string.IsNullOrEmpty(environmentName))
+            if (userId == null)
             {
-                return await CloudEnvironmentRepository.GetWhereAsync((cloudEnvironment) => cloudEnvironment.OwnerId == currentUserId && cloudEnvironment.FriendlyName == environmentName.Trim(), logger);
-            }
+                Requires.NotNull(accountId, nameof(accountId));
 
-            return await CloudEnvironmentRepository.GetWhereAsync((cloudEnvironment) => cloudEnvironment.OwnerId == currentUserId, logger);
+                if (!string.IsNullOrEmpty(environmentName))
+                {
+                    return await CloudEnvironmentRepository.GetWhereAsync(
+                        (cloudEnvironment) => cloudEnvironment.AccountId == accountId &&
+                            cloudEnvironment.FriendlyName == environmentName.Trim(),
+                        logger);
+                }
+                else
+                {
+                    return await CloudEnvironmentRepository.GetWhereAsync(
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId, logger);
+                }
+            }
+            else if (accountId == null)
+            {
+                if (!string.IsNullOrEmpty(environmentName))
+                {
+                    Requires.NotNull(userId, nameof(userId));
+                    return await CloudEnvironmentRepository.GetWhereAsync(
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
+                            cloudEnvironment.FriendlyName == environmentName.Trim(),
+                        logger);
+                }
+                else
+                {
+                    return await CloudEnvironmentRepository.GetWhereAsync(
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId, logger);
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(environmentName))
+                {
+                    Requires.NotNull(userId, nameof(userId));
+                    return await CloudEnvironmentRepository.GetWhereAsync(
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
+                            cloudEnvironment.AccountId == accountId &&
+                            cloudEnvironment.FriendlyName == environmentName.Trim(),
+                        logger);
+                }
+                else
+                {
+                    return await CloudEnvironmentRepository.GetWhereAsync(
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
+                            cloudEnvironment.AccountId == accountId,
+                        logger);
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -608,16 +659,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ValidationUtil.IsRequired(id);
             Requires.NotNull(logger, nameof(logger));
             return await CloudEnvironmentRepository.GetAsync(id, logger);
-        }
-
-        /// <inheritdoc />
-        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsByAccountIdAsync(
-            string accountId,
-            IDiagnosticsLogger logger)
-        {
-            UnauthorizedUtil.IsRequired(accountId);
-            Requires.NotNull(logger, nameof(logger));
-            return await CloudEnvironmentRepository.GetWhereAsync((cloudEnvironment) => cloudEnvironment.AccountId == accountId, logger);
         }
 
         /// <inheritdoc/>

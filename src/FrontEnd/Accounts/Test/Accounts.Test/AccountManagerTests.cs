@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
             this.accountManager = new AccountManager(this.accountRepository);
         }
 
-        private VsoAccount GenerateAccount(string name, string subscriptionOption = null)
+        private VsoAccount GenerateAccount(string name, string subscriptionOption = null, string userId = null)
         {
             return new VsoAccount
             {
@@ -39,7 +39,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
                 Plan = new Sku
                 {
                     Name = "Preview"
-                }
+                },
+                UserId = userId,
             };  
         }
 
@@ -85,21 +86,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
         }
 
         [Fact]
-        public async Task GetAllAccountsBySubscriptionAndRG()
+        public async Task GetAccountsBySubscriptionAndRG()
         {
             var model1 = GenerateAccount("Model1");
             await accountManager.CreateOrUpdateAsync(model1, logger);
             await accountManager.CreateOrUpdateAsync(GenerateAccount("Model2"), logger);
             await accountManager.CreateOrUpdateAsync(GenerateAccount("Model3"), logger);
 
-            var modelList = await accountManager.GetListAsync(model1.Account.Subscription, model1.Account.ResourceGroup, logger);
+            var modelList = await accountManager.ListAsync(
+                userId: null, model1.Account.Subscription, model1.Account.ResourceGroup, logger);
             Assert.NotNull(modelList);
             Assert.IsAssignableFrom<IEnumerable>(modelList);
             Assert.All(modelList, item => Assert.Contains(model1.Account.Subscription, model1.Account.Subscription));
         }
 
         [Fact]
-        public async Task GetAllAccountsBySubscription()
+        public async Task GetAccountsBySubscription()
         {
             var subscriptionGuid1 = Guid.NewGuid().ToString();
             var subscriptionGuid2 = Guid.NewGuid().ToString();
@@ -108,12 +110,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts.Tests
             await accountManager.CreateOrUpdateAsync(GenerateAccount("Model2", subscriptionGuid2), logger);
             await accountManager.CreateOrUpdateAsync(GenerateAccount("Model3", subscriptionGuid2), logger);
 
-            var modelListFirst = await accountManager.GetListBySubscriptionAsync(subscriptionGuid1, logger);
+            var modelListFirst = await accountManager.ListAsync(
+                userId: null, subscriptionGuid1, resourceGroup: null, logger);
             var listFirst = modelListFirst.ToList();
             Assert.NotNull(listFirst);
             Assert.Single(listFirst);
 
-            var modelListSecond = await accountManager.GetListBySubscriptionAsync(subscriptionGuid2, logger);
+            var modelListSecond = await accountManager.ListAsync(
+                userId: null, subscriptionGuid2, resourceGroup: null, logger);
+            var listSecond = modelListSecond.ToList();
+            Assert.NotNull(listSecond);
+            Assert.Equal(2, listSecond.Count());
+        }
+
+
+        [Fact]
+        public async Task GetAccountsByUser()
+        {
+            const string testUser1 = "test1";
+            const string testUser2 = "test2";
+            var subscriptionGuid1 = Guid.NewGuid().ToString();
+            var subscriptionGuid2 = Guid.NewGuid().ToString();
+            await accountManager.CreateOrUpdateAsync(GenerateAccount("Model1", subscriptionGuid1, testUser1), logger);
+            await accountManager.CreateOrUpdateAsync(GenerateAccount("Model2", subscriptionGuid2, testUser2), logger);
+            await accountManager.CreateOrUpdateAsync(GenerateAccount("Model3", subscriptionGuid2, testUser2), logger);
+
+            var modelListFirst = await accountManager.ListAsync(
+                userId: testUser1, subscriptionId: null, resourceGroup: null, logger);
+            var listFirst = modelListFirst.ToList();
+            Assert.NotNull(listFirst);
+            Assert.Single(listFirst);
+
+            var modelListSecond = await accountManager.ListAsync(
+                userId: testUser2, subscriptionId: null, resourceGroup: null, logger);
             var listSecond = modelListSecond.ToList();
             Assert.NotNull(listSecond);
             Assert.Equal(2, listSecond.Count());

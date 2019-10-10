@@ -135,8 +135,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(CloudEnvironmentResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ListEnvironmentsByOwnerAsync([FromQuery]string name)
+        public async Task<IActionResult> ListEnvironmentsAsync(
+            [FromQuery]string name, [FromQuery]string accountId)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
@@ -145,27 +145,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 var currentUserId = CurrentUserProvider.GetProfileId();
 
-                var modelsRaw = await EnvironmentManager.GetEnvironmentsByOwnerAsync(currentUserId, name, logger);
-                if (modelsRaw is null)
-                {
-                    logger.AddDuration(duration)
-                        .AddReason($"{HttpStatusCode.NotFound}: environments not found for the specified search criteria.")
-                        .LogError(GetType().FormatLogErrorMessage(nameof(ListEnvironmentsByOwnerAsync)));
-
-                    // TODO: why not return 200 with empty collection?
-                    return NotFound();
-                }
+                var modelsRaw = await EnvironmentManager.ListEnvironmentsAsync(currentUserId, name, accountId, logger);
 
                 logger.AddDuration(duration)
                     .FluentAddValue("Count", modelsRaw.Count().ToString())
-                    .LogInfo(GetType().FormatLogMessage(nameof(ListEnvironmentsByOwnerAsync)));
+                    .LogInfo(GetType().FormatLogMessage(nameof(ListEnvironmentsAsync)));
 
                 return Ok(Mapper.Map<CloudEnvironmentResult[]>(modelsRaw));
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ListEnvironmentsByOwnerAsync)), ex.Message);
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ListEnvironmentsAsync)), ex.Message);
                 throw;
             }
         }
@@ -363,6 +354,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 }
 
                 var currentUserId = CurrentUserProvider.GetProfileId();
+                var currentUserProviderId = CurrentUserProvider.GetProfile().ProviderId;
                 var accessToken = CurrentUserProvider.GetBearerToken();
 
                 // Build the service URI.
@@ -375,6 +367,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     serviceUri,
                     callbackUriFormat,
                     currentUserId,
+                    currentUserProviderId,
                     accessToken,
                     logger);
 
