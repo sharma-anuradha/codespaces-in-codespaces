@@ -19,9 +19,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
         public DateTime TimeStamp { get; set; }
 
         /// <summary>
-        /// Gets or Sets the Name.
+        /// Gets or Sets the Type Name.
         /// </summary>
-        [JsonProperty("name")]
-        public string Name { get; set; }
+        [JsonProperty("typeName")]
+        public string TypeName { get; set; }
     }
 }

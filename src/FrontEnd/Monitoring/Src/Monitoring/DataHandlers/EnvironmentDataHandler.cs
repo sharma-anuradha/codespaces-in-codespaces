@@ -67,9 +67,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
         private void ValidateState(EnvironmentData environmentData)
         {
-            if (environmentData.EnvironmentId == null)
+            if (string.IsNullOrEmpty(environmentData.EnvironmentId))
             {
-                throw new Exception($"Environment Id is null for {nameof(EnvironmentData)}");
+                throw new Exception($"Environment Id is empty for {nameof(EnvironmentData)}");
             }
         }
 

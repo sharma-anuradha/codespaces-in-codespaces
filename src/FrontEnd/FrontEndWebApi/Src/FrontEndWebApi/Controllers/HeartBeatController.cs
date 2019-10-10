@@ -81,13 +81,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         catch (Exception e)
                         {
                             logger.AddDuration(duration)
-                                .LogErrorWithDetail($"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", e.Message);
+                                .LogErrorWithDetail($"Processing failed for the data {data.TypeName} received from Virtual Machine {heartBeat.ResourceId}", e.Message);
                         }
                     }
                     else
                     {
                         logger.AddDuration(duration)
-                            .LogWarning($"No handlers found for processing the data {data?.Name} received from Virtual Machine {heartBeat.ResourceId}");
+                            .LogWarning($"No handlers found for processing the data {data?.TypeName} received from Virtual Machine {heartBeat.ResourceId}");
                     }
                 }
             }
