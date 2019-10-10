@@ -46,7 +46,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 try
                 {
-                    // TODO: Add distributedlease
                     logger.LogInfo("Billing Worker is running in the backgroud.");
                     var duration = logger.StartDuration();
                     await billingService.GenerateBillingSummary(logger, cancellationToken);

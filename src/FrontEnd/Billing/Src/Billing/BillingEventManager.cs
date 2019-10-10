@@ -22,8 +22,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingEventManager : IBillingEventManager
     {
+        private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
         private readonly IBillingEventRepository billingEventRepository;
-
+       
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingEventManager"/> class.
         /// </summary>
@@ -330,6 +331,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountEventsAsync)), ex.Message);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Returns the Account sharding mechanism. We have currently sharing by SubscriptionId so the returned list
+        /// includes all availabe chars in a 16 bit GUID.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<string> GetShards()
+        {
+            // Represents all the available chars in a 16 bit GUID.
+            return guidChars;
         }
     }
 }

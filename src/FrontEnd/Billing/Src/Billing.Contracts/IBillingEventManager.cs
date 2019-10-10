@@ -48,5 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         Task<BillingEvent> UpdateEventAsync(
             BillingEvent billingEvent,
             IDiagnosticsLogger logger);
+
+        IEnumerable<string> GetShards();
     }
 }
