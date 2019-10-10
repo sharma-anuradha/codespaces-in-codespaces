@@ -135,6 +135,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     { "vmAgentInputQueueSasToken", new Dictionary<string, object>() { { Key, queueConnectionInfo.SasToken } } },
                     { "vmInitScriptStorageAccountName", new Dictionary<string, object>() { { Key, storageAccountName } } },
                     { "vmInitScriptStorageAccountKey", new Dictionary<string, object>() { { Key, storageAccountAccessKey } } },
+                    { "vmToken", new Dictionary<string, object>() { { Key, input.VMToken } } },
+                    { "resourceId", new Dictionary<string, object>() { { Key, input.ResourceId } } },
+                    { "serviceHostName", new Dictionary<string, object>() { { Key, input.FrontDnsHostName } } },
                 };
 
                 // Create virtual machine

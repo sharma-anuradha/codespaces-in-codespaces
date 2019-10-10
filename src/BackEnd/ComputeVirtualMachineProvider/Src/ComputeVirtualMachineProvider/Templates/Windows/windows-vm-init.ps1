@@ -9,7 +9,10 @@ param
     [string] $vmAgentInputQueueUrl,
     [string] $vmAgentInputQueueSasToken,
     [string] $username,
-    [string] $password
+    [string] $password,
+    [string] $vmToken,
+    [string] $resourceId,
+    [string] $serviceHostName
 )
 
 function Log ([string] $message)
@@ -48,6 +51,10 @@ try
         Add-Content "bin\config.ini" "INPUTQUEUENAME=$vmAgentInputQueueName"
         Add-Content "bin\config.ini" "INPUTQUEUEURL=$vmAgentInputQueueUrl"
         Add-Content "bin\config.ini" "INPUTQUEUESASTOKEN=$vmAgentInputQueueSasToken"
+        Add-Content "bin\config.ini" "[HEARTBEATSETTINGS]"
+        Add-Content "bin\config.ini" "VMTOKEN=$vmToken"
+        Add-Content "bin\config.ini" "RESOURCEID=$resourceId"
+        Add-Content "bin\config.ini" "SERVICEHOSTNAME=$serviceHostName"        
     }
 
     # Create file that will run for the user on startup.
