@@ -20,15 +20,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
             try
             {
                 var collectedData = JObject.Load(reader);
-                var typeName = (string)collectedData["typeName"];
+                var name = (string)collectedData["name"];
 
-                switch (typeName)
+                switch (name)
                 {
                     case nameof(EnvironmentData):
                         var environmentData = new EnvironmentData
                         {
                             EnvironmentId = (string)collectedData["environmentId"],
-                            TypeName = typeName,
+                            Name = name,
                             SessionPath = (string)collectedData["sessionPath"],
                             State = collectedData["state"].ToObject<VsoEnvironmentState>(),
                             EnvironmentType = collectedData["environmentType"].ToObject<VsoEnvironmentType>(),
