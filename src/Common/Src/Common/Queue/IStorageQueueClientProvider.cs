@@ -5,7 +5,7 @@
 using Microsoft.Azure.Storage.Queue;
 using System.Threading.Tasks;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// An Azure Storage Queue client provider.

@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -41,15 +40,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Add the <see cref="BillingService"/> and <see cref="BillingWorker"/> to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>
-        /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository.</param>
         /// <returns>service instance.</returns>
         public static IServiceCollection AddBillingWorker(
-            this IServiceCollection services,
-            bool useMockCloudEnvironmentRepository)
+            this IServiceCollection services)
         {
             services.AddHostedService<BillingWorker>();
             services.AddSingleton<IBillingService, BillingService>();
+            return services;
+        }
 
+        public static IServiceCollection AddBillingSubmissionWorker(
+            this IServiceCollection services,
+            bool useMockCloudEnvironmentRepository)
+        {
+            if (useMockCloudEnvironmentRepository)
+            {
+                services.AddSingleton<IBillingSubmissionCloudStorageFactory, MockBillingSubmissionCloudStorageFactory>();
+            }
+            else
+            {
+                services.AddSingleton<IBillingSubmissionCloudStorageFactory, BillingSubmissionCloudStorageFactory>();
+            }
+
+            services.AddSingleton<IBillingSummarySubmissionService, BillingSummarySubmissionService>();
+            services.AddHostedService<BillingSummarySubmissionWorker>();
             return services;
         }
     }

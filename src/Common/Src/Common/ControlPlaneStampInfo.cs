@@ -20,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private const string ComputeQueueKind = "cq";
         private const string StorageImageKind = "si";
         private const string VmAgentImageKind = "vm";
+        private const string BillingStorageImageKind = "bl";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ControlPlaneStampInfo"/> class.
@@ -92,6 +93,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation computeVmLocation)
         {
             return MakeStorageAccountName(VmAgentImageKind, computeVmLocation);
+        }
+
+        /// <inheritdoc/>
+        public string GetStampStorageAccountNameForBillingSubmission(AzureLocation billingLocation)
+        {
+            return MakeStorageAccountName(BillingStorageImageKind, billingLocation);
         }
 
         /// <inheritdoc/>

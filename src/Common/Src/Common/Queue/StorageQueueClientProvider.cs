@@ -8,7 +8,7 @@ using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <inheritdoc/>
     public class StorageQueueClientProvider : IStorageQueueClientProvider
@@ -24,6 +24,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));
             cloudQueueClientTask = InitQueueClient(controlPlaneAzureResourceAccessor);
+        }
+
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StorageQueueClientProvider"/> class.
+        /// </summary>
+        /// <param name="cloudQueueclient">The initialzied cloud Queue Client.</param>
+        public StorageQueueClientProvider(CloudQueueClient cloudQueueclient)
+        {
+            cloudQueueClientTask = Task.FromResult(cloudQueueclient);
         }
 
         /// <inheritdoc/>

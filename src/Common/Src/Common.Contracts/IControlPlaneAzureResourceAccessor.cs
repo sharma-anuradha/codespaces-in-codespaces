@@ -81,5 +81,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="computeStorageLocation">The azure location of the compute storage.</param>
         /// <returns>A tuple of the account name and the account key.</returns>
         Task<(string, string)> GetStampStorageAccountForStorageImagesAsync(AzureLocation computeStorageLocation);
+
+        /// <summary>
+        /// Gets the stamp-level storage account used for billing submission
+        /// </summary>
+        /// <param name="billingSubmissionLocation">The azure location of the billing submission data.</param>
+        /// <returns>A tuple of the account name and the account key.</returns>
+        Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation);
     }
 }

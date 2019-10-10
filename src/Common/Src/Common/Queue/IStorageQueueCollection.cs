@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Sdk
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// Core queue collection interface.

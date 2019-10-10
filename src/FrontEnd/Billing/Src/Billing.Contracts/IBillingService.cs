@@ -1,12 +1,12 @@
-﻿using Microsoft.VsSaaS.Diagnostics;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿// <copyright file="IBillingService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using Microsoft.VsSaaS.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
     /// Interface defining the BillingWorker contract.

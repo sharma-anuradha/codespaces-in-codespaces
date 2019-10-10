@@ -1,4 +1,4 @@
-﻿// <copyright file="StorageResourceJobQueueRepository.cs" company="Microsoft">
+﻿// <copyright file="BillingSubmissionQueueCollection.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,22 +6,22 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
-    /// Resource repository fronting storage queue.
+    /// A small wrapper around the StorageQueueCollection type to allow for billing specific queues.
     /// </summary>
-    public class StorageResourceJobQueueRepository : StorageQueueCollection, IResourceJobQueueRepository
+    public class BillingSubmissionQueueCollection : StorageQueueCollection
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="StorageResourceJobQueueRepository"/> class.
+        /// Initializes a new instance of the <see cref="BillingSubmissionQueueCollection"/> class.
         /// </summary>
         /// <param name="clientProvider">The client provider.</param>
         /// <param name="healthProvider">The health provider.</param>
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="defaultLogValues">The default log values.</param>
-        public StorageResourceJobQueueRepository(
+        public BillingSubmissionQueueCollection(
             IStorageQueueClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
@@ -32,9 +32,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <inheritdoc/>
-        protected override string QueueId => ResourceNameBuilder.GetQueueName("resource-job-queue");
+        protected override string QueueId => ResourceNameBuilder.GetQueueName("usage-reporting-queue");
 
         /// <inheritdoc/>
-        protected override string LoggingDocumentName => "resource";
+        protected override string LoggingDocumentName => "billing-submission";
     }
 }

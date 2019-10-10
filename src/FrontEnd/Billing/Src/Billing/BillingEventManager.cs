@@ -85,6 +85,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <summary>
+        /// Updates a new billing event entity in the repository
+        /// </summary>
+        /// <param name="billingEvent"> the event being updated</param>
+        /// <param name="logger">Optional logger.</param>
+        /// <returns>The created event entity, including unique ID and timestamp.</returns>
+        public async Task<BillingEvent> UpdateEventAsync(
+            BillingEvent billingEvent,
+            IDiagnosticsLogger logger)
+        {
+            var duration = logger.StartDuration();
+            try
+            {
+                billingEvent = await this.billingEventRepository.UpdateAsync(billingEvent, logger);
+
+                logger.AddDuration(duration)
+                    .LogInfo(GetType().FormatLogMessage(nameof(UpdateEventAsync)));
+                return billingEvent;
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(UpdateEventAsync)), ex.Message);
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Gets all accounts for which there are any billing events in a specified time range.
         /// </summary>
         /// <param name="start">Required start time (UTC). Events before this time are ignored.</param>
@@ -119,10 +146,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 }
 
                 // TODO: pagedcallback 200ms delay
-                var accounts = (await this.billingEventRepository.QueryAsync(
+                var accountsPreFiltered = await this.billingEventRepository.QueryAsync(
                     q => q.Where(where).Select(bev => bev.Account).Distinct(),
-                    logger)).Where(a => locations.Contains(a.Location));
-
+                    logger);
+                var accounts = accountsPreFiltered.Where(a => locations.Contains(a.Location));
                 logger.AddDuration(duration)
                     .LogInfo(GetType().FormatLogMessage(nameof(GetAccountsAsync)));
                 return accounts;
@@ -180,13 +207,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     logger)).Where(t => locations.Contains(t.Location));
 
                 logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountsAsync)));
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountsByShardAsync)));
                 return accounts;
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountsAsync)), ex.Message);
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountsByShardAsync)), ex.Message);
                 throw;
             }
         }
@@ -200,6 +227,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="eventTypes">Optional list of one or more event types to include, or null to include
         /// all event types.</param>
         /// <param name="logger">Optional logger.</param>
+        /// <param name="filter"> optional called provided filter</param>
         /// <returns>List of billing events matching the parameters.</returns>
         public async Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
             VsoAccountInfo account,
@@ -258,7 +286,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             start <= bev.Time && bev.Time < end.Value && eventTypes.Contains(bev.Type);
                     }
                 }
-
                 // This should be a single-partition query.
                 // The billing event collection is partitioned on subscription, and all queries
                 // filter on account, which includes the subscription property.
@@ -274,6 +301,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 logger.AddDuration(duration)
                     .AddAccount(account)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountEventsAsync)), ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
+       Expression<Func<BillingEvent, bool>> filter,
+       IDiagnosticsLogger logger)
+        {
+
+            var duration = logger.StartDuration();
+            try
+            {
+                // This should be a single-partition query.
+                // The billing event collection is partitioned on subscription, and all queries
+                // filter on account, which includes the subscription property.
+                var billingEvents = await this.billingEventRepository.QueryAsync(
+                    q => q.Where(filter).OrderBy(bev => bev.Time), logger);
+
+                logger.AddDuration(duration)
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountEventsAsync)));
+                return billingEvents;
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountEventsAsync)), ex.Message);
                 throw;
             }

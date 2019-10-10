@@ -106,11 +106,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add the billing event manager and the billing event repository
             services.AddBillingEventManager(frontEndAppSettings.UseMocksForLocalDevelopment);
 
+            // Add the Billing SubmissionWorker
+            services.AddBillingSubmissionWorker(frontEndAppSettings.UseMocksForLocalDevelopment);
+
             // Add the environment manager and the cloud environment repository.
             services.AddEnvironmentManager(frontEndAppSettings.EnvironmentManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment || frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker);
 
             // Add the billing backgroud worker
-            services.AddBillingWorker(frontEndAppSettings.UseMocksForLocalDevelopment);
+            services.AddBillingWorker();
 
             // Add the Live Share user profile and workspace providers.
             services

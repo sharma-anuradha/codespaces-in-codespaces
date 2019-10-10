@@ -91,5 +91,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             throw new NotImplementedException();
         }
+
+        public Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

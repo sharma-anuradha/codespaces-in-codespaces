@@ -62,5 +62,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="computeStorageLocation">The compute storage location.</param>
         /// <returns>The storage account name.</returns>
         string GetStampStorageAccountNameForStorageImages(AzureLocation computeStorageLocation);
+
+        /// <summary>
+        /// Gets the control-plane stamp storage account name for storing billing submissions.
+        /// </summary>
+        /// <param name="billingLocation">The billing submisisonlocation.</param>
+        /// <returns>The storage account name.</returns>
+        string GetStampStorageAccountNameForBillingSubmission(AzureLocation billingLocation);
     }
 }

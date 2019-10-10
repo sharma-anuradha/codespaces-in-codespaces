@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -38,6 +39,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             DateTime start,
             DateTime? end,
             ICollection<string> eventTypes,
+            IDiagnosticsLogger logger);
+
+        Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
+            Expression<Func<BillingEvent, bool>> filter,
+            IDiagnosticsLogger logger);
+
+        Task<BillingEvent> UpdateEventAsync(
+            BillingEvent billingEvent,
             IDiagnosticsLogger logger);
     }
 }

@@ -11,7 +11,6 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
@@ -225,7 +224,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 UsageDetail = new UsageDetail { Environments = envUsageDetails, Users = userUsageDetails, },
                 SubscriptionState = string.Empty,
                 Plan = string.Empty,
-                Emitted = false,
+                SubmissionState = BillingSubmissionState.None,
                 Usage = new UsageDictionary
                 {
                     { "METER", totalBillable },

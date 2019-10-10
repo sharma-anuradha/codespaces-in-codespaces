@@ -110,5 +110,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             throw new NotImplementedException();
         }
+
+        public Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

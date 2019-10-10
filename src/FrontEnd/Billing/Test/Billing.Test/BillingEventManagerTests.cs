@@ -258,7 +258,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                 SubscriptionState = SubscriptionStates.Registered,
                 Usage = new UsageDictionary { [meter] = 3.3 },
                 UsageDetail = usageDetail,
-                Emitted = false,
+                SubmissionState = BillingSubmissionState.None,
             };
 
             var billingEvent = new BillingEvent
@@ -425,7 +425,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                                 }
                             },
                         },
-                        Emitted = false,
+                        SubmissionState = BillingSubmissionState.None,
                     },
                     logger); ;
                 await this.manager.CreateEventAsync(
@@ -468,7 +468,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
                                 }
                             },
                         },
-                        Emitted = false,
+                        SubmissionState = BillingSubmissionState.None,
                     },
                     logger);
             }

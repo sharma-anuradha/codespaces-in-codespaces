@@ -70,7 +70,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// billed for this usage; false if billing for this subscription/account/period was
         /// disabled or there was no usage during this period.
         /// </summary>
-        [JsonProperty(Required = Required.Always, PropertyName = "emitted")]
-        public bool Emitted { get; set; }
+        [JsonProperty(Required = Required.Default, PropertyName = "submissionState")]
+        public BillingSubmissionState SubmissionState { get; set; }
+
+        /// <summary>
+        /// Gets or sets the eventID used to match the submission IDs
+        /// 
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "eventId")]
+        public string EventId { get; set; }
     }
 }

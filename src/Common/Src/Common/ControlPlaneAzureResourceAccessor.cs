@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         private IServicePrincipal ServicePrincipal { get; }
-        
+
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
         private HttpClientWrapper HttpClient { get; }
@@ -194,6 +194,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public async Task<(string, string)> GetStampStorageAccountForStorageImagesAsync(AzureLocation computeStorageLocation)
         {
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForStorageImages(computeStorageLocation);
+            return await GetStorageAccountAsync(
+                ControlPlaneInfo.Stamp.StampResourceGroupName,
+                storageAccountName,
+                default);
+        }
+
+        /// <inheritdoc/>
+        public async Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation)
+        {
+            var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForBillingSubmission(billingSubmissionLocation);
             return await GetStorageAccountAsync(
                 ControlPlaneInfo.Stamp.StampResourceGroupName,
                 storageAccountName,
