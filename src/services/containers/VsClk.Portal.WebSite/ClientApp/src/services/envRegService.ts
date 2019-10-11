@@ -1,6 +1,8 @@
 import {
     ICloudEnvironment,
     CreateEnvironmentParameters as CreateEnvironmentParametersBase,
+    StateInfo,
+    EnvPersonalization,
 } from '../interfaces/cloudenvironment';
 
 import { useWebClient } from '../actions/middleware/useWebClient';
@@ -52,19 +54,35 @@ export async function createEnvironment(
         type = 'cloudEnvironment',
         userEmail,
         userName,
+        dotfilesRepository,
+        dotfilesInstallCommand,
+        dotfilesTargetPath = `~/dotfiles`,
     } = environment;
 
+    const personalization: EnvPersonalization = {
+        dotfilesRepository,
+        dotfilesTargetPath,
+        dotfilesInstallCommand,
+    };
+
     const body = {
+        id: '',
         type,
+        accountId: undefined,
+        location: undefined,
         friendlyName,
         seed: {
             type: gitRepositoryUrl ? 'git' : '',
             moniker: gitRepositoryUrl ? gitRepositoryUrl : '',
-            gitConfig: {
-                userName,
-                userEmail,
-            },
+            gitConfig: { userName, userEmail },
         },
+        personalization,
+        state: StateInfo.Provisioning,
+        connection: {
+            sessionId: '',
+            sessionPath: '',
+        },
+        created: new Date(),
     };
 
     const webClient = useWebClient();

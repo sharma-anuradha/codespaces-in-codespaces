@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { TitleBar } from '../titlebar/titlebar';
+
+import { PortalLayout } from '../portalLayout/portalLayout';
+import { storeGitHubAccessTokenResponse } from '../../services/gitHubAuthenticationService';
 
 import './gitHubLogin.css';
-import { storeGitHubAccessTokenResponse } from '../../ts-agent/services/gitCredentialService';
 
 export function GitHubLogin() {
     const url = new URL(window.location.href);
@@ -30,15 +31,8 @@ export function GitHubLogin() {
     }
 
     return (
-        <div className='ms-Grid main'>
-            <div className='ms-Grid-row'>
-                <TitleBar />
-            </div>
-            <div className='ms-Grid-row main__app-content'>
-                <div className='ms-Grid-col main__app-content-container'>
-                    <div className='github-login'>{content}</div>
-                </div>
-            </div>
-        </div>
+        <PortalLayout hideNavigation>
+            <div className='github-login'>{content}</div>
+        </PortalLayout>
     );
 }

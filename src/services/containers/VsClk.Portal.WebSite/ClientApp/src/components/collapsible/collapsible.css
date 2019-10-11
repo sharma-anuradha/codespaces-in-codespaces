@@ -1,0 +1,9 @@
+.collapsible__button {
+    border: none;
+    padding: 0;
+    background: none;
+}
+
+.collapsible__content-collapsed {
+    visibility: hidden;
+}

@@ -112,8 +112,8 @@ describe('actions - init', () => {
         expect(store.dispatchedActions).toHaveFailed();
         expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
             'async.app.init',
-            'async.configuration.fetch',
             'async.authentication.getToken',
+            'async.configuration.fetch',
             'async.authentication.getToken.failure',
             'async.app.init.failure'
         );
@@ -145,8 +145,8 @@ describe('actions - init', () => {
         expect(store.dispatchedActions).toHaveFailed();
         expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
             'async.app.init',
-            'async.configuration.fetch',
             'async.authentication.getToken',
+            'async.configuration.fetch',
             'async.authentication.getToken.success',
             'async.configuration.fetch.success',
             'async.environments.fetch',

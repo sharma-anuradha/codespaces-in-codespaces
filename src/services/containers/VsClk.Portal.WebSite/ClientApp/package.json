@@ -17,6 +17,7 @@
     "babel-preset-react-app": "^7.0.2",
     "bfj": "6.1.1",
     "case-sensitive-paths-webpack-plugin": "2.2.0",
+    "classnames": "^2.2.6",
     "cross-env": "^6.0.0",
     "css-loader": "1.0.0",
     "custom-protocol-check": "^1.0.1",
@@ -75,6 +76,7 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.3.0",
+    "@types/classnames": "^2.2.9",
     "@types/debug": "^4.1.4",
     "@types/express": "^4.17.0",
     "@types/jest": "^24.0.17",

@@ -25,6 +25,7 @@
         "no-suspicious-comment": false,
         "export-name": false,
         "import-name": false,
-        "object-literal-shorthand": true
+        "object-literal-shorthand": true,
+        "use-simple-attributes": false
     }
 }

@@ -1,5 +1,6 @@
 import { WithMetadata, ErrorAction } from '../../actions/middleware/types';
 import { ITelemetryEvent, TelemetryPropertyValue } from './types';
+
 export class ActionErrorEvent implements ITelemetryEvent {
     readonly name: string = 'vsonline/action/failure';
     constructor(private readonly action: WithMetadata<ErrorAction>) {}

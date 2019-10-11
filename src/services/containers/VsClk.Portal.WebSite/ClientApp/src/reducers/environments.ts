@@ -65,6 +65,9 @@ export function environments(
                 type = 'cloudEnvironment',
                 friendlyName,
                 gitRepositoryUrl,
+                dotfilesInstallCommand,
+                dotfilesTargetPath,
+                dotfilesRepository,
             } = action.payload.environment;
 
             const envLie: ILocalCloudEnvironment = {
@@ -74,7 +77,12 @@ export function environments(
                 updated: new Date(),
                 seed: {
                     moniker: gitRepositoryUrl || '',
-                    type: 'git',
+                    type: gitRepositoryUrl ? 'git' : '',
+                },
+                personalization: {
+                    dotfilesInstallCommand,
+                    dotfilesTargetPath,
+                    dotfilesRepository,
                 },
                 state: StateInfo.Provisioning,
                 lieId: action.payload.lieId,

@@ -4,6 +4,9 @@ export interface CreateEnvironmentParameters {
     gitRepositoryUrl?: string;
     userName: string;
     userEmail: string;
+    dotfilesRepository?: string;
+    dotfilesTargetPath?: string;
+    dotfilesInstallCommand?: string;
 }
 
 export enum StateInfo {
@@ -13,6 +16,8 @@ export enum StateInfo {
     Unavailable = 'Unavailable',
     Hibernating = 'Hibernating',
     WakingUp = 'WakingUp',
+    Shutdown = 'Shutdown',
+    ShuttingDown = 'ShuttingDown',
     Failed = 'Failed to Create',
 }
 
@@ -25,6 +30,15 @@ export interface ICloudEnvironment {
     connection: Connection;
     created: Date;
     updated: Date;
+    personalization?: EnvPersonalization;
+    accountId?: string;
+    location?: string;
+}
+
+export interface EnvPersonalization {
+    dotfilesRepository?: string;
+    dotfilesTargetPath?: string;
+    dotfilesInstallCommand?: string;
 }
 
 type RequiredLocalEnvironmentProperties = 'state' | 'seed' | 'friendlyName' | 'created' | 'updated';

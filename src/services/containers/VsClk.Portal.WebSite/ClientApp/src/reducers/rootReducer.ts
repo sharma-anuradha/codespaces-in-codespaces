@@ -3,6 +3,7 @@ import { combineReducers } from 'redux';
 import { authentication } from './authentication';
 import { configuration } from './configuration';
 import { environments } from './environments';
+import { githubAuthentication } from './githubAuthenticationReducer';
 import { userInfo } from './userInfo';
 import { testReducer as __test } from './testReducer';
 
@@ -13,12 +14,14 @@ type Reducers = {
 };
 type ReducersToState<T extends Reducers> = { [k in keyof T]: ReturnType<T[k]> };
 
-const reducers = { authentication, configuration, environments, userInfo, __test };
-
-type ReducerAcceptedAction<
-    T extends (state: ApplicationState, action: any) => ApplicationState
-> = Parameters<T>[1];
-type ReducersToAcceptedActions<T extends Reducers> = ReducerAcceptedAction<T[keyof T]>;
+const reducers = {
+    authentication,
+    configuration,
+    environments,
+    githubAuthentication,
+    userInfo,
+    __test,
+};
 
 type State<T extends (state: any, action: any) => any> = T extends (
     state: infer S | undefined,
