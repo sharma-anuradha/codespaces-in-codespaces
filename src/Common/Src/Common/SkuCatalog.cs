@@ -50,6 +50,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));
 
+            // Get the mapping from family to VM agent.
+            BuildArtifactImageFamilies = new ReadOnlyDictionary<string, IBuildArtifactImageFamily>(
+                skuCatalogSettings.VmAgentImageFamilies.ToDictionary(e => e.Key, e => new BuildArtifactImageFamily(e.Key, e.Value.ImageName) as IBuildArtifactImageFamily));
+
             // Get the supported azure locations
             var dataPlaneLocations = new HashSet<AzureLocation>(controlPlaneInfo.Stamp.DataPlaneLocations);
 
@@ -120,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 var vmAgentImageFamily = CreateBuildArtifactImageFamily(
                     cloudEnvironmentSettings.vmAgentImageFamily,
-                    skuCatalogSettings.vmAgentImageFamilies);
+                    skuCatalogSettings.VmAgentImageFamilies);
 
                 var storageImageFamily = CreateBuildArtifactImageFamily(
                     cloudEnvironmentSettings.StorageImageFamily,
@@ -154,6 +158,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public IReadOnlyDictionary<string, ICloudEnvironmentSku> CloudEnvironmentSkus { get; }
+
+        /// <inheritdoc/>
+        public IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactImageFamilies { get; }
 
         private Dictionary<string, ICloudEnvironmentSku> Skus { get; } = new Dictionary<string, ICloudEnvironmentSku>();
 

@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
@@ -239,11 +238,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         {
             // TODO: use IMapper!
             var result = await ResourceBroker.AllocateAsync(
-                new ResourceBroker.Models.AllocateInput
+                new AllocateInput
                 {
                     Location = requestBody.Location,
                     SkuName = requestBody.SkuName,
-                    Type = (Common.Models.ResourceType)requestBody.Type,
+                    Type = requestBody.Type,
                 },
                 logger.WithValues(new LogValueSet()));
 

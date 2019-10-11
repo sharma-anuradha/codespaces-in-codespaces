@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Newtonsoft.Json;
@@ -58,6 +57,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string DnsHostName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the blob container that the Resource Broker can use for file share template blobs.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string FileShareTemplateContainerName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the blob container that the Resource Broker can use for vso agent blobs.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string VirtualMachineAgentContainerName { get; set; }
 
         /// <summary>
         /// Gets or sets the control-plane stamps.

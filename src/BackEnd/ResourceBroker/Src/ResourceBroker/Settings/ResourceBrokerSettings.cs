@@ -19,19 +19,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string LeaseContainerName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the blob container that the Resource Broker can use for file share template blobs.
-        /// </summary>
-        [JsonProperty(Required = Required.Always)]
-        [Obsolete("This property will be moved to the sku catalog.", false)]
-        public string FileShareTemplateContainerName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the blob container that the Resource Broker can use for vso agent blobs.
-        /// </summary>
-        [JsonProperty(Required = Required.Always)]
-        [Obsolete("This property will be moved to the sku catalog.", false)]
-        public string VirtualMachineAgentContainerName { get; set; }
     }
 }

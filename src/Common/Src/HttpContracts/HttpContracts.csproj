@@ -4,4 +4,8 @@
     <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

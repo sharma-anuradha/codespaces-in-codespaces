@@ -237,7 +237,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         }
                     },
                 },
-                vmAgentImageFamilies = new Dictionary<string, ImageFamilySettings>
+                VmAgentImageFamilies = new Dictionary<string, ImageFamilySettings>
                 {
                     {
                         "test-compute-agent-image-family",

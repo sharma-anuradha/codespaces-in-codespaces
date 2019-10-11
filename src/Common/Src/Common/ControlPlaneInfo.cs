@@ -1,4 +1,5 @@
-﻿// <copyright file="ControlPlaneInfo.cs" company="Microsoft">
+﻿
+// <copyright file="ControlPlaneInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Security;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -67,6 +67,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public string DnsHostName => NotNullOrWhiteSpace(ControlPlaneSettings.DnsHostName, nameof(ControlPlaneSettings.DnsHostName));
+
+        /// <inheritdoc/>
+        public string VirtualMachineAgentContainerName => NotNullOrWhiteSpace(ControlPlaneSettings.VirtualMachineAgentContainerName, nameof(ControlPlaneSettings.VirtualMachineAgentContainerName));
+
+        /// <inheritdoc/>
+        public string FileShareTemplateContainerName => NotNullOrWhiteSpace(ControlPlaneSettings.FileShareTemplateContainerName, nameof(ControlPlaneSettings.FileShareTemplateContainerName));
 
         /// <inheritdoc/>
         public IControlPlaneStampInfo Stamp { get; }

@@ -38,6 +38,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string DnsHostName { get; }
 
         /// <summary>
+        /// Gets the VM agent container name.
+        /// </summary>
+        string VirtualMachineAgentContainerName { get; }
+
+        /// <summary>
+        /// Gets the File Share Template Container Name.
+        /// </summary>
+        string FileShareTemplateContainerName { get; }
+
+        /// <summary>
         /// Gets the control-plane stamp info.
         /// </summary>
         IControlPlaneStampInfo Stamp { get; }

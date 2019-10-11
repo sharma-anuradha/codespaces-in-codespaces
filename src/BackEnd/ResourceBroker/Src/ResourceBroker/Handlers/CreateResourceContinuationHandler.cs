@@ -15,7 +15,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -27,7 +26,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
-using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
@@ -58,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service provider.</param>
         /// <param name="virtualMachineTokenProvider">Virtual machine token provider.</param>
+        /// <param name="imageUrlGenerator">Image URL generator.</param>
         public CreateResourceContinuationHandler(
             IResourcePoolManager resourcePoolManager,
             IComputeProvider computeProvider,
@@ -68,7 +67,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             ResourceBrokerSettings resourceBrokerSettings,
             IVirtualMachineTokenProvider virtualMachineTokenProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            IImageUrlGenerator imageUrlGenerator)
             : base(serviceProvider, resourceRepository)
         {
             ResourcePoolManager = resourcePoolManager;
@@ -79,6 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             CapacityManager = capacityManager;
             ResourceBrokerSettings = resourceBrokerSettings;
             VirtualMachineTokenProvider = virtualMachineTokenProvider;
+            ImageUrlGenerator = imageUrlGenerator;
         }
 
         /// <inheritdoc/>
@@ -105,6 +106,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
         private IVirtualMachineTokenProvider VirtualMachineTokenProvider { get; }
+
+        private IImageUrlGenerator ImageUrlGenerator{ get; }
 
         /// <inheritdoc/>
         protected override Task<ContinuationResult> QueueOperationAsync(CreateResourceContinuationInput input, ResourceRecordRef record, IDiagnosticsLogger logger)
@@ -167,8 +170,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     var subscription = resourceLocation.Subscription.SubscriptionId;
 
                     var token = await VirtualMachineTokenProvider.GenerateAsync(resource.Value.Id, logger);
-                    var blobStorageClientProvider = await GetVmAgentImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
-                    var url = GetBlobUrlWithSasToken(ResourceBrokerSettings.VirtualMachineAgentContainerName, computeDetails.VmAgentImageName, blobStorageClientProvider);
+                    var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, computeDetails.VmAgentImageName);
 
                     resourceTags.Add(ResourceTagName.ComputeOS, computeDetails.OS.ToString());
 
@@ -209,14 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     var resourceGroup = resourceLocation.ResourceGroup;
                     var subscription = resourceLocation.Subscription.SubscriptionId;
 
-                    // Get storage SAS token
-                    var blobStorageClientProvider = await GetStorageImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
-                    var url = GetBlobUrlWithSasToken(
-                        ResourceBrokerSettings.FileShareTemplateContainerName,
-                        storageDetails.ImageName,
-                        blobStorageClientProvider,
-                        sharedAccessExpiryTime: DateTime.UtcNow.AddDays(100));
-
+                    var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, storageDetails.ImageName, TimeSpan.FromDays(100));
                     result = new FileShareProviderCreateInput
                     {
                         AzureLocation = storageDetails.Location.ToString().ToLowerInvariant(),
@@ -238,24 +233,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             return result;
-        }
-
-        private string GetBlobUrlWithSasToken(string containerName, string blobName, IBlobStorageClientProvider blobStorageClientProvider, DateTimeOffset sharedAccessExpiryTime = default)
-        {
-            if (sharedAccessExpiryTime == default)
-            {
-                sharedAccessExpiryTime = DateTime.UtcNow.AddHours(4);
-            }
-
-            var container = blobStorageClientProvider.GetCloudBlobContainer(containerName);
-            var blob = container.GetBlobReference(blobName);
-            var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
-            {
-                Permissions = SharedAccessBlobPermissions.Read,
-                SharedAccessExpiryTime = sharedAccessExpiryTime,
-            });
-
-            return blob.Uri + sas;
         }
 
         /// <inheritdoc/>
@@ -326,18 +303,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private async Task<IBlobStorageClientProvider> GetStorageImageBlobStorageClientProvider(AzureLocation azureLocation)
         {
             var (blobStorageAccountName, blobStorageAccountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForStorageImagesAsync(azureLocation);
-            var blobStorageClientOptions = new BlobStorageClientOptions
-            {
-                AccountName = blobStorageAccountName,
-                AccountKey = blobStorageAccountKey,
-            };
-            var blobStorageClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
-            return blobStorageClientProvider;
-        }
-
-        private async Task<IBlobStorageClientProvider> GetVmAgentImageBlobStorageClientProvider(AzureLocation azureLocation)
-        {
-            var (blobStorageAccountName, blobStorageAccountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(azureLocation);
             var blobStorageClientOptions = new BlobStorageClientOptions
             {
                 AccountName = blobStorageAccountName,

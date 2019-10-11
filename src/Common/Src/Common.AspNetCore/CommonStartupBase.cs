@@ -173,6 +173,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 
             services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
             services.AddSingleton<ITaskHelper, TaskHelper>();
+            services.AddSingleton<IImageUrlGenerator, BlobImageUrlGenerator>();
         }
 
         /// <summary>

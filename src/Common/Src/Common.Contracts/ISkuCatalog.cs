@@ -15,5 +15,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the list of Cloud Environment SKUs.
         /// </summary>
         IReadOnlyDictionary<string, ICloudEnvironmentSku> CloudEnvironmentSkus { get; }
+
+        /// <summary>
+        /// Gets the VM Image Families.
+        /// </summary>
+        IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactImageFamilies { get; }
     }
 }
