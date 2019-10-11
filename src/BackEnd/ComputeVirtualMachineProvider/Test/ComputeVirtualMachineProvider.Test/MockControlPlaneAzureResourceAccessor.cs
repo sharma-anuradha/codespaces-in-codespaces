@@ -56,8 +56,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var azure = await clientFactory.GetAzureClientAsync(new Guid("86642df6-843e-4610-a956-fdd497102261"));
             await azure.CreateResourceGroupIfNotExistsAsync(QueueResourceGroup, computeVmLocation.ToString());
             var storageAccount = await azure.CreateStorageAccountIfNotExistsAsync(
-                QueueResourceGroup, 
-                computeVmLocation.ToString(), 
+                QueueResourceGroup,
+                computeVmLocation.ToString(),
                 QueueStorageAccount);
             if (storageAccount == null)
             {
@@ -92,6 +92,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
+        public Task<(string, string, string)> GetStampBatchAccountAsync(AzureLocation location, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation)
         {
             throw new NotImplementedException();

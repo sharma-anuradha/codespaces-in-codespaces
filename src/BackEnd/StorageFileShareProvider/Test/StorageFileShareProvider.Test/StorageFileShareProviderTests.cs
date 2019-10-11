@@ -26,6 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private const string MockStorageFileName = "dockerlib";
         private static readonly Guid MockSubscriptionId = Guid.Parse("a058a07c-dfbb-4501-82a2-fa0bb37ec166");
         private static readonly AzureResourceInfo MockAzureResourceInfo = new AzureResourceInfo(MockSubscriptionId, MockResourceGroup, MockStorageAccountName);
+        private static readonly PrepareFileShareTaskInfo MockPrepareTaskInfo = new PrepareFileShareTaskInfo("job1", "task1", MockLocation);
 
         private static readonly IDictionary<string, string> MockResourceTags = new Dictionary<string, string>
         {
@@ -46,7 +47,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
-            var mockCheckPrepareResults = new[] { 0.0, 0.5, 0.7, 1 };
+            var mockCheckPrepareResults = new[] {
+                PrepareFileShareStatus.Pending,
+                PrepareFileShareStatus.Running,
+                PrepareFileShareStatus.Running,
+                PrepareFileShareStatus.Succeeded,
+             };
             providerHelperMoq
                 .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockAzureResourceInfo);
@@ -55,10 +61,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .Returns(Task.CompletedTask);
             providerHelperMoq
                 .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns(Task.CompletedTask);
-            
+                .ReturnsAsync(MockPrepareTaskInfo);
+
             providerHelperMoq
-                .SetupSequence(x => x.CheckPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .SetupSequence(x => x.CheckPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<PrepareFileShareTaskInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(mockCheckPrepareResults[0])
                 .ReturnsAsync(mockCheckPrepareResults[1])
                 .ReturnsAsync(mockCheckPrepareResults[2])

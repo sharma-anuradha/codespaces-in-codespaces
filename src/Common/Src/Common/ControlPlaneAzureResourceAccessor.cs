@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.KeyVault.Models;
+using Microsoft.Azure.Management.Batch.Fluent;
 using Microsoft.Azure.Management.CosmosDB.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -64,6 +65,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private ICosmosDBManager CosmosDbManager { get; set; }
 
         private IStorageManagementClient StorageManagementClient { get; set; }
+
+        private IBatchManagementClient BatchManagementClient { get; set; }
 
         /// <inheritdoc/>
         public async Task<string> GetCurrentSubscriptionIdAsync()
@@ -201,6 +204,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
+        public async Task<(string, string, string)> GetStampBatchAccountAsync(AzureLocation location, IDiagnosticsLogger logger)
+        {
+            var resourceGroup = ControlPlaneInfo.Stamp.StampResourceGroupName;
+            var accountName = ControlPlaneInfo.Stamp.GetStampBatchAccountName(location);
+            try
+            {
+                var batchManagementClient = await GetBatchManagementClientAsync();
+                var batchAccount = await batchManagementClient.BatchAccount.GetAsync(
+                    resourceGroup,
+                    accountName);
+                var accountKeys = await batchManagementClient.BatchAccount.GetKeysAsync(
+                    resourceGroup,
+                    accountName);
+                return (batchAccount.Name, accountKeys.Primary, $"https://{batchAccount.AccountEndpoint}");
+            }
+            catch (Exception)
+            {
+                logger.FluentAddValue(nameof(accountName), accountName)
+                    .FluentAddValue(nameof(resourceGroup), resourceGroup)
+                    .LogError("get_batch_account_error");
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
         public async Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation)
         {
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForBillingSubmission(billingSubmissionLocation);
@@ -291,6 +319,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             };
 
             return StorageManagementClient;
+        }
+
+        private async Task<IBatchManagementClient> GetBatchManagementClientAsync()
+        {
+            if (BatchManagementClient != null)
+            {
+                return BatchManagementClient;
+            }
+
+            var subscriptionId = await GetCurrentSubscriptionIdAsync();
+            var azureCredentials = await GetAzureCredentialsAsync();
+            BatchManagementClient = new BatchManagementClient(ConfigureRestClient(azureCredentials))
+            {
+                SubscriptionId = subscriptionId,
+            };
+
+            return BatchManagementClient;
         }
 
         private RestClient ConfigureRestClient(AzureCredentials creds)

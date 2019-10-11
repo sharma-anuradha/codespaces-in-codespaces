@@ -59,6 +59,7 @@
     <AzureMgmtFluentPackageVersion>1.26.0</AzureMgmtFluentPackageVersion> <!-- preferred for new projects-->
     <AzureResourceMgmtFluentPackageVersion>1.26.0</AzureResourceMgmtFluentPackageVersion>
     <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
+    <AzureBatchPackageVersion>12.0.0</AzureBatchPackageVersion>
   </PropertyGroup>
 
   <!-- Common project settings (except dirs.proj) -->

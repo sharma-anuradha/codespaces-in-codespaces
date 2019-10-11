@@ -117,9 +117,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("vsodevciusw2cqusw2", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestUs2));
                 Assert.Equal("vsodevciusw2vmusw2", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestUs2));
                 Assert.Equal("vsodevciusw2siusw2", s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestUs2));
+                Assert.Equal("vsodevciusw2bausw2", s.GetStampBatchAccountName(AzureLocation.WestUs2));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs));
+                Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.EastUs));
             }
 
             Assert.Collection(controlPlaneInfo.AllStamps.Values.OrderBy(s => s.Location.ToString()),
@@ -169,9 +171,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("vsopperelusw2cqusw2", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestUs2));
                 Assert.Equal("vsopperelusw2vmusw2", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestUs2));
                 Assert.Equal("vsopperelusw2siusw2", s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestUs2));
+                Assert.Equal("vsopperelusw2bausw2", s.GetStampBatchAccountName(AzureLocation.WestUs2));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs));
+                Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.EastUs));
             }
 
             void westEuropeStamp(IControlPlaneStampInfo s)
@@ -203,9 +207,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("vsopperelassecqasse", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.SouthEastAsia));
                 Assert.Equal("vsopperelassevmasse", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.SouthEastAsia));
                 Assert.Equal("vsopperelassesiasse", s.GetStampStorageAccountNameForStorageImages(AzureLocation.SouthEastAsia));
+                Assert.Equal("vsopperelassebaasse", s.GetStampBatchAccountName(AzureLocation.SouthEastAsia));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs));
+                Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.EastUs));
             }
 
             Assert.Collection(controlPlaneInfo.AllStamps.Values.OrderBy(s => s.Location.ToString()),
@@ -241,9 +247,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("vsoprodrelusecquse", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.EastUs));
                 Assert.Equal("vsoprodrelusevmuse", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs));
                 Assert.Equal("vsoprodrelusesiuse", s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs));
+                Assert.Equal("vsoprodrelusebause", s.GetStampBatchAccountName(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestUs2));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestUs2));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestUs2));
+                Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.WestUs2));
             }
 
             void westEuropeStamp(IControlPlaneStampInfo s)
@@ -258,9 +266,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("vsoprodreleuwcqeuw", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestEurope));
                 Assert.Equal("vsoprodreleuwvmeuw", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestEurope));
                 Assert.Equal("vsoprodreleuwsieuw", s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestEurope));
+                Assert.Equal("vsoprodreleuwbaeuw", s.GetStampBatchAccountName(AzureLocation.WestEurope));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs));
+                Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.EastUs));
             }
 
             void westUs2Stamp(IControlPlaneStampInfo s)
@@ -275,9 +285,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("vsoprodrelusw2cqusw2", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestUs2));
                 Assert.Equal("vsoprodrelusw2vmusw2", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestUs2));
                 Assert.Equal("vsoprodrelusw2siusw2", s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestUs2));
+                Assert.Equal("vsoprodrelusw2bausw2", s.GetStampBatchAccountName(AzureLocation.WestUs2));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestEurope));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestEurope));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestEurope));
+                Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.WestEurope));
             }
 
             void southEastAsiaStamp(IControlPlaneStampInfo s)
@@ -292,9 +304,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("vsoprodrelassecqasse", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.SouthEastAsia));
                 Assert.Equal("vsoprodrelassevmasse", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.SouthEastAsia));
                 Assert.Equal("vsoprodrelassesiasse", s.GetStampStorageAccountNameForStorageImages(AzureLocation.SouthEastAsia));
+                Assert.Equal("vsoprodrelassebaasse", s.GetStampBatchAccountName(AzureLocation.SouthEastAsia));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestUs2));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestUs2));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestUs2));
+                Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.WestUs2));
             }
 
             Assert.Collection(controlPlaneInfo.AllStamps.Values.OrderBy(s => s.Location.ToString()),
@@ -355,7 +369,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 
         private static IControlPlaneInfo LoadControlPlaneInfo(
             string environmentName,
-            string overrideName = null, 
+            string overrideName = null,
             AzureLocation location = AzureLocation.WestUs2)
         {
             var appSettings = LoadAppSettings(environmentName, overrideName);

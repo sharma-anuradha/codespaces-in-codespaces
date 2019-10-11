@@ -36,10 +36,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public string ServiceName { get; set; }
 
         /// <summary>
-        /// Gets or sets storage account prefix.
+        /// Gets or sets short prefix.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public string StorageAccountPrefix { get; set; }
+        public string ShortPrefix { get; set; }
 
         /// <summary>
         /// Gets or sets the environment name.

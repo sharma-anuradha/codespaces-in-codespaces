@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the stamp-level storage account used for compute job queues.
         /// </summary>
         /// <param name="computeVmLocation">The azure location of the compute vm.</param>
-        /// <param name="logger">Thelogger instance.</param>
+        /// <param name="logger">The logger instance.</param>
         /// <returns>A tuple of the account name and the account key.</returns>
         Task<(string, string)> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger);
 
@@ -83,7 +83,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         Task<(string, string)> GetStampStorageAccountForStorageImagesAsync(AzureLocation computeStorageLocation);
 
         /// <summary>
-        /// Gets the stamp-level storage account used for billing submission
+        /// Gets the stamp-level batch account.
+        /// </summary>
+        /// <param name="location">The data-plane azure location.</param>
+        /// <param name="logger">The logger instance.</param>
+        /// <returns>A tuple of the account name, account key, account endpoint.</returns>
+        Task<(string, string, string)> GetStampBatchAccountAsync(AzureLocation location, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the stamp-level storage account used for billing submission.
         /// </summary>
         /// <param name="billingSubmissionLocation">The azure location of the billing submission data.</param>
         /// <returns>A tuple of the account name and the account key.</returns>

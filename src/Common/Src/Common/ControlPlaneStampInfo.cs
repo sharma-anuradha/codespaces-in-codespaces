@@ -15,11 +15,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     /// </summary>
     public class ControlPlaneStampInfo : IControlPlaneStampInfo
     {
-        private const int AzureStorageAccountNameLengthMax = 24;
-        private const int StorageAccountUniquePrefixLengthMax = AzureStorageAccountNameLengthMax - 10;
+        private const int AzureStorageOrBatchAccountNameLengthMax = 24;
+        private const int ShortUniquePrefixLengthMax = AzureStorageOrBatchAccountNameLengthMax - 10;
         private const string ComputeQueueKind = "cq";
         private const string StorageImageKind = "si";
         private const string VmAgentImageKind = "vm";
+        private const string BatchAccountKind = "ba";
         private const string BillingStorageImageKind = "bl";
 
         /// <summary>
@@ -27,21 +28,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         /// <param name="controlPlaneInfo">The control plane info.</param>
         /// <param name="location">The control plane azure location.</param>
-        /// <param name="storageAccountUniquePrefix">A globally-unique prefix for storage accounts.</param>
+        /// <param name="stampShortUniquePrefix">A globally-unique prefix for storage/batch accounts.</param>
         /// <param name="controlPlaneStampSettings">The control plane stamp settings.</param>
         public ControlPlaneStampInfo(
             IControlPlaneInfo controlPlaneInfo,
             AzureLocation location,
-            string storageAccountUniquePrefix,
+            string stampShortUniquePrefix,
             ControlPlaneStampSettings controlPlaneStampSettings)
         {
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
-            Requires.NotNullOrEmpty(storageAccountUniquePrefix, nameof(storageAccountUniquePrefix));
-            Requires.Argument(storageAccountUniquePrefix.Length <= StorageAccountUniquePrefixLengthMax, nameof(storageAccountUniquePrefix), $"The prefix '{nameof(storageAccountUniquePrefix)}' must not be longer than {StorageAccountUniquePrefixLengthMax} characters.");
-            Requires.Argument(storageAccountUniquePrefix.ToCharArray().All(c => char.IsLetterOrDigit(c)), nameof(storageAccountUniquePrefix), $"The prefix '{nameof(storageAccountUniquePrefix)}' contains invalid characters.");
+            Requires.NotNullOrEmpty(stampShortUniquePrefix, nameof(stampShortUniquePrefix));
+            Requires.Argument(stampShortUniquePrefix.Length <= ShortUniquePrefixLengthMax, nameof(stampShortUniquePrefix), $"The prefix '{nameof(stampShortUniquePrefix)}' must not be longer than {ShortUniquePrefixLengthMax} characters.");
+            Requires.Argument(stampShortUniquePrefix.ToCharArray().All(c => char.IsLetterOrDigit(c)), nameof(stampShortUniquePrefix), $"The prefix '{nameof(stampShortUniquePrefix)}' contains invalid characters.");
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             Location = location;
-            StorageAccountUniquePrefix = storageAccountUniquePrefix;
+            AccountShortUniquePrefix = stampShortUniquePrefix;
             ControlPlaneStampSettings = Requires.NotNull(controlPlaneStampSettings, nameof(ControlPlaneStampSettings));
         }
 
@@ -69,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <remarks>
         /// This map will need to grow as we add new supported data-plane locations.
         /// </remarks>
-        private static Dictionary<AzureLocation, string> StorageAccountRegionCodes { get; } = new Dictionary<AzureLocation, string>
+        private static Dictionary<AzureLocation, string> RegionCodes { get; } = new Dictionary<AzureLocation, string>
         {
             { AzureLocation.EastUs, "use" },
             { AzureLocation.SouthEastAsia, "asse" },
@@ -81,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private ControlPlaneStampSettings ControlPlaneStampSettings { get; }
 
-        private string StorageAccountUniquePrefix { get; }
+        private string AccountShortUniquePrefix { get; }
 
         /// <inheritdoc/>
         public string GetStampStorageAccountNameForComputeQueues(AzureLocation computeVmLocation)
@@ -107,6 +108,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return MakeStorageAccountName(StorageImageKind, computeStorageLocation);
         }
 
+        /// <inheritdoc/>
+        public string GetStampBatchAccountName(AzureLocation azureLocation)
+        {
+            if (!DataPlaneLocations.Contains(azureLocation))
+            {
+                throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{this.StampResourceGroupName}'");
+            }
+
+            var regionCode = RegionCodes[azureLocation];
+            var accountName = $"{AccountShortUniquePrefix}{ControlPlaneStampSettings.StampName}{BatchAccountKind}{regionCode}".ToLowerInvariant();
+            if (accountName.Length > AzureStorageOrBatchAccountNameLengthMax)
+            {
+                throw new InvalidOperationException($"The resulting batch account name '{accountName}' must not be longer than {AzureStorageOrBatchAccountNameLengthMax} characters.");
+            }
+
+            return accountName;
+        }
+
         private static string NotNullOrWhiteSpace(string value, string propertyName)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -126,11 +145,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{this.StampResourceGroupName}'");
             }
 
-            var regionCode = StorageAccountRegionCodes[azureLocation];
-            var accountName = $"{StorageAccountUniquePrefix}-{ControlPlaneStampSettings.StampName}-{kind}-{regionCode}".Replace("-", string.Empty).ToLowerInvariant();
-            if (accountName.Length > AzureStorageAccountNameLengthMax)
+            var regionCode = RegionCodes[azureLocation];
+            var accountName = $"{AccountShortUniquePrefix}-{ControlPlaneStampSettings.StampName}-{kind}-{regionCode}".Replace("-", string.Empty).ToLowerInvariant();
+            if (accountName.Length > AzureStorageOrBatchAccountNameLengthMax)
             {
-                throw new InvalidOperationException($"The resulting storage account name '{accountName}' must not be longer than {AzureStorageAccountNameLengthMax} characters.");
+                throw new InvalidOperationException($"The resulting storage account name '{accountName}' must not be longer than {AzureStorageOrBatchAccountNameLengthMax} characters.");
             }
 
             return accountName;

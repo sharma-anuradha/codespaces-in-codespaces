@@ -16,10 +16,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// </summary>
         /// <param name="nextState"><see cref="NextState"/>.</param>
         /// <param name="azureResourceInfo">The resource info of the azure storage account.</param>
-        public FileShareProviderCreateContinuationToken(FileShareProviderCreateState nextState, AzureResourceInfo azureResourceInfo)
+        /// <param name="prepareTaskInfo">The info for the task preparing the file share.</param>
+        public FileShareProviderCreateContinuationToken(FileShareProviderCreateState nextState, AzureResourceInfo azureResourceInfo, PrepareFileShareTaskInfo prepareTaskInfo)
         {
             NextState = nextState;
             AzureResourceInfo = azureResourceInfo;
+            PrepareTaskInfo = prepareTaskInfo;
         }
 
         /// <summary>
@@ -31,5 +33,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// Gets the resource info of the azure storage account.
         /// </summary>
         public AzureResourceInfo AzureResourceInfo { get; }
+
+        /// <summary>
+        /// Gets the info for the task preparing the file share.
+        /// </summary>
+        public PrepareFileShareTaskInfo PrepareTaskInfo { get; }
     }
 }

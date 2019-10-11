@@ -97,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IStorageProvider StorageProvider { get; }
 
         private IControlPlaneAzureResourceAccessor ControlPlaneAzureResourceAccessor { get; }
-        
+
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
         private ICapacityManager CapacityManager { get; }
@@ -211,7 +211,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
                     // Get storage SAS token
                     var blobStorageClientProvider = await GetStorageImageBlobStorageClientProvider(input.ResourcePoolDetails.Location);
-                    var url = GetBlobUrlWithSasToken(ResourceBrokerSettings.FileShareTemplateContainerName, storageDetails.ImageName, blobStorageClientProvider);
+                    var url = GetBlobUrlWithSasToken(
+                        ResourceBrokerSettings.FileShareTemplateContainerName,
+                        storageDetails.ImageName,
+                        blobStorageClientProvider,
+                        sharedAccessExpiryTime: DateTime.UtcNow.AddDays(100));
 
                     result = new FileShareProviderCreateInput
                     {
@@ -236,14 +240,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             return result;
         }
 
-        private string GetBlobUrlWithSasToken(string containerName, string blobName, IBlobStorageClientProvider blobStorageClientProvider)
+        private string GetBlobUrlWithSasToken(string containerName, string blobName, IBlobStorageClientProvider blobStorageClientProvider, DateTimeOffset sharedAccessExpiryTime = default)
         {
+            if (sharedAccessExpiryTime == default)
+            {
+                sharedAccessExpiryTime = DateTime.UtcNow.AddHours(4);
+            }
+
             var container = blobStorageClientProvider.GetCloudBlobContainer(containerName);
             var blob = container.GetBlobReference(blobName);
             var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
             {
                 Permissions = SharedAccessBlobPermissions.Read,
-                SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4),
+                SharedAccessExpiryTime = sharedAccessExpiryTime,
             });
 
             return blob.Uri + sas;

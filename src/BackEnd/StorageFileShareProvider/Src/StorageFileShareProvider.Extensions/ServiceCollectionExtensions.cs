@@ -5,6 +5,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions
 {
@@ -17,10 +18,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.E
         /// <see cref="IServiceCollection"/> extensions for the storage provider.
         /// </summary>
         /// <param name="services">The service collection.</param>
+        /// <param name="storageProviderSettings">The storage provider settings.</param>
         /// <param name="mocksSettings">The mocks settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddStorageFileShareProvider(
             this IServiceCollection services,
+            StorageProviderSettings storageProviderSettings,
             MocksSettings mocksSettings = null)
         {
             Requires.NotNull(services, nameof(services));
@@ -32,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.E
             }
 
             // Core services
+            services.AddSingleton(storageProviderSettings);
             services.AddSingleton<IStorageProvider, StorageFileShareProvider>();
             services.AddSingleton<IStorageFileShareProviderHelper, StorageFileShareProviderHelper>();
 

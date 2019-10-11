@@ -76,27 +76,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var azureSubscriptionId = subscriptionId.ToString();
             try
             {
-                var azureSub = systemCatalog
-                    .AzureSubscriptionCatalog
-                    .AzureSubscriptions
-                    .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
-
-                IServicePrincipal sp = azureSub.ServicePrincipal;
-                string azureAppId = sp.ClientId;
-                string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
-                string azureTenant = sp.TenantId;
-                var creds = new AzureCredentialsFactory()
-                    .FromServicePrincipal(
-                        azureAppId,
-                        azureAppKey,
-                        azureTenant,
-                        AzureEnvironment.AzureGlobalCloud);
-                var azureClient = new ComputeManagementClient(RestClient.Configure()
-                    .WithEnvironment(creds.Environment)
-                    .WithCredentials(creds)
-                    .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(creds))
-                    .Build())
-                { SubscriptionId = azureSub.SubscriptionId };
+                var restClient = await CreateRestClientAsync(azureSubscriptionId);
+                var azureClient = new ComputeManagementClient(restClient)
+                { SubscriptionId = azureSubscriptionId };
                 return azureClient;
             }
             catch (InvalidOperationException ex)
@@ -111,27 +93,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var azureSubscriptionId = subscriptionId.ToString();
             try
             {
-                var azureSub = systemCatalog
-                    .AzureSubscriptionCatalog
-                    .AzureSubscriptions
-                    .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
-
-                IServicePrincipal sp = azureSub.ServicePrincipal;
-                string azureAppId = sp.ClientId;
-                string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
-                string azureTenant = sp.TenantId;
-                var creds = new AzureCredentialsFactory()
-                    .FromServicePrincipal(
-                        azureAppId,
-                        azureAppKey,
-                        azureTenant,
-                        AzureEnvironment.AzureGlobalCloud);
-                var azureClient = new NetworkManagementClient(RestClient.Configure()
-                    .WithEnvironment(creds.Environment)
-                    .WithCredentials(creds)
-                    .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(creds))
-                    .Build())
-                { SubscriptionId = azureSub.SubscriptionId };
+                var restClient = await CreateRestClientAsync(azureSubscriptionId);
+                var azureClient = new NetworkManagementClient(restClient)
+                { SubscriptionId = azureSubscriptionId };
                 return azureClient;
             }
             catch (InvalidOperationException ex)
@@ -146,33 +110,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var azureSubscriptionId = subscriptionId.ToString();
             try
             {
-                var azureSub = systemCatalog
-                    .AzureSubscriptionCatalog
-                    .AzureSubscriptions
-                    .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
-
-                IServicePrincipal sp = azureSub.ServicePrincipal;
-                string azureAppId = sp.ClientId;
-                string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
-                string azureTenant = sp.TenantId;
-                var creds = new AzureCredentialsFactory()
-                    .FromServicePrincipal(
-                        azureAppId,
-                        azureAppKey,
-                        azureTenant,
-                        AzureEnvironment.AzureGlobalCloud);
-                var azureClient = new ResourceManagementClient(RestClient.Configure()
-                    .WithEnvironment(creds.Environment)
-                    .WithCredentials(creds)
-                    .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(creds))
-                    .Build())
-                { SubscriptionId = azureSub.SubscriptionId };
+                var restClient = await CreateRestClientAsync(azureSubscriptionId);
+                var azureClient = new ResourceManagementClient(restClient)
+                { SubscriptionId = azureSubscriptionId };
                 return azureClient;
             }
             catch (InvalidOperationException ex)
             {
                 throw new AzureClientException(azureSubscriptionId, ex);
             }
+        }
+
+        private async Task<RestClient> CreateRestClientAsync(string azureSubscriptionId)
+        {
+            var azureSub = systemCatalog
+                    .AzureSubscriptionCatalog
+                    .AzureSubscriptions
+                    .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
+
+            IServicePrincipal sp = azureSub.ServicePrincipal;
+            string azureAppId = sp.ClientId;
+            string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
+            string azureTenant = sp.TenantId;
+            var creds = new AzureCredentialsFactory()
+                .FromServicePrincipal(
+                    azureAppId,
+                    azureAppKey,
+                    azureTenant,
+                    AzureEnvironment.AzureGlobalCloud);
+
+            var restClient = RestClient.Configure()
+                .WithEnvironment(creds.Environment)
+                .WithCredentials(creds)
+                .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(creds))
+                .Build();
+
+            return restClient;
         }
     }
 }

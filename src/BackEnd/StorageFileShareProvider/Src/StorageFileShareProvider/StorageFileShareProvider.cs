@@ -129,6 +129,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             string resultContinuationToken = default;
             FileShareProviderCreateState nextState;
             AzureResourceInfo resultResourceInfo;
+            PrepareFileShareTaskInfo prepareTaskInfo = default;
             string continuationToken = input.ContinuationToken;
 
             if (continuationToken == null)
@@ -152,19 +153,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         nextState = FileShareProviderCreateState.PrepareFileShare;
                         break;
                     case FileShareProviderCreateState.PrepareFileShare:
-                        await providerHelper.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageBlobUrl, logger);
+                        prepareTaskInfo = await providerHelper.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageBlobUrl, logger);
                         nextState = FileShareProviderCreateState.CheckFileShare;
                         break;
                     case FileShareProviderCreateState.CheckFileShare:
-                        var completed = await providerHelper.CheckPrepareFileShareAsync(prevContinuation.AzureResourceInfo, logger);
-                        if (completed == 1)
+                        var prepareStatus = await providerHelper.CheckPrepareFileShareAsync(prevContinuation.AzureResourceInfo, prevContinuation.PrepareTaskInfo, logger);
+                        if (prepareStatus == PrepareFileShareStatus.Succeeded)
                         {
                             nextState = default;
+                        }
+                        else if (prepareStatus == PrepareFileShareStatus.Failed)
+                        {
+                            throw new StorageCreateException("Failed to prepare the file share.");
                         }
                         else
                         {
                             resultRetryAfter = TimeSpan.FromMinutes(1);
                             nextState = FileShareProviderCreateState.CheckFileShare;
+                            prepareTaskInfo = prevContinuation.PrepareTaskInfo;
                         }
 
                         break;
@@ -182,7 +188,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             }
             else
             {
-                var nextContinuation = new FileShareProviderCreateContinuationToken(nextState, resultResourceInfo);
+                var nextContinuation = new FileShareProviderCreateContinuationToken(nextState, resultResourceInfo, prepareTaskInfo);
                 resultContinuationToken = JsonConvert.SerializeObject(nextContinuation);
                 resultState = OperationState.InProgress;
             }

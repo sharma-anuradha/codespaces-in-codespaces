@@ -137,7 +137,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddComputeVirtualMachineProvider(appSettings.BackEnd.MocksSettings);
 
             // Storage Provider
-            services.AddStorageFileShareProvider(appSettings.BackEnd.MocksSettings);
+            services.AddStorageFileShareProvider(
+                appSettings.BackEnd.StorageProviderSettings,
+                appSettings.BackEnd.MocksSettings);
 
             // Capacity Manager
             services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);

@@ -111,6 +111,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
+        public Task<(string, string, string)> GetStampBatchAccountAsync(AzureLocation location, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation)
         {
             throw new NotImplementedException();

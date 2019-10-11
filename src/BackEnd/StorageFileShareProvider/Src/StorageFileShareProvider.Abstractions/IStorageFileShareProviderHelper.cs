@@ -40,16 +40,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         /// <param name="azureResourceInfo">Azure resource info of the storage account.</param>
         /// <param name="srcBlobUrl">Full url to blob to use (including SAS token with read permission to blob).</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>Task.</returns>
-        Task StartPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, string srcBlobUrl, IDiagnosticsLogger logger);
+        /// <returns>The task info that can be used to query the task</returns>
+        Task<PrepareFileShareTaskInfo> StartPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, string srcBlobUrl, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Check if the preparation of the file share has completed.
         /// </summary>
         /// <param name="azureResourceInfo">Azure resource info of the storage account.</param>
+        /// <param name="prepareTaskInfo">The info for the task preparing the file share.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>The percentage completed (from 0 - 1).</returns>
-        Task<double> CheckPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, IDiagnosticsLogger logger);
+        /// <returns>Status.</returns>
+        Task<PrepareFileShareStatus> CheckPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, PrepareFileShareTaskInfo prepareTaskInfo, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Provides the connection information needed to connect to the file share.

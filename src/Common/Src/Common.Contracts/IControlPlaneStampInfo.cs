@@ -64,6 +64,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string GetStampStorageAccountNameForStorageImages(AzureLocation computeStorageLocation);
 
         /// <summary>
+        /// Gets the control-plane stamp batch account name.
+        /// </summary>
+        /// <param name="azureLocation">The data-plane location.</param>
+        /// <returns>The batch account name.</returns>
+        string GetStampBatchAccountName(AzureLocation azureLocation);
+
+        /// <summary>
         /// Gets the control-plane stamp storage account name for storing billing submissions.
         /// </summary>
         /// <param name="billingLocation">The billing submisisonlocation.</param>

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.Blob;
@@ -17,6 +18,8 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
 using Moq;
 using Xunit;
 
@@ -29,19 +32,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         // Prefix for Azure resource group that will be created (then cleaned-up) by the test
         private static readonly string azureResourceGroupPrefix = "test-storage-file-share-";
         // File share template info (storage account should be in same Azure subscription as above)
-        private static readonly string fileShareTemplateStorageAccount = "vsclkcloudenvstbaseusw2";
-        private static readonly string fileShareTemplateContainerName = "ext4-images";
-        private static readonly string fileShareTemplateBlobName = "cloudenvdata_2964550";
-
+        private static readonly string fileShareTemplateStorageAccount = "vsodevciusw2siusw2";
+        private static readonly string fileShareTemplateContainerName = "templates";
+        private static readonly string fileShareTemplateBlobName = "cloudenvdata_kitchensink_1.0.802-gd48f49b5ef087333264e189bb12a7b8df825c334.release22.2";
+        private static readonly string batchAccountResourceGroup = "vsclk-online-dev-ci-usw2";
+        private static readonly string batchAccountName = "vsodevcibatchusw2usw2";
+        private static readonly string batchPoolId = "storage-worker-pool";
         private static readonly string azureLocationStr = "westus2";
         private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
         private static readonly string azureSubscriptionName = "ignorethis";
-        private static readonly IDictionary<string, string> resourceTags = new Dictionary<string, string>
-        {
-            {"ResourceTag", "GeneratedFromTest"},
-        };
         private static readonly int PREPARE_TIMEOUT_MINS = 60;
-        private static readonly int NUM_STORAGE_TO_CREATE = 1;
+        private static readonly int NUM_STORAGE_TO_CREATE = 2;
 
         private static IConfiguration InitConfiguration()
         {
@@ -53,13 +54,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
         private static string GetResourceGroupName(Guid groupGuid)
         {
-            return azureResourceGroupPrefix + groupGuid.ToString("N") + '-' + Guid.NewGuid().ToString("N");
+            return azureResourceGroupPrefix + groupGuid.ToString("N");
         }
 
         private static IServicePrincipal GetServicePrincipal()
         {
             var config = InitConfiguration();
-            
+
             var clientId = config["CLIENT_ID"];
             var tenantId = config["TENANT_ID"];
             var clientSecret = config["CLIENT_SECRET"];
@@ -90,13 +91,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             return catalogMoq;
         }
 
-        private static async Task<string> GetSrcBlobUrlAsync(IServicePrincipal servicePrincipal)
+        private static Mock<IControlPlaneAzureResourceAccessor> GetMockControlPlaneAzureResourceAccessor(IAzure azure)
+        {
+            var resourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
+            resourceAccessor.Setup(x => x.GetStampBatchAccountAsync(It.IsAny<AzureLocation>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(async () => {
+                    var batch = await azure.BatchAccounts.GetByResourceGroupAsync(batchAccountResourceGroup, batchAccountName);
+                    var batchKey = batch.GetKeys().Primary;
+                    return (batch.Name, batchKey, $"https://{batch.AccountEndpoint}");
+                });
+            return resourceAccessor;
+        }
+
+        private static async Task<IAzure> GetAzureClient(ISystemCatalog catalog)
         {
             // Get azure client
-            var catalogMoq = GetMockSystemCatalog(servicePrincipal);
-            var azureClientFactory = new AzureClientFactory(catalogMoq.Object);
+            var azureClientFactory = new AzureClientFactory(catalog);
             var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
+            return azure;
+        }
 
+        private static async Task<string> GetSrcBlobUrlAsync(IAzure azure)
+        {
             // Get storage account key
             var storageAccountsInSubscription = await azure.StorageAccounts.ListAsync();
             var srcStorageAccount = storageAccountsInSubscription.Single(sa => sa.Name == fileShareTemplateStorageAccount);
@@ -129,15 +145,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var resourceGroupTestGroupGuid = Guid.NewGuid();
             var servicePrincipal = GetServicePrincipal();
             var catalogMoq = GetMockSystemCatalog(servicePrincipal);
-            var srcBlobUrl = await GetSrcBlobUrlAsync(servicePrincipal);
+            var azure = await GetAzureClient(catalogMoq.Object);
+            var storageProviderSettings = new StorageProviderSettings() { WorkerBatchPoolId = batchPoolId };
+            var resourceAccessorMoq = GetMockControlPlaneAzureResourceAccessor(azure);
+            var srcBlobUrl = await GetSrcBlobUrlAsync(azure);
 
             // construct the real StorageFileShareProviderHelper
-            IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(catalogMoq.Object);
+            IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(
+                catalogMoq.Object,
+                resourceAccessorMoq.Object,
+                storageProviderSettings);
 
             // Create storage accounts
             var storageAccounts = await Task.WhenAll(
                 Enumerable.Range(0, NUM_STORAGE_TO_CREATE)
-                    .Select(x => providerHelper.CreateStorageAccountAsync(azureSubscriptionId, azureLocationStr,  GetResourceGroupName(resourceGroupTestGroupGuid), resourceTags, logger))
+                    .Select(x => providerHelper.CreateStorageAccountAsync(
+                        azureSubscriptionId,
+                        azureLocationStr,
+                        GetResourceGroupName(resourceGroupTestGroupGuid),
+                        new Dictionary<string, string> { {"ResourceTag", "GeneratedFromTest"}, },
+                        logger))
             );
 
             try
@@ -146,24 +173,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 await Task.WhenAll(storageAccounts.Select(sa => providerHelper.CreateFileShareAsync(sa, logger)));
 
                 // Start file share preparations
-                await Task.WhenAll(storageAccounts.Select(sa => providerHelper.StartPrepareFileShareAsync(sa, srcBlobUrl, logger)));
-                
-                double[] completedPercent  = new double[NUM_STORAGE_TO_CREATE];
+                var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => providerHelper.StartPrepareFileShareAsync(sa, srcBlobUrl, logger)));
+
+                PrepareFileShareStatus[] fileShareStatus  = new PrepareFileShareStatus[NUM_STORAGE_TO_CREATE];
 
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
-                
-                while (completedPercent.Any(x => x != 1) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
+
+                while (fileShareStatus.Any(x => x != PrepareFileShareStatus.Succeeded) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
                 {
                     Thread.Sleep(TimeSpan.FromMinutes(1));
-                    // Check completion status
-                    completedPercent = await Task.WhenAll(storageAccounts.Select(sa => providerHelper.CheckPrepareFileShareAsync(sa, logger)));
+                    fileShareStatus = await Task.WhenAll(storageAccounts.Zip(prepareFileShareTaskInfos, (sa, prepareInfo) => providerHelper.CheckPrepareFileShareAsync(sa, prepareInfo, logger)));
                 }
 
                 stopWatch.Stop();
 
                 // Verify that none still haven't finished after the timeout
-                if (completedPercent.Any(x => x != 1))
+                if (fileShareStatus.Any(x => x != PrepareFileShareStatus.Succeeded))
                 {
                     Assert.True(false, string.Format("Failed to complete all file share preparations in given time of {0} minutes.", PREPARE_TIMEOUT_MINS));
                 }
