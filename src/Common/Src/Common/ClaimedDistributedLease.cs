@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_obtain",
-                (childLogger) =>
+                async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
                         .FluentAddBaseValue("LeaseContainerName", containerName)
@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                     try
                     {
-                        return InnerCreate(containerName, name, claimDateTime, childLogger);
+                        return await InnerCreate(containerName, name, claimDateTime, childLogger);
                     }
                     catch (StorageException e) when (e.RequestInformation.ErrorCode == "LeaseAlreadyPresent")
                     {
