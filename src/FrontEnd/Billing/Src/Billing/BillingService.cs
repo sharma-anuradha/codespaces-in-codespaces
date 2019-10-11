@@ -474,7 +474,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 var billingSlice = new BillingWindowSlice
                 {
                     BillingState = endState == CloudEnvironmentState.Shutdown ? 
-                        BillingWindowBillingState.Active : BillingWindowBillingState.Inactive,
+                        BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
                     EndTime = latestEvent.Time,
                     LastState = endState,
                     StartTime = latestEvent.Time,
