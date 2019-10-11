@@ -81,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         catch (Exception e)
                         {
                             logger.AddDuration(duration)
-                                .LogErrorWithDetail($"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", e.Message);
+                                .LogException($"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", e);
                         }
                     }
                     else

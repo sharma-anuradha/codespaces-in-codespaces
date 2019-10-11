@@ -651,7 +651,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
         }
 
-        /// <inheritdoc/>
+       /// <inheritdoc/>
         public async Task<CloudEnvironment> GetEnvironmentByIdAsync(
             string id,
             IDiagnosticsLogger logger)

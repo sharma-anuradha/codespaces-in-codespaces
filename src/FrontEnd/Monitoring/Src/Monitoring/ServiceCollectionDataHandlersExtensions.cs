@@ -20,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring
         public static IServiceCollection AddHeartBeatDataHandlers(this IServiceCollection services)
         {
             services.AddSingleton<IDataHandler, EnvironmentDataHandler>();
+            services.AddSingleton<IDataHandler, StartEnviornmentResultHandler>();
             /* Add additional handlers here as needed */
 
             return services;

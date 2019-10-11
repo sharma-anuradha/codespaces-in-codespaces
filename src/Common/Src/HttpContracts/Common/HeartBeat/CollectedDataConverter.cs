@@ -21,23 +21,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
             {
                 var collectedData = JObject.Load(reader);
                 var name = (string)collectedData["name"];
-
-                switch (name)
+                if (string.IsNullOrEmpty(name))
                 {
-                    case nameof(EnvironmentData):
-                        var environmentData = new EnvironmentData
-                        {
-                            EnvironmentId = (string)collectedData["environmentId"],
-                            Name = name,
-                            SessionPath = (string)collectedData["sessionPath"],
-                            State = collectedData["state"].ToObject<VsoEnvironmentState>(),
-                            EnvironmentType = collectedData["environmentType"].ToObject<VsoEnvironmentType>(),
-                            TimeStamp = (DateTime)collectedData["timestamp"],
-                        };
-                        return environmentData;
+                    return null;
+                }
 
-                    default:
-                        return null;
+                if (name.Equals((nameof(EnvironmentData), StringComparison.OrdinalIgnoreCase)))
+                {
+                    var environmentData = new EnvironmentData
+                    {
+                        EnvironmentId = (string)collectedData["environmentId"],
+                        Name = (string)collectedData["name"],
+                        SessionPath = (string)collectedData["sessionPath"],
+                        State = collectedData["state"].ToObject<VsoEnvironmentState>(),
+                        EnvironmentType = collectedData["environmentType"].ToObject<VsoEnvironmentType>(),
+                        TimeStamp = (DateTime)collectedData["timestamp"],
+                    };
+                    return environmentData;
+                }
+                else if (Enum.TryParse<JobCommand>(name, out var jobCommand))
+                {
+                    var jobResult = collectedData.ToObject<JobResult>();
+                    return jobResult;
+                }
+                else
+                {
+                    return null;
                 }
             }
             catch
