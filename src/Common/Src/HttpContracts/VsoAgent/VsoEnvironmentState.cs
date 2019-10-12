@@ -41,5 +41,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
         /// Liveshare relay is connected.
         /// </summary>
         VslsRelayConnected = 16,
+
+        /// <summary>
+        /// Environment is idle
+        /// </summary>
+        Idle = 32,
     }
 }

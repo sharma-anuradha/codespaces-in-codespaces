@@ -32,6 +32,13 @@ mkdir -p /.vsonline/vsoagent/bin
 cd /.vsonline/vsoagent/bin
 wget -qO- -O tmp.zip $SCRIPT_PARAM_VMAGENT_BLOB_URL && unzip tmp.zip && rm tmp.zip
 
+echo "Create vso shared folder ..."
+mkdir -p /.vsonline/.vsoshared
+
+echo "Create monitor files"
+touch /.vsonline/.vsoshared/connection-monitor.json
+chmod o+rw /.vsonline/.vsoshared/connection-monitor.json
+
 echo "Install vso agent ..."
 chmod +x install_vsoagent.sh uninstall_vsoagent.sh
 ./install_vsoagent.sh

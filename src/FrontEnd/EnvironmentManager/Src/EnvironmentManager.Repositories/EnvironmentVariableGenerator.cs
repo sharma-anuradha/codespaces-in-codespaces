@@ -34,6 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 // Variables for vscode cloudenv extension
                 new EnvVarEnvironmentId(cloudEnvironment),
                 new EnvVarServiceEndpoint(cloudEnvironment, serviceUri),
+                new EnvVarAutoShutdownTime(cloudEnvironment),
 
                 // Variables for repository seed
                 new EnvVarGitRepoUrl(cloudEnvironment),
@@ -153,6 +154,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             }
 
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Generates the environment auto shutdown time.
+    /// </summary>
+    public class EnvVarAutoShutdownTime : EnvironmentVariableStrategy
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnvVarAutoShutdownTime"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        public EnvVarAutoShutdownTime(CloudEnvironment cloudEnvironment)
+            : base(cloudEnvironment)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            return new Tuple<string, string>(EnvironmentVariableConstants.AutoShutdownTime, CloudEnvironment.AutoShutdownDelayMinutes.ToString());
         }
     }
 

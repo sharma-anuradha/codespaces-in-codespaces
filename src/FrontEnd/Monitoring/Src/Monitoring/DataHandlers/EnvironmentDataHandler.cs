@@ -50,6 +50,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
             var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
             await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, logger, newState);
+
+            // Verify if shutdown is needed
+            if (IsFlagSet(environmentData.State, VsoEnvironmentState.Idle))
+            {
+                await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, vmResourceId, logger);
+            }
         }
 
         private void ValidateCloudEnvironment(CloudEnvironment cloudEnvironment, string inputEnvironmentId)
@@ -126,6 +132,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         private CloudEnvironmentState DetermineNewStateForVmBasedEnvironment(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
         {
             return default;
+        }
+
+        private bool IsFlagSet(VsoEnvironmentState current, VsoEnvironmentState flag)
+        {
+            return (current & flag) == flag;
         }
     }
 }

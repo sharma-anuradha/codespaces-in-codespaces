@@ -125,5 +125,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "lastUpdatedByHeartBeat")]
         public DateTime LastUpdatedByHeartBeat { get; set; }
+
+        /// <summary>
+        /// Gets or sets the auto shutdown time the user specified.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "autoShutdownDelayMinutes")]
+        public int AutoShutdownDelayMinutes { get; set; }
     }
 }

@@ -112,7 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
                     throw new DirectoryNotFoundException($"{cliPublishedpath} not found. Make sure you publish the cli and point appsettings.Development.json at it.");
                 }
 
-                string vsoCliExecutable = Path.Combine(cliPublishedpath, "vsonline");
+                string vsoCliExecutable = Path.Combine(cliPublishedpath, "vso");
                 if (!File.Exists(vsoCliExecutable))
                 {
                     throw new FileNotFoundException($"{vsoCliExecutable} not found. Publish VSO CLI and check the output.");
