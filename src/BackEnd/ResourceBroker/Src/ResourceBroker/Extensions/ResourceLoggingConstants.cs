@@ -98,5 +98,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Delete Orphaned Continuation Task Message Handler name.
         /// </summary>
         public const string ContinuationTaskMessageHandlerDeleteOrphaned = "continuation_task_message_handler_delete_orphaned";
+
+        /// <summary>
+        /// Cleanup Continuation Task Message Handler name.
+        /// </summary>
+        public const string ContinuationTaskMessageHandlerCleanup = "continuation_task_message_handler_cleanup";
     }
 }

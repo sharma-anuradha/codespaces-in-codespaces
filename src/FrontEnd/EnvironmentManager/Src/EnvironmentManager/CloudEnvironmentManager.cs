@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public async Task<CloudEnvironmentServiceResult> ShutdownEnvironmentAsync(
             string id,
             string currentUserId,
@@ -112,7 +112,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     };
                 }
 
-                if (cloudEnvironment.State == CloudEnvironmentState.Shutdown)
+                if (cloudEnvironment.State == CloudEnvironmentState.Shutdown ||
+                    cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
                 {
                     return new CloudEnvironmentServiceResult
                     {
@@ -121,44 +122,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     };
                 }
 
-                if (cloudEnvironment.State != CloudEnvironmentState.Available &&
-                    cloudEnvironment.State != CloudEnvironmentState.Starting)
+                if (cloudEnvironment.State == CloudEnvironmentState.Available ||
+                    cloudEnvironment.State == CloudEnvironmentState.Starting)
                 {
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, logger);
+
+                    // Update the database state.
+                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+                    // Start the cleanup operation to shutdown environment.
+                    await ResourceBrokerClient.CleanupResourceAsync(cloudEnvironment.Compute.ResourceId, cloudEnvironment.Id, logger);
+
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentAsync)));
+
                     return new CloudEnvironmentServiceResult
                     {
-                        CloudEnvironment = null,
-                        ErrorCode = ErrorCodes.EnvironmentNotAvailable,
-                        HttpStatusCode = StatusCodes.Status400BadRequest,
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
                     };
                 }
 
-                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, logger);
-                var computeIdToken = cloudEnvironment.Compute?.ResourceId;
-                var connectionSessionId = cloudEnvironment.Connection.ConnectionSessionId;
-
-                cloudEnvironment.Compute = null;
-                cloudEnvironment.Connection = null;
-
-                // Update the database state.
-                await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-
-                // Delete the allocated resources.
-                if (computeIdToken != null)
-                {
-                    await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
-                }
-
-                // Delete the liveshare session from database.
-                await WorkspaceRepository.DeleteAsync(connectionSessionId);
-
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentAsync)));
-
                 return new CloudEnvironmentServiceResult
                 {
-                    CloudEnvironment = cloudEnvironment,
-                    HttpStatusCode = StatusCodes.Status200OK,
+                    CloudEnvironment = null,
+                    ErrorCode = ErrorCodes.EnvironmentNotAvailable,
+                    HttpStatusCode = StatusCodes.Status400BadRequest,
                 };
             }
             catch (Exception ex)
@@ -166,6 +156,77 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 logger
                     .AddDuration(duration)
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ShutdownEnvironmentAsync)), ex.Message);
+
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task ShutdownEnvironmentCallbackAsync(
+            string id,
+            bool wasSuccessful,
+            IDiagnosticsLogger logger)
+        {
+            var duration = logger.StartDuration();
+
+            try
+            {
+                Requires.NotNull(id, nameof(id));
+                Requires.NotNull(logger, nameof(logger));
+
+                // Check if the environment exists.
+                var cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
+                if (cloudEnvironment == null)
+                {
+                    return;
+                }
+
+                // Static Environment
+                if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                {
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentCallbackAsync)));
+
+                    return;
+                }
+
+                if (cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
+                {
+                    if (wasSuccessful)
+                    {
+                        await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, logger);
+                        var computeIdToken = cloudEnvironment.Compute?.ResourceId;
+                        cloudEnvironment.Compute = null;
+
+                        // Update the database state.
+                        await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+                        // Delete the allocated resources.
+                        if (computeIdToken != null)
+                        {
+                            await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
+                        }
+
+                        logger.AddDuration(duration)
+                            .AddCloudEnvironment(cloudEnvironment)
+                            .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentCallbackAsync)));
+                    }
+                    else
+                    {
+                        // TODO: Code to recover vm.
+                        // If detaching storage from the vm failed, set it to available state.
+                        // await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, logger);
+                        // Update the database state.
+                        // await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger
+                    .AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ShutdownEnvironmentCallbackAsync)), ex.Message);
 
                 throw;
             }
@@ -239,6 +300,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         ErrorCode = ErrorCodes.EnvironmentNotShutdown,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
+                }
+
+                var connectionSessionId = cloudEnvironment.Connection?.ConnectionSessionId;
+                if (!string.IsNullOrWhiteSpace(connectionSessionId))
+                {
+                    // Delete the previous liveshare session from database.
+                    await WorkspaceRepository.DeleteAsync(connectionSessionId);
+                    cloudEnvironment.Connection = null;
                 }
 
                 // Allocate Compute
@@ -712,7 +781,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             return true;
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public async Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger, CloudEnvironmentState newState)
         {
             cloudEnvironment.Updated = DateTime.UtcNow;

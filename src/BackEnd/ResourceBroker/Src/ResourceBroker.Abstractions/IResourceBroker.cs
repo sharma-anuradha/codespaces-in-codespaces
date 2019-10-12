@@ -30,6 +30,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         Task<DeallocateResult> DeallocateAsync(DeallocateInput input, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Performs cleanup operations to be done before delete on the resource.
+        /// </summary>
+        /// <param name="input">The cleanup input.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the cleanup operation was successful.</returns>
+        Task<CleanupResult> CleanupAsync(CleanupInput input, IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Start compute with storage and startup parameters.
         /// </summary>
         /// <param name="input">Input for the environment to be started.</param>

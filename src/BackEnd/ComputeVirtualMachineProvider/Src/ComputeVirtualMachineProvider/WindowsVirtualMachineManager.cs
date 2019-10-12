@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Azure.KeyVault.Models;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
@@ -359,6 +360,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                 return (OperationState.Failed, default, 0);
             }
+        }
+
+        /// <inheritdoc/>
+        public Task<(OperationState, int)> ShutdownComputeAsync(VirtualMachineProviderShutdownInput input, int retryAttempt, IDiagnosticsLogger logger)
+        {
+            return default;
         }
 
         private static OperationState GetFinalState(Dictionary<string, VmResourceState> resourcesToBeDeleted)

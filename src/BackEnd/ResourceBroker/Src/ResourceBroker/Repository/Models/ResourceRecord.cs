@@ -141,10 +141,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// </summary>
         public IList<OperationStateChanges> DeletingStatusChanges { get; set; }
 
-        /// <summary>
+		/// <summary>
         /// Gets or sets the current state of the Keep Alives.
         /// </summary>
         public ResourceKeepAliveRecord KeepAlives { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cleanup reason.
+        /// </summary>
+        public string CleanupReason { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cleanup status.
+        /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
+        public OperationState? CleanupStatus { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cleanup Status Changed date.
+        /// </summary>
+        public DateTime? CleanupStatusChanged { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cleanup Status Changes.
+        /// </summary>
+        public IList<OperationStateChanges> CleanupStatusChanges { get; set; }
 
         /// <summary>
         /// Gets or sets the Properties.
@@ -255,6 +276,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 IsReady = false;
                 IsDeleted = true;
             }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Updates the cleanup status.
+        /// </summary>
+        /// <param name="newState">Target new state.</param>
+        /// <param name="trigger">Trigger that caused the action.</param>
+        /// <param name="newTime">Time if that is being set.</param>
+        /// <returns>Returns if the update occured.</returns>
+        public bool UpdateCleanupStatus(OperationState newState, string trigger, DateTime? newTime = null)
+        {
+            if (CleanupStatus.HasValue && CleanupStatus.Value == newState)
+            {
+                return false;
+            }
+
+            if (CleanupStatusChanges == null)
+            {
+                CleanupStatusChanges = new List<OperationStateChanges>();
+            }
+
+            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
+            CleanupStatus = newState;
+            CleanupStatusChanged = time;
+            CleanupStatusChanges.Add(new OperationStateChanges
+            {
+                Status = newState,
+                Time = time,
+                Trigger = trigger,
+            });
 
             return true;
         }

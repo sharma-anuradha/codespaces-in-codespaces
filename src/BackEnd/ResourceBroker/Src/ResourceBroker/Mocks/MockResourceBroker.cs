@@ -39,6 +39,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
             });
         }
 
+        public Task<CleanupResult> CleanupAsync(CleanupInput input, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(new CleanupResult { Successful = true });
+        }
+
         /// <inheritdoc/>
         public Task<DeallocateResult> DeallocateAsync(DeallocateInput input, IDiagnosticsLogger logger)
         {

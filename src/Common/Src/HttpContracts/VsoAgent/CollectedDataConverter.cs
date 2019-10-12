@@ -3,14 +3,13 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
 {
     /// <summary>
-    /// Converting JSON representation of AbstractMonitorState to concrete object.
+    /// Converting JSON representation of <see cref="CollectedData"/> to concrete object.
     /// </summary>
     public class CollectedDataConverter : JsonConverter<CollectedData>
     {
@@ -26,20 +25,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
                     return null;
                 }
 
-                if (name.Equals((nameof(EnvironmentData), StringComparison.OrdinalIgnoreCase)))
+                if (name.Equals(nameof(EnvironmentData), StringComparison.OrdinalIgnoreCase))
                 {
-                    var environmentData = new EnvironmentData
-                    {
-                        EnvironmentId = (string)collectedData["environmentId"],
-                        Name = (string)collectedData["name"],
-                        SessionPath = (string)collectedData["sessionPath"],
-                        State = collectedData["state"].ToObject<VsoEnvironmentState>(),
-                        EnvironmentType = collectedData["environmentType"].ToObject<VsoEnvironmentType>(),
-                        TimeStamp = (DateTime)collectedData["timestamp"],
-                    };
+                    var environmentData = collectedData.ToObject<EnvironmentData>();
                     return environmentData;
                 }
-                else if (Enum.TryParse<JobCommand>(name, out var jobCommand))
+                else if (!string.IsNullOrEmpty((string)collectedData["jobState"]))
                 {
                     var jobResult = collectedData.ToObject<JobResult>();
                     return jobResult;

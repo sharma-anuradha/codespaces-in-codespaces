@@ -113,5 +113,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         Task<CloudEnvironment> GetEnvironmentByIdAsync(string id, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Callback to be executed after running shutdown on the vm.
+        /// </summary>
+        /// <param name="id">The environment id.</param>
+        /// <param name="wasSuccessful">Whether the shutdown was successful.</param>
+        /// <param name="logger">Diagnostics logger.</param>
+        /// <returns>A task.</returns>
+        Task ShutdownEnvironmentCallbackAsync(string id, bool wasSuccessful, IDiagnosticsLogger logger);
     }
 }

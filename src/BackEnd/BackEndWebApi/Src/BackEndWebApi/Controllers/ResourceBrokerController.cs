@@ -173,6 +173,62 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <summary>
+        /// Cleans a resource in the resource broker.
+        /// <para>
+        /// GET api/resourcebroker/resources/cleanup?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="id">The resource id token.</param>
+        /// <param name="environmentId">The environment id.</param>
+        /// <returns>No content.</returns>
+        [HttpPost("cleanup")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CleanupAsync(
+            [FromQuery] string id,
+            [FromQuery] string environmentId)
+        {
+            var logger = HttpContext.GetLogger();
+            var duration = logger.StartDuration();
+
+            if (!Guid.TryParse(id, out var resourceId))
+            {
+                logger.AddDuration(duration)
+                    .AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid")
+                    .LogError(GetType().FormatLogErrorMessage(nameof(CleanupAsync)));
+
+                return BadRequest();
+            }
+
+            try
+            {
+                if (!await ResourceBrokerHttp.CleanupResourceAsync(resourceId, environmentId, logger))
+                {
+                    logger.AddDuration(duration)
+                        .AddResourceId(resourceId)
+                        .AddReason($"{HttpStatusCode.NotFound}")
+                        .LogInfo(GetType().FormatLogErrorMessage(nameof(CleanupAsync)));
+
+                    return NotFound();
+                }
+
+                logger.AddDuration(duration)
+                    .AddResourceId(resourceId)
+                    .LogInfo(GetType().FormatLogMessage(nameof(CleanupAsync)));
+
+                return NoContent();
+            }
+            catch (Exception)
+            {
+                logger.AddDuration(duration)
+                    .AddResourceId(resourceId)
+                    .LogError(GetType().FormatLogErrorMessage(nameof(CleanupAsync)));
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Start a compute resource.
         /// <para>
         /// POST api/v1/resourcebroker/resources/start?id={id}
@@ -266,6 +322,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         async Task<bool> IResourceBrokerResourcesHttpContract.DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             return (await ResourceBroker.DeallocateAsync(new DeallocateInput { ResourceId = resourceId, Trigger = "FrontEndDeleteResourceService" }, logger.WithValues(new LogValueSet()))).Successful;
+        }
+
+        /// <inheritdoc/>
+        async Task<bool> IResourceBrokerResourcesHttpContract.CleanupResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        {
+            return (await ResourceBroker.CleanupAsync(
+                new CleanupInput
+                {
+                    ResourceId = resourceId,
+                    Trigger = "FrontEndCleanupResourceService",
+                    EnvironmentId = environmentId,
+                }, logger.WithValues(new LogValueSet()))).Successful;
         }
 
         /// <inheritdoc/>

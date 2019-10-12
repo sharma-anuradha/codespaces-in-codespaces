@@ -21,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring
         {
             services.AddSingleton<IDataHandler, EnvironmentDataHandler>();
             services.AddSingleton<IDataHandler, StartEnviornmentResultHandler>();
+            services.AddSingleton<IDataHandler, ShutdownJobHandler>();
             /* Add additional handlers here as needed */
 
             return services;

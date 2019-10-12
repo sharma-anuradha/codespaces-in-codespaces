@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -112,6 +113,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 Reason = trigger,
             };
             var target = DeleteResourceContinuationHandler.DefaultQueueTarget;
+
+            return await activator.Execute(target, input, logger, input.ResourceId);
+        }
+
+        /// <summary>
+        /// Delete resource by invoking the continution activator.
+        /// </summary>
+        /// <param name="activator">Target continuation activator.</param>
+        /// <param name="resourceId">Target resource id.</param>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="trigger">Trigger for operation.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Resuling continuation result.</returns>
+        public static async Task<ContinuationResult> CleanupResource(
+            this IContinuationTaskActivator activator,
+            Guid resourceId,
+            string environmentId,
+            string trigger,
+            IDiagnosticsLogger logger)
+        {
+            logger.FluentAddBaseValue("ResourceId", resourceId);
+
+            var input = new CleanupResourceContinuationInput()
+            {
+                ResourceId = resourceId,
+                Reason = trigger,
+                EnvironmentId = environmentId,
+            };
+            var target = CleanupResourceContinuationHandler.DefaultQueueTarget;
 
             return await activator.Execute(target, input, logger, input.ResourceId);
         }

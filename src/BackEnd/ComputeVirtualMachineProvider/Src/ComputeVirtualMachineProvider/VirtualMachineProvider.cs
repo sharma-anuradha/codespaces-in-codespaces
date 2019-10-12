@@ -81,8 +81,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public Task<VirtualMachineProviderDeleteResult> DeleteAsync(
-            VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
+        public Task<VirtualMachineProviderShutdownResult> ShutdownAsync(VirtualMachineProviderShutdownInput input, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
+
+            return logger.OperationScopeAsync(
+               "virtual_machine_compute_provider_shutdown_compute",
+               async (childLogger) =>
+               {
+                   var deploymentManager = SelectDeploymentManager(input.ComputeOS);
+                   var duration = logger.StartDuration();
+                   childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString())
+                        .FluentAddBaseValue(nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup)
+                        .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name)
+                        .FluentAddBaseValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString());
+
+                   var getRetryAttempt = int.TryParse(input.ContinuationToken, out int count);
+                   var retryAttemptCount = getRetryAttempt ? count : 0;
+                   var shutdownOperationResult = await deploymentManager.ShutdownComputeAsync(input, retryAttemptCount, logger);
+                   var result = new VirtualMachineProviderShutdownResult
+                   {
+                       Status = shutdownOperationResult.Item1,
+                       NextInput = (shutdownOperationResult.Item1 == OperationState.Succeeded) ? default : input.BuildNextInput(shutdownOperationResult.Item2.ToString()),
+                   };
+                   childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
+                        .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
+                   return result;
+               });
+        }
+
+        /// <inheritdoc/>
+        public Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));

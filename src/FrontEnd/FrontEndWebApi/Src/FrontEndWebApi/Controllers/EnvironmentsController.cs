@@ -166,7 +166,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <param name="environmentId">The environment id.</param>
         /// <returns>A cloud environment.</returns>
-        [HttpGet("shutdown/{environmentId}")]
+        [HttpPost("{environmentId}/shutdown")]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -234,7 +234,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <param name="environmentId">The environment id.</param>
         /// <returns>A cloud environment.</returns>
-        [HttpGet("start/{environmentId}")]
+        [HttpPost("{environmentId}/start")]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

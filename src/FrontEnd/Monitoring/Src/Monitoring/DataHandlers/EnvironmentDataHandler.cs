@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             var cloudEnvironment = await environmentManager.GetEnvironmentByIdAsync(environmentData.EnvironmentId, logger);
             ValidateCloudEnvironment(cloudEnvironment, environmentData.EnvironmentId);
 
-            cloudEnvironment.LastUpdatedByHeartBeat = environmentData.TimeStamp;
+            cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
             cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
             var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
             await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, logger, newState);

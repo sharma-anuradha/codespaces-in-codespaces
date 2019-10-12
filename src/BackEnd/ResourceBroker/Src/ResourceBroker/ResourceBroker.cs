@@ -120,6 +120,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
+        public Task<CleanupResult> CleanupAsync(
+            CleanupInput input,
+            IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_cleanup",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("ResourceId", input.ResourceId);
+                    await ContinuationTaskActivator.CleanupResource(input.ResourceId, input.EnvironmentId, input.Trigger, logger);
+                    return new CleanupResult { Successful = true };
+                });
+        }
+
+        /// <inheritdoc/>
         public Task<EnvironmentStartResult> StartComputeAsync(
             EnvironmentStartInput input,
             IDiagnosticsLogger logger)

@@ -8,6 +8,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     {
         Deleting,
         Starting,
-        Provisioning
+        Provisioning,
+        CleanUp,
     }
 }

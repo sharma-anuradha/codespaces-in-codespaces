@@ -30,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         public async Task<ResourceBrokerResource> CreateResourceAsync(CreateResourceRequestBody input, IDiagnosticsLogger logger)
         {
             var requestUri = ResourceBrokerHttpContract.GetCreateResourceUri();
-            var result = await SendAsync<CreateResourceRequestBody, ResourceBrokerResource>(ResourceBrokerHttpContract.CreateResourceMethod, requestUri, input, logger);
+            var result = await SendAsync<CreateResourceRequestBody, ResourceBrokerResource>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, input, logger);
             return result;
         }
 
@@ -63,6 +63,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
                 startComputeRequestBody,
                 logger);
             return;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> CleanupResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(resourceId, nameof(resourceId));
+            var requestUri = ResourceBrokerHttpContract.GetCleanupResourceUri(resourceId, environmentId);
+            await SendRawAsync<string>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, null, logger);
+            return true;
         }
     }
 }

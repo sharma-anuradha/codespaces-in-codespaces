@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                        if (cloudEnvironment.State == CloudEnvironmentState.Provisioning)
                        {
-                           cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.TimeStamp;
+                           cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
                            var newState = CloudEnvironmentState.Unavailable;
                            await cloudEnvironmentManager.UpdateEnvironmentAsync(cloudEnvironment, logger, newState);
                            return;

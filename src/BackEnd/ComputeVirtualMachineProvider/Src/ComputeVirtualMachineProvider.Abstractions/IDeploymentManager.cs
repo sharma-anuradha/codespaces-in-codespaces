@@ -79,5 +79,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <param name="logger">Diagnostics logger object.</param>
         /// <returns>Operation state and Continuation object.</returns>
         Task<(OperationState, NextStageInput)> CheckDeleteComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Shuts down the virtual machine.
+        /// </summary>
+        /// <param name="input">The input info.</param>
+        /// <param name="retryAttempt">Retry attempt.</param>
+        /// <param name="logger">Diagnostics logger.</param>
+        /// <returns>The status of the operation and retry attempt.</returns>
+        Task<(OperationState, int)> ShutdownComputeAsync(VirtualMachineProviderShutdownInput input, int retryAttempt, IDiagnosticsLogger logger);
     }
 }

@@ -52,5 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             return Task.CompletedTask;
         }
+
+        /// <inheritdoc/>
+        public Task<bool> CleanupResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
     }
 }

@@ -241,6 +241,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 record.Value.ProvisioningReason = input.Reason;
                 stateChanged = record.Value.UpdateProvisioningStatus(state, trigger);
             }
+            else if (Operation == ResourceOperation.CleanUp)
+            {
+                record.Value.CleanupReason = input.Reason;
+                stateChanged = record.Value.UpdateCleanupStatus(state, trigger);
+            }
             else
             {
                 throw new NotSupportedException($"Operation type is not supported - {Operation}");

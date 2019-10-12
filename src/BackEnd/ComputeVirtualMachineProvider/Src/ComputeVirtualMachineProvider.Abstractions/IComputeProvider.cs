@@ -4,6 +4,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions
@@ -50,5 +51,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         ///     of the create request.
         /// </returns>
         Task<VirtualMachineProviderStartComputeResult> StartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Shuts down the vm.
+        /// </summary>
+        /// <param name="input">Provides input to shutdown the cloud environment.</param>
+        /// <param name="diagnosticsLogger">Diagnostics logger.</param>
+        /// <returns>
+        ///     Result of the shutdown operation which includes the TrackingId which
+        ///     can be used to call the StatusCheckAsync to find out the status
+        ///     of the create request.
+        /// </returns>
+        Task<VirtualMachineProviderShutdownResult> ShutdownAsync(VirtualMachineProviderShutdownInput input, IDiagnosticsLogger diagnosticsLogger);
     }
 }

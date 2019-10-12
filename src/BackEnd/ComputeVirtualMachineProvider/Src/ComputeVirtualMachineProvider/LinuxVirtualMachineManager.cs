@@ -269,6 +269,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
+        public async Task<(OperationState, int)> ShutdownComputeAsync(VirtualMachineProviderShutdownInput input, int retryAttempt, IDiagnosticsLogger logger)
+        {
+            try
+            {
+                var vmAgentQueueMessage = new QueueMessage
+                {
+                    Command = "ShutdownEnvironment",
+                    Id = input.EnvironmentId,
+                };
+
+                var message = new CloudQueueMessage(JsonConvert.SerializeObject(vmAgentQueueMessage));
+                var queue = await GetQueueClientAsync(input.AzureVmLocation, GetInputQueueName(input.AzureResourceInfo.Name), logger);
+
+                // Push the message to queue.
+                queue.AddMessage(message);
+
+                return (OperationState.Succeeded, 0);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException("linux_virtual_machine_manager_shutdown_compute_error", ex);
+
+                if (retryAttempt < 5)
+                {
+                    return (OperationState.InProgress, retryAttempt + 1);
+                }
+
+                return (OperationState.Failed, retryAttempt);
+            }
+        }
+
+        /// <inheritdoc/>
         public async Task<(OperationState, NextStageInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
         {
             try
@@ -453,10 +485,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         private async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineOutputQueueConnectionInfoAsync(
-           AzureLocation location,
-           string queueName,
-           int retryAttempCount,
-           IDiagnosticsLogger logger)
+          AzureLocation location,
+          string queueName,
+          int retryAttempCount,
+          IDiagnosticsLogger logger)
         {
             try
             {

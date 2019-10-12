@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// <summary>
         /// The create resource http method.
         /// </summary>
-        public static readonly HttpMethod CreateResourceMethod = HttpMethod.Post;
+        public static readonly HttpMethod PostResourceMethod = HttpMethod.Post;
 
         /// <summary>
         /// The create resource http method.
@@ -76,6 +76,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// <param name="resourceId">The resource id token.</param>
         /// <returns>Uri.</returns>
         public static string GetDeleteResourceUri(Guid resourceId) => GetResourceUri(resourceId);
+
+        /// <summary>
+        /// Get the cleanup uri.
+        /// </summary>
+        /// <param name="resourceId">The resource id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetCleanupResourceUri(Guid resourceId, string environmentId) => $"{ResourcesRoute}/cleanup?id={resourceId}&environmentId={environmentId}";
 
         /// <summary>
         /// Get the resource uri with id.

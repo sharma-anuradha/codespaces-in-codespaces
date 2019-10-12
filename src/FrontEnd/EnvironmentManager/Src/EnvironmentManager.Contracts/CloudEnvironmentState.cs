@@ -53,5 +53,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Environment is starting.
         /// </summary>
         Starting,
+
+        /// <summary>
+        /// Environment is detaching storage in preparation for shutdown.
+        /// </summary>
+        ShuttingDown,
     }
 }

@@ -38,6 +38,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Perform cleanup operations prior to delete on a resource from the resource broker.
+        /// </summary>
+        /// <param name="resourceId">The resource id.</param>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the resource has been cleaned.</returns>
+        Task<bool> CleanupResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Start the compute VM instance with the specified storage.
         /// </summary>
         /// <param name="computeResourceId">The compute resource id.</param>
