@@ -15,7 +15,7 @@ describe('fetchConfiguration', () => {
     });
 
     it('sets auth token', async () => {
-        const signOut = jest
+        const logout = jest
             .spyOn(authService, 'getCachedToken')
             .mockReturnValue(
                 Promise.resolve({
@@ -32,6 +32,6 @@ describe('fetchConfiguration', () => {
             getAuthTokenActionType,
             getAuthTokenSuccessActionType
         );
-        expect(signOut).toHaveBeenCalled();
+        expect(logout).toHaveBeenCalled();
     });
 });

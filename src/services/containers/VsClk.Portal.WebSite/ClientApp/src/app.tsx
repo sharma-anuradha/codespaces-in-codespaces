@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { connect, Provider } from 'react-redux';
-import './app.css';
 import { configureStore } from './store/configureStore';
 import { init } from './actions/init';
 import { ApplicationState } from './reducers/rootReducer';
@@ -12,6 +11,8 @@ import { ConfigurationState } from './reducers/configuration';
 import { routes } from './routes';
 import { telemetry } from './utils/telemetry';
 import { ApplicationLoadEvent } from './utils/telemetry/ApplicationLoadEvent';
+
+import './app.css';
 
 export interface AppState {}
 

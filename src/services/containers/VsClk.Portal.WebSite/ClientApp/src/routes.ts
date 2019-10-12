@@ -2,7 +2,7 @@ import { RouteProps, RouteComponentProps, matchPath as routerMatch, match } from
 
 import { NewEnvironment } from './components/newEnvironment/newEnvironment';
 import { EnvironmentsPanel } from './components/environments/environments';
-import { Welcome } from './components/welcome/welcome';
+import { Login } from './components/login/login';
 import { Workbench } from './components/workbench/workbench';
 import { GitHubLogin } from './components/gitHubLogin/gitHubLogin';
 import { BlogPost } from './BlogPost';
@@ -39,9 +39,9 @@ export const routes: Route[] = [
     },
     {
         authenticated: false,
-        path: '/welcome',
+        path: '/login',
         exact: false,
-        component: Welcome,
+        component: Login,
     },
     {
         authenticated: false,

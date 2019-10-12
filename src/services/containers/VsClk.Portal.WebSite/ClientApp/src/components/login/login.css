@@ -1,0 +1,19 @@
+.login-page {}
+
+.login-page__sign-in-buttons {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.login-page__sign-in-label {
+	margin: 1.6rem 0;
+	display: block;
+	text-align: center;
+}
+
+.login-page__sign-in-button {
+	margin: 0 auto;
+	display: block;
+}

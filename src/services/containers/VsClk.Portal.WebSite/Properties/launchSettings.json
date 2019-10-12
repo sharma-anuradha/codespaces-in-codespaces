@@ -12,7 +12,7 @@
           },
           "launchBrowser": true,
           "applicationUrl": "https://localhost:3000",
-          "launchUrl": "https://localhost:3000/welcome"
+          "launchUrl": "https://localhost:3000/login"
       }
   }
 }

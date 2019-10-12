@@ -5,9 +5,9 @@ import { trace as baseTrace } from '../utils/trace';
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 import { inLocalStorageJWTTokenCacheFactory } from '../cache/localstorageJWTCache';
 import { getTokenExpiration } from '../utils/getTokenExpiration';
-import { expirationTimeBackgroundTokenRefreshThreshold, aadAuthorityUrl } from '../constants';
+import { expirationTimeBackgroundTokenRefreshThreshold, aadAuthorityUrlCommon } from '../constants';
 
-import { signOut as signOutFromArmAuthService } from './authARMService';
+import { logout as logoutFromArmAuthService, getARMToken } from './authARMService';
 
 const error = baseTrace.extend('authService:error');
 
@@ -19,7 +19,7 @@ const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed
 const msalConfig: msal.Configuration = {
     auth: {
         clientId: 'a3037261-2c94-4a2e-b53f-090f6cdd712a',
-        authority: aadAuthorityUrl,
+        authority: aadAuthorityUrlCommon,
         validateAuthority: false,
         navigateToLoginRequestUrl: false,
         redirectUri: location.origin,
@@ -37,13 +37,17 @@ export const clientApplication = new UserAgentApplication(msalConfig);
 const tokenCache = inLocalStorageJWTTokenCacheFactory();
 
 class AuthService {
-    public async signIn() {
+    public async login() {
         const loginRequest = {
             scopes: SCOPES,
         };
 
         await clientApplication.loginPopup(loginRequest);
         const token = await this.acquireToken();
+
+        // try to get arm token instantly since
+        // this can trigger the second popup window
+        await getARMToken(60 * 10);
 
         return token;
     }
@@ -100,9 +104,9 @@ class AuthService {
         tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
     }
 
-    public async signOut() {
+    public async logout() {
         tokenCache.clearCache();
-        signOutFromArmAuthService();
+        logoutFromArmAuthService();
     }
 }
 

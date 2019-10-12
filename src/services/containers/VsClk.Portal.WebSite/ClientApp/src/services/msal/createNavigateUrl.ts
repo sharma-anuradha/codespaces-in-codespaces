@@ -5,7 +5,6 @@ import { authService } from '../authService';
 import { ServerRequestParameters } from './serverRequestParameters';
 import { AuthorityFactory } from './authorityFactory';
 import { UrlUtils } from './urlUtils';
-import { aadAuthorityUrl } from '../../constants';
 
 const VSCODE_APP_ID = 'aebc6443-996d-45c2-90f0-388ff96faa56';
 const ARM_RESOURCE_ID = 'https://management.core.windows.net';
@@ -17,13 +16,14 @@ export const createNavigateUrl = async (nonce: string) => {
         throw new Error('User is not authenticated.')
     }
 
+    const aadAuthorityUrlOrganizations = 'https://login.microsoftonline.com/organizations';
     const tokenRequest: AuthenticationParameters = {
         scopes: [`${ARM_RESOURCE_ID}/.default`],
-        authority: aadAuthorityUrl,
+        authority: aadAuthorityUrlOrganizations,
         state: nonce
     };
 
-    const authority = AuthorityFactory.CreateInstance(aadAuthorityUrl, false);
+    const authority = AuthorityFactory.CreateInstance(aadAuthorityUrlOrganizations, false);
 
     if (!authority) {
         throw new Error('No authority created.');

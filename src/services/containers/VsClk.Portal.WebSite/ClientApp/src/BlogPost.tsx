@@ -5,7 +5,7 @@ import { ApplicationState } from './reducers/rootReducer';
 
 export function BlogPost() {
     if (process.env.NODE_ENV === 'development') {
-        return <Redirect to='/welcome' />;
+        return <Redirect to='/login' />;
     }
 
     const isAuthenticated = useSelector(

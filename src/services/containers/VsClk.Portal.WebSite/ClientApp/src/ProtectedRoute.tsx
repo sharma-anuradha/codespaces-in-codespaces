@@ -37,7 +37,7 @@ const ProtectedRouteView = (props: Props) => {
         return (
             <Redirect
                 to={{
-                    pathname: '/welcome',
+                    pathname: '/login',
                     search: new URLSearchParams({
                         redirectUrl: location.href.substr(location.origin.length),
                     }).toString(),

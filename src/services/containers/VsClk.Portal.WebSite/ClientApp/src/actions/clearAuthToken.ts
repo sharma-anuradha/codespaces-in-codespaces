@@ -15,5 +15,5 @@ export type ClearAuthTokenAction = ReturnType<typeof clearAuthTokenAction>;
 export async function clearAuthToken() {
     const dispatch = useDispatch();
     dispatch(clearAuthTokenAction());
-    await authService.signOut();
+    await authService.logout();
 }

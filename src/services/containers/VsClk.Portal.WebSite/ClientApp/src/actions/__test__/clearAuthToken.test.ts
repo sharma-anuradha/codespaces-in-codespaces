@@ -11,10 +11,10 @@ describe('clearAuthToken', () => {
     });
 
     it('signs user out', async () => {
-        const signOut = jest.spyOn(authService, 'signOut');
+        const logout = jest.spyOn(authService, 'logout');
         await store.dispatch(clearAuthToken());
 
         expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(clearAuthTokenActionType);
-        expect(signOut).toHaveBeenCalled();
+        expect(logout).toHaveBeenCalled();
     });
 });

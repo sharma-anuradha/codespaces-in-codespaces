@@ -41,8 +41,8 @@ export class BrowserSyncService {
                 return;
             }
             case BrowserConnectorMessages.SignOut: {
-                await authService.signOut();
-                this.redirect(`/welcome`);
+                await authService.logout();
+                this.redirect(`/login`);
                 return;
             }
             case BrowserConnectorMessages.CopyServerUrl:

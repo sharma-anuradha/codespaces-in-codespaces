@@ -65,8 +65,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return Ok();
         }
 
-        [HttpPost("~/signout-port-forwarder")]
-        public async Task<IActionResult> SignOutPortForwarder()
+        [HttpPost("~/logout-port-forwarder")]
+        public async Task<IActionResult> LogoutPortForwarder()
         {
             Response.Cookies.Delete(Constants.PFCookieName);
 

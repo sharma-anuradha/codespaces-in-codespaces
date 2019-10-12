@@ -2,13 +2,13 @@ import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 
 import { ClearAuthTokenAction, clearAuthTokenActionType } from '../actions/clearAuthToken';
 import {
-    SignInAction,
-    SignInFailureAction,
-    SignInSuccessAction,
-    signInActionType,
-    signInFailureActionType,
-    signInSuccessActionType,
-} from '../actions/signIn';
+    loginAction,
+    loginFailureAction,
+    loginSuccessAction,
+    loginActionType,
+    loginFailureActionType,
+    loginSuccessActionType,
+} from '../actions/login';
 import {
     GetAuthTokenAction,
     GetAuthTokenFailureAction,
@@ -23,9 +23,9 @@ type AcceptedActions =
     | GetAuthTokenFailureAction
     | GetAuthTokenSuccessAction
     | ClearAuthTokenAction
-    | SignInAction
-    | SignInFailureAction
-    | SignInSuccessAction;
+    | loginAction
+    | loginFailureAction
+    | loginSuccessAction;
 
 type AuthenticationState = {
     token: ITokenWithMsalAccount | undefined;
@@ -44,14 +44,14 @@ export function authentication(
     action: AcceptedActions
 ): AuthenticationState {
     switch (action.type) {
-        case signInActionType:
+        case loginActionType:
         case getAuthTokenActionType:
             return {
                 ...state,
                 isAuthenticating: true,
             };
 
-        case signInFailureActionType:
+        case loginFailureActionType:
         case getAuthTokenFailureActionType:
             return {
                 token: undefined,
@@ -59,7 +59,7 @@ export function authentication(
                 isAuthenticating: false,
             };
 
-        case signInSuccessActionType:
+        case loginSuccessActionType:
         case getAuthTokenSuccessActionType:
             return {
                 token: action.payload.token,
