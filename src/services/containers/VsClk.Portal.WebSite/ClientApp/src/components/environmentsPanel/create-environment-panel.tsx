@@ -77,9 +77,9 @@ function gitHubUrlToGithubApiUrl(fullGitHubUrl: string) {
 async function pingUrl(url: string, bearerToken?: string): Promise<boolean> {
     const webClient = useWebClient();
 
-    const headers: Headers = new Headers();
+    const headers: Record<string, string> = {};
     if (bearerToken) {
-        headers.set('Authorization', `Bearer ${bearerToken}`);
+        headers['Authorization'] = `Bearer ${bearerToken}`;
     }
 
     try {
@@ -340,7 +340,9 @@ export class CreateEnvironmentPanelView extends Component<
         }
 
         const creationDisabled =
-            (!this.isCurrentStateValid() && !this.state.shouldTryToAuthenticateForRepo) ||
+            (!this.isCurrentStateValid() &&
+                !this.state.shouldTryToAuthenticateForRepo &&
+                !this.state.shouldTryToAuthenticateForDotfiles) ||
             (!this.isCurrentStateValid() && !!this.state.authenticationAttempt);
 
         const label =
