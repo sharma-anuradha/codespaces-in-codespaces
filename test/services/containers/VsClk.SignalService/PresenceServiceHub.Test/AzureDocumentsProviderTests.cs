@@ -1,4 +1,4 @@
-#define _HAS_AZURE_COSMOS_EMULATOR
+//#define _HAS_AZURE_COSMOS_EMULATOR
 
 using System;
 using System.Threading.Tasks;

@@ -17,6 +17,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             ILogger logger,
             IHubFormatProvider formatProvider)
         {
+            Requires.NotNullOrEmpty(serviceId, nameof(serviceId));
             Requires.NullOrNotNullElements(hubContextHosts, nameof(hubContextHosts));
 
             HubContextHosts = hubContextHosts.Where(hCtxt => hCtxt.HubType == typeof(THub)).ToArray();

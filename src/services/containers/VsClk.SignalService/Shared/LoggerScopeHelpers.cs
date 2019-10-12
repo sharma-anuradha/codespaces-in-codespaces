@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             var loggerScope = new JObject();
             foreach(var scope in scopes)
             {
-                loggerScope[scope.Item1] = JToken.FromObject(scope.Item2);
+                loggerScope[scope.Item1] = scope.Item2 != null ? JToken.FromObject(scope.Item2) : JValue.CreateNull();
             }
 
             return logger.BeginScope(loggerScope);

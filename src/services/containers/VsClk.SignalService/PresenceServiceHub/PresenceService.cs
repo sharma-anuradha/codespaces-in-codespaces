@@ -86,7 +86,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     (PresenceServiceScopes.TotalContactsScope, metrics.SelfCount),
                     (PresenceServiceScopes.TotalConnectionsScope, metrics.TotalSelfCount)))
             {
-                Logger.LogInformation($"serviceInfo:{serviceInfo}");
+                Logger.LogInformation($"serviceInfo:{serviceInfo} memory:{GC.GetTotalMemory(false)}");
             }
 
             foreach (var backplaneProvider in this.backplaneProviders)
@@ -325,7 +325,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             var targetContact = GetRegisteredContact(targetContactReference.Id, throwIfNotFound: false);
-            if (targetContact?.IsSelfEmpty == false)
+            if (targetContact?.CanSendMessage(targetContactReference.ConnectionId) == true)
             {
                 await targetContact.SendReceiveMessageAsync(contactReference, messageType, body, targetContactReference.ConnectionId, cancellationToken);
             }
@@ -758,8 +758,14 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             AddDataChanged(backplaneProvider, messageData);
 
-            if (Contacts.TryGetValue(messageData.TargetContact.Id, out var targetContact))
+            if (Contacts.TryGetValue(messageData.TargetContact.Id, out var targetContact) &&
+                targetContact.CanSendMessage(messageData.TargetContact.ConnectionId))
             {
+                using (Logger.BeginContactReferenceScope(PresenceServiceScopes.MethodOnMessageReceived, messageData.TargetContact, FormatProvider))
+                {
+                    Logger.LogDebug($"fromContact:{messageData.FromContact.ToString(FormatProvider)} messageType:{messageData.Type}");
+                }
+
                 await targetContact.SendReceiveMessageAsync(
                     messageData.FromContact,
                     messageData.Type,

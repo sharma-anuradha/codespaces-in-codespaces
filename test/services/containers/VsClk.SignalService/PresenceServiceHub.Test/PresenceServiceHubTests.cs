@@ -682,7 +682,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         private class CustomMatchService : PresenceService
         {
             public CustomMatchService(IEnumerable<IHubContextHost> hubContextHosts, ILogger<PresenceService> logger)
-                : base(new PresenceServiceOptions(), hubContextHosts, logger)
+                : base(new PresenceServiceOptions() { Id = "custom" }, hubContextHosts, logger)
             {
             }
 

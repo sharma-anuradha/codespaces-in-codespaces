@@ -218,6 +218,17 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
+        /// Return true if this contact would be able to deliver a message to its self connections end points
+        /// </summary>
+        /// <param name="targetConnectionId">The desired target connection or null if delivery will be for all self connections</param>
+        /// <returns></returns>
+        public bool CanSendMessage(string targetConnectionId)
+        {
+            return (string.IsNullOrEmpty(targetConnectionId) && !IsSelfEmpty) ||
+                (!string.IsNullOrEmpty(targetConnectionId) && this.selfConnectionProperties.ContainsKey(targetConnectionId));
+        }
+
+        /// <summary>
         /// Remove a self connection from this contact
         /// </summary>
         /// <param name="connectionId">The self connection id that is being removed</param>

@@ -1,4 +1,4 @@
-#define _IS_REDIS_SERVER_RUNNING
+//#define _IS_REDIS_SERVER_RUNNING
 
 using System;
 using System.Threading.Tasks;

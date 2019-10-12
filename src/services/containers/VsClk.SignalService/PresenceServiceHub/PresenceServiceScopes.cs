@@ -15,6 +15,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string MethodRemoveSubscription = "RemoveSubscription";
         public const string MethodUpdateProperties = "UpdateProperties";
         public const string MethodSendMessage = "SendMessage";
+        public const string MethodOnMessageReceived = "OnMessageReceived";
         public const string MethodUnregisterSelfContact = "UnregisterSelfContact";
         public const string MethodMatchContacts = "MatchContacts";
         public const string MethodContactOnContactChanged = "Contact.OnContactChanged";
