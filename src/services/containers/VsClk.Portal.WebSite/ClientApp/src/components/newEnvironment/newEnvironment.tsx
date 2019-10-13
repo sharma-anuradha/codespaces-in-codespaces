@@ -71,12 +71,20 @@ function storeDotfilesConfiguration({
     try {
         if (dotfilesInstallCommand) {
             localStorage.setItem(dotfilesInstallCommandLocalStorageKey, dotfilesInstallCommand);
+        } else {
+            localStorage.removeItem(dotfilesInstallCommandLocalStorageKey);
         }
+
         if (dotfilesRepository) {
             localStorage.setItem(dotfilesRepositoryLocalStorageKey, dotfilesRepository);
+        } else {
+            localStorage.removeItem(dotfilesRepositoryLocalStorageKey);
         }
+
         if (dotfilesTargetPath) {
             localStorage.setItem(dotfilesTargetPathLocalStorageKey, dotfilesTargetPath);
+        } else {
+            localStorage.removeItem(dotfilesTargetPathLocalStorageKey);
         }
     } catch (err) {
         // noop
