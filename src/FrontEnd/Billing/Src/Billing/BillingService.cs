@@ -72,6 +72,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             SkuDictionary = this.skuCatalog.CloudEnvironmentSkus;
             logger = diagnosticsLogger;
             this.claimedDistributedLease = claimedDistributedLease;
+
+            // Send all logs to billingservices Geneva logger table
+            logger.FluentAddBaseValue("Service", "billingservices");
         }
 
         /// <summary>
@@ -87,6 +90,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             var concurrentRuns = 0;
             var start = DateTime.UtcNow.Subtract(TimeSpan.FromHours(lookBackThresholdHrs));
+            // TODO: consider on the hour billing summary creation. For example summarys would have a time range of
+            // 12:00:00 -> 1:00:00
             var end = DateTime.UtcNow;
             var controlPlaneRegions = controlPlaneInfo.GetAllDataPlaneLocations().Shuffle();
             var accountShards = billingEventManager.GetShards();
@@ -101,6 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 async (billingAccountShard, childlogger) =>
                  {
                      var leaseName = $"billingworkerrun-{billingAccountShard.accoundShard}-{billingAccountShard.region}";
+                     childlogger.FluentAddBaseValue("Service", "billingservices");
                      childlogger.FluentAddBaseValue("leaseName", leaseName);
                      using (var lease = await claimedDistributedLease.Obtain($"{billingWorkerLogBase}-leases", leaseName, TimeSpan.FromHours(1),
                          childlogger))
@@ -196,7 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="startSummary"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        private BillingSummary CalculateBillingUnits(
+        public BillingSummary CalculateBillingUnits(
             VsoAccountInfo account,
             IEnumerable<BillingEvent> events,
             BillingSummary startSummary,
@@ -306,8 +312,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                 var finalSlice = new BillingWindowSlice()
                 {
-                    BillingState = lastSlice.LastState == CloudEnvironmentState.Shutdown ? 
-                        BillingWindowBillingState.Active : BillingWindowBillingState.Inactive,
+                    BillingState = lastSlice.LastState == CloudEnvironmentState.Shutdown ?
+                        BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
                     EndTime = endTimeForPeriod,
                     StartTime = lastSlice.EndTime,
                     LastState = lastSlice.LastState,
@@ -332,7 +338,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                 StartTime = lastSlice.EndTime,
                                 EndTime = currentEvent.Time,
                                 LastState = nextState,
-                                BillingState = BillingWindowBillingState.Inactive,
+                                BillingState = BillingWindowBillingState.Active,
                             };
                             break;
                         default:
@@ -353,7 +359,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                 StartTime = lastSlice.EndTime,
                                 EndTime = currentEvent.Time,
                                 LastState = nextState,
-                                BillingState = BillingWindowBillingState.Active,
+                                BillingState = BillingWindowBillingState.Inactive,
                             };
                             break;
                         default:
@@ -400,7 +406,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="latestEvent"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        private BillingSummary CaculateBillingForEnvironmentsWithNoEvents(
+        public BillingSummary CaculateBillingForEnvironmentsWithNoEvents(
             VsoAccountInfo account,
             BillingSummary currentSummary,
             BillingEvent latestEvent,
@@ -473,7 +479,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Create a BillingWindowSlice that represents the previous state of this environment.
                 var billingSlice = new BillingWindowSlice
                 {
-                    BillingState = endState == CloudEnvironmentState.Shutdown ? 
+                    BillingState = endState == CloudEnvironmentState.Shutdown ?
                         BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
                     EndTime = latestEvent.Time,
                     LastState = endState,

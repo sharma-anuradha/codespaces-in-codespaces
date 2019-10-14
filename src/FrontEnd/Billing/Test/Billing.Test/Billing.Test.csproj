@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\BackEnd\Common\Src\Common.Abstractions\Common.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj" />
     <ProjectReference Include="..\..\Src\Billing\Billing.csproj" />
     <ProjectReference Include="..\..\Src\Billing.Contracts\Billing.Contracts.csproj" />

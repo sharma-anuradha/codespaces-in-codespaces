@@ -1,0 +1,74 @@
+﻿using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
+{
+    public class BaseBillingTests
+    {
+        public static readonly string subscription = Guid.NewGuid().ToString();
+        public static readonly string smallLinuxSKuName = "smallLinuxSku";
+        public static readonly VsoAccountInfo testAccount = new VsoAccountInfo
+        {
+            Subscription = subscription,
+            ResourceGroup = "testRG",
+            Name = "testAccount",
+            Location = AzureLocation.WestUs2,
+        };
+        public static readonly VsoAccountInfo testAccount2 = new VsoAccountInfo 
+        {
+            Subscription = subscription, 
+            ResourceGroup = "testRG", 
+            Name = "testAccount2", 
+            Location = AzureLocation.WestUs2, 
+        };
+        public static readonly VsoAccountInfo testAccount3 = new VsoAccountInfo
+        {
+            Subscription = subscription,
+            ResourceGroup = "testRG",
+            Name = "testAccount3",
+            Location = AzureLocation.WestUs2,
+        };
+        public static readonly EnvironmentBillingInfo testEnvironment = new EnvironmentBillingInfo
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "testEnvironment",
+            UserId = Guid.NewGuid().ToString(),
+            Sku = new Sku { Name = smallLinuxSKuName, Tier = "test" },
+        };
+        public static readonly EnvironmentBillingInfo testEnvironment2 = new EnvironmentBillingInfo
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "testEnvironment2",
+            UserId = testEnvironment.UserId,
+            Sku = new Sku { Name = smallLinuxSKuName, Tier = "test" },
+        };
+        public static readonly EnvironmentBillingInfo testEnvironment3 = new EnvironmentBillingInfo
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "testEnvironment3",
+            UserId = testEnvironment.UserId,
+            Sku = new Sku { Name = smallLinuxSKuName, Tier = "test" },
+        };
+        public readonly IBillingEventRepository repository;
+        public readonly BillingEventManager manager;
+        public readonly IDiagnosticsLoggerFactory loggerFactory;
+        public readonly IDiagnosticsLogger logger;
+        public readonly JsonSerializer serializer;
+
+        public BaseBillingTests()
+        {
+            this.loggerFactory = new DefaultLoggerFactory();
+            this.logger = loggerFactory.New();
+            this.repository = new MockBillingEventRepository();
+            this.manager = new BillingEventManager(this.repository);
+            this.serializer = JsonSerializer.CreateDefault();
+        }
+
+    }
+}

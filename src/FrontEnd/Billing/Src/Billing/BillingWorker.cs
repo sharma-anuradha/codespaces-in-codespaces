@@ -39,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <returns>Task.</returns>
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
+            logger.FluentAddBaseValue("Service", "billingservices");
             logger.LogInfo("Billing Worker is initializing.");
             cancellationToken.Register(() => logger.LogInfo("Billing Worker was cancelled."));
 

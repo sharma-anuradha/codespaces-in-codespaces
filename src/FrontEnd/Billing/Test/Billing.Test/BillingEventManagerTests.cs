@@ -6,72 +6,18 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
-using Newtonsoft.Json;
 using Xunit;
 using UsageDictionary = System.Collections.Generic.Dictionary<string, double>;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tests
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 {
-    public class BillingEventManagerTests
+    public class BillingEventManagerTests : BaseBillingTests
     {
-        private static readonly string subscription = Guid.NewGuid().ToString();
-        private static readonly VsoAccountInfo testAccount = new VsoAccountInfo
-        {
-            Subscription = subscription,
-            ResourceGroup = "testRG",
-            Name = "testAccount",
-            Location = AzureLocation.WestUs2,
-        };
-        private static readonly VsoAccountInfo testAccount2 = new VsoAccountInfo
-        {
-            Subscription = subscription,
-            ResourceGroup = "testRG",
-            Name = "testAccount2",
-            Location = AzureLocation.WestUs2,
-        };
-        private static readonly VsoAccountInfo testAccount3 = new VsoAccountInfo
-        {
-            Subscription = subscription,
-            ResourceGroup = "testRG",
-            Name = "testAccount3",
-            Location = AzureLocation.WestUs2,
-        };
-        private static readonly EnvironmentBillingInfo testEnvironment = new EnvironmentBillingInfo
-        {
-            Id = Guid.NewGuid().ToString(),
-            Name = "testEnvironment",
-            UserId = Guid.NewGuid().ToString(),
-            Sku = new Sku { Name = "testSku", Tier = "test" },
-        };
-        private static readonly EnvironmentBillingInfo testEnvironment2 = new EnvironmentBillingInfo
-        {
-            Id = Guid.NewGuid().ToString(),
-            Name = "testEnvironment2",
-            UserId = testEnvironment.UserId,
-            Sku = new Sku { Name = "testSku", Tier = "test" },
-        };
-
-        private readonly IBillingEventRepository repository;
-        private readonly BillingEventManager manager;
-        private readonly IDiagnosticsLoggerFactory loggerFactory;
-        private readonly IDiagnosticsLogger logger;
-        private readonly JsonSerializer serializer;
-
         public BillingEventManagerTests()
         {
-            this.loggerFactory = new DefaultLoggerFactory();
-            this.logger = loggerFactory.New();
-
-            this.repository = new MockBillingEventRepository();
-
             // Uncomment to use the local CosmosDB emulator instead of in-memory mock.
             ////this.repository = ConfigureEmulator();
-
-            this.manager = new BillingEventManager(this.repository);
-            this.serializer = JsonSerializer.CreateDefault();
         }
 
         private IBillingEventRepository ConfigureEmulator()
