@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { ApplicationState } from './reducers/rootReducer';
 import { Loader } from './components/loader/loader';
 import { telemetry } from './utils/telemetry';
+import { loginPath, environmentsPath } from './routes';
 
 const getAuthInfo = ({
     authentication: { isAuthenticated, isAuthenticating },
@@ -34,13 +35,17 @@ const ProtectedRouteView = (props: Props) => {
     }
 
     if (!isAuthenticating && !isAuthenticated) {
+        const search =
+            location.pathname === environmentsPath
+                ? undefined
+                : new URLSearchParams({
+                      redirectUrl: location.href,
+                  }).toString();
         return (
             <Redirect
                 to={{
-                    pathname: '/login',
-                    search: new URLSearchParams({
-                        redirectUrl: location.href.substr(location.origin.length),
-                    }).toString(),
+                    pathname: loginPath,
+                    search,
                 }}
             />
         );

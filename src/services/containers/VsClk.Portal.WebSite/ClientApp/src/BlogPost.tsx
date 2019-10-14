@@ -2,10 +2,12 @@ import React, { useEffect, Fragment } from 'react';
 import { useSelector } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { ApplicationState } from './reducers/rootReducer';
+import { loginPath, environmentsPath } from './routes';
+import { RouteComponentProps } from 'react-router';
 
-export function BlogPost() {
+export function BlogPost(props: RouteComponentProps) {
     if (process.env.NODE_ENV === 'development') {
-        return <Redirect to='/login' />;
+        return <Redirect to={loginPath} />;
     }
 
     const isAuthenticated = useSelector(
@@ -14,6 +16,7 @@ export function BlogPost() {
 
     useEffect(() => {
         if (isAuthenticated) {
+            props.history.push(environmentsPath);
             return;
         }
 

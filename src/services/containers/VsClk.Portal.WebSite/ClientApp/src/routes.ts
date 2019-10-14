@@ -12,40 +12,47 @@ type Route = RouteProps & {
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
 };
 
+export const rootPath = '/';
+export const environmentPath = '/environment/:id';
+export const environmentsPath = '/environments';
+export const newEnvironmentPath = '/environments/new';
+export const loginPath = '/login';
+export const githubLoginPath = '/github/login';
+
 export const routes: Route[] = [
     {
         authenticated: true,
-        path: '/environment/:id',
+        path: environmentPath,
         exact: false,
         component: Workbench,
     },
     {
         authenticated: true,
-        path: '/environments',
+        path: environmentsPath,
         exact: true,
         component: EnvironmentsPanel,
     },
     {
         authenticated: true,
-        path: '/environments/new',
+        path: newEnvironmentPath,
         exact: true,
         component: NewEnvironment,
     },
     {
         authenticated: true,
-        path: '/github/login',
+        path: githubLoginPath,
         exact: false,
         component: GitHubLogin,
     },
     {
         authenticated: false,
-        path: '/login',
+        path: loginPath,
         exact: false,
         component: Login,
     },
     {
         authenticated: false,
-        path: '/',
+        path: rootPath,
         exact: true,
         component: BlogPost,
     },

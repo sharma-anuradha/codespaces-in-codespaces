@@ -3,6 +3,7 @@ import { WorkspaceClient } from '../workspaceClient';
 import { authService } from '../../services/authService';
 import { getAuthToken } from '../../actions/getAuthToken';
 import { setAuthCookie } from '../../utils/setAuthCookie';
+import { loginPath, environmentsPath } from '../../routes';
 
 export enum BrowserConnectorMessages {
     ConnectToEnvironment = 'VSO_BrowserSync_ConnectToEnvironment',
@@ -37,12 +38,12 @@ export class BrowserSyncService {
                 return;
             }
             case BrowserConnectorMessages.DisconnectFromEnvironment: {
-                this.redirect(`/environments`);
+                this.redirect(environmentsPath);
                 return;
             }
             case BrowserConnectorMessages.SignOut: {
                 await authService.logout();
-                this.redirect(`/login`);
+                this.redirect(loginPath);
                 return;
             }
             case BrowserConnectorMessages.CopyServerUrl:

@@ -9,6 +9,7 @@ import { login } from '../../actions/login';
 import './login.css';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
+import { environmentsPath } from '../../routes';
 
 interface LoginProps {
     redirectUrl: string | null;
@@ -17,17 +18,32 @@ interface LoginProps {
     login: (...name: Parameters<typeof login>) => void;
 }
 
+function withAllowedSubdomain(targetUrl: URL) {
+    const [sessionAndPort, app, ...rest] = targetUrl.hostname.split('.');
+    if (app === 'app' && rest.join('.') === location.hostname) {
+        targetUrl.hostname = [sessionAndPort, app, location.hostname].join('.');
+
+        return targetUrl.toString();
+    }
+    return new URL(environmentsPath, location.origin).toString();
+}
+
 class LoginView extends Component<LoginProps> {
     render() {
         if (!this.props.isAuthenticated && this.props.isAuthenticating) {
             return <Loader message='Signing in...' />;
         }
         if (this.props.isAuthenticated) {
-            if (this.props.redirectUrl) {
-                window.location.href = "https://" + this.props.redirectUrl;
-            } else {
-                return <Redirect to={'/environments'} />;
+            if (!this.props.redirectUrl) {
+                return <Redirect to={environmentsPath} />;
             }
+
+            const redirectUrl = new URL(this.props.redirectUrl, location.origin);
+            if (redirectUrl.origin === location.origin) {
+                return <Redirect to={redirectUrl.toString().substr(redirectUrl.origin.length)} />;
+            }
+
+            window.location.href = withAllowedSubdomain(redirectUrl);
         }
 
         return (
