@@ -60,7 +60,8 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
     private renderNoEnvironments() {
         return (
             <div className='environments-panel__no-environments' key='no-envs'>
-                No environments so far. <Link onClick={this.showPanel}>Create one!</Link>
+                <span className='environments-panel__no-environments-label'>You don't have any environments</span>
+                <Link onClick={this.showPanel}>Create your first one now!</Link>
             </div>
         );
     }
