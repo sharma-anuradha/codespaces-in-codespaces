@@ -156,7 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             // TODO: EventID needs to have some other correlation to it for the case of multiple meters.
                             EventId = eventID,
                             Location = MapPav2Location(billingEvent.Account.Location),
-                            MeterID = "3bd29058-3028-448d-8ba4-f8f60b731019", //"5f3afa79-01ad-4d7e-b691-73feca4ea350", // eventually just use meter here.
+                            MeterID = meter,
                             SubscriptionId = billingEvent.Account.Subscription,
                             ResourceUri = billingEvent.Account.ResourceId,
                             Quantity = billingSummary.Usage[meter],
