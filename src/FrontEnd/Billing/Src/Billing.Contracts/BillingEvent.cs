@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public string Type { get; set; }
 
         /// <summary>
-        /// The type of object depends on the <see cref="EventType" />.
+        /// The type of object depends on the <see cref="BillingEventTypes" />.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "args")]
         [JsonConverter(typeof(BillingEventArgsConverter))]
