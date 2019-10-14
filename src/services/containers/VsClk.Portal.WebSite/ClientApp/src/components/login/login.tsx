@@ -11,6 +11,7 @@ import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
 
 interface LoginProps {
+    redirectUrl: string | null;
     isAuthenticated: boolean;
     isAuthenticating: boolean;
     login: (...name: Parameters<typeof login>) => void;
@@ -22,7 +23,11 @@ class LoginView extends Component<LoginProps> {
             return <Loader message='Signing in...' />;
         }
         if (this.props.isAuthenticated) {
-            return <Redirect to='/environments' />;
+            if (this.props.redirectUrl) {
+                window.location.href = "https://" + this.props.redirectUrl;
+            } else {
+                return <Redirect to={'/environments'} />;
+            }
         }
 
         return (
@@ -42,6 +47,7 @@ class LoginView extends Component<LoginProps> {
 }
 
 const getAuthState = (state: ApplicationState) => ({
+    redirectUrl: new URLSearchParams(location.search).get('redirectUrl'),
     isAuthenticated: state.authentication.isAuthenticated,
     isAuthenticating: state.authentication.isAuthenticating,
 });

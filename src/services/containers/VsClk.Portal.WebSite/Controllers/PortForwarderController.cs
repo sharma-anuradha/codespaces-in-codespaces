@@ -24,10 +24,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             [FromQuery] string devSessionId
         )
         {
-            if (path == "error") {
-                return View("error");
+            if (path == "error")
+            {
+                return View("exception");
             }
-            
+
             // Since all paths in the forwarded domain are redirected to this controller, the request for the service 
             // worker will be as well. In that case, serve up the actual service worker.
             if (path == "service-worker.js")
@@ -43,13 +44,15 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return await FetchStaticAsset("favicon.ico", "image/x-icon");
             }
 
-            if (devSessionId != null && devSessionId.EndsWith('/')) {
+            if (devSessionId != null && devSessionId.EndsWith('/'))
+            {
                 devSessionId = devSessionId.Substring(0, devSessionId.Length - 1);
             }
 
             string cascadeToken;
             string host = Request.Host.Value;
-            string sessionId = AppSettings.IsLocal 
+            ViewBag.HtmlStr = host;
+            string sessionId = AppSettings.IsLocal
                 ? devSessionId
                 : host.Split("-")[0];
             var cookie = Request.Cookies[Constants.PFCookieName];
@@ -58,14 +61,17 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 var payload = AuthController.DecryptCookie(cookie);
                 if (payload == null)
                 {
-                    return Content("Failed to find cookie's payload.");
+                    //cookie is expired or there was an error decrypting the cookie. So we will redirect the user to the main page to set new cookie.
+                    TempData["exception"] = "cookiePayload";
+                    return View("exception");
                 }
                 cascadeToken = payload.CascadeToken;
             }
             else
             {
-                //TODO: Redirect to /signIn
-                return Content("No Cookie was Found.");
+                //in this case user probably try to access the portForwarding link directry without signing in, so will redirect to SignIn page and redirect back to PF
+                TempData["exception"] = "NotAuthenticated";
+                return View("exception");
             }
 
             var userId = string.Empty;
@@ -80,28 +86,28 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 }
             }
 
-                var ownerId = await WorkSpaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId, AppSettings.LiveShareEndpoint);
+            var ownerId = await WorkSpaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId, AppSettings.LiveShareEndpoint);
 
             if (ownerId == null || userId == null)
             {
-                return Content("userId or OwnerId is not provided.");
+                TempData["exception"] = "nullError";
+                return View("exception");
             }
 
-                if (ownerId == userId)
+            if (ownerId == userId)
+            {
+                var cookiePayload = new LiveShareConnectionDetails
                 {
-                    var cookiePayload = new LiveShareConnectionDetails
-                    {
-                        CascadeToken = cascadeToken,
-                        SessionId = sessionId,
-                        LiveShareEndPoint = AppSettings.LiveShareEndpoint
-                    };
+                    CascadeToken = cascadeToken,
+                    SessionId = sessionId,
+                    LiveShareEndPoint = AppSettings.LiveShareEndpoint
+                };
 
                 return View(cookiePayload);
             }
 
-            System.Console.WriteLine("user was not authorized for the workspace.");
-            //TODO: redirect to 'Not Authorized' page
-            return Content("Access Denied.");
+            TempData["exception"] = "NotAuthorized";
+            return View("exception");
         }
 
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)

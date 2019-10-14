@@ -1,0 +1,49 @@
+﻿@{
+    var returnUrl = ViewBag.HtmlStr;
+    var index = returnUrl.IndexOf("app") + 4;
+    var domain = returnUrl.Replace(returnUrl.Substring(0, index), "");
+}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Port Forwarding exceptions...</title>
+</head>
+<body>
+    <div>
+        @switch (TempData["exception"].ToString()) {
+            case "path":
+                <p>Failed connecting to Visual Studio Online environment.</p>
+                break;
+            case "cookiePayload":
+                <p>Bad Cookie, redirecting back to the portal...</p>
+                <script type="text/javaScript">
+                    setTimeout(function() {
+                        window.location = "https://@domain/login?redirectUrl=@returnUrl";
+                    }, 1000);
+                </script>
+                break;
+            case "NotAuthenticated":
+                <p>You need to sign in first, redirecting...</p>
+                <script type="text/javaScript">
+                    setTimeout(function() {
+                        window.location = "https://@domain/login?redirectUrl=@returnUrl";
+                    }, 1000);
+                </script>
+                break;
+            case "NotAuthorized":
+                <p>You do not have access to this server.</p>
+                break;
+            case "nullError":
+                <p>Either workspace id or owner id is null/incorrect.</p>
+                break;
+            default:
+                <p>PortForwarder Failed due to unknown reason.</p>
+                break;
+        }
+    </div>
+</body>
+</html>
