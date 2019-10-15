@@ -152,10 +152,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 Skus.Add(skuName, cloudEnvironment);
             }
 
-            // Add a SKU for static environments.
-            var staticEnvironmentSku = new StaticEnvironmentSku();
-            Skus.Add(staticEnvironmentSku.SkuName, staticEnvironmentSku);
-
             // The public, immutable dictionary of skus.
             CloudEnvironmentSkus = new ReadOnlyDictionary<string, ICloudEnvironmentSku>(Skus);
         }

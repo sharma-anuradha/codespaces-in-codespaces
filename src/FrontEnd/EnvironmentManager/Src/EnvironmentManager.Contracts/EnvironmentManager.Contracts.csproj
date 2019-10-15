@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\BackEnd\Common\Src\Common.Models\Common.Models.csproj" />
-    <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
   </ItemGroup>
 
 </Project>

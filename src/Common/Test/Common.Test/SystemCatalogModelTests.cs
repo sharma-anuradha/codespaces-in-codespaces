@@ -134,12 +134,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     // Assert the override locations
                     Assert.Collection(sku.SkuLocations,
                         loc => Assert.Equal(AzureLocation.WestEurope, loc));
-                },
-                sku =>
-                {
-                    Assert.Equal(StaticEnvironmentSku.Name, sku.SkuName);
-                    Assert.Equal(decimal.Zero, sku.StorageCloudEnvironmentUnitsPerHr);
-                    Assert.Equal(decimal.Zero, sku.ComputeCloudEnvironmentUnitsPerHr);
                 });
         }
 
