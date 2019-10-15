@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\BackEnd\Common\Src\Common\BackEnd.Common.csproj" />
   </ItemGroup>
 
 </Project>

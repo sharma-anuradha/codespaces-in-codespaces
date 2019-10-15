@@ -57,6 +57,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             // Get the supported azure locations
             var dataPlaneLocations = new HashSet<AzureLocation>(controlPlaneInfo.Stamp.DataPlaneLocations);
 
+            // Get the default configuration for all skus.
+            var defaultSkuConfiguration = skuCatalogSettings.DefaultSkuConfiguration;
+
+            // Create the ordered, immutable list, same for all configured subscriptions.
+            var defaultLocations = new ReadOnlyCollection<AzureLocation>(defaultSkuConfiguration.Locations
+                .Distinct()
+                .OrderBy(l => Enum.GetName(typeof(AzureLocation), l))
+                .ToList());
+
             // Get the subscription id
             var subscriptionId = controlPlaneAzureResourceAccessor.GetCurrentSubscriptionIdAsync().Result;
             var vmImageResourceGroup = controlPlaneInfo.EnvironmentResourceGroupName;
@@ -70,11 +79,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 {
                     throw new InvalidOperationException($"The cloud environment sku '{skuName}' already exists. Is it listed more than once in appsettings.json?");
                 }
-
-                var computeOS = cloudEnvironmentSettings.ComputeOS;
-                var defaultSkuConfiguration = skuCatalogSettings.DefaultSkuConfiguration[computeOS];
-                var tier = cloudEnvironmentSettings.Tier;
-                var tierSettings = skuCatalogSettings.SkuTierSettings[tier];
 
                 // Compute the sku configuration from its own settings or from the default settings.
                 var skuConfiguration = cloudEnvironmentSettings.SkuConfiguration;
@@ -96,24 +100,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         skuConfiguration.StoragePoolSize = defaultSkuConfiguration.StoragePoolSize;
                     }
 
-                    // The compute image family
-                    if (string.IsNullOrEmpty(skuConfiguration.ComputeImageFamily))
-                    {
-                        skuConfiguration.ComputeImageFamily = defaultSkuConfiguration.ComputeImageFamily;
-                    }
-
-                    // The storage image family
-                    if (string.IsNullOrEmpty(skuConfiguration.StorageImageFamily))
-                    {
-                        skuConfiguration.StorageImageFamily = defaultSkuConfiguration.StorageImageFamily;
-                    }
-
-                    // The storage image family
-                    if (string.IsNullOrEmpty(skuConfiguration.VmAgentImageFamily))
-                    {
-                        skuConfiguration.VmAgentImageFamily = defaultSkuConfiguration.VmAgentImageFamily;
-                    }
-
                     // This is a restrictive set. Defaults might be more. Only use defaults if none set.
                     if (!skuConfiguration.Locations.Any())
                     {
@@ -131,39 +117,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 // Get the VM and storage image familes.
                 var computeImageFamily = NewVmImageFamily(
-                    skuConfiguration.ComputeImageFamily,
+                    cloudEnvironmentSettings.ComputeImageFamily,
                     skuCatalogSettings.ComputeImageFamilies,
                     subscriptionId,
                     vmImageResourceGroup);
 
                 var vmAgentImageFamily = CreateBuildArtifactImageFamily(
-                    skuConfiguration.VmAgentImageFamily,
+                    cloudEnvironmentSettings.vmAgentImageFamily,
                     skuCatalogSettings.VmAgentImageFamilies);
 
                 var storageImageFamily = CreateBuildArtifactImageFamily(
-                    skuConfiguration.StorageImageFamily,
+                    cloudEnvironmentSettings.StorageImageFamily,
                     skuCatalogSettings.StorageImageFamilies);
 
                 var cloudEnvironment = new CloudEnvironmentSku(
                     skuName,
-                    tier,
-                    cloudEnvironmentSettings.DisplayName,
-                    cloudEnvironmentSettings.Enabled,
+                    cloudEnvironmentSettings.SkuDisplayName,
                     skuLocations,
-                    tierSettings.ComputeSkuFamily,
-                    tierSettings.ComputeSkuName,
-                    tierSettings.ComputeSkuSize,
-                    tierSettings.ComputeSkuCores,
-                    computeOS,
+                    cloudEnvironmentSettings.ComputeSkuFamily,
+                    cloudEnvironmentSettings.ComputeSkuName,
+                    cloudEnvironmentSettings.ComputeSkuSize,
+                    cloudEnvironmentSettings.ComputeSkuCores,
+                    cloudEnvironmentSettings.ComputeOS,
                     vmAgentImageFamily,
                     computeImageFamily,
-                    tierSettings.StorageSkuName,
+                    cloudEnvironmentSettings.StorageSkuName,
                     storageImageFamily,
-                    tierSettings.StorageSizeInGB,
-                    cloudEnvironmentSettings.StorageVsoUnitsPerHour,
-                    cloudEnvironmentSettings.ComputeVsoUnitsPerHour,
-                    cloudEnvironmentSettings.Enabled ? skuConfiguration.ComputePoolSize.GetValueOrDefault() : 0,
-                    cloudEnvironmentSettings.Enabled ? skuConfiguration.StoragePoolSize.GetValueOrDefault() : 0);
+                    cloudEnvironmentSettings.StorageSizeInGB,
+                    cloudEnvironmentSettings.StorageCloudEnvironmentUnits,
+                    cloudEnvironmentSettings.ComputeCloudEnvironmentUnits,
+                    skuConfiguration.ComputePoolSize.GetValueOrDefault(),
+                    skuConfiguration.StoragePoolSize.GetValueOrDefault());
 
                 Skus.Add(skuName, cloudEnvironment);
             }

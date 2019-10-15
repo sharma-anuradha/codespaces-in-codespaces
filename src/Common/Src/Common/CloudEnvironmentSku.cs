@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -18,9 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Initializes a new instance of the <see cref="CloudEnvironmentSku"/> class.
         /// </summary>
         /// <param name="skuName">The cloud environment sku name.</param>
-        /// <param name="tier">The SKU tier.</param>
-        /// <param name="displayName">The cloud environment sku display name.</param>
-        /// <param name="enabled">Whether the SKU is enabled for creation.</param>
+        /// <param name="skuDisplayName">The cloud environment sku display name.</param>
         /// <param name="skuLocations">The locations in which this sku is available.</param>
         /// <param name="computeSkuFamily">The azure compute sku family.</param>
         /// <param name="computeSkuName">The azure compute sku name.</param>
@@ -32,15 +28,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="storageSkuName">The azure storage sku name.</param>
         /// <param name="storageImageFamily">The storage image family.</param>
         /// <param name="storageSizeInGB">The azure storage size in GB.</param>
-        /// <param name="storageVsoUnitsPerHour">The cloud environment units for this sku when active.</param>
-        /// <param name="computeVsoUnitsPerHour">The cloud environment units for this sku when inactive.</param>
+        /// <param name="storageCloudEnvironmentUnits">The cloud environment units for this sku when active.</param>
+        /// <param name="computeCloudEnvironmentUnits">The cloud environment units for this sku when inactive.</param>
         /// <param name="computePoolLevel">The size of the compute pool that should be maintained.</param>
         /// <param name="storagePoolLevel">The size of the storage pool that should be maintained.</param>
         public CloudEnvironmentSku(
             string skuName,
-            SkuTier tier,
-            string displayName,
-            bool enabled,
+            string skuDisplayName,
             IReadOnlyCollection<AzureLocation> skuLocations,
             string computeSkuFamily,
             string computeSkuName,
@@ -52,13 +46,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             string storageSkuName,
             IBuildArtifactImageFamily storageImageFamily,
             int storageSizeInGB,
-            decimal storageVsoUnitsPerHour,
-            decimal computeVsoUnitsPerHour,
+            decimal storageCloudEnvironmentUnits,
+            decimal computeCloudEnvironmentUnits,
             int computePoolLevel,
             int storagePoolLevel)
         {
             Requires.NotNullOrEmpty(skuName, nameof(skuName));
-            Requires.NotNullOrEmpty(displayName, nameof(displayName));
+            Requires.NotNullOrEmpty(skuDisplayName, nameof(skuDisplayName));
             Requires.NotNullOrEmpty(computeSkuFamily, nameof(computeSkuFamily));
             Requires.NullOrNotNullElements(skuLocations, nameof(skuLocations));
             Requires.NotNullOrEmpty(computeSkuName, nameof(computeSkuName));
@@ -70,15 +64,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNullOrEmpty(storageSkuName, nameof(storageSkuName));
             Requires.NotNull(storageImageFamily, nameof(storageImageFamily));
             Requires.Argument(storageSizeInGB > 0, nameof(storageSizeInGB), "The storage size must be greater than zero.");
-            Requires.Argument(storageVsoUnitsPerHour >= 0m, nameof(storageVsoUnitsPerHour), "The environment units must be greater than or equal to 0.");
-            Requires.Argument(computeVsoUnitsPerHour >= 0m, nameof(computeVsoUnitsPerHour), "The environment units must be greater than or equal to 0.");
-            Requires.Argument(!enabled || computePoolLevel > 0, nameof(computePoolLevel), "The compute pool level must be greater than zero.");
-            Requires.Argument(!enabled || storagePoolLevel > 0, nameof(storagePoolLevel), "The storage pool level must be greater than zero.");
+            Requires.Argument(storageCloudEnvironmentUnits >= 0m, nameof(storageCloudEnvironmentUnits), "The cloud environment units must be greater than or equal to 0.");
+            Requires.Argument(computeCloudEnvironmentUnits >= 0m, nameof(computeCloudEnvironmentUnits), "The cloud environment units must be greater than or equal to 0.");
+            Requires.Argument(computePoolLevel > 0, nameof(computePoolLevel), "The compute pool level must be greater than zero.");
+            Requires.Argument(storagePoolLevel > 0, nameof(storagePoolLevel), "The storage pool level must be greater than zero.");
 
             SkuName = skuName;
-            Tier = tier;
-            DisplayName = displayName;
-            Enabled = enabled;
+            SkuDisplayName = skuDisplayName;
             SkuLocations = skuLocations;
             ComputeSkuFamily = computeSkuFamily;
             ComputeSkuName = computeSkuName;
@@ -90,8 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             StorageSkuName = storageSkuName;
             StorageImage = storageImageFamily;
             StorageSizeInGB = storageSizeInGB;
-            StorageVsoUnitsPerHour = storageVsoUnitsPerHour;
-            ComputeVsoUnitsPerHour = computeVsoUnitsPerHour;
+            StorageCloudEnvironmentUnitsPerHr = storageCloudEnvironmentUnits;
+            ComputeCloudEnvironmentUnitsPerHr = computeCloudEnvironmentUnits;
             ComputePoolLevel = computePoolLevel;
             StoragePoolLevel = storagePoolLevel;
         }
@@ -100,16 +92,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string SkuName { get; }
 
         /// <inheritdoc/>
-        public SkuTier Tier { get; }
+        public string SkuDisplayName { get; }
 
         /// <inheritdoc/>
-        public string DisplayName { get; }
-
-        /// <inheritdoc/>
-        public bool Enabled { get; }
-
-        /// <inheritdoc/>
-        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
         public IEnumerable<AzureLocation> SkuLocations { get; }
 
         /// <inheritdoc/>
@@ -143,10 +128,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public int StorageSizeInGB { get; }
 
         /// <inheritdoc/>
-        public decimal StorageVsoUnitsPerHour { get; }
+        public decimal StorageCloudEnvironmentUnitsPerHr { get; }
 
         /// <inheritdoc/>
-        public decimal ComputeVsoUnitsPerHour { get; }
+        public decimal ComputeCloudEnvironmentUnitsPerHr { get; }
 
         /// <inheritdoc/>
         public int ComputePoolLevel { get; }

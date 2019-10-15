@@ -11,19 +11,19 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Duration = Microsoft.VsSaaS.Diagnostics.Extensions.DiagnosticsLoggerExtensions.Duration;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -337,56 +337,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 // TODO HACK: specify a temporary sku. Old clients don't specify one.
                 if (string.IsNullOrEmpty(cloudEnvironment.SkuName))
                 {
-                    cloudEnvironment.SkuName = SkuCatalog.CloudEnvironmentSkus
-                        .Where(defaultSku => defaultSku.Value.ComputeOS == ComputeOS.Linux)
-                        .Where(defaultSku => defaultSku.Value.Tier == SkuTier.Standard)
-                        .Where(defaultSku => defaultSku.Value.Enabled)
-                        .Single()
-                        .Value
-                        .SkuName;
+                    cloudEnvironment.SkuName = SkuCatalog.CloudEnvironmentSkus.First(sku => sku.Key.StartsWith("small") && sku.Value.ComputeOS == ComputeOS.Linux).Value.SkuName;
                 }
 
                 // TODO HACK: specify a temporary location. Old clients don't specify one.
-                // At some point this should be a BadRequest!
                 if (cloudEnvironment.Location == default)
                 {
                     cloudEnvironment.Location = AzureLocation.WestUs2;
                 }
 
                 // Reroute to correct location if needed
-                var owningStamp = default(IControlPlaneStampInfo);
-                try
+                var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(cloudEnvironment.Location);
+                if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
                 {
-                    owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(cloudEnvironment.Location);
-                    if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
-                    {
-                        return RedirectToLocation(owningStamp);
-                    }
-                }
-                catch (NotSupportedException)
-                {
-                    var message = $"The requested location is not supported: {cloudEnvironment.Location}";
-                    return CreateEnvironmentBadRequest(message, duration, logger);
-                }
-
-                // Validate the requested SKU
-                if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku))
-                {
-                    var message = $"The requested SKU is not defined: {cloudEnvironment.SkuName}";
-                    return CreateEnvironmentBadRequest(message, duration, logger);
-                }
-
-                if (!sku.Enabled)
-                {
-                    var message = $"The requested SKU is not available: {cloudEnvironment.SkuName}";
-                    return CreateEnvironmentBadRequest(message, duration, logger);
-                }
-
-                // Validate the SKU location
-                if (!sku.SkuLocations.Contains(cloudEnvironment.Location))
-                {
-                    var message = $"The requested SKU is not available in location: {cloudEnvironment.Location}";
-                    return CreateEnvironmentBadRequest(message, duration, logger);
+                    return RedirectToLocation(owningStamp);
                 }
 
                 var currentUserId = CurrentUserProvider.GetProfileId();
@@ -613,17 +577,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 Scheme = Uri.UriSchemeHttps,
             };
             return new RedirectResult(builder.ToString(), permanent: false, preserveMethod: true);
-        }
-
-        private IActionResult CreateEnvironmentBadRequest(
-            string message,
-            Duration duration,
-            IDiagnosticsLogger logger)
-        {
-            logger.AddDuration(duration)
-                .AddReason($"{HttpStatusCode.BadRequest}: {message}")
-                .LogError(GetType().FormatLogErrorMessage(nameof(CreateCloudEnvironmentAsync)));
-            return BadRequest(message);
         }
     }
 }

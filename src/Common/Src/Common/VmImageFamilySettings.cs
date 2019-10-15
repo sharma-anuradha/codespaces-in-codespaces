@@ -4,6 +4,7 @@
 
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -15,9 +16,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     public class VmImageFamilySettings : ImageFamilySettings
     {
         /// <summary>
-        /// Gets or sets a value that indicates how <see cref="ImageFamilySettings.ImageName"/> is to be interpreted.
+        /// Gets or sets the meaning image kind, which implies the meaning of <see cref="ImageName"/>.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
+        [JsonConverter(typeof(StringEnumConverter))]
         public VmImageKind ImageKind { get; set; }
     }
 }

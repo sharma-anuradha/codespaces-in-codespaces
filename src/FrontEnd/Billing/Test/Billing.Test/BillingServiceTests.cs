@@ -503,8 +503,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         public BillingServiceTests()
         {
             var mockSku = new Mock<ICloudEnvironmentSku>();
-            mockSku.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(smallLinuxComputeUnitPerHr);
-            mockSku.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(smallLinuxStorageUnitPerHr);
+            mockSku.Setup(sku => sku.ComputeCloudEnvironmentUnitsPerHr).Returns(smallLinuxComputeUnitPerHr);
+            mockSku.Setup(sku => sku.StorageCloudEnvironmentUnitsPerHr).Returns(smallLinuxStorageUnitPerHr);
             var skus = new Dictionary<string, ICloudEnvironmentSku>
             {
                 [smallLinuxSKuName] = mockSku.Object

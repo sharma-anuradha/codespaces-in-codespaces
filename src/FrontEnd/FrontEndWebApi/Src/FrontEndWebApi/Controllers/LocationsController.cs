@@ -123,12 +123,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 }
 
                 var skus = this.skuCatalog.CloudEnvironmentSkus.Values
-                    .Where((sku) => sku.Enabled)
                     .Where((sku) => sku.SkuLocations.Contains(azureLocation))
                     .Select((sku) => new SkuInfoResult
                     {
                         Name = sku.SkuName,
-                        DisplayName = sku.DisplayName,
+                        DisplayName = sku.SkuDisplayName,
                         OS = sku.ComputeOS.ToString(),
                     })
                     .ToArray();

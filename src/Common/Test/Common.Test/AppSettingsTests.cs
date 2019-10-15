@@ -54,13 +54,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 var name = item.Key;
                 var sku = item.Value;
                 Assert.Equal(name, sku.SkuName);
-                if (sku.Enabled)
-                {
-                    Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
-                    Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);
-                    Assert.True(sku.StoragePoolLevel > 0);
-                    Assert.True(sku.ComputePoolLevel > 0);
-                }
             }
         }
 
@@ -352,7 +345,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             var environment = skuCatalog.CloudEnvironmentSkus[skuName];
             Assert.Equal(VmImageKind.Custom, environment.ComputeImage.ImageKind);
             Assert.Equal(ComputeOS.Windows, environment.ComputeOS);
-            Assert.Equal("Small Windows (Preview)", environment.DisplayName);
+            Assert.Equal("Small Windows (Preview)", environment.SkuDisplayName);
         }
 
         public static AppSettingsBase LoadAppSettings(string environmentName, string overrideName = null)

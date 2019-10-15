@@ -2,15 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
     /// Indicates the kind of vm image name.
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
     public enum VmImageKind
     {
         /// <summary>
