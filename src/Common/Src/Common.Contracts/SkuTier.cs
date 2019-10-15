@@ -1,4 +1,4 @@
-﻿// <copyright file="ComputeOS.cs" company="Microsoft">
+﻿// <copyright file="SkuTier.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,19 +8,19 @@ using Newtonsoft.Json.Converters;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
-    /// Specifies the Cloud Enivronment OS type.
+    /// The Environment SKU tier.
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum ComputeOS
+    public enum SkuTier
     {
         /// <summary>
-        /// Linux OS
+        /// A standard tier SKU.
         /// </summary>
-        Linux = 1,
+        Standard = 0,
 
         /// <summary>
-        /// Windows OS
+        /// A premium tier SKU.
         /// </summary>
-        Windows = 2,
+        Premium = 1,
     }
 }

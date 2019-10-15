@@ -20,7 +20,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets the SKU display name.
         /// </summary>
-        string SkuDisplayName { get; }
+        string DisplayName { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this SKU is enabled for creation.
+        /// </summary>
+        bool Enabled { get; }
 
         /// <summary>
         /// Gets the list of locations supported for this subscription.
@@ -31,6 +36,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the Cloud Environment OS.
         /// </summary>
         ComputeOS ComputeOS { get; }
+
+        /// <summary>
+        /// Gets the SKU tier.
+        /// </summary>
+        SkuTier Tier { get; }
 
         /// <summary>
         /// Gets the Azure compute SKU family, e.g., "standardFSv2Family".
@@ -78,14 +88,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         int StorageSizeInGB { get; }
 
         /// <summary>
-        /// Gets the number of Cloud Environment Units that will be billed for this SKU when storage is active.
+        /// Gets the number of VSO units per hour for storage.
         /// </summary>
-        decimal StorageCloudEnvironmentUnitsPerHr { get; }
+        decimal StorageVsoUnitsPerHour { get; }
 
         /// <summary>
-        /// Gets the number of Cloud Environment Units that will be billed for this SKU when compute is active.
+        /// Gets the number of VSO units per hour for compute.
         /// </summary>
-        decimal ComputeCloudEnvironmentUnitsPerHr { get; }
+        decimal ComputeVsoUnitsPerHour { get; }
 
         /// <summary>
         /// Gets the compute pool size that should be maintained.

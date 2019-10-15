@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <returns>The VSO units per hour when the SKU is active.</returns>
         public static decimal GetActiveVsoUnitsPerHour(this ICloudEnvironmentSku sku)
         {
-            return sku.ComputeCloudEnvironmentUnitsPerHr + sku.StorageCloudEnvironmentUnitsPerHr;
+            return sku.ComputeVsoUnitsPerHour + sku.StorageVsoUnitsPerHour;
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <returns>The VSO units per hour when the SKU is inactive.</returns>
         public static decimal GetInactiveVsoUnitsPerHour(this ICloudEnvironmentSku sku)
         {
-            return sku.StorageCloudEnvironmentUnitsPerHr;
+            return sku.StorageVsoUnitsPerHour;
         }
     }
 }

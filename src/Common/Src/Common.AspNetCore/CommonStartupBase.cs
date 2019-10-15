@@ -48,9 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             CurrentAzureLocation = GetCurrentAzureLocation();
 
             // All appsettings.*.json files are loaded from this location.
-            var dirChar = Path.DirectorySeparatorChar.ToString();
-            var settingsRelativePath = IsRunningInAzure() ? string.Empty : Path.GetFullPath(
-                Path.Combine(hostingEnvironment.ContentRootPath, "..", "..", "..", "..", $"Settings{dirChar}"));
+            var settingsRelativePath = GetSettingsRelativePath();
             var infix = GetAppSettingsInfixName();
 
             var builder = new ConfigurationBuilder()
@@ -183,6 +181,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         protected static bool IsRunningInAzure()
         {
             return Environment.GetEnvironmentVariable(RunningInAzureEnvironmentVariable) == "true";
+        }
+
+        /// <summary>
+        /// All appsettings.*.json files are loaded from this location.
+        /// </summary>
+        /// <returns>The settings path or empty string.</returns>
+        protected virtual string GetSettingsRelativePath()
+        {
+            var dirChar = Path.DirectorySeparatorChar.ToString();
+            var settingsRelativePath = IsRunningInAzure() ? string.Empty : Path.GetFullPath(
+                Path.Combine(HostingEnvironment.ContentRootPath, "..", "..", "..", "..", $"Settings{dirChar}"));
+            return settingsRelativePath;
         }
 
         /// <summary>
@@ -320,6 +330,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             }
             else
             {
+                var locationEnvVar = Environment.GetEnvironmentVariable("AZURE_LOCATION");
+                if (!string.IsNullOrEmpty(locationEnvVar))
+                {
+                    var azureLocation = Enum.Parse<AzureLocation>(locationEnvVar, ignoreCase: true);
+                    return azureLocation;
+                }
+
                 // Default location for localhost development.
                 return AzureLocation.WestUs2;
             }

@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Xunit;
-using Moq;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.Azure.Management.Storage.Fluent.Models;
+using Moq;
+using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 {
@@ -84,25 +82,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         public void SystemCatalog_OK()
         {
             var provider = CreateTestSystemCatalogProvider();
-            Assert.Collection(provider.SkuCatalog.CloudEnvironmentSkus.Values,
+            Assert.Collection(provider.SkuCatalog.CloudEnvironmentSkus.Values.OrderBy(s => s.SkuName),
                 sku =>
                 {
-                    Assert.Equal(1.0m, sku.StorageCloudEnvironmentUnitsPerHr);
-                    Assert.Equal(10.0m, sku.ComputeCloudEnvironmentUnitsPerHr);
-                    Assert.Equal("test-compute-sku-family-1", sku.ComputeSkuFamily);
-                    Assert.Equal("test-compute-sku-name-1", sku.ComputeSkuName);
-                    Assert.Equal("test-compute-sku-size-1", sku.ComputeSkuSize);
+                    Assert.Equal("test-sku-linux-standard", sku.SkuName);
+                    Assert.Equal(1.0m, sku.StorageVsoUnitsPerHour);
+                    Assert.Equal(10.0m, sku.ComputeVsoUnitsPerHour);
+                    Assert.Equal("standard-compute-sku-family", sku.ComputeSkuFamily);
+                    Assert.Equal("standard-compute-sku-name", sku.ComputeSkuName);
+                    Assert.Equal("standard-compute-sku-size", sku.ComputeSkuSize);
                     Assert.Equal(ComputeOS.Linux, sku.ComputeOS);
-                    Assert.Equal("test-sku-display-name-1", sku.SkuDisplayName);
-                    Assert.Equal("test-sku-name-1", sku.SkuName);
-                    Assert.Equal(1, sku.StorageSizeInGB);
-                    Assert.Equal("test-storage-sku-name-1", sku.StorageSkuName);
+                    Assert.Equal("test-sku-linux-standard-name", sku.DisplayName);
+                    Assert.Equal(64, sku.StorageSizeInGB);
+                    Assert.Equal("standard-storage-sku-name", sku.StorageSkuName);
                     // Assert the vm image and storage image
-                    Assert.Equal("test-compute-image-family", sku.ComputeImage.ImageFamilyName);
-                    Assert.Equal("test-compute-agent-image-family", sku.VmAgentImage.ImageFamilyName);
+                    Assert.Equal("test-compute-image-family-linux", sku.ComputeImage.ImageFamilyName);
+                    Assert.Equal("test-vm-agent-image-family-linux", sku.VmAgentImage.ImageFamilyName);
                     Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
-                    Assert.Equal("test-storage-image-family", sku.StorageImage.ImageFamilyName);
-                    Assert.Equal("test-storage-image-url", sku.StorageImage.ImageName);
+                    Assert.Equal("test-storage-image-family-linux", sku.StorageImage.ImageFamilyName);
+                    Assert.Equal("test-storage-image-url-linux", sku.StorageImage.ImageName);
                     // Assert the default pool level
                     Assert.Equal(1, sku.ComputePoolLevel);
                     // Assert the default locations
@@ -113,22 +111,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 },
                 sku =>
                 {
-                    Assert.Equal(2.0m, sku.StorageCloudEnvironmentUnitsPerHr);
-                    Assert.Equal(20.0m, sku.ComputeCloudEnvironmentUnitsPerHr);
-                    Assert.Equal("test-compute-sku-family-2", sku.ComputeSkuFamily);
-                    Assert.Equal("test-compute-sku-name-2", sku.ComputeSkuName);
-                    Assert.Equal("test-compute-sku-size-2", sku.ComputeSkuSize);
-                    Assert.Equal(ComputeOS.Linux, sku.ComputeOS);
-                    Assert.Equal("test-sku-display-name-2", sku.SkuDisplayName);
-                    Assert.Equal("test-sku-name-2", sku.SkuName);
-                    Assert.Equal(2, sku.StorageSizeInGB);
-                    Assert.Equal("test-storage-sku-name-2", sku.StorageSkuName);
+                    Assert.Equal("test-sku-windows-premium", sku.SkuName);
+                    Assert.Equal(2.0m, sku.StorageVsoUnitsPerHour);
+                    Assert.Equal(20.0m, sku.ComputeVsoUnitsPerHour);
+                    Assert.Equal("premium-compute-sku-family", sku.ComputeSkuFamily);
+                    Assert.Equal("premium-compute-sku-name", sku.ComputeSkuName);
+                    Assert.Equal("premium-compute-sku-size", sku.ComputeSkuSize);
+                    Assert.Equal(ComputeOS.Windows, sku.ComputeOS);
+                    Assert.Equal("test-sku-windows-premium-name", sku.DisplayName);
+                    Assert.Equal(64, sku.StorageSizeInGB);
+                    Assert.Equal("premium-storage-sku-name", sku.StorageSkuName);
                     // Assert the vm image and storage image
-                    Assert.Equal("test-compute-agent-image-family", sku.VmAgentImage.ImageFamilyName);
-                    Assert.Equal("test-compute-image-family", sku.ComputeImage.ImageFamilyName);
+                    Assert.Equal("test-compute-image-family-windows", sku.ComputeImage.ImageFamilyName);
+                    Assert.Equal("test-vm-agent-image-family-windows", sku.VmAgentImage.ImageFamilyName);
                     Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
-                    Assert.Equal("test-storage-image-family", sku.StorageImage.ImageFamilyName);
-                    Assert.Equal("test-storage-image-url", sku.StorageImage.ImageName);
+                    Assert.Equal("test-storage-image-family-windows", sku.StorageImage.ImageFamilyName);
+                    Assert.Equal("test-storage-image-url-windows", sku.StorageImage.ImageName);
                     // Assert the override pool level
                     Assert.Equal(1, sku.ComputePoolLevel);
                     // Assert the override locations
@@ -214,25 +212,87 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         {
             var skuCatalogSettings = new SkuCatalogSettings
             {
-                DefaultSkuConfiguration = new SkuConfigurationSettings
+                DefaultSkuConfiguration = new Dictionary<ComputeOS, SkuConfigurationSettings>
                 {
-                    Locations =
                     {
-                        AzureLocation.EastUs,
-                        AzureLocation.WestUs2,
-                        AzureLocation.UaeNorth, // should get filtered out by IDataPlaneManager.GetAllDataPlaneLocations
+                        ComputeOS.Linux,
+                        new SkuConfigurationSettings
+                        {
+                            Locations =
+                            {
+                                AzureLocation.EastUs,
+                                AzureLocation.WestUs2,
+                                AzureLocation.UaeNorth, // should get filtered out by IDataPlaneManager.GetAllDataPlaneLocations
+                            },
+                            ComputePoolSize = 1,
+                            StoragePoolSize = 1,
+                            ComputeImageFamily = "test-compute-image-family-linux",
+                            StorageImageFamily = "test-storage-image-family-linux",
+                            VmAgentImageFamily = "test-vm-agent-image-family-linux",
+                        }
                     },
-                    ComputePoolSize = 1,
-                    StoragePoolSize = 1,
+                    {
+                        ComputeOS.Windows,
+                        new SkuConfigurationSettings
+                        {
+                            Locations =
+                            {
+                                AzureLocation.EastUs,
+                                AzureLocation.WestUs2,
+                                AzureLocation.UaeNorth, // should get filtered out by IDataPlaneManager.GetAllDataPlaneLocations
+                            },
+                            ComputePoolSize = 1,
+                            StoragePoolSize = 1,
+                            ComputeImageFamily = "test-compute-image-family-windows",
+                            StorageImageFamily = "test-storage-image-family-windows",
+                            VmAgentImageFamily = "test-vm-agent-image-family-windows",
+                        }
+                    },
+                },
+                SkuTierSettings = new Dictionary<SkuTier, SkuTierSettings>
+                {
+                    {
+                        SkuTier.Standard,
+                        new SkuTierSettings
+                        {
+                            ComputeSkuCores = 4,
+                            ComputeSkuFamily = "standard-compute-sku-family",
+                            ComputeSkuName = "standard-compute-sku-name",
+                            ComputeSkuSize = "standard-compute-sku-size",
+                            StorageSizeInGB = 64,
+                            StorageSkuName = "standard-storage-sku-name",
+                        }
+                    },
+                    {
+                        SkuTier.Premium,
+                        new SkuTierSettings
+                        {
+                            ComputeSkuCores = 8,
+                            ComputeSkuFamily = "premium-compute-sku-family",
+                            ComputeSkuName = "premium-compute-sku-name",
+                            ComputeSkuSize = "premium-compute-sku-size",
+                            StorageSizeInGB = 64,
+                            StorageSkuName = "premium-storage-sku-name",
+                        }
+                    }
                 },
                 ComputeImageFamilies = new Dictionary<string, VmImageFamilySettings>
                 {
                     {
-                        "test-compute-image-family",
+                        "test-compute-image-family-linux",
                         new VmImageFamilySettings
                         {
                             ImageKind = VmImageKind.Custom,
-                            ImageName = "test-compute-image-url",
+                            ImageName = "test-compute-image-url-linux",
+                            ImageVersion = "1.0.1",
+                        }
+                    },
+                    {
+                        "test-compute-image-family-windows",
+                        new VmImageFamilySettings
+                        {
+                            ImageKind = VmImageKind.Custom,
+                            ImageName = "test-compute-image-url-windows",
                             ImageVersion = "1.0.1",
                         }
                     },
@@ -240,61 +300,59 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 VmAgentImageFamilies = new Dictionary<string, ImageFamilySettings>
                 {
                     {
-                        "test-compute-agent-image-family",
+                        "test-vm-agent-image-family-linux",
                         new ImageFamilySettings
                         {
-                            ImageName = "test-compute-image-url",
+                            ImageName = "test-vm-image-url-linux",
+                        }
+                    },
+                    {
+                        "test-vm-agent-image-family-windows",
+                        new ImageFamilySettings
+                        {
+                            ImageName = "test-vm-image-url-windows",
                         }
                     },
                 },
                 StorageImageFamilies = new Dictionary<string, ImageFamilySettings>
                 {
                     {
-                        "test-storage-image-family",
+                        "test-storage-image-family-linux",
                         new VmImageFamilySettings
                         {
-                            ImageName = "test-storage-image-url",
+                            ImageName = "test-storage-image-url-linux",
+                        }
+                    },
+                    {
+                        "test-storage-image-family-windows",
+                        new VmImageFamilySettings
+                        {
+                            ImageName = "test-storage-image-url-windows",
                         }
                     },
                 },
                 CloudEnvironmentSkuSettings =
                 {
                     {
-                        "test-sku-name-1",
+                        "test-sku-linux-standard",
                         new SkuSettings
                         {
-                            StorageCloudEnvironmentUnits = 1.0m,
-                            ComputeCloudEnvironmentUnits = 10.0m,
-                            ComputeSkuFamily = "test-compute-sku-family-1",
-                            ComputeSkuName = "test-compute-sku-name-1",
-                            ComputeSkuSize = "test-compute-sku-size-1",
-                            ComputeSkuCores = 2,
-                            ComputeImageFamily = "test-compute-image-family",
-                            vmAgentImageFamily = "test-compute-agent-image-family",
                             ComputeOS = ComputeOS.Linux,
-                            SkuDisplayName = "test-sku-display-name-1",
-                            StorageSizeInGB = 1,
-                            StorageSkuName = "test-storage-sku-name-1",
-                            StorageImageFamily = "test-storage-image-family",
+                            Tier = SkuTier.Standard,
+                            DisplayName = "test-sku-linux-standard-name",
+                            StorageVsoUnitsPerHour = 1.0m,
+                            ComputeVsoUnitsPerHour = 10.0m,
                         }
                     },
                     {
-                        "test-sku-name-2",
+                        "test-sku-windows-premium",
                         new SkuSettings
                         {
-                            StorageCloudEnvironmentUnits = 2.0m,
-                            ComputeCloudEnvironmentUnits = 20.0m,
-                            ComputeSkuFamily = "test-compute-sku-family-2",
-                            ComputeSkuName = "test-compute-sku-name-2",
-                            ComputeSkuSize = "test-compute-sku-size-2",
-                            ComputeSkuCores = 2,
-                            ComputeImageFamily = "test-compute-image-family",
-                            vmAgentImageFamily = "test-compute-agent-image-family",
-                            ComputeOS = ComputeOS.Linux,
-                            SkuDisplayName = "test-sku-display-name-2",
-                            StorageSizeInGB = 2,
-                            StorageSkuName = "test-storage-sku-name-2",
-                            StorageImageFamily = "test-storage-image-family",
+                            ComputeOS = ComputeOS.Windows,
+                            Tier = SkuTier.Premium,
+                            DisplayName = "test-sku-windows-premium-name",
+                            StorageVsoUnitsPerHour = 2.0m,
+                            ComputeVsoUnitsPerHour = 20.0m,
                             SkuConfiguration = new SkuConfigurationSettings
                             {
                                 Locations =

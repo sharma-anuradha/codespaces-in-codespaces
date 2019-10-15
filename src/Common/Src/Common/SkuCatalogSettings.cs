@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -24,7 +25,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Gets or sets the defaults for <see cref="CloudEnvironmentSkuSettings"/>.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public SkuConfigurationSettings DefaultSkuConfiguration { get; set; } = new SkuConfigurationSettings();
+        public Dictionary<ComputeOS, SkuConfigurationSettings> DefaultSkuConfiguration { get; set; } = new Dictionary<ComputeOS, SkuConfigurationSettings>();
+
+        /// <summary>
+        /// Gets or sets the compute image families referenced in in <see cref="CloudEnvironmentSkuSettings"/>.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public Dictionary<SkuTier, SkuTierSettings> SkuTierSettings { get; set; } = new Dictionary<SkuTier, SkuTierSettings>();
 
         /// <summary>
         /// Gets or sets the compute image families referenced in in <see cref="CloudEnvironmentSkuSettings"/>.
