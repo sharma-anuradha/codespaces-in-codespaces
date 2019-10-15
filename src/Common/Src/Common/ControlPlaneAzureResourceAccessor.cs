@@ -114,9 +114,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public string GetDNSHostName()
+        public List<string> GetStampOrigins()
         {
-            return this.ControlPlaneInfo.DnsHostName;
+            var allDNSNames = this.ControlPlaneInfo.AllStamps.Values.Select(s => $"https://{s.DnsHostName}")
+                .Distinct()
+                .ToList();
+            
+            allDNSNames.Add($"https://{this.ControlPlaneInfo.DnsHostName}");
+
+            return allDNSNames;
         }
 
         /// <inheritdoc/>

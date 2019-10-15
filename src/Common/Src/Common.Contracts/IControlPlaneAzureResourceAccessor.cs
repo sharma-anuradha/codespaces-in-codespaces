@@ -37,10 +37,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         Task<IEnumerable<SecretItem>> GetKeyVaultSecretVersionsAsync(string secretName);
 
         /// <summary>
-        /// Gets the DNS host name from the control panel info.
+        /// Gets the DNS origins from the control panel info.
         /// </summary>
-        /// <returns>DNS host name</returns>
-        string GetDNSHostName();
+        /// <returns>DNS origins</returns>
+        List<string> GetStampOrigins();
 
         /// <summary>
         /// Gets the instance-level cosmos db account.

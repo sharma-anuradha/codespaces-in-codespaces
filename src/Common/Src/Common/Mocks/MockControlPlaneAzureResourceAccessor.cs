@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public string GetDNSHostName()
+        public List<string> GetStampOrigins()
         {
             throw new NotImplementedException();
         }

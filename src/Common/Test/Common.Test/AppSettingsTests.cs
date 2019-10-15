@@ -126,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 
             Assert.Collection(controlPlaneInfo.AllStamps.Values.OrderBy(s => s.Location.ToString()),
                 westUs2Stamp);
-            Assert.Equal("ci-online.dev.core.vsengsaas.visualstudio.com", controlPlaneInfo.DnsHostName);
+            Assert.Equal("online.dev.core.vsengsaas.visualstudio.com", controlPlaneInfo.DnsHostName);
             Assert.Equal("vsclk-online-dev", controlPlaneInfo.EnvironmentResourceGroupName);
             Assert.Equal("vsclk-online-dev-kv", controlPlaneInfo.EnvironmentKeyVaultName);
             Assert.Equal("vsclk-online-dev-ci", controlPlaneInfo.InstanceResourceGroupName);

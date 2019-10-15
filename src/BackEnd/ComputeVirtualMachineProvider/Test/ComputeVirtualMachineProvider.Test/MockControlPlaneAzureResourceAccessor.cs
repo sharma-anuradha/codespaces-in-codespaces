@@ -87,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         }
 
         /// <inheritdoc/>
-        public string GetDNSHostName()
+        public List<string> GetStampOrigins()
         {
             throw new NotImplementedException();
         }

@@ -80,19 +80,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             services.AddCors(options =>
                 {
-                    var currentDomain = $"https://{ControlPlaneAzureResourceAccessor.GetDNSHostName()}";
+                    var currentOrigins = ControlPlaneAzureResourceAccessor.GetStampOrigins();
                     options.AddPolicy("ProdCORSPolicy",
                         builder => builder
-                            .WithOrigins(currentDomain)
+                            .WithOrigins(currentOrigins.ToArray())
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                         );
 
+                    var currentOriginsDev = currentOrigins.GetRange(0, currentOrigins.Count);
+                    currentOriginsDev.Add("https://localhost:3000");
+
                     options.AddPolicy("NonProdCORSPolicy",
                         builder => builder
                             .WithOrigins(
-                                "https://localhost:3000",
-                                currentDomain
+                                currentOriginsDev.ToArray()
                             )
                             .AllowAnyHeader()
                             .AllowAnyMethod()
