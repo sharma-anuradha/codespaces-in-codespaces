@@ -6,6 +6,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using System.Net.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -26,7 +29,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         {
             if (path == "error")
             {
-                return View("exception");
+                return ExceptionView();
             }
 
             // Since all paths in the forwarded domain are redirected to this controller, the request for the service 
@@ -61,17 +64,15 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 var payload = AuthController.DecryptCookie(cookie);
                 if (payload == null)
                 {
-                    //cookie is expired or there was an error decrypting the cookie. So we will redirect the user to the main page to set new cookie.
-                    TempData["exception"] = "cookiePayload";
-                    return View("exception");
+                    // Cookie is expired or there was an error decrypting the cookie. So we will redirect the user to the main page to set new cookie.
+                    return ExceptionView(PortForwardingFailure.InvalidCookiePayload);
                 }
                 cascadeToken = payload.CascadeToken;
             }
             else
             {
-                //in this case user probably try to access the portForwarding link directry without signing in, so will redirect to SignIn page and redirect back to PF
-                TempData["exception"] = "NotAuthenticated";
-                return View("exception");
+                // In this case user probably try to access the portForwarding link directory without signing in, so will redirect to SignIn page and redirect back to PF
+                return ExceptionView(PortForwardingFailure.NotAuthenticated);
             }
 
             var userId = string.Empty;
@@ -90,8 +91,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             if (ownerId == null || userId == null)
             {
-                TempData["exception"] = "nullError";
-                return View("exception");
+                return ExceptionView(PortForwardingFailure.InvalidWorkspaceOrOwner);
             }
 
             if (ownerId == userId)
@@ -106,8 +106,49 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return View(cookiePayload);
             }
 
-            TempData["exception"] = "NotAuthorized";
-            return View("exception");
+            return ExceptionView(PortForwardingFailure.NotAuthorized);
+        }
+
+        private ActionResult ExceptionView(PortForwardingFailure failureReason = PortForwardingFailure.Unknown)
+        {
+            var redirectUriBuilder = new UriBuilder(AppSettings.PortalEndpoint);
+            var redirectUriQuery = HttpUtility.ParseQueryString(string.Empty);
+
+            redirectUriQuery.Set("redirectUrl", UriHelper.BuildAbsolute(Request.Scheme, Request.Host));
+            if(Uri.TryCreate(Request.GetEncodedUrl(), UriKind.Absolute, out Uri uri)) 
+            {
+                var query = uri.ParseQueryString();
+                var path = query.Get("path");
+                if (!string.IsNullOrEmpty(path)) {
+                    if (!path.StartsWith("/")) {
+                        path = "/" + path;
+                    }
+
+                    var pathAndQuery = path.Split("?");
+                    if (pathAndQuery.Length == 1) {
+                        redirectUriQuery.Set("redirectUrl", UriHelper.BuildAbsolute(Request.Scheme, Request.Host, pathAndQuery[0]));
+                    } else if (pathAndQuery.Length == 2){
+                        redirectUriQuery.Set(
+                            "redirectUrl", 
+                            UriHelper.BuildAbsolute(
+                                Request.Scheme, 
+                                Request.Host, 
+                                path: pathAndQuery[0],
+                                query: QueryString.FromUriComponent("?" + pathAndQuery[1])));
+                    }
+                }
+            } 
+
+            redirectUriBuilder.Path = "/login";
+            redirectUriBuilder.Query = redirectUriQuery.ToString();
+
+            var details = new PortForwardingErrorDetails()
+            {
+                FailureReason = failureReason,
+                RedirectUrl = redirectUriBuilder.Uri.ToString()
+            };
+
+            return View("exception", details);
         }
 
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)

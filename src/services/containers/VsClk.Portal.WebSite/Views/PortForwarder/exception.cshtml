@@ -1,8 +1,5 @@
-﻿@{
-    var returnUrl = ViewBag.HtmlStr;
-    var index = returnUrl.IndexOf("app") + 4;
-    var domain = returnUrl.Replace(returnUrl.Substring(0, index), "");
-}
+﻿@using Microsoft.VsCloudKernel.Services.Portal.WebSite
+@model PortForwardingErrorDetails
 
 <!doctype html>
 <html lang="en">
@@ -14,34 +11,47 @@
 </head>
 <body>
     <div>
-        @switch (TempData["exception"].ToString()) {
-            case "path":
+        @switch (@Model.FailureReason) {
+            case PortForwardingFailure.InvalidPath:
                 <p>Failed connecting to Visual Studio Online environment.</p>
                 break;
-            case "cookiePayload":
+
+            case PortForwardingFailure.InvalidCookiePayload:
                 <p>Bad Cookie, redirecting back to the portal...</p>
+
+                <p>In case you were not redirected automatically, <a href="@Model.RedirectUrl">Redirect</a></p>
+                
                 <script type="text/javaScript">
                     setTimeout(function() {
-                        window.location = "https://@domain/login?redirectUrl=@returnUrl";
+                        window.location = "@Model.RedirectUrl";
                     }, 1000);
                 </script>
                 break;
-            case "NotAuthenticated":
+
+            case PortForwardingFailure.NotAuthenticated:
                 <p>You need to sign in first, redirecting...</p>
+
+                <p>In case you were not redirected automatically, <a href="@Model.RedirectUrl">Redirect</a></p>
+
                 <script type="text/javaScript">
                     setTimeout(function() {
-                        window.location = "https://@domain/login?redirectUrl=@returnUrl";
+                        window.location = "@Model.RedirectUrl";
                     }, 1000);
                 </script>
                 break;
-            case "NotAuthorized":
+
+            case PortForwardingFailure.NotAuthorized:
                 <p>You do not have access to this server.</p>
                 break;
-            case "nullError":
+
+            case PortForwardingFailure.InvalidWorkspaceOrOwner:
                 <p>Either workspace id or owner id is null/incorrect.</p>
                 break;
+
             default:
                 <p>PortForwarder Failed due to unknown reason.</p>
+                <a href="@Model.RedirectUrl">Reload</a>
+
                 break;
         }
     </div>

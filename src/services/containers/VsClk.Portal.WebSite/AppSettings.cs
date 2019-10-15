@@ -22,6 +22,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public string GitHubAppClientSecret { get; set; }
 
         public string LiveShareEndpoint { get; set; }
+
+        public string PortalEndpoint { get; set; } 
+        
         public string EnvironmentRegistrationEndpoint { get; set; }
         public string Domain { get; set; }
         public string AesKey { get; set; }

@@ -28,6 +28,7 @@ config:
   authRedirectUrl: https://online.dev.core.vsengsaas.visualstudio.com
   keyVaultName: vsclk-online-dev-kv
   clusterDefaultHost: online.dev.core.vsengsaas.visualstudio.com
+  portalEndpoint: https://online.dev.core.vsengsaas.visualstudio.com/
   environmentRegistrationEndpoint: https://online.dev.core.vsengsaas.visualstudio.com/api/v1/environments
   liveShareEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com
   githubClientId: fe42cbbb45cdcb17a106
