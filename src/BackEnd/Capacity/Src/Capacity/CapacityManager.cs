@@ -27,18 +27,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// <summary>
         /// Initializes a new instance of the <see cref="CapacityManager"/> class.
         /// </summary>
+        /// <param name="azureClientFactory">The factory for getting clients to query Azure.</param>
         /// <param name="azureSubscriptionCatalog">The azure subscription catalog.</param>
         /// <param name="azureSubscriptionCapacity">The azure subscription capacity data.</param>
         /// <param name="controlPlaneInfo">The control-plane resource accessor.</param>
         /// <param name="resourceNameBuilder">resource name builder.</param>
         /// <param name="capacitySettings">Capacity settings.</param>
         public CapacityManager(
+            IAzureClientFactory azureClientFactory,
             IAzureSubscriptionCatalog azureSubscriptionCatalog,
             IAzureSubscriptionCapacityProvider azureSubscriptionCapacity,
             IControlPlaneInfo controlPlaneInfo,
             IResourceNameBuilder resourceNameBuilder,
             CapacitySettings capacitySettings)
         {
+            AzureClientFactory = Requires.NotNull(azureClientFactory, nameof(azureClientFactory));
             AzureSubscriptionCatalog = Requires.NotNull(azureSubscriptionCatalog, nameof(azureSubscriptionCatalog));
             AzureSubscriptionCapacity = Requires.NotNull(azureSubscriptionCapacity, nameof(azureSubscriptionCapacity));
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
@@ -47,6 +50,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         }
 
         private Random Rnd { get; } = new Random();
+
+        private IAzureClientFactory AzureClientFactory { get; }
 
         private IAzureSubscriptionCatalog AzureSubscriptionCatalog { get; }
 
@@ -204,13 +209,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<IAzureResourceGroup>> SelectAllAzureResourceGroups(IAzureClientFactory azureClientFactory)
+        public async Task<IEnumerable<IAzureResourceGroup>> GetAllDataPlaneResourceGroups()
         {
             var results = new List<IAzureResourceGroup>();
             var resourceGroupNamePrefix = GetBaseResourceGroupName();
             foreach (var subscription in AzureSubscriptionCatalog.AzureSubscriptions)
             {
-                var azure = await azureClientFactory.GetAzureClientAsync(Guid.Parse(subscription.SubscriptionId));
+                var azure = await AzureClientFactory.GetAzureClientAsync(Guid.Parse(subscription.SubscriptionId));
                 var resourceGroups = await azure.ResourceGroups.ListAsync();
                 foreach (var resourceGroup in resourceGroups)
                 {

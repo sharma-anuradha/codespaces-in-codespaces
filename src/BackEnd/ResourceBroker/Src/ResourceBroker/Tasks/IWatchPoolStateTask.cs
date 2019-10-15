@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Task mananager that takes regular snapshot of the state of the resource pool.
     /// </summary>
-    public interface IWatchPoolStateTask : IWatchPoolTask
+    public interface IWatchPoolStateTask : IBackgroundTask
     {
     }
 }

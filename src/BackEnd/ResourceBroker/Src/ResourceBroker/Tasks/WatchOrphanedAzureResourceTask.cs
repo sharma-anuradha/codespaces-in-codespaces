@@ -28,17 +28,15 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
     /// <summary>
-    /// Watches for Orphaned Azure Resource.
+    /// Watches for Orphaned Azure Resources.
     /// </summary>
-    public class WatchOrphanedAzureResourceTask : IWatchOrphanedAzureResourceTask
+    public class WatchOrphanedAzureResourceTask : BaseDataPlaneResourceGroupTask, IWatchOrphanedAzureResourceTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WatchOrphanedAzureResourceTask"/> class.
         /// </summary>
         /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
-        /// <param name="resourceManagementRepository">Target resource management repository.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
-        /// <param name="resourceScalingStore">Resource scaling store.</param>
         /// <param name="continuationTaskActivator">Target continuation task activator.</param>
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="capacityManager">Target capacity manager.</param>
@@ -54,86 +52,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IClaimedDistributedLease claimedDistributedLease,
             IAzureClientFactory azureClientFactory,
             IResourceNameBuilder resourceNameBuilder)
+            : base(
+                  resourceBrokerSettings,
+                  taskHelper,
+                  capacityManager,
+                  claimedDistributedLease,
+                  resourceNameBuilder)
         {
-            ResourceBrokerSettings = resourceBrokerSettings;
-            ResourceRepository = resourceRepository;
-            ContinuationTaskActivator = continuationTaskActivator;
-            TaskHelper = taskHelper;
-            CapacityManager = capacityManager;
-            ClaimedDistributedLease = claimedDistributedLease;
             AzureClientFactory = azureClientFactory;
-            ResourceNameBuilder = resourceNameBuilder;
+            ContinuationTaskActivator = continuationTaskActivator;
+            ResourceRepository = resourceRepository;
         }
 
-        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchOrphanedAzureResourceTask)}Lease");
+        /// <inheritdoc/>
+        protected override string TaskName { get; } = nameof(WatchOrphanedAzureResourceTask);
 
-        private string LogBaseName => ResourceLoggingConstants.WatchOrphanedAzureResourceTask;
-
-        private ResourceBrokerSettings ResourceBrokerSettings { get; }
-
-        private IResourceRepository ResourceRepository { get; }
-
-        private IContinuationTaskActivator ContinuationTaskActivator { get; }
-
-        private ITaskHelper TaskHelper { get; }
-
-        private ICapacityManager CapacityManager { get; }
-
-        private IClaimedDistributedLease ClaimedDistributedLease { get; }
+        /// <inheritdoc/>
+        protected override string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedAzureResourceTask;
 
         private IAzureClientFactory AzureClientFactory { get; }
 
-        private IResourceNameBuilder ResourceNameBuilder { get; }
+        private IContinuationTaskActivator ContinuationTaskActivator { get; }
 
-        private bool Disposed { get; set; }
-
-        /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_run",
-                async (childLogger) =>
-                {
-                    var capacityUnits = await RetrieveResourceGroups();
-
-                    logger.FluentAddValue("TaskCountResourceUnits", capacityUnits.Count().ToString());
-
-                    // Run through found resources in the background
-                    TaskHelper.RunBackgroundEnumerable(
-                        $"{LogBaseName}_run_unit_check",
-                        capacityUnits,
-                        (capacityUnit, itemLogger) => CoreRunUnitAsync(capacityUnit, claimSpan, itemLogger),
-                        childLogger,
-                        (capacityUnit, itemLogger) => ObtainLease($"{LeaseBaseName}-{capacityUnit.Subscription.SubscriptionId}-{capacityUnit.ResourceGroup}", claimSpan, logger));
-
-                    return !Disposed;
-                },
-                (e) => !Disposed);
-        }
+        private IResourceRepository ResourceRepository { get; }
 
         /// <inheritdoc/>
-        public void Dispose()
-        {
-            Disposed = true;
-        }
-
-        private async Task CoreRunUnitAsync(IAzureResourceGroup capacityUnit, TimeSpan claimSpan, IDiagnosticsLogger logger)
-        {
-            logger.FluentAddBaseValue("TaskResourceSubscription", capacityUnit.Subscription.SubscriptionId)
-                .FluentAddBaseValue("TaskResourceResourceGroup", capacityUnit.ResourceGroup);
-
-            // Executes the action that needs to be performed on the pool
-            await logger.TrackDurationAsync(
-                "RunPoolAction", () => CoreRunActionAsync(capacityUnit, logger));
-        }
-
-        private async Task CoreRunActionAsync(IAzureResourceGroup capacityUnit, IDiagnosticsLogger logger)
+        protected override async Task ProcessResourceGroupAsync(IAzureResourceGroup resourceGroup, IDiagnosticsLogger logger)
         {
             var count = 0;
             var page = 0;
             var records = default(IPage<GenericResourceInner>);
-
-            var azure = await AzureClientFactory.GetResourceManagementClient(Guid.Parse(capacityUnit.Subscription.SubscriptionId));
 
             do
             {
@@ -141,9 +89,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     $"{LogBaseName}_run_unit_check_page",
                     async (childLogger) =>
                     {
+                        var azure = await AzureClientFactory.GetResourceManagementClient(Guid.Parse(resourceGroup.Subscription.SubscriptionId));
+
                         // Get data page at a time
                         records = records == null ?
-                            await azure.Resources.ListByResourceGroupAsync(capacityUnit.ResourceGroup)
+                            await azure.Resources.ListByResourceGroupAsync(resourceGroup.ResourceGroup)
                             : await azure.Resources.ListByResourceGroupNextAsync(records.NextPageLink);
 
                         childLogger.FluentAddValue("TaskFoundItems", count += records.Count())
@@ -159,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                         foreach (var resource in resources)
                         {
-                            await RunOrphanedCheckAsync(resource, capacityUnit, childLogger);
+                            await RunOrphanedCheckAsync(resource, resourceGroup, childLogger);
 
                             // Need to slow things down so we don't blow the RUs
                             await Task.Delay(100);
@@ -232,18 +182,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     }
                 },
                 swallowException: true);
-        }
-
-        private async Task<IEnumerable<IAzureResourceGroup>> RetrieveResourceGroups()
-        {
-            var capacityUnits = (await CapacityManager.SelectAllAzureResourceGroups(AzureClientFactory)).Shuffle();
-            return capacityUnits;
-        }
-
-        private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
-        {
-            return await ClaimedDistributedLease.Obtain(
-                ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }
 }

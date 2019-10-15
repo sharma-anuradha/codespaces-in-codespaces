@@ -10,6 +10,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
     public class ResourceLoggingConstants
     {
         /// <summary>
+        /// Watch Orphaned Azure Resource Task.
+        /// </summary>
+        public const string DeleteResourceGroupDeploymentsTask = "delete_resource_group_deployments_task";
+
+        /// <summary>
         /// Resource Broker.
         /// </summary>
         public const string ResourceBroker = "resource_broker";

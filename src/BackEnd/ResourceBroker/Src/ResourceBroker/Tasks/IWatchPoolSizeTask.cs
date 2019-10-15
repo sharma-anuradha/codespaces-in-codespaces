@@ -8,7 +8,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// Task mananager that watches the pool size and determins if any delta operations need to be
     /// performed to fill/drain the pool.
     /// </summary>
-    public interface IWatchPoolSizeTask : IWatchPoolTask
+    public interface IWatchPoolSizeTask : IBackgroundTask
     {
     }
 }

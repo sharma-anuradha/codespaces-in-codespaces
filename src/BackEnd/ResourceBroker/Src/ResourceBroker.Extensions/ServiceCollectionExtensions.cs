@@ -89,6 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
+            services.AddSingleton<IDeleteResourceGroupDeploymentsTask, DeleteResourceGroupDeploymentsTask>();
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
             services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
             services.AddSingleton<IWatchPoolStateTask, WatchPoolStateTask>();

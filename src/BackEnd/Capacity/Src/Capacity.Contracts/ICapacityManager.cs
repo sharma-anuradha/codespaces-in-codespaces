@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
@@ -28,10 +27,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
         Task<IAzureResourceLocation> SelectAzureResourceLocation(IEnumerable<AzureResourceCriterion> criteria, AzureLocation location, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Gets list of all azure resource groups.
+        /// Gets list of all existing resource groups in the data plane subscriptions that are owned by the current stamp.
         /// </summary>
-        /// <param name="azureClientFactory">Azure client factory.</param>
         /// <returns>Complete list of resource groups.</returns>
-        Task<IEnumerable<IAzureResourceGroup>> SelectAllAzureResourceGroups(IAzureClientFactory azureClientFactory);
+        Task<IEnumerable<IAzureResourceGroup>> GetAllDataPlaneResourceGroups();
     }
 }

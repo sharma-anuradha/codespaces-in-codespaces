@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Xunit;
@@ -27,12 +28,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var controlPlaneInfo = new Mock<IControlPlaneInfo>().Object;
             var capacitySettings = new CapacitySettings();
             var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false));
-            _ = new CapacityManager(azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings);
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureSubscriptionCatalog, null, controlPlaneInfo, resourceNameBuilder, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureSubscriptionCatalog, azureSubscriptionCapacityProvider, null, resourceNameBuilder, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, null, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, null));
+            var azureClient = new Mock<IAzureClientFactory>().Object;
+            _ = new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings);
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, null, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, null, controlPlaneInfo, resourceNameBuilder, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, null, resourceNameBuilder, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, null, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, null));
         }
 
         [Fact]
@@ -120,7 +123,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var controlPlaneInfo = MockControlPlaneInfo();
             var capacitySettings = new CapacitySettings();
             var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false));
-            var capacityManager = new CapacityManager(catalog, capacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings);
+            var azureClient = new Mock<IAzureClientFactory>().Object;
+            var capacityManager = new CapacityManager(azureClient, catalog, capacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings);
             return capacityManager;
         }
 

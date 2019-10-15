@@ -20,16 +20,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
         /// </summary>
+        /// <param name="deleteResourceGroupDeploymentsTask">Task to delete resource group deployments.</param>
         /// <param name="watchPoolSizeJob">Target watch pool size job.</param>
         /// <param name="watchPoolVersionTask">Target watch pool version job.</param>
         /// <param name="watchPoolStateTask">Target watch pool state task.</param>
         /// <param name="watchPoolSettingsTask">Target watch pool settings task.</param>
         /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
         /// <param name="watchOrphanedAzureResourceTask">Target watch orphaned Azure resources job.</param>
+        /// <param name="watchOrphanedSystemResourceTask">Target watch orphaned system resources job.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public ResourceRegisterJobs(
+            IDeleteResourceGroupDeploymentsTask deleteResourceGroupDeploymentsTask,
             IWatchPoolSizeTask watchPoolSizeJob,
             IWatchPoolVersionTask watchPoolVersionTask,
             IWatchPoolStateTask watchPoolStateTask,
@@ -41,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             ITaskHelper taskHelper)
         {
+            DeleteResourceGroupDeploymentsTask = deleteResourceGroupDeploymentsTask;
             WatchPoolSizeJob = watchPoolSizeJob;
             WatchPoolVersionTask = watchPoolVersionTask;
             WatchPoolStateTask = watchPoolStateTask;
@@ -53,6 +57,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             TaskHelper = taskHelper;
             Random = new Random();
         }
+
+        private IDeleteResourceGroupDeploymentsTask DeleteResourceGroupDeploymentsTask { get; }
 
         private IWatchPoolSizeTask WatchPoolSizeJob { get; }
 
@@ -152,11 +158,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             await Task.Delay(Random.Next(5000, 7500));
 
             // Job: Watch Orphaned Azure Resources
-            var watchOrphanedSystemResourceTaskSpan = TimeSpan.FromHours(2);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedSystemResourceTask}_run",
                 (childLogger) => WatchOrphanedSystemResourceTask.RunAsync(TimeSpan.FromHours(2), childLogger),
                 TimeSpan.FromMinutes(20));
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Delete Resource Group Deployments
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.DeleteResourceGroupDeploymentsTask}_run",
+                (childLogger) => DeleteResourceGroupDeploymentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                TimeSpan.FromMinutes(10));
         }
     }
 }

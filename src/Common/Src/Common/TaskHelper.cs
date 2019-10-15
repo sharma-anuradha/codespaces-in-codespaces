@@ -268,7 +268,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
             else
             {
-                // In this case make sure we catch unhandlled exception
+                // In this case make sure we catch unhandled exceptions
                 return () =>
                 {
                     try
@@ -363,7 +363,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                                     itemTryLogger.FluentAddValue("LockAchived", lockAchieved)
                                         .FluentAddValue("LockConcurrentPostCount", concurrentCount);
 
-                                    // If we got the lock run the backgroun task
+                                    // If we got the lock run the background task
                                     if (lockAchieved)
                                     {
                                         // Spawn work to take place in the background, this allows for the

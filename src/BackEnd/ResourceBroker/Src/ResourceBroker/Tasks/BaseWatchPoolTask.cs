@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
@@ -19,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Defines a task which is designed to watch the pools for versious changes.
     /// </summary>
-    public abstract class BaseWatchPoolTask : IWatchPoolTask
+    public abstract class BaseWatchPoolTask : IBackgroundTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseWatchPoolTask"/> class.

@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
     public class CommonAppSecretsProvider : SecretProviderBase
     {
         /// <summary>
-        /// The application servie principal client secret name.
+        /// The application service principal client secret name.
         /// </summary>
         public const string AppServicePrincipalClientSecretName = "AppServicePrincipalClientSecret";
 
