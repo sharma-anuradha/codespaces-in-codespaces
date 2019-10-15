@@ -138,6 +138,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             logger = logger ?? Logger;
 
+            // When debugging, just run one at a time
+            concurrentLimit = Math.Max(concurrentLimit, 1);
+            concurrentLimit = Debugger.IsAttached ? 1 : concurrentLimit;
+
             // Log the main task
             return logger.OperationScopeAsync(
                 "task_helper_run_background_enumerable",

@@ -171,17 +171,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
                     foreach (var usage in usages)
                     {
-                        TaskHelper.RunBackground(
-                            MakeLoggingName("update_capacity_record"),
-                            async (taskLogger) =>
+                        await Retry.DoAsync(
+                            async (attempt) =>
                             {
                                 var capacityRecord = new CapacityRecord(usage);
-                                await CapacityRepository.CreateOrUpdateAsync(capacityRecord, taskLogger);
-                            },
-                            childLogger);
+                                await CapacityRepository.CreateOrUpdateAsync(capacityRecord, logger);
+                            });
                     }
-                },
-                swallowException: true);
+                });
         }
 
         private async Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(

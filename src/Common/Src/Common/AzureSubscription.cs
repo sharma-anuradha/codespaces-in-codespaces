@@ -5,12 +5,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <inheritdoc/>
+    [DebuggerDisplay("{DisplayName} ({SubscriptionId})")]
     public class AzureSubscription : IAzureSubscription
     {
         private static readonly Lazy<ReadOnlyDictionary<string, int>> EmptyQuotas = new Lazy<ReadOnlyDictionary<string, int>>(() => new ReadOnlyDictionary<string, int>(new Dictionary<string, int>()));

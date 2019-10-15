@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.ResponseCaching.Internal;
+using Microsoft.CodeAnalysis;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
@@ -25,16 +26,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         // Update capacity constants
         private const string UpdateCapacityLeaseContainerName = "update-capacity-leases";
         private const string UpdateCapacityLeasePrefix = "update-capacity-lease";
-        private const string UpdateCapacityLoopName = "update_capacity_loop";
+        private const string UpdateCapacityLoopPrefix = "update_capacity_loop";
         private const string UpdateCapacityOperationName = "update_capacity_operation";
-        private const string UpdateCapacityTaskName = "update_capacity_job";
 
         // Monitor capacity constants
         private const string MonitorCapacityLeaseContainerName = "monitor-capacity-leases";
         private const string MonitorCapacityLeasePrefix = "monitor-capacity-lease";
-        private const string MonitorCapacityLoopName = "monitor_capacity_loop";
+        private const string MonitorCapacityLoopPrefix = "monitor_capacity_loop";
         private const string MonitorCapacityOperationName = "monitor_capacity_operation";
-        private const string MonitorCapacityTaskName = "monitor_capacity_job";
         private const string MonitorCapacityLogAlert = "monitor_capacity_alert";
         private const string MonitorCapacityLogInfo = "monitor_capacity_info";
         private const double MonitorCapacityQuotaThreshold = 0.80;
@@ -97,6 +96,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
         private bool DeveloperStamp { get; }
 
+        private Random Random { get; } = new Random();
+
         /// <inheritdoc/>
         public async Task WarmupCompletedAsync(IDiagnosticsLogger logger)
         {
@@ -124,85 +125,90 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 monitorCapacityInterval *= 0.1;
             }
 
-            // TODO: Candidate for RunBackgroundEnumerableAsync usage
             // Update the compute capacity
-            foreach (var (subscription, location) in computeSubscriptionLocations)
-            {
-                await WaitASecond();
-                UpdateAzureResourceUsageBackgroundLoop(subscription, location, ServiceType.Compute, updateCapacityInterval, logger);
-            }
+            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Compute, computeSubscriptionLocations, updateCapacityInterval, logger);
 
-            // TODO: Candidate for RunBackgroundEnumerableAsync usage
             // Update the storage capacity
-            foreach (var (subscription, location) in storageSubscriptionLocations)
-            {
-                await WaitASecond();
-                UpdateAzureResourceUsageBackgroundLoop(subscription, location, ServiceType.Storage, updateCapacityInterval, logger);
-            }
+            await DelayBetweenLoops();
+            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Storage, storageSubscriptionLocations, updateCapacityInterval, logger);
 
-            // TODO: Candidate for RunBackgroundEnumerableAsync usage
             // Update the network capacity
-            foreach (var (subscription, location) in networkSubscriptionLocations)
-            {
-                await WaitASecond();
-                UpdateAzureResourceUsageBackgroundLoop(subscription, location, ServiceType.Network, updateCapacityInterval, logger);
-            }
+            await DelayBetweenLoops();
+            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Network, networkSubscriptionLocations, updateCapacityInterval, logger);
 
-            // TODO: Candidate for RunBackgroundEnumerableAsync usage
-            // Monitor all capacity
+            // Group the subscription by location for monitoring and aggregates
             var subscriptionLocationGroups = subscriptionLocations.GroupBy(item => item.location);
-            foreach (var subscriptionLocationGroup in subscriptionLocationGroups)
-            {
-                var location = subscriptionLocationGroup.Key;
-                var subscriptions = subscriptionLocationGroup.Select(item => item.subscription);
 
-                await WaitASecond();
-                MonitorAzureResourceUsageBackgroundLoop(location, subscriptions, ServiceType.Compute, monitorCapacityInterval, logger);
+            // Monitor the compute capacity
+            await DelayBetweenLoops();
+            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Compute, subscriptionLocationGroups, monitorCapacityInterval, logger);
 
-                await WaitASecond();
-                MonitorAzureResourceUsageBackgroundLoop(location, subscriptions, ServiceType.Storage, monitorCapacityInterval, logger);
+            // Monitor the storage capacity
+            await DelayBetweenLoops();
+            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Storage, subscriptionLocationGroups, monitorCapacityInterval, logger);
 
-                await WaitASecond();
-                MonitorAzureResourceUsageBackgroundLoop(location, subscriptions, ServiceType.Network, monitorCapacityInterval, logger);
-            }
+            // Monitor the network capacity
+            await DelayBetweenLoops();
+            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Network, subscriptionLocationGroups, monitorCapacityInterval, logger);
         }
 
-        private static async Task WaitASecond()
+        // Temporal offset to distribute inital load of recuring tasks
+        private async Task DelayBetweenLoops()
         {
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(Random.Next(1000, 2000));
         }
 
         private void UpdateAzureResourceUsageBackgroundLoop(
-            IAzureSubscription subscription,
-            AzureLocation location,
             ServiceType serviceType,
-            TimeSpan updateInterval,
+            IEnumerable<(IAzureSubscription subscription, AzureLocation location)> subscriptionLocations,
+            TimeSpan schedule,
             IDiagnosticsLogger logger)
         {
-            // Each loop gets its own logger with a unique activity id.
-            logger = logger
-                .FromExisting(withActivityId: true)
-                .WithValues(
-                    new LogValueSet
-                    {
-                        { nameof(subscription), subscription.SubscriptionId },
-                        { nameof(location), location.ToString() },
-                        { nameof(serviceType), serviceType.ToString() },
-                    });
+            var loopName = UpdateCapacityLoopPrefix + $"_{serviceType}".ToLowerInvariant();
 
             TaskHelper.RunBackgroundLoop(
-                UpdateCapacityLoopName,
-                (childLogger) => UpdateAzureResourceUsageAsync(subscription, location, serviceType, childLogger),
-                updateInterval,
+                loopName,
+                async (loopLogger) =>
+                {
+                    await TaskHelper.RunBackgroundEnumerableAsync(
+                        loopName,
+                        subscriptionLocations,
+                        (item, childLogger) => UpdateAzureResourceUsageAsync(serviceType, item, childLogger),
+                        loopLogger,
+                        (item, childLogger) => ObtainUpdateCapacityLeaseAsync(serviceType, item, childLogger));
+
+                    return true;
+                },
+                schedule,
                 logger);
         }
 
-        private async Task<bool> UpdateAzureResourceUsageAsync(
-            IAzureSubscription subscription,
-            AzureLocation location,
-            ServiceType serviceType,
-            IDiagnosticsLogger logger)
+        private async Task UpdateAzureResourceUsageAsync(ServiceType serviceType, (IAzureSubscription subscription, AzureLocation location) item, IDiagnosticsLogger logger)
         {
+            var (subscription, location) = item;
+
+            logger
+                .FluentAddValue(nameof(location), location.ToString())
+                .FluentAddValue(nameof(serviceType), serviceType.ToString());
+
+            try
+            {
+                await AzureSubscriptionCapacityProvider.UpdateAzureResourceUsageAsync(
+                    subscription,
+                    location,
+                    serviceType,
+                    logger.NewChildLogger());
+            }
+            catch (Exception ex)
+            {
+                var message = $"{UpdateCapacityLoopPrefix}_{serviceType}_error".ToLowerInvariant();
+                logger.LogException(message, ex);
+            }
+        }
+
+        private async Task<IDisposable> ObtainUpdateCapacityLeaseAsync(ServiceType serviceType, (IAzureSubscription subscription, AzureLocation location) item, IDiagnosticsLogger logger)
+        {
+            var (subscription, location) = item;
             var containerName = ResourceNameBuilder.GetLeaseName(UpdateCapacityLeaseContainerName);
             var leaseName = $"{UpdateCapacityLeasePrefix}-{subscription.SubscriptionId}-{location}-{serviceType}".ToLowerInvariant();
             var leaseTime = UpdateCapacityLeaseTimeSpan;
@@ -211,115 +217,121 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 leaseTime *= 0.1;
             }
 
-            using (var lease = await ClaimedDistributedLease.Obtain(containerName, leaseName, leaseTime, logger))
-            {
-                if (lease != null)
-                {
-                    TaskHelper.RunBackground(
-                        UpdateCapacityTaskName,
-                        (childLogger) => AzureSubscriptionCapacityProvider.UpdateAzureResourceUsageAsync(subscription, location, serviceType, childLogger),
-                        logger);
-                }
-            }
-
-            return true;
-        }
-
-        private void MonitorAzureResourceUsageBackgroundLoop(
-            AzureLocation location,
-            IEnumerable<IAzureSubscription> subscriptions,
-            ServiceType serviceType,
-            TimeSpan monitorInterval,
-            IDiagnosticsLogger logger)
-        {
-            // Each loop gets its own logger with a unique activity id.
-            logger = logger
-                .FromExisting(withActivityId: true)
-                .WithValues(
-                    new LogValueSet
-                    {
-                        { nameof(location), location.ToString() },
-                        { nameof(serviceType), serviceType.ToString() },
-                    });
-
-            TaskHelper.RunBackgroundLoop(
-                MonitorCapacityLoopName,
-                (childLogger) => MonitorAzureResourceUsageAsync(location, subscriptions, serviceType, childLogger),
-                monitorInterval,
+            return await ClaimedDistributedLease.Obtain(
+                containerName,
+                leaseName,
+                leaseTime,
                 logger);
         }
 
-        private async Task<bool> MonitorAzureResourceUsageAsync(
-            AzureLocation location,
-            IEnumerable<IAzureSubscription> subscriptions,
+        private void MonitorAzureResourceUsageBackgroundLoop(
             ServiceType serviceType,
+            IEnumerable<IGrouping<AzureLocation, (IAzureSubscription subscription, AzureLocation location)>> subscriptionLocationGroups,
+            TimeSpan monitorCapacityInterval,
             IDiagnosticsLogger logger)
         {
+            var loopName = MonitorCapacityLoopPrefix + $"_{serviceType}".ToLowerInvariant();
+
+            TaskHelper.RunBackgroundLoop(
+                loopName,
+                async (loopLogger) =>
+                {
+                    await TaskHelper.RunBackgroundEnumerableAsync(
+                        loopName,
+                        subscriptionLocationGroups,
+                        (item, childLogger) => MonitorAzureResourceUsageAsync(serviceType, item, childLogger),
+                        loopLogger,
+                        (item, childLogger) => ObtainMonitorCapacityLeaseAsync(serviceType, item, childLogger));
+
+                    return true;
+                },
+                monitorCapacityInterval,
+                logger);
+
+        }
+
+        private async Task MonitorAzureResourceUsageAsync(
+            ServiceType serviceType,
+            IGrouping<AzureLocation, (IAzureSubscription, AzureLocation)> subscriptionLocationsGrouping,
+            IDiagnosticsLogger logger)
+        {
+            var location = subscriptionLocationsGrouping.Key;
+            var subscriptions = subscriptionLocationsGrouping
+                .AsEnumerable()
+                .Select(item => item.Item1);
+
+            await logger.OperationScopeAsync(
+                MonitorCapacityOperationName,
+                async (innerLogger) =>
+                {
+                    innerLogger
+                        .FluentAddBaseValue(nameof(location), location.ToString())
+                        .FluentAddBaseValue(nameof(serviceType), serviceType.ToString());
+
+                    var aggregate = new Dictionary<string, (long, long)>();
+
+                    // Report subscription-location quota thresholds
+                    foreach (var subscription in subscriptions)
+                    {
+                        try
+                        {
+                            var resourceUsages = await AzureSubscriptionCapacityProvider
+                                .GetAzureResourceUsageAsync(
+                                    subscription,
+                                    location,
+                                    serviceType,
+                                    innerLogger.NewChildLogger());
+
+                            foreach (var resourceUsage in resourceUsages)
+                            {
+                                UpdateAggregate(aggregate, resourceUsage);
+                                LogCapacityAlert(
+                                    innerLogger,
+                                    subscription.DisplayName,
+                                    resourceUsage.Quota,
+                                    resourceUsage.Limit,
+                                    resourceUsage.CurrentValue,
+                                    resourceUsage.SubscriptionId,
+                                    resourceUsage.Location,
+                                    subscription.Enabled);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            innerLogger.LogException($"{nameof(MonitorAzureResourceUsageAsync)}_error", ex);
+                        }
+                    }
+
+                    // Report aggregate location quota threshold
+                    foreach (var quota in aggregate.Keys)
+                    {
+                        var (limit, current) = aggregate[quota];
+                        LogCapacityAlert(innerLogger, "aggregate", quota, limit, current);
+                    }
+                },
+                null,
+                swallowException: true);
+        }
+
+        private async Task<IDisposable> ObtainMonitorCapacityLeaseAsync(
+            ServiceType serviceType,
+            IEnumerable<(IAzureSubscription subscription, AzureLocation location)> items,
+            IDiagnosticsLogger logger)
+        {
+            _ = items;
             var containerName = ResourceNameBuilder.GetLeaseName(MonitorCapacityLeaseContainerName);
-            var leaseName = $"{MonitorCapacityLeasePrefix}-{location}-{serviceType}".ToLowerInvariant();
+            var leaseName = $"{MonitorCapacityLeasePrefix}-{serviceType}".ToLowerInvariant();
             var leaseTime = MonitorCapacityLeaseTimeSpan;
             if (DeveloperStamp)
             {
                 leaseTime *= 0.1;
             }
 
-            using (var lease = await ClaimedDistributedLease.Obtain(containerName, leaseName, MonitorCapacityLeaseTimeSpan, logger))
-            {
-                if (lease != null)
-                {
-                    TaskHelper.RunBackground(
-                        MonitorCapacityTaskName,
-                        (childLogger) => MonitorAzureResourceUsageInnerAsync(location, subscriptions, serviceType, childLogger),
-                        logger);
-                }
-            }
-
-            return true;
-        }
-
-        private async Task MonitorAzureResourceUsageInnerAsync(
-            AzureLocation location,
-            IEnumerable<IAzureSubscription> subscriptions,
-            ServiceType serviceType,
-            IDiagnosticsLogger logger)
-        {
-            // Quota: (limit, current)
-            var aggregate = new Dictionary<string, (long, long)>();
-
-            // Report subscription-location quota thresholds
-            foreach (var subscription in subscriptions)
-            {
-                try
-                {
-                    var resourceUsages = await AzureSubscriptionCapacityProvider
-                        .GetAzureResourceUsageAsync(subscription, location, serviceType, logger);
-
-                    foreach (var resourceUsage in resourceUsages)
-                    {
-                        UpdateAggregate(aggregate, resourceUsage);
-                        LogCapacityAlert(
-                            logger,
-                            subscription.DisplayName,
-                            resourceUsage.Quota,
-                            resourceUsage.Limit,
-                            resourceUsage.CurrentValue,
-                            resourceUsage.SubscriptionId,
-                            resourceUsage.Location,
-                            subscription.Enabled);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogException($"{nameof(MonitorAzureResourceUsageInnerAsync)}_error", ex);
-                }
-            }
-
-            // Report aggregate location quota threshold
-            foreach (var quota in aggregate.Keys)
-            {
-                var (limit, current) = aggregate[quota];
-                LogCapacityAlert(logger, "aggregate", quota, limit, current);
-            }
+            return await ClaimedDistributedLease.Obtain(
+                containerName,
+                leaseName,
+                leaseTime,
+                logger);
         }
 
         private void UpdateAggregate(Dictionary<string, (long, long)> aggregate, AzureResourceUsage resourceUsage)
