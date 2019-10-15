@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
@@ -63,6 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromBody] AccountResource resource)
         {
             var logger = HttpContext.GetLogger();
+            var duration = logger.StartDuration();
             try
             {
                 ValidationUtil.IsRequired(subscriptionId);
@@ -75,7 +77,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogException("Error validating Account Resource parameters before creation", ex);
+                logger.AddDuration(duration)
+                        .LogErrorWithDetail("account_create_validate_error", ex.Message);
                 return CreateErrorResponse("NullParameters");
             }
 
@@ -83,6 +86,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 // TODO: Validate that the user profile exists.
             }
+
+            logger.AddDuration(duration)
+                    .LogInfo("account_create_validate_success");
 
             // Required response format in case validation pass with empty body.
             return new OkObjectResult(string.Empty);
@@ -102,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromBody] AccountResource resource)
         {
             var logger = HttpContext.GetLogger();
-
+            var duration = logger.StartDuration();
             try
             {
                 var accessToken = this.currentUserProvider.GetBearerToken();
@@ -140,13 +146,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 // Clear the userId property so it will not be stored on the created ARM resource.
                 // It will only be saved internally by the account manager.
                 resource.Properties.UserId = null;
+                logger.AddAccount(account.Account)
+                        .AddDuration(duration)
+                        .LogInfo("account_create_success");
 
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, resource);
             }
             catch (Exception ex)
             {
-                logger.LogException("Error creating Account Resource", ex);
+                logger.AddDuration(duration)
+                        .LogErrorWithDetail("account_create_error", ex.Message);
                 return CreateErrorResponse("CreateResourceFailed");
             }
         }
@@ -174,7 +184,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             var logger = HttpContext.GetLogger();
-
+            var duration = logger.StartDuration();
             try
             {
                 ValidationUtil.IsRequired(subscriptionId);
@@ -192,24 +202,59 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                 var environments = await cloudEnvironmentManager.ListEnvironmentsAsync(
                     ownerId: null, name: null, account.ResourceId, logger);
-                var count = environments.Count(t => t.State != CloudEnvironmentState.Deleted);
-                if (count > 0)
+                var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
+                if (nonDeletedEnvironments.Any())
                 {
-                    return CreateErrorResponse("DeleteFailed", $"Account contains {count} environment(s). Delete all the environments before deleting the account.");
+                    foreach (var environment in nonDeletedEnvironments)
+                    {
+                        var childLogger = logger.NewChildLogger()
+                                                .AddAccount(account);
+
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                var result = await cloudEnvironmentManager.DeleteEnvironmentAsync(environment.Id, environment.OwnerId, childLogger);
+                                if (!result)
+                                {
+                                    childLogger.AddCloudEnvironment(environment)
+                                                .AddDuration(duration)
+                                                .LogError("account_delete_environment_delete_error");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                childLogger.AddDuration(duration)
+                                            .LogErrorWithDetail("account_delete_environment_delete_error", ex.Message);
+                            }
+                        });
+                    }
+
+                    logger.AddAccount(account)
+                            .AddDuration(duration)
+                            .FluentAddValue("Count", $"{nonDeletedEnvironments.Count()}")
+                            .LogInfo("account_delete_environment_delete_success");
                 }
 
                 var response = await this.accountManager.DeleteAsync(account, logger);
                 if (!response)
                 {
+                    logger.AddAccount(account)
+                            .AddDuration(duration)
+                            .LogError("account_delete_error");
                     return CreateErrorResponse("DeleteFailed");
                 }
+
+                logger.AddDuration(duration)
+                        .LogInfo($"account_delete_success");
 
                 // Required response format in case validation pass with empty body.
                 return new OkObjectResult(string.Empty);
             }
             catch (Exception ex)
             {
-                logger.LogException("Error deleting Account Resource", ex);
+                logger.AddDuration(duration)
+                        .LogErrorWithDetail("account_delete_error", ex.Message);
                 return CreateErrorResponse("DeleteFailed");
             }
         }
@@ -223,7 +268,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string subscriptionId, string resourceGroup, string providerNamespace, string resourceType)
         {
             var logger = HttpContext.GetLogger();
-
+            var duration = logger.StartDuration();
             try
             {
                 var accessToken = this.currentUserProvider.GetBearerToken();
@@ -236,12 +281,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var accounts = await this.accountManager.ListAsync(
                     userId: null, subscriptionId, resourceGroup, logger);
 
+                logger.AddDuration(duration)
+                       .LogInfo("account_list_by_resourcegroup_success");
+
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, accounts);
             }
             catch (Exception ex)
             {
-                logger.LogException("Error retrieving Account Resource list by Subscription and Resource Group", ex);
+                logger.LogErrorWithDetail("account_list_by_resourcegroup_error", ex.Message);
                 return CreateErrorResponse("GetResourceListFailed");
             }
         }
@@ -255,10 +303,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string subscriptionId, string providerNamespace, string resourceType)
         {
             var logger = HttpContext.GetLogger();
+            var duration = logger.StartDuration();
             try
             {
-                var accessToken = this.currentUserProvider.GetBearerToken();
-
                 ValidationUtil.IsRequired(subscriptionId);
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
@@ -266,12 +313,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var accounts = await this.accountManager.ListAsync(
                     userId: null, subscriptionId, resourceGroup: null, logger);
 
+                logger.AddDuration(duration)
+                        .LogInfo("account_list_by_subscription_success");
+
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, accounts);
             }
             catch (Exception ex)
             {
-                logger.LogException("Error retrieving Account Resource list by Subscription", ex);
+                logger.AddDuration(duration)
+                        .LogErrorWithDetail("account_list_by_subscription_error", ex.Message);
                 return CreateErrorResponse("GetResourceListFailed");
             }
         }
