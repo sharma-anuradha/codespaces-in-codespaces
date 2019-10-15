@@ -306,7 +306,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 if (!string.IsNullOrWhiteSpace(connectionSessionId))
                 {
                     // Delete the previous liveshare session from database.
-                    await WorkspaceRepository.DeleteAsync(connectionSessionId);
+                    // Do not block start process on delete of old workspace from liveshare db.
+                    var _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId));
                     cloudEnvironment.Connection = null;
                 }
 
