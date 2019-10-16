@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
+    <ProjectReference Include="FrontEndWebApi.Test\FrontEndWebApi.Test.csproj" />
   </ItemGroup>
 
 </Project>

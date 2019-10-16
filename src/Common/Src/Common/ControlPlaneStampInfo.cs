@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -47,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
+        [JsonConverter(typeof(StringEnumConverter))]
         public AzureLocation Location { get; }
 
         /// <inheritdoc/>
@@ -57,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string DnsHostName => NotNullOrWhiteSpace(ControlPlaneStampSettings.DnsHostName, nameof(ControlPlaneStampSettings.DnsHostName));
 
         /// <inheritdoc/>
+        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
         public IEnumerable<AzureLocation> DataPlaneLocations => ControlPlaneStampSettings.DataPlaneLocations;
 
         /// <inheritdoc/>

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+﻿namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
     /// The response object to describe downloadable agent binaries.

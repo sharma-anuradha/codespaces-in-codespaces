@@ -6,6 +6,7 @@
     <ProjectReference Include="HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="Common.AspNetCore\Common.AspNetCore.csproj" />
+    <ProjectReference Include="Catalog\Catalog.csproj" />
   </ItemGroup>
 
 </Project>

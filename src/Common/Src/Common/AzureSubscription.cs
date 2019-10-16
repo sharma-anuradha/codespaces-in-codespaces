@@ -8,6 +8,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -66,6 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public bool Enabled { get; }
 
         /// <inheritdoc/>
+        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
         public IEnumerable<AzureLocation> Locations { get; }
 
         /// <inheritdoc/>

@@ -36,19 +36,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public int? StoragePoolSize { get; set; }
 
         /// <summary>
-        /// Gets or sets the storage blob name for the file share template.
+        /// Gets or sets the compute image family.
         /// </summary>
-        /*
         [JsonProperty(Required = Required.Default)]
-        public string FileShareTemplateBlobName { get; set; }
-        */
+        public string ComputeImageFamily { get; set; }
 
         /// <summary>
-        /// Gets or sets storage container name for the file share template.
+        /// Gets or sets the storage image family.
         /// </summary>
-        /*
         [JsonProperty(Required = Required.Default)]
-        public string FileShareTemplateContainerName { get; set; }
-        */
+        public string StorageImageFamily { get; set; }
+
+        /// <summary>
+        /// Gets or sets the VM agent image family.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string VmAgentImageFamily { get; set; }
     }
 }
