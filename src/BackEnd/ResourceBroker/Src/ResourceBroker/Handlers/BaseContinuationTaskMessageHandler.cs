@@ -131,8 +131,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // If we don't have the operation input build it
             if (input.OperationInput == null)
             {
-                input.OperationInput = await logger.TrackDurationAsync(
-                    "HandlerBuildOperationInput", () => BuildOperationInputAsync(input, record, logger));
+                try
+                {
+                    // Get core input
+                    input.OperationInput = await logger.TrackDurationAsync(
+                        "HandlerBuildOperationInput", () => BuildOperationInputAsync(input, record, logger));
+                }
+                catch (Exception e) when (!(e is ContinuationTaskTemporarilyUnavailableException))
+                {
+                    // Log core details
+                    LogExceptionDetails("HandlerOperationInputException", e, logger);
+
+                    return await FailOperationAsync(input, record, "BuildOperationInputFailed", logger);
+                }
 
                 // If we were not able to build operation input fail
                 if (input.OperationInput == null)
@@ -380,11 +391,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
             catch (Exception e)
             {
-                logger.FluentAddValue("HandlerOperationExceptionThrew", true)
-                    .FluentAddValue("HandlerOperationExceptionMessage", e.Message);
-
-                // Since we are swallowing, make sure we have a record at this level of the excpetion just in case
-                logger.WithValues(new LogValueSet()).LogException($"{LogBaseName}_operation_error", e);
+                // Log core details
+                LogExceptionDetails("HandlerOperationException", e, logger);
 
                 threwException = true;
             }
@@ -419,6 +427,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     NextInput = input,
                 };
             }
+        }
+
+        private void LogExceptionDetails(string propertyName, Exception e, IDiagnosticsLogger logger)
+        {
+            // Log core details
+            logger.FluentAddValue($"{propertyName}Threw", true)
+                .FluentAddValue($"{propertyName}Message", e.Message);
+
+            // Since we are swallowing, make sure we have a record at this level of the excpetion just in case
+            logger.WithValues(new LogValueSet()).LogException($"{LogBaseName}_operation_error", e);
         }
     }
 }

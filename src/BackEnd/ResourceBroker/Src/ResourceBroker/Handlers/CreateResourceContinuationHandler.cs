@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
@@ -143,6 +144,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var result = default(ContinuationInput);
 
+            // Base resource tags that will be attached
             var resourceTags = new Dictionary<string, string>()
             {
                 { ResourceTagName.ResourceId, resource.Value.Id },
@@ -162,16 +164,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = "cores", Required = computeDetails.Cores },
                         new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 },
                     };
-                    var resourceLocation = await CapacityManager.SelectAzureResourceLocation(
-                        criteria,
-                        input.ResourcePoolDetails.Location,
-                        logger);
-                    var resourceGroup = resourceLocation.ResourceGroup;
-                    var subscription = resourceLocation.Subscription.SubscriptionId;
+                    var resourceLocation = await SelectAzureResourceLocation(
+                        criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
 
+                    // Get VM Agent Blob Url
                     var token = await VirtualMachineTokenProvider.GenerateAsync(resource.Value.Id, logger);
                     var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, computeDetails.VmAgentImageName);
 
+                    // Add additional tags
                     resourceTags.Add(ResourceTagName.ComputeOS, computeDetails.OS.ToString());
 
                     result = new VirtualMachineProviderCreateInput
@@ -180,8 +180,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         VMToken = token,
                         AzureVmLocation = computeDetails.Location,
                         AzureSkuName = computeDetails.SkuName,
-                        AzureSubscription = Guid.Parse(subscription),
-                        AzureResourceGroup = resourceGroup,
+                        AzureSubscription = Guid.Parse(resourceLocation.Subscription.SubscriptionId),
+                        AzureResourceGroup = resourceLocation.ResourceGroup,
                         AzureVirtualMachineImage = computeDetails.ImageName,
                         VmAgentBlobUrl = url,
                         ResourceTags = resourceTags,
@@ -204,20 +204,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     {
                         new AzureResourceCriterion { ServiceType = ServiceType.Storage, Quota = "StorageAccounts", Required = 1 },
                     };
-                    var resourceLocation = await CapacityManager.SelectAzureResourceLocation(
-                        criteria,
-                        input.ResourcePoolDetails.Location,
-                        logger);
-                    var resourceGroup = resourceLocation.ResourceGroup;
-                    var subscription = resourceLocation.Subscription.SubscriptionId;
+                    var resourceLocation = await SelectAzureResourceLocation(
+                        criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
 
+                    // Get Storage Blob Url
                     var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, storageDetails.ImageName, TimeSpan.FromDays(100));
+
                     result = new FileShareProviderCreateInput
                     {
                         AzureLocation = storageDetails.Location.ToString().ToLowerInvariant(),
                         AzureSkuName = storageDetails.SkuName,
-                        AzureSubscription = subscription,
-                        AzureResourceGroup = resourceGroup,
+                        AzureSubscription = resourceLocation.Subscription.SubscriptionId,
+                        AzureResourceGroup = resourceLocation.ResourceGroup,
                         StorageBlobUrl = url,
                         ResourceTags = resourceTags,
                     };
@@ -310,6 +308,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             };
             var blobStorageClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
             return blobStorageClientProvider;
+        }
+
+        private async Task<IAzureResourceLocation> SelectAzureResourceLocation(
+            IEnumerable<AzureResourceCriterion> criteria, AzureLocation location, IDiagnosticsLogger logger)
+        {
+            try
+            {
+                // Check for capacity
+                return await CapacityManager.SelectAzureResourceLocation(
+                    criteria, location, logger.NewChildLogger());
+            }
+            catch (CapacityNotAvailableException ex)
+            {
+                // Translate to Temporarily Unavailable Exception
+                throw new ContinuationTaskTemporarilyUnavailableException(
+                    ex.Message, TimeSpan.FromMinutes(1), ex);
+            }
         }
     }
 }

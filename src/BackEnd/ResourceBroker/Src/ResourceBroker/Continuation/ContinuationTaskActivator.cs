@@ -125,6 +125,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 result = await logger.TrackDurationAsync(
                     "ContinuationHandler", () => handler.Continue(payload.Input, logger.WithValues(new LogValueSet())));
             }
+            catch (ContinuationTaskTemporarilyUnavailableException e)
+            {
+                // Swallowing the exception
+                logger.FluentAddValue("ContinuationHandlerTemporarilyUnavailable", true)
+                    .FluentAddValue("ContinuationHandlerTemporarilyUnavailableMessage", e.Message);
+
+                result = new ContinuationResult
+                    {
+                        NextInput = payload.Input,
+                        RetryAfter = e.RetryAfter,
+                        Status = payload.Status.GetValueOrDefault(),
+                    };
+            }
             catch (Exception e)
             {
                 // Swallowing the exception
