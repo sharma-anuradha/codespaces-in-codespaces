@@ -4,6 +4,7 @@
 
 using AutoMapper;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
@@ -25,6 +26,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             cfg.CreateMap<ResourcePool, ResourcePool>();
             cfg.CreateMap<FileShareProviderAssignResult, ShareConnectionInfo>();
             cfg.CreateMap<VirtualMachineProviderStartComputeResult, EnvironmentStartResult>();
+            cfg.CreateMap<HeartBeatBody, HeartBeatInput>();
+            cfg.CreateMap<HeartBeatInput, ResourceHeartBeatRecord>();
         }
     }
 }

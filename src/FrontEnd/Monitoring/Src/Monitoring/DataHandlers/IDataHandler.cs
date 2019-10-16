@@ -2,9 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 {
@@ -27,6 +28,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         /// <param name="vmResourceId">ID of the VM that sent this data.</param>
         /// <param name="logger">IDiagnosticsLogger.</param>
         /// <returns>Task.</returns>
-        Task ProcessAsync(CollectedData data, string vmResourceId, IDiagnosticsLogger logger);
+        Task ProcessAsync(CollectedData data, Guid vmResourceId, IDiagnosticsLogger logger);
     }
 }

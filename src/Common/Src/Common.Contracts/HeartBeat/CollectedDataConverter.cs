@@ -6,7 +6,7 @@ using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
     /// Converting JSON representation of <see cref="CollectedData"/> to concrete object.
@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
         /// <inheritdoc/>
         public override void WriteJson(JsonWriter writer, CollectedData value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            serializer.Serialize(writer, value);
         }
     }
 }

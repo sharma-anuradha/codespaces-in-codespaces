@@ -1,17 +1,18 @@
-﻿// <copyright file="HeartBeat.cs" company="Microsoft">
+﻿// <copyright file="HeartBeatInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
     /// <summary>
     /// HeartBeat message from a VM.
     /// </summary>
-    public class HeartBeat
+    public class HeartBeatInput
     {
         /// <summary>
         /// Gets or sets uTC timestamp of the heartbeat.
@@ -29,12 +30,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
         /// Gets or sets virtual Machine Resource Id.
         /// </summary>
         [JsonProperty("resourceId")]
-        public string ResourceId { get; set; }
+        public Guid ResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets a list of data collected and sent by the VSOAgent.
         /// </summary>
-        [JsonProperty(ItemConverterType = typeof(CollectedDataConverter), PropertyName = "collectedDataList")]
+        [JsonProperty("collectedDataList")]
         public IEnumerable<CollectedData> CollectedDataList { get; set; }
+
     }
 }

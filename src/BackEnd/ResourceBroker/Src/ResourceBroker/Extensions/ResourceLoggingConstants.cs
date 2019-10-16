@@ -25,6 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string ResourcePoolManager = "resource_pool_manager";
 
         /// <summary>
+        /// Resource Heartbeat Manager.
+        /// </summary>
+        public const string ResourceHeartBeatManager = "resource_heartbeat_manager";
+
+        /// <summary>
         /// Watch Continuation Task Worker Pool.
         /// </summary>
         public const string WatchContinuationTaskWorkerPool = "watch_continuation_task_worker_pool";

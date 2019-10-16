@@ -5,8 +5,8 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 {
@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         }
 
         /// <inheritdoc />
-        public async Task ProcessAsync(CollectedData data, string vmResourceId, IDiagnosticsLogger logger)
+        public async Task ProcessAsync(CollectedData data, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             if (!CanProcess(data))
             {
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             // Verify if shutdown is needed
             if (IsFlagSet(environmentData.State, VsoEnvironmentState.Idle))
             {
-                await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, vmResourceId, logger);
+                await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, vmResourceId.ToString(), logger);
             }
         }
 
@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
             if (cloudEnvironment.State == CloudEnvironmentState.Deleted)
             {
-                throw new Exception($"Heartbeat recieved for a deleted environment {inputEnvironmentId}");
+                throw new Exception($"Heartbeat received for a deleted environment {inputEnvironmentId}");
             }
         }
 

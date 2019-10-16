@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
     /// Represents the current state of a Cloud Environment instance running on a Virtual Machine.

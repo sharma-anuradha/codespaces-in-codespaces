@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
@@ -34,11 +36,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Initializes a new instance of the <see cref="HeartBeatController"/> class.
         /// </summary>
         /// <param name="handlers">List of handlers to process the collected data from VSOAgent.</param>
+        /// <param name="backendHeartBeatClient">Backend HeartBeat Client.</param>
         public HeartBeatController(
-            IEnumerable<IDataHandler> handlers)
+            IEnumerable<IDataHandler> handlers,
+            IResourceHeartBeatHttpContract backendHeartBeatClient)
         {
             this.handlers = handlers;
+            BackendHeartBeatClient = backendHeartBeatClient;
         }
+
+        private IResourceHeartBeatHttpContract BackendHeartBeatClient { get; }
 
         /// <summary>
         /// Controller to recieve heartbeat messages from VSO Agents.
@@ -48,12 +55,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        public async Task<IActionResult> ProcessHeartBeatAsync([FromBody] HeartBeat heartBeat)
+        public async Task<IActionResult> ProcessHeartBeatAsync([FromBody] HeartBeatBody heartBeat)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
-
-            /* TODO: Forward the heartBeat to Backend Service immediatly */
 
             try
             {
@@ -61,10 +66,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
             catch (Exception e)
             {
-                logger.AddDuration(duration).
-                    LogErrorWithDetail("Invalid VM Resource", e.Message);
+                logger.AddDuration(duration)
+                    .AddReason(e.Message)
+                    .LogError(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)));
+
                 return UnprocessableEntity();
             }
+
+            // Asynchronously forward the heartbeat to backend service.
+            var backendHeartBeatProcessingTask = BackendHeartBeatClient.UpdateHeartBeatAsync(heartBeat.ResourceId, heartBeat, logger.NewChildLogger());
 
             if (heartBeat.CollectedDataList != null && heartBeat.CollectedDataList.Count() > 0)
             {
@@ -76,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     {
                         try
                         {
-                            await handler.ProcessAsync(data, heartBeat.ResourceId, logger);
+                            await handler.ProcessAsync(data, heartBeat.ResourceId, logger.NewChildLogger());
                         }
                         catch (Exception e)
                         {
@@ -92,34 +102,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 }
             }
 
+            try
+            {
+                await Task.WhenAll(backendHeartBeatProcessingTask);
+            }
+            catch (Exception e)
+            {
+                logger.AddDuration(duration)
+                    .AddReason("Backend heartbeat processing failed.")
+                    .LogException(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)), e);
+                return UnprocessableEntity();
+            }
+
             logger.AddDuration(duration)
                     .LogInfo(GetType().FormatLogMessage(nameof(ProcessHeartBeatAsync)));
 
             return NoContent();
         }
 
-        private void ValidateResource(string resourceId)
+        private void ValidateResource(Guid resourceId)
         {
-            if (!HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName))
-            {
-                throw new Exception($"Heartbeat VMToken has invalid vmResourceId");
-            }
-
-            var vmResourceId = HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string;
-            if (string.IsNullOrWhiteSpace(vmResourceId))
-            {
-                throw new Exception($"Heartbeat VMToken has invalid vmResourceId");
-            }
-
-            if (string.IsNullOrWhiteSpace(resourceId))
-            {
-                throw new Exception($"Heartbeat recieved with empty vmResourceId, from the VM {vmResourceId}");
-            }
-
-            if (vmResourceId != resourceId)
-            {
-                throw new Exception($"Heartbeat recieved with conflicting vmResourceId = {resourceId}, from the VM {vmResourceId}");
-            }
+            ValidationUtil.IsTrue(HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName), "Heartbeat VMToken has invalid vmResourceId");
+            ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out var vmResourceId), $"Heartbeat VMToken has invalid vmResourceId");
+            ValidationUtil.IsRequired<Guid>(resourceId, $"Heartbeat received with empty vmResourceId, from the VM {vmResourceId}");
+            ValidationUtil.IsTrue(vmResourceId == resourceId, $"Heartbeat received with conflicting vmResourceId = {resourceId}, from the VM {vmResourceId}");
         }
     }
 }

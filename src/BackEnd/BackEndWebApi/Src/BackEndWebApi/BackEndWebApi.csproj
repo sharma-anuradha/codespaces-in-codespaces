@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\..\..\Settings\**" >
+    <Content Include="..\..\..\..\Settings\**">
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>

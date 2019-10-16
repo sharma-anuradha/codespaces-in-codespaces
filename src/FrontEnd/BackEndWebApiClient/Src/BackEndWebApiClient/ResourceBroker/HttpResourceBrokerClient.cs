@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 

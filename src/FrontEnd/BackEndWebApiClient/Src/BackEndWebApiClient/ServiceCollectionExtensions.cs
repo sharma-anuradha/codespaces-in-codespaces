@@ -37,7 +37,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             // Add the shared back end http client provider and the resource broker http client
             services.Configure(configureOptions)
                 .AddSingleton<ICurrentUserHttpClientProvider<BackEndHttpClientProviderOptions>, BackEndHttpClientProvider>()
-                .AddResourceBrokerClient(useMocks, useFakes, dockerImageName, publishedCLIPath);
+                .AddResourceBrokerClient(useMocks, useFakes, dockerImageName, publishedCLIPath)
+                .AddHeartBeatClient();
 
             return services;
         }
@@ -58,5 +59,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
                 return services.AddSingleton<IResourceBrokerResourcesHttpContract, HttpResourceBrokerClient>();
             }
         }
+
+        private static IServiceCollection AddHeartBeatClient(this IServiceCollection services)
+        {
+            return services.AddSingleton<IResourceHeartBeatHttpContract, HttpResourceHeartBeatClient>();
+        }
+
     }
 }

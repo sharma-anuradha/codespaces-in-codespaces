@@ -141,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// </summary>
         public IList<OperationStateChanges> DeletingStatusChanges { get; set; }
 
-		/// <summary>
+        /// <summary>
         /// Gets or sets the current state of the Keep Alives.
         /// </summary>
         public ResourceKeepAliveRecord KeepAlives { get; set; }
@@ -166,6 +166,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// Gets or sets the cleanup Status Changes.
         /// </summary>
         public IList<OperationStateChanges> CleanupStatusChanges { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current HeartBeat.
+        /// </summary>
+        public ResourceHeartBeatSummaryRecord HeartBeatSummary { get; set; }
 
         /// <summary>
         /// Gets or sets the Properties.

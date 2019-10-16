@@ -27,6 +27,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstr
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
 using Newtonsoft.Json;
+using JobState = Microsoft.Azure.Batch.Common.JobState;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 {

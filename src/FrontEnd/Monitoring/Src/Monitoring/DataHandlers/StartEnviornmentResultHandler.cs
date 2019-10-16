@@ -4,11 +4,10 @@
 
 using System;
 using System.Threading.Tasks;
-using System.Transactions;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
@@ -36,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         }
 
         /// <inheritdoc/>
-        public async Task ProcessAsync(CollectedData data, string vmResourceId, IDiagnosticsLogger logger)
+        public async Task ProcessAsync(CollectedData data, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             await logger.OperationScopeAsync(
                "start_environment_handler_process",

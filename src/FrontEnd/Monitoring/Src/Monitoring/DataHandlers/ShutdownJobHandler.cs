@@ -5,9 +5,8 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 {
@@ -36,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         }
 
         /// <inheritdoc/>
-        public async Task ProcessAsync(CollectedData data, string vmResourceId, IDiagnosticsLogger logger)
+        public async Task ProcessAsync(CollectedData data, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             if (!CanProcess(data))
             {
