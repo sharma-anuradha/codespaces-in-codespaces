@@ -50,22 +50,7 @@
     "vmAgentBlobUrl": {
       "type": "string"
     },
-    "vmAgentInputQueueName": {
-      "type": "string"
-    },
-    "vmAgentInputQueueUrl": {
-      "type": "string"
-    },
-    "vmAgentInputQueueSasToken": {
-      "type": "string"
-    },
-    "vmToken": {
-      "type": "string"
-    },
-    "resourceId": {
-      "type": "string"
-    },
-    "serviceHostName": {
+    "vmInitScriptBase64ParametersBlob": {
       "type": "string"
     }
   },
@@ -192,7 +177,7 @@
           "properties": {
             "autoUpgradeMinorVersion": true,
             "protectedSettings": {
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'windows-vm-init.ps1 ', ' -vmAgentBlobUrl \"', parameters('vmAgentBlobUrl'), '\" -vmAgentInputQueueName \"', parameters('vmAgentInputQueueName'), '\" -vmAgentInputQueueUrl \"', parameters('vmAgentInputQueueUrl'), '\" -vmAgentInputQueueSasToken \"', parameters('vmAgentInputQueueSasToken'), '\" -username \"', parameters('adminUsername'), '\" -password \"', parameters('adminPassword'), '\" -vmToken \"', parameters('vmToken'), '\" -resourceId \"', parameters('resourceId'), '\" -serviceHostName \"', parameters('serviceHostName'), '\"')]",
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'WindowsInitShim.ps1 ', ' -vmAgentBlobUrl \"', parameters('vmAgentBlobUrl'), '\" -base64ParametersBlob \"', parameters('vmInitScriptBase64ParametersBlob'), '\"')]",
               "storageAccountName": "[parameters('vmInitScriptStorageAccountName')]",
               "storageAccountKey": "[parameters('vmInitScriptStorageAccountKey')]"
             },

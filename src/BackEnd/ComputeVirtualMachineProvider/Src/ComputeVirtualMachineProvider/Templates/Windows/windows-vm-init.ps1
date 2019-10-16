@@ -1,24 +1,22 @@
 ﻿# Custom script extension script that is executed on Windows VMs.
-# This script is read out of a storage account during custom script execution and is not automatically updated (TODO).
-# Dev location: vsodevciusw2vmusw2 under the windows-vm-init container.
+# This script will live in the vsclk-cluster repo, but checking it in here for now for reference.
 
 param 
 (
-    [string] $vmAgentBlobUrl, # Blob URL contains SAS token, no need for access key.
-    [string] $vmAgentInputQueueName,
-    [string] $vmAgentInputQueueUrl,
-    [string] $vmAgentInputQueueSasToken,
-    [string] $username,
-    [string] $password,
-    [string] $vmToken,
-    [string] $resourceId,
-    [string] $serviceHostName
+    # Blob URL of the VM agent. Contains SAS token.
+    [string] $vmAgentBlobUrl, 
+    # Base 64 encoded (UTF8) json blob. No nested json as this is parsed into a hashtable<string, string>
+    [string] $base64ParametersBlob,
+    [string] $serviceVersionNumber = "1",
+    [string] $vsoAgentRootDir = "c:\vsonline\vsoagent",
+    [string] $logFile = "c:\windows-vm-init.txt"
 )
 
-function Log ([string] $message)
+function Log([string] $message)
 {
+    Write-Host $message
     $message = "[$(Get-Date -Format o)] $message $([Environment]::NewLine)"
-    [System.IO.File]::AppendAllText("c:\custom-script-log.txt", $message)
+    [System.IO.File]::AppendAllText($logFile, $message)
 }
 
 $ErrorActionPreference = "Stop"
@@ -27,58 +25,23 @@ try
 {
     Log "Starting script."
     Log "VM agent blob url: $vmAgentBlobUrl"
-    Log "Creating vsoagent directory..."
-    Set-Location "c:\"
-    if (-Not (Test-Path "vsonline\vsoagent\bin\appdata"))
+    Log "Downloading the VM agent to '$vsoAgentRootDir\bin'"
+
+    # Download the VM agent.
+    if (-Not (Test-Path $vsoAgentRootDir))
     {
-        New-Item "vsonline\vsoagent\bin\appdata" -ItemType Directory 
-        Set-Location "vsonline\vsoagent"
+        New-Item $vsoAgentRootDir -ItemType Directory 
+        Set-Location $vsoAgentRootDir
         Log "Download the VSO agent..."
         Invoke-WebRequest -Uri $vmAgentBlobUrl -OutFile "vsoagent.zip"
         Expand-Archive -Path "vsoagent.zip" -DestinationPath "bin"
         Remove-Item "vsoagent.zip" -Force
     }
-    else
-    {
-        Set-Location "vsonline\vsoagent"
-    }
 
-    # Write to .ini file agent reads to pick up configuration.
-    if (-Not (Test-Path "bin\config.ini"))
-    {
-        Log "Writing config.ini..."
-        Add-Content "bin\config.ini" "[ENVAGENTSETTINGS]"
-        Add-Content "bin\config.ini" "INPUTQUEUENAME=$vmAgentInputQueueName"
-        Add-Content "bin\config.ini" "INPUTQUEUEURL=$vmAgentInputQueueUrl"
-        Add-Content "bin\config.ini" "INPUTQUEUESASTOKEN=$vmAgentInputQueueSasToken"
-        Add-Content "bin\config.ini" "[HEARTBEATSETTINGS]"
-        Add-Content "bin\config.ini" "VMTOKEN=$vmToken"
-        Add-Content "bin\config.ini" "RESOURCEID=$resourceId"
-        Add-Content "bin\config.ini" "SERVICEHOSTNAME=$serviceHostName"        
-    }
+    # Execute bulk of init logic that was downloaded with the VM agent.
+    & $vsoAgentRootDir\bin\VMAgent\EnvironmentAgent\Scripts\WindowsInit.ps1 -vsoAgentDir "$vsoAgentRootDir\bin" -base64ParametersBlob "$base64ParametersBlob" -logFile "$logFile"
 
-    # Create file that will run for the user on startup.
-    Log "Write start up file..."
-    $startUpFile = "C:\Users\$username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\vsoagent.cmd"
-    if (-Not (Test-Path $startUpFile))
-    {
-        Add-Content $startUpFile 'C:\VisualStudio\Common7\IDE\DevEnv.exe /ResetSettingsFull "general.vssettings" /Command "File.Exit"'
-        Add-Content $startUpFile 'C:\VisualStudio\Common7\IDE\VsRegEdit.exe set "C:\VisualStudio" HKCU FeatureFlags\ServiceBroker\LiveShareTransport Value DWORD 1'
-        Add-Content $startUpFile 'C:\VisualStudio\Common7\IDE\VsRegEdit.exe set "C:\VisualStudio" HKCU FeatureFlags\Microsoft\VisualStudio\Terminal Value DWORD 1'
-        Add-Content $startUpFile "cd c:\vsonline\vsoagent\bin"
-        Add-Content $startUpFile "c:\vsonline\vsoagent\bin\vso.exe vmagent"
-    }
-
-    # Needed for Powershell VHD commands for managing user disk.
-    Log "Enable the Hyper-V powershell module..."
-    Install-WindowsFeature -Name Hyper-V-PowerShell
-    & dism /online /enable-feature /featurename:Microsoft-Hyper-V /Quiet /NoRestart
-    & bcdedit /set hypervisorlaunchtype off
-
-    # Schedule a restart to run the start up program.
-    Log "Scheduling restart..."
-    & $env:SystemRoot\system32\shutdown.exe -r -f -t 60
-    Log "Finished."
+    Log "Finished windows-vm-init.ps1."
 }
 catch 
 {

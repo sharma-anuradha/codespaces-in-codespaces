@@ -113,7 +113,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var storageInfo = await controlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(input.AzureVmLocation);
                 var storageAccountName = storageInfo.Item1;
                 var storageAccountAccessKey = storageInfo.Item2;
-                var vmInitScriptFileUri = $"https://{storageAccountName}.blob.core.windows.net/windows-vm-init/windows-vm-init.ps1";
+                var vmInitScriptFileUri = $"https://{storageAccountName}.blob.core.windows.net/windows-init-shim/WindowsInitShim.ps1";
+                var userName = "vsonline";
+
+                // Required parameters forwarded to the VM agent init script.
+                // Be very careful removing parameters from this list because it can break the VM agent init script.
+                var initScriptParametersBlob = new Dictionary<string, object>()
+                {
+                    { "inputQueueName", queueConnectionInfo.Name },
+                    { "inputQueueUrl", queueConnectionInfo.Url },
+                    { "inputQueueSasToken", queueConnectionInfo.SasToken },
+                    { "vmToken", input.VMToken },
+                    { "resourceId", input.ResourceId },
+                    { "serviceHostName", input.FrontDnsHostName },
+                    { "visualStudioInstallationDir", @"C:\VisualStudio" },
+                    { "userName", userName },
+                };
+
+                // b64 encode the parameters json blob, this gets forwarded onto the VM agent script through the custom script extension.
+                var parametersBlob = JsonConvert.SerializeObject(initScriptParametersBlob);
+                var encodedBytes = Encoding.UTF8.GetBytes(parametersBlob);
+                var b64ParametersBlob = Convert.ToBase64String(encodedBytes);
 
                 var parameters = new Dictionary<string, Dictionary<string, object>>()
                 {
@@ -126,19 +146,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     { "networkSecurityGroupName", new Dictionary<string, object>() { { Key, GetNetworkSecurityGroupName(virtualMachineName) } } },
                     { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
                     { "virtualNetworkName", new Dictionary<string, object>() { { Key, GetVirtualNetworkName(virtualMachineName) } } },
-                    { "adminUserName", new Dictionary<string, object>() { { Key, "vsonline" } } },
+                    { "adminUserName", new Dictionary<string, object>() { { Key, userName } } },
                     { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
                     { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
                     { "vmInitScriptFileUri", new Dictionary<string, object>() { { Key, vmInitScriptFileUri } } },
                     { "vmAgentBlobUrl", new Dictionary<string, object>() { { Key, input.VmAgentBlobUrl } } },
-                    { "vmAgentInputQueueName", new Dictionary<string, object>() { { Key, queueConnectionInfo.Name } } },
-                    { "vmAgentInputQueueUrl", new Dictionary<string, object>() { { Key, queueConnectionInfo.Url } } },
-                    { "vmAgentInputQueueSasToken", new Dictionary<string, object>() { { Key, queueConnectionInfo.SasToken } } },
                     { "vmInitScriptStorageAccountName", new Dictionary<string, object>() { { Key, storageAccountName } } },
                     { "vmInitScriptStorageAccountKey", new Dictionary<string, object>() { { Key, storageAccountAccessKey } } },
-                    { "vmToken", new Dictionary<string, object>() { { Key, input.VMToken } } },
-                    { "resourceId", new Dictionary<string, object>() { { Key, input.ResourceId } } },
-                    { "serviceHostName", new Dictionary<string, object>() { { Key, input.FrontDnsHostName } } },
+                    { "vmInitScriptBase64ParametersBlob", new Dictionary<string, object>() { { Key, b64ParametersBlob } } },
                 };
 
                 // Create virtual machine

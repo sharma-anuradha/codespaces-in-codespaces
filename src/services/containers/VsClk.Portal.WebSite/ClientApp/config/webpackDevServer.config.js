@@ -84,6 +84,13 @@ module.exports = function(proxy, allowedHost) {
                 ws: true,
                 xfwd: true,
             },
+            '/api/v1/**': {
+                target: 'https://westus2-ci-online.dev.core.vsengsaas.visualstudio.com',
+                logLevel: 'debug',
+                secure: false,
+                changeOrigin: true,
+                ws: true,
+            },
         },
         before(app) {
             app.use(function(req, res, next) {
