@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/../../../../bin/debug/VsClk.Portal.WebSite/Microsoft.VsCloudKernel.Services.VsClk.Portal.WebSite.dll",
             "args": [
                 "--urls",
-                "https://localhost:3000"
+                "https://online.dev.core.vsengsaas.visualstudio.com"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

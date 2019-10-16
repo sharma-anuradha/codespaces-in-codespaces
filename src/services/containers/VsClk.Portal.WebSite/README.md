@@ -6,12 +6,9 @@ Tha application itself is Asp.Net Core Application that serves a React SPA (buil
 
 In development mode the portal works as a proxy to the CRA dev server with hot reloading and watcher.
 
-Locally, the portal has to run on port `3000` and the CRA dev server is set up to run on port 3030. Since we are using service workers, browsers require the app to use HTTPS. Dotnet makes this easier to manage - to enable trusted certificates run (it will probably want your password):
-```sh
-dotnet dev-certs https --trust
-```
+Locally, the portal has to run on port `443` and the CRA dev server is set up to run on port 3030. Since we are using service workers, browsers require the app to use HTTPS. Use `Get Dev certificate` to set up the SSL cert locally.
 
-CORS headers on environment registration enable requests from `https://localhost:3000`.
+CORS headers on environment registration enable requests from `https://localhost:443`.
 
 When working only on the react side of the project you can start from `<projectRoot>/src/services/containers/VsClk.Portal.WebSite/ClientApp`
 
@@ -20,7 +17,7 @@ When working only on the react side of the project you can start from `<projectR
 Prerequisite:
 - Connect to npm feed
   1. Open [NodeRepos](https://devdiv.visualstudio.com/DefaultCollection/OnlineServices/_packaging?_a=feed&feed=NodeRepos)
-  1. Click on 'Connect to feed', Select npm
+  2. Click on 'Connect to feed', Select npm
       - Append feed to local machine's .npmrc (%userprofile%\.npmrc) file
       - Run the auth helper commands
 
@@ -32,8 +29,10 @@ Required Software:
 - Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 1. [From project root] Restore dotnet dependencies (`dotnet restore <projectRoot>/dirs.proj --interactive`)
-1. [From ClientApp] Install node dependencies (`yarn`)
-1. [From ClientApp] Start the portal (`yarn start`)
+2. [From ClientApp] Install node dependencies (`yarn`)
+3. [From ClientApp] Get Dev certificate (`yarn get-dev-cert`). Note that you need to be authenticated to `azure cli` for this. (`az login`). Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
+4. Add `127.0.0.1 online.dev.core.vsengsaas.visualstudio.com` record in your `hosts` file. (https://support.rackspace.com/how-to/modify-your-hosts-file/)    
+5. [From ClientApp] Start the portal (`[sudo] yarn start`)
 
 ### Debugging .Net Portal 
 

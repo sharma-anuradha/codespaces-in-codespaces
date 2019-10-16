@@ -11,8 +11,8 @@
               "PORTAL_AppSettings__IsLocal": "true"
           },
           "launchBrowser": true,
-          "applicationUrl": "https://localhost:3000",
-          "launchUrl": "https://localhost:3000/login"
+          "applicationUrl": "https://localhost:443",
+          "launchUrl": "https://localhost:443/login"
       }
   }
 }

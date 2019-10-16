@@ -154,11 +154,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)
         {
             // Locally we don't produce the physical file, so we grab it from the portal itself.
-            // The portal runs on https://localhost:3000 only right now, because of authentication.
+            // The portal runs on https://localhost:443 only right now, because of authentication.
             if (AppSettings.IsLocal)
             {
                 HttpClient client = new HttpClient();
-                var stream = await client.GetStreamAsync($"https://localhost:3000/{path}");
+                var stream = await client.GetStreamAsync($"https://localhost:443/{path}");
 
                 return File(stream, mediaType);
             }
