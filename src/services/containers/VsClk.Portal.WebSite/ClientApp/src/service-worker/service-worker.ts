@@ -1,3 +1,5 @@
+import deepEqual from 'deep-equal';
+
 import { InMemoryLiveShareClient } from '../ts-agent/client/inMemoryClient';
 import { WebClient } from '../ts-agent/client/webClient';
 
@@ -16,37 +18,18 @@ import { CredentialsManager } from './lib/credentials-manager';
 import { LiveShareConnectionFactory } from './lib/connection-factory';
 import { ConnectionManager } from './lib/connection-manager';
 import { PassThroughHttpClient, LiveShareHttpClient } from './lib/http-client';
+import { CriticalError } from './lib/errors/CriticalError';
 
 declare var self: ServiceWorkerGlobalScope;
 
-export const logger = createLogger();
+const logger = createLogger();
 
 const serviceRegistry = new ServiceRegistry();
 
 serviceRegistry.registerInstance('ConfigurationManager', new ConfigurationManager());
 serviceRegistry.registerInstance('CredentialsManager', new CredentialsManager());
-serviceRegistry.registerFactory('LiveShareClient', (serviceRegistry) => {
-    const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
-    if (configurationManager.configuration.features.useSharedConnection) {
-        return new InMemoryLiveShareClient();
-    }
-
-    const credentialsManager = serviceRegistry.getInstance('CredentialsManager');
-    return new WebClient(configurationManager.configuration.liveShareEndpoint, {
-        getToken(sessionId: string) {
-            const credentials = credentialsManager.getCredentials(sessionId);
-            if (!credentials) {
-                throw new Error('No credentials.');
-            }
-            return credentials.token;
-        },
-    });
-});
 serviceRegistry.registerFactory('ConnectionFactory', (serviceRegistry) => {
-    return new LiveShareConnectionFactory(
-        serviceRegistry.getInstance('LiveShareClient'),
-        serviceRegistry.getInstance('ConfigurationManager')
-    );
+    return new LiveShareConnectionFactory(serviceRegistry.getInstance('LiveShareClient'));
 });
 serviceRegistry.registerFactory('ConnectionManager', (serviceRegistry) => {
     const connectionFactory = serviceRegistry.getInstance('ConnectionFactory');
@@ -65,15 +48,41 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', (event) => {
-    const httpClient = serviceRegistry.getInstance('HttpClient');
+self.addEventListener('error', (e) => {
+    handleUnhandledError(e.error);
+});
+
+self.addEventListener('unhandledrejection', (ev: any) => {
+    const event = ev as PromiseRejectionEvent;
+    handleUnhandledError(event.reason);
+});
+
+async function handleUnhandledError(error: any) {
+    // We don't want any error to unregister the service worker.
+    if (error instanceof CriticalError) {
+        await self.registration.unregister();
+
+        logger.warn('Unregistered service worker. Updating clients.', error);
+
+        const allClients = (await self.clients.matchAll({ type: 'window' })) as WindowClient[];
+        for (const client of allClients) {
+            // Reload only our top level (non-iframe) clients.
+            if (client.frameType === 'top-level') {
+                client.navigate(client.url);
+            }
+        }
+    }
+}
+
+self.addEventListener('fetch', async (event) => {
+    const httpClient = serviceRegistry.getInstance('HttpClient', false);
     event.respondWith(httpClient.fetch(event.request));
 });
 
 self.addEventListener('message', async (event) => {
     const message: ServiceWorkerMessage = event.data;
 
-    logger.info('onMessage', {
+    logger.verbose('onMessage', {
         type: message.type,
     });
 
@@ -83,6 +92,15 @@ self.addEventListener('message', async (event) => {
             credentialsManager.setCredentials(message.payload.sessionId, {
                 token: message.payload.token,
             });
+
+            // In case your client is telling to be in non-shared connection info mode,
+            // switch to it.
+            if (
+                !serviceRegistry.canResolve('LiveShareClient') ||
+                serviceRegistry.getInstance('LiveShareClient') instanceof InMemoryLiveShareClient
+            ) {
+                registerWebLiveShareClient();
+            }
 
             const connectionManager = serviceRegistry.getInstance('ConnectionManager');
             connectionManager.initializeConnection(message.payload);
@@ -95,27 +113,36 @@ self.addEventListener('message', async (event) => {
         }
         case configureServiceWorker: {
             const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
-            if (
-                message.payload.features &&
-                message.payload.features.useSharedConnection &&
-                configurationManager.configuration.features.useSharedConnection !==
-                    message.payload.features.useSharedConnection
-            ) {
+            const configuration = configurationManager.getConfigurationSafe();
+            const newConfiguration = message.payload;
+
+            const configurationChanged = deepEqual(configuration, newConfiguration);
+
+            if (configurationChanged) {
                 serviceRegistry.unregisterInstance('LiveShareClient');
                 serviceRegistry.unregisterInstance('ConnectionFactory');
                 serviceRegistry.unregisterInstance('ConnectionManager');
                 serviceRegistry.unregisterInstance('HttpClient');
+
+                configurationManager.updateConfiguration(newConfiguration);
             }
-            configurationManager.updateConfiguration(message.payload);
+
+            if (newConfiguration.features.useSharedConnection) {
+                registerInMemoryLiveShareClient();
+            } else {
+                registerWebLiveShareClient();
+            }
 
             return;
         }
         case updateLiveShareConnectionInfo: {
-            const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
-            if (!configurationManager.configuration.features.useSharedConnection) {
-                throw new Error(
-                    'Trying to use shared connection manager, but the feature is not enabled.'
-                );
+            // In case your client is telling to be in shared connection info mode,
+            // switch to it.
+            if (
+                !serviceRegistry.canResolve('LiveShareClient') ||
+                serviceRegistry.getInstance('LiveShareClient') instanceof WebClient
+            ) {
+                registerInMemoryLiveShareClient();
             }
 
             const liveShareClient = serviceRegistry.getInstance(
@@ -135,3 +162,62 @@ self.addEventListener('message', async (event) => {
         }
     }
 });
+
+function registerInMemoryLiveShareClient() {
+    if (
+        serviceRegistry.canResolve('LiveShareClient') &&
+        serviceRegistry.getInstance('LiveShareClient') instanceof InMemoryLiveShareClient
+    ) {
+        return;
+    }
+
+    // We clean LiveShareClient and things that depend on it.
+    if (
+        serviceRegistry.canResolve('LiveShareClient') &&
+        serviceRegistry.getInstance('LiveShareClient') instanceof WebClient
+    ) {
+        serviceRegistry.unregisterInstance('LiveShareClient');
+        serviceRegistry.unregisterInstance('ConnectionFactory');
+        serviceRegistry.unregisterInstance('ConnectionManager');
+        serviceRegistry.unregisterInstance('HttpClient');
+    }
+
+    serviceRegistry.registerInstance('LiveShareClient', new InMemoryLiveShareClient());
+}
+
+function registerWebLiveShareClient() {
+    if (
+        serviceRegistry.canResolve('LiveShareClient') &&
+        serviceRegistry.getInstance('LiveShareClient') instanceof InMemoryLiveShareClient
+    ) {
+        return;
+    }
+
+    // We clean LiveShareClient and things that depend on it.
+    if (
+        serviceRegistry.canResolve('LiveShareClient') &&
+        serviceRegistry.getInstance('LiveShareClient') instanceof WebClient
+    ) {
+        serviceRegistry.unregisterInstance('LiveShareClient');
+        serviceRegistry.unregisterInstance('ConnectionFactory');
+        serviceRegistry.unregisterInstance('ConnectionManager');
+        serviceRegistry.unregisterInstance('HttpClient');
+    }
+
+    const credentialsManager = serviceRegistry.getInstance('CredentialsManager');
+    const configuration = serviceRegistry.getInstance('ConfigurationManager').configuration;
+    serviceRegistry.registerInstance(
+        'LiveShareClient',
+        new WebClient(configuration.liveShareEndpoint, {
+            getToken(sessionId: string) {
+                const credentials = credentialsManager.getCredentials(sessionId);
+                if (!credentials) {
+                    throw new CriticalError('No credentials.');
+                }
+                return credentials.token;
+            },
+        })
+    );
+
+    serviceRegistry.registerInstance('LiveShareClient', new InMemoryLiveShareClient());
+}

@@ -31,16 +31,6 @@ export async function fetchConfiguration() {
 
         dispatch(fetchConfigurationSuccessAction(configuration));
 
-        postServiceWorkerMessage({
-            type: configureServiceWorker,
-            payload: {
-                liveShareEndpoint: configuration.liveShareEndpoint,
-                features: {
-                    useSharedConnection: true,
-                },
-            },
-        });
-
         return configuration;
     } catch (err) {
         return dispatch(fetchConfigurationFailureAction(err));

@@ -6,9 +6,6 @@ import { initializeIcons } from '@uifabric/icons';
 import { App } from './app';
 import { store } from './store/store';
 
-import { postServiceWorkerMessage } from './common/post-message';
-import * as serviceWorker from './serviceWorker';
-import { configureServiceWorker } from './common/service-worker-messages';
 import { trackUnhandled } from './utils/telemetry/unhandledErrors';
 
 import './index.css';
@@ -36,22 +33,6 @@ function startApplication() {
         </BrowserRouter>,
         rootElement
     );
-
-    // If you want your app to work offline and load faster, you can change
-    // unregister() to register() below. Note this comes with some pitfalls.
-    // Learn more about service workers: https://bit.ly/CRA-PWA
-    serviceWorker.register({
-        onReady() {
-            postServiceWorkerMessage({
-                type: configureServiceWorker,
-                payload: {
-                    features: {
-                        useSharedConnection: true,
-                    },
-                },
-            });
-        },
-    });
 }
 
 // Don't start application in iframe created by MSAL.

@@ -5,6 +5,7 @@ import { LiveShareConnectionFactory } from './connection-factory';
 import { IHttpClient } from './http-client';
 import { ILiveShareClient } from '../../ts-agent/client/ILiveShareClient';
 import { createLogger, Logger } from './logger';
+import { CriticalError } from './errors/CriticalError';
 
 export class ServiceRegistry {
     private instances = new Map<string, unknown>();
@@ -61,7 +62,8 @@ export class ServiceRegistry {
                 throw error;
             }
         }
-        throw new Error(`Service not registered: ${serviceHandle}`);
+
+        throw new CriticalError(`Service not registered: ${serviceHandle}`);
     }
     registerInstance(serviceHandle: 'CredentialsManager', service: CredentialsManager): void;
     registerInstance(serviceHandle: 'CredentialsManager', service: CredentialsManager): void;

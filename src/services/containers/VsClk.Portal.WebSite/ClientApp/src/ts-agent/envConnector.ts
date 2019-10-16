@@ -18,6 +18,7 @@ import { DEFAULT_EXTENSIONS, vscodeConfig } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { BrowserSyncService } from './services/browserSyncService';
 import { postServiceWorkerMessage } from '../common/post-message';
+import { updateLiveShareConnectionInfo } from '../common/service-worker-messages';
 
 export type RemoteVSCodeServerDescription = {
     readonly port: number;
@@ -134,7 +135,7 @@ export class EnvConnector {
             await workspaceClient.connect(sessionId);
 
             postServiceWorkerMessage({
-                type: 'cloudenv/update-liveshare-connection-info',
+                type: updateLiveShareConnectionInfo,
                 payload: {
                     sessionId,
                     workspaceInfo: workspaceClient.getWorkspaceInfo()!,

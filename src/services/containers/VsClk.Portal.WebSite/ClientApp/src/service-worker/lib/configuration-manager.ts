@@ -1,30 +1,30 @@
 import { ServiceWorkerConfiguration } from '../../common/service-worker-configuration';
 import { createLogger, Logger } from './logger';
-import { defaultConfig } from '../../services/configurationService';
+import { CriticalError } from './errors/CriticalError';
 
 export class ConfigurationManager {
     private readonly logger: Logger;
 
-    private currentConfiguration: ServiceWorkerConfiguration = {
-        liveShareEndpoint: defaultConfig.liveShareEndpoint,
-        features: {
-            useSharedConnection: false,
-        },
-    };
+    private currentConfiguration?: ServiceWorkerConfiguration;
 
     constructor() {
         this.logger = createLogger('ConfigurationManager');
     }
 
     get configuration(): ServiceWorkerConfiguration {
+        if (!this.currentConfiguration) {
+            throw new CriticalError('NotInitialized');
+        }
+
         return this.currentConfiguration;
     }
 
-    updateConfiguration(configuration: Partial<ServiceWorkerConfiguration>) {
-        this.currentConfiguration = {
-            ...this.currentConfiguration,
-            ...configuration,
-        };
+    getConfigurationSafe() {
+        return this.currentConfiguration || null;
+    }
+
+    updateConfiguration(configuration: ServiceWorkerConfiguration) {
+        this.currentConfiguration = configuration;
 
         this.logger.info('Updated service worker configuration', {
             configuration: this.configuration,

@@ -5,6 +5,7 @@ import { SshDisconnectReason } from '@vs/vs-ssh';
 import { createLogger, Logger } from './logger';
 import { ConfigurationManager } from './configuration-manager';
 import { ILiveShareClient } from '../../ts-agent/client/ILiveShareClient';
+import { CriticalError } from './errors/CriticalError';
 
 export class LiveShareConnection implements Disposable {
     private serverSharingService!: vsls.ServerSharingService;
@@ -21,17 +22,12 @@ export class LiveShareConnection implements Disposable {
 
     private disposables: Disposable[] = [];
 
-    constructor(
-        private readonly liveShareClient: ILiveShareClient,
-        private readonly configurationManager: ConfigurationManager,
-        private sessionId: string
-    ) {
+    constructor(private readonly liveShareClient: ILiveShareClient, private sessionId: string) {
         this.logger = createLogger(`LiveShareConnection:${sessionId.substr(0, 5)}`);
     }
 
     async init() {
         const defaultArgs = {
-            liveShareUri: this.configurationManager.configuration.liveShareEndpoint,
             sessionId: this.sessionId,
         };
         this.logger.info('Initializing live share connection', defaultArgs);
@@ -76,7 +72,6 @@ export class LiveShareConnection implements Disposable {
 
     async getSharedServerStream(port: number) {
         const defaultArgs = {
-            liveShareUri: this.configurationManager.configuration.liveShareEndpoint,
             sessionId: this.sessionId,
         };
         this.logger.verbose('Getting shared server stream.', defaultArgs);
@@ -94,7 +89,7 @@ export class LiveShareConnection implements Disposable {
         });
 
         if (!targetServer) {
-            throw new Error(`VSCode server port ${port} not shared.`);
+            throw new CriticalError(`VSCode server port ${port} not shared.`);
         }
 
         const localPortForwarder = this.workspaceClient.createServerStream(
@@ -116,10 +111,7 @@ export class LiveShareConnection implements Disposable {
 
 export class LiveShareConnectionFactory {
     private readonly logger: Logger;
-    constructor(
-        private readonly liveShareClient: ILiveShareClient,
-        private readonly configurationManager: ConfigurationManager
-    ) {
+    constructor(private readonly liveShareClient: ILiveShareClient) {
         this.logger = createLogger('LiveShareConnectionFactory');
     }
 
@@ -129,11 +121,7 @@ export class LiveShareConnectionFactory {
         };
         this.logger.info('Creating LiveShare connection.', defaultAttributes);
 
-        const connection = new LiveShareConnection(
-            this.liveShareClient,
-            this.configurationManager,
-            sessionId
-        );
+        const connection = new LiveShareConnection(this.liveShareClient, sessionId);
 
         try {
             await connection.init();

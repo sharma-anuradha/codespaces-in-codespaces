@@ -1,7 +1,15 @@
 import { ServiceWorkerMessage } from './service-worker-messages';
 
-export function postServiceWorkerMessage(message: ServiceWorkerMessage): void {
-    if ('serviceWorker' in window.navigator && window.navigator.serviceWorker.controller) {
-        window.navigator.serviceWorker.controller.postMessage(message);
+const defaultServiceWorker =
+    window.navigator && window.navigator.serviceWorker && window.navigator.serviceWorker.controller;
+
+export function postServiceWorkerMessage(
+    message: ServiceWorkerMessage,
+    serviceWorker = defaultServiceWorker
+): void {
+    if (!serviceWorker) {
+        return;
     }
+
+    serviceWorker.postMessage(message);
 }

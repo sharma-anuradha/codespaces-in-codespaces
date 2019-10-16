@@ -2,13 +2,13 @@ import { ConnectionDetails } from './connection-details';
 import { ServiceWorkerConfiguration } from './service-worker-configuration';
 import { IWorkspaceInfo, IWorkspaceAccess } from '../ts-agent/client/ILiveShareClient';
 
-export const authenticateMessageType = 'cloudenv/authenticate';
+export const authenticateMessageType = 'vsonline/authenticate';
 export type Authenticated = {
     type: typeof authenticateMessageType;
     payload: ConnectionDetails;
 };
 
-export const disconnectCloudEnv = 'cloudenv/disconnect';
+export const disconnectCloudEnv = 'vsonline/disconnect';
 export type Disconnect = {
     type: typeof disconnectCloudEnv;
     payload: {
@@ -16,13 +16,13 @@ export type Disconnect = {
     };
 };
 
-export const configureServiceWorker = 'cloudenv/configure';
+export const configureServiceWorker = 'vsonline/configure';
 export type Configure = {
     type: typeof configureServiceWorker;
-    payload: Partial<ServiceWorkerConfiguration>;
+    payload: ServiceWorkerConfiguration;
 };
 
-export const updateLiveShareConnectionInfo = 'cloudenv/update-liveshare-connection-info';
+export const updateLiveShareConnectionInfo = 'vsonline/update-liveshare-connection-info';
 export type LiveShareConnectionInfo = {
     type: typeof updateLiveShareConnectionInfo;
     payload: {
@@ -32,14 +32,14 @@ export type LiveShareConnectionInfo = {
     };
 };
 
-export const connected = 'cloudenv/connected';
+export const connected = 'vsonline/connected';
 export type Connected = {
     type: typeof connected;
     payload: {
         sessionId: string;
     };
 };
-export const connectionFailed = 'cloudenv/connectionFailed';
+export const connectionFailed = 'vsonline/connectionFailed';
 export type ConnectionFailed = {
     type: typeof connectionFailed;
     payload: {

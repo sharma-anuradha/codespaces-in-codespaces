@@ -6,6 +6,7 @@ import { getRoutingDetails, RoutingDetails } from '../../common/url-utils';
 import { Signal } from '../../utils/signal';
 import { createLogger, Logger } from './logger';
 import { createUniqueId } from '../../dependencies';
+import { CriticalError } from './errors/CriticalError';
 
 const separator = '\r\n';
 const [crByte, lfByte] = Array.from(new TextEncoder().encode(separator));
@@ -103,6 +104,10 @@ export class LiveShareHttpClient implements IHttpClient {
                 ...routingDetails,
                 error,
             });
+
+            if (error instanceof CriticalError) {
+                throw error;
+            }
         }
 
         return new Response(undefined, {

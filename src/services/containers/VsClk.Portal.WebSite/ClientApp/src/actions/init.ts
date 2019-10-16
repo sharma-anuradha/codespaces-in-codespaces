@@ -10,6 +10,8 @@ import { setAuthCookie } from '../utils/setAuthCookie';
 import { telemetry } from '../utils/telemetry';
 import { tryGetGitHubCredentialsLocal } from './getGitHubCredentials';
 
+import { register as registerServiceWorker } from '../serviceWorker';
+
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
 export const initActionFailureType = 'async.app.init.failure';
@@ -31,7 +33,18 @@ export async function init() {
             return token;
         });
 
-        await Promise.all([dispatch(fetchConfiguration()), dispatch(tokenPromise)]);
+        const configurationPromise = fetchConfiguration().then((configuration) => {
+            registerServiceWorker({
+                liveShareEndpoint: configuration.liveShareEndpoint,
+                features: {
+                    useSharedConnection: true,
+                },
+            });
+
+            return configuration;
+        });
+
+        await Promise.all([dispatch(configurationPromise), dispatch(tokenPromise)]);
         await Promise.all([dispatch(fetchEnvironments()), dispatch(getUserInfo())]);
 
         dispatch(tryGetGitHubCredentialsLocal());

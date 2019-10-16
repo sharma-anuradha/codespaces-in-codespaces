@@ -242,7 +242,7 @@ export function useWebClient() {
 export class ServiceError extends Error {
     constructor(message: string) {
         super(message);
-        Error.captureStackTrace(this, ServiceResponseError);
+        Error.captureStackTrace(this, ServiceError);
     }
 }
 
