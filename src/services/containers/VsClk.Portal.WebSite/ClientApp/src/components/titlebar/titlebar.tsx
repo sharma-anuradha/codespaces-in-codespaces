@@ -10,6 +10,11 @@ import './titlebar.css';
 
 export function TitleBar() {
     const userInfo = useSelector((state: ApplicationState) => state.userInfo);
+
+
+    const title = (userInfo)
+        ? `${userInfo.displayName} <${userInfo.mail}>`
+        : '<unknown>';
     
     const photoUrl = (userInfo)
         ? userInfo.photoUrl
@@ -26,6 +31,7 @@ export function TitleBar() {
                 className='titlebar__main-avatar'
                 size={PersonaSize.size28}
                 imageUrl={photoUrl}
+                title={title}
             />
         </div>
     );

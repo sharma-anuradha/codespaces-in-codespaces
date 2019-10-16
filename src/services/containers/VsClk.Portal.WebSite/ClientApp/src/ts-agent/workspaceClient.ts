@@ -73,10 +73,11 @@ export class WorkspaceClient implements rpc.Disposable {
             throw new Error('Connect to a workspace first.');
         }
 
-        this.sshSession = new ssh.SshClientSession(
-            this.socketStream,
-            new ssh.SshSessionConfiguration()
-        );
+        const config = new ssh.SshSessionConfiguration();
+        config.keyExchangeAlgorithms.splice(0);
+        config.keyExchangeAlgorithms.push(ssh.SshAlgorithms.keyExchange.dhGroup14Sha256);
+        
+        this.sshSession = new ssh.SshClientSession(this.socketStream, config);
 
         // The client authenticates over SSH using the workspace session token.
         this.sshSession.setPasswordCredential('', this.workspaceAccess.sessionToken);
