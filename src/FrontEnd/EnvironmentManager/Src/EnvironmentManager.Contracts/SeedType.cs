@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// The seed is whatever SVN means.
         /// </summary>
         Svn = 1,
+
+        /// <summary>
+        /// The seed is StaticEnvironment.
+        /// </summary>
+        StaticEnvironment = 2,
     }
 }

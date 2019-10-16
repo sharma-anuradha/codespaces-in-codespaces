@@ -28,6 +28,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         bool Enabled { get; }
 
         /// <summary>
+        /// Gets a value indicating whether this SKU represents hardware that we manage.
+        /// </summary>
+        bool IsExternalHardware { get; }
+
+        /// <summary>
         /// Gets the list of locations supported for this subscription.
         /// </summary>
         IEnumerable<AzureLocation> SkuLocations { get; }

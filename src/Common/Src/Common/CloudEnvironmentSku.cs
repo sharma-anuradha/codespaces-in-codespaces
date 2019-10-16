@@ -103,6 +103,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public SkuTier Tier { get; }
 
         /// <inheritdoc/>
+        public bool IsExternalHardware { get; } = false;
+
+        /// <inheritdoc/>
         public string DisplayName { get; }
 
         /// <inheritdoc/>

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
@@ -170,6 +171,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
 
             // Flatten out list so we have one sku per target region
             var flatEnvironmentSkus = cloudEnvironmentSku
+                .Where(s => !s.IsExternalHardware)
                 .SelectMany(x => x.SkuLocations
                     .Select(y => new FlatComputeItem
                     {

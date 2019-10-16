@@ -85,6 +85,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Collection(provider.SkuCatalog.CloudEnvironmentSkus.Values.OrderBy(s => s.SkuName),
                 sku =>
                 {
+                    Assert.Equal(StaticEnvironmentSku.Name, sku.SkuName);
+                    Assert.Equal(decimal.Zero, sku.StorageVsoUnitsPerHour);
+                    Assert.Equal(decimal.Zero, sku.ComputeVsoUnitsPerHour);
+                },
+                sku =>
+                {
                     Assert.Equal("test-sku-linux-standard", sku.SkuName);
                     Assert.Equal(1.0m, sku.StorageVsoUnitsPerHour);
                     Assert.Equal(10.0m, sku.ComputeVsoUnitsPerHour);
