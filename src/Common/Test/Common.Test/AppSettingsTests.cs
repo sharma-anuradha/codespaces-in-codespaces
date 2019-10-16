@@ -327,7 +327,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.False(controlPlaneInfo.TryGetSubscriptionId(out var _));
         }
 
-        [Fact]
+        [Fact(Skip = "skip until windows skus are re-enabled")]
         public void AppSettings_WindowsSkus()
         {
             const string skuName = "smallWindowsPreview";
