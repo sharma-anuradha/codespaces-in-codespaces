@@ -55,6 +55,7 @@ describe('createEnvironment', () => {
         await store.dispatch(
             createEnvironment({
                 friendlyName: 'test',
+                autoShutdownDelayMinutes: 30
             })
         );
 

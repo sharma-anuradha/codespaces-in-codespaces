@@ -7,6 +7,7 @@ export interface CreateEnvironmentParameters {
     dotfilesRepository?: string;
     dotfilesTargetPath?: string;
     dotfilesInstallCommand?: string;
+    autoShutdownDelayMinutes: number;
 }
 
 export enum StateInfo {

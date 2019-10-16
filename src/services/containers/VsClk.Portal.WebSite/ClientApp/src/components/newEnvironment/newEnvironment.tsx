@@ -4,7 +4,7 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { createEnvironment } from '../../actions/createEnvironment';
 import { EnvironmentsPanel } from '../environments/environments';
-import { CreateEnvironmentPanel } from '../environmentsPanel/create-environment-panel';
+import { CreateEnvironmentPanel, defaultAutoShutdownDelayMinutes } from '../environmentsPanel/create-environment-panel';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
@@ -40,6 +40,7 @@ export function NewEnvironment(props: RouteComponentProps) {
                 defaultRepo={repo}
                 hidePanel={hidePanel}
                 onCreateEnvironment={createEnvironmentCallback}
+                autoShutdownDelayMinutes={defaultAutoShutdownDelayMinutes}
             />
         </Fragment>
     );

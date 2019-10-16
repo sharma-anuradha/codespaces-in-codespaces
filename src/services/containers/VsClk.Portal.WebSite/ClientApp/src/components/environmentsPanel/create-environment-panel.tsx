@@ -14,6 +14,7 @@ import { ApplicationState } from '../../reducers/rootReducer';
 import { GithubAuthenticationAttempt } from '../../services/gitHubAuthenticationService';
 import { Link } from 'office-ui-fabric-react/lib/components/Link';
 import { Collapsible } from '../collapsible/collapsible';
+import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 
 import './create-environment-panel.css';
 
@@ -129,6 +130,11 @@ type TextFieldState = {
     isRequired: boolean;
 };
 
+type NumberFieldState = {
+    value: number;
+    validation: ValidationState;
+};
+
 enum SupportedGitServices {
     Unknown,
     GitHub = 'github.com',
@@ -146,6 +152,8 @@ export interface CreateEnvironmentPanelProps {
 
     gitHubAccessToken: string | null;
 
+    autoShutdownDelayMinutes: number;
+
     storeGitHubCredentials: (accessToken: string) => void;
     hidePanel: () => void;
     onCreateEnvironment: (environmentInfo: CreateEnvironmentParams) => void;
@@ -157,6 +165,7 @@ interface FormFields {
     dotfilesRepository: TextFieldState;
     dotfilesInstallCommand: TextFieldState;
     dotfilesTargetPath: TextFieldState;
+    autoShutdownDelayMinutes: NumberFieldState
 }
 
 interface CreateEnvironmentPanelState extends FormFields {
@@ -172,6 +181,7 @@ const initialFormState: CreateEnvironmentPanelState = {
     dotfilesRepository: { value: '', validation: ValidationState.Valid, isRequired: false },
     dotfilesInstallCommand: { value: '', validation: ValidationState.Valid, isRequired: false },
     dotfilesTargetPath: { value: '', validation: ValidationState.Valid, isRequired: false },
+    autoShutdownDelayMinutes: { value: 30, validation: ValidationState.Valid },
     shouldTryToAuthenticateForRepo: false,
     shouldTryToAuthenticateForDotfiles: false,
     authenticationErrorMessage: undefined,
@@ -187,8 +197,18 @@ function formToEnvironmentParams(fields: FormFields): CreateEnvironmentParams {
         dotfilesRepository: normalizeGitUrl(fields.dotfilesRepository.value),
         dotfilesTargetPath: fields.dotfilesTargetPath.value,
         dotfilesInstallCommand: fields.dotfilesInstallCommand.value,
+        autoShutdownDelayMinutes: fields.autoShutdownDelayMinutes.value,
     };
 }
+
+export const defaultAutoShutdownDelayMinutes: number = 30
+const autoShutdownOptions: IDropdownOption[] = 
+    [
+        {key: 5, text: '5 Minutes'},
+        {key: 30, text: '30 Minutes'},
+        {key: 120, text: '2 Hours'},
+        {key: 0, text: 'Never'},
+    ];
 
 export class CreateEnvironmentPanelView extends Component<
     CreateEnvironmentPanelProps,
@@ -219,6 +239,10 @@ export class CreateEnvironmentPanelView extends Component<
             dotfilesInstallCommand: {
                 ...initialFormState.dotfilesInstallCommand,
                 value: props.defaultDotfilesInstallCommand || '',
+            },
+            autoShutdownDelayMinutes: {
+                ...initialFormState.autoShutdownDelayMinutes,
+                value: defaultAutoShutdownDelayMinutes,
             },
         };
     }
@@ -266,6 +290,12 @@ export class CreateEnvironmentPanelView extends Component<
                             onGetErrorMessage={this.onGetErrorMessageGitRepo}
                             onNotifyValidationResult={this.onNotifyValidationResultGitRepositoryUrl}
                             validateOnLoad={!!this.props.defaultRepo}
+                        />
+                        <Dropdown
+                            label='Put environment to sleep after...'
+                            options={autoShutdownOptions}
+                            onChange={this.onChangeAutoShutdownDelayMinutes}
+                            selectedKey={this.state.autoShutdownDelayMinutes.value}
                         />
                     </Stack>
 
@@ -492,6 +522,26 @@ export class CreateEnvironmentPanelView extends Component<
         }, callback);
     }
 
+    private setNumberValidationState(
+        field: Fields,
+        value: number,
+        validation: ValidationState,
+        callback?: () => void
+    ) {
+        this.setState((previousState) => {
+            const previousFieldState = previousState[field];
+
+            return {
+                ...previousState,
+                [field]: {
+                    ...previousFieldState,
+                    value,
+                    validation,
+                },
+            };
+        }, callback);
+    }
+
     private onChangeFriendlyName = (_event: unknown, value = '') => {
         this.setTextValidationState('friendlyName', value, ValidationState.Validating);
     };
@@ -610,6 +660,15 @@ export class CreateEnvironmentPanelView extends Component<
 
     private onChangeDotfilesTargetPath = (_event: unknown, value = '') => {
         this.setTextValidationState('dotfilesTargetPath', value, ValidationState.Valid);
+    };
+
+    private onChangeAutoShutdownDelayMinutes = (_event: unknown, option?: IDropdownOption, index?: number) => {
+        if (option) {
+            if (typeof option.key !== 'number') {
+                throw new Error('NotImplemented')
+            }
+            this.setNumberValidationState('autoShutdownDelayMinutes', option.key, ValidationState.Valid);
+        }
     };
 }
 
