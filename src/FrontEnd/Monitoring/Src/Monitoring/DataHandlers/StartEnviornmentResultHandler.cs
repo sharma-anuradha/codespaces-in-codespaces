@@ -47,13 +47,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        throw new InvalidOperationException($"Collected data of type {data?.GetType().Name}, name  {data?.Name} cannot be processed by {nameof(StartEnviornmentResultHandler)}.");
                    }
 
-                   logger.FluentAddBaseValue(nameof(data.Name), data.Name)
+                   childLogger.FluentAddBaseValue(nameof(data.Name), data.Name)
                          .FluentAddBaseValue("JobResult", JsonConvert.SerializeObject(data));
 
                    var jobResultData = (JobResult)data;
                    if (jobResultData.JobState != JobState.Succeeded)
                    {
-                       logger.LogError($"Start Environment job failed for virtaul machine : {vmResourceId}");
+                       childLogger.LogError($"Start Environment job failed for virtaul machine : {vmResourceId}");
 
                        // Mark environment provision to failed status
                        if (string.IsNullOrEmpty(jobResultData.EnvironmentId))
@@ -61,10 +61,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                            throw new ArgumentException($"Environment id is null or empty for Start environment job result from virtual machine, {vmResourceId}");
                        }
 
-                       var cloudEnvironment = await cloudEnvironmentManager.GetEnvironmentByIdAsync(jobResultData.EnvironmentId, logger);
+                       var cloudEnvironment = await cloudEnvironmentManager.GetEnvironmentByIdAsync(jobResultData.EnvironmentId, childLogger);
                        if (cloudEnvironment == default)
                        {
-                           logger.LogInfo($"No environment found for virtual machine id : {vmResourceId} and environment {jobResultData.EnvironmentId}");
+                           childLogger.LogInfo($"No environment found for virtual machine id : {vmResourceId} and environment {jobResultData.EnvironmentId}");
                            return;
                        }
 
@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        {
                            cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
                            var newState = CloudEnvironmentState.Unavailable;
-                           await cloudEnvironmentManager.UpdateEnvironmentAsync(cloudEnvironment, logger, newState);
+                           await cloudEnvironmentManager.UpdateEnvironmentAsync(cloudEnvironment, childLogger, newState);
                            return;
                        }
                    }
