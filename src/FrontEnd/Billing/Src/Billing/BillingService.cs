@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Newtonsoft.Json.Serialization;
 using UsageDictionary = System.Collections.Generic.Dictionary<string, double>;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -23,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// Calculates billing units per VSO Account in the current control plane region(s)
     /// and saves a BillingSummary to the environment_billing_events table.
     /// </summary>
-    public partial class BillingService : IBillingService
+    public partial class BillingService : BillingServiceBase, IBillingService
     {
         private readonly IBillingEventManager billingEventManager;
         private readonly IControlPlaneInfo controlPlaneInfo;
@@ -33,7 +34,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private readonly string billingEventType = BillingEventTypes.BillingSummary;
         private readonly string DeletedEnvState = nameof(CloudEnvironmentState.Deleted);
         private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> SkuDictionary;
-        private readonly string billingWorkerLogBase = "billing-worker";
         // TODO: move the meter Dictionary to AppSettings
         private readonly IDictionary<AzureLocation, string> meterDictionary = new Dictionary<AzureLocation, string>
         {
@@ -58,7 +58,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             IControlPlaneInfo controlPlaneInfo,
                             ISkuCatalog skuCatalog,
                             IDiagnosticsLogger diagnosticsLogger,
-                            IClaimedDistributedLease claimedDistributedLease)
+                            IClaimedDistributedLease claimedDistributedLease,
+                            ITaskHelper taskHelper)
+            : base(billingEventManager, controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, "billing-worker")
         {
             Requires.NotNull(billingEventManager, nameof(billingEventManager));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
@@ -77,59 +79,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             logger.FluentAddBaseValue("Service", "billingservices");
         }
 
-        /// <summary>
-        /// Generates BillingSummary<see cref="BillingSummary"/> records per accounts in the
-        /// current control plane region(s). The method creates subscriptionId shards in the form
-        /// "a-westus2", "1-westus2" for every char of a 16 bit GUID.
-        /// Background tasks are created per shard to process subscriptions.
-        /// </summary>
-        /// <param name="logger"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task GenerateBillingSummary(IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        /// <inheritdoc/>
+        public async Task GenerateBillingSummaryAsync(CancellationToken cancellationToken)
         {
-            var concurrentRuns = 0;
-            var start = DateTime.UtcNow.Subtract(TimeSpan.FromHours(lookBackThresholdHrs));
-            // TODO: consider on the hour billing summary creation. For example summarys would have a time range of
-            // 12:00:00 -> 1:00:00
-            var end = DateTime.UtcNow;
-            var controlPlaneRegions = controlPlaneInfo.GetAllDataPlaneLocations().Shuffle();
-            var accountShards = billingEventManager.GetShards();
-            var accountsToRegionsShards = accountShards.SelectMany(x => controlPlaneRegions, (accoundShard, region) => new { accoundShard, region });
-            var taskHelper = new TaskHelper(logger);
-            logger.FluentAddBaseValue("startCalculationTime", start);
-            logger.FluentAddBaseValue("endCalculationTime", end);
+            await Execute(cancellationToken);
+        }
 
-            await taskHelper.RunBackgroundEnumerableAsync(
-                $"{billingWorkerLogBase}-run",
-                accountsToRegionsShards,
-                async (billingAccountShard, childlogger) =>
-                 {
-                     var leaseName = $"billingworkerrun-{billingAccountShard.accoundShard}-{billingAccountShard.region}";
-                     childlogger.FluentAddBaseValue("Service", "billingservices");
-                     childlogger.FluentAddBaseValue("leaseName", leaseName);
-                     using (var lease = await claimedDistributedLease.Obtain($"{billingWorkerLogBase}-leases", leaseName, TimeSpan.FromHours(1),
-                         childlogger))
-                     {
-                         if (lease != null)
-                         {
-                             concurrentRuns++;
-                             var accounts = await billingEventManager.GetAccountsByShardAsync(
-                                                                     start,
-                                                                     end,
-                                                                     logger,
-                                                                     new List<AzureLocation> { billingAccountShard.region },
-                                                                     billingAccountShard.accoundShard);
-                             foreach (var account in accounts)
-                             {
-                                 await BeginAccountCalculations(account, start, end, childlogger);
-                             }
-
-                             concurrentRuns--;
-                         }
-                     }
-                 },
-                logger);
+        protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string accountShard, AzureLocation region)
+        {
+            var accounts = await billingEventManager.GetAccountsByShardAsync(
+                                                start,
+                                                end,
+                                                childlogger,
+                                                new List<AzureLocation> { region },
+                                                accountShard);
+            foreach (var account in accounts)
+            {
+                await BeginAccountCalculations(account, start, end, childlogger);
+            }
         }
 
         /// <summary>
@@ -149,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 .FluentAddBaseValue("endCalculationTime", end);
 
             await logger.OperationScopeAsync(
-                $"{billingWorkerLogBase}-begin-account-calculations",
+                $"{ServiceName}-begin-account-calculations",
                 async (childLogger) =>
                 {
                     // Get the last BillingSummary.
@@ -182,10 +149,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var billingEvents = await billingEventManager.GetAccountEventsAsync(account, latestSummary.Time, end, new string[] { BillingEventTypes.EnvironmentStateChange }, logger);
 
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
-                    var billingSummary = CalculateBillingUnits(account, billingEvents, (BillingSummary)latestSummary.Args, end);
+                    var billingSummary = await CalculateBillingUnits(account, billingEvents, (BillingSummary)latestSummary.Args, end);
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
-                    var totalBillingSummary = CaculateBillingForEnvironmentsWithNoEvents(account, billingSummary, latestSummary, end);
+                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(account, billingSummary, latestSummary, end);
                     await billingEventManager.CreateEventAsync(account, null, billingEventType, totalBillingSummary, logger);
                 },
                 swallowException: true);
@@ -202,7 +169,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="startSummary"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        public BillingSummary CalculateBillingUnits(
+
+        public async Task<BillingSummary> CalculateBillingUnits(
+
             VsoAccountInfo account,
             IEnumerable<BillingEvent> events,
             BillingSummary startSummary,
@@ -235,22 +204,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 };
 
                 var currSlice = initialSlice;
+                IEnumerable<BillingWindowSlice> allSlices;
 
                 // Loop through each billing event for the current environment.
                 foreach (var evnt in seqEvents)
                 {
-                    currSlice = CalculateNextWindow(evnt, currSlice, end);
-                    if (currSlice != null)
+                    allSlices = await GenerateWindowSlices(end, currSlice, evnt, account, environmentDetails.Sku);
+                    if (allSlices.Any())
                     {
-                        slices.Add(currSlice);
+                        slices.AddRange(allSlices);
+                        currSlice = allSlices.Last();
                     }
                 }
 
                 // Get the remainder or the entire window if there were no events.
-                currSlice = CalculateNextWindow(null, currSlice, end);
-                if (currSlice != null)
+                allSlices = await GenerateWindowSlices(end, currSlice, null, account, environmentDetails.Sku);
+                if (allSlices.Any())
                 {
-                    slices.Add(currSlice);
+                    slices.AddRange(allSlices);
+                    currSlice = allSlices.Last();
                 }
 
                 // Aggregate the billable units for each slice created above.
@@ -286,6 +258,92 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             };
         }
 
+        private async Task<IEnumerable<BillingWindowSlice>> GenerateWindowSlices(DateTime end, BillingWindowSlice currSlice, BillingEvent evnt, VsoAccountInfo account, Sku sku)
+        {
+            currSlice = CalculateNextWindow(evnt, currSlice, end);
+
+            if (currSlice is null)
+            {
+                // there are no state machine transitions here so just bail out
+                return Enumerable.Empty<BillingWindowSlice>();
+            }
+
+            var slicesWithOverrides = await GenerateSlicesWithOverrides(currSlice, account, sku);
+            return slicesWithOverrides;
+        }
+
+        private async Task<IEnumerable<BillingWindowSlice>> GenerateSlicesWithOverrides(BillingWindowSlice currSlice, VsoAccountInfo account, Sku sku)
+        {
+            var dividedSlices = GenerateHourBoundTimeSlices(currSlice);
+            foreach (var slice in dividedSlices)
+            {
+                var currBillingOverride = await billingEventManager.GetOverrideStateForTimeAsync(slice.StartTime, account.Subscription, account, sku, logger);
+                if (currBillingOverride != null)
+                {
+                    slice.OverrideState = currBillingOverride.BillingOverrideState;
+                }
+            }
+            return dividedSlices;
+        }
+
+        private IEnumerable<BillingWindowSlice> GenerateHourBoundTimeSlices(BillingWindowSlice currSlice)
+        {
+
+            List<BillingWindowSlice> slices = new List<BillingWindowSlice>();
+            DateTime nextHourBoundary = new DateTime(currSlice.StartTime.Year, currSlice.StartTime.Month, currSlice.StartTime.Day, currSlice.StartTime.Hour, 0, 0, DateTimeKind.Utc).AddHours(1);
+            if (currSlice.EndTime <= nextHourBoundary)
+            {
+                slices.Add(currSlice);
+            }
+            else
+            {
+                var startTime = currSlice.StartTime;
+                var endTime = nextHourBoundary;
+                bool dividedFully = false;
+
+                // create the input time slice and add it to the hour boundary.
+                var lastSlice = new BillingWindowSlice()
+                {
+                    StartTime = currSlice.StartTime,
+                    EndTime = endTime,
+                    BillingState = currSlice.BillingState,
+                    LastState = currSlice.LastState,
+                };
+                slices.Add(lastSlice);
+
+                while (!dividedFully)
+                {
+                    endTime = endTime.AddHours(1);
+                    if (currSlice.EndTime > endTime)
+                    {
+                        // We need to loop again and add a new slice for this hour segment since this segment is a subset.
+                        lastSlice = new BillingWindowSlice()
+                        {
+                            StartTime = lastSlice.EndTime,
+                            EndTime = endTime,
+                            BillingState = currSlice.BillingState,
+                            LastState = currSlice.LastState,
+                        };
+                        slices.Add(lastSlice);
+                    }
+                    else
+                    {
+                        // Get the remainder of the time
+                        dividedFully = true;
+                        lastSlice = new BillingWindowSlice()
+                        {
+                            StartTime = lastSlice.EndTime,
+                            EndTime = currSlice.EndTime,
+                            BillingState = currSlice.BillingState,
+                            LastState = currSlice.LastState,
+                        };
+                        slices.Add(lastSlice);
+                    }
+                }
+            }
+            return slices;
+        }
+
         /// <summary>
         /// This method creates the class BillingWindowSlice<see cref="BillingWindowSlice"/>.
         /// A BillingWindowSlice represents a timespan of billing activity from one
@@ -305,20 +363,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 // No new time slice to create if last status was Deleted.
                 // There will be no more events after a Deleted event.
-                if (lastSlice.LastState == CloudEnvironmentState.Deleted)
+                if (lastSlice.LastState == CloudEnvironmentState.Available || lastSlice.LastState == CloudEnvironmentState.Shutdown)
+                {
+                    var finalSlice = new BillingWindowSlice()
+                    {
+                        BillingState = lastSlice.LastState == CloudEnvironmentState.Shutdown ?
+                        BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
+                        EndTime = endTimeForPeriod,
+                        StartTime = lastSlice.EndTime,
+                        LastState = lastSlice.LastState,
+                    };
+                    return finalSlice;
+                }
+                else
                 {
                     return null;
                 }
 
-                var finalSlice = new BillingWindowSlice()
-                {
-                    BillingState = lastSlice.LastState == CloudEnvironmentState.Shutdown ?
-                        BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
-                    EndTime = endTimeForPeriod,
-                    StartTime = lastSlice.EndTime,
-                    LastState = lastSlice.LastState,
-                };
-                return finalSlice;
+
             }
 
             var currentState = lastSlice.LastState;
@@ -406,7 +468,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="latestEvent"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        public BillingSummary CaculateBillingForEnvironmentsWithNoEvents(
+        public async Task<BillingSummary> CaculateBillingForEnvironmentsWithNoEvents(
+
             VsoAccountInfo account,
             BillingSummary currentSummary,
             BillingEvent latestEvent,
@@ -486,12 +549,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     StartTime = latestEvent.Time,
                 };
 
-                var currentWindowSlice = CalculateNextWindow(null, billingSlice, end);
-                var billable = CalculateVsoUnitsByTimeAndSku(currentWindowSlice, envUsageDetail.Sku.Name);
+                // Get the remainder or the entire window if there were no events.
+                var allSlices = (await GenerateWindowSlices(end, billingSlice, null, account, envUsageDetail.Sku)).ToList();
+                if (allSlices.Any())
+                {
+                    billingSlice = allSlices.Last();
+                }
+
+                var billable = 0d;
+
+                allSlices.ForEach((slice) => billable += CalculateVsoUnitsByTimeAndSku(slice, envUsageDetail.Sku.Name));
                 var usageDetail = new EnvironmentUsageDetail
                 {
                     Name = envUsageDetail.Name,
-                    EndState = currentWindowSlice.LastState.ToString(),
+                    EndState = billingSlice.LastState.ToString(),
                     Usage = new UsageDictionary
                     {
                         { meterId, billable },
@@ -558,12 +629,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <returns></returns>
         private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, string sku)
         {
-            var vsoUnitsPerHour = GetVsoUnitsBySkuName(sku, slice.BillingState);
-            const decimal secondsPerHour = 3600m;
-            var vsoUnitsPerSecond = vsoUnitsPerHour / secondsPerHour;
-            var totalSeconds = (decimal)slice.EndTime.Subtract(slice.StartTime).TotalSeconds;
-            var vsoUnits = totalSeconds * vsoUnitsPerSecond;
-            return (double)vsoUnits;
+            if (slice.OverrideState == BillingOverrideState.BillingEnabled)
+            {
+                var vsoUnitsPerHour = GetVsoUnitsBySkuName(sku, slice.BillingState);
+                const decimal secondsPerHour = 3600m;
+                var vsoUnitsPerSecond = vsoUnitsPerHour / secondsPerHour;
+                var totalSeconds = (decimal)slice.EndTime.Subtract(slice.StartTime).TotalSeconds;
+                var vsoUnits = totalSeconds * vsoUnitsPerSecond;
+                return (double)vsoUnits;
+            }
+            else
+            {
+                // Billing is disabled for this time slice
+                return 0;
+            }
         }
 
         /// <summary>

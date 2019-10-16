@@ -33,5 +33,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// These are the only 2 states we bill for.
         /// </summary>
         public BillingWindowBillingState BillingState { get; set; }
+
+        /// <summary>
+        /// Gets or sets the override state for billing
+        /// </summary>
+        public BillingOverrideState OverrideState { get; set; }
     }
 }

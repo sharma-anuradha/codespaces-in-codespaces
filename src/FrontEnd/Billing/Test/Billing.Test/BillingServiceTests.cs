@@ -1,30 +1,35 @@
-﻿using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+﻿using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 {
     public class BillingServiceTests : BaseBillingTests
     {
-        private static readonly DateTime TestTimeNow = DateTime.UtcNow;
+        private static readonly DateTime TestTimeNow = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0, DateTimeKind.Utc);
         private readonly BillingService billingService;
         private readonly decimal smallLinuxComputeUnitPerHr = 125;
         private readonly decimal smallLinuxStorageUnitPerHr = 2;
         private static readonly string WestUs2MeterId = "5f3afa79-01ad-4d7e-b691-73feca4ea350";
         
+
         // 5 hrs Available => 127 * 5 = 635
         private static readonly double BillableUnits = 635;
-        // 3 hrs Available + 3hrs Shutdown => 127units * 3hrs + 2units * 3 hrs = 387
-        private static readonly double BillableUnitsWithShutdown = 387;
+        // 3 hrs Available + 3hrs Shutdown => 127units * 3hrs + 2units * 2 hrs = 385
+        private static readonly double BillableUnitsWithShutdown = 385;
         // 5 hr Available for 2 environments => (127units * 5)*2 = 1270
         private static readonly double BillableUnitsMultiEnvironments = 1270;
         // 5 hrs Available, 5 hrs Shutdown => (127units * 5) + (2units *5) = 645
         private static readonly double BIllableUnitsNoNewEvents = 645;
+
+
         // 5 hrs Shutdown => 2units * 5 = 10
         private static readonly double BillableUnitForShutdownEnvironment = 10;
 
@@ -92,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     NewValue = nameof(CloudEnvironmentState.Deleted),
                 },
                 Environment = testEnvironment,
-                Time = DateTime.UtcNow,
+                Time =TestTimeNow.Subtract(TimeSpan.FromHours(1)),
                 Type = BillingEventTypes.EnvironmentStateChange
 
             },
@@ -151,6 +156,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             },
         };
+
+        public static readonly BillingOverride BillingOverrideGlobal = new BillingOverride()
+        {
+            Id = "test",
+            StartTime = TestTimeNow.AddHours(-7),
+            EndTime = TestTimeNow.AddHours(12),
+            BillingOverrideState = BillingOverrideState.BillingDisabled,
+            Priority = 1,
+        };
+
+        public static readonly BillingOverride BillingOverrideGlobalSmall = new BillingOverride()
+        {
+            Id = "test",
+            StartTime = TestTimeNow.AddHours(-4),
+            EndTime = TestTimeNow.AddHours(-3),
+            BillingOverrideState = BillingOverrideState.BillingDisabled,
+            Priority = 1,
+        };
+
+        public static readonly BillingOverride BillingOverrideSubscription = new BillingOverride()
+        {
+            Id = "testOverrideSub",
+            StartTime = TestTimeNow.AddHours(-7),
+            EndTime = TestTimeNow.AddHours(12),
+            BillingOverrideState = BillingOverrideState.BillingDisabled,
+            Priority = 2,
+            Subscription = testAccount.Subscription,
+        };
+
+        public static readonly BillingOverride BillingOverrideAccount = new BillingOverride()
+        {
+            Id = "testOverrideAccount",
+            StartTime = TestTimeNow.AddHours(-7),
+            EndTime = TestTimeNow.AddHours(12),
+            BillingOverrideState = BillingOverrideState.BillingDisabled,
+            Priority = 3,
+            Account = testAccount,
+        };
+
+        public static readonly BillingOverride BillingOverrideSKU = new BillingOverride()
+        {
+            Id = "testOverrideSKU",
+            StartTime = TestTimeNow.AddHours(-7),
+            EndTime = TestTimeNow.AddHours(12),
+            BillingOverrideState = BillingOverrideState.BillingDisabled,
+            Priority = 4,
+            Sku = new Sku { Name = smallLinuxSKuName, Tier = "test" },
+        };
+
         public static readonly BillingSummary BillingSummaryInput = new BillingSummary
         {
             SubmissionState = BillingSubmissionState.None,
@@ -162,8 +216,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 Environments = new Dictionary<string, EnvironmentUsageDetail>
                 {
-                    { 
-                        testEnvironment.Id, 
+                    {
+                        testEnvironment.Id,
                         new EnvironmentUsageDetail
                         {
                             EndState = "Available",
@@ -178,8 +232,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 },
                 Users = new Dictionary<string, UserUsageDetail>
                 {
-                    { 
-                        testEnvironment.UserId, 
+                    {
+                        testEnvironment.UserId,
                         new UserUsageDetail
                         {
                             Usage = new Dictionary<string, double>
@@ -193,7 +247,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             },
             PeriodEnd = TestTimeNow.Subtract(TimeSpan.FromHours(6)),
-            
+
         };
         public static readonly BillingSummary BillingSummaryInputNoCurrentEvents = new BillingSummary
         {
@@ -274,8 +328,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 Environments = new Dictionary<string, EnvironmentUsageDetail>
                 {
-                    { 
-                        testEnvironment.Id, 
+                    {
+                        testEnvironment.Id,
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
@@ -290,7 +344,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 Users = new Dictionary<string, UserUsageDetail>
                 {
                     {
-                        testEnvironment.UserId, 
+                        testEnvironment.UserId,
                         new UserUsageDetail
                         {
                             Usage = new Dictionary<string, double>
@@ -309,16 +363,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Usage = new Dictionary<string, double>
             {
                 {
-                    WestUs2MeterId, 
-                    BillableUnitsMultiEnvironments 
+                    WestUs2MeterId,
+                    BillableUnitsMultiEnvironments
                 },
             },
             UsageDetail = new UsageDetail
             {
                 Environments = new Dictionary<string, EnvironmentUsageDetail>
                 {
-                    { 
-                        testEnvironment.Id, 
+                    {
+                        testEnvironment.Id,
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
@@ -329,8 +383,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             },
                         }
                     },
-                    { 
-                        testEnvironment2.Id, 
+                    {
+                        testEnvironment2.Id,
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
@@ -345,7 +399,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 Users = new Dictionary<string, UserUsageDetail>
                 {
                     {
-                        testEnvironment.UserId, 
+                        testEnvironment.UserId,
                         new UserUsageDetail
                         {
                             Usage = new Dictionary<string, double>
@@ -370,8 +424,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 Environments = new Dictionary<string, EnvironmentUsageDetail>
                 {
-                    { 
-                        testEnvironment.Id, 
+                    {
+                        testEnvironment.Id,
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
@@ -386,7 +440,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 Users = new Dictionary<string, UserUsageDetail>
                 {
                     {
-                        testEnvironment.UserId, 
+                        testEnvironment.UserId,
                         new UserUsageDetail
                         {
                             Usage = new Dictionary<string, double>
@@ -473,8 +527,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Test billing calculations with Available and Deleted events and No previous billing summary.
             BillingSummaryInput.UsageDetail = null;
             yield return new object[] { BillingEventsInput, BillingSummaryInput, BillingSummaryOutput };
-
         }
+
+        /// <summary>
+        /// Gets the input parameters for the billing calculations
+        /// Each yield statement represent a seperate tests run
+        /// </summary>
+        /// <returns>An object array representing all 3 inputs to the test method.</returns>
+        public static IEnumerable<object[]> GetBillingInputsWithNewEventsForBillOverride()
+        {
+            // Test billing overrides with various tiers
+            yield return new object[] { BillingEventsInput, BillingSummaryInput, BillingOverrideGlobal, 0 };
+            yield return new object[] { BillingEventsInput, BillingSummaryInput, BillingOverrideAccount, 0 };
+            yield return new object[] { BillingEventsInput, BillingSummaryInput, BillingOverrideSKU, 0 };
+            yield return new object[] { BillingEventsInput, BillingSummaryInput, BillingOverrideSubscription, 0 };
+
+            // Test billing overrides that are shorter term
+            yield return new object[] { BillingEventsInput, BillingSummaryInput, BillingOverrideGlobalSmall, 508 };
+            //
+        }
+
+
 
         /// <summary>
         /// Gets input parameters for testing billing calculations when
@@ -511,22 +584,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             };
             var mockSkuCatelog = new Mock<ISkuCatalog>();
             mockSkuCatelog.Setup(cat => cat.CloudEnvironmentSkus).Returns(skus);
-            billingService = new BillingService(manager, 
-                                            new Mock<IControlPlaneInfo>().Object, 
-                                            mockSkuCatelog.Object, 
-                                            logger, 
-                                            new Mock<IClaimedDistributedLease>().Object);
+            billingService = new BillingService(manager,
+                                            new Mock<IControlPlaneInfo>().Object,
+                                            mockSkuCatelog.Object,
+                                            logger,
+                                            new Mock<IClaimedDistributedLease>().Object,
+                                            new MockTaskHelper());
         }
 
         [Theory]
         [MemberData(nameof(GetBillingInputsWithNewEvents))]
-        public void BillingSummaryIsCreatedFromEvents(
-            IEnumerable<BillingEvent> inputEvents, 
-            BillingSummary inputSummary, 
+        public async Task BillingSummaryIsCreatedFromEvents(
+            IEnumerable<BillingEvent> inputEvents,
+            BillingSummary inputSummary,
             BillingSummary expectedSummary)
         {
             // Billing Service
-            var actualSummary = billingService.CalculateBillingUnits(testAccount, inputEvents, inputSummary, TestTimeNow);
+            var actualSummary = await billingService.CalculateBillingUnits(testAccount, inputEvents, inputSummary, TestTimeNow);
 
             // Compare total billable units
             Assert.Equal(expectedSummary.Usage.First().Value, actualSummary.Usage.First().Value, 2);
@@ -536,7 +610,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             var actualUsageDetail = actualSummary.UsageDetail;
             var expectedUsageDetail = expectedSummary.UsageDetail;
-            
+
             // Environment list is not null and Count matches
             Assert.NotNull(actualUsageDetail.Environments);
             Assert.Equal(actualUsageDetail.Environments.Count(), expectedUsageDetail.Environments.Count());
@@ -555,16 +629,62 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         }
 
         [Theory]
+        [MemberData(nameof(GetBillingInputsWithNewEvents))]
+        public async Task BillingSummaryIsCreatedFromEvents_GlobalOverride(
+           IEnumerable<BillingEvent> inputEvents,
+           BillingSummary inputSummary,
+           BillingSummary expectedSummary)
+        {
+
+
+            var billOverride = new BillingOverride()
+            {
+                Id = "test",
+                StartTime = TestTimeNow.AddHours(-7),
+                EndTime = TestTimeNow.AddHours(12),
+                BillingOverrideState = BillingOverrideState.BillingDisabled,
+                Priority = 1,
+            };
+            await this.overrideRepository.CreateAsync(billOverride, logger);
+
+            // Billing Service
+            var actualSummary = await billingService.CalculateBillingUnits(testAccount, inputEvents, inputSummary, TestTimeNow);
+
+            // Compare total billable units
+            // Should be overriden with 0
+            Assert.Equal(0, actualSummary.Usage.First().Value, 2);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetBillingInputsWithNewEventsForBillOverride))]
+        public async Task BillingSummaryIsCreatedFromEvents_variousOverrides(
+            IEnumerable<BillingEvent> inputEvents,
+            BillingSummary inputSummary,
+            BillingOverride billingOverride,
+            double expectedBilledTime)
+        {
+
+            await this.overrideRepository.CreateAsync(billingOverride, logger);
+
+            // Billing Service
+            var actualSummary = await billingService.CalculateBillingUnits(testAccount, inputEvents, inputSummary, TestTimeNow);
+
+            // Compare total billable units
+            // Should be overriden with 0
+            Assert.Equal(expectedBilledTime, actualSummary.Usage.First().Value, 2);
+        }
+
+        [Theory]
         [MemberData(nameof(GetBillingInputsNoNewEvents))]
-        public void BillingSummaryIsCreatedNoNewEvents(
+        public async Task BillingSummaryIsCreatedNoNewEvents(
             BillingSummary currentSummary,
             BillingEvent latestBillingEvent,
             BillingSummary expectedSummary)
         {
             // BIlling Service
-            var actualSummary = billingService.CaculateBillingForEnvironmentsWithNoEvents(testAccount, 
-                                                                                        currentSummary, 
-                                                                                        latestBillingEvent, 
+            var actualSummary = await billingService.CaculateBillingForEnvironmentsWithNoEvents(testAccount,
+                                                                                        currentSummary,
+                                                                                        latestBillingEvent,
                                                                                         TestTimeNow);
 
             // Compare total billable units
@@ -591,7 +711,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var actualShutdownEnvironmentUsageDetail = actualUsageDetail.Environments.Last().Value;
             var expectedAvailableEnvironmentUsageDetail = expectedUsageDetail.Environments.First().Value;
             var expectedShutdownEnvironment2UsageDetail = expectedUsageDetail.Environments.Last().Value;
-            
+
             // Environment billable usage
             Assert.Equal(expectedAvailableEnvironmentUsageDetail.Usage.First().Value, actualAvailableEnvironmentUsageDetail.Usage.First().Value, 2);
             Assert.Equal(expectedShutdownEnvironment2UsageDetail.Usage.First().Value, actualShutdownEnvironmentUsageDetail.Usage.First().Value, 2);

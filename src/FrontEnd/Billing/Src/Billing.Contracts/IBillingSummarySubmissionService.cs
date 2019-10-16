@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -12,8 +13,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Processes a sharded set of billing summaries for the current control plane.
         /// </summary>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task to track completion</returns>
-        Task ProcessBillingSummaries();
+        Task ProcessBillingSummariesAsync(CancellationToken cancellationToken);
 
     }
 }

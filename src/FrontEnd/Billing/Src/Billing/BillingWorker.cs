@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     logger.LogInfo("Billing Worker is running in the backgroud.");
                     var duration = logger.StartDuration();
-                    await billingService.GenerateBillingSummary(logger, cancellationToken);
+                    await billingService.GenerateBillingSummaryAsync(cancellationToken);
                     logger.AddDuration(duration).LogInfo(GetType().FormatLogMessage(nameof(ExecuteAsync)));
                     var remainingTime = taskRunIntervalMinutes - TimeSpan.FromMilliseconds(duration.Elapsed.TotalMilliseconds).TotalMinutes;
                     await Task.Delay(TimeSpan.FromMinutes(remainingTime > 0 ? remainingTime : 0));

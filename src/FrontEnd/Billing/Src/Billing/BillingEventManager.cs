@@ -24,29 +24,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     {
         private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
         private readonly IBillingEventRepository billingEventRepository;
-       
+        private readonly IBillingOverrideRepository billingOverrideRepository;
+        private IEnumerable<BillingOverride> billingOverrideCache;
+        private DateTime billingOverrideCacheTime;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingEventManager"/> class.
         /// </summary>
         /// <param name="billingEventRepository">Event repository.</param>
+        /// <param name="billingOverrideRepository">the billing override repository</param>
         public BillingEventManager(
-            IBillingEventRepository billingEventRepository)
+            IBillingEventRepository billingEventRepository,
+            IBillingOverrideRepository billingOverrideRepository)
         {
             Requires.NotNull(billingEventRepository, nameof(billingEventRepository));
+            Requires.NotNull(billingOverrideRepository, nameof(billingOverrideRepository));
 
+            this.billingOverrideRepository = billingOverrideRepository;
             this.billingEventRepository = billingEventRepository;
         }
 
-        /// <summary>
-        /// Creates a new billing event entity in the repository, stamped with the current time.
-        /// </summary>
-        /// <param name="account">Required account that the event is associated with.</param>
-        /// <param name="environment">Optional environment that the event is associated with.</param>
-        /// <param name="eventType">Required event type; one of the constants from
-        /// <see cref="BillingEventTypes"/>.</param>
-        /// <param name="args">Required event args; the type of args must match the event type.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <returns>The created event entity, including unique ID and timestamp.</returns>
+        /// <inheritdoc/>
         public async Task<BillingEvent> CreateEventAsync(
             VsoAccountInfo account,
             EnvironmentBillingInfo environment,
@@ -85,6 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
         }
 
+
         /// <summary>
         /// Updates a new billing event entity in the repository
         /// </summary>
@@ -112,14 +111,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
         }
 
-        /// <summary>
-        /// Gets all accounts for which there are any billing events in a specified time range.
-        /// </summary>
-        /// <param name="start">Required start time (UTC). Events before this time are ignored.</param>
-        /// <param name="end">Optional end time (UTC), or null to look at all events after the start time.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <param name="locations">Azure regions to search.</param>
-        /// <returns>List of distinct accounts of all billing events within the specified time.</returns>
+
+        /// <inheritdoc />
+
         public async Task<IEnumerable<VsoAccountInfo>> GetAccountsAsync(
             DateTime start,
             DateTime? end,
@@ -162,6 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 throw;
             }
         }
+
 
         /// <summary>
         /// Returns all accounts for which there are any billing events in a specified time range
@@ -219,17 +214,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
         }
 
-        /// <summary>
-        /// Gets all billing events for a specified account within a time range.
-        /// </summary>
-        /// <param name="account">Required account to filter billing events.</param>
-        /// <param name="start">Required start time (UTC). Events before this time are ignored.</param>
-        /// <param name="end">Optional end time (UTC), or null to look at all events after the start time.</param>
-        /// <param name="eventTypes">Optional list of one or more event types to include, or null to include
-        /// all event types.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <param name="filter"> optional called provided filter</param>
-        /// <returns>List of billing events matching the parameters.</returns>
+
+        /// <inheritdoc />
+
         public async Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
             VsoAccountInfo account,
             DateTime start,
@@ -307,6 +294,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
         }
 
+
         public async Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
        Expression<Func<BillingEvent, bool>> filter,
        IDiagnosticsLogger logger)
@@ -328,7 +316,130 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
+
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountEventsAsync)), ex.Message);
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<BillingOverride> GetOverrideStateForTimeAsync(DateTime start, string subscriptionID, VsoAccountInfo account, Sku sku, IDiagnosticsLogger logger)
+        {
+            Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
+
+            await CacheBillingOverrides(start, logger);
+            Func<BillingOverride, bool> timeRangeCondition = x => start >= x.StartTime && start < x.EndTime;
+
+            var candidates = GetApplicableBillingOverrides(subscriptionID, account, sku, timeRangeCondition);
+
+            return candidates.OrderBy(x => x.Priority).FirstOrDefault();
+        }
+
+        private IEnumerable<BillingOverride> GetApplicableBillingOverrides(string subscriptionID, VsoAccountInfo account, Sku sku, Func<BillingOverride, bool> timeRangeCondition)
+        {
+            List<BillingOverride> candidates = new List<BillingOverride>();
+            Func<BillingOverride, bool> where;
+
+            // The algorithm is to get overrides for:
+            // - All the subscrptionIDs that match
+            // - All the SKUs that match
+            // - All the Accounts that match
+            // - All global overrides
+            // Union all of these together.
+
+            if (!string.IsNullOrEmpty(subscriptionID))
+            {
+                // When there's a subscription ID 
+                where = x => timeRangeCondition(x)
+                            && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
+                            && x.Account == null
+                            && x.Sku == null;
+                candidates.AddRange(billingOverrideCache.Where(where));
+                if (account != null)
+                {
+                    where = x => timeRangeCondition(x)
+                                && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
+                                && x.Account == account
+                                && x.Sku == null;
+                    candidates.AddRange(billingOverrideCache.Where(where));
+
+                    // All three have been specified on the override
+                    if (sku != null)
+                    {
+                        where = x => timeRangeCondition(x)
+                                    && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
+                                    && x.Account == account
+                                    && (x.Sku !=null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
+                        candidates.AddRange(billingOverrideCache.Where(where));
+                    }
+                }
+            }
+            if (account != null)
+            {
+                where = x => timeRangeCondition(x)
+                                && x.Subscription == null
+                                && x.Account == account
+                                && x.Sku == null;
+                candidates.AddRange(billingOverrideCache.Where(where));
+
+                // Account and Sku have been specified on the override
+                if (sku != null)
+                {
+                    where = x => timeRangeCondition(x)
+                                && x.Subscription == null
+                                && x.Account == account
+                                && (x.Sku != null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
+                    candidates.AddRange(billingOverrideCache.Where(where));
+                }
+            }
+
+            if (sku != null)
+            {
+                where = x => timeRangeCondition(x)
+                            && x.Subscription == null
+                            && x.Account == null
+                            && (x.Sku != null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
+                candidates.AddRange(billingOverrideCache.Where(where));
+            }
+
+            if (!string.IsNullOrEmpty(subscriptionID) && sku != null)
+            {
+                where = x => timeRangeCondition(x)
+                        && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
+                        && x.Account == null
+                        && (x.Sku != null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
+                candidates.AddRange(billingOverrideCache.Where(where));
+            }
+
+            // Add in the gloal overrides
+            where = x => timeRangeCondition(x)
+                    && x.Subscription == null
+                    && x.Account == null
+                    && x.Sku == null;
+            candidates.AddRange(billingOverrideCache.Where(where));
+            return candidates;
+        }
+
+        private async Task CacheBillingOverrides(DateTime startTime, IDiagnosticsLogger logger)
+        {
+            try
+            {
+                // Note: We're getting this whole collection right now but this hinges on the fact that it is small and likely only used in emergency casese. If not, we would potentially want
+                // to apply filters at a different point in time. 
+                if (billingOverrideCache is null || startTime > billingOverrideCacheTime)
+                {
+                    var duration = logger.StartDuration();
+                    var billingOverride = await this.billingOverrideRepository.QueryAsync(
+                    q => q, logger);
+                    billingOverrideCache = billingOverride.ToList();
+                    billingOverrideCacheTime = DateTime.Now;
+                    logger.AddDuration(duration)
+                        .LogInfo(GetType().FormatLogMessage(nameof(CacheBillingOverrides)));
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CacheBillingOverrides)), ex.Message);
                 throw;
             }
         }

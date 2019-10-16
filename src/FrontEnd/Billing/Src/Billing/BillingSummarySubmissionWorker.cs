@@ -33,17 +33,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <inheritdoc/>
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             logger.LogInfo("BillingSummarySubmission worker is starting up");
 
-            while (!stoppingToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 logger.LogInfo("BillingSummarySubmission worker is processing");
                 var duration = logger.StartDuration();
 
                 // Do the actual work
-                await billingSummarySubmissionService.ProcessBillingSummaries();
+                await billingSummarySubmissionService.ProcessBillingSummariesAsync(cancellationToken);
 
                 // Log
                 logger.AddDuration(duration).LogInfo(GetType().FormatLogMessage(nameof(ExecuteAsync)));

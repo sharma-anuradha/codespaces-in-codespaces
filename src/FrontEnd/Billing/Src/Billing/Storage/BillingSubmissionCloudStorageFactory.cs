@@ -22,7 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingSubmissionCloudStorageFactory : IBillingSubmissionCloudStorageFactory
     {
-        private const string UsageQueueName = "usage-reporting-queue";
         private readonly IControlPlaneAzureResourceAccessor azureResourceAccesor;
         private readonly IDiagnosticsLogger logger;
         private readonly IHealthProvider healthProvider;
@@ -75,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Create the various clients
                 var queueClient = new CloudQueueClient(storageAccountQueue.QueueStorageUri, storageCredentialsForQueue);
                 var tableClient = new CloudTableClient(storageAccountTable.TableStorageUri, storageCredentialsForTable);
-
+                
                 var provider = new StorageQueueClientProvider(queueClient);
 
                 var collection = new BillingSubmissionQueueCollection(provider, healthProvider, loggerFactory, resourceNameBuilder, logValues);

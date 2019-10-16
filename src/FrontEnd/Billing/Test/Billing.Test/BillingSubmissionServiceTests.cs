@@ -55,6 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             IEnumerable<BillingEvent> billingSummaries = new List<BillingEvent>() { billingEvent };
             billingEventManager.Setup(x => x.GetAccountsByShardAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<ICollection<AzureLocation>>(), It.IsAny<string>())).Returns(Task.FromResult(accounts));
             billingEventManager.Setup(x => x.GetAccountEventsAsync(It.IsAny<Expression<Func<BillingEvent, bool>>>(), logger.Object)).Returns(Task.FromResult(billingSummaries));
+            billingEventManager.Setup(x => x.GetShards()).Returns(new List<string>() { "a" });
 
             Mock<IBillingSubmissionCloudStorageFactory> factory = new Mock<IBillingSubmissionCloudStorageFactory>();
             Mock<IBillingSubmissionCloudStorageClient> client = new Mock<IBillingSubmissionCloudStorageClient>();
@@ -66,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
             lease.Setup(x => x.Obtain(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new FakeLease() as IDisposable));
             BillingSummarySubmissionService sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper());
-            await sut.ProcessBillingSummaries();
+            await sut.ProcessBillingSummariesAsync(new System.Threading.CancellationToken());
             Assert.Equal(BillingSubmissionState.Submitted, billingSummary.SubmissionState);
         }
 
@@ -77,37 +78,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             }
         }
 
-        class MockTaskHelper : ITaskHelper
-        {
-            public Task<bool> RetryUntilSuccessOrTimeout(string name, Func<Task<bool>> callback, TimeSpan timeoutTimeSpan, TimeSpan? waitTimeSpan = null, IDiagnosticsLogger logger = null, Action onTimeout = null)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception> errCallback = null, TimeSpan? delay = null)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void RunBackgroundEnumerable<T>(string name, IEnumerable<T> list, Func<T, IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null, Action<T, Exception> errItemCallback = null, int concurrentLimit = 3, int successDelay = 250, int failDelay = 100)
-            {
-                callback(list.First(), logger);
-            }
-
-            public Task RunBackgroundEnumerableAsync<T>(string name, IEnumerable<T> list, Func<T, IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null, Action<T, Exception> errItemCallback = null, int concurrentLimit = 3, int successDelay = 250, int failDelay = 100)
-            {
-                return callback(list.First(), logger);
-            }
-
-            public void RunBackgroundLong(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception> errCallback = null, TimeSpan? delay = null)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null, bool autoLogLoopOperation = false, Func<Exception, bool> errLoopCallback = null)
-            {
-                throw new NotImplementedException();
-            }
-        }
+       
     }
 }

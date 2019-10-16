@@ -8,11 +8,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
-    public class BillingSummarySubmissionService : IBillingSummarySubmissionService
+    public class BillingSummarySubmissionService : BillingServiceBase, IBillingSummarySubmissionService
     {
         // services
         private readonly IControlPlaneInfo controlPlanInfo;
@@ -21,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private readonly IBillingSubmissionCloudStorageFactory billingStorageFactory;
         private readonly IClaimedDistributedLease claimedDistributedLease;
         private readonly ITaskHelper taskHelper;
-        private readonly string billingSubmissionWorkerLogBase = "billingsubmission-worker";
+
 
         /// <summary>
         /// Accoring to the FAQs - usage meters should arrive within 48 hours of when it was incurred.
@@ -45,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IBillingSubmissionCloudStorageFactory billingStorageFactory,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper)
+            : base(billingEventManager, controlPlanInfo, logger, claimedDistributedLease, taskHelper, "billingsub-worker")
         {
             this.controlPlanInfo = controlPlanInfo;
             this.billingEventManager = billingEventManager;
@@ -55,85 +57,61 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <inheritdoc />
-        public async Task ProcessBillingSummaries()
+        public async Task ProcessBillingSummariesAsync(CancellationToken cancellationToken)
         {
+            await Execute(cancellationToken);
+        }
 
-            var accountShards = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
-
-            var controlledRegions = controlPlanInfo.GetAllDataPlaneLocations().Shuffle();
-            var accountsToRegions = accountShards.SelectMany(x => controlledRegions, (accoundShard, region) => new { accoundShard, region });
-
-            var startTime = DateTime.UtcNow.Subtract(TimeSpan.FromHours(lookBackThresholdHrs));
-            var endTime = DateTime.UtcNow;
-
-            logger.FluentAddBaseValue("startCalculationTime", startTime);
-            logger.FluentAddBaseValue("endCalculationTime", endTime);
-
-            // TODO: There's a lot here that's similar to the Billing Worker. If we need another similar worker, perhaps we should refactor this into an abstract BillingWorker that skeletons out the inner "what to do with accounts" aspect.
-            await taskHelper.RunBackgroundEnumerableAsync(
-                $"{billingSubmissionWorkerLogBase}-run",
-                accountsToRegions,
-                async (x, childlogger) =>
+        protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime startTime, DateTime endTime, string accountShard, AzureLocation region)
+        {
+            var batchID = Guid.NewGuid().ToString();
+            bool addedEntries = false;
+            var accounts = await billingEventManager.GetAccountsByShardAsync(
+                                                    startTime,
+                                                    endTime,
+                                                    logger,
+                                                    new List<AzureLocation> { region },
+                                                    accountShard);
+            logger.LogInfo($"Submitting bill summaries for region {region} and shard {accountShard}");
+            foreach (var account in accounts)
+            {
+                Expression<Func<BillingEvent, bool>> filter = bev => bev.Account == account &&
+                                                 startTime <= bev.Time &&
+                                                 bev.Time < endTime &&
+                                                 bev.Type == BillingEventTypes.BillingSummary
+                                                 && ((BillingSummary)bev.Args).SubmissionState == BillingSubmissionState.None;
+                var billingSummaries = await billingEventManager.GetAccountEventsAsync(filter, logger);
+                foreach (var summary in billingSummaries)
                 {
-                    var leaseName = $"billingsubmissionworkerrun-{x.accoundShard}-{x.region}";
-                    var batchID = Guid.NewGuid().ToString();
-                    childlogger.FluentAddBaseValue("leaseName", leaseName);
-                    using (var lease = await claimedDistributedLease.Obtain($"{billingSubmissionWorkerLogBase}-leases", leaseName, TimeSpan.FromHours(1), childlogger))
+                    addedEntries |= await ProcessSummary(summary, batchID);
+                }
+            }
+
+            // If we've pushed anything, now we should create a queue entry to record the whole batch.
+            if (addedEntries)
+            {
+                try
+                {
+                    logger.LogInfo($"Billing Submissions for {region} and shard {accountShard} were submitted to table, now submitting to queue");
+
+                    // Get the storage mechanism for billing submission
+                    var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
+                    var billingSummaryQueueSubmission = new BillingSummaryQueueSubmission()
                     {
-                        if (lease != null)
-                        {
-                            bool addedEntries = false;
-                            var accounts = await billingEventManager.GetAccountsByShardAsync(
-                                                                    startTime,
-                                                                    endTime,
-                                                                    logger,
-                                                                    new List<AzureLocation> { x.region },
-                                                                    x.accoundShard);
-                            logger.LogInfo($"Submitting bill summaries for region {x.region} and shard {x.accoundShard}");
-                            foreach (var account in accounts)
-                            {
-                                Expression<Func<BillingEvent, bool>> filter = bev => bev.Account == account &&
-                                                                 startTime <= bev.Time &&
-                                                                 bev.Time < endTime &&
-                                                                 bev.Type == BillingEventTypes.BillingSummary
-                                                                 && ((BillingSummary)bev.Args).SubmissionState == BillingSubmissionState.None;
-                                var billingSummaries = await billingEventManager.GetAccountEventsAsync(filter, logger);
-                                foreach (var summary in billingSummaries)
-                                {
-                                    addedEntries |= await ProcessSummary(summary, batchID);
-                                }
-                            }
+                        BatchId = batchID,
+                        PartitionKey = batchID,
+                    };
 
-                            // If we've pushed anything, now we should create a queue entry to record the whole batch.
-                            if (addedEntries)
-                            {
-                                try
-                                {
-                                    logger.LogInfo($"Billing Submissions for {x.region} and shard {x.accoundShard} were submitted to table, now submitting to queue");
+                    // Send off the queue submission
+                    await storageClient.PushBillingQueueSubmission(billingSummaryQueueSubmission);
+                }
+                catch (Exception ex)
+                {
 
-                                    // Get the storage mechanism for billing submission
-                                    var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(x.region);
-                                    var billingSummaryQueueSubmission = new BillingSummaryQueueSubmission()
-                                    {
-                                        BatchId = batchID,
-                                        PartitionKey = batchID,
-                                    };
-
-                                    // Send off the queue submission
-                                    await storageClient.PushBillingQueueSubmission(billingSummaryQueueSubmission);
-                                }
-                                catch (Exception ex)
-                                {
-
-                                    logger.LogError($"Submitting queue message for batch {batchID} failed with exception:{ex.Message}");
-                                    throw;
-                                }
-                            }
-
-                        }
-                    }
-                },
-                logger);
+                    logger.LogError($"Submitting queue message for batch {batchID} failed with exception:{ex.Message}");
+                    throw;
+                }
+            }
         }
 
         private async Task<bool> ProcessSummary(BillingEvent billingEvent, string batchID)

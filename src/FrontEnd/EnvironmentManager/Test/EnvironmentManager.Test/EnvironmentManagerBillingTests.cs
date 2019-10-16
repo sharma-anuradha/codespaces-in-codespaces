@@ -20,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         private readonly MockCloudEnvironmentRepository environmentRepository;
         private readonly MockAccountRepository accountRepository;
         private readonly MockBillingEventRepository billingEventRepository;
+        private readonly MockBillingOverrideRepository billingOverrideRepository;
         private readonly MockClientWorkspaceRepository workspaceRepository;
         private readonly IAccountManager accountManager;
         private readonly IBillingEventManager billingEventManager;
@@ -53,8 +54,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             this.environmentRepository = new MockCloudEnvironmentRepository();
             this.accountRepository = new MockAccountRepository();
             this.billingEventRepository = new MockBillingEventRepository();
+            this.billingOverrideRepository = new MockBillingOverrideRepository();
             this.accountManager = new AccountManager(this.accountRepository);
-            this.billingEventManager = new BillingEventManager(this.billingEventRepository);
+            this.billingEventManager = new BillingEventManager(this.billingEventRepository, this.billingOverrideRepository);
             this.workspaceRepository = new MockClientWorkspaceRepository();
             this.authRepository = new MockClientAuthRepository(); 
             this.resourceBroker = new MockResourceBrokerClient();

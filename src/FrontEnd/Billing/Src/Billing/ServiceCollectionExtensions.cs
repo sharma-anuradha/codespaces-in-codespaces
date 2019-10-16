@@ -25,10 +25,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             if (useMockCloudEnvironmentRepository)
             {
                 services.AddSingleton<IBillingEventRepository, MockBillingEventRepository>();
+                services.AddSingleton<IBillingOverrideRepository, MockBillingOverrideRepository>();
             }
             else
             {
                 services.AddDocumentDbCollection<BillingEvent, IBillingEventRepository, BillingEventRepository>(BillingEventRepository.ConfigureOptions);
+                services.AddDocumentDbCollection<BillingOverride, IBillingOverrideRepository, BillingOverrideRepository>(BillingOverrideRepository.ConfigureOptions);
             }
 
             services.AddSingleton<IBillingEventManager, BillingEventManager>();

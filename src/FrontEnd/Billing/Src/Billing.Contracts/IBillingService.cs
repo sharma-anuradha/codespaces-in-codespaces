@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,9 +15,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Generate billing summary events.
         /// </summary>
-        /// <param name="logger">Logging.</param>
         /// <param name="cancellationToken">Notification that the Task should stop.</param>
         /// <returns><see cref="Task"/> representing the asynchronous operation.</returns>
-        Task GenerateBillingSummary(IDiagnosticsLogger logger, CancellationToken cancellationToken);
+        Task GenerateBillingSummaryAsync(CancellationToken cancellationToken);
     }
 }
