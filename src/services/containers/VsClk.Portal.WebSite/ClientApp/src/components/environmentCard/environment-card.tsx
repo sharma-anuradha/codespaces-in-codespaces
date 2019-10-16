@@ -10,17 +10,22 @@ import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dia
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
 
-import { ILocalCloudEnvironment, StateInfo } from '../../interfaces/cloudenvironment';
+import { ILocalCloudEnvironment, StateInfo, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
-import { environmentIsALie, isNotAvailable } from '../../utils/environmentUtils';
+import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
+import { environmentIsALie, isNotAvailable, isNotConnectable } from '../../utils/environmentUtils';
 import { createUniqueId } from '../../dependencies';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
+import { withRouter, match } from 'react-router-dom';
+import { History, Location } from 'history';
+import { connectEnvironment } from '../../actions/connectEnvironment';
 
 export interface EnvironmentCardProps {
     className?: string;
     environment: ILocalCloudEnvironment;
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
+    shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
 }
 
 function ThinSeparator() {
@@ -85,13 +90,19 @@ function Status({ environment }: { environment: ILocalCloudEnvironment }) {
 }
 
 type ActionProps = {
+    history: History;
+    location: Location<{}>;
+    match: match<{}>;
     environment: ILocalCloudEnvironment;
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
+    shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
+    connectEnvironment: (...name: Parameters<typeof connectEnvironment>) => Promise<ICloudEnvironment | undefined>;
 };
 
-const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
+const Actions = withRouter(({ environment, deleteEnvironment, shutdownEnvironment, connectEnvironment, history }: ActionProps) => {
     const [deleteDialogHidden, setDeleteDialogHidden] = useState(true);
     const [unsucessfullUrlDialogHidden, setUnsucessfullUrlDialogHidden] = useState(true);
+    const [shutdownDialogHidden, setShutdownDialogHidden] = useState(true);
     return (
         <>
             <IconButton
@@ -105,13 +116,17 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
                             key: 'open-vscode',
                             iconProps: { iconName: 'OpenInNewWindow' },
                             name: 'Open in VS Code',
-                            disabled: environmentIsALie(environment) || isNotAvailable(environment),
+                            disabled: environmentIsALie(environment) || isNotConnectable(environment),
                             onClick: async () => {
+                                if (environment.state === StateInfo.Shutdown) {
+                                    await connectEnvironment(environment.id!, environment.state);
+                                }
+
                                 const url = `ms-vsonline.vsonline/connect?environmentId=${encodeURIComponent(
                                     environment.id!
                                 )}&sessionPath=${
                                     environment.connection!.sessionPath
-                                }&correlationId=${createUniqueId()}`;
+                                    }&correlationId=${createUniqueId()}`;
 
                                 try {
                                     await tryOpeningUrl(`vscode-insiders://${url}`).catch(
@@ -128,8 +143,22 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
                             key: 'open-web',
                             iconProps: { iconName: 'PlugConnected' },
                             name: 'Connect',
+                            disabled: environmentIsALie(environment) || isNotConnectable(environment),
+                            onClick: async () => {
+                                let result = await connectEnvironment(environment.id!, environment.state);
+                                if (result) {
+                                    history.push(`/environment/${environment.id}`);
+                                }
+                            },
+                        },
+                        {
+                            key: 'shutdown',
+                            iconProps: { iconName: 'PowerButton' },
+                            name: 'Shutdown',
                             disabled: environmentIsALie(environment) || isNotAvailable(environment),
-                            href: `environment/${environment.id!}`,
+                            onClick: () => {
+                                if (environment.id) setShutdownDialogHidden(false);
+                            },
                         },
                         {
                             key: 'delete',
@@ -142,6 +171,15 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
                         },
                     ],
                 }}
+            />
+            <ShutdownDialog
+                environment={environment}
+                shutdownEnvironment={shutdownEnvironment}
+                // tslint:disable-next-line: react-this-binding-issue
+                close={() => {
+                    setShutdownDialogHidden(true);
+                }}
+                hidden={shutdownDialogHidden}
             />
             <DeleteDialog
                 environment={environment}
@@ -161,7 +199,7 @@ const Actions = ({ environment, deleteEnvironment }: ActionProps) => {
             />
         </>
     );
-};
+});
 
 type DeleteDialogProps = {
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
@@ -198,6 +236,43 @@ function DeleteDialog({ deleteEnvironment, environment, cancel, hidden }: Delete
     );
 }
 
+type ShutdownDialogProps = {
+    shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
+    close: () => void;
+    environment: ILocalCloudEnvironment;
+    hidden: boolean;
+};
+
+function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: ShutdownDialogProps) {
+    return (
+        <Dialog
+            hidden={hidden}
+            dialogContentProps={{
+                type: DialogType.normal,
+                title: `Shutdown environment ${environment.friendlyName}`,
+                subText: `You are about to shutdown ${environment.friendlyName}. Are you sure?`,
+            }}
+            modalProps={{
+                isBlocking: true,
+                styles: { main: { maxWidth: 450 } },
+            }}
+        >
+            <DialogFooter>
+                <PrimaryButton
+                    onClick={
+                        () => {
+                            shutdownEnvironment(environment.id!);
+                            close();
+                        }
+                    }
+                    text='Shutdown'
+                />
+                <DefaultButton onClick={close} text='Cancel' />
+            </DialogFooter>
+        </Dialog>
+    );
+}
+
 type UnsucessfullUrlDialogProps = {
     accept: () => void;
     hidden: boolean;
@@ -226,16 +301,22 @@ function UnsucessfullUrlDialog({ accept, hidden }: UnsucessfullUrlDialogProps) {
 export function EnvironmentCard(props: EnvironmentCardProps) {
     const environmentNameText = <Text variant={'large'}>{props.environment.friendlyName}</Text>;
     const environmentName =
-        environmentIsALie(props.environment) || props.environment.state !== StateInfo.Available ? (
-            <div className='environment-card__environment-name'>{environmentNameText}</div>
-        ) : (
-            <Link
-                className='environment-card__environment-name'
-                href={`environment/${props.environment.id}`}
-            >
-                {environmentNameText}
-            </Link>
-        );
+        environmentIsALie(props.environment) || isNotConnectable(props.environment)
+            ? <div className='environment-card__environment-name'>{environmentNameText}</div>
+            : (
+                <Link
+                    className='environment-card__environment-name'
+                    onClick={async () => {
+                        let result = await connectEnvironment(props.environment.id!, props.environment.state)
+                        console.log(result);
+                        if (result) {
+                            window.location.replace(`environment/${props.environment.id!}`);
+                        }
+                    }}
+                >
+                    {environmentNameText}
+                </Link >
+            );
 
     let details = [];
     details.push({ key: 'Created', value: moment(props.environment.created).format('LLLL') });
@@ -270,6 +351,8 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
                 <Actions
                     environment={props.environment}
                     deleteEnvironment={props.deleteEnvironment}
+                    shutdownEnvironment={props.shutdownEnvironment}
+                    connectEnvironment={connectEnvironment}
                 />
             </Stack>
         </Stack>

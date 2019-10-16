@@ -3,7 +3,7 @@ import {
     CreateEnvironmentParameters,
 } from '../services/envRegService';
 import { createUniqueId } from '../dependencies';
-import { ICloudEnvironment } from '../interfaces/cloudenvironment';
+import { ICloudEnvironment, StateInfo } from '../interfaces/cloudenvironment';
 import { pollEnvironment } from './pollEnvironment';
 import { action } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
@@ -55,7 +55,7 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
         const environment = await createCloudEnvironment(environmentParameters);
         dispatch(createEnvironmentSuccessAction(lieId, environment));
         try {
-            dispatch(pollEnvironment(environment.id));
+            dispatch(pollEnvironment(environment.id, StateInfo.Available));
         } catch (err) {
             // Noop
         }

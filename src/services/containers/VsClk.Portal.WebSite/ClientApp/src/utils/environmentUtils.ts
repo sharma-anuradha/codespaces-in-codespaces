@@ -23,3 +23,7 @@ export function environmentIsALie({ lieId }: ILocalCloudEnvironment) {
 export function isNotAvailable({ state }: ILocalCloudEnvironment): boolean {
     return state !== StateInfo.Available;
 }
+
+export function isNotConnectable({ state }: ILocalCloudEnvironment): boolean {
+    return state !== StateInfo.Available && state !== StateInfo.Shutdown;
+}

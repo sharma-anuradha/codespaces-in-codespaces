@@ -23,6 +23,7 @@ import {
     PollEnvironmentUpdateAction,
 } from '../actions/pollEnvironment';
 import { deleteEnvironmentActionType, DeleteEnvironmentAction } from '../actions/deleteEnvironment';
+import { stateChangeEnvironmentActionType, StateChangeEnvironmentAction } from '../actions/environmentStateChange';
 
 type EnvironmentsState = {
     environments: ILocalCloudEnvironment[];
@@ -39,7 +40,8 @@ type AcceptedActions =
     | CreateEnvironmentFailureAction
     | PollEnvironmentUpdateAction
     | PollEnvironmentSuccessAction
-    | DeleteEnvironmentAction;
+    | DeleteEnvironmentAction
+    | StateChangeEnvironmentAction
 
 const defaultState: EnvironmentsState = {
     environments: [] as ILocalCloudEnvironment[],
@@ -173,6 +175,23 @@ export function environments(
                     ...state,
                     environments: restOfEnvironments,
                     deletedEnvironments: [...environmentToDelete, ...state.deletedEnvironments],
+                };
+            })(state, action);
+
+        case stateChangeEnvironmentActionType:
+            return ((state, action) => {
+                const { id, environmentState } = action.payload;
+                const index = state.environments.findIndex((e) => e.id === id);
+
+                if (index < 0) {
+                    throw new Error(`${action.type} returned an environment we are not tracking.`);
+                }
+
+                var environment = state.environments[index];
+                environment.state = environmentState;
+                return {
+                    ...state,
+                    environments: replaceAtIndex(state.environments, index, environment),
                 };
             })(state, action);
 

@@ -14,11 +14,10 @@ export enum StateInfo {
     Deleted = 'Deleted',
     Available = 'Available',
     Unavailable = 'Unavailable',
-    Hibernating = 'Hibernating',
-    WakingUp = 'WakingUp',
     Shutdown = 'Shutdown',
     ShuttingDown = 'ShuttingDown',
     Failed = 'Failed to Create',
+    Starting = 'Starting',
 }
 
 export interface ICloudEnvironment {

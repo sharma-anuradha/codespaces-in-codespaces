@@ -7,6 +7,7 @@ import {
 
 import { useWebClient } from '../actions/middleware/useWebClient';
 import { useActionContext } from '../actions/middleware/useActionContext';
+import { pollEnvironment } from '../actions/pollEnvironment';
 
 // Webpack configuration enforces isolatedModules use on typescript
 // and prevents direct re-exporting of types.
@@ -111,4 +112,33 @@ export async function deleteEnvironment(id: string): Promise<void> {
     const webClient = useWebClient();
 
     await webClient.delete(`${environmentRegistrationEndpoint}/${id}`);
+}
+
+export async function shutdownEnvironment(id: string): Promise<void> {
+    const configuration = useActionContext().state.configuration;
+    if (!configuration) {
+        throw new Error('Configuration must be fetched before calling EnvReg service.');
+    }
+
+    const { environmentRegistrationEndpoint } = configuration;
+    const webClient = useWebClient();
+
+    await webClient.post(`${environmentRegistrationEndpoint}/${id}/shutdown`, null);
+}
+
+export async function connectEnvironment(id: string, state: StateInfo): Promise<ICloudEnvironment | undefined> {
+    const configuration = useActionContext().state.configuration;
+    if (!configuration) {
+        throw new Error('Configuration must be fetched before calling EnvReg service.');
+    }
+
+    const { environmentRegistrationEndpoint } = configuration;
+    const webClient = useWebClient();
+
+    if (state === StateInfo.Shutdown) {
+        await webClient.post(`${environmentRegistrationEndpoint}/${id}/start`, null);
+        await pollEnvironment(id, StateInfo.Available);
+    }
+
+    return await getEnvironment(id);
 }

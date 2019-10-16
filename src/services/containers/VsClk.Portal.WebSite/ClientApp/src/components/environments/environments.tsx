@@ -7,22 +7,24 @@ import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { PortalLayout } from '../portalLayout/portalLayout';
-import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
+import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { EnvironmentCard } from '../environmentCard/environment-card';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { clamp } from '../../utils/clamp';
 import './environments.css';
+import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 
 type EnvironmentsPanelProps = {
     deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
+    shutdownEnvironment: (...name: Parameters<typeof shutdownEnvironment>) => void;
     environments: ILocalCloudEnvironment[];
     isLoading: boolean;
 };
 
 class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComponentProps> {
     private renderEnvironments() {
-        const { isLoading, environments, deleteEnvironment } = this.props;
+        const { isLoading, environments, deleteEnvironment, shutdownEnvironment } = this.props;
 
         if (isLoading) {
             return (
@@ -43,6 +45,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
                 <EnvironmentCard
                     environment={env}
                     deleteEnvironment={deleteEnvironment}
+                    shutdownEnvironment={shutdownEnvironment}
                     key={key}
                 />
             );
@@ -100,6 +103,7 @@ const stateToProps = ({ environments: { environments, isLoading } }: Application
 
 const mapDispatch = {
     deleteEnvironment,
+    shutdownEnvironment,
 };
 
 export const EnvironmentsPanel = connect(
