@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { initializeIcons } from '@uifabric/icons';
 
 import { App } from './app';
@@ -8,11 +9,12 @@ import { store } from './store/store';
 import { postServiceWorkerMessage } from './common/post-message';
 import * as serviceWorker from './serviceWorker';
 import { configureServiceWorker } from './common/service-worker-messages';
+import { trackUnhandled } from './utils/telemetry/unhandledErrors';
 
 import './index.css';
-import { BrowserRouter } from 'react-router-dom';
 
 function startApplication() {
+    trackUnhandled();
     initializeIcons();
 
     const baseUrl = (document.getElementById('public_url') as HTMLBaseElement).getAttribute('href');

@@ -86,6 +86,10 @@ class TelemetryService {
         this.context.isInternal = isInternal;
     }
 
+    get isInternal(): boolean {
+        return !!this.context.isInternal;
+    }
+
     private getSessionId(): string {
         try {
             let sessionId = window.sessionStorage.getItem('vso_sessionId');
