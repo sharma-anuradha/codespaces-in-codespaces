@@ -75,5 +75,6 @@ Create a `appsettings.test.json` like below in the directory of the tests:
 }
 ```
 
-You can create a service principal with `az ad sp create-for-rbac --sdk-auth`.
+Get the client secret from here:
 
+https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/asset/Microsoft_Azure_KeyVault/Secret/https://vsclk-online-dev-kv.vault.azure.net/secrets/app-sp-password/23fcb016764e460a854fb21f033ad492
