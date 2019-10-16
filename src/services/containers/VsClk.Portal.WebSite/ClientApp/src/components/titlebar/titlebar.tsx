@@ -5,13 +5,15 @@ import { Persona, PersonaSize } from 'office-ui-fabric-react/lib/Persona';
 import { Separator } from 'office-ui-fabric-react/lib/Separator';
 
 import { ApplicationState } from '../../reducers/rootReducer';
-import { defaultPhotoUrl } from '../../actions/getUserInfo';
 
 import './titlebar.css';
 
 export function TitleBar() {
     const userInfo = useSelector((state: ApplicationState) => state.userInfo);
-    let photoUrl = (userInfo && userInfo.photoUrl) || defaultPhotoUrl;
+    
+    const photoUrl = (userInfo)
+        ? userInfo.photoUrl
+        : undefined;
 
     return (
         <div className='vsonline-titlebar part'>

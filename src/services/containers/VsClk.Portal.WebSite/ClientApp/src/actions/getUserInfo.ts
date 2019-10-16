@@ -1,13 +1,11 @@
 import { useDispatch } from './middleware/useDispatch';
 import { action } from './middleware/useActionCreator';
-import { acquireToken } from '../services/authService';
-import { useWebClient } from './middleware/useWebClient';
 import { useActionContext } from './middleware/useActionContext';
 
 export type UserInfo = {
     displayName: string;
     mail: string;
-    photoUrl: string;
+    photoUrl?: string;
 };
 
 export const getUserInfoActionType = 'async.user.getInfo';
@@ -39,15 +37,13 @@ export async function getUserInfo() {
 
         const token = authentication.token;
         if (token) {
-            const photoUrl = await fetchMyPhoto();
-
             const { idTokenClaims } = token.account;
             const { email, preferred_username } = idTokenClaims;
 
             const userInfo = {
                 displayName: token.account.name,
                 mail: email || preferred_username,
-                photoUrl,
+                photoUrl: await fetchMyPhoto(),
             };
 
             dispatch(getUserInfoSuccessAction(userInfo));
@@ -61,27 +57,38 @@ export async function getUserInfo() {
     }
 }
 
-export const defaultPhotoUrl = 'https://graph.microsoft.com/v1.0/me/photos/48x48/$value';
 async function fetchMyPhoto() {
-    try {
-        const token = await acquireToken(['user.read']);
-        const webClient = useWebClient();
+    return undefined;
+    /*
+       `Note:` since getting the token with the `user.read` scope results in additional consent prompt,
+        we commented out this logic until we have a better solution with first-party app.
+    */
 
-        const response = await webClient.request(
-            defaultPhotoUrl,
-            {
-                headers: {
-                    Authorization: `Bearer ${token.accessToken}`,
-                },
-            },
-            { skipParsingResponse: true }
-        );
-        const imageBlob = await response.blob();
+    // try {
+    //     const token = await acquireToken(['user.read']);
 
-        return URL.createObjectURL(imageBlob);
-    } catch (err) {
-        // If the user doesn't have an image then that returns a 404 which results in an exception.
-        // Simply return empty string here so that it shows the default image.
-        return defaultPhotoUrl;
-    }
+    //     if (!token) {
+    //         return;
+    //     }
+    //     
+    ///    const defaultPhotoUrl = 'https://graph.microsoft.com/v1.0/me/photos/48x48/$value';
+    //     const webClient = useWebClient();
+    //     const response = await webClient.request(
+    //         defaultPhotoUrl,
+    //         {
+    //             headers: {
+    //                 Authorization: `Bearer ${token.accessToken}`,
+    //             },
+    //         },
+    //         { skipParsingResponse: true }
+    //     );
+    //     debugger;
+    //     const imageBlob = await response.blob();
+
+    //     return URL.createObjectURL(imageBlob);
+    // } catch (err) {
+    //     // If the user doesn't have an image then that returns a 404 which results in an exception.
+    //     // Simply return empty string here so that it shows the default image.
+    //     return defaultPhotoUrl;
+    // }
 }

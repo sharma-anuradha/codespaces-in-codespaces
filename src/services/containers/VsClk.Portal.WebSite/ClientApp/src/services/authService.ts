@@ -52,7 +52,7 @@ class AuthService {
         return token;
     }
 
-    public async getCachedToken(expiration: number = 1800): Promise<ITokenWithMsalAccount | undefined> {
+    public async getCachedToken(expiration: number = expirationTimeBackgroundTokenRefreshThreshold): Promise<ITokenWithMsalAccount | undefined> {
         const cachedToken = tokenCache.getCachedToken(LOCAL_STORAGE_KEY, expiration);
 
         if (cachedToken) {
