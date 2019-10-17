@@ -244,7 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     else
                     {
                         where = bev => bev.Account == account &&
-                            start <= bev.Time && bev.Time < end.Value;
+                            start <= bev.Time && bev.Time <= end.Value;
                     }
                 }
                 else if (eventTypes.Count == 1)
@@ -258,7 +258,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     else
                     {
                         where = bev => bev.Account == account &&
-                            start <= bev.Time && bev.Time < end.Value && bev.Type == eventType;
+                            start <= bev.Time && bev.Time <= end.Value && bev.Type == eventType;
                     }
                 }
                 else
@@ -271,7 +271,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     else
                     {
                         where = bev => bev.Account == account &&
-                            start <= bev.Time && bev.Time < end.Value && eventTypes.Contains(bev.Type);
+                            start <= bev.Time && bev.Time <= end.Value && eventTypes.Contains(bev.Type);
                     }
                 }
                 // This should be a single-partition query.
