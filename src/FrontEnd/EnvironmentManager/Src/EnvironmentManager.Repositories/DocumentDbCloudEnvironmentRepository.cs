@@ -38,7 +38,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
-            : base(options.PromoteToOptionSnapshot(), clientProvider, healthProvider, loggerFactory, defaultLogValues)
+            : base(
+                  new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                  clientProvider,
+                  healthProvider,
+                  loggerFactory,
+                  defaultLogValues)
         {
         }
 

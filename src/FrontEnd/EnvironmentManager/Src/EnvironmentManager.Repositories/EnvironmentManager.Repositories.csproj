@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile\UserProfile.csproj" />

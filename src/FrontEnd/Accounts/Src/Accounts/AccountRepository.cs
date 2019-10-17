@@ -17,12 +17,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
         public const string AccountCollectionId = "environment_billing_accounts";
 
         public AccountRepository(
-            IOptions<DocumentDbCollectionOptions> collectionOptions,
+            IOptions<DocumentDbCollectionOptions> options,
             IDocumentDbClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues)
-            : base(collectionOptions.PromoteToOptionSnapshot(), clientProvider, healthProvider, loggerFactory, defaultLogValues)
+            : base(
+                new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                clientProvider,
+                healthProvider,
+                loggerFactory,
+                defaultLogValues)
         {
         }
 

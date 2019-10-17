@@ -61,7 +61,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             Requires.NotNull(options, nameof(options));
             options.PartitioningStrategy = PartitioningStrategy.IdOnly;
-            options.LogPreconditionFailedErrorsAsWarnings = true;
         }
 
         public async Task<ResourceRecord> GetPoolReadyUnassignedAsync(string poolCode, IDiagnosticsLogger logger)

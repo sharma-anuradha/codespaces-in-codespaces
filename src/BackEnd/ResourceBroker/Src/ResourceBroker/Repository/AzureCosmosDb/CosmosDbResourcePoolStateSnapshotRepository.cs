@@ -47,7 +47,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             Requires.NotNull(options, nameof(options));
             options.PartitioningStrategy = PartitioningStrategy.IdOnly;
-            options.LogPreconditionFailedErrorsAsWarnings = true;
         }
 
         // TEMP: Map backend common and frontend common into src/Common/Src/Common!

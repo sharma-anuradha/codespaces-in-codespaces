@@ -20,11 +20,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="options">The options instance.</param>
         /// <param name="configureOptions">The documentdb options.</param>
         public DocumentDbCollectionOptionsSnapshot(
-            IOptions<DocumentDbCollectionOptions> options, 
+            IOptions<DocumentDbCollectionOptions> options,
             Action<DocumentDbCollectionOptions> configureOptions)
         {
-            configureOptions(options.Value);
-            Options = options.Value;
+            var optionValue = options.Value;
+            var localOptions = new DocumentDbCollectionOptions()
+            {
+                CacheExpiry = optionValue.CacheExpiry,
+                CustomPartitionKeyFunc = optionValue.CustomPartitionKeyFunc,
+                CustomPartitionKeyPaths = optionValue.CustomPartitionKeyPaths,
+                DisableCaching = optionValue.DisableCaching,
+                LogPreconditionFailedErrorsAsWarnings = true, // TODO: pull from here in the future optionValue.LogPreconditionFailedErrorsAsWarnings,
+                PartitioningStrategy = optionValue.PartitioningStrategy,
+            };
+            configureOptions(localOptions);
+            Options = localOptions;
         }
 
         /// <summary>
