@@ -76,14 +76,6 @@ class WorkbenchView extends Component<WorkbenchProps> {
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
         envConnector.ensureConnection(environmentInfo, accessToken, this.props.liveShareEndpoint);
 
-        postServiceWorkerMessage({
-            type: authenticateMessageType,
-            payload: {
-                token: accessToken,
-                sessionId: environmentInfo.connection.sessionId,
-            },
-        });
-
         const listener = () => {
             window.removeEventListener('beforeunload', listener);
 

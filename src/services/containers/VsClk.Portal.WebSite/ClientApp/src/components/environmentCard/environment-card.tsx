@@ -10,17 +10,21 @@ import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dia
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
 
-import { ILocalCloudEnvironment, StateInfo, ICloudEnvironment } from '../../interfaces/cloudenvironment';
+import {
+    ILocalCloudEnvironment,
+    StateInfo,
+    ICloudEnvironment,
+} from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 import { environmentIsALie, isNotAvailable, isNotConnectable } from '../../utils/environmentUtils';
 import { createUniqueId } from '../../dependencies';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
-import { withRouter, match } from 'react-router-dom';
-import { History, Location } from 'history';
 import { connectEnvironment } from '../../actions/connectEnvironment';
+import { createTrace } from '../../utils/createTrace';
 
+const trace = createTrace('environment-card');
 export interface EnvironmentCardProps {
     className?: string;
     environment: ILocalCloudEnvironment;
@@ -90,18 +94,23 @@ function Status({ environment }: { environment: ILocalCloudEnvironment }) {
 }
 
 type ActionProps = {
-    history: History;
-    location: Location<{}>;
-    match: match<{}>;
     environment: ILocalCloudEnvironment;
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
     shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
-    connectEnvironment: (...name: Parameters<typeof connectEnvironment>) => Promise<ICloudEnvironment | undefined>;
+    connectEnvironment: (
+        ...name: Parameters<typeof connectEnvironment>
+    ) => Promise<ICloudEnvironment | undefined>;
 };
 
-const Actions = withRouter(({ environment, deleteEnvironment, shutdownEnvironment, connectEnvironment, history }: ActionProps) => {
+// tslint:disable-next-line: max-func-body-length
+const Actions = ({
+    environment,
+    deleteEnvironment,
+    shutdownEnvironment,
+    connectEnvironment,
+}: ActionProps) => {
     const [deleteDialogHidden, setDeleteDialogHidden] = useState(true);
-    const [unsucessfullUrlDialogHidden, setUnsucessfullUrlDialogHidden] = useState(true);
+    const [unsuccessfulUrlDialogHidden, setUnsuccessfulUrlDialogHidden] = useState(true);
     const [shutdownDialogHidden, setShutdownDialogHidden] = useState(true);
     return (
         <>
@@ -116,7 +125,8 @@ const Actions = withRouter(({ environment, deleteEnvironment, shutdownEnvironmen
                             key: 'open-vscode',
                             iconProps: { iconName: 'OpenInNewWindow' },
                             name: 'Open in VS Code',
-                            disabled: environmentIsALie(environment) || isNotConnectable(environment),
+                            disabled:
+                                environmentIsALie(environment) || isNotConnectable(environment),
                             onClick: async () => {
                                 if (environment.state === StateInfo.Shutdown) {
                                     await connectEnvironment(environment.id!, environment.state);
@@ -126,7 +136,7 @@ const Actions = withRouter(({ environment, deleteEnvironment, shutdownEnvironmen
                                     environment.id!
                                 )}&sessionPath=${
                                     environment.connection!.sessionPath
-                                    }&correlationId=${createUniqueId()}`;
+                                }&correlationId=${createUniqueId()}`;
 
                                 try {
                                     await tryOpeningUrl(`vscode-insiders://${url}`).catch(
@@ -135,7 +145,7 @@ const Actions = withRouter(({ environment, deleteEnvironment, shutdownEnvironmen
                                         }
                                     );
                                 } catch {
-                                    setUnsucessfullUrlDialogHidden(false);
+                                    setUnsuccessfulUrlDialogHidden(false);
                                 }
                             },
                         },
@@ -143,11 +153,15 @@ const Actions = withRouter(({ environment, deleteEnvironment, shutdownEnvironmen
                             key: 'open-web',
                             iconProps: { iconName: 'PlugConnected' },
                             name: 'Connect',
-                            disabled: environmentIsALie(environment) || isNotConnectable(environment),
+                            disabled:
+                                environmentIsALie(environment) || isNotConnectable(environment),
                             onClick: async () => {
-                                let result = await connectEnvironment(environment.id!, environment.state);
+                                let result = await connectEnvironment(
+                                    environment.id!,
+                                    environment.state
+                                );
                                 if (result) {
-                                    history.push(`/environment/${environment.id}`);
+                                    location.assign(`/environment/${environment.id}`);
                                 }
                             },
                         },
@@ -190,16 +204,16 @@ const Actions = withRouter(({ environment, deleteEnvironment, shutdownEnvironmen
                 }}
                 hidden={deleteDialogHidden}
             />
-            <UnsucessfullUrlDialog
+            <UnsuccessfulUrlDialog
                 // tslint:disable-next-line: react-this-binding-issue
                 accept={() => {
-                    setUnsucessfullUrlDialogHidden(true);
+                    setUnsuccessfulUrlDialogHidden(true);
                 }}
-                hidden={unsucessfullUrlDialogHidden}
+                hidden={unsuccessfulUrlDialogHidden}
             />
         </>
     );
-});
+};
 
 type DeleteDialogProps = {
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
@@ -259,12 +273,10 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
         >
             <DialogFooter>
                 <PrimaryButton
-                    onClick={
-                        () => {
-                            shutdownEnvironment(environment.id!);
-                            close();
-                        }
-                    }
+                    onClick={() => {
+                        shutdownEnvironment(environment.id!);
+                        close();
+                    }}
                     text='Shutdown'
                 />
                 <DefaultButton onClick={close} text='Cancel' />
@@ -273,12 +285,12 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
     );
 }
 
-type UnsucessfullUrlDialogProps = {
+type UnsuccessfulUrlDialogProps = {
     accept: () => void;
     hidden: boolean;
 };
 
-function UnsucessfullUrlDialog({ accept, hidden }: UnsucessfullUrlDialogProps) {
+function UnsuccessfulUrlDialog({ accept, hidden }: UnsuccessfulUrlDialogProps) {
     return (
         <Dialog
             hidden={hidden}
@@ -301,22 +313,25 @@ function UnsucessfullUrlDialog({ accept, hidden }: UnsucessfullUrlDialogProps) {
 export function EnvironmentCard(props: EnvironmentCardProps) {
     const environmentNameText = <Text variant={'large'}>{props.environment.friendlyName}</Text>;
     const environmentName =
-        environmentIsALie(props.environment) || isNotConnectable(props.environment)
-            ? <div className='environment-card__environment-name'>{environmentNameText}</div>
-            : (
-                <Link
-                    className='environment-card__environment-name'
-                    onClick={async () => {
-                        let result = await connectEnvironment(props.environment.id!, props.environment.state)
-                        console.log(result);
-                        if (result) {
-                            window.location.replace(`environment/${props.environment.id!}`);
-                        }
-                    }}
-                >
-                    {environmentNameText}
-                </Link >
-            );
+        environmentIsALie(props.environment) || isNotConnectable(props.environment) ? (
+            <div className='environment-card__environment-name'>{environmentNameText}</div>
+        ) : (
+            <Link
+                className='environment-card__environment-name'
+                onClick={async () => {
+                    let result = await connectEnvironment(
+                        props.environment.id!,
+                        props.environment.state
+                    );
+                    trace.info('Connect to environment done.', result);
+                    if (result) {
+                        window.location.assign(`environment/${props.environment.id!}`);
+                    }
+                }}
+            >
+                {environmentNameText}
+            </Link>
+        );
 
     let details = [];
     details.push({ key: 'Created', value: moment(props.environment.created).format('LLLL') });

@@ -4,7 +4,7 @@ const ignoredFiles = require('react-dev-utils/ignoredFiles');
 const paths = require('./paths');
 const fs = require('fs');
 
-const host = process.env.HOST || '0.0.0.0';
+const host = 'online.dev.core.vsengsaas.visualstudio.com';
 
 module.exports = function(proxy, allowedHost) {
     return {
@@ -73,17 +73,6 @@ module.exports = function(proxy, allowedHost) {
         public: allowedHost,
         proxy: {
             ...proxy,
-            '/vsls-api/**': {
-                pathRewrite: (url) => {
-                    return url.replace('/vsls-api', '');
-                },
-                target: 'https://prod.liveshare.vsengsaas.visualstudio.com',
-                logLevel: 'silent',
-                secure: false,
-                changeOrigin: true,
-                ws: true,
-                xfwd: true,
-            },
             '/api/v1/**': {
                 target: 'https://westus2-ci-online.dev.core.vsengsaas.visualstudio.com',
                 logLevel: 'debug',

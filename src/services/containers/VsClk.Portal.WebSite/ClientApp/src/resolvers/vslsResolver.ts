@@ -49,7 +49,9 @@ export class VSLSWebSocket implements IWebSocket {
         verbose(`[${this.getWebSocketIdentifier()}] Ssh channel sending data.`);
         logContent(`[${this.getWebSocketIdentifier()}]\n\n${bufferData.toString()}`);
 
-        this.channel.send(bufferData);
+        this.channel.send(bufferData).catch((err) => {
+            this._onError.fire(err);
+        });
     }
 
     public close() {

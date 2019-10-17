@@ -11,8 +11,8 @@
               "PORTAL_AppSettings__IsLocal": "true"
           },
           "launchBrowser": true,
-          "applicationUrl": "https://localhost:443",
-          "launchUrl": "https://localhost:443/login"
+          "applicationUrl": "https://online.dev.core.vsengsaas.visualstudio.com",
+          "launchUrl": "https://online.dev.core.vsengsaas.visualstudio.com/login"
       }
   }
 }

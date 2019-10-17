@@ -7,7 +7,7 @@ import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { PortalLayout } from '../portalLayout/portalLayout';
-import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
+import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
 import { EnvironmentCard } from '../environmentCard/environment-card';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { ApplicationState } from '../../reducers/rootReducer';
@@ -66,7 +66,9 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
     private renderNoEnvironments() {
         return (
             <div className='environments-panel__no-environments' key='no-envs'>
-                <span className='environments-panel__no-environments-label'>You don't have any environments</span>
+                <span className='environments-panel__no-environments-label'>
+                    You don't have any environments
+                </span>
                 <Link onClick={this.showPanel}>Create your first one now!</Link>
             </div>
         );
