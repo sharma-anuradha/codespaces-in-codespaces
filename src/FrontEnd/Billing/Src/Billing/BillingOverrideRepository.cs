@@ -23,18 +23,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingOverrideRepository"/> class.
         /// </summary>
-        /// <param name="collectionOptions">The collection options</param>
+        /// <param name="options">The collection options</param>
         /// <param name="clientProvider">The client provider</param>
         /// <param name="healthProvider">the health provider</param>
         /// <param name="loggerFactory">the logger factory</param>
         /// <param name="defaultLogValues">the log values</param>
         public BillingOverrideRepository(
-            IOptions<DocumentDbCollectionOptions> collectionOptions,
+            IOptions<DocumentDbCollectionOptions> options,
             IDocumentDbClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
-            LogValueSet defaultLogValues) 
-            : base(collectionOptions.PromoteToOptionSnapshot(), clientProvider, healthProvider, loggerFactory, defaultLogValues)
+            LogValueSet defaultLogValues)
+            : base(
+                new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                clientProvider,
+                healthProvider,
+                loggerFactory,
+                defaultLogValues)
         {
         }
 

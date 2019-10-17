@@ -23,11 +23,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues)
             : base(
-                    new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
-                    clientProvider,
-                    healthProvider,
-                    loggerFactory,
-                    defaultLogValues)
+                new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                clientProvider,
+                healthProvider,
+                loggerFactory,
+                defaultLogValues)
         {
         }
 
