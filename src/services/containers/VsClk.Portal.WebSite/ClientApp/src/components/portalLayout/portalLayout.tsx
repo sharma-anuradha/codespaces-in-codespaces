@@ -10,18 +10,18 @@ export function PortalLayout({
     hideNavigation,
 }: React.PropsWithChildren<{ hideNavigation?: boolean }>) {
     const navigation = hideNavigation ? null : (
-        <div className='ms-Grid-col ms-bgColor-gray20 portalLayout__app-navigation-container'>
+        <div className='ms-Grid-col ms-bgColor-gray20 portal-layout__app-navigation-container'>
             <Navigation />
         </div>
     );
     return (
-        <div className='ms-Grid portalLayout'>
+        <div className='ms-Grid portal-layout'>
             <div className='ms-Grid-row'>
                 <TitleBar />
             </div>
-            <div className='ms-Grid-row portalLayout__app-content'>
+            <div className='ms-Grid-row portal-layout__app-content'>
                 {navigation}
-                <div className='ms-Grid-col portalLayout__app-content-container'>{children}</div>
+                <div className='ms-Grid-col portal-layout__app-content-container'>{children}</div>
             </div>
         </div>
     );

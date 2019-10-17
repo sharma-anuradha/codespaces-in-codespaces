@@ -1,6 +1,8 @@
 export interface CreateEnvironmentParameters {
     type?: 'cloudEnvironment' | 'staticEnvironment';
     friendlyName: string;
+    accountId: string;
+    location: string;
     gitRepositoryUrl?: string;
     userName: string;
     userEmail: string;

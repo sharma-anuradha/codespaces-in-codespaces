@@ -13,6 +13,7 @@ import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { clamp } from '../../utils/clamp';
 import './environments.css';
+import { AccountSelector } from '../accountSelector/accountSelector';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 
 type EnvironmentsPanelProps = {
@@ -40,15 +41,17 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
         const cards = [];
         let i = 0;
         for (const env of clamp(environments, 5)) {
-            const key = env.id || env.lieId || i++;
-            cards.push(
-                <EnvironmentCard
-                    environment={env}
-                    deleteEnvironment={deleteEnvironment}
-                    shutdownEnvironment={shutdownEnvironment}
-                    key={key}
-                />
-            );
+            if((env.accountId === AccountSelector.getAccountID()) || (!env.accountId)){
+                const key = env.id || env.lieId || i++;
+                cards.push(
+                    <EnvironmentCard
+                        environment={env}
+                        deleteEnvironment={deleteEnvironment}
+                        shutdownEnvironment={shutdownEnvironment}
+                        key={key}
+                    />
+                );
+            }
         }
 
         return (
@@ -81,6 +84,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
                                     text='Create environment'
                                     className='environments-panel__create-button'
                                     onClick={this.showPanel}
+                                    disabled={this.accountValueSelected()}
                                 />
                             </div>
                         </div>
@@ -92,8 +96,17 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
     }
 
     private showPanel = () => {
-        this.props.history.replace('/environments/new');
+        if(AccountSelector.getAccountID() && AccountSelector.getAccountLocation()){
+            this.props.history.replace('/environments/new');
+        }
     };
+
+    private accountValueSelected(){
+        if(AccountSelector.getAccountID() && AccountSelector.getAccountLocation()){
+            return false;
+        }
+        return true;
+    }
 }
 
 const stateToProps = ({ environments: { environments, isLoading } }: ApplicationState) => ({

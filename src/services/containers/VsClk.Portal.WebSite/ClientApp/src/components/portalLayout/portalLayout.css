@@ -3,7 +3,7 @@
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.portalLayout {
+.portal-layout {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -11,21 +11,21 @@
     right: 0;
 }
 
-.portalLayout__app-content {
+.portal-layout__app-content {
     height: calc(100% - 4rem);
     display: flex;
 }
 
-.portalLayout__app-content-container,
-.portalLayout__app-navigation-container {
+.portal-layout__app-content-container,
+.portal-layout__app-navigation-container {
     height: 100%;
 }
 
-.portalLayout__app-navigation-container {
+.portal-layout__app-navigation-container {
     width: 17rem;
 }
 
-.portalLayout__app-content-container {
+.portal-layout__app-content-container {
     flex-grow: 1;
     overflow: auto;
 }

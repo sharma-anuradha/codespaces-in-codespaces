@@ -1,6 +1,7 @@
 import { RouteProps, RouteComponentProps, matchPath as routerMatch, match } from 'react-router-dom';
 
-import { NewEnvironment } from './components/newEnvironment/newEnvironment';
+import { NewEnvironment } from './components/newEnvironment/new-environment';
+import { NewAccount } from './components/newAccount/new-account';
 import { EnvironmentsPanel } from './components/environments/environments';
 import { Login } from './components/login/login';
 import { Workbench } from './components/workbench/workbench';
@@ -18,6 +19,7 @@ export const environmentsPath = '/environments';
 export const newEnvironmentPath = '/environments/new';
 export const loginPath = '/login';
 export const githubLoginPath = '/github/login';
+export const newAccountPath = '/environments/plan';
 
 export const routes: Route[] = [
     {
@@ -37,6 +39,12 @@ export const routes: Route[] = [
         path: newEnvironmentPath,
         exact: true,
         component: NewEnvironment,
+    },
+    {
+        authenticated: true,
+        path: newAccountPath,
+        exact: true,
+        component: NewAccount,
     },
     {
         authenticated: true,

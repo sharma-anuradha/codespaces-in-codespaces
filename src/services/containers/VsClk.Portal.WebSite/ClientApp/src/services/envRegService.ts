@@ -11,7 +11,7 @@ import { pollEnvironment } from '../actions/pollEnvironment';
 
 // Webpack configuration enforces isolatedModules use on typescript
 // and prevents direct re-exporting of types.
-export type CreateEnvironmentParameters = CreateEnvironmentParametersBase;
+export type CreateEnvironmentParameters = CreateEnvironmentParametersBase; 
 
 export async function fetchEnvironments(): Promise<ICloudEnvironment[]> {
     const configuration = useActionContext().state.configuration;
@@ -44,6 +44,7 @@ export async function createEnvironment(
     environment: CreateEnvironmentParameters
 ): Promise<ICloudEnvironment> {
     const configuration = useActionContext().state.configuration;
+
     if (!configuration) {
         throw new Error('Configuration must be fetched before calling EnvReg service.');
     }
@@ -51,6 +52,8 @@ export async function createEnvironment(
     const { environmentRegistrationEndpoint } = configuration;
     const {
         friendlyName,
+        accountId,
+        location,
         gitRepositoryUrl,
         type = 'cloudEnvironment',
         userEmail,
@@ -70,8 +73,8 @@ export async function createEnvironment(
     const body = {
         id: '',
         type,
-        accountId: undefined,
-        location: undefined,
+        accountId,
+        location,
         friendlyName,
         seed: {
             type: gitRepositoryUrl ? 'git' : '',
@@ -83,7 +86,7 @@ export async function createEnvironment(
         connection: {
             sessionId: '',
             sessionPath: '',
-        },
+        },        
         created: new Date(),
         autoShutdownDelayMinutes,
     };
