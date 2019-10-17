@@ -161,7 +161,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     {
                         // SkuFamily must be first as the primary criterion for ordering candidate subscriptions.
                         new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = computeDetails.SkuFamily, Required = computeDetails.Cores },
-                        new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = "cores", Required = computeDetails.Cores },
                         new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 },
                     };
                     var resourceLocation = await SelectAzureResourceLocation(
