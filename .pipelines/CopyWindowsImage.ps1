@@ -53,6 +53,7 @@ $Start = Get-Date
 az storage blob upload -c $TempContainerName -f $BlobPath -n $ImageName --account-name $TempStorageName --subscription $TargetSubscription --no-progress
 $Duration = (Get-Date) - $Start
 Write-Host "Upload completed in $($Duration.TotalMinutes) minutes"
+Remove-Item $BlobPath -Force -ErrorAction Continue
 
 Write-Host "Snapshot $ImageName"
 $Snapshot = az snapshot create -n $SnapshotName -g $TempGroupName -l $TargetLocation --source "$($Storage.primaryEndpoints.blob)$TempContainerName/$ImageName" --subscription $TargetSubscription | ConvertFrom-Json
