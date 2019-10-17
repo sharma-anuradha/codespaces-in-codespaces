@@ -24,8 +24,6 @@
     <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common.AspNetCore\Common.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
-    <ProjectReference Include="..\..\..\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Accounts\Src\Accounts\Accounts.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient\BackEndWebApiClient.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing\Billing.csproj" />
@@ -35,6 +33,8 @@
     <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
     <ProjectReference Include="..\..\..\Monitoring\Src\Monitoring\Monitoring.csproj" />
+    <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Plans\Test\Plans.Test\Plans.Test.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\src\UserProfile\UserProfile.csproj" />
   </ItemGroup>

@@ -12,8 +12,8 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -46,13 +46,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         /// <inheritdoc/>
         public async Task<BillingEvent> CreateEventAsync(
-            VsoAccountInfo account,
+            VsoPlanInfo plan,
             EnvironmentBillingInfo environment,
             string eventType,
             object args,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNull(account, nameof(account));
+            Requires.NotNull(plan, nameof(plan));
             Requires.NotNullOrEmpty(eventType, nameof(eventType));
 
             var duration = logger.StartDuration();
@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     Id = Guid.NewGuid().ToString(),
                     Time = DateTime.UtcNow,
-                    Account = account,
+                    Plan = plan,
                     Environment = environment,
                     Type = eventType,
                     Args = args,
@@ -70,14 +70,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 billingEvent = await this.billingEventRepository.CreateAsync(billingEvent, logger);
 
                 logger.AddDuration(duration)
-                    .AddAccount(account)
+                    .AddVsoPlan(plan)
                     .LogInfo(GetType().FormatLogMessage(nameof(CreateEventAsync)));
                 return billingEvent;
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .AddAccount(account)
+                    .AddVsoPlan(plan)
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEventAsync)), ex.Message);
                 throw;
             }
@@ -114,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         /// <inheritdoc />
 
-        public async Task<IEnumerable<VsoAccountInfo>> GetAccountsAsync(
+        public async Task<IEnumerable<VsoPlanInfo>> GetPlansAsync(
             DateTime start,
             DateTime? end,
             IDiagnosticsLogger logger,
@@ -141,25 +141,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 }
 
                 // TODO: pagedcallback 200ms delay
-                var accountsPreFiltered = await this.billingEventRepository.QueryAsync(
-                    q => q.Where(where).Select(bev => bev.Account).Distinct(),
+                var plansPreFiltered = await this.billingEventRepository.QueryAsync(
+                    q => q.Where(where).Select(bev => bev.Plan).Distinct(),
                     logger);
-                var accounts = accountsPreFiltered.Where(a => locations.Contains(a.Location));
+                var plans = plansPreFiltered.Where(a => locations.Contains(a.Location));
                 logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountsAsync)));
-                return accounts;
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetPlansAsync)));
+                return plans;
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountsAsync)), ex.Message);
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetPlansAsync)), ex.Message);
                 throw;
             }
         }
 
 
         /// <summary>
-        /// Returns all accounts for which there are any billing events in a specified time range
+        /// Returns all plans for which there are any billing events in a specified time range
         /// and has a subscriptionId that begins with the shard value.
         /// </summary>
         /// <param name="start"></param>
@@ -168,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="locations"></param>
         /// <param name="shard"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<VsoAccountInfo>> GetAccountsByShardAsync(
+        public async Task<IEnumerable<VsoPlanInfo>> GetPlansByShardAsync(
             DateTime start,
             DateTime? end,
             IDiagnosticsLogger logger,
@@ -189,27 +189,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 if (end == null)
                 {
                     // Optimize common queries with no end date.
-                    where = bev => start <= bev.Time && bev.Account.Subscription.StartsWith(shard);
+                    where = bev => start <= bev.Time && bev.Plan.Subscription.StartsWith(shard);
                 }
                 else
                 {
-                    where = bev => start <= bev.Time && bev.Time < end.Value && bev.Account.Subscription.StartsWith(shard);
+                    where = bev => start <= bev.Time && bev.Time < end.Value && bev.Plan.Subscription.StartsWith(shard);
                 }
 
                 // TODO: pagedcallback 200ms delay
                 // TODO: move locations.Contains() to Expression definition
-                var accounts = (await this.billingEventRepository.QueryAsync(
-                    q => q.Where(where).Select(bev => bev.Account).Distinct(),
+                var plans = (await this.billingEventRepository.QueryAsync(
+                    q => q.Where(where).Select(bev => bev.Plan).Distinct(),
                     logger)).Where(t => locations.Contains(t.Location));
 
                 logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountsByShardAsync)));
-                return accounts;
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetPlansByShardAsync)));
+                return plans;
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountsByShardAsync)), ex.Message);
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetPlansByShardAsync)), ex.Message);
                 throw;
             }
         }
@@ -217,14 +217,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         /// <inheritdoc />
 
-        public async Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
-            VsoAccountInfo account,
+        public async Task<IEnumerable<BillingEvent>> GetPlanEventsAsync(
+            VsoPlanInfo plan,
             DateTime start,
             DateTime? end,
             ICollection<string> eventTypes,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNull(account, nameof(account));
+            Requires.NotNull(plan, nameof(plan));
             Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
             Requires.Argument(
                 end == null || end.Value.Kind == DateTimeKind.Utc, nameof(end), "DateTime values must be UTC.");
@@ -238,12 +238,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Optimize common queries with no event types or end date.
                     if (end == null)
                     {
-                        where = bev => bev.Account == account &&
+                        where = bev => bev.Plan == plan &&
                             start <= bev.Time;
                     }
                     else
                     {
-                        where = bev => bev.Account == account &&
+                        where = bev => bev.Plan == plan &&
                             start <= bev.Time && bev.Time <= end.Value;
                     }
                 }
@@ -252,12 +252,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     string eventType = eventTypes.Single();
                     if (end == null)
                     {
-                        where = bev => bev.Account == account &&
+                        where = bev => bev.Plan == plan &&
                             start <= bev.Time && bev.Type == eventType;
                     }
                     else
                     {
-                        where = bev => bev.Account == account &&
+                        where = bev => bev.Plan == plan &&
                             start <= bev.Time && bev.Time <= end.Value && bev.Type == eventType;
                     }
                 }
@@ -265,37 +265,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     if (end == null)
                     {
-                        where = bev => bev.Account == account &&
+                        where = bev => bev.Plan == plan &&
                             start <= bev.Time && eventTypes.Contains(bev.Type);
                     }
                     else
                     {
-                        where = bev => bev.Account == account &&
+                        where = bev => bev.Plan == plan &&
                             start <= bev.Time && bev.Time <= end.Value && eventTypes.Contains(bev.Type);
                     }
                 }
                 // This should be a single-partition query.
                 // The billing event collection is partitioned on subscription, and all queries
-                // filter on account, which includes the subscription property.
+                // filter on plan, which includes the subscription property.
                 var billingEvents = await this.billingEventRepository.QueryAsync(
                     q => q.Where(where).OrderBy(bev => bev.Time), logger);
 
                 logger.AddDuration(duration)
-                    .AddAccount(account)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountEventsAsync)));
+                    .AddVsoPlan(plan)
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetPlanEventsAsync)));
                 return billingEvents;
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .AddAccount(account)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountEventsAsync)), ex.Message);
+                    .AddVsoPlan(plan)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetPlanEventsAsync)), ex.Message);
                 throw;
             }
         }
 
 
-        public async Task<IEnumerable<BillingEvent>> GetAccountEventsAsync(
+        public async Task<IEnumerable<BillingEvent>> GetPlanEventsAsync(
        Expression<Func<BillingEvent, bool>> filter,
        IDiagnosticsLogger logger)
         {
@@ -305,37 +305,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 // This should be a single-partition query.
                 // The billing event collection is partitioned on subscription, and all queries
-                // filter on account, which includes the subscription property.
+                // filter on plan, which includes the subscription property.
                 var billingEvents = await this.billingEventRepository.QueryAsync(
                     q => q.Where(filter).OrderBy(bev => bev.Time), logger);
 
                 logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetAccountEventsAsync)));
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetPlanEventsAsync)));
                 return billingEvents;
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
 
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetAccountEventsAsync)), ex.Message);
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetPlanEventsAsync)), ex.Message);
                 throw;
             }
         }
 
         /// <inheritdoc/>
-        public async Task<BillingOverride> GetOverrideStateForTimeAsync(DateTime start, string subscriptionID, VsoAccountInfo account, Sku sku, IDiagnosticsLogger logger)
+        public async Task<BillingOverride> GetOverrideStateForTimeAsync(DateTime start, string subscriptionID, VsoPlanInfo plan, Sku sku, IDiagnosticsLogger logger)
         {
             Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
 
             await CacheBillingOverrides(start, logger);
             Func<BillingOverride, bool> timeRangeCondition = x => start >= x.StartTime && start < x.EndTime;
 
-            var candidates = GetApplicableBillingOverrides(subscriptionID, account, sku, timeRangeCondition);
+            var candidates = GetApplicableBillingOverrides(subscriptionID, plan, sku, timeRangeCondition);
 
             return candidates.OrderBy(x => x.Priority).FirstOrDefault();
         }
 
-        private IEnumerable<BillingOverride> GetApplicableBillingOverrides(string subscriptionID, VsoAccountInfo account, Sku sku, Func<BillingOverride, bool> timeRangeCondition)
+        private IEnumerable<BillingOverride> GetApplicableBillingOverrides(string subscriptionID, VsoPlanInfo plan, Sku sku, Func<BillingOverride, bool> timeRangeCondition)
         {
             List<BillingOverride> candidates = new List<BillingOverride>();
             Func<BillingOverride, bool> where;
@@ -352,14 +352,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // When there's a subscription ID 
                 where = x => timeRangeCondition(x)
                             && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
-                            && x.Account == null
+                            && x.Plan == null
                             && x.Sku == null;
                 candidates.AddRange(billingOverrideCache.Where(where));
-                if (account != null)
+                if (plan != null)
                 {
                     where = x => timeRangeCondition(x)
                                 && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
-                                && x.Account == account
+                                && x.Plan == plan
                                 && x.Sku == null;
                     candidates.AddRange(billingOverrideCache.Where(where));
 
@@ -368,26 +368,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     {
                         where = x => timeRangeCondition(x)
                                     && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
-                                    && x.Account == account
+                                    && x.Plan == plan
                                     && (x.Sku !=null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
                         candidates.AddRange(billingOverrideCache.Where(where));
                     }
                 }
             }
-            if (account != null)
+            if (plan != null)
             {
                 where = x => timeRangeCondition(x)
                                 && x.Subscription == null
-                                && x.Account == account
+                                && x.Plan == plan
                                 && x.Sku == null;
                 candidates.AddRange(billingOverrideCache.Where(where));
 
-                // Account and Sku have been specified on the override
+                // SkuPlan and Sku have been specified on the override
                 if (sku != null)
                 {
                     where = x => timeRangeCondition(x)
                                 && x.Subscription == null
-                                && x.Account == account
+                                && x.Plan == plan
                                 && (x.Sku != null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
                     candidates.AddRange(billingOverrideCache.Where(where));
                 }
@@ -397,7 +397,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 where = x => timeRangeCondition(x)
                             && x.Subscription == null
-                            && x.Account == null
+                            && x.Plan == null
                             && (x.Sku != null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
                 candidates.AddRange(billingOverrideCache.Where(where));
             }
@@ -406,7 +406,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 where = x => timeRangeCondition(x)
                         && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
-                        && x.Account == null
+                        && x.Plan == null
                         && (x.Sku != null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
                 candidates.AddRange(billingOverrideCache.Where(where));
             }
@@ -414,7 +414,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             // Add in the gloal overrides
             where = x => timeRangeCondition(x)
                     && x.Subscription == null
-                    && x.Account == null
+                    && x.Plan == null
                     && x.Sku == null;
             candidates.AddRange(billingOverrideCache.Where(where));
             return candidates;
@@ -445,7 +445,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <summary>
-        /// Returns the Account sharding mechanism. We have currently sharing by SubscriptionId so the returned list
+        /// Returns the SkuPlan sharding mechanism. We have currently sharing by SubscriptionId so the returned list
         /// includes all availabe chars in a 16 bit GUID.
         /// </summary>
         /// <returns></returns>

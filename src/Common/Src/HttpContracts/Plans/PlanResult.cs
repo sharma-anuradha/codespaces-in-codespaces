@@ -1,4 +1,4 @@
-// <copyright file="AccountResult.cs" company="Microsoft">
+// <copyright file="PlanResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,9 +9,9 @@ using Newtonsoft.Json.Converters;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts
 {
     /// <summary>
-    /// The account REST API result.
+    /// The plan REST API result.
     /// </summary>
-    public class AccountResult
+    public class PlanResult
     {
         [JsonProperty(Required = Required.Always, PropertyName = "id")]
         public string Id { get; set; }
@@ -26,8 +26,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the Azure location (region) the account resource is in.
-        /// All environments in the account must be in the same location.
+        /// Gets or sets the Azure location (region) the plan resource is in.
+        /// All environments in the plan must be in the same location.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "location")]
         [JsonConverter(typeof(StringEnumConverter))]

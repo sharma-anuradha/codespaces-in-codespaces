@@ -4,9 +4,9 @@
 
 using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                 cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
                 cfg.CreateMap<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>();
                 cfg.CreateMap<EnvironmetnRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
-                cfg.CreateMap<AccountResource, VsoAccount>();
+                cfg.CreateMap<PlanResource, VsoPlan>();
             });
             var mapper = config.CreateMapper();
             services.AddSingleton(mapper);

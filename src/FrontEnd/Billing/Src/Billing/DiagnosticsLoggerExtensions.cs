@@ -4,7 +4,7 @@
 
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -15,24 +15,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     {
         private const string LogValueSubscriptionId = "SubscriptionId";
         private const string LogValueResourceGroupName = "ResourceGroup";
-        private const string LogValueAccountName = "Account";
+        private const string LogValuePlanName = "Plan";
 
         /// <summary>
-        /// Add logging fields for a <see cref="VsoAccountInfo"/> instance.
+        /// Add logging fields for a <see cref="VsoPlanInfo"/> instance.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <param name="account">The account, or null.</param>
+        /// <param name="plan">The plan, or null.</param>
         /// <returns>The <paramref name="logger"/> instance.</returns>
-        public static IDiagnosticsLogger AddAccount(this IDiagnosticsLogger logger, VsoAccountInfo account)
+        public static IDiagnosticsLogger AddVsoPlan(this IDiagnosticsLogger logger, VsoPlanInfo plan)
         {
             Requires.NotNull(logger, nameof(logger));
 
-            if (account != null)
+            if (plan != null)
             {
                 logger
-                    .AddSubscriptionId(account.Subscription)
-                    .AddResourceGroupName(account.ResourceGroup)
-                    .AddAccountName(account.Name);
+                    .AddSubscriptionId(plan.Subscription)
+                    .AddResourceGroupName(plan.ResourceGroup)
+                    .AddPlanName(plan.Name);
             }
 
             return logger;
@@ -60,9 +60,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Add the environment connection session id to the logger.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <param name="accountName">The account name.</param>
+        /// <param name="planName">The plan name.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
-        public static IDiagnosticsLogger AddAccountName(this IDiagnosticsLogger logger, string accountName)
-            => logger.FluentAddValue(LogValueAccountName, accountName);
+        public static IDiagnosticsLogger AddPlanName(this IDiagnosticsLogger logger, string planName)
+            => logger.FluentAddValue(LogValuePlanName, planName);
     }
 }

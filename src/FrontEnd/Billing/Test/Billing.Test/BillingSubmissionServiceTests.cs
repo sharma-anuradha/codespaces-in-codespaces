@@ -2,7 +2,7 @@
 using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
@@ -27,14 +27,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
             Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();
-            var vsoAccount = new VsoAccountInfo()
+            var vsoPlan = new VsoPlanInfo()
             {
-                Name = "AccountName",
+                Name = "PlanName",
                 Location = AzureLocation.WestUs2,
                 ResourceGroup = "RG",
                 Subscription = Guid.NewGuid().ToString(),
             };
-            IEnumerable<VsoAccountInfo> accounts = new List<VsoAccountInfo>() { vsoAccount };
+            IEnumerable<VsoPlanInfo> plans = new List<VsoPlanInfo>() { vsoPlan };
             var endDate = DateTime.Now;
             var usage = new Dictionary<string, double>();
             usage.Add("meter", 3d);
@@ -49,12 +49,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             };
             var billingEvent = new BillingEvent()
             {
-                Account = vsoAccount,
+                Plan = vsoPlan,
                 Args = billingSummary,
             };
             IEnumerable<BillingEvent> billingSummaries = new List<BillingEvent>() { billingEvent };
-            billingEventManager.Setup(x => x.GetAccountsByShardAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<ICollection<AzureLocation>>(), It.IsAny<string>())).Returns(Task.FromResult(accounts));
-            billingEventManager.Setup(x => x.GetAccountEventsAsync(It.IsAny<Expression<Func<BillingEvent, bool>>>(), logger.Object)).Returns(Task.FromResult(billingSummaries));
+            billingEventManager.Setup(x => x.GetPlansByShardAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<ICollection<AzureLocation>>(), It.IsAny<string>())).Returns(Task.FromResult(plans));
+            billingEventManager.Setup(x => x.GetPlanEventsAsync(It.IsAny<Expression<Func<BillingEvent, bool>>>(), logger.Object)).Returns(Task.FromResult(billingSummaries));
             billingEventManager.Setup(x => x.GetShards()).Returns(new List<string>() { "a" });
 
             Mock<IBillingSubmissionCloudStorageFactory> factory = new Mock<IBillingSubmissionCloudStorageFactory>();

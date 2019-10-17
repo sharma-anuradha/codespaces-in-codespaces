@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// <summary>
         /// Gets or sets the fully-qualified Azure resource id of the Account object.
         /// </summary>
-        public string AccountId { get; set; }
+        public string PlanId { get; set; }
 
         /// <summary>
         /// Gets or sets the auto shutdown time the user specified.

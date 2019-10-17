@@ -27,13 +27,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets all environments owned by the given user id.
         /// </summary>
-        /// <param name="ownerId">The owner's user id. Required unless account ID is specified.</param>
+        /// <param name="ownerId">The owner's user id. Required unless plan ID is specified.</param>
         /// <param name="name">Optional environment name to filter on.</param>
-        /// <param name="accountId">Optional account ID to filter on.</param>
+        /// <param name="planId">Optional plan ID to filter on.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the list of <see cref="CloudEnvironment"/>.</returns>
         Task<IEnumerable<CloudEnvironment>> ListEnvironmentsAsync(
-            string ownerId, string name, string accountId, IDiagnosticsLogger logger);
+            string ownerId, string name, string planId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Creates a new environment.

@@ -10,18 +10,18 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Newtonsoft.Json.Serialization;
 using UsageDictionary = System.Collections.Generic.Dictionary<string, double>;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
-    /// Calculates billing units per VSO Account in the current control plane region(s)
+    /// Calculates billing units per VSO SkuPlan in the current control plane region(s)
     /// and saves a BillingSummary to the environment_billing_events table.
     /// </summary>
     public partial class BillingService : BillingServiceBase, IBillingService
@@ -85,17 +85,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             await Execute(cancellationToken);
         }
 
-        protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string accountShard, AzureLocation region)
+        protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string planShard, AzureLocation region)
         {
-            var accounts = await billingEventManager.GetAccountsByShardAsync(
+            var plans = await billingEventManager.GetPlansByShardAsync(
                                                 start,
                                                 end,
                                                 childlogger,
                                                 new List<AzureLocation> { region },
-                                                accountShard);
-            foreach (var account in accounts)
+                                                planShard);
+            foreach (var plan in plans)
             {
-                await BeginAccountCalculations(account, start, end, childlogger);
+                await BeginAccountCalculations(plan, start, end, childlogger);
             }
         }
 
@@ -104,27 +104,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// The last BillingSummary is fetched and used as the seed event for the billing unit
         /// calculations on the current events.
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="plan"></param>
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
-        private async Task BeginAccountCalculations(VsoAccountInfo account, DateTime start, DateTime end, IDiagnosticsLogger logger)
+        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime end, IDiagnosticsLogger logger)
         {
-            logger.AddAccount(account)
+            logger.AddVsoPlan(plan)
                 .FluentAddBaseValue("startCalculationTime", start)
                 .FluentAddBaseValue("endCalculationTime", end);
 
             await logger.OperationScopeAsync(
-                $"{ServiceName}-begin-account-calculations",
+                $"{ServiceName}-begin-plan-calculations",
                 async (childLogger) =>
                 {
                     // Get the last BillingSummary.
-                    var summaryEvents = await billingEventManager.GetAccountEventsAsync(account, start, end, new string[] { billingEventType }, logger);
+                    var summaryEvents = await billingEventManager.GetPlanEventsAsync(plan, start, end, new string[] { billingEventType }, logger);
                     BillingEvent latestSummary = new BillingEvent();
                     if (!summaryEvents.Any())
                     {
-                        // No summary events exist for this account eg. first run of the BillingWorker
+                        // No summary events exist for this plan eg. first run of the BillingWorker
                         // Create a generic BillingSummary to use as a starting point for the following
                         // billing calculations, and seed it with this billing period's start time.
                         latestSummary.Time = start;
@@ -145,15 +145,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         }
                     }
 
-                    // Get EnvironmentStateChnage events for the given account during the given period.
-                    var billingEvents = await billingEventManager.GetAccountEventsAsync(account, latestSummary.Time, end, new string[] { BillingEventTypes.EnvironmentStateChange }, logger);
+                    // Get EnvironmentStateChnage events for the given plan during the given period.
+                    var billingEvents = await billingEventManager.GetPlanEventsAsync(plan, latestSummary.Time, end, new string[] { BillingEventTypes.EnvironmentStateChange }, logger);
 
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
-                    var billingSummary = await CalculateBillingUnits(account, billingEvents, (BillingSummary)latestSummary.Args, end);
+                    var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestSummary.Args, end);
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
-                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(account, billingSummary, latestSummary, end);
-                    await billingEventManager.CreateEventAsync(account, null, billingEventType, totalBillingSummary, logger);
+                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestSummary, end);
+                    await billingEventManager.CreateEventAsync(plan, null, billingEventType, totalBillingSummary, logger);
                 },
                 swallowException: true);
 
@@ -164,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// This method loops through all the BillingEvents<see cref="BillingEvent"/> in this current billing period and generates a
         /// BillingSummary. The last BillingSummary is used as the starting point for billing unit calculations.
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="plan"></param>
         /// <param name="events"></param>
         /// <param name="startSummary"></param>
         /// <param name="end"></param>
@@ -172,7 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         public async Task<BillingSummary> CalculateBillingUnits(
 
-            VsoAccountInfo account,
+            VsoPlanInfo plan,
             IEnumerable<BillingEvent> events,
             BillingSummary startSummary,
             DateTime end)
@@ -180,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var totalBillable = 0.0d;
             var environmentUsageDetails = new Dictionary<string, EnvironmentUsageDetail>();
             var userUsageDetails = new Dictionary<string, UserUsageDetail>();
-            var meterId = GetMeterIdByAzureLocation(account.Location);
+            var meterId = GetMeterIdByAzureLocation(plan.Location);
 
             // Get events per environment
             var billingEventsPerEnvironment = events.GroupBy(b => b.Environment.Id);
@@ -209,7 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Loop through each billing event for the current environment.
                 foreach (var evnt in seqEvents)
                 {
-                    allSlices = await GenerateWindowSlices(end, currSlice, evnt, account, environmentDetails.Sku);
+                    allSlices = await GenerateWindowSlices(end, currSlice, evnt, plan, environmentDetails.Sku);
                     if (allSlices.Any())
                     {
                         slices.AddRange(allSlices);
@@ -218,7 +218,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 }
 
                 // Get the remainder or the entire window if there were no events.
-                allSlices = await GenerateWindowSlices(end, currSlice, null, account, environmentDetails.Sku);
+                allSlices = await GenerateWindowSlices(end, currSlice, null, plan, environmentDetails.Sku);
                 if (allSlices.Any())
                 {
                     slices.AddRange(allSlices);
@@ -258,7 +258,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             };
         }
 
-        private async Task<IEnumerable<BillingWindowSlice>> GenerateWindowSlices(DateTime end, BillingWindowSlice currSlice, BillingEvent evnt, VsoAccountInfo account, Sku sku)
+        private async Task<IEnumerable<BillingWindowSlice>> GenerateWindowSlices(DateTime end, BillingWindowSlice currSlice, BillingEvent evnt, VsoPlanInfo plan, Sku sku)
         {
             currSlice = CalculateNextWindow(evnt, currSlice, end);
 
@@ -268,16 +268,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 return Enumerable.Empty<BillingWindowSlice>();
             }
 
-            var slicesWithOverrides = await GenerateSlicesWithOverrides(currSlice, account, sku);
+            var slicesWithOverrides = await GenerateSlicesWithOverrides(currSlice, plan, sku);
             return slicesWithOverrides;
         }
 
-        private async Task<IEnumerable<BillingWindowSlice>> GenerateSlicesWithOverrides(BillingWindowSlice currSlice, VsoAccountInfo account, Sku sku)
+        private async Task<IEnumerable<BillingWindowSlice>> GenerateSlicesWithOverrides(BillingWindowSlice currSlice, VsoPlanInfo plan, Sku sku)
         {
             var dividedSlices = GenerateHourBoundTimeSlices(currSlice);
             foreach (var slice in dividedSlices)
             {
-                var currBillingOverride = await billingEventManager.GetOverrideStateForTimeAsync(slice.StartTime, account.Subscription, account, sku, logger);
+                var currBillingOverride = await billingEventManager.GetOverrideStateForTimeAsync(slice.StartTime, plan.Subscription, plan, sku, logger);
                 if (currBillingOverride != null)
                 {
                     slice.OverrideState = currBillingOverride.BillingOverrideState;
@@ -463,14 +463,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// if any environments exist in the previous but not in the current. For those environments a billing unit is
         /// calculated and appended to the current BillingSummary.
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="plan"></param>
         /// <param name="currentSummary"></param>
         /// <param name="latestEvent"></param>
         /// <param name="end"></param>
         /// <returns></returns>
         public async Task<BillingSummary> CaculateBillingForEnvironmentsWithNoEvents(
 
-            VsoAccountInfo account,
+            VsoPlanInfo plan,
             BillingSummary currentSummary,
             BillingEvent latestEvent,
             DateTime end)
@@ -482,8 +482,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // TODO: design for no billing summary in this time period
                 // We may want to widen our summary search
                 // No previous summary environments
-                logger.AddAccount(account);
-                logger.LogWarning("No BillingSummary found in the last 48 hours for the account.");
+                logger.AddVsoPlan(plan);
+                logger.LogWarning("No BillingSummary found in the last 48 hours for the plan.");
                 return currentSummary;
             }
 
@@ -524,7 +524,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 return currentSummary;
             }
 
-            var meterId = GetMeterIdByAzureLocation(account.Location);
+            var meterId = GetMeterIdByAzureLocation(plan.Location);
             var envUsageDetails = new Dictionary<string, EnvironmentUsageDetail>();
 
             // Loop through the missing environments and calculate billing.
@@ -550,7 +550,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 };
 
                 // Get the remainder or the entire window if there were no events.
-                var allSlices = (await GenerateWindowSlices(end, billingSlice, null, account, envUsageDetail.Sku)).ToList();
+                var allSlices = (await GenerateWindowSlices(end, billingSlice, null, plan, envUsageDetail.Sku)).ToList();
                 if (allSlices.Any())
                 {
                     billingSlice = allSlices.Last();
@@ -571,7 +571,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     UserId = environment.Value.UserId,
                 };
 
-                // Update Environment list, Account billable units, and User billable units
+                // Update Environment list, SkuPlan billable units, and User billable units
                 currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
                 if (currentSummary.Usage.ContainsKey(meterId))
                 {

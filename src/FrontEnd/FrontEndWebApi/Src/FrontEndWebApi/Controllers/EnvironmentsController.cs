@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
@@ -136,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(typeof(CloudEnvironmentResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ListEnvironmentsAsync(
-            [FromQuery]string name, [FromQuery]string accountId)
+            [FromQuery]string name, [FromQuery]string planId)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
@@ -145,7 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 var currentUserId = CurrentUserProvider.GetProfileId();
 
-                var modelsRaw = await EnvironmentManager.ListEnvironmentsAsync(currentUserId, name, accountId, logger);
+                var modelsRaw = await EnvironmentManager.ListEnvironmentsAsync(currentUserId, name, planId, logger);
 
                 logger.AddDuration(duration)
                     .FluentAddValue("Count", modelsRaw.Count().ToString())
@@ -328,9 +329,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(createEnvironmentInput.FriendlyName, nameof(createEnvironmentInput.FriendlyName));
                 ValidationUtil.IsRequired(createEnvironmentInput.Type, nameof(createEnvironmentInput.Type));
 
-                // TODO: Make account ID required and validate it. Old clients don't specify an account.
-                ////ValidationUtil.IsRequired(createEnvironmentInput.AccountId, nameof(createEnvironmentInput.AccountId));
-                ////ValidationUtil.IsTrue(VsoAccountInfo.TryParse(createEnvironmentInput.AccountId, out _), "Invalid account ID.");
+                // SkuPlan ID required and valid.
+                ValidationUtil.IsRequired(createEnvironmentInput.PlanId, nameof(createEnvironmentInput.PlanId));
+                ValidationUtil.IsTrue(VsoPlanInfo.TryParse(createEnvironmentInput.PlanId, out _), "Invalid plan ID.");
 
                 var cloudEnvironment = Mapper.Map<CreateCloudEnvironmentBody, CloudEnvironment>(createEnvironmentInput);
 
@@ -350,13 +351,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 else if (cloudEnvironment.SkuName.Equals("smallWindowsPreview", StringComparison.OrdinalIgnoreCase))
                 {
                     cloudEnvironment.SkuName = LookupSkuName(ComputeOS.Windows, SkuTier.Standard);
-                }
-
-                // TODO HACK: specify a temporary location. Old clients don't specify one.
-                // At some point this should be a BadRequest!
-                if (cloudEnvironment.Location == default)
-                {
-                    cloudEnvironment.Location = AzureLocation.WestUs2;
                 }
 
                 // Reroute to correct location if needed

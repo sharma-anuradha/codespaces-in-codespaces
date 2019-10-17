@@ -13,7 +13,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     /// <remarks>
     /// A billing period typically covers one hour, but in some cases it may be for
-    /// a partial hour (if the subscription state or account plan changed) or
+    /// a partial hour (if the subscription state or plan plan changed) or
     /// multiple hours (when contiguous hours of zero activity are combined).
     /// </remarks>
     public class BillingSummary
@@ -31,10 +31,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public DateTime PeriodEnd { get; set; }
 
         /// <summary>
-        /// Account plan used for this billing period.
+        /// SkuPlan plan used for this billing period.
         /// </summary>
         /// <remarks>
-        /// If the account plan changes during the middle of the default billing period (hour), the
+        /// If the plan plan changes during the middle of the default billing period (hour), the
         /// period should be split at that point.
         /// </remarks>
         [JsonProperty(Required = Required.Always, PropertyName = "plan")]
@@ -52,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public string SubscriptionState { get; set; }
 
         /// <summary>
-        /// Total usage billed to the account for the billing period for one or more
+        /// Total usage billed to the plan for the billing period for one or more
         /// billing meters, in each meter's units.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "usage")]
@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         /// <summary>
         /// True if this billing data was emitted so that the customer will actually get
-        /// billed for this usage; false if billing for this subscription/account/period was
+        /// billed for this usage; false if billing for this subscription/plan/period was
         /// disabled or there was no usage during this period.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "submissionState")]

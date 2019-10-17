@@ -1,4 +1,4 @@
-﻿// <copyright file="AccountResource.cs" company="Microsoft">
+﻿// <copyright file="PlanResource.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,10 +10,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
     /// <summary>
     /// JSON body properties from RPSaaS
     /// </summary>
-    public class AccountResource
+    public class PlanResource
     {
         [JsonProperty(Required = Required.Default, PropertyName = "properties")]
-        public AccountResourceProperties Properties { get; set; }
+        public PlanResourceProperties Properties { get; set; }
 
         [JsonProperty(Required = Required.Always, PropertyName = "id")]
         public string Id { get; set; }

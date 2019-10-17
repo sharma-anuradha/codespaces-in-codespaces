@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cloudEnvironmentRepository">The cloud environment repository.</param>
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
-        /// <param name="accountManager">The account manager.</param>
+        /// <param name="planManager">The plan manager.</param>
         /// <param name="authRepository">The Live Share authentication repository.</param>
         /// <param name="billingEventManager">The billing event manager.</param>
         /// <param name="environmentManagerSettings">The environment manager settings.</param>
@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
             IWorkspaceRepository workspaceRepository,
-            IAccountManager accountManager,
+            IPlanManager planManager,
             IAuthRepository authRepository,
             IBillingEventManager billingEventManager,
             EnvironmentManagerSettings environmentManagerSettings)
@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
-            AccountManager = Requires.NotNull(accountManager, nameof(accountManager));
+            PlanManager = Requires.NotNull(planManager, nameof(planManager));
             AuthRepository = Requires.NotNull(authRepository, nameof(authRepository));
             BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IResourceBrokerResourcesHttpContract ResourceBrokerClient { get; }
 
-        private IAccountManager AccountManager { get; }
+        private IPlanManager PlanManager { get; }
 
         private IBillingEventManager BillingEventManager { get; }
 
@@ -397,10 +397,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ValidationUtil.IsTrue(
                     cloudEnvironment.Location != default,
                     "Location is required");
+                ValidationUtil.IsRequired(cloudEnvironment.PlanId, nameof(CloudEnvironment.PlanId));
+
+                // Validate that the specified plan ID is well-formed.
+                ValidationUtil.IsTrue(
+                    VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out var plan),
+                    $"Invalid plan ID: {cloudEnvironment.PlanId}");
+
+                // Validate the plan exists (and lookup the plan details).
+                plan.Location = cloudEnvironment.Location;
+                var planDetails = (await PlanManager.GetAsync(plan, logger)).VsoPlan;
+                if (planDetails == null)
+                {
+                    throw new ArgumentException($"SkuPlan not found.", nameof(cloudEnvironment.PlanId));
+                }
 
                 // Validate against existing environments.
                 var environments = await CloudEnvironmentRepository.GetWhereAsync(
-                    (env) => env.OwnerId == currentUserId, logger);
+                    (env) => env.PlanId == cloudEnvironment.PlanId, logger);
                 if (environments.Any((env) => string.Equals(
                     env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
                 {
@@ -409,37 +423,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return result;
                 }
 
-                if (environments.Count() >= EnvironmentManagerSettings.PerUserEnvironmentQuota)
+                // Validate the calling user is the owner of the the plan (if the plan has an owner).
+                // Match on provider ID instead of profile ID because clients dont have
+                // the profile ID when the create the plan resource via ARM.
+                UnauthorizedUtil.IsTrue(
+                    planDetails.UserId == null || currentUserProviderId == planDetails.UserId);
+
+                // TODO: Validate the plan & subscription are in a good state?
+
+                // Check for quota on # of environments per plan
+                var totalEnvironments = await ListEnvironmentsAsync(userId: null, string.Empty, plan.ResourceId, logger);
+                if (totalEnvironments.Count() >= EnvironmentManagerSettings.MaxEnvironmentsPerPlan)
                 {
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogInfo(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)));
+
                     result.ErrorCode = ErrorCodes.ExceededQuota;
                     result.HttpStatusCode = StatusCodes.Status403Forbidden;
                     return result;
-                }
-
-                // TODO: Make AccountId required after clients are updated to supply it.
-                if (cloudEnvironment.AccountId != null)
-                {
-                    // Validate that the specified account ID is well-formed.
-                    ValidationUtil.IsTrue(
-                        VsoAccountInfo.TryParse(cloudEnvironment.AccountId, out var account),
-                        $"Invalid account ID: {cloudEnvironment.AccountId}");
-
-                    // Validate the account exists (and lookup the account details).
-                    account.Location = cloudEnvironment.Location;
-                    var accountDetails = await AccountManager.GetAsync(account, logger);
-                    if (accountDetails == null)
-                    {
-                        throw new ArgumentException($"Account not found.", nameof(cloudEnvironment.AccountId));
-                    }
-
-                    // Validate the calling user is the owner of the the account (if the account has an owner).
-                    // Match on provider ID instead of profile ID because clients dont have
-                    // the profile ID when the create the account resource via ARM.
-                    UnauthorizedUtil.IsTrue(
-                        accountDetails.UserId == null || currentUserProviderId == accountDetails.UserId);
-
-                    // TODO: Validate the account & subscription are in a good state?
-                    // TODO: Check for quota on # of environments per account?
                 }
 
                 // Setup
@@ -666,29 +668,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public async Task<IEnumerable<CloudEnvironment>> ListEnvironmentsAsync(
             string userId,
             string environmentName,
-            string accountId,
+            string planId,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(logger, nameof(logger));
 
             if (userId == null)
             {
-                Requires.NotNull(accountId, nameof(accountId));
+                Requires.NotNull(planId, nameof(planId));
 
                 if (!string.IsNullOrEmpty(environmentName))
                 {
                     return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => cloudEnvironment.AccountId == accountId &&
+                        (cloudEnvironment) => cloudEnvironment.PlanId == planId &&
                             cloudEnvironment.FriendlyName == environmentName.Trim(),
                         logger);
                 }
                 else
                 {
                     return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId, logger);
+                        (cloudEnvironment) => cloudEnvironment.PlanId == planId, logger);
                 }
             }
-            else if (accountId == null)
+            else if (planId == null)
             {
                 if (!string.IsNullOrEmpty(environmentName))
                 {
@@ -711,7 +713,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     Requires.NotNull(userId, nameof(userId));
                     return await CloudEnvironmentRepository.GetWhereAsync(
                         (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
-                            cloudEnvironment.AccountId == accountId &&
+                            cloudEnvironment.PlanId == planId &&
                             cloudEnvironment.FriendlyName == environmentName.Trim(),
                         logger);
                 }
@@ -719,7 +721,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     return await CloudEnvironmentRepository.GetWhereAsync(
                         (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
-                            cloudEnvironment.AccountId == accountId,
+                            cloudEnvironment.PlanId == planId,
                         logger);
                 }
             }
@@ -804,12 +806,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var oldState = cloudEnvironment.State;
 
-            VsoAccountInfo account;
-            if (cloudEnvironment.AccountId == default)
+            VsoPlanInfo plan;
+            if (cloudEnvironment.PlanId == default)
             {
-                // Use a temporary account if the environment doesn't have one.
-                // TODO: Remove this; make the account required after clients are updated to supply it.
-                account = new VsoAccountInfo
+                // Use a temporary plan if the environment doesn't have one.
+                // TODO: Remove this; make the plan required after clients are updated to supply it.
+                plan = new VsoPlanInfo
                 {
                     Subscription = Guid.Empty.ToString(),
                     ResourceGroup = "none",
@@ -819,11 +821,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             else
             {
                 Requires.Argument(
-                    VsoAccountInfo.TryParse(cloudEnvironment.AccountId, out account),
-                    nameof(cloudEnvironment.AccountId),
-                    "Invalid account ID");
+                    VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out plan),
+                    nameof(cloudEnvironment.PlanId),
+                    "Invalid plan ID");
 
-                account.Location = cloudEnvironment.Location;
+                plan.Location = cloudEnvironment.Location;
             }
 
             var environment = new EnvironmentBillingInfo
@@ -841,7 +843,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             };
 
             await BillingEventManager.CreateEventAsync(
-                account, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
+                plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
 
             cloudEnvironment.State = state;
         }

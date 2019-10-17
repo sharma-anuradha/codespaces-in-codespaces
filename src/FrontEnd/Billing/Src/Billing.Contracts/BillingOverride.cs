@@ -4,7 +4,7 @@
 
 using System;
 using Microsoft.VsSaaS.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -35,10 +35,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public string Subscription { get; set; }
 
         /// <summary>
-        /// Gets or sets the Account the billing override applies to.
+        /// Gets or sets the SkuPlan the billing override applies to.
         /// </summary>
-        [JsonProperty(Required = Required.AllowNull, PropertyName = "account")]
-        public VsoAccountInfo Account { get; set; }
+        [JsonProperty(Required = Required.AllowNull, PropertyName = "plan")]
+        public VsoPlanInfo Plan { get; set; }
 
         /// <summary>
         /// Gets or sets the override state

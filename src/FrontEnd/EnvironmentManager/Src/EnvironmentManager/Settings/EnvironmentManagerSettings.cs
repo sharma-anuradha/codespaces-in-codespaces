@@ -12,6 +12,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// <summary>
         /// Gets or sets the Cloud Environment Quota.
         /// </summary>
-        public int PerUserEnvironmentQuota { get; set; }
+        public int MaxEnvironmentsPerPlan { get; set; }
     }
 }

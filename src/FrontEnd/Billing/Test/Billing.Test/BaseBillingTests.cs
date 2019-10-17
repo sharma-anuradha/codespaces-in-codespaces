@@ -1,6 +1,6 @@
 ﻿using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Newtonsoft.Json;
@@ -14,25 +14,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
     {
         public static readonly string subscription = Guid.NewGuid().ToString();
         public static readonly string smallLinuxSKuName = "smallLinuxSku";
-        public static readonly VsoAccountInfo testAccount = new VsoAccountInfo
+        public static readonly VsoPlanInfo testPlan = new VsoPlanInfo
         {
             Subscription = subscription,
             ResourceGroup = "testRG",
-            Name = "testAccount",
+            Name = "testPlan",
             Location = AzureLocation.WestUs2,
         };
-        public static readonly VsoAccountInfo testAccount2 = new VsoAccountInfo
+        public static readonly VsoPlanInfo testPlan2 = new VsoPlanInfo
         {
             Subscription = subscription,
             ResourceGroup = "testRG",
-            Name = "testAccount2",
+            Name = "testPlan2",
             Location = AzureLocation.WestUs2,
         };
-        public static readonly VsoAccountInfo testAccount3 = new VsoAccountInfo
+        public static readonly VsoPlanInfo testPlan3 = new VsoPlanInfo
         {
             Subscription = subscription,
             ResourceGroup = "testRG",
-            Name = "testAccount3",
+            Name = "testPlan3",
             Location = AzureLocation.WestUs2,
         };
         public static readonly EnvironmentBillingInfo testEnvironment = new EnvironmentBillingInfo

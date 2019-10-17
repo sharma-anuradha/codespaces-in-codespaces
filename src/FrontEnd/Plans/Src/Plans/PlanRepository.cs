@@ -1,4 +1,4 @@
-﻿// <copyright file="AccountRepository.cs" company="Microsoft">
+﻿// <copyright file="PlanRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,21 +9,21 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
-    [DocumentDbCollectionId(AccountCollectionId)]
-    public class AccountRepository : DocumentDbCollection<VsoAccount>, IAccountRepository
+    [DocumentDbCollectionId(PlanCollectionId)]
+    public class PlanRepository : DocumentDbCollection<VsoPlan>, IPlanRepository
     {
-        public const string AccountCollectionId = "environment_billing_accounts";
+        public const string PlanCollectionId = "environment_billing_plans";
 
-        public AccountRepository(
-            IOptions<DocumentDbCollectionOptions> options,
+        public PlanRepository(
+            IOptions<DocumentDbCollectionOptions> collectionOptions,
             IDocumentDbClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues)
             : base(
-                new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                new DocumentDbCollectionOptionsSnapshot(collectionOptions, ConfigureOptions),
                 clientProvider,
                 healthProvider,
                 loggerFactory,
@@ -41,12 +41,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
             options.PartitioningStrategy = PartitioningStrategy.Custom;
             options.CustomPartitionKeyPaths = new[]
             {
-                // Partitioning on Subscription ID under the Account object
-                "/account/subscription",
+                // Partitioning on Subscription ID under the SkuPlan object
+                "/plan/subscription",
             };
             options.CustomPartitionKeyFunc = (entity) =>
             {
-                return new PartitionKey(((VsoAccount)entity).Account?.Subscription);
+                return new PartitionKey(((VsoPlan)entity).Plan?.Subscription);
             };
         }
     }

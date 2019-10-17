@@ -86,8 +86,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the fully-qualified Azure resource id of the Account object.
         /// </summary>
-        [JsonProperty(Required = Required.Default, PropertyName = "accountId")]
-        public string AccountId { get; set; }
+        [JsonProperty(Required = Required.Default, PropertyName = "planId")]
+        public string PlanId { get; set; }
 
         /// <summary>
         /// Gets or sets the environment sku name.

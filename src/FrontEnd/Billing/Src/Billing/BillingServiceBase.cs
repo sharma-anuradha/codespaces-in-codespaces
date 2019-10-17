@@ -64,20 +64,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var start = absoluteDate.Subtract(TimeSpan.FromHours(lookBackThresholdHrs));
             var end = absoluteDate;
             var controlPlaneRegions = controlPlaneInfo.GetAllDataPlaneLocations().Shuffle();
-            var accountShards = billingEventManager.GetShards();
-            var accountsToRegionsShards = accountShards.SelectMany(x => controlPlaneRegions, (accountShard, region) => new { accountShard, region });
+            var planShards = billingEventManager.GetShards();
+            var plansToRegionsShards = planShards.SelectMany(x => controlPlaneRegions, (planShard, region) => new { planShard, region });
 
             logger.FluentAddValue("startCalculationTime", start);
             logger.FluentAddValue("endCalculationTime", end);
 
             await taskHelper.RunBackgroundEnumerableAsync(
                 $"{ServiceName}-run",
-                accountsToRegionsShards,
+                plansToRegionsShards,
                 async (x, childlogger) =>
                 {
-                    var accountShard = x.accountShard;
+                    var planShard = x.planShard;
                     var region = x.region;
-                    var leaseName = $"{ServiceName}-{accountShard}-{region}";
+                    var leaseName = $"{ServiceName}-{planShard}-{region}";
                     childlogger.FluentAddBaseValue("Service", "billingservices");
                     childlogger.FluentAddBaseValue("leaseName", leaseName);
                     using (var lease = await claimedDistributedLease.Obtain(
@@ -88,14 +88,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     {
                         if (lease != null)
                         {
-                            await ExecuteInner(childlogger, start, end, accountShard, region);
+                            await ExecuteInner(childlogger, start, end, planShard, region);
                         }
                     }
                 },
                 logger);
         }
 
-        protected abstract Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string accountShard, AzureLocation region);
+        protected abstract Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string planShard, AzureLocation region);
 
     }
 }

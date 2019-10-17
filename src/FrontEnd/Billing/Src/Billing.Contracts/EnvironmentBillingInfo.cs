@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         /// <summary>
         /// Gets or sets the Cloud Environments (VSLS) profile ID of the user of the environment
-        /// (not necessarily the account owner).
+        /// (not necessarily the plan owner).
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "userId")]
         public string UserId { get; set; }

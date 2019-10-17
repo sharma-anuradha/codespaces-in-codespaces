@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 NewValue = "two",
             };
             var bev = await this.manager.CreateEventAsync(
-                testAccount,
+                testPlan,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
                 stateChange,
@@ -81,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     NewValue = i.ToString(),
                 };
                 await this.manager.CreateEventAsync(
-                    testAccount,
+                    testPlan,
                     testEnvironment,
                     BillingEventTypes.EnvironmentStateChange,
                     stateChange,
@@ -91,8 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 await Task.Delay(1);
             }
 
-            var allEvents = (await this.manager.GetAccountEventsAsync(
-                testAccount,
+            var allEvents = (await this.manager.GetPlanEventsAsync(
+                testPlan,
                 startTime,
                 DateTime.UtcNow,
                 eventTypes,
@@ -130,7 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 Id = Guid.NewGuid().ToString(),
                 Time = DateTime.UtcNow,
-                Account = testAccount,
+                Plan = testPlan,
                 Environment = testEnvironment,
                 Type = BillingEventTypes.EnvironmentStateChange,
                 Args = new BillingStateChange
@@ -211,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 Id = Guid.NewGuid().ToString(),
                 Time = DateTime.UtcNow,
-                Account = testAccount,
+                Plan = testPlan,
                 Environment = testEnvironment,
                 Type = BillingEventTypes.BillingSummary,
                 Args = billingSummary,
@@ -252,46 +252,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         }
 
         [Fact]
-        public async Task GetAccounts()
+        public async Task GetPlans()
         {
             var startTime = await CreateMockBillingData(includeSummaries: true);
 
-            var accounts = (await this.manager.GetAccountsAsync(startTime, DateTime.UtcNow, logger, new AzureLocation[] { AzureLocation.WestUs2 })).ToList();
+            var plans = (await this.manager.GetPlansAsync(startTime, DateTime.UtcNow, logger, new AzureLocation[] { AzureLocation.WestUs2 })).ToList();
 
-            Assert.Equal(2, accounts.Count);
-            Assert.Contains(testAccount, accounts);
-            Assert.Contains(testAccount2, accounts);
+            Assert.Equal(2, plans.Count);
+            Assert.Contains(testPlan, plans);
+            Assert.Contains(testPlan2, plans);
         }
 
         [Fact]
-        public async Task GetAccountEvents()
+        public async Task GetPlanEvents()
         {
             var startTime = await CreateMockBillingData(includeSummaries: true);
 
-            var accountEvents = (await this.manager.GetAccountEventsAsync(
-                testAccount, startTime, DateTime.UtcNow, eventTypes: null, logger)).ToList();
+            var accountEvents = (await this.manager.GetPlanEventsAsync(
+                testPlan, startTime, DateTime.UtcNow, eventTypes: null, logger)).ToList();
 
             Assert.Equal(3, accountEvents.Count);
-            Assert.True(accountEvents.All(bev => bev.Account == testAccount));
+            Assert.True(accountEvents.All(bev => bev.Plan == testPlan));
 
-            var accountEvents2 = (await this.manager.GetAccountEventsAsync(
-                testAccount2, startTime, DateTime.UtcNow, eventTypes: null, logger)).ToList();
+            var accountEvents2 = (await this.manager.GetPlanEventsAsync(
+                testPlan2, startTime, DateTime.UtcNow, eventTypes: null, logger)).ToList();
 
             Assert.Equal(5, accountEvents2.Count);
-            Assert.True(accountEvents2.All(bev => bev.Account == testAccount2));
+            Assert.True(accountEvents2.All(bev => bev.Plan == testPlan2));
         }
 
         private async Task<DateTime> CreateMockBillingData(bool includeSummaries)
         {
             await this.manager.CreateEventAsync(
-                testAccount3,
+                testPlan3,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "zero", NewValue = "one" },
                 logger);
 
             await this.manager.CreateEventAsync(
-                testAccount,
+                testPlan,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "zero", NewValue = "one" },
@@ -301,26 +301,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             DateTime startTime = DateTime.UtcNow;
             
             await this.manager.CreateEventAsync(
-                testAccount,
+                testPlan,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "one", NewValue = "two" },
                 logger);
             await this.manager.CreateEventAsync(
-                testAccount,
+                testPlan,
                 testEnvironment2,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "two", NewValue = "three" },
                 logger);
 
             await this.manager.CreateEventAsync(
-                testAccount2,
+                testPlan2,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "one", NewValue = "two" },
                 logger);
             await this.manager.CreateEventAsync(
-                testAccount2,
+                testPlan2,
                 testEnvironment2,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "two", NewValue = "three" },
@@ -332,7 +332,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 var summaryTime = DateTime.UtcNow;
 
                 await this.manager.CreateEventAsync(
-                    testAccount,
+                    testPlan,
                     null,
                     BillingEventTypes.BillingSummary,
                     new BillingSummary
@@ -375,7 +375,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     },
                     logger); ;
                 await this.manager.CreateEventAsync(
-                    testAccount2,
+                    testPlan2,
                     null,
                     BillingEventTypes.BillingSummary,
                     new BillingSummary
@@ -422,13 +422,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             await Task.Delay(1);
 
             await this.manager.CreateEventAsync(
-                testAccount2,
+                testPlan2,
                 testEnvironment2,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "two", NewValue = "four" },
                 logger);
             await this.manager.CreateEventAsync(
-                testAccount2,
+                testPlan2,
                 testEnvironment2,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "four", NewValue = "five" },

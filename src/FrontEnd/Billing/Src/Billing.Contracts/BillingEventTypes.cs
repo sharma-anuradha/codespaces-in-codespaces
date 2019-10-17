@@ -8,18 +8,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     {
         /// <summary>
         /// Event that occurs when we are notified by our RP that a subscription state changed.
-        /// An initial event should also be emitted when each account is created.
+        /// An initial event should also be emitted when each plan is created.
         /// </summary>
         /// <seealso cref="SubscriptionStates" />
         /// <seealso cref="BillingStateChange" />
         public const string SubscriptionStateChange = "subscriptionStateChange";
 
         /// <summary>
-        /// Event that occurrs when we are notified by our RP that an account plan (SKU)
-        /// changed. Events must also be emitted when each account is created and deleted.
+        /// Event that occurrs when we are notified by our RP that an plan plan (SKU)
+        /// changed. Events must also be emitted when each plan is created and deleted.
         /// </summary>
         /// <seealso cref="BillingStateChange" />
-        public const string AccountPlanChange = "accountPlanChange";
+        public const string AccountPlanChange = "planPlanChange";
 
         /// <summary>
         /// Event that occurrs when a cloud environment state changes (including creation and deletion).

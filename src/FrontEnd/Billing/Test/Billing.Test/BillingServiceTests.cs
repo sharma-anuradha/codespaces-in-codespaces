@@ -1,5 +1,5 @@
 ﻿using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Moq;
@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Provisioning),
@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Available),
@@ -65,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Created),
@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Available),
@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Shutdown),
@@ -106,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Created),
@@ -118,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Created),
@@ -131,7 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Available),
@@ -144,7 +144,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
-                Account = testAccount,
+                Plan = testPlan,
                 Args = new BillingStateChange
                 {
                     OldValue = nameof(CloudEnvironmentState.Available),
@@ -182,7 +182,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EndTime = TestTimeNow.AddHours(12),
             BillingOverrideState = BillingOverrideState.BillingDisabled,
             Priority = 2,
-            Subscription = testAccount.Subscription,
+            Subscription = testPlan.Subscription,
         };
 
         public static readonly BillingOverride BillingOverrideAccount = new BillingOverride()
@@ -192,7 +192,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EndTime = TestTimeNow.AddHours(12),
             BillingOverrideState = BillingOverrideState.BillingDisabled,
             Priority = 3,
-            Account = testAccount,
+            Plan = testPlan,
         };
 
         public static readonly BillingOverride BillingOverrideSKU = new BillingOverride()
@@ -600,7 +600,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             BillingSummary expectedSummary)
         {
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testAccount, inputEvents, inputSummary, TestTimeNow);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow);
 
             // Compare total billable units
             Assert.Equal(expectedSummary.Usage.First().Value, actualSummary.Usage.First().Value, 2);
@@ -648,7 +648,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             await this.overrideRepository.CreateAsync(billOverride, logger);
 
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testAccount, inputEvents, inputSummary, TestTimeNow);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -667,7 +667,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             await this.overrideRepository.CreateAsync(billingOverride, logger);
 
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testAccount, inputEvents, inputSummary, TestTimeNow);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -682,7 +682,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             BillingSummary expectedSummary)
         {
             // BIlling Service
-            var actualSummary = await billingService.CaculateBillingForEnvironmentsWithNoEvents(testAccount,
+            var actualSummary = await billingService.CaculateBillingForEnvironmentsWithNoEvents(testPlan,
                                                                                         currentSummary,
                                                                                         latestBillingEvent,
                                                                                         TestTimeNow);

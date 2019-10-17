@@ -3,15 +3,17 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.AppService.Fluent.Models;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
@@ -23,7 +25,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
     /// <summary>
-    /// The VSO Account api called by RPSaaS.
+    /// The VSO SkuPlan api called by RPSaaS.
     /// </summary>
     [ApiController]
     [Authorize(Policy = "RPSaaSIdentity", AuthenticationSchemes = AuthenticationBuilderRPSaasExtensions.AuthenticationScheme)]
@@ -32,20 +34,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [LoggingBaseName("subscriptions_controller")]
     public class SubscriptionsController : ControllerBase
     {
-        private readonly IAccountManager accountManager;
+        private readonly IPlanManager planManager;
         private readonly ICurrentUserProvider currentUserProvider;
         private readonly ICloudEnvironmentManager cloudEnvironmentManager;
+        private const string planResourceType = "plans";
+        private const string resourceType = "Microsoft.VSOnline";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
         public SubscriptionsController(
-            IAccountManager accountManager, 
+            IPlanManager planManager, 
             ICurrentUserProvider currentUserProvider,
             ICloudEnvironmentManager cloudEnvironmentManager)
 
         {
-            this.accountManager = accountManager;
+            this.planManager = planManager;
             this.currentUserProvider = currentUserProvider;
             this.cloudEnvironmentManager = cloudEnvironmentManager;
         }
@@ -61,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
-            [FromBody] AccountResource resource)
+            [FromBody] PlanResource resource)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
@@ -72,13 +76,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
                 ValidationUtil.IsRequired(resourceName);
-
-                // TODO: Validate required resource.Properties.UserId.
+                ValidationUtil.IsRequired(resource.Properties?.UserId);
+                ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                        .LogErrorWithDetail("account_create_validate_error", ex.Message);
+                        .LogErrorWithDetail("plan_create_validate_error", ex.Message);
                 return CreateErrorResponse("NullParameters");
             }
 
@@ -88,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             logger.AddDuration(duration)
-                    .LogInfo("account_create_validate_success");
+                    .LogInfo("plan_create_validate_success");
 
             // Required response format in case validation pass with empty body.
             return new OkObjectResult(string.Empty);
@@ -105,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
-            [FromBody] AccountResource resource)
+            [FromBody] PlanResource resource)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
@@ -123,15 +128,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsTrue(
                     Enum.TryParse(nospacesLocation, true, out AzureLocation location),
                     $"Invalid location: ${resource.Location}");
+                ValidationUtil.IsRequired(resource.Properties?.UserId);
+                ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                if (resource.Properties == null)
+                var plan = new VsoPlan
                 {
-                    resource.Properties = new AccountResourceProperties();
-                }
-
-                var account = new VsoAccount
-                {
-                    Account = new VsoAccountInfo
+                    Plan = new VsoPlanInfo
                     {
                         Location = location,
                         Name = resourceName,
@@ -141,14 +144,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     UserId = resource.Properties.UserId,
                 };
 
-                await this.accountManager.CreateOrUpdateAsync(account, logger);
+                await this.planManager.CreateOrUpdateAsync(plan, logger);
 
                 // Clear the userId property so it will not be stored on the created ARM resource.
-                // It will only be saved internally by the account manager.
+                // It will only be saved internally by the plan manager.
                 resource.Properties.UserId = null;
-                logger.AddAccount(account.Account)
+                logger.AddVsoPlan(plan.Plan)
                         .AddDuration(duration)
-                        .LogInfo("account_create_success");
+                        .LogInfo("plan_create_success");
 
                 // Required response format.
                 return CreateResponse(HttpStatusCode.OK, resource);
@@ -156,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                        .LogErrorWithDetail("account_create_error", ex.Message);
+                        .LogErrorWithDetail("plan_create_error", ex.Message);
                 return CreateErrorResponse("CreateResourceFailed");
             }
         }
@@ -192,8 +195,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
                 ValidationUtil.IsRequired(resourceName);
+                ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                var account = new VsoAccountInfo
+                var plan = new VsoPlanInfo
                 {
                     Name = resourceName,
                     ResourceGroup = resourceGroup,
@@ -201,52 +206,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 };
 
                 var environments = await cloudEnvironmentManager.ListEnvironmentsAsync(
-                    ownerId: null, name: null, account.ResourceId, logger);
+                    ownerId: null, name: null, plan.ResourceId, logger);
                 var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                 if (nonDeletedEnvironments.Any())
                 {
                     foreach (var environment in nonDeletedEnvironments)
                     {
                         var childLogger = logger.NewChildLogger()
-                                                .AddAccount(account);
+                                                .AddVsoPlan(plan);
 
-                        Task.Run(async () =>
-                        {
-                            try
-                            {
-                                var result = await cloudEnvironmentManager.DeleteEnvironmentAsync(environment.Id, environment.OwnerId, childLogger);
-                                if (!result)
-                                {
-                                    childLogger.AddCloudEnvironment(environment)
-                                                .AddDuration(duration)
-                                                .LogError("account_delete_environment_delete_error");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                childLogger.AddDuration(duration)
-                                            .LogErrorWithDetail("account_delete_environment_delete_error", ex.Message);
-                            }
-                        });
+                        _ = Task.Run(async () =>
+                          {
+                              try
+                              {
+                                  var result = await cloudEnvironmentManager.DeleteEnvironmentAsync(environment.Id, environment.OwnerId, childLogger);
+                                  if (!result)
+                                  {
+                                      childLogger.AddCloudEnvironment(environment)
+                                                  .AddDuration(duration)
+                                                  .LogError("plan_delete_environment_delete_error");
+                                  }
+                              }
+                              catch (Exception ex)
+                              {
+                                  childLogger.AddDuration(duration)
+                                              .LogErrorWithDetail("plan_delete_environment_delete_error", ex.Message);
+                              }
+                          });
                     }
 
-                    logger.AddAccount(account)
+                    logger.AddVsoPlan(plan)
                             .AddDuration(duration)
                             .FluentAddValue("Count", $"{nonDeletedEnvironments.Count()}")
-                            .LogInfo("account_delete_environment_delete_success");
+                            .LogInfo("plan_delete_environment_delete_success");
                 }
 
-                var response = await this.accountManager.DeleteAsync(account, logger);
+                var response = await this.planManager.DeleteAsync(plan, logger);
                 if (!response)
                 {
-                    logger.AddAccount(account)
+                    logger.AddVsoPlan(plan)
                             .AddDuration(duration)
-                            .LogError("account_delete_error");
+                            .LogError("plan_delete_error");
                     return CreateErrorResponse("DeleteFailed");
                 }
 
                 logger.AddDuration(duration)
-                        .LogInfo($"account_delete_success");
+                        .LogInfo($"plan_delete_success");
 
                 // Required response format in case validation pass with empty body.
                 return new OkObjectResult(string.Empty);
@@ -254,13 +259,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                        .LogErrorWithDetail("account_delete_error", ex.Message);
+                        .LogErrorWithDetail("plan_delete_error", ex.Message);
                 return CreateErrorResponse("DeleteFailed");
             }
         }
 
         /// <summary>
-        /// Gets a list of VSO Account objects filtered by the input subscriptionID and resourceGroup.
+        /// Gets a list of VSO Plan objects filtered by the input subscriptionID and resourceGroup.
         /// </summary>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}")]
@@ -277,27 +282,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(resourceGroup);
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
+                ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                var accounts = await this.accountManager.ListAsync(
+                var plans = await this.planManager.ListAsync(
                     userId: null, subscriptionId, resourceGroup, logger);
 
                 logger.AddDuration(duration)
-                       .LogInfo("account_list_by_resourcegroup_success");
+                       .LogInfo("plan_list_by_resourcegroup_success");
 
                 // Required response format.
-                return CreateResponse(HttpStatusCode.OK, accounts);
+                return CreateResponse(HttpStatusCode.OK, plans);
             }
             catch (Exception ex)
             {
-                logger.LogErrorWithDetail("account_list_by_resourcegroup_error", ex.Message);
+                logger.LogErrorWithDetail("plan_list_by_resourcegroup_error", ex.Message);
                 return CreateErrorResponse("GetResourceListFailed");
             }
         }
 
         /// <summary>
-        /// Gets a list of VSO Account objects filtered by the input subscriptionID.
+        /// Gets a list of VSO Plan objects filtered by the input subscriptionID.
         /// </summary>
-        /// <returns>Returns an Http status code and a list of VSO Account objects filtering by subscriptionID.</returns>
+        /// <returns>Returns an Http status code and a list of VSO SkuPlan objects filtering by subscriptionID.</returns>
         [HttpGet("{subscriptionId}/providers/{providerNamespace}/{resourceType}")]
         public async Task<IActionResult> OnResourceListGetBySubscription(
             string subscriptionId, string providerNamespace, string resourceType)
@@ -309,34 +316,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsRequired(subscriptionId);
                 ValidationUtil.IsRequired(providerNamespace);
                 ValidationUtil.IsRequired(resourceType);
+                ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                var accounts = await this.accountManager.ListAsync(
+                var plans = await this.planManager.ListAsync(
                     userId: null, subscriptionId, resourceGroup: null, logger);
 
                 logger.AddDuration(duration)
-                        .LogInfo("account_list_by_subscription_success");
+                        .LogInfo("plan_list_by_subscription_success");
 
                 // Required response format.
-                return CreateResponse(HttpStatusCode.OK, accounts);
+                return CreateResponse(HttpStatusCode.OK, plans);
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                        .LogErrorWithDetail("account_list_by_subscription_error", ex.Message);
+                        .LogErrorWithDetail("plan_list_by_subscription_error", ex.Message);
                 return CreateErrorResponse("GetResourceListFailed");
             }
         }
 
         /// <summary>
-        /// Gets a VSO Account object.
+        /// Gets a VSO Plan object.
         /// </summary>
-        /// <returns>Returns a Http status code and a VSO Account object.</returns>
+        /// <returns>Returns a Http status code and a VSO SkuPlan object.</returns>
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate")]
         public IActionResult OnResourceReadValidate(
             string subscriptionId, string resourceGroup, string providerNamespace, string resourceType, string resourceName)
         {
             // Used for pre-read validation only. The Resource is returned from RPSaaS(MetaRP) CosmosDB storage and not from here
             return new OkObjectResult(string.Empty);
+        }
+
+        /// <summary>
+        /// Validates the given resourceType.
+        /// </summary>
+        /// <param name="resourceType"></param>
+        /// <returns></returns>
+        private bool ResourceTypeIsValid(string resourceType)
+        {
+            return planResourceType.Equals(resourceType, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Validates the give resource provider.
+        /// </summary>
+        /// <param name="resourceProvider"></param>
+        /// <returns></returns>
+        private bool ResourceProviderIsValid(string resourceProvider)
+        {
+            return resourceProvider.Equals(resourceProvider, StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>

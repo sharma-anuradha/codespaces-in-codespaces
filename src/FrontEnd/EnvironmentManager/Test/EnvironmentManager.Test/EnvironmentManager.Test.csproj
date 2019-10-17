@@ -5,8 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Accounts\Src\Accounts\Accounts.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient\BackEndWebApiClient.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
@@ -15,6 +13,8 @@
     <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
+    <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Plans\Src\Plans\Plans.csproj" />
     <ProjectReference Include="..\..\Src\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />
     <ProjectReference Include="..\..\Src\EnvironmentManager\EnvironmentManager.csproj" />
     <ProjectReference Include="..\..\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />

@@ -42,12 +42,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             options.CustomPartitionKeyPaths = new[]
             {
                 // Billing events are partitioned by subscription ID. Most queries
-                // will filter on a specific account, which includes a subscription ID.
-                "/account/subscription",
+                // will filter on a specific plan, which includes a subscription ID.
+                "/plan/subscription",
             };
             options.CustomPartitionKeyFunc = (entity) =>
             {
-                return new PartitionKey(((BillingEvent)entity).Account?.Subscription);
+                return new PartitionKey(((BillingEvent)entity).Plan?.Subscription);
             };
         }
     }

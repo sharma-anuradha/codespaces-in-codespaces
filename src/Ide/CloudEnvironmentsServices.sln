@@ -65,11 +65,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpContracts", "..\Common\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Deploy", "..\Deploy\Deploy.csproj", "{0810F49C-9D4D-4834-8BFD-7EDB1CAA1364}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts", "..\FrontEnd\Accounts\Src\Accounts\Accounts.csproj", "{30F2E775-9CDF-4BA7-A9D9-B6A0DE7961E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Plans", "..\FrontEnd\Plans\Src\Plans\Plans.csproj", "{30F2E775-9CDF-4BA7-A9D9-B6A0DE7961E0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Contracts", "..\FrontEnd\Accounts\Src\Accounts.Contracts\Accounts.Contracts.csproj", "{9DA4348B-FBFC-44CE-A265-694A77A6BF55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Plans.Contracts", "..\FrontEnd\Plans\Src\Plans.Contracts\Plans.Contracts.csproj", "{9DA4348B-FBFC-44CE-A265-694A77A6BF55}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Test", "..\FrontEnd\Accounts\Test\Accounts.Test\Accounts.Test.csproj", "{39C9020C-DABA-44C2-A623-6724E1307E6A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Plans.Test", "..\FrontEnd\Plans\Test\Plans.Test\Plans.Test.csproj", "{39C9020C-DABA-44C2-A623-6724E1307E6A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackEndWebApiClient", "..\FrontEnd\BackEndWebApiClient\Src\BackEndWebApiClient\BackEndWebApiClient.csproj", "{8F6C84C3-6CAE-4FE3-8D43-806EBE662ED6}"
 EndProject

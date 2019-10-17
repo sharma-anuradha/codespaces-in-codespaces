@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -24,6 +26,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
     public class EnvironmentControllerTests
     {
+        private readonly IPlanRepository accountRepository;
+        private readonly PlanManager accountManager;
+        private readonly IDiagnosticsLoggerFactory loggerFactory;
+        private readonly IDiagnosticsLogger logger; 
+
+        public EnvironmentControllerTests()
+        {
+            loggerFactory = new DefaultLoggerFactory();
+            logger = loggerFactory.New();
+
+            this.accountRepository = new MockPlanRepository();
+            this.accountManager = new PlanManager(
+                this.accountRepository,
+                new PlanManagerSettings() { MaxPlansPerSubscription = 20 });
+        }
+
         [Fact]
         public void EnvironmentController_Constructor()
         {
@@ -37,9 +55,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var body = new CreateCloudEnvironmentBody 
             {
                 FriendlyName = "test-environment",
-                AccountId = "fake-account-id",
+                PlanId = (await GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
+                Location = "WestUs2",
             };
             var environmentController = CreateTestEnvironmentsController();
             var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
@@ -52,11 +71,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var skuCatalog = LoadSkuCatalog("prod-rel");
             var environmentController = CreateTestEnvironmentsController(skuCatalog);
 
-            var body = CreateBody("smallLinuxPreview", null);
+            var body = await CreateBodyAsync("smallLinuxPreview", "WestUs2");
             var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<CreatedResult>(actionResult);
 
-            body = CreateBody("smallWindowsPreview", null);
+            body = await CreateBodyAsync("smallWindowsPreview", "WestUs2");
             actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<CreatedResult>(actionResult);
         }
@@ -83,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 var location = AzureLocation.WestUs2.ToString();
                 if (sku.Enabled)
                 {
-                    var body = CreateBody(skuName, location);
+                    var body = await CreateBodyAsync(skuName, location);
                     var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
                     Assert.IsType<CreatedResult>(actionResult);
                 }
@@ -97,27 +116,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var environmentController = CreateTestEnvironmentsController(skuCatalog);
 
             // Redirect location
-            var body = CreateBody(null, AzureLocation.EastUs.ToString());
+            var body = await CreateBodyAsync(null, AzureLocation.EastUs.ToString());
             var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<RedirectResult>(actionResult);
 
             // Not supported location
-            body = CreateBody(null, AzureLocation.AustraliaCentral.ToString());
+            body = await CreateBodyAsync(null, AzureLocation.AustraliaCentral.ToString());
             actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<BadRequestObjectResult>(actionResult);
 
             // Not supported SKU
-            body = CreateBody("bad-sku", AzureLocation.WestUs2.ToString());
+            body = await CreateBodyAsync("bad-sku", AzureLocation.WestUs2.ToString());
             actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<BadRequestObjectResult>(actionResult);
         }
 
-        private static CreateCloudEnvironmentBody CreateBody(string skuName, string location)
+        private async Task<CreateCloudEnvironmentBody> CreateBodyAsync(string skuName, string location)
         {
             return new CreateCloudEnvironmentBody
             {
                 FriendlyName = "test-environment",
-                AccountId = "fake-account-id",
+                PlanId = (await GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
                 SkuName = skuName,
@@ -386,6 +405,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var appSettingsConfiguration = configuration.GetSection("AppSettings");
             var appSettings = appSettingsConfiguration.Get<AppSettingsBase>();
             return appSettings;
+        }
+
+        private async Task<VsoPlan> GeneratePlan(string planName = "Test")
+        {
+            var model = new VsoPlan
+            {
+                Plan = new VsoPlanInfo
+                {
+                    Name = planName,
+                    ResourceGroup = "myRG",
+                    Subscription = Guid.NewGuid().ToString(),
+                    Location = AzureLocation.WestUs2
+                },
+                UserId = "TestUser",
+            };
+
+            var serviceResult = await accountManager.CreateOrUpdateAsync(model, logger);
+            Assert.Equal(Plans.Contracts.ErrorCodes.Unknown, serviceResult.ErrorCode);
+            Assert.NotNull(serviceResult.VsoPlan);
+
+            return serviceResult.VsoPlan;
         }
     }
 }

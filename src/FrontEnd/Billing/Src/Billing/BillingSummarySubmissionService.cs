@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Initializes a new instance of the <see cref="BillingSummarySubmissionService"/> class.
         /// </summary>
         /// <param name="controlPlanInfo">Needed to find all available control plans</param>
-        /// <param name="billingEventManager">used to get billing summaries and accounts</param>
+        /// <param name="billingEventManager">used to get billing summaries and plan</param>
         /// <param name="logger">the logger</param>
         /// <param name="billingStorageFactory">used to get billing storage collections</param>
         /// <param name="claimedDistributedLease"></param>
@@ -62,25 +62,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             await Execute(cancellationToken);
         }
 
-        protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime startTime, DateTime endTime, string accountShard, AzureLocation region)
+        protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime startTime, DateTime endTime, string planShard, AzureLocation region)
         {
             var batchID = Guid.NewGuid().ToString();
             bool addedEntries = false;
-            var accounts = await billingEventManager.GetAccountsByShardAsync(
+            var plans = await billingEventManager.GetPlansByShardAsync(
                                                     startTime,
                                                     endTime,
                                                     logger,
                                                     new List<AzureLocation> { region },
-                                                    accountShard);
-            logger.LogInfo($"Submitting bill summaries for region {region} and shard {accountShard}");
-            foreach (var account in accounts)
+                                                    planShard);
+            logger.LogInfo($"Submitting bill summaries for region {region} and shard {planShard}");
+            foreach (var plan in plans)
             {
-                Expression<Func<BillingEvent, bool>> filter = bev => bev.Account == account &&
+                Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan &&
                                                  startTime <= bev.Time &&
                                                  bev.Time < endTime &&
                                                  bev.Type == BillingEventTypes.BillingSummary
                                                  && ((BillingSummary)bev.Args).SubmissionState == BillingSubmissionState.None;
-                var billingSummaries = await billingEventManager.GetAccountEventsAsync(filter, logger);
+                var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, logger);
                 foreach (var summary in billingSummaries)
                 {
                     addedEntries |= await ProcessSummary(summary, batchID);
@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 try
                 {
-                    logger.LogInfo($"Billing Submissions for {region} and shard {accountShard} were submitted to table, now submitting to queue");
+                    logger.LogInfo($"Billing Submissions for {region} and shard {planShard} were submitted to table, now submitting to queue");
 
                     // Get the storage mechanism for billing submission
                     var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
@@ -118,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             var billingSummary = billingEvent.Args as BillingSummary;
             var addedEntries = false;
-            var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(billingEvent.Account.Location);
+            var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(billingEvent.Plan.Location);
             var eventID = Guid.NewGuid();
             try
             {
@@ -133,10 +133,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             EventDateTime = billingSummary.PeriodEnd,
                             // TODO: EventID needs to have some other correlation to it for the case of multiple meters.
                             EventId = eventID,
-                            Location = MapPav2Location(billingEvent.Account.Location),
+                            Location = MapPav2Location(billingEvent.Plan.Location),
                             MeterID = meter,
-                            SubscriptionId = billingEvent.Account.Subscription,
-                            ResourceUri = billingEvent.Account.ResourceId,
+                            SubscriptionId = billingEvent.Plan.Subscription,
+                            ResourceUri = billingEvent.Plan.ResourceId,
                             Quantity = billingSummary.Usage[meter],
                         };
 
@@ -163,7 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to submit billing event for resourceID: {billingEvent.Account.ResourceId}" + ex.Message);
+                logger.LogError($"Failed to submit billing event for resourceID: {billingEvent.Plan.ResourceId}" + ex.Message);
                 throw;
             }
 

@@ -4,7 +4,7 @@
 
 using System;
 using Microsoft.VsSaaS.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Accounts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -22,10 +22,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public DateTime Time { get; set; }
 
         /// <summary>
-        /// Information about the account that the event relates to.
+        /// Information about the plan that the event relates to.
         /// </summary>
-        [JsonProperty(Required = Required.Always, PropertyName = "account")]
-        public VsoAccountInfo Account { get; set; }
+        [JsonProperty(Required = Required.Always, PropertyName = "plan")]
+        public VsoPlanInfo Plan { get; set; }
 
         /// <summary>
         /// Optional environment info. Required for some event types, but may be omitted

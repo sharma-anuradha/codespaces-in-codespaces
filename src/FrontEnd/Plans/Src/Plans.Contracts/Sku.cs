@@ -4,7 +4,7 @@
 
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Accounts
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
     /// <summary>
     /// Azure standard SKU model.

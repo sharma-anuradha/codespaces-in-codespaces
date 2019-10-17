@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
-    <ProjectReference Include="Accounts.Test\Accounts.Test.csproj" />
+    <ProjectReference Include="Plans.Test\Plans.Test.csproj" />
   </ItemGroup>
 
 </Project>
