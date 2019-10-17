@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             var query = new SqlQuerySpec(
                 @"SELECT TOP 1 *
-                FROM c 
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.isAssigned = @isAssigned
                     AND c.isReady = @isReady
@@ -91,8 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public async Task<int> GetPoolUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
-                @"SELECT VALUE COUNT(1) 
-                FROM c 
+                @"SELECT VALUE COUNT(1)
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.isAssigned = @isAssigned
                     AND c.isDeleted = @isDeleted
@@ -118,8 +118,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public async Task<int> GetPoolReadyUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
-                @"SELECT VALUE COUNT(1) 
-                FROM c 
+                @"SELECT VALUE COUNT(1)
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.isAssigned = @isAssigned
                     AND c.isReady = @isReady
@@ -143,8 +143,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public async Task<int> GetPoolUnassignedVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
-                @"SELECT VALUE COUNT(1) 
-                FROM c 
+                @"SELECT VALUE COUNT(1)
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.poolReference.versionCode = @poolVersionCode
                     AND c.isAssigned = @isAssigned
@@ -172,8 +172,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public async Task<int> GetPoolReadyUnassignedVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
-                @"SELECT VALUE COUNT(1) 
-                FROM c 
+                @"SELECT VALUE COUNT(1)
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.poolReference.versionCode = @poolVersionCode
                     AND c.isAssigned = @isAssigned
@@ -199,8 +199,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public async Task<int> GetPoolUnassignedNotVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
-                @"SELECT VALUE COUNT(1) 
-                FROM c 
+                @"SELECT VALUE COUNT(1)
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.poolReference.versionCode != @poolVersionCode
                     AND c.isAssigned = @isAssigned
@@ -228,8 +228,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public async Task<int> GetPoolReadyUnassignedNotVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
-                @"SELECT VALUE COUNT(1) 
-                FROM c 
+                @"SELECT VALUE COUNT(1)
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.poolReference.versionCode != @poolVersionCode
                     AND c.isAssigned = @isAssigned
@@ -256,7 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             var query = new SqlQuerySpec(
                 @"SELECT TOP @count VALUE c.id
-                FROM c 
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.isAssigned = @isAssigned
                     AND c.isDeleted = @isDeleted
@@ -282,7 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             var query = new SqlQuerySpec(
                 @"SELECT TOP @count VALUE c.id
-                FROM c 
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND c.poolReference.versionCode != @poolVersionCode
                     AND c.isAssigned = @isAssigned
@@ -310,7 +310,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             var query = new SqlQuerySpec(
                 @"SELECT TOP @count VALUE c
-                FROM c 
+                FROM c
                 WHERE c.poolReference.code = @poolCode
                     AND (
                            c.provisioningStatus = @operationStateFailed
@@ -323,6 +323,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                             (c.provisioningStatus = @operationStateInitialized
                              OR c.provisioningStatus = @operationStateInProgress
                             ) AND c.provisioningStatusChanged <= @operationFailedTimeLimit
+                        )
+                        OR (
+                            c.provisioningStatus = null
+                            AND c.created <= @operationFailedTimeLimit
                         )
                         OR (
                             (c.startingStatus = @operationStateInitialized

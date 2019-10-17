@@ -89,7 +89,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                     // Record the reason why this one is being deleted
                     var didFailStatus = false;
-                    if (record.ProvisioningStatus == OperationState.Failed
+                    if (record.ProvisioningStatus == null
+                        || record.ProvisioningStatus == OperationState.Failed
                         || record.ProvisioningStatus == OperationState.Cancelled
                         || record.StartingStatus == OperationState.Failed
                         || record.StartingStatus == OperationState.Cancelled
@@ -107,20 +108,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     var didFailProvisioning = false;
                     var didFailStarting = false;
                     var didFailDeleting = false;
+                    var operationFailedTimeLimit = DateTime.UtcNow.AddHours(-1);
                     if (record.ProvisioningStatus == OperationState.Failed
                         || record.ProvisioningStatus == OperationState.Cancelled
                         || ((record.ProvisioningStatus == OperationState.Initialized
                                 || record.ProvisioningStatus == OperationState.InProgress)
-                            && record.ProvisioningStatusChanged <= DateTime.UtcNow.AddHours(-1)))
+                            && record.ProvisioningStatusChanged <= operationFailedTimeLimit)
+                        || (record.ProvisioningStatus == null
+                            && record.Created <= operationFailedTimeLimit))
                     {
                         didFailProvisioning = true;
-                        reason = "FailProvisioning";
+                        reason = (record.ProvisioningStatus == null) ? "FailProvisioningNullStatus" : "FailProvisioning";
                     }
                     else if (record.StartingStatus == OperationState.Failed
                         || record.StartingStatus == OperationState.Cancelled
                         || ((record.StartingStatus == OperationState.Initialized
                                 || record.StartingStatus == OperationState.InProgress)
-                            && record.StartingStatusChanged <= DateTime.UtcNow.AddHours(-1)))
+                            && record.StartingStatusChanged <= operationFailedTimeLimit))
                     {
                         didFailStarting = true;
                         reason = "FailStarting";
@@ -129,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         || record.DeletingStatus == OperationState.Cancelled
                         || ((record.DeletingStatus == OperationState.Initialized
                                 || record.DeletingStatus == OperationState.InProgress)
-                            && record.DeletingStatusChanged <= DateTime.UtcNow.AddHours(-1)))
+                            && record.DeletingStatusChanged <= operationFailedTimeLimit))
                     {
                         didFailDeleting = true;
                         reason = "FailDeleting";
