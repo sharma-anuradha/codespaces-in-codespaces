@@ -38,8 +38,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         public IDictionary<string, string> ResourceTags { get; set; }
 
         /// <summary>
-        /// Gets or sets the blob url used for file share preparation.
+        /// Gets or sets the array of items to copy to the file share.
         /// </summary>
-        public string StorageBlobUrl { get; set; }
+        public IEnumerable<StorageCopyItem> StorageCopyItems { get; set; }
     }
 }

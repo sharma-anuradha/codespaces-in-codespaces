@@ -24,6 +24,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private const string MockStorageAccountKey = "SecretKey";
         private const string MockStorageShareName = "cloudenvdata";
         private const string MockStorageFileName = "dockerlib";
+        private const StorageType MockStorageBlobType = StorageType.Linux;
+        private static readonly StorageCopyItem MockStorageCopyItem = new StorageCopyItem()
+        {
+            SrcBlobUrl = MockStorageBlobUrl,
+            StorageType = MockStorageBlobType,
+        };
         private static readonly Guid MockSubscriptionId = Guid.Parse("a058a07c-dfbb-4501-82a2-fa0bb37ec166");
         private static readonly AzureResourceInfo MockAzureResourceInfo = new AzureResourceInfo(MockSubscriptionId, MockResourceGroup, MockStorageAccountName);
         private static readonly PrepareFileShareTaskInfo MockPrepareTaskInfo = new PrepareFileShareTaskInfo("job1", "task1", MockLocation);
@@ -60,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .Setup(x => x.CreateFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
             providerHelperMoq
-                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageCopyItem[]>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockPrepareTaskInfo);
 
             providerHelperMoq
@@ -77,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 AzureResourceGroup = MockResourceGroup,
                 AzureLocation = MockLocation,
                 AzureSubscription = MockSubscriptionId.ToString(),
-                StorageBlobUrl = MockStorageBlobUrl,
+                StorageCopyItems = new[] { MockStorageCopyItem },
                 ResourceTags = MockResourceTags,
             };
 
@@ -132,7 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 AzureResourceGroup = MockResourceGroup,
                 AzureLocation = MockLocation,
                 AzureSubscription = MockSubscriptionId.ToString(),
-                StorageBlobUrl = MockStorageBlobUrl,
+                StorageCopyItems = new[] { MockStorageCopyItem },
                 ResourceTags = MockResourceTags,
             };
             var result = await storageProvider.CreateAsync(input, logger);
@@ -214,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 MockStorageShareName,
                 MockStorageFileName);
             providerHelperMoq
-                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageType>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockConnInfo));
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             var input = new FileShareProviderAssignInput()
@@ -253,7 +259,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
-                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageType>(), It.IsAny<IDiagnosticsLogger>()))
                 .Throws(new Exception());
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             FileShareProviderAssignInput input = new FileShareProviderAssignInput()

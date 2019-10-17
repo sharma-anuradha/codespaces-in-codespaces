@@ -34,9 +34,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         // File share template info (storage account should be in same Azure subscription as above)
         private static readonly string fileShareTemplateStorageAccount = "vsodevciusw2siusw2";
         private static readonly string fileShareTemplateContainerName = "templates";
-        private static readonly string fileShareTemplateBlobName = "cloudenvdata_kitchensink_1.0.802-gd48f49b5ef087333264e189bb12a7b8df825c334.release22.2";
+        private static readonly string fileShareTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.802-gd48f49b5ef087333264e189bb12a7b8df825c334.release22.2";
+        private static readonly string fileShareTemplateBlobNameWindows = "cloudenvdata_kitchensink_1.0.1008-g33c1a463062d75d12b0a8520c114a86af1644e6e.release136.disk.vhdx";
         private static readonly string batchAccountResourceGroup = "vsclk-online-dev-ci-usw2";
-        private static readonly string batchAccountName = "vsodevcibatchusw2usw2";
+        private static readonly string batchAccountName = "vsodevciusw2bausw2";
         private static readonly string batchPoolId = "storage-worker-pool";
         private static readonly string azureLocationStr = "westus2";
         private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
@@ -111,7 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             return azure;
         }
 
-        private static async Task<string> GetSrcBlobUrlAsync(IAzure azure)
+        private static async Task<string> GetSrcBlobUrlAsync(IAzure azure, string srcBlobName)
         {
             // Get storage account key
             var storageAccountsInSubscription = await azure.StorageAccounts.ListAsync();
@@ -123,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var blobRef = new CloudStorageAccount(storageCreds, useHttps: true)
                 .CreateCloudBlobClient()
                 .GetContainerReference(fileShareTemplateContainerName)
-                .GetBlobReference(fileShareTemplateBlobName);
+                .GetBlobReference(srcBlobName);
             var blobSas = blobRef.GetSharedAccessSignature(new SharedAccessBlobPolicy {
                     Permissions = SharedAccessBlobPermissions.Read,
                     SharedAccessExpiryTime = DateTime.UtcNow.AddHours(12) // Allow time for blob copy and debugging, etc.
@@ -148,7 +149,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var azure = await GetAzureClient(catalogMoq.Object);
             var storageProviderSettings = new StorageProviderSettings() { WorkerBatchPoolId = batchPoolId };
             var resourceAccessorMoq = GetMockControlPlaneAzureResourceAccessor(azure);
-            var srcBlobUrl = await GetSrcBlobUrlAsync(azure);
 
             // construct the real StorageFileShareProviderHelper
             IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(
@@ -172,8 +172,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 // Create file shares
                 await Task.WhenAll(storageAccounts.Select(sa => providerHelper.CreateFileShareAsync(sa, logger)));
 
-                // Start file share preparations
-                var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => providerHelper.StartPrepareFileShareAsync(sa, srcBlobUrl, logger)));
+                var linuxCopyItem = new StorageCopyItem()
+                {
+                    SrcBlobUrl = await GetSrcBlobUrlAsync(azure, fileShareTemplateBlobNameLinux),
+                    StorageType = StorageType.Linux,
+                };
+
+                var windowsCopyItem = new StorageCopyItem()
+                {
+                    SrcBlobUrl = await GetSrcBlobUrlAsync(azure, fileShareTemplateBlobNameWindows),
+                    StorageType = StorageType.Windows,
+                };
+
+                var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => providerHelper.StartPrepareFileShareAsync(sa, new[] { linuxCopyItem, windowsCopyItem }, logger)));
 
                 PrepareFileShareStatus[] fileShareStatus  = new PrepareFileShareStatus[NUM_STORAGE_TO_CREATE];
 

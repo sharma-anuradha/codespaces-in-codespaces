@@ -39,13 +39,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         private static readonly int StorageAccountNameMaxLength = 24;
         private static readonly int StorageAccountNameGenerateMaxAttempts = 3;
         private static readonly string StorageMountableShareName = "cloudenvdata";
-        private static readonly string StorageMountableFileName = "dockerlib";
         private static readonly string StorageAccountNamePrefix = "vsoce";
         private readonly string batchJobMetadataKey = "SourceBlobFilename";
         private readonly ISystemCatalog systemCatalog;
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
         private readonly StorageProviderSettings storageProviderSettings;
         private readonly IAzureClientFactory azureClientFactory;
+
+        private string GetStorageMountableFileName(StorageType storageType) => storageType == StorageType.Linux ? "dockerlib" : "windowsdisk.vhdx";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageFileShareProviderHelper"/> class.
@@ -147,18 +148,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <inheritdoc/>
         public async Task<PrepareFileShareTaskInfo> StartPrepareFileShareAsync(
             AzureResourceInfo azureResourceInfo,
-            string srcBlobUrl,
+            IEnumerable<StorageCopyItem> copyItems,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
-            Requires.NotNullOrEmpty(srcBlobUrl, nameof(srcBlobUrl));
+            Requires.NotNullOrEmpty(copyItems, nameof(copyItems));
             logger = logger.WithValue("AzureStorageAccountName", azureResourceInfo.Name);
 
             var azureSubscriptionId = azureResourceInfo.SubscriptionId;
             var azure = await azureClientFactory.GetAzureClientAsync(azureSubscriptionId);
-
-            var srcBlobUri = new Uri(srcBlobUrl);
-            var sourceBlobFilename = srcBlobUri.Segments.Last();
 
             try
             {
@@ -169,17 +167,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 var cloudStorageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
                 var fileClient = cloudStorageAccount.CreateCloudFileClient();
                 var fileShare = fileClient.GetShareReference(StorageMountableShareName);
-                var destFile = fileShare.GetRootDirectoryReference().GetFileReference(StorageMountableFileName);
+
+                // The SaS tokens applies to the entire file share where all items are copied to.
                 var destFileSas = fileShare.GetSharedAccessSignature(new SharedAccessFilePolicy()
                 {
                     Permissions = SharedAccessFilePermissions.Read | SharedAccessFilePermissions.Write,
                     SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4),
                 });
-                var destFileUriWithSas = destFile.Uri.AbsoluteUri + destFileSas;
+
+                var taskCopyCommands = new List<string>();
+                foreach (var copyItem in copyItems)
+                {
+                    var destFile = fileShare.GetRootDirectoryReference().GetFileReference(GetStorageMountableFileName(copyItem.StorageType));
+                    var destFileUriWithSas = destFile.Uri.AbsoluteUri + destFileSas;
+                    taskCopyCommands.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp $AZ_BATCH_NODE_SHARED_DIR/'{copyItem.SrcBlobFileName}' '{destFileUriWithSas}'");
+
+                    logger.FluentAddValue($"DestinationStorageFilePath-{copyItem.StorageType}", destFile.Uri.ToString());
+                }
 
                 // Define the task
+                var taskCommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", taskCopyCommands)}\"";
                 var taskId = azureResourceInfo.Name;
-                var taskCommandLine = $"/bin/bash -cxe \"printenv && $AZ_BATCH_NODE_SHARED_DIR/azcopy cp $AZ_BATCH_NODE_SHARED_DIR/'{sourceBlobFilename}' '{destFileUriWithSas}'\"";
                 var task = new CloudTask(taskId, taskCommandLine)
                 {
                     Constraints = new TaskConstraints(maxTaskRetryCount: 3, maxWallClockTime: TimeSpan.FromMinutes(20)),
@@ -191,7 +199,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 {
                     // Job ids can only contain any combination of alphanumeric characters along with dash (-) and underscore (_). The name must be from 1 through 64 characters long
                     // Source blob file names are used to find a Job so should be versioned (i.e. immutable files with no in-place updates)
-                    var job = GetActiveJobFromSourceBlobFilename(batchClient, sourceBlobFilename);
+                    // We will use just the first blob src url to track the job.
+                    var job = GetActiveJobFromSourceBlobFilename(batchClient, copyItems);
 
                     // If job is null, no currently defined Job is available to add this Task to.
                     // So we create a job to place this Task in.
@@ -199,17 +208,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     {
                         var jobId = Guid.NewGuid().ToString();
                         var poolInformation = new PoolInformation { PoolId = storageProviderSettings.WorkerBatchPoolId, };
-                        var jobPrepareCommandLine = $"/bin/bash -cxe \"printenv && $AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{srcBlobUrl}' $AZ_BATCH_NODE_SHARED_DIR/'{sourceBlobFilename}'\"";
-                        var jobReleaseCommandLine = $"/bin/bash -cxe \"printenv && rm $AZ_BATCH_NODE_SHARED_DIR/'{sourceBlobFilename}'\"";
+                        var jobPrepareCommandLines = new List<string>();
+                        var jobReleaseCommandLines = new List<string>();
+                        var jobMetadata = new List<MetadataItem>();
+
+                        foreach (var copyItem in copyItems)
+                        {
+                            jobPrepareCommandLines.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{copyItem.SrcBlobUrl}' $AZ_BATCH_NODE_SHARED_DIR/'{copyItem.SrcBlobFileName}'");
+                            jobReleaseCommandLines.Add($"rm $AZ_BATCH_NODE_SHARED_DIR/'{copyItem.SrcBlobFileName}'");
+                            jobMetadata.Add(new MetadataItem($"{batchJobMetadataKey}-{copyItem.StorageType}", copyItem.SrcBlobFileName));
+                        }
+
                         job = batchClient.JobOperations.CreateJob(jobId, poolInformation);
+                        job.Metadata = jobMetadata;
 
                         // Job preparation, release Task info - https://docs.microsoft.com/en-us/azure/batch/batch-job-prep-release#what-are-job-preparation-and-release-tasks
-                        job.JobPreparationTask = new JobPreparationTask { CommandLine = jobPrepareCommandLine };
-                        job.JobReleaseTask = new JobReleaseTask { CommandLine = jobReleaseCommandLine };
-                        job.Metadata = new List<MetadataItem>
-                        {
-                            new MetadataItem(batchJobMetadataKey, sourceBlobFilename),
-                        };
+                        job.JobPreparationTask = new JobPreparationTask { CommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", jobPrepareCommandLines)}\"" };
+                        job.JobReleaseTask = new JobReleaseTask { CommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", jobReleaseCommandLines)}\"" };
                         job.Constraints = new JobConstraints(maxWallClockTime: TimeSpan.FromDays(90));
 
                         await job.CommitAsync();
@@ -220,7 +235,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
                     logger.FluentAddValue("TaskId", taskId)
                         .FluentAddValue("TaskJobId", job.Id)
-                        .FluentAddValue("DestinationStorageFilePath", destFile.Uri.ToString())
                         .LogInfo("file_share_storage_provider_helper_start_prepare_file_share_complete");
 
                     return new PrepareFileShareTaskInfo(job.Id, task.Id, desiredBatchLocation);
@@ -302,6 +316,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <inheritdoc/>
         public async Task<ShareConnectionInfo> GetConnectionInfoAsync(
             AzureResourceInfo azureResourceInfo,
+            StorageType storageType,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
@@ -319,7 +334,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     storageAccountName,
                     storageAccountKey,
                     StorageMountableShareName,
-                    StorageMountableFileName);
+                    GetStorageMountableFileName(storageType));
                 logger.LogInfo("file_share_storage_provider_helper_connection_info_complete");
                 return shareConnectionInfo;
             }
@@ -404,13 +419,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             return BatchClient.Open(credentials);
         }
 
-        private CloudJob GetActiveJobFromSourceBlobFilename(BatchClient batchClient, string sourceBlobFilename)
+        private CloudJob GetActiveJobFromSourceBlobFilename(BatchClient batchClient, IEnumerable<StorageCopyItem> storageCopyItems)
         {
+            // Find the active job that has metadata matching all the copy items.
             var job = batchClient.JobOperations.ListJobs().FirstOrDefault(
                     j => j.State != null
                         && j.State == JobState.Active
                         && j.Metadata != null
-                        && j.Metadata.Any(m => m.Name == batchJobMetadataKey && m.Value == sourceBlobFilename));
+                        && storageCopyItems.All(copyItem => j.Metadata.Any(m => m.Name == $"{batchJobMetadataKey}-{copyItem.StorageType}" && m.Value == copyItem.SrcBlobFileName)));
             return job;
         }
     }

@@ -2,11 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions
 {
@@ -38,10 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         /// Prepare the file share by seeding it with the blob specified.
         /// </summary>
         /// <param name="azureResourceInfo">Azure resource info of the storage account.</param>
-        /// <param name="srcBlobUrl">Full url to blob to use (including SAS token with read permission to blob).</param>
+        /// <param name="storageCopyItems">Array of storage items to copy.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The task info that can be used to query the task</returns>
-        Task<PrepareFileShareTaskInfo> StartPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, string srcBlobUrl, IDiagnosticsLogger logger);
+        Task<PrepareFileShareTaskInfo> StartPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, IEnumerable<StorageCopyItem> storageCopyItems, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Check if the preparation of the file share has completed.
@@ -56,9 +56,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         /// Provides the connection information needed to connect to the file share.
         /// </summary>
         /// <param name="azureResourceInfo">Azure resource info of the storage account.</param>
+        /// <param name="storageType">The type of storage to get conneciton info for.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The connection information for the share.</returns>
-        Task<ShareConnectionInfo> GetConnectionInfoAsync(AzureResourceInfo azureResourceInfo, IDiagnosticsLogger logger);
+        Task<ShareConnectionInfo> GetConnectionInfoAsync(AzureResourceInfo azureResourceInfo, StorageType storageType, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Delete the storage account.

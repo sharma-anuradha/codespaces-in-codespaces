@@ -64,7 +64,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override async Task<ContinuationInput> BuildOperationInputAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
         {
-            var storageResult = await AssignStorageAsync(input, input.StorageResourceId, logger);
+            var computeOs = compute.Value.PoolReference.GetComputeOS();
+            var storageResult = await AssignStorageAsync(input, input.StorageResourceId, computeOs, logger);
             if (storageResult.Status != OperationState.Succeeded)
             {
                 return null;
@@ -84,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     storageResult.StorageShareName,
                     storageResult.StorageFileName),
                 input.EnvironmentVariables,
-                compute.Value.PoolReference.GetComputeOS(),
+                computeOs,
                 azureLocation,
                 null);
         }
@@ -95,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             return await ComputeProvider.StartComputeAsync((VirtualMachineProviderStartComputeInput)input.OperationInput, logger.WithValues(new LogValueSet()));
         }
 
-        private async Task<FileShareProviderAssignResult> AssignStorageAsync(StartEnvironmentContinuationInput input, Guid storageId, IDiagnosticsLogger logger)
+        private async Task<FileShareProviderAssignResult> AssignStorageAsync(StartEnvironmentContinuationInput input, Guid storageId, ComputeOS computeOS, IDiagnosticsLogger logger)
         {
             // Fetch storage reference
             var storage = await FetchReferenceAsync(storageId, logger);
@@ -107,6 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var fileShareProviderAssignInput = new FileShareProviderAssignInput
             {
                 AzureResourceInfo = storage.Value.AzureResourceInfo,
+                StorageType = computeOS == ComputeOS.Windows ? StorageType.Windows : StorageType.Linux,
             };
             var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, logger);
 

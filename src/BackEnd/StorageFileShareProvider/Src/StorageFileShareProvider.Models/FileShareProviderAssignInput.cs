@@ -15,5 +15,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// Gets or sets the azure resource info.
         /// </summary>
         public AzureResourceInfo AzureResourceInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the type of storage being assigned.
+        /// </summary>
+        public StorageType StorageType { get; set; }
     }
 }

@@ -13,7 +13,6 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
@@ -206,8 +205,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     var resourceLocation = await SelectAzureResourceLocation(
                         criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
 
-                    // Get Storage Blob Url
-                    var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, storageDetails.ImageName, TimeSpan.FromDays(100));
+                    var linuxCopyItem = new StorageCopyItem()
+                    {
+                        SrcBlobUrl = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, storageDetails.ImageName, TimeSpan.FromDays(100)),
+                        StorageType = StorageType.Linux,
+                    };
+
+                    // The name of the Windows blob is implied by the name of the Linux blob.
+                    // This is a limitation of the current schema for appsettings.images.json where only the image name is specified without knowledge of platform.
+                    // This works because both the Windows and Linux blobs are pushed at the same time with the same version, the Windows blob just has the ".disk.vhdx" postfix.
+                    var windowsCopyItem = new StorageCopyItem()
+                    {
+                        SrcBlobUrl = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, $"{storageDetails.ImageName}.disk.vhdx", TimeSpan.FromDays(100)),
+                        StorageType = StorageType.Windows,
+                    };
 
                     result = new FileShareProviderCreateInput
                     {
@@ -215,7 +226,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureSkuName = storageDetails.SkuName,
                         AzureSubscription = resourceLocation.Subscription.SubscriptionId,
                         AzureResourceGroup = resourceLocation.ResourceGroup,
-                        StorageBlobUrl = url,
+                        StorageCopyItems = new[] { linuxCopyItem, windowsCopyItem },
                         ResourceTags = resourceTags,
                     };
                 }

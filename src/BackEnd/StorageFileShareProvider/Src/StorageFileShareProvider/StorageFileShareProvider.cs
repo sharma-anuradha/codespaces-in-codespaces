@@ -98,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 {
                     childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
 
-                    var info = await providerHelper.GetConnectionInfoAsync(input.AzureResourceInfo, childLogger);
+                    var info = await providerHelper.GetConnectionInfoAsync(input.AzureResourceInfo, input.StorageType, childLogger);
                     var r = new FileShareProviderAssignResult(
                         info.StorageAccountName,
                         info.StorageAccountKey,
@@ -153,7 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         nextState = FileShareProviderCreateState.PrepareFileShare;
                         break;
                     case FileShareProviderCreateState.PrepareFileShare:
-                        prepareTaskInfo = await providerHelper.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageBlobUrl, logger);
+                        prepareTaskInfo = await providerHelper.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageCopyItems, logger);
                         nextState = FileShareProviderCreateState.CheckFileShare;
                         break;
                     case FileShareProviderCreateState.CheckFileShare:
