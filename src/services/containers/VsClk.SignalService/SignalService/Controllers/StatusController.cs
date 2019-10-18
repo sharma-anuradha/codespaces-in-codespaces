@@ -48,6 +48,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             {
                 this.presenceService.ServiceId,
                 Name = "vsclk-core-signalservice",
+                NumberOfProcessors = System.Environment.ProcessorCount,
                 this.startup.Environment,
                 ApplicationClientId = ApplicationServicePrincipal?.ClientId,
                 Health = new

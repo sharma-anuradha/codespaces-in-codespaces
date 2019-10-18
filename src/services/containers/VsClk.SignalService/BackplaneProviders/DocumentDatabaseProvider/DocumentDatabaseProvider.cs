@@ -16,7 +16,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Base class to all our backplane providers that are based on a document database 
     /// </summary>
-    public abstract class DocumentDatabaseProvider : IAsyncDisposable, IBackplaneProvider
+    public abstract class DocumentDatabaseProvider : VisualStudio.Threading.IAsyncDisposable, IBackplaneProvider
     {
         private const int StaleServiceSeconds = 120;
 

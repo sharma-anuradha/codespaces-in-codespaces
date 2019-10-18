@@ -25,6 +25,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string ConnectionScope = "Connection";
         public const string TotalContactsScope = "NumberOfContacts";
         public const string TotalConnectionsScope = "NumberOfConnections";
+        public const string MemorySizeScope = "MemorySize";
+        public const string TotalMemoryScope = "TotalMemory";
 
 
         public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, ContactReference contactReference, IFormatProvider formatProvider)

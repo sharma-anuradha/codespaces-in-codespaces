@@ -31,7 +31,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         // RU values for production
         private const int ServicesRUThroughput = 400;
         private const int ContactsRUThroughput = 5000;
-        private const int MessageRUThroughput = 400;
+        private const int MessageRUThroughput = 2000;
         private const int LeasesRUThroughput = 1000;
 
         // RU values for Development

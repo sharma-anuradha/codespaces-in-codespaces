@@ -21,7 +21,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// The non Hub Service class instance that manage all the registered contacts
     /// </summary>
-    public class PresenceService : HubService<PresenceServiceHub>, IAsyncDisposable
+    public class PresenceService : HubService<PresenceServiceHub>, VisualStudio.Threading.IAsyncDisposable
     {
         private readonly List<IBackplaneProvider> backplaneProviders = new List<IBackplaneProvider>();
 
@@ -48,7 +48,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             Logger.LogDebug($"Dispose");
 
-            foreach (var disposable in this.backplaneProviders.Cast<IAsyncDisposable>())
+            foreach (var disposable in this.backplaneProviders.Cast<VisualStudio.Threading.IAsyncDisposable>())
             {
                 await disposable.DisposeAsync();
             }
@@ -80,13 +80,20 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdateBackplaneMetrics(object serviceInfo, CancellationToken cancellationToken)
         {
+            const long OneMb = 1024 * 1024;
+
             var metrics = GetMetrics();
-            using (Logger.BeginScope(
+            using (var proc = System.Diagnostics.Process.GetCurrentProcess())
+            {
+                using (Logger.BeginScope(
                     (LoggerScopeHelpers.MethodScope, PresenceServiceScopes.MethodUpdateBackplaneMetrics),
                     (PresenceServiceScopes.TotalContactsScope, metrics.SelfCount),
-                    (PresenceServiceScopes.TotalConnectionsScope, metrics.TotalSelfCount)))
-            {
-                Logger.LogInformation($"serviceInfo:{serviceInfo} memory:{GC.GetTotalMemory(false)}");
+                    (PresenceServiceScopes.TotalConnectionsScope, metrics.TotalSelfCount),
+                    (PresenceServiceScopes.MemorySizeScope, proc.WorkingSet64 / OneMb),
+                    (PresenceServiceScopes.TotalMemoryScope, GC.GetTotalMemory(false) / OneMb)))
+                {
+                    Logger.LogInformation($"serviceInfo:{serviceInfo}");
+                }
             }
 
             foreach (var backplaneProvider in this.backplaneProviders)

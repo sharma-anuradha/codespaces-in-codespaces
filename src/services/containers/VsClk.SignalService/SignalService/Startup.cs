@@ -105,6 +105,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 // inject the Telemetry logger provider
                 services.ReplaceConsoleTelemetry((opts) =>
                 {
+                    // Our options on every telemetry log
                     opts.FactoryOptions = new Dictionary<string, object>()
                     {
                         { "Service", "signlr" },
@@ -121,7 +122,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.logger.LogInformation($"ConfigureServices -> env:{this._hostEnvironment.EnvironmentName}");
 
             // Frameworks
-            services.AddMvc();
+            services.AddMvc()
+#if _NETCORE3_
+                .AddMvcOptions(options => options.EnableEndpointRouting = false)
+#endif
+            ;
 
             // provide IHttpClientFactory
             services.AddHttpClient();
@@ -175,9 +180,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             services.AddSingleton<RelayService>();
 
             var signalRService = services.AddSignalR().AddJsonProtocol(options => {
+#if _NETCORE3_
+                options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+#else
                 // ensure we disable the camel case contract
                 options.PayloadSerializerSettings.ContractResolver =
                 new Newtonsoft.Json.Serialization.DefaultContractResolver();
+#endif
             });
 
             var applicationServicePrincipal = Configuration.GetSection(nameof(ApplicationServicePrincipal)).Get<ApplicationServicePrincipal>();

@@ -6,6 +6,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <LangVersion>Latest</LangVersion>
     <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
+    <IsPublishable>true</IsPublishable>
   </PropertyGroup>
 
   <ItemGroup>
