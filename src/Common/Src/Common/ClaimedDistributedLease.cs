@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     /// </summary>
     public class ClaimedDistributedLease : IClaimedDistributedLease
     {
+        private const string CurrentClaimPeriodName = nameof(CurrentClaimPeriodName);
         private static TimeSpan leaseTime = TimeSpan.FromMinutes(1);
         private static TimeSpan autoRenewLeaseTime = leaseTime - TimeSpan.FromSeconds(7.5);
 
@@ -178,11 +179,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                             .FluentAddValue("LeaseCurrentTime", DateTime.UtcNow);
 
                         // Touch file so that we can check LMT for the period logic
-                        await blob.UploadTextAsync(
-                            DateTime.UtcNow.ToString(),
-                            new AccessCondition() { LeaseId = id },
-                            new BlobRequestOptions(),
-                            new OperationContext());
+                        blob.Metadata[CurrentClaimPeriodName] = DateTime.UtcNow.ToString();
+
+                        await blob.SetMetadataAsync(
+                            new AccessCondition() { LeaseId = id }, new BlobRequestOptions(), new OperationContext());
 
                         // Force release lease
                         await blob.ReleaseLeaseAsync(acc);
@@ -200,8 +200,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             // Get attributes
             await blob.FetchAttributesAsync();
 
-            // If its already been updated in this claim period, don't do anything
-            return blob.Properties.LastModified.HasValue && blob.Properties.LastModified.Value.Date >= claimPeriod;
+            // Get last claimed
+            if (blob.Metadata.TryGetValue(CurrentClaimPeriodName, out string currentClaimPeriodValue))
+            {
+                var currentClaimPeriodDate = DateTime.Parse(currentClaimPeriodValue);
+
+                // If its already been updated in this claim period, don't do anything
+                return currentClaimPeriodDate >= claimPeriod;
+            }
+
+            // If no metdata, then we are good to go
+            return false;
         }
 
         private static string EnsureBlobSafeName(string name)
