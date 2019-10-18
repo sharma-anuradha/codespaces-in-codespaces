@@ -438,6 +438,8 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     private createEnvironment = async (event: SyntheticEvent<any, any>) => {
+        event.persist();
+
         if (
             !this.props.gitHubAccessToken &&
             (this.state.shouldTryToAuthenticateForDotfiles ||
@@ -466,7 +468,7 @@ export class CreateEnvironmentPanelView extends Component<
                     this.state.gitRepositoryUrl.value,
                     this.props.gitHubAccessToken
                 );
-                if (validationMessage === validationMessages.valid) {
+                if (validationMessage !== validationMessages.valid) {
                     throw new Error(validationMessages.noAccess);
                 }
 
