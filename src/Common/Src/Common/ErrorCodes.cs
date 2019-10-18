@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// Remote error codes.

@@ -3,9 +3,8 @@
 // </copyright>
 
 using System;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// Relays details about an unhandled exception thrown by the remote handler of an RPC request.

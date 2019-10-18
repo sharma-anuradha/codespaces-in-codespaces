@@ -64,6 +64,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     try
                     {
                         result = await InnerCreate(containerName, name, childLogger);
+
+                        childLogger.FluentAddValue("LeaseAlreadyPresent", false);
                     }
                     catch (StorageException e) when (e.RequestInformation.ErrorCode == "LeaseAlreadyPresent")
                     {

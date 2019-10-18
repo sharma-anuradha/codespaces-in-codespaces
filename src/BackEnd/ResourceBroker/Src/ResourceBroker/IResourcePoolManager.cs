@@ -29,5 +29,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         Task<ResourceRecord> TryGetAsync(
             string poolCode,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Releases resource record from assignment.
+        /// </summary>
+        /// <param name="resourceId">Target resource id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Running task.</returns>
+        Task ReleaseGetAsync(
+            string resourceId,
+            IDiagnosticsLogger logger);
     }
 }

@@ -144,11 +144,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     skuConfiguration.StorageImageFamily,
                     skuCatalogSettings.StorageImageFamilies);
 
+                var enabled = cloudEnvironmentSettings.Enabled && tierSettings.Enabled && defaultSkuConfiguration.Enabled;
+
                 var cloudEnvironment = new CloudEnvironmentSku(
                     skuName,
                     tier,
                     cloudEnvironmentSettings.DisplayName,
-                    cloudEnvironmentSettings.Enabled,
+                    enabled,
                     skuLocations,
                     tierSettings.ComputeSkuFamily,
                     tierSettings.ComputeSkuName,
@@ -162,8 +164,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     tierSettings.StorageSizeInGB,
                     cloudEnvironmentSettings.StorageVsoUnitsPerHour,
                     cloudEnvironmentSettings.ComputeVsoUnitsPerHour,
-                    cloudEnvironmentSettings.Enabled ? skuConfiguration.ComputePoolSize.GetValueOrDefault() : 0,
-                    cloudEnvironmentSettings.Enabled ? skuConfiguration.StoragePoolSize.GetValueOrDefault() : 0);
+                    enabled ? skuConfiguration.ComputePoolSize.GetValueOrDefault() : 0,
+                    enabled ? skuConfiguration.StoragePoolSize.GetValueOrDefault() : 0);
 
                 Skus.Add(skuName, cloudEnvironment);
             }

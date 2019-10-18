@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
@@ -46,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             await ResourceScalingBroker.UpdateResourceScaleLevels(new ScalingInput() { Pools = resourceSkus });
         }
 
-        private IList<ResourcePool> FlattenResourceSkus(IEnumerable<ICloudEnvironmentSku> cloudEnvironmentSku)
+        private IEnumerable<ResourcePool> FlattenResourceSkus(IEnumerable<ICloudEnvironmentSku> cloudEnvironmentSku)
         {
             /*
             Phase 0 (input):
@@ -212,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                 x => BuildScalingInput(x, ResourceType.ComputeVM, y => y.ComputeDetails, y => y.Environment.ComputePoolLevel));
 
             // Merge lists back together
-            var resourceSkus = new List<ResourcePool>(storageSkus).Concat(computeSkus).ToList();
+            var resourceSkus = new List<ResourcePool>(storageSkus).Concat(computeSkus);
 
             return resourceSkus;
         }

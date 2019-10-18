@@ -30,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 CustomPartitionKeyFunc = optionValue.CustomPartitionKeyFunc,
                 CustomPartitionKeyPaths = optionValue.CustomPartitionKeyPaths,
                 DisableCaching = optionValue.DisableCaching,
-                LogPreconditionFailedErrorsAsWarnings = true, // TODO: pull from here in the future optionValue.LogPreconditionFailedErrorsAsWarnings,
+                LogPreconditionFailedErrorsAsWarnings = true, // TODO: pull from here in the future optionValue.LogPreconditionFailedErrorsAsWarnings
                 PartitioningStrategy = optionValue.PartitioningStrategy,
             };
             configureOptions(localOptions);

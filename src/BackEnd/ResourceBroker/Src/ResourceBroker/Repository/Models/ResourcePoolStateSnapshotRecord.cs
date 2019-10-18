@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common.Models;
 
@@ -71,5 +72,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// Gets or sets a value indicating whether the pool is enabled or not.
         /// </summary>
         public bool IsEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time the pool was last updated.
+        /// </summary>
+        public DateTime Updated { get; set; }
     }
 }

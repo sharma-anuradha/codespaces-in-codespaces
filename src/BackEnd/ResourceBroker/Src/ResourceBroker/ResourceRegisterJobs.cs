@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
@@ -15,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     /// <summary>
     /// Registeres any jobs that need to be run on warmup.
     /// </summary>
-    public class ResourceRegisterJobs : IAsyncBackgroundWarmup
+    public class ResourceRegisterJobs : IAsyncWarmup, IAsyncBackgroundWarmup
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
@@ -83,7 +84,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private Random Random { get; }
 
         /// <inheritdoc/>
-        public async Task WarmupCompletedAsync(IDiagnosticsLogger logger)
+        public async Task WarmupCompletedAsync()
+        {
+            // Job: Watch Pool Settings
+            var watchPoolSettingsTaskSpan = TimeSpan.FromMinutes(1);
+            await TaskHelper.RunBackgroundLoopAsync(
+                $"{ResourceLoggingConstants.WatchPoolSettingsTask}_run",
+                (childLogger) => WatchPoolSettingsTask.RunAsync(childLogger),
+                watchPoolSettingsTaskSpan);
+        }
+
+        /// <inheritdoc/>
+        public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
         {
             // Job: Continuation Task Worker Pool Manager
             TaskHelper.RunBackground(
@@ -121,21 +133,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             await Task.Delay(Random.Next(5000, 7500));
 
             // Job: Watch Pool State
-            var watchPoolStateTaskSpan = TimeSpan.FromMinutes(2);
+            var watchPoolStateTaskSpan = TimeSpan.FromMinutes(1);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchPoolStateTask}_run",
                 (childLogger) => WatchPoolStateTask.RunAsync(watchPoolStateTaskSpan, childLogger),
                 watchPoolStateTaskSpan);
-
-            // Offset to help distribute inital load of recuring tasks
-            await Task.Delay(Random.Next(5000, 7500));
-
-            // Job: Watch Pool Settings
-            var watchPoolSettingsTaskSpan = TimeSpan.FromMinutes(2);
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.WatchPoolSettingsTask}_run",
-                (childLogger) => WatchPoolSettingsTask.RunAsync(childLogger),
-                watchPoolSettingsTaskSpan);
 
             await Task.Delay(Random.Next(5000, 7500));
 

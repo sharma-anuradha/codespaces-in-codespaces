@@ -103,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
                     (childLogger) => {
                         childLogger.FluentAddValue("ServiceName", service.GetType().Name);
 
-                        return service.WarmupCompletedAsync(childLogger);
+                        return service.BackgroundWarmupCompletedAsync(childLogger);
                     },
                     logger);
             }

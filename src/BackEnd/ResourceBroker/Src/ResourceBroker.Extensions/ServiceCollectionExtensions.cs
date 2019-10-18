@@ -4,6 +4,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -70,7 +71,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
 
             // Jobs
-            services.AddSingleton<IAsyncBackgroundWarmup, ResourceRegisterJobs>();
+            services.AddSingleton<ResourceRegisterJobs>();
+            services.AddSingleton<IAsyncWarmup>(x => x.GetRequiredService<ResourceRegisterJobs>());
+            services.AddSingleton<IAsyncBackgroundWarmup>(x => x.GetRequiredService<ResourceRegisterJobs>());
 
             // Handlers
             services.AddSingleton<CreateResourceContinuationHandler>();
@@ -126,9 +129,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddDocumentDbCollection<ResourceRecord, IResourceRepository, CosmosDbResourceRepository>(
                 CosmosDbResourceRepository.ConfigureOptions);
             services.AddDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
-                CosmosDbResourceRepository.ConfigureOptions);
+                CosmosDbResourcePoolStateSnapshotRepository.ConfigureOptions);
             services.AddDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
-                CosmosDbResourceRepository.ConfigureOptions);
+                CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
 
             // Register Queue Items
             services.AddSingleton<IResourceJobQueueRepository, StorageResourceJobQueueRepository>();

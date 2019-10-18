@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="resourceId">Target resource id.</param>
         /// <param name="type">Target type.</param>
         /// <param name="detials">Target detials.</param>
-        /// <param name="trigger">Trigger for operation.</param>
+        /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
         public static async Task<ContinuationResult> CreateResource(
@@ -41,17 +41,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             Guid resourceId,
             ResourceType type,
             ResourcePoolResourceDetails detials,
-            string trigger,
+            string reason,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", resourceId);
+            logger.FluentAddBaseValue("ResourceId", resourceId)
+                .FluentAddBaseValue("OperationReason", reason);
 
             var input = new CreateResourceContinuationInput()
             {
                 Type = type,
                 ResourcePoolDetails = detials,
                 ResourceId = resourceId,
-                Reason = trigger,
+                Reason = reason,
             };
             var target = CreateResourceContinuationHandler.DefaultQueueTarget;
 
@@ -65,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeResourceId">Target compute resource id.</param>
         /// <param name="storageResourceId">Target storage resource id.</param>
         /// <param name="environmentVariables">Input environment variables for the compute.</param>
-        /// <param name="trigger">Trigger for operation.</param>
+        /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
         public static async Task<ContinuationResult> StartEnvironment(
@@ -73,10 +74,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             Guid computeResourceId,
             Guid storageResourceId,
             IDictionary<string, string> environmentVariables,
-            string trigger,
+            string reason,
             IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("ResourceId", computeResourceId)
+                .FluentAddBaseValue("OperationReason", reason)
                 .FluentAddBaseValue("StorageResourceId", storageResourceId);
 
             var input = new StartEnvironmentContinuationInput()
@@ -84,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 ResourceId = computeResourceId,
                 StorageResourceId = storageResourceId,
                 EnvironmentVariables = environmentVariables,
-                Reason = trigger,
+                Reason = reason,
             };
             var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
 
@@ -96,21 +98,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// </summary>
         /// <param name="activator">Target continuation activator.</param>
         /// <param name="resourceId">Target resource id.</param>
-        /// <param name="trigger">Trigger for operation.</param>
+        /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
         public static async Task<ContinuationResult> DeleteResource(
             this IContinuationTaskActivator activator,
             Guid resourceId,
-            string trigger,
+            string reason,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", resourceId);
+            logger.FluentAddBaseValue("ResourceId", resourceId)
+                .FluentAddBaseValue("OperationReason", reason);
 
             var input = new DeleteResourceContinuationInput()
             {
                 ResourceId = resourceId,
-                Reason = trigger,
+                Reason = reason,
             };
             var target = DeleteResourceContinuationHandler.DefaultQueueTarget;
 

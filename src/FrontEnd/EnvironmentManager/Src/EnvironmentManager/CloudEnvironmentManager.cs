@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        ErrorCode = ErrorCodes.EnvironmentDoesNotExist,
+                        ErrorCode = Contracts.ErrorCodes.EnvironmentDoesNotExist,
                         HttpStatusCode = StatusCodes.Status404NotFound,
                     };
                 }
@@ -107,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = cloudEnvironment,
-                        ErrorCode = ErrorCodes.ShutdownStaticEnvironment,
+                        ErrorCode = Contracts.ErrorCodes.ShutdownStaticEnvironment,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -147,7 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 return new CloudEnvironmentServiceResult
                 {
                     CloudEnvironment = null,
-                    ErrorCode = ErrorCodes.EnvironmentNotAvailable,
+                    ErrorCode = Contracts.ErrorCodes.EnvironmentNotAvailable,
                     HttpStatusCode = StatusCodes.Status400BadRequest,
                 };
             }
@@ -262,7 +262,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        ErrorCode = ErrorCodes.EnvironmentDoesNotExist,
+                        ErrorCode = Contracts.ErrorCodes.EnvironmentDoesNotExist,
                         HttpStatusCode = StatusCodes.Status404NotFound,
                     };
                 }
@@ -277,7 +277,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = cloudEnvironment,
-                        ErrorCode = ErrorCodes.StartStaticEnvironment,
+                        ErrorCode = Contracts.ErrorCodes.StartStaticEnvironment,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -297,7 +297,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        ErrorCode = ErrorCodes.EnvironmentNotShutdown,
+                        ErrorCode = Contracts.ErrorCodes.EnvironmentNotShutdown,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -312,7 +312,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
 
                 // Allocate Compute
-                cloudEnvironment.Compute = await AllocateCompute(cloudEnvironment, logger);
+                cloudEnvironment.Compute = await AllocateComputeAsync(cloudEnvironment, logger);
 
                 // Create the Live Share workspace
                 cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger);
@@ -375,7 +375,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var result = new CloudEnvironmentServiceResult()
             {
-                ErrorCode = ErrorCodes.Unknown,
+                ErrorCode = Contracts.ErrorCodes.Unknown,
                 HttpStatusCode = StatusCodes.Status409Conflict,
             };
 
@@ -418,7 +418,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 if (environments.Any((env) => string.Equals(
                     env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    result.ErrorCode = ErrorCodes.EnvironmentNameAlreadyExists;
+                    result.ErrorCode = Contracts.ErrorCodes.EnvironmentNameAlreadyExists;
                     result.HttpStatusCode = StatusCodes.Status409Conflict;
                     return result;
                 }
@@ -439,7 +439,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogInfo(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)));
 
-                    result.ErrorCode = ErrorCodes.ExceededQuota;
+                    result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
                     result.HttpStatusCode = StatusCodes.Status403Forbidden;
                     return result;
                 }
@@ -480,12 +480,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return result;
                 }
 
-                // Allocate Storage
-                // TODO: What about cloudEnvironmentOptions.CreateFileShare
-                cloudEnvironment.Storage = await AllocateStorage(cloudEnvironment, logger);
-
-                // Allocate Compute
-                cloudEnvironment.Compute = await AllocateCompute(cloudEnvironment, logger);
+                // Allocate Storage and Compute
+                var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, logger);
+                cloudEnvironment.Storage = allocationResult.Storage;
+                cloudEnvironment.Compute = allocationResult.Compute;
 
                 // Create the Live Share workspace
                 cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger);
@@ -884,48 +882,91 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             };
         }
 
-        private async Task<ResourceAllocation> AllocateCompute(
+        private async Task<ResourceAllocation> AllocateComputeAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
         {
-            var compute = await ResourceBrokerClient.CreateResourceAsync(
-                new CreateResourceRequestBody
+            var computeRequest = new CreateResourceRequestBody
+            {
+                Type = ResourceType.ComputeVM,
+                SkuName = cloudEnvironment.SkuName,
+                Location = cloudEnvironment.Location,
+            };
+
+            var inputRequest = new List<CreateResourceRequestBody> { computeRequest };
+
+            var resultResponse = await ResourceBrokerClient.CreateResourceSetAsync(
+                inputRequest, logger);
+
+            if (resultResponse != null && resultResponse.Count() == inputRequest.Count)
+            {
+                var computeResponse = resultResponse.Where(x => x.Type == ResourceType.ComputeVM).FirstOrDefault();
+                if (computeResponse != null)
+                {
+                    var computeResult = new ResourceAllocation
+                    {
+                        ResourceId = computeResponse.ResourceId,
+                        SkuName = computeResponse.SkuName,
+                        Location = computeResponse.Location,
+                        Created = computeResponse.Created,
+                    };
+
+                    return computeResult;
+                }
+            }
+
+            throw new InvalidOperationException("Allocate result for Compute and Storage was invalid.");
+        }
+
+        private async Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(
+            CloudEnvironment cloudEnvironment,
+            IDiagnosticsLogger logger)
+        {
+            var computeRequest = new CreateResourceRequestBody
                 {
                     Type = ResourceType.ComputeVM,
                     SkuName = cloudEnvironment.SkuName,
                     Location = cloudEnvironment.Location,
-                },
-                logger);
+                };
 
-            return new ResourceAllocation
-            {
-                ResourceId = compute.ResourceId,
-                SkuName = compute.SkuName,
-                Location = compute.Location,
-                Created = compute.Created,
-            };
-        }
-
-        private async Task<ResourceAllocation> AllocateStorage(
-            CloudEnvironment cloudEnvironment,
-            IDiagnosticsLogger logger)
-        {
-            var storage = await ResourceBrokerClient.CreateResourceAsync(
-                new CreateResourceRequestBody
+            var storageRequest = new CreateResourceRequestBody
                 {
                     Type = ResourceType.StorageFileShare,
                     SkuName = cloudEnvironment.SkuName,
                     Location = cloudEnvironment.Location,
-                },
-                logger);
+                };
 
-            return new ResourceAllocation
+            var inputRequest = new List<CreateResourceRequestBody> { computeRequest, storageRequest };
+
+            var resultResponse = await ResourceBrokerClient.CreateResourceSetAsync(
+                inputRequest, logger);
+
+            if (resultResponse != null && resultResponse.Count() == inputRequest.Count)
             {
-                ResourceId = storage.ResourceId,
-                SkuName = storage.SkuName,
-                Location = storage.Location,
-                Created = storage.Created,
-            };
+                var computeResponse = resultResponse.Where(x => x.Type == ResourceType.ComputeVM).FirstOrDefault();
+                var storageResponse = resultResponse.Where(x => x.Type == ResourceType.StorageFileShare).FirstOrDefault();
+                if (computeResponse != null && storageResponse != null)
+                {
+                    var computeResult = new ResourceAllocation
+                    {
+                        ResourceId = computeResponse.ResourceId,
+                        SkuName = computeResponse.SkuName,
+                        Location = computeResponse.Location,
+                        Created = computeResponse.Created,
+                    };
+                    var stroageResult = new ResourceAllocation
+                    {
+                        ResourceId = storageResponse.ResourceId,
+                        SkuName = storageResponse.SkuName,
+                        Location = storageResponse.Location,
+                        Created = storageResponse.Created,
+                    };
+
+                    return (computeResult, stroageResult);
+                }
+            }
+
+            throw new InvalidOperationException("Allocate result for Compute and Storage was invalid.");
         }
 
         private async Task StartCompute(

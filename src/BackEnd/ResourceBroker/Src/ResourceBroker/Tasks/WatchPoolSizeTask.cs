@@ -91,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 {
                     TaskHelper.RunBackground(
                         $"{LogBaseName}_run_delete",
-                        (childLogger) => DeletePoolItemAsync(Guid.Parse(unassignedId), childLogger),
+                        (childLogger) => DeletePoolItemAsync(Guid.Parse(unassignedId), "WatchPoolSizePoolDisabled", childLogger),
                         logger);
                 }
             }
@@ -131,7 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     {
                         TaskHelper.RunBackground(
                             $"{LogBaseName}_run_delete",
-                            (childLogger) => DeletePoolItemAsync(Guid.Parse(unassignedId), childLogger),
+                            (childLogger) => DeletePoolItemAsync(Guid.Parse(unassignedId), "WatchPoolSizeDecrease", childLogger),
                             logger);
                     }
                 }
@@ -153,19 +153,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private async Task AddPoolItemAsync(ResourcePool resourcePool, int iteration, IDiagnosticsLogger logger)
         {
             var id = Guid.NewGuid();
+            var reason = "WatchPoolSizeIncrease";
 
             logger.FluentAddBaseValue("TaskJobIteration", iteration.ToString())
-                .FluentAddBaseValue("ResourceId", id);
+                .FluentAddBaseValue("ResourceId", id)
+                .FluentAddBaseValue("OperationReason", reason);
 
             await ContinuationTaskActivator.CreateResource(
-                id, resourcePool.Type, resourcePool.Details, "WatchPoolSizeIncrease", logger.NewChildLogger());
+                id, resourcePool.Type, resourcePool.Details, reason, logger.NewChildLogger());
         }
 
-        private async Task DeletePoolItemAsync(Guid id, IDiagnosticsLogger logger)
+        private async Task DeletePoolItemAsync(Guid id, string reason, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", id);
+            logger.FluentAddBaseValue("ResourceId", id)
+                .FluentAddBaseValue("OperationReason", reason);
 
-            await ContinuationTaskActivator.DeleteResource(id, "WatchPoolSizeDecrease", logger.NewChildLogger());
+            await ContinuationTaskActivator.DeleteResource(id, reason, logger.NewChildLogger());
         }
     }
 }

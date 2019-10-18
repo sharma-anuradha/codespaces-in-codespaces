@@ -48,5 +48,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string StorageSkuName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the tier is enabled.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool Enabled { get; set; } = true;
     }
 }

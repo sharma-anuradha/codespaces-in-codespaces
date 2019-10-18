@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 {

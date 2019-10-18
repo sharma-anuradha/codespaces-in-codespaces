@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
@@ -18,19 +19,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         private static readonly string MockResourceGroup = "mock-resource-group";
 
         /// <inheritdoc/>
-        public async Task<ResourceBrokerResource> CreateResourceAsync(CreateResourceRequestBody allocateRequestBody, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
+            IEnumerable<CreateResourceRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
-            var mockInstanceId = Guid.NewGuid();
-            var result = new ResourceBrokerResource
+
+            var now = DateTime.UtcNow;
+            var results = new List<ResourceBrokerResource>();
+            foreach (var createResourceRequestBody in createResourcesRequestBody)
             {
-                ResourceId = mockInstanceId,
-                Created = DateTime.UtcNow,
-                Location = allocateRequestBody.Location,
-                SkuName = allocateRequestBody.SkuName,
-                Type = allocateRequestBody.Type,
-            };
-            return result;
+                var mockInstanceId = Guid.NewGuid();
+                results.Add(new ResourceBrokerResource
+                {
+                    ResourceId = mockInstanceId,
+                    Created = DateTime.UtcNow,
+                    Location = createResourceRequestBody.Location,
+                    SkuName = createResourceRequestBody.SkuName,
+                    Type = createResourceRequestBody.Type,
+                });
+            }
+
+            return results;
         }
 
         /// <inheritdoc/>

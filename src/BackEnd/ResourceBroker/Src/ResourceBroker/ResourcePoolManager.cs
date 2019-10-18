@@ -86,6 +86,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 });
         }
 
+        /// <inheritdoc/>
+        public Task ReleaseGetAsync(string resourceId, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_release_get",
+                async (childLogger) =>
+                {
+                    // Fetch record
+                    var item = await ResourceRepository.GetAsync(resourceId, childLogger.NewChildLogger());
+
+                    // Update core properties to indicate that its unassigned
+                    item.IsAssigned = false;
+                    item.Assigned = null;
+
+                    // Update core resource record
+                    await ResourceRepository.UpdateAsync(item, childLogger.NewChildLogger());
+                });
+        }
+
         private Task<(ResourceRecord, bool)> TryGetAttemptAsync(string poolCode, int trys, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
@@ -98,7 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         .FluentAddValue("PoolLookupAttemptTry", trys);
 
                     // Get core resource record
-                    var item = await ResourceRepository.GetPoolReadyUnassignedAsync(poolCode, childLogger);
+                    var item = await ResourceRepository.GetPoolReadyUnassignedAsync(poolCode, childLogger.NewChildLogger());
 
                     childLogger.FluentAddValue("PoolLookupFoundItem", item != null);
 
@@ -112,7 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             item.Assigned = DateTime.UtcNow;
 
                             // Update core resource record
-                            await ResourceRepository.UpdateAsync(item, childLogger);
+                            await ResourceRepository.UpdateAsync(item, childLogger.NewChildLogger());
 
                             childLogger.FluentAddValue("PoolLookupUpdateConflict", false);
                         }

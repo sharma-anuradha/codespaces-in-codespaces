@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
@@ -28,10 +29,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceBrokerResource> CreateResourceAsync(CreateResourceRequestBody input, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
+            IEnumerable<CreateResourceRequestBody> input, IDiagnosticsLogger logger)
         {
             var requestUri = ResourceBrokerHttpContract.GetCreateResourceUri();
-            var result = await SendAsync<CreateResourceRequestBody, ResourceBrokerResource>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, input, logger);
+            var result = await SendAsync<IEnumerable<CreateResourceRequestBody>, IEnumerable<ResourceBrokerResource>>(
+                ResourceBrokerHttpContract.PostResourceMethod, requestUri, input, logger);
             return result;
         }
 

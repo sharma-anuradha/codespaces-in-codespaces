@@ -43,24 +43,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceBrokerResource> CreateResourceAsync(CreateResourceRequestBody allocateRequestBody, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
+            IEnumerable<CreateResourceRequestBody> allocateRequestsBody, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
 
-            var resource = new ResourceBrokerResource
+            var results = new List<ResourceBrokerResource>();
+            foreach (var allocateRequestBody in allocateRequestsBody)
             {
-                ResourceId = Guid.NewGuid(),
-                Created = DateTime.UtcNow,
-                Location = allocateRequestBody.Location,
-                SkuName = allocateRequestBody.SkuName,
-            };
+                var resource = new ResourceBrokerResource
+                {
+                    ResourceId = Guid.NewGuid(),
+                    Created = DateTime.UtcNow,
+                    Location = allocateRequestBody.Location,
+                    SkuName = allocateRequestBody.SkuName,
+                };
 
-            if (!resources.TryAdd(resource.ResourceId, resource))
-            {
-                throw new InvalidOperationException($"Resource already found {resource.ResourceId}");
+                if (!resources.TryAdd(resource.ResourceId, resource))
+                {
+                    throw new InvalidOperationException($"Resource already found {resource.ResourceId}");
+                }
+
+                results.Add(resource);
             }
 
-            return resource;
+            return results;
         }
 
         /// <inheritdoc/>

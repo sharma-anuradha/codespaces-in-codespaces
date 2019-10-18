@@ -5,8 +5,8 @@
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
 {

@@ -2,9 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// A remote invocation exception.

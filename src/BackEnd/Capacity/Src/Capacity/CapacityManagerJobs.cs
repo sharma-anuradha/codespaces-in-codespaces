@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         private Random Random { get; } = new Random();
 
         /// <inheritdoc/>
-        public async Task WarmupCompletedAsync(IDiagnosticsLogger logger)
+        public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
 

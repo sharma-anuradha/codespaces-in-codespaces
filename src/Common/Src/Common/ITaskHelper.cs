@@ -38,6 +38,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<Exception, bool> errLoopCallback = default);
 
         /// <summary>
+        /// Runs a TRPL Task fire-and-forget style on a repeated schedule,
+        /// the right way - in the background, separate from the current
+        /// thread, with no risk of it trying to rejoin the current thread.
+        /// The exception to this is the first run of the callback which is
+        /// expected to be awaited 
+        /// </summary>
+        /// <param name="name">Target name.</param>
+        /// <param name="callback">Target callback.</param>
+        /// <param name="schedule">Target time between runs.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="autoLogLoopOperation">
+        /// Whether the task execution of each item should be auto logged.
+        /// </param>
+        /// <param name="errLoopCallback">
+        /// Callback which will trigger when erros happen on execution of each item.
+        /// </param>
+        /// <returns>Running tasks.</returns>
+        Task RunBackgroundLoopAsync(
+            string name,
+            Func<IDiagnosticsLogger, Task<bool>> callback,
+            TimeSpan? schedule = null,
+            IDiagnosticsLogger logger = null,
+            bool autoLogLoopOperation = false,
+            Func<Exception, bool> errLoopCallback = default);
+
+        /// <summary>
         /// Runs a TPL Task fire-and-forget style, the right way - in the
         /// background, separate from the current thread, with no risk
         /// of it trying to rejoin the current thread.
@@ -155,7 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <returns>Returns whether the task was successful.</returns>
         Task<bool> RetryUntilSuccessOrTimeout(
             string name,
-            Func<Task<bool>> callback,
+            Func<IDiagnosticsLogger, Task<bool>> callback,
             TimeSpan timeoutTimeSpan,
             TimeSpan? waitTimeSpan = null,
             IDiagnosticsLogger logger = null,

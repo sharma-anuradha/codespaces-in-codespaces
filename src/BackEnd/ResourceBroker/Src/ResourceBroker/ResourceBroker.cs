@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -16,6 +17,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
@@ -59,45 +61,132 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IMapper Mapper { get; }
 
         /// <inheritdoc/>
+        public Task<IEnumerable<AllocateResult>> AllocateAsync(
+            IEnumerable<AllocateInput> inputs, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_allocate_set",
+                async (childLogger) =>
+                {
+                    var failedInput = default(AllocateInput);
+                    var resourceResults = new List<(AllocateInput Input, ResourceRecord Record, ResourcePool Pool)>();
+
+                    // Work through each input
+                    foreach (var input in inputs)
+                    {
+                        // Try and get item from the pool
+                        var resourceResult = await childLogger.OperationScopeAsync(
+                            $"{LogBaseName}_allocate",
+                            async (itemLogger) =>
+                            {
+                                // Try and get item from the pool
+                                var assignResult = await TryGetAsync(input, itemLogger.NewChildLogger());
+
+                                // Deal with case that it didn't exist
+                                if (assignResult.Resource == null)
+                                {
+                                    failedInput = input;
+                                }
+                                else
+                                {
+                                    itemLogger.FluentAddBaseValue("ResourceId", assignResult.Resource.Id);
+                                }
+
+                                return (Input: input, Resource: assignResult.Resource, ResourceSku: assignResult.ResourceSku);
+                            });
+
+                        // Abort things at the first fail we hit
+                        if (resourceResult.Resource == null)
+                        {
+                            break;
+                        }
+
+                        // Add to result set
+                        resourceResults.Add(resourceResult);
+                    }
+
+                    // Valdiate that things worked as expected
+                    var isValid = resourceResults.Count == inputs.Count() && failedInput == null;
+
+                    childLogger.FluentAddValue("AllocationIsValid", isValid)
+                        .FluentAddValue("AllocationAllocationCount", resourceResults.Count);
+
+                    if (isValid)
+                    {
+                        var results = new List<AllocateResult>();
+
+                        // Trigger create to replace allocated items and map results
+                        foreach (var resourceResult in resourceResults)
+                        {
+                            var pool = resourceResult.Pool;
+                            var record = resourceResult.Record;
+
+                            // Trigger auto pool create to replace assigned item
+                            TaskHelper.RunBackground(
+                                $"{LogBaseName}_run_create",
+                                (taskLogger) => ContinuationTaskActivator.CreateResource(
+                                    Guid.NewGuid(), pool.Type, pool.Details, "ResourceAssignedReplace", taskLogger),
+                                childLogger);
+
+                            results.Add(Mapper.Map<AllocateResult>(record));
+                        }
+
+                        return (IEnumerable<AllocateResult>)results;
+                    }
+
+                    // Release each of the items that had been assigned so far
+                    foreach (var resourceResult in resourceResults)
+                    {
+                        var input = resourceResult.Input;
+                        var record = resourceResult.Record;
+
+                        // Try and get item from the pool
+                        await childLogger.OperationScopeAsync(
+                            $"{LogBaseName}_release",
+                            async (itemLogger) =>
+                            {
+                                itemLogger.FluentAddBaseValue("ResourceId", record.Id)
+                                    .FluentAddBaseValue("ResourceLocation", record.Location)
+                                    .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
+                                    .FluentAddBaseValue("ResourceType", record.Type);
+
+                                await ResourcePool.ReleaseGetAsync(
+                                    record.Id, itemLogger.NewChildLogger());
+                            },
+                            swallowException: true);
+                    }
+
+                    // Throw exception since we failed to allocate
+                    throw new OutOfCapacityException(failedInput.SkuName, failedInput.Type, failedInput.Location.ToString().ToLowerInvariant());
+                });
+        }
+
+        /// <inheritdoc/>
         public Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate",
                 async (childLogger) =>
                 {
-                    // Setting up logger
-                    childLogger.FluentAddBaseValue("ResourceLocation", input.Location.ToString())
-                        .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
-                        .FluentAddBaseValue("ResourceType", input.Type.ToString());
-
-                    // Map logical sku to resource sku
-                    var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
-
-                    childLogger.FluentAddBaseValue("ResourceResourceSkuName", resourceSku.Details.SkuName);
-
                     // Try and get item from the pool
-                    var item = await ResourcePool.TryGetAsync(
-                        resourceSku.Details.GetPoolDefinition(), logger.NewChildLogger());
-
-                    childLogger.FluentAddBaseValue("ResourceResourceAllocateFound", item != null);
+                    var assignResult = await TryGetAsync(input, childLogger.NewChildLogger());
 
                     // Deal with case that it didn't exist
-                    if (item == null)
+                    if (assignResult.Resource == null)
                     {
                         throw new OutOfCapacityException(input.SkuName, input.Type, input.Location.ToString().ToLowerInvariant());
                     }
 
-                    childLogger.FluentAddBaseValue("ResourceId", item.Id);
+                    childLogger.FluentAddBaseValue("ResourceId", assignResult.Resource.Id);
 
                     // Trigger auto pool create to replace assigned item
                     TaskHelper.RunBackground(
                         $"{LogBaseName}_run_create",
                         (taskLogger) => ContinuationTaskActivator.CreateResource(
-                            Guid.NewGuid(), resourceSku.Type, resourceSku.Details, "ResourceAssignedReplace", taskLogger),
-                        childLogger,
-                        autoLogOperation: false);
+                            Guid.NewGuid(), assignResult.ResourceSku.Type, assignResult.ResourceSku.Details, "ResourceAssignedReplace", taskLogger),
+                        childLogger);
 
-                    return Mapper.Map<AllocateResult>(item);
+                    return Mapper.Map<AllocateResult>(assignResult.Resource);
                 });
         }
 
@@ -151,6 +240,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                     return new EnvironmentStartResult { Successful = true };
                 });
+        }
+
+        private async Task<(ResourceRecord Resource, ResourcePool ResourceSku)> TryGetAsync(AllocateInput input, IDiagnosticsLogger itemLogger)
+        {
+            // Setting up logger
+            itemLogger.FluentAddBaseValue("ResourceLocation", input.Location.ToString())
+                .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
+                .FluentAddBaseValue("ResourceType", input.Type.ToString());
+
+            // Map logical sku to resource sku
+            var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
+
+            itemLogger.FluentAddBaseValue("ResourceResourceSkuName", resourceSku.Details.SkuName);
+
+            // Try and get item from the pool
+            var resource = await ResourcePool.TryGetAsync(
+                        resourceSku.Details.GetPoolDefinition(), itemLogger.NewChildLogger());
+
+            itemLogger.FluentAddBaseValue("ResourceResourceAllocateFound", resource != null);
+
+            return (resource, resourceSku);
         }
 
         private async Task<ResourcePool> MapLogicalSkuToResourceSku(string skuName, ResourceType type, AzureLocation location)

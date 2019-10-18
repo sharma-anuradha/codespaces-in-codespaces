@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// <see cref="HttpResponseMessage"/> extensions.

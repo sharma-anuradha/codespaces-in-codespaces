@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -109,8 +110,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 ReadyUnassignedCount = poolReadyUnassignedCount,
                 ReadyUnassignedVersionCount = poolReadyUnassignedVersionCount,
                 ReadyUnassignedNotVersionCount = poolReadyUnassignedNotVersionCount,
-                Dimensions = null, // TODO: Add in later - resourcePool.Details.GetPoolDimensions(),
+                Dimensions = resourcePool.Details.GetPoolDimensions(),
                 IsEnabled = isPoolEnabled,
+                Updated = DateTime.UtcNow,
             };
 
             // Save data back

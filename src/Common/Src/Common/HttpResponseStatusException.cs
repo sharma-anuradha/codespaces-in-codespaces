@@ -3,12 +3,12 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Microsoft.Net.Http.Headers;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// An exception that indicates a non-success http response.
@@ -24,6 +24,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
             : base(MessageFormat(httpResponseMessage, clientOrigin), GetErrorCode(httpResponseMessage.StatusCode))
         {
             StatusCode = httpResponseMessage.StatusCode;
+            ReasonPhrase = httpResponseMessage.ReasonPhrase;
+            ClientOrigin = clientOrigin;
+            RetryAfter = httpResponseMessage.Headers.RetryAfter?.Delta?.Seconds;
         }
 
         /// <summary>
@@ -51,6 +54,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
         {
             get => this.GetDataValue<bool?>(nameof(ClientOrigin));
             set => this.SetDataValue(nameof(ClientOrigin), value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the http request originated in an external client.
+        /// </summary>
+        public int? RetryAfter
+        {
+            get => this.GetDataValue<int?>(nameof(RetryAfter));
+            set => this.SetDataValue(nameof(RetryAfter), value);
         }
 
         private static int GetErrorCode(HttpStatusCode statusCode)

@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="logger">Target logger.</param>
         /// <param name="name">Base name of the operaiton scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
-         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
+        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions should be swallowed.</param>
         /// <returns>Returns the task.</returns>
         public static async Task OperationScopeAsync(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task> callback, Action<Exception> errCallback = default, bool swallowException = false)

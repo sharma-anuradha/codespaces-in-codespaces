@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
@@ -22,6 +23,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
     {
         private static readonly Guid MockSubscriptionId = Guid.NewGuid();
         private static readonly string MockResourceGroup = "MockResourceGroup";
+
+        /// <inheritdoc/>
+        public Task<IEnumerable<AllocateResult>> AllocateAsync(
+            IEnumerable<AllocateInput> inputs, IDiagnosticsLogger logger)
+        {
+            var now = DateTime.UtcNow;
+            var results = new List<AllocateResult>();
+            foreach (var input in inputs)
+            {
+                var resourceId = Guid.NewGuid();
+                results.Add(new AllocateResult
+                {
+                    Created = now,
+                    Location = input.Location,
+                    Id = resourceId,
+                    AzureResourceInfo = new AzureResourceInfo(MockSubscriptionId, MockResourceGroup, resourceId.ToString()),
+                    SkuName = input.SkuName,
+                    Type = input.Type,
+                });
+            }
+
+            return Task.FromResult((IEnumerable<AllocateResult>)results);
+        }
 
         /// <inheritdoc/>
         public Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)

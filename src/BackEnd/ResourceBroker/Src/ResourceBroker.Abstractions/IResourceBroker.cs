@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
@@ -13,6 +14,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
     /// </summary>
     public interface IResourceBroker
     {
+        /// <summary>
+        /// Allocate resource set based on input manifest.
+        /// </summary>
+        /// <param name="inputs">Target input manifest.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>An <see cref="AllocateResult"/> enumerable object.</returns>
+        Task<IEnumerable<AllocateResult>> AllocateAsync(
+            IEnumerable<AllocateInput> inputs, IDiagnosticsLogger logger);
+
         /// <summary>
         /// Allocate a compute or storage resource.
         /// </summary>

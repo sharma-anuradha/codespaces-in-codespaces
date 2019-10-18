@@ -121,9 +121,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task DeletetPoolItemAsync(Guid id, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", id);
+            var reason = "TaskVersionChange";
 
-            await ContinuationTaskActivator.DeleteResource(id, "TaskVersionChange", logger.NewChildLogger());
+            logger.FluentAddBaseValue("ResourceId", id)
+                .FluentAddBaseValue("OperationReason", reason);
+
+            await ContinuationTaskActivator.DeleteResource(id, reason, logger.NewChildLogger());
         }
     }
 }

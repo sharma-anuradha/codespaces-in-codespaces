@@ -8,9 +8,9 @@ using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication

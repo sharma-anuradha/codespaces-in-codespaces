@@ -22,6 +22,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             throw new NotImplementedException();
         }
 
+        public Task<bool> RetryUntilSuccessOrTimeout(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan timeoutTimeSpan, TimeSpan? waitTimeSpan = null, IDiagnosticsLogger logger = null, Action onTimeout = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception> errCallback = null, TimeSpan? delay = null)
         {
             throw new NotImplementedException();
@@ -43,6 +48,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         }
 
         public void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null, bool autoLogLoopOperation = false, Func<Exception, bool> errLoopCallback = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RunBackgroundLoopAsync(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null, bool autoLogLoopOperation = false, Func<Exception, bool> errLoopCallback = null)
         {
             throw new NotImplementedException();
         }

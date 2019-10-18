@@ -66,20 +66,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                     var claimDateTime = currentTime.Date + TimeSpan.FromSeconds(secondsSinceMidnightClaimSpan);
 
+                    childLogger.FluentAddBaseValue("LeaseClaimDateTime", claimDateTime);
+
+                    var result = default(IDisposable);
                     try
                     {
-                        return await InnerCreate(containerName, name, claimDateTime, childLogger);
+                        result = await InnerCreateAsync(containerName, name, claimDateTime, childLogger);
+
+                        childLogger.FluentAddValue("LeaseAlreadyPresent", false);
                     }
                     catch (StorageException e) when (e.RequestInformation.ErrorCode == "LeaseAlreadyPresent")
                     {
                         childLogger.FluentAddValue("LeaseAlreadyPresent", true);
                     }
 
-                    return null;
+                    return result;
                 });
         }
 
-        private async Task<IDisposable> InnerCreate(
+        private async Task<IDisposable> InnerCreateAsync(
             string containerName,
             string name,
             DateTime claimPeriod,

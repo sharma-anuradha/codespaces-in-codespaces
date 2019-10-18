@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 
@@ -16,10 +17,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <summary>
         /// Allocate a resource from the resource broker.
         /// </summary>
-        /// <param name="allocateRequestBody">The allocation input properties.</param>
+        /// <param name="requestBodies">The allocation input properties.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The allocation result.</returns>
-        Task<ResourceBrokerResource> CreateResourceAsync(CreateResourceRequestBody allocateRequestBody, IDiagnosticsLogger logger);
+        Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
+            IEnumerable<CreateResourceRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Get a resource by id from the resource broker.

@@ -41,9 +41,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             bool autoLogLoopOperation = false,
             Func<Exception, bool> errLoopCallback = default)
         {
+            Task.Run(() => RunBackgroundLoopAsync(
+                name, callback, schedule, logger, autoLogLoopOperation, errLoopCallback));
+        }
+
+        /// <inheritdoc/>
+        public async Task RunBackgroundLoopAsync(
+            string name,
+            Func<IDiagnosticsLogger, Task<bool>> callback,
+            TimeSpan? schedule = null,
+            IDiagnosticsLogger logger = null,
+            bool autoLogLoopOperation = false,
+            Func<Exception, bool> errLoopCallback = default)
+        {
             logger = (logger ?? Logger)
-                .FluentAddBaseValue("TaskWorkerRunId", Guid.NewGuid())
-                .FluentAddBaseValue("TaskRunTarget", name);
+                .FluentAddBaseValue("TaskWorkerLoopRunId", Guid.NewGuid())
+                .FluentAddBaseValue("TaskLoopRunName", name)
+                .FluentAddBaseValue("TaskRunName", name);
+
+            await RunBackgroundLoopItemCore(
+                name, callback, logger, autoLogLoopOperation, errLoopCallback);
 
             RunBackground(
                 "task_helper_run_background_loop",
@@ -51,14 +68,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 {
                     logger.LogInfo("task_helper_run_background_loop_started");
 
-                    while (await RunBackgroundLoopCore(
-                        name, callback, childLogger, autoLogLoopOperation, errLoopCallback))
+                    do
                     {
                         if (schedule != null)
                         {
                             await Task.Delay(schedule.Value);
                         }
                     }
+                    while (await RunBackgroundLoopItemCore(
+                        name, callback, childLogger, autoLogLoopOperation, errLoopCallback));
                 },
                 logger);
         }
@@ -147,8 +165,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 "task_helper_run_background_enumerable",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddBaseValue("TaskWorkerRunId", Guid.NewGuid())
-                        .FluentAddBaseValue("TaskRunTarget", name);
+                    childLogger.FluentAddBaseValue("TaskWorkerEnumerableRunId", Guid.NewGuid())
+                        .FluentAddBaseValue("TaskEnumerableRunName", name)
+                        .FluentAddBaseValue("TasksRunName", name)
+                        .FluentAddValue("IterateItemCount", list.Count());
 
                     // Trigger core runner
                     await RunBackgroundEnumerableCore(
@@ -159,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public async Task<bool> RetryUntilSuccessOrTimeout(
             string name,
-            Func<Task<bool>> callback,
+            Func<IDiagnosticsLogger, Task<bool>> callback,
             TimeSpan timeoutTimeSpan,
             TimeSpan? waitTimeSpan = null,
             IDiagnosticsLogger logger = null,
@@ -172,7 +192,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 "task_helper_run_until_success_or_timeout",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddBaseValue("TaskRunId", Guid.NewGuid())
+                    childLogger.FluentAddBaseValue("TaskWorkerRetryRunId", Guid.NewGuid())
+                        .FluentAddBaseValue("TaskRetryRunName", name)
                         .FluentAddBaseValue("TaskRunName", name)
                         .FluentAddValue("TaskTimeoutTimeSpan", timeoutTimeSpan);
 
@@ -188,11 +209,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                             "task_helper_run_until_success_or_timeout_item",
                             async (tryLogger) =>
                             {
-                                tryLogger.FluentAddValue("IterateTryCount", tryCount)
+                                tryLogger.FluentAddBaseValue("TaskWorkerRetrAttemptRunId", Guid.NewGuid())
+                                    .FluentAddValue("TaskRetrAttemptCount", tryCount)
                                     .FluentAddValue("TaskTimeoutTimeSpan", timeoutTimeSpan);
 
                                 // Execute core
-                                success = await callback();
+                                success = await logger.OperationScopeAsync(name, (opLogger) => callback(opLogger));
 
                                 tryLogger.FluentAddValue("IterateSuccess", success)
                                     .FluentAddDuration("IterateTotalRun", timer);
@@ -221,7 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 });
         }
 
-        private Task<bool> RunBackgroundLoopCore(
+        private Task<bool> RunBackgroundLoopItemCore(
             string name,
             Func<IDiagnosticsLogger, Task<bool>> callback,
             IDiagnosticsLogger logger,
@@ -259,7 +281,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Action<Exception> errCallback)
         {
             logger = (logger ?? Logger)
-                .FluentAddBaseValue("TaskRunId", Guid.NewGuid())
+                .FluentAddBaseValue("TaskBackgroundRunId", Guid.NewGuid())
+                .FluentAddBaseValue("TaskBackgroundRunName", name)
                 .FluentAddBaseValue("TaskRunName", name);
 
             if (autoLogOperation)
@@ -309,8 +332,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var concurrentCount = 0;
             var index = 0;
 
-            logger.FluentAddValue("IterateItemCount", list.Count());
-
             // Run through each item in the list
             foreach (var item in list)
             {
@@ -326,7 +347,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     "task_helper_run_background_enumerable_item",
                     async (itemLogger) =>
                     {
-                        itemLogger.FluentAddBaseValue("IterateItemRunId", Guid.NewGuid())
+                        itemLogger.FluentAddBaseValue("TaskItemRunId", Guid.NewGuid())
                             .FluentAddValue("IterateItemCount", list.Count())
                             .FluentAddValue("IterateItemIndex", index)
                             .FluentAddValue("LockConcurrentLimit", concurrentLimit)
@@ -340,7 +361,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                                 "task_helper_run_background_enumerable_item_try",
                                 async (itemTryLogger) =>
                                 {
-                                    itemTryLogger.FluentAddBaseValue("IterateItemRunTryId", Guid.NewGuid())
+                                    itemTryLogger.FluentAddBaseValue("TaskItemRunTryId", Guid.NewGuid())
                                         .FluentAddValue("IterateItemCount", list.Count())
                                         .FluentAddValue("IterateItemIndex", index)
                                         .FluentAddValue("LockConcurrentLimit", concurrentLimit)
@@ -370,12 +391,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                                         // concurrent worker limit to be achived, otherwise we would only
                                         // be running one at time.
                                         RunBackground(
-                                            name,
+                                            "task_helper_run_background_enumerable_item_try_task",
                                             async (executeLogger) =>
                                                 {
                                                     // Core task execution
                                                     var didExecute = await RunBackgroundEnumerableItemCore(
-                                                        item, callback, executeLogger, obtainLease);
+                                                        name, item, callback, executeLogger, obtainLease);
 
                                                     // Pause to give some time between runs (mainly to give other
                                                     // workers on other machines a case to work through things)
@@ -440,6 +461,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         private async Task<bool> RunBackgroundEnumerableItemCore<T>(
+            string name,
             T item,
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger,
@@ -449,12 +471,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             logger.FluentAddValue("LeaseShouldObtain", obtainLease != null);
 
+            Func<IDiagnosticsLogger, Task> wrappedCallback = async (childLogger) =>
+                {
+                    childLogger.FluentAddValue("IterateItemTask", true);
+                    await callback(item, childLogger);
+                    success = true;
+                };
+
             // If we don't have lease, normal execute
             if (obtainLease == null)
             {
-                await callback(item, logger.NewChildLogger());
-
-                success = true;
+                await logger.OperationScopeAsync(name, wrappedCallback);
             }
             else
             {
@@ -466,9 +493,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     // Obnly execute if we have somethin g to do
                     if (lease != null)
                     {
-                        await callback(item, logger.NewChildLogger());
-
-                        success = true;
+                        await logger.OperationScopeAsync(name, wrappedCallback);
                     }
                 }
             }

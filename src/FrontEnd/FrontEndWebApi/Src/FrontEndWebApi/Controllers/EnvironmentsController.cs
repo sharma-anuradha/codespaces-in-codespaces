@@ -440,6 +440,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 logger.AddDuration(duration)
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateCloudEnvironmentAsync)), ex.Message);
+
+                if (ex is HttpResponseStatusException httpResponseStatusException)
+                {
+                    // If it was a 503 from the backend we want to pass that one down
+                    if (httpResponseStatusException.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    {
+                        if (httpResponseStatusException.RetryAfter.HasValue)
+                        {
+                            Response.Headers.Add("Retry-After", httpResponseStatusException.RetryAfter.Value.ToString());
+                        }
+
+                        return StatusCode(StatusCodes.Status503ServiceUnavailable);
+                    }
+                }
+
                 throw;
             }
         }

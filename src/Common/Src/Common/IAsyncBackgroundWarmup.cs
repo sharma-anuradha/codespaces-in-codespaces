@@ -19,6 +19,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         /// <param name="logger">Target Logger.</param>
         /// <returns>A task that completes when the service is warmed up.</returns>
-        Task WarmupCompletedAsync(IDiagnosticsLogger logger);
+        Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger);
     }
 }

@@ -56,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             if (plans.Count() >= planManagerSettings.MaxPlansPerSubscription)
             {
                 result.VsoPlan = null;
-                result.ErrorCode = ErrorCodes.ExceededQuota;
+                result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
                 return result;
             }
 
@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             if (result.VsoPlan == null)
             {
-                result.ErrorCode = ErrorCodes.PlanDoesNotExist;
+                result.ErrorCode = Contracts.ErrorCodes.PlanDoesNotExist;
             }
 
             return result;

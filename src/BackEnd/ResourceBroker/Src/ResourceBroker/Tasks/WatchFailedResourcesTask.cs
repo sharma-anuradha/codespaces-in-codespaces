@@ -186,8 +186,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task DeleteResourceItemAsync(Guid id, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", id);
-            await ContinuationTaskActivator.DeleteResource(id, "WatchFailedResourcesTask", logger.NewChildLogger());
+            var reason = "WatchFailedResourcesTask";
+
+            logger.FluentAddBaseValue("ResourceId", id)
+                .FluentAddBaseValue("OperationReason", reason);
+
+            await ContinuationTaskActivator.DeleteResource(id, reason, logger.NewChildLogger());
         }
     }
 }

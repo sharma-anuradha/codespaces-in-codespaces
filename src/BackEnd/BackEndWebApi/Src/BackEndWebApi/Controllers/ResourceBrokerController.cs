@@ -3,10 +3,11 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics;
@@ -41,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         private IResourceBrokerResourcesHttpContract ResourceBrokerHttp { get => this; }
 
         /// <summary>
-        /// Allocate a new resource from the resource broker.
+        /// Allocate new resources from the resource broker.
         /// <para>
         /// POST api/v1/resourcebroker/resources.
         /// </para>
@@ -54,48 +55,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(ResourceBrokerResource), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateResourceAsync(
-            [FromBody]CreateResourceRequestBody createResourceRequestBody)
+        public async Task<IActionResult> CreateResourceSetAsync(
+            [FromBody]IEnumerable<CreateResourceRequestBody> createResourcesRequestBody)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
 
-            if (createResourceRequestBody is null)
+            if (createResourcesRequestBody is null
+                || !createResourcesRequestBody.Any())
             {
                 logger.AddDuration(duration)
                     .AddReason($"{HttpStatusCode.BadRequest}: body is null")
-                    .LogError(GetType().FormatLogErrorMessage(nameof(CreateResourceAsync)));
+                    .LogError(GetType().FormatLogErrorMessage(nameof(CreateResourceSetAsync)));
 
                 return BadRequest();
             }
 
             try
             {
-                var result = await ResourceBrokerHttp.CreateResourceAsync(createResourceRequestBody, logger);
-
-                // Set the location header.
-                var locationRelativeUri = ResourceBrokerHttpContract.GetGetResourceUri(result.ResourceId);
-                var location = new UriBuilder(Request.GetDisplayUrl())
-                {
-                    Path = Request.Path = "/" + locationRelativeUri,
-                }.Uri;
+                var result = await ResourceBrokerHttp.CreateResourceSetAsync(createResourcesRequestBody, logger);
 
                 logger
                     .AddDuration(duration)
-                    .AddCreateResourceRequestBody(createResourceRequestBody)
-                    .AddResourceBrokerResource(result)
-                    .FluentAddValue("LocationHeader", location.AbsoluteUri)
-                    .LogInfo(GetType().FormatLogMessage(nameof(CreateResourceAsync)));
+                    .LogInfo(GetType().FormatLogMessage(nameof(CreateResourceSetAsync)));
 
-                // Returns 201-Created with Location header.
-                return Created(location, result);
+                // Returns 200-Ok
+                return Ok(result);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 logger
                     .AddDuration(duration)
-                    .AddCreateResourceRequestBody(createResourceRequestBody)
-                    .LogError(GetType().FormatLogErrorMessage(nameof(CreateResourceAsync)));
+                    .LogException(GetType().FormatLogErrorMessage(nameof(CreateResourceSetAsync)), e);
+
+                // If we are out of capacity, return 503
+                if (e is OutOfCapacityException capacityException)
+                {
+                    Response.Headers.Add("Retry-After", TimeSpan.FromSeconds(30).TotalSeconds.ToString());
+                    return StatusCode(StatusCodes.Status503ServiceUnavailable, e.Message);
+                }
+
                 throw;
             }
         }
@@ -290,26 +289,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <inheritdoc/>
-        async Task<ResourceBrokerResource> IResourceBrokerResourcesHttpContract.CreateResourceAsync(CreateResourceRequestBody requestBody, IDiagnosticsLogger logger)
+        async Task<IEnumerable<ResourceBrokerResource>> IResourceBrokerResourcesHttpContract.CreateResourceSetAsync(
+            IEnumerable<CreateResourceRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger)
         {
-            // TODO: use IMapper!
-            var result = await ResourceBroker.AllocateAsync(
-                new AllocateInput
-                {
-                    Location = requestBody.Location,
-                    SkuName = requestBody.SkuName,
-                    Type = requestBody.Type,
-                },
-                logger.WithValues(new LogValueSet()));
-
-            return new ResourceBrokerResource
+            var brokerInput = new List<AllocateInput>();
+            foreach (var createResourceRequestBody in createResourcesRequestBody)
             {
-                Type = requestBody.Type,
-                SkuName = result.SkuName,
-                ResourceId = result.Id,
-                Location = result.Location,
-                Created = result.Created,
-            };
+                brokerInput.Add(new AllocateInput
+                    {
+                        Location = createResourceRequestBody.Location,
+                        SkuName = createResourceRequestBody.SkuName,
+                        Type = createResourceRequestBody.Type,
+                    });
+            }
+
+            var brokerResults = await ResourceBroker.AllocateAsync(
+                brokerInput, logger.WithValues(new LogValueSet()));
+
+            var createResourcesResponseBody = new List<ResourceBrokerResource>();
+            foreach (var brokerResult in brokerResults)
+            {
+                createResourcesResponseBody.Add(new ResourceBrokerResource
+                    {
+                        Type = brokerResult.Type,
+                        SkuName = brokerResult.SkuName,
+                        ResourceId = brokerResult.Id,
+                        Location = brokerResult.Location,
+                        Created = brokerResult.Created,
+                    });
+            }
+
+            return createResourcesResponseBody;
         }
 
         /// <inheritdoc/>
