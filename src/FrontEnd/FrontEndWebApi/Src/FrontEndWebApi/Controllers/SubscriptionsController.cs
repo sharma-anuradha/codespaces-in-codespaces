@@ -21,6 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using PlanErrorCodes = Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts.ErrorCodes;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -246,8 +247,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     logger.AddVsoPlan(plan)
                             .AddDuration(duration)
-                            .LogError("plan_delete_error");
-                    return CreateErrorResponse("DeleteFailed");
+                            .LogError("plan_delete_doesnotexist_error");
+                    return new OkObjectResult(string.Empty);
                 }
 
                 logger.AddDuration(duration)

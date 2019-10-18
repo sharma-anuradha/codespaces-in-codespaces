@@ -94,6 +94,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         }
 
         [Fact]
+        public async Task GetPlanReturnsDoesNotExistIfPlanDoesNotExist()
+        {
+            var vsoPlan = GeneratePlan("GetPlanTest");
+            var getResult = await planManager.GetAsync(vsoPlan.Plan, logger);
+            Assert.Equal(ErrorCodes.PlanDoesNotExist, getResult.ErrorCode);
+        }
+
+        [Fact]
         public async Task UpdatePlan()
         {
             var original = (await planManager.CreateOrUpdateAsync(GeneratePlan("UpdatePlanTest"), logger)).VsoPlan;
