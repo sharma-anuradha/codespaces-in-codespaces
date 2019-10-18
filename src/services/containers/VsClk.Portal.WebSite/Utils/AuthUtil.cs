@@ -30,7 +30,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 var authToken = authTokenJson.Value<string>("access_token");
                 return authToken;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null;
             }

@@ -6,7 +6,6 @@ import { useDispatch } from './middleware/useDispatch';
 import { fetchConfiguration } from './fetchConfiguration';
 import { fetchEnvironments } from './fetchEnvironments';
 import { getUserInfo } from './getUserInfo';
-import { setAuthCookie } from '../utils/setAuthCookie';
 import { telemetry } from '../utils/telemetry';
 import { tryGetGitHubCredentialsLocal } from './getGitHubCredentials';
 
@@ -26,9 +25,6 @@ export async function init() {
             const { email, preferred_username } = token.account.idTokenClaims;
             const userEmail = email || preferred_username;
             telemetry.setIsInternal(userEmail.includes('@microsoft.com'));
-
-            // Fire & forget
-            setAuthCookie(token.accessToken);
 
             return token;
         });
