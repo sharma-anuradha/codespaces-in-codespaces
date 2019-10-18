@@ -7,7 +7,7 @@ import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { KeyCodes } from '@uifabric/utilities';
 import { PlanSelector } from '../planSelector/planSelector';
-import { useWebClient } from '../../actions/middleware/useWebClient';
+import { useWebClient, ServiceResponseError } from '../../actions/middleware/useWebClient';
 import { createEnvironment } from '../../actions/createEnvironment';
 import { storeGitHubCredentials } from '../../actions/getGitHubCredentials';
 import { ApplicationState } from '../../reducers/rootReducer';
@@ -15,67 +15,18 @@ import { GithubAuthenticationAttempt } from '../../services/gitHubAuthentication
 import { Link } from 'office-ui-fabric-react/lib/components/Link';
 import { Collapsible } from '../collapsible/collapsible';
 import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
+import {
+    normalizeGitUrl,
+    getSupportedGitService,
+    getQueryableUrl,
+    SupportedGitService,
+} from '../../utils/gitUrlNormalization';
 
 import './create-environment-panel.css';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
-function normalizeGitUrl(url: string): string | undefined {
-    let result = url.trim();
-    if (result.length === 0) {
-        return undefined;
-    }
-
-    // GitHub allows organization names to contain alphanumeric characters + hyphens. They cannot start or end in hyphen.
-    // For repository names they turn all non-hyphen symbols to hyphens and allow underscores and hyphens in the beginning and end.
-    const shortGithubUrlRegex = /^([a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]|[a-zA-Z0-9]+)\/[_\-a-zA-Z0-9]+$/;
-    if (shortGithubUrlRegex.test(result)) {
-        return `https://github.com/${result}`;
-    }
-
-    // If we don't need to normalize to full form or no-data form, it's a valid full git url.
-    return result;
-}
-
-function getGitProvider(repo: string): SupportedGitServices {
-    const normalizedRepo = normalizeGitUrl(repo);
-
-    if (!normalizedRepo) {
-        return SupportedGitServices.Unknown;
-    }
-
-    const providers: [SupportedGitServices, RegExp][] = [
-        [
-            SupportedGitServices.BitBucket,
-            /^(https?:\/\/)?(www\.)?(bitbucket\.org)\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/,
-        ],
-        [
-            SupportedGitServices.GitLab,
-            /^(https?:\/\/)?(www\.)?(gitlab\.com)\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/,
-        ],
-        [
-            SupportedGitServices.GitHub,
-            /^(https?:\/\/)?(www\.)?(github\.com)\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/,
-        ],
-    ];
-
-    for (const [provider, regex] of providers) {
-        if (regex.test(normalizedRepo)) {
-            return provider;
-        }
-    }
-
-    return SupportedGitServices.Unknown;
-}
-
-function gitHubUrlToGithubApiUrl(fullGitHubUrl: string) {
-    const gitHubUrl = new URL(fullGitHubUrl);
-    const url = new URL(`/repos${gitHubUrl.pathname}`, 'https://api.github.com/');
-
-    return url.toString();
-}
-
-async function pingUrl(url: string, bearerToken?: string): Promise<boolean> {
+async function queryGitService(url: string, bearerToken?: string): Promise<boolean> {
     const webClient = useWebClient();
 
     const headers: Record<string, string> = {};
@@ -90,8 +41,65 @@ async function pingUrl(url: string, bearerToken?: string): Promise<boolean> {
             { skipParsingResponse: true, requiresAuthentication: false }
         );
         return true;
-    } catch {
-        return false;
+    } catch (err) {
+        if (err instanceof ServiceResponseError) {
+            return false;
+        }
+
+        throw err;
+    }
+}
+
+export async function validateGitRepository(
+    maybeRepository: string,
+    gitHubAccessToken: string | null = null,
+    required = false
+): Promise<string> {
+    const valid = '';
+    const maybeGitUrl = normalizeGitUrl(maybeRepository);
+
+    if (!required && !maybeRepository) {
+        return valid;
+    }
+
+    if (!maybeGitUrl) {
+        return validationMessages.invalidGitUrl;
+    }
+
+    const gitServiceProvider = getSupportedGitService(maybeGitUrl);
+    const queryableUrl = getQueryableUrl(maybeGitUrl);
+    if (!queryableUrl) {
+        return validationMessages.invalidGitUrl;
+    }
+
+    if (gitServiceProvider === SupportedGitService.GitHub && gitHubAccessToken) {
+        const isAccessible = await queryGitService(queryableUrl, gitHubAccessToken);
+        if (!isAccessible) {
+            return validationMessages.noAccess;
+        } else {
+            return valid;
+        }
+    } else if (gitServiceProvider === SupportedGitService.GitHub) {
+        try {
+            const isAccessible = await queryGitService(queryableUrl);
+            if (!isAccessible) {
+                return validationMessages.privateRepoNoAuth;
+            } else {
+                return valid;
+            }
+        } catch {
+            return validationMessages.testFailed;
+        }
+    } else {
+        try {
+            if (await queryGitService(queryableUrl)) {
+                return valid;
+            } else {
+                return validationMessages.unableToConnect;
+            }
+        } catch {
+            return validationMessages.testFailed;
+        }
     }
 }
 
@@ -109,12 +117,15 @@ function getValidationIcon(state: TextFieldState) {
     }
 }
 
-const validationErrorMessages = {
+export const validationMessages = {
+    valid: '',
+    testFailed: 'Failed to check repository access, please try again.',
     nameIsRequired: 'Name is required.',
     unableToConnect: 'Unable to connect to this repo. Create an empty environment.',
-    invalidGitUrl: 'We are not able to clone this repository into the environment automatically.',
+    invalidGitUrl: 'We are unable to clone this repository automatically.',
     noAccess: 'You do not have access to this repo.',
-    privateRepoNoAuth: 'Private GitHub repo detected.',
+    privateRepoNoAuth:
+        'Repository doesn’t appear to exist. If it’s private, then you’ll need to authenticate.',
 };
 
 enum ValidationState {
@@ -134,13 +145,6 @@ type NumberFieldState = {
     value: number;
     validation: ValidationState;
 };
-
-enum SupportedGitServices {
-    Unknown,
-    GitHub = 'github.com',
-    BitBucket = 'bitbucket.org',
-    GitLab = 'gitlab.com',
-}
 
 export interface CreateEnvironmentPanelProps {
     defaultName?: string | null;
@@ -165,7 +169,7 @@ interface FormFields {
     dotfilesRepository: TextFieldState;
     dotfilesInstallCommand: TextFieldState;
     dotfilesTargetPath: TextFieldState;
-    autoShutdownDelayMinutes: NumberFieldState
+    autoShutdownDelayMinutes: NumberFieldState;
 }
 
 interface CreateEnvironmentPanelState extends FormFields {
@@ -203,14 +207,13 @@ function formToEnvironmentParams(fields: FormFields): CreateEnvironmentParams {
     };
 }
 
-export const defaultAutoShutdownDelayMinutes: number = 30
-const autoShutdownOptions: IDropdownOption[] = 
-    [
-        {key: 5, text: '5 Minutes'},
-        {key: 30, text: '30 Minutes'},
-        {key: 120, text: '2 Hours'},
-        {key: 0, text: 'Never'},
-    ];
+export const defaultAutoShutdownDelayMinutes: number = 30;
+const autoShutdownOptions: IDropdownOption[] = [
+    { key: 5, text: '5 Minutes' },
+    { key: 30, text: '30 Minutes' },
+    { key: 120, text: '2 Hours' },
+    { key: 0, text: 'Never' },
+];
 
 export class CreateEnvironmentPanelView extends Component<
     CreateEnvironmentPanelProps,
@@ -339,7 +342,7 @@ export class CreateEnvironmentPanelView extends Component<
             </Panel>
         );
     }
- 
+
     private onRenderFooterContent = () => {
         let authStatusMessage;
         if (this.state.authenticationErrorMessage) {
@@ -459,15 +462,12 @@ export class CreateEnvironmentPanelView extends Component<
 
                 this.props.storeGitHubCredentials(accessToken);
 
-                const maybeGitUrl = normalizeGitUrl(this.state.gitRepositoryUrl.value);
-                if (!maybeGitUrl) {
-                    throw new Error('Internal error: state mismatch.');
-                }
-
-                const pingableUrl = gitHubUrlToGithubApiUrl(maybeGitUrl);
-                const isGitHubRepositoryAccessible = await pingUrl(pingableUrl, accessToken);
-                if (!isGitHubRepositoryAccessible) {
-                    throw new Error(validationErrorMessages.noAccess);
+                const validationMessage = await validateGitRepository(
+                    this.state.gitRepositoryUrl.value,
+                    this.props.gitHubAccessToken
+                );
+                if (validationMessage === validationMessages.valid) {
+                    throw new Error(validationMessages.noAccess);
                 }
 
                 this.props.onCreateEnvironment(formToEnvironmentParams(this.state));
@@ -550,7 +550,7 @@ export class CreateEnvironmentPanelView extends Component<
 
     private onGetErrorMessageFriendlyName = (value: string) => {
         if (value.trim().length === 0) {
-            return validationErrorMessages.nameIsRequired;
+            return validationMessages.nameIsRequired;
         }
     };
 
@@ -575,40 +575,7 @@ export class CreateEnvironmentPanelView extends Component<
     };
 
     private onGetErrorMessageGitRepo = async (value: string) => {
-        const valid = '';
-        const maybeGitUrl = normalizeGitUrl(value);
-
-        if (!maybeGitUrl) {
-            return valid;
-        }
-
-        const gitServiceProvider = getGitProvider(maybeGitUrl);
-        switch (gitServiceProvider) {
-            case SupportedGitServices.GitHub:
-                const pingableUrl = gitHubUrlToGithubApiUrl(maybeGitUrl);
-                if (this.props.gitHubAccessToken) {
-                    const isAccessible = await pingUrl(pingableUrl, this.props.gitHubAccessToken);
-                    if (!isAccessible) {
-                        return validationErrorMessages.noAccess;
-                    }
-                } else {
-                    const isAccessible = await pingUrl(pingableUrl);
-                    if (!isAccessible) {
-                        return validationErrorMessages.privateRepoNoAuth;
-                    }
-                }
-
-                return valid;
-
-            case SupportedGitServices.BitBucket:
-            case SupportedGitServices.GitLab:
-                return (await pingUrl(maybeGitUrl))
-                    ? valid
-                    : validationErrorMessages.unableToConnect;
-
-            default:
-                return validationErrorMessages.invalidGitUrl;
-        }
+        return await validateGitRepository(value, this.props.gitHubAccessToken);
     };
 
     private onNotifyValidationResultGitRepositoryUrl = (
@@ -624,7 +591,7 @@ export class CreateEnvironmentPanelView extends Component<
         if (errorMessage) {
             this.setState({
                 shouldTryToAuthenticateForRepo:
-                    errorMessage === validationErrorMessages.privateRepoNoAuth,
+                    errorMessage === validationMessages.privateRepoNoAuth,
             });
         }
     };
@@ -651,7 +618,7 @@ export class CreateEnvironmentPanelView extends Component<
         if (errorMessage) {
             this.setState({
                 shouldTryToAuthenticateForDotfiles:
-                    errorMessage === validationErrorMessages.privateRepoNoAuth,
+                    errorMessage === validationMessages.privateRepoNoAuth,
             });
         }
     };
@@ -664,12 +631,16 @@ export class CreateEnvironmentPanelView extends Component<
         this.setTextValidationState('dotfilesTargetPath', value, ValidationState.Valid);
     };
 
-    private onChangeAutoShutdownDelayMinutes = (_event: unknown, option?: IDropdownOption, index?: number) => {
+    private onChangeAutoShutdownDelayMinutes = (_event: unknown, option?: IDropdownOption) => {
         if (option) {
             if (typeof option.key !== 'number') {
-                throw new Error('NotImplemented')
+                throw new Error('NotImplemented');
             }
-            this.setNumberValidationState('autoShutdownDelayMinutes', option.key, ValidationState.Valid);
+            this.setNumberValidationState(
+                'autoShutdownDelayMinutes',
+                option.key,
+                ValidationState.Valid
+            );
         }
     };
 }

@@ -180,12 +180,21 @@ export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {
         }
         await wait(delay);
 
-        let { body = undefined, ...rest } = responses.shift() || {};
+        let {
+            body = undefined,
+            ok = responseDefaults.ok,
+            status = responseDefaults.status,
+            ...rest
+        } = responses.shift() || {};
 
         const response: Response = {
             ...responseDefaults,
             ...rest,
+            status,
             url,
+            get ok() {
+                return !!ok && (status < 400 && status >= 200);
+            },
             clone() {
                 throw Error('MockResponse.clone not implemented');
             },

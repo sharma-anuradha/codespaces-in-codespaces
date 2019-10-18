@@ -59,14 +59,21 @@ async function request<TResult>(
 
     let { headers, body, ...rest } = options;
 
-    const {
-        state: {
-            authentication: { token },
-        },
-    } = useActionContext();
+    if (requestOptions.requiresAuthentication) {
+        const {
+            state: {
+                authentication: { token },
+            },
+        } = useActionContext();
 
-    if (requestOptions.requiresAuthentication && !token) {
-        throw new ServiceAuthenticationError();
+        if (!token) {
+            throw new ServiceAuthenticationError();
+        }
+
+        headers = {
+            Authorization: `Bearer ${token!.accessToken}`,
+            ...headers,
+        } as Record<string, string>;
     }
 
     let response;
@@ -75,13 +82,6 @@ async function request<TResult>(
             'Content-Type': 'application/json',
             ...headers,
         } as Record<string, string>;
-
-        if (requestOptions.requiresAuthentication && token) {
-            headers = {
-                Authorization: `Bearer ${token!.accessToken}`,
-                ...headers,
-            } as Record<string, string>;
-        }
 
         const { makeRequest } = useActionContext();
 
@@ -261,7 +261,7 @@ export class ServiceContentError extends ServiceError {
 
 export class ServiceConnectionError extends ServiceError {
     constructor(public error: Error) {
-        super('Service connection failed');
+        super('Service connection failed. ' + error.message);
 
         Error.captureStackTrace(this, ServiceConnectionError);
     }
