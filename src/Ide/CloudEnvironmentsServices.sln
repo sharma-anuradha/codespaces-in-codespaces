@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29230.54
@@ -93,7 +93,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnvironmentManager.Test", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrontEndWebApi", "..\FrontEnd\FrontEndWebApi\Src\FrontEndWebApi\FrontEndWebApi.csproj", "{0E87C844-42C8-4632-9F34-DEA3FB4629F7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveshareAuthentication", "..\FrontEnd\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj", "{1E628C43-1511-4608-8076-F4BDAC329F8B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveShareAuthentication", "..\FrontEnd\LiveShareAuthentication\Src\LiveShareAuthentication\LiveShareAuthentication.csproj", "{1E628C43-1511-4608-8076-F4BDAC329F8B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveShareAuthentication.Contracts", "..\FrontEnd\LiveShareAuthentication\Src\LiveShareAuthentication.Contracts\LiveShareAuthentication.Contracts.csproj", "{F5389F27-497B-4209-B37B-44E773A32EE3}"
 EndProject

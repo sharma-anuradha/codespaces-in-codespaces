@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29202.138
@@ -61,7 +61,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "..\..\Common\Src\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LiveShareAuthentication", "LiveShareAuthentication", "{F991780B-48E0-4DDA-A1EB-7B9F15A8B4B1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveshareAuthentication", "..\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj", "{6778C974-03E8-4A51-B5D5-A9230E0607D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveShareAuthentication", "..\LiveShareAuthentication\Src\LiveShareAuthentication\LiveShareAuthentication.csproj", "{6778C974-03E8-4A51-B5D5-A9230E0607D1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveShareAuthentication.Contracts", "..\LiveShareAuthentication\Src\LiveShareAuthentication.Contracts\LiveShareAuthentication.Contracts.csproj", "{57F6F9B8-2DF4-4E57-85AA-768C811D1DAE}"
 EndProject

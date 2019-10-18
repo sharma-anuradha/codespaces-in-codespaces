@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
@@ -30,13 +30,13 @@
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
     <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj" />
-    <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveshareAuthentication\LiveshareAuthentication.csproj" />
-    <ProjectReference Include="..\..\..\LiveShareWorkspace\src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveShareAuthentication\LiveShareAuthentication.csproj" />
+    <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
     <ProjectReference Include="..\..\..\Monitoring\Src\Monitoring\Monitoring.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Plans\Test\Plans.Test\Plans.Test.csproj" />
-    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\UserProfile\src\UserProfile\UserProfile.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile\UserProfile.csproj" />
   </ItemGroup>
 
   <ItemGroup>
