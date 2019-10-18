@@ -409,7 +409,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 var planDetails = (await PlanManager.GetAsync(plan, logger)).VsoPlan;
                 if (planDetails == null)
                 {
-                    throw new ArgumentException($"SkuPlan not found.", nameof(cloudEnvironment.PlanId));
+                    throw new ArgumentException($"Plan not found.", nameof(cloudEnvironment.PlanId));
                 }
 
                 // Validate against existing environments.
@@ -423,13 +423,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return result;
                 }
 
-                // Validate the calling user is the owner of the the plan (if the plan has an owner).
+                // Validate the calling user is the owner of the the plan (if the account has an owner).
                 // Match on provider ID instead of profile ID because clients dont have
                 // the profile ID when the create the plan resource via ARM.
                 UnauthorizedUtil.IsTrue(
                     planDetails.UserId == null || currentUserProviderId == planDetails.UserId);
 
-                // TODO: Validate the plan & subscription are in a good state?
+                // TODO: Validate the account & subscription are in a good state?
 
                 // Check for quota on # of environments per plan
                 var totalEnvironments = await ListEnvironmentsAsync(userId: null, string.Empty, plan.ResourceId, logger);

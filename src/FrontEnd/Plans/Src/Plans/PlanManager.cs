@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
@@ -171,7 +173,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 return false;
             }
 
-            return await this.planRepository.DeleteAsync(modelList.Id, logger);
+            return await this.planRepository.DeleteAsync(
+                                    new DocumentDbKey(
+                                        modelList.Id,
+                                        new PartitionKey(modelList.Plan.Subscription)),
+                                    logger);
         }
     }
 }
