@@ -2,10 +2,10 @@ import React, { Fragment, useCallback } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { EnvironmentsPanel } from '../environments/environments';
-import { CreateAccountPanel } from '../environmentsPanel/create-account-panel';
+import { CreatePlanPanel } from '../environmentsPanel/create-plan-panel';
 import { environmentsPath } from '../../routes';
 
-export function NewAccount(props: RouteComponentProps) {
+export function NewPlan(props: RouteComponentProps) {
 
     const hidePanel = useCallback(() => {
         // going back to environments cards (landing page)
@@ -15,9 +15,9 @@ export function NewAccount(props: RouteComponentProps) {
     return (
         <Fragment>
             <EnvironmentsPanel {...props} />
-            <CreateAccountPanel
+            <CreatePlanPanel
                     hidePanel={hidePanel}
                 />
         </Fragment>
-    );
+    ); 
 }

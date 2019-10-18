@@ -1,7 +1,7 @@
 export interface CreateEnvironmentParameters {
     type?: 'cloudEnvironment' | 'staticEnvironment';
     friendlyName: string;
-    accountId: string;
+    planId: string;
     location: string;
     gitRepositoryUrl?: string;
     userName: string;
@@ -33,7 +33,7 @@ export interface ICloudEnvironment {
     created: Date;
     updated: Date;
     personalization?: EnvPersonalization;
-    accountId?: string;
+    planId?: string;
     location?: string;
 }
 

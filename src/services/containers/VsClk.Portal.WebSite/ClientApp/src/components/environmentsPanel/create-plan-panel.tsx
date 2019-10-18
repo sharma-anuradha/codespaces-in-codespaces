@@ -14,12 +14,12 @@ import { authService } from '../../services/authService';
 import jwtDecode from 'jwt-decode';
 
 
-export interface CreateAccountPanelProps {
+export interface CreatePlanPanelProps {
     hidePanel: () => void;
 }
 
-export interface CreateAccountPanelState {
-    accountName?: string;
+export interface CreatePlanPanelState {
+    planName?: string;
     regionList: Array<{key: string, text: string}>;
     subscriptionList: Array<{key: string, text: string}>;
     resourceGroupList: Array<{key: string, text: string}>;
@@ -28,10 +28,10 @@ export interface CreateAccountPanelState {
     selectedRegion?: string;
 }
 
-export class CreateAccountPanel extends Component<CreateAccountPanelProps, CreateAccountPanelState>{
+export class CreatePlanPanel extends Component<CreatePlanPanelProps, CreatePlanPanelState>{
 
     
-    public constructor(props: CreateAccountPanelProps){
+    public constructor(props: CreatePlanPanelProps){
         super(props);
         
         this.state = {
@@ -74,8 +74,8 @@ export class CreateAccountPanel extends Component<CreateAccountPanelProps, Creat
                     <TextField
                         label='Plan Name'
                         placeholder='planNameExample'
-                        onChange={this.accountNameChanged}
-                        value={this.state.accountName}
+                        onChange={this.planNameChanged}
+                        value={this.state.planName}
                     />
                 </Stack>
             </Panel>
@@ -86,7 +86,7 @@ export class CreateAccountPanel extends Component<CreateAccountPanelProps, Creat
         return (
             <>
                 <PrimaryButton
-                    onClick={this.createAccount}
+                    onClick={this.createPlan}
                     style={{ marginRight: '.8rem' }}
                     disabled={!this.isCurrentStateValid()}
                 >
@@ -103,7 +103,7 @@ export class CreateAccountPanel extends Component<CreateAccountPanelProps, Creat
         }
     };
 
-    private createAccount = async () => {
+    private createPlan = async () => {
         if(!this.isCurrentStateValid()){
             return;
         }
@@ -118,7 +118,7 @@ export class CreateAccountPanel extends Component<CreateAccountPanelProps, Creat
         }
  
         const url = 'https://management.azure.com/'+ this.state.resourceGroup    //NOTE: Resource group id contains subscription id
-                    +'/providers/Microsoft.VSOnline//accounts/'+ this.state.accountName
+                    +'/providers/Microsoft.VSOnline//plans/'+ this.state.planName
                     +'?api-version=' + this.getAPIVersion();
 
         const myAuthToken = await getARMToken(60);
@@ -139,7 +139,7 @@ export class CreateAccountPanel extends Component<CreateAccountPanelProps, Creat
 
     private clearForm = () => { 
         this.setState({
-            accountName: undefined,
+            planName: undefined,
             regionList: [],
         });
         this.props.hidePanel();
@@ -233,8 +233,8 @@ export class CreateAccountPanel extends Component<CreateAccountPanelProps, Creat
     private isCurrentStateValid(){
         let isInvalid = false;
 
-        const accountName = this.state.accountName && this.state.accountName.trim();
-        isInvalid = isInvalid || !accountName || accountName.length === 0;
+        const planName = this.state.planName && this.state.planName.trim();
+        isInvalid = isInvalid || !planName || planName.length === 0;
 
         if(!this.state.resourceGroup
             || !this.state.selectedRegion
@@ -247,12 +247,12 @@ export class CreateAccountPanel extends Component<CreateAccountPanelProps, Creat
 
     //Functions that handle dropdown change events
 
-    private accountNameChanged: (
+    private planNameChanged: (
         event: FormEvent<HTMLInputElement | HTMLTextAreaElement>,
-        accountName?: string
-    ) => void = (_event, accountName) => {
+        planName?: string
+    ) => void = (_event, planName) => {
         this.setState({
-            accountName,
+            planName,
         });
     };
 

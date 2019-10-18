@@ -7,7 +7,7 @@ import { Persona, PersonaSize } from 'office-ui-fabric-react/lib/Persona';
 import { Separator } from 'office-ui-fabric-react/lib/Separator';
 
 import { ApplicationState } from '../../reducers/rootReducer';
-import { AccountSelector } from '../accountSelector/accountSelector';
+import { PlanSelector } from '../planSelector/planSelector';
 
 import './titlebar.css';
 
@@ -28,7 +28,7 @@ function TitleBarNoRouter(props: RouteComponentProps) {
                 <Separator vertical className='vsonline-titlebar__separator' />
                 <div className='vsonline-titlebar__caption-text'>{pageTitle}</div>
                 <Separator vertical className='vsonline-titlebar__separator' />
-                <AccountSelector {...props} />
+                <PlanSelector {...props}/>
             </div>
             <Persona
                 className='titlebar__main-avatar'

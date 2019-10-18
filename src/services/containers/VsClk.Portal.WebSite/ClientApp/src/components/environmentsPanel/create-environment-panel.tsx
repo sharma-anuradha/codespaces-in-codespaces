@@ -6,7 +6,7 @@ import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { KeyCodes } from '@uifabric/utilities';
-import { AccountSelector } from '../accountSelector/accountSelector';
+import { PlanSelector } from '../planSelector/planSelector';
 import { useWebClient } from '../../actions/middleware/useWebClient';
 import { createEnvironment } from '../../actions/createEnvironment';
 import { storeGitHubCredentials } from '../../actions/getGitHubCredentials';
@@ -192,8 +192,8 @@ type Fields = keyof FormFields;
 
 function formToEnvironmentParams(fields: FormFields): CreateEnvironmentParams {
     return {
-        accountId: AccountSelector.getAccountID(),
-        location: AccountSelector.getAccountLocation(),
+        planId: PlanSelector.getPlanID(),
+        location: PlanSelector.getPlanLocation(),
         friendlyName: fields.friendlyName.value,
         gitRepositoryUrl: normalizeGitUrl(fields.gitRepositoryUrl.value),
         dotfilesRepository: normalizeGitUrl(fields.dotfilesRepository.value),

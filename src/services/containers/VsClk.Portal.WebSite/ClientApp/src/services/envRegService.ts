@@ -52,7 +52,7 @@ export async function createEnvironment(
     const { environmentRegistrationEndpoint } = configuration;
     const {
         friendlyName,
-        accountId,
+        planId,
         location,
         gitRepositoryUrl,
         type = 'cloudEnvironment',
@@ -73,7 +73,7 @@ export async function createEnvironment(
     const body = {
         id: '',
         type,
-        accountId,
+        planId,
         location,
         friendlyName,
         seed: {

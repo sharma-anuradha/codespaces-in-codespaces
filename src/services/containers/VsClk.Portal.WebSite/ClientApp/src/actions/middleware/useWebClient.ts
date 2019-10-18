@@ -133,9 +133,6 @@ async function request<TResult>(
 
     try {
         const content = await response.json();
-        console.log(response);
-        console.log(content);
-
         return content as TResult;
     } catch (err) {
         throw new ServiceContentError(url, response.status);

@@ -55,7 +55,7 @@ describe('createEnvironment', () => {
         await store.dispatch(
             createEnvironment({
                 friendlyName: 'test',
-                accountId: '/subscriptions/mockSubscription/resourceGroups/mockResourceGroup/providers/Microsoft.VSOnline/accounts/test',
+                planId: '/subscriptions/mockSubscription/resourceGroups/mockResourceGroup/providers/Microsoft.VSOnline/plans/test',
                 location: 'WestUS2',
                 autoShutdownDelayMinutes: 30
             })
