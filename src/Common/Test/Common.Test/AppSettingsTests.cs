@@ -84,6 +84,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.NotNull(subscription.ComputeQuotas);
                 Assert.NotNull(subscription.NetworkQuotas);
                 Assert.NotNull(subscription.StorageQuotas);
+                Assert.True(subscription.ComputeQuotas.ContainsKey("standardFSv2Family"));
+                Assert.True(subscription.NetworkQuotas.ContainsKey("VirtualNetworks"));
+                Assert.True(subscription.StorageQuotas.ContainsKey("StorageAccounts"));
             }
         }
 

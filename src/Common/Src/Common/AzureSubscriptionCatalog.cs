@@ -48,6 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var applicatonServicePrincipal = azureSubscriptionCatalogOptions.ApplicationServicePrincipal;
             var dataPlaneSettings = azureSubscriptionCatalogOptions.DataPlaneSettings;
             var defaultQuotas = dataPlaneSettings.DefaultQuotas;
+            var defaultLocations = dataPlaneSettings.DefaultLocations;
 
             foreach (var item in dataPlaneSettings.Subscriptions)
             {
@@ -62,7 +63,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 }
 
                 // Create the ordered list of locations.
-                var locations = new ReadOnlyCollection<AzureLocation>(azureSubscriptionSettings.Locations
+                var whichLocations = azureSubscriptionSettings.Locations?.Any() == true ?
+                    azureSubscriptionSettings.Locations : defaultLocations;
+                var locations = new ReadOnlyCollection<AzureLocation>(whichLocations
                     .Distinct()
                     .OrderBy(l => Enum.GetName(typeof(AzureLocation), l))
                     .ToList()
