@@ -25,9 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         private readonly IBillingEventManager billingEventManager;
         private readonly IControlPlaneInfo controlPlaneInfo;
-        private readonly IDiagnosticsLogger logger;
         private readonly IClaimedDistributedLease claimedDistributedLease;
         private readonly ITaskHelper taskHelper;
+
+        protected IDiagnosticsLogger Logger;
 
         public BillingServiceBase( 
             IBillingEventManager billingEventManager,
@@ -39,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             this.billingEventManager = billingEventManager;
             this.controlPlaneInfo = controlPlaneInfo;
-            this.logger = logger;
+            this.Logger = logger.NewChildLogger();
             this.claimedDistributedLease = claimedDistributedLease;
             this.taskHelper = taskHelper;
 
@@ -67,8 +68,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var planShards = billingEventManager.GetShards();
             var plansToRegionsShards = planShards.SelectMany(x => controlPlaneRegions, (planShard, region) => new { planShard, region });
 
-            logger.FluentAddValue("startCalculationTime", start);
-            logger.FluentAddValue("endCalculationTime", end);
+            Logger.FluentAddValue("startCalculationTime", start);
+            Logger.FluentAddValue("endCalculationTime", end);
 
             await taskHelper.RunBackgroundEnumerableAsync(
                 $"{ServiceName}-run",
@@ -92,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         }
                     }
                 },
-                logger);
+                Logger);
         }
 
         protected abstract Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string planShard, AzureLocation region);

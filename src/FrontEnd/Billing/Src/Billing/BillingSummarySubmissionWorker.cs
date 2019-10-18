@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public BillingSummarySubmissionWorker(IBillingSummarySubmissionService billingSummarySubmissionService, IDiagnosticsLogger diagnosticsLogger)
         {
             this.billingSummarySubmissionService = billingSummarySubmissionService;
-            this.logger = diagnosticsLogger;
+            this.logger = diagnosticsLogger.NewChildLogger();
         }
 
         /// <inheritdoc/>

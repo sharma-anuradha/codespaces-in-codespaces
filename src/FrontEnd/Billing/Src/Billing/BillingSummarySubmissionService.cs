@@ -16,13 +16,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     public class BillingSummarySubmissionService : BillingServiceBase, IBillingSummarySubmissionService
     {
         // services
-        private readonly IControlPlaneInfo controlPlanInfo;
         private readonly IBillingEventManager billingEventManager;
-        private readonly IDiagnosticsLogger logger;
         private readonly IBillingSubmissionCloudStorageFactory billingStorageFactory;
-        private readonly IClaimedDistributedLease claimedDistributedLease;
-        private readonly ITaskHelper taskHelper;
-
 
         /// <summary>
         /// Accoring to the FAQs - usage meters should arrive within 48 hours of when it was incurred.
@@ -48,12 +43,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             ITaskHelper taskHelper)
             : base(billingEventManager, controlPlanInfo, logger, claimedDistributedLease, taskHelper, "billingsub-worker")
         {
-            this.controlPlanInfo = controlPlanInfo;
+
             this.billingEventManager = billingEventManager;
-            this.logger = logger;
             this.billingStorageFactory = billingStorageFactory;
-            this.claimedDistributedLease = claimedDistributedLease;
-            this.taskHelper = taskHelper;
         }
 
         /// <inheritdoc />
@@ -69,10 +61,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var plans = await billingEventManager.GetPlansByShardAsync(
                                                     startTime,
                                                     endTime,
-                                                    logger,
+                                                    Logger,
                                                     new List<AzureLocation> { region },
                                                     planShard);
-            logger.LogInfo($"Submitting bill summaries for region {region} and shard {planShard}");
+            Logger.LogInfo($"Submitting bill summaries for region {region} and shard {planShard}");
             foreach (var plan in plans)
             {
                 Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan &&
@@ -80,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                                  bev.Time < endTime &&
                                                  bev.Type == BillingEventTypes.BillingSummary
                                                  && ((BillingSummary)bev.Args).SubmissionState == BillingSubmissionState.None;
-                var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, logger);
+                var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, Logger);
                 foreach (var summary in billingSummaries)
                 {
                     addedEntries |= await ProcessSummary(summary, batchID);
@@ -92,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 try
                 {
-                    logger.LogInfo($"Billing Submissions for {region} and shard {planShard} were submitted to table, now submitting to queue");
+                    Logger.LogInfo($"Billing Submissions for {region} and shard {planShard} were submitted to table, now submitting to queue");
 
                     // Get the storage mechanism for billing submission
                     var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
@@ -108,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 catch (Exception ex)
                 {
 
-                    logger.LogError($"Submitting queue message for batch {batchID} failed with exception:{ex.Message}");
+                    Logger.LogError($"Submitting queue message for batch {batchID} failed with exception:{ex.Message}");
                     throw;
                 }
             }
@@ -152,18 +144,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Update the billing event to show it's been submitted
                     billingSummary.SubmissionState = BillingSubmissionState.Submitted;
                     billingSummary.EventId = eventID.ToString();
-                    await billingEventManager.UpdateEventAsync(billingEvent, logger);
+                    await billingEventManager.UpdateEventAsync(billingEvent, Logger);
                 }
                 else
                 {
                     // We don't want to submit this entry as it's zero quantity. Mark it and move on so that we don't look at it again
                     billingSummary.SubmissionState = BillingSubmissionState.NeverSubmit;
-                    await billingEventManager.UpdateEventAsync(billingEvent, logger);
+                    await billingEventManager.UpdateEventAsync(billingEvent, Logger);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to submit billing event for resourceID: {billingEvent.Plan.ResourceId}" + ex.Message);
+                Logger.LogError($"Failed to submit billing event for resourceID: {billingEvent.Plan.ResourceId}" + ex.Message);
                 throw;
             }
 

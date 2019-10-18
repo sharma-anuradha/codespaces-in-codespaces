@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         private readonly decimal smallLinuxComputeUnitPerHr = 125;
         private readonly decimal smallLinuxStorageUnitPerHr = 2;
         private static readonly string WestUs2MeterId = "5f3afa79-01ad-4d7e-b691-73feca4ea350";
-        
+
 
         // 5 hrs Available => 127 * 5 = 635
         private static readonly double BillableUnits = 635;
@@ -256,6 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 { WestUs2MeterId, 0 },
             },
+            PeriodEnd = TestTimeNow.AddHours(-4),
             UsageDetail = new UsageDetail
             {
                 Environments = new Dictionary<string, EnvironmentUsageDetail>
@@ -461,6 +462,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 { WestUs2MeterId, BIllableUnitsNoNewEvents },
             },
+            PeriodEnd = TestTimeNow.AddHours(-5),
+            PeriodStart = TestTimeNow.AddHours(-4),
             UsageDetail = new UsageDetail
             {
                 Environments = new Dictionary<string, EnvironmentUsageDetail>
@@ -563,12 +566,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 // Current billing summary is null
                 null,
-                new BillingEvent
-                {
-                    Args = BillingSummaryInputNoCurrentEvents,
-                    // Last billing summary was written 5 hrs ago.
-                    Time = TestTimeNow.Subtract(TimeSpan.FromHours(5)),
-                },
+
                 BillingSummaryOutputNoCurrentEvents
             };
         }
@@ -675,15 +673,151 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         }
 
         [Theory]
-        [MemberData(nameof(GetBillingInputsNoNewEvents))]
-        public async Task BillingSummaryIsCreatedNoNewEvents(
-            BillingSummary currentSummary,
-            BillingEvent latestBillingEvent,
-            BillingSummary expectedSummary)
+        [InlineData(2)]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(5)]
+        [InlineData(48)]
+        public async Task BillingSummaryIsCreatedNoNewEvents(int billDuration)
         {
+
+            double billableActiveHours = 127 * billDuration;
+            double billableShutdownHours = 2 * billDuration;
+
+            var latestBillingEvent = new BillingEvent
+            {
+                Args = new BillingSummary
+                {
+                    SubmissionState = BillingSubmissionState.None,
+                    Usage = new Dictionary<string, double>
+                    {
+                        { WestUs2MeterId, 0 },
+                    },
+                    PeriodEnd = TestTimeNow.AddHours(-billDuration),
+                    UsageDetail = new UsageDetail
+                    {
+                        Environments = new Dictionary<string, EnvironmentUsageDetail>
+                        {
+                            {
+                                testEnvironment.Id,
+                                new EnvironmentUsageDetail
+                                {
+                                    EndState = "Available",
+                                    Sku = new Sku { Name = smallLinuxSKuName },
+                                    UserId = testEnvironment.UserId,
+                                    Usage = new Dictionary<string, double>
+                                    {
+                                        { WestUs2MeterId, 0 },
+                                    },
+                                }
+                            },
+                            {
+                                testEnvironment2.Id,
+                                new EnvironmentUsageDetail
+                                {
+                                    EndState = "Shutdown",
+                                    Sku = new Sku { Name = smallLinuxSKuName },
+                                    UserId = testEnvironment.UserId,
+                                    Usage = new Dictionary<string, double>
+                                    {
+                                        { WestUs2MeterId, 0 },
+                                    },
+                                }
+                            },
+                            {
+                                testEnvironment3.Id,
+                                new EnvironmentUsageDetail
+                                {
+                                    EndState = "Deleted",
+                                    Sku = new Sku { Name = smallLinuxSKuName },
+                                    UserId = testEnvironment.UserId,
+                                    Usage = new Dictionary<string, double>
+                                    {
+                                        { WestUs2MeterId, 0 },
+                                    },
+                                }
+                            }
+                        },
+                        Users = new Dictionary<string, UserUsageDetail>
+                        {
+                            {
+                                testEnvironment.UserId,
+                                new UserUsageDetail
+                                {
+                                    Usage = new Dictionary<string, double>
+                                    {
+                                        { WestUs2MeterId, 0 },
+                                    },
+
+                                }
+                            }
+                        }
+
+                    }
+                },
+                // Last billing summary was written 3 hrs ago but should be irrelevant
+                Time = TestTimeNow.Subtract(TimeSpan.FromHours(3)).AddMinutes(7),
+            };
+            var expectedSummary = new BillingSummary
+            {
+                SubmissionState = BillingSubmissionState.None,
+                Usage = new Dictionary<string, double>
+                {
+                    { WestUs2MeterId, billableActiveHours + billableShutdownHours
+                    },
+                },
+                PeriodEnd = TestTimeNow,
+                PeriodStart = TestTimeNow.AddHours(-billDuration),
+                UsageDetail = new UsageDetail
+                {
+                    Environments = new Dictionary<string, EnvironmentUsageDetail>
+                {
+                    {
+                        testEnvironment.Id,
+                        new EnvironmentUsageDetail
+                        {
+                            EndState = "Available",
+                            UserId = testEnvironment.UserId,
+                            Usage = new Dictionary<string, double>
+                            {
+                                { WestUs2MeterId, billableActiveHours },
+                            },
+                        }
+                    },
+                    {
+                        testEnvironment2.Id,
+                        new EnvironmentUsageDetail
+                        {
+                            EndState = "Shutdown",
+                            UserId = testEnvironment.UserId,
+                            Usage = new Dictionary<string, double>
+                            {
+                                { WestUs2MeterId, billableShutdownHours },
+                            },
+                        }
+                    },
+                },
+                    Users = new Dictionary<string, UserUsageDetail>
+                {
+                    {
+                        testEnvironment.UserId,
+                        new UserUsageDetail
+                        {
+                            Usage = new Dictionary<string, double>
+                            {
+                                { WestUs2MeterId, billableActiveHours + billableShutdownHours },
+                            },
+
+                        }
+                    }
+                }
+
+                }
+            };
+
             // BIlling Service
             var actualSummary = await billingService.CaculateBillingForEnvironmentsWithNoEvents(testPlan,
-                                                                                        currentSummary,
+                                                                                        null,
                                                                                         latestBillingEvent,
                                                                                         TestTimeNow);
 

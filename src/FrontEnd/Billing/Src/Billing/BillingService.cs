@@ -27,11 +27,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     public partial class BillingService : BillingServiceBase, IBillingService
     {
         private readonly IBillingEventManager billingEventManager;
-        private readonly IControlPlaneInfo controlPlaneInfo;
         private readonly ISkuCatalog skuCatalog;
-        private readonly IDiagnosticsLogger logger;
-        private readonly IClaimedDistributedLease claimedDistributedLease;
-        private readonly string billingEventType = BillingEventTypes.BillingSummary;
+        private readonly string billingSummaryType = BillingEventTypes.BillingSummary;
         private readonly string DeletedEnvState = nameof(CloudEnvironmentState.Deleted);
         private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> SkuDictionary;
         // TODO: move the meter Dictionary to AppSettings
@@ -42,12 +39,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {AzureLocation.WestEurope, "edd2e9c5-56ce-469f-aedb-ba82f4e745cd" },
             {AzureLocation.SouthEastAsia, "12e4ab51-ee20-4bbc-95a6-9dddea31e634" },
         };
-
-        /// <summary>
-        /// According to the FAQs - usage meters should arrive within 48 hours of when it was incurred.
-        /// https://microsoft.sharepoint.com/teams/CustomerAcquisitionBilling/_layouts/15/WopiFrame.aspx?sourcedoc={c7a559f4-316d-46b1-b5d4-f52cdfbc4389}&action=edit&wd=target%28Onboarding.one%7C55f62e8d-ea91-4a90-982c-04899e106633%2FFAQ%7C25cc6e79-1e39-424d-9403-cd05d2f675e9%2F%29&wdorigin=703
-        /// </summary>
-        private readonly int lookBackThresholdHrs = 48;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingService"/> class.
@@ -69,14 +60,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Requires.NotNull(claimedDistributedLease, nameof(claimedDistributedLease));
 
             this.billingEventManager = billingEventManager;
-            this.controlPlaneInfo = controlPlaneInfo;
             this.skuCatalog = skuCatalog;
             SkuDictionary = this.skuCatalog.CloudEnvironmentSkus;
-            logger = diagnosticsLogger;
-            this.claimedDistributedLease = claimedDistributedLease;
 
             // Send all logs to billingservices Geneva logger table
-            logger.FluentAddBaseValue("Service", "billingservices");
+            Logger.FluentAddBaseValue("Service", "billingservices");
         }
 
         /// <inheritdoc/>
@@ -120,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 async (childLogger) =>
                 {
                     // Get the last BillingSummary.
-                    var summaryEvents = await billingEventManager.GetPlanEventsAsync(plan, start, end, new string[] { billingEventType }, logger);
+                    var summaryEvents = await billingEventManager.GetPlanEventsAsync(plan, start, end, new string[] { billingSummaryType }, logger);
                     BillingEvent latestSummary = new BillingEvent();
                     if (!summaryEvents.Any())
                     {
@@ -153,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
                     var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestSummary, end);
-                    await billingEventManager.CreateEventAsync(plan, null, billingEventType, totalBillingSummary, logger);
+                    await billingEventManager.CreateEventAsync(plan, null, billingSummaryType, totalBillingSummary, logger);
                 },
                 swallowException: true);
 
@@ -277,7 +265,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var dividedSlices = GenerateHourBoundTimeSlices(currSlice);
             foreach (var slice in dividedSlices)
             {
-                var currBillingOverride = await billingEventManager.GetOverrideStateForTimeAsync(slice.StartTime, plan.Subscription, plan, sku, logger);
+                var currBillingOverride = await billingEventManager.GetOverrideStateForTimeAsync(slice.StartTime, plan.Subscription, plan, sku, Logger);
                 if (currBillingOverride != null)
                 {
                     slice.OverrideState = currBillingOverride.BillingOverrideState;
@@ -482,8 +470,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // TODO: design for no billing summary in this time period
                 // We may want to widen our summary search
                 // No previous summary environments
-                logger.AddVsoPlan(plan);
-                logger.LogWarning("No BillingSummary found in the last 48 hours for the plan.");
+                Logger.AddVsoPlan(plan);
+                Logger.LogWarning("No BillingSummary found in the last 48 hours for the plan.");
                 return currentSummary;
             }
 
@@ -544,9 +532,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     BillingState = endState == CloudEnvironmentState.Shutdown ?
                         BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
-                    EndTime = latestEvent.Time,
+                    EndTime = lastSummary.PeriodEnd,
                     LastState = endState,
-                    StartTime = latestEvent.Time,
+                    StartTime = lastSummary.PeriodEnd,
                 };
 
                 // Get the remainder or the entire window if there were no events.
@@ -665,15 +653,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 }
                 else
                 {
-                    logger.AddValue("BillingWindowState", billingState.ToString());
-                    logger.LogError("BillingWindowState is in an unsupported state.");
+                    Logger.AddValue("BillingWindowState", billingState.ToString());
+                    Logger.LogError("BillingWindowState is in an unsupported state.");
                     return 0;
                 }
             }
             else
             {
-                logger.FluentAddBaseValue("SkuName", name);
-                logger.LogError("A Sku is being used on an environment that does not have a corresponding Sku catelog record.");
+                Logger.FluentAddBaseValue("SkuName", name);
+                Logger.LogError("A Sku is being used on an environment that does not have a corresponding Sku catelog record.");
                 return 0.0m;
             }
         }
@@ -691,8 +679,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
             else
             {
-                logger.FluentAddBaseValue("Azurelocation", location.ToString());
-                logger.LogError("An Azure location was used that does not have a corresponding meter Id.");
+                Logger.FluentAddBaseValue("Azurelocation", location.ToString());
+                Logger.LogError("An Azure location was used that does not have a corresponding meter Id.");
                 return "METER_NOT_FOUND";
             }
         }

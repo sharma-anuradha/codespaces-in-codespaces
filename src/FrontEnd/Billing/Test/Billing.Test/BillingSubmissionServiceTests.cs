@@ -27,6 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
             Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();
+            logger.Setup(x => x.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
             var vsoPlan = new VsoPlanInfo()
             {
                 Name = "PlanName",

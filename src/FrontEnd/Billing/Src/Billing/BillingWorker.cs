@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public BillingWorker(IBillingService service, IDiagnosticsLogger diagnosticsLogger)
         {
             billingService = service;
-            logger = diagnosticsLogger;
+            logger = diagnosticsLogger.NewChildLogger();
         }
 
         /// <summary>
