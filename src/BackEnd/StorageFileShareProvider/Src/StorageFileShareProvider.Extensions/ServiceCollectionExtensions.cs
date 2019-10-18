@@ -3,9 +3,11 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions
 {
@@ -34,10 +36,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.E
                 return services;
             }
 
+            // Client factories
+            services.AddSingleton<IBatchClientFactory, BatchClientFactory>();
+
             // Core services
             services.AddSingleton(storageProviderSettings);
             services.AddSingleton<IStorageProvider, StorageFileShareProvider>();
             services.AddSingleton<IStorageFileShareProviderHelper, StorageFileShareProviderHelper>();
+
+            // Jobs
+            services.AddSingleton<IAsyncBackgroundWarmup, StorageFileShareProviderRegisterJobs>();
+
+            // Job Registration
+            services.AddSingleton<IWatchStorageAzureBatchCleanupTask, WatchStorageAzureBatchCleanupTask>();
 
             return services;
         }

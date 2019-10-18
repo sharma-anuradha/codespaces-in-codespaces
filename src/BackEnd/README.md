@@ -22,17 +22,17 @@ The steps below will create a batch account and pool. Modify `BATCH_NAME`, `BATC
 
 
 ```bash
-BATCH_NAME=vsodevcibatchusw2usw2
+BATCH_NAME=vsodevciusw2bausw2
 BATCH_RG=vsclk-online-dev-ci-usw2
 BATCH_REGION=westus2
-BATCH_ENDPOINT=vsodevcibatchusw2usw2.westus2.batch.azure.com
+BATCH_ENDPOINT=vsodevciusw2bausw2.westus2.batch.azure.com
 
 # Create the batch account
 az batch account create -l $BATCH_REGION -g $BATCH_RG -n $BATCH_NAME
 
 BATCH_KEY=$(az batch account keys list -g $BATCH_RG -n $BATCH_NAME --query primary -otsv)
 
-POOL_NODE_COUNT=1
+POOL_NODE_COUNT=2
 POOL_NODE_SIZE=Standard_D4s_v3
 # 4 cores on Standard_D4s_v3
 POOL_CORES_ON_A_NODE=4

@@ -34,22 +34,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         }
 
         /// <summary>
-        /// Gets the Azure storage account name.
+        /// Gets or sets the Azure storage account name.
         /// </summary>
         public string StorageAccountName { get; set; }
 
         /// <summary>
-        /// Gets the Azure storage account key.
+        /// Gets or sets the Azure storage account key.
         /// </summary>
         public string StorageAccountKey { get; set; }
 
         /// <summary>
-        /// Gets the share name of a share in the storage account.
+        /// Gets or sets the share name of a share in the storage account.
         /// </summary>
         public string StorageShareName { get; set; }
 
         /// <summary>
-        /// Gets the file name of a file in the share.
+        /// Gets or sets the file name of a file in the share.
         /// </summary>
         public string StorageFileName { get; set; }
     }

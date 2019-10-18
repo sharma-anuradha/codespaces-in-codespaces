@@ -8,6 +8,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.Batch;
+using Microsoft.Azure.Batch.Auth;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
@@ -34,11 +36,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         // File share template info (storage account should be in same Azure subscription as above)
         private static readonly string fileShareTemplateStorageAccount = "vsodevciusw2siusw2";
         private static readonly string fileShareTemplateContainerName = "templates";
-        private static readonly string fileShareTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.802-gd48f49b5ef087333264e189bb12a7b8df825c334.release22.2";
-        private static readonly string fileShareTemplateBlobNameWindows = "cloudenvdata_kitchensink_1.0.1008-g33c1a463062d75d12b0a8520c114a86af1644e6e.release136.disk.vhdx";
+
+        private static readonly string fileShareTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.1053-gcb237b7bbdd33bfa6c9fc4aee288e199e1a2b5d2.release160";
+        // The name of the Windows blob is implied by the name of the Linux blob.
+        // This is a limitation of the current schema for appsettings.images.json where only the image name is specified without knowledge of platform.
+        // This works because both the Windows and Linux blobs are pushed at the same time with the same version, the Windows blob just has the ".disk.vhdx" postfix.
+        private static readonly string fileShareTemplateBlobNameWindows = $"{fileShareTemplateBlobNameLinux}.disk.vhdx";
         private static readonly string batchAccountResourceGroup = "vsclk-online-dev-ci-usw2";
         private static readonly string batchAccountName = "vsodevciusw2bausw2";
-        private static readonly string batchPoolId = "storage-worker-pool";
+        private static readonly string batchPoolId = "storage-worker-devstamp-pool";
         private static readonly string azureLocationStr = "westus2";
         private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
         private static readonly string azureSubscriptionName = "ignorethis";
@@ -144,16 +150,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var logger = new DefaultLoggerFactory().New();
 
             var resourceGroupTestGroupGuid = Guid.NewGuid();
+            var resourceGroupName = GetResourceGroupName(resourceGroupTestGroupGuid);
             var servicePrincipal = GetServicePrincipal();
             var catalogMoq = GetMockSystemCatalog(servicePrincipal);
             var azure = await GetAzureClient(catalogMoq.Object);
             var storageProviderSettings = new StorageProviderSettings() { WorkerBatchPoolId = batchPoolId };
             var resourceAccessorMoq = GetMockControlPlaneAzureResourceAccessor(azure);
+            var batchClientFactory = new BatchClientFactory(resourceAccessorMoq.Object);
 
             // construct the real StorageFileShareProviderHelper
             IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(
                 catalogMoq.Object,
-                resourceAccessorMoq.Object,
+                batchClientFactory,
                 storageProviderSettings);
 
             // Create storage accounts
@@ -162,7 +170,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     .Select(x => providerHelper.CreateStorageAccountAsync(
                         azureSubscriptionId,
                         azureLocationStr,
-                        GetResourceGroupName(resourceGroupTestGroupGuid),
+                        resourceGroupName,
                         new Dictionary<string, string> { {"ResourceTag", "GeneratedFromTest"}, },
                         logger))
             );
@@ -209,6 +217,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             {
                 // Verify that we can delete the storage accounts
                 await Task.WhenAll(storageAccounts.Select(sa => providerHelper.DeleteStorageAccountAsync(sa, logger)));
+                await azure.ResourceGroups.BeginDeleteByNameAsync(resourceGroupName);
             }
         }
     }
