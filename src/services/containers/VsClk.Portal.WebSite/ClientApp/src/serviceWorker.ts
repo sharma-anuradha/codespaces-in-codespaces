@@ -44,7 +44,8 @@ async function registerValidSW(swUrl: string, config: ServiceWorkerConfiguration
                 type: configureServiceWorker,
                 payload: config,
             },
-            registration.active
+            // We are not interested in the waiting service worker yet.
+            registration.active || registration.installing
         );
     } catch (err) {
         logger.error('Failed to register service worker.', err.message);
