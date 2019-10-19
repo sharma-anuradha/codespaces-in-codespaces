@@ -1,18 +1,18 @@
 import * as msal from 'msal';
 import { UserAgentApplication, AuthResponse } from 'msal';
 import jwtDecode from 'jwt-decode';
-import { trace as baseTrace } from '../utils/trace';
+
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 import { inLocalStorageJWTTokenCacheFactory } from '../cache/localstorageJWTCache';
 import { getTokenExpiration } from '../utils/getTokenExpiration';
 import { expirationTimeBackgroundTokenRefreshThreshold, aadAuthorityUrlCommon } from '../constants';
+import { debounceInterval } from '../utils/debounce-interval';
 
 import { logout as logoutFromArmAuthService, getARMToken } from './authARMService';
+import { getAuthTokenSuccessAction } from '../actions/getAuthToken';
+import { createTrace } from '../utils/createTrace';
 
-const error = baseTrace.extend('authService:error');
-
-// tslint:disable-next-line: no-console
-error.log = console.log.bind(console);
+const trace = createTrace('AuthService');
 
 const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'];
 
@@ -52,21 +52,27 @@ class AuthService {
         return token;
     }
 
-    public async getCachedToken(expiration: number = expirationTimeBackgroundTokenRefreshThreshold): Promise<ITokenWithMsalAccount | undefined> {
+    public getCachedToken = async (expiration: number = 60): Promise<ITokenWithMsalAccount | undefined> => {
         const cachedToken = tokenCache.getCachedToken(LOCAL_STORAGE_KEY, expiration);
 
+        this.keepUserAuthenticated();
+        
         if (cachedToken) {
             const expirationTime = getTokenExpiration(cachedToken);
-            if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
-                this.acquireToken();
+            
+            if (expirationTime > expiration) {
+                if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
+                    this.acquireToken();
+                }
+
+                return cachedToken as ITokenWithMsalAccount;
             }
-            return cachedToken as ITokenWithMsalAccount;
         }
         
         try {
             return await this.acquireToken();
         } catch (e) {
-            error(e);
+            trace.error(e);
         }
 
         return undefined;
@@ -79,20 +85,17 @@ class AuthService {
             this.tokenAcquirePromise = this.acquireTokenInternal();
         }
 
-        const result = await this.tokenAcquirePromise;
+        const token = await this.tokenAcquirePromise;
+
         this.tokenAcquirePromise = undefined;
-        return result;
+        return token;
     }
 
     private async acquireTokenInternal(): Promise<ITokenWithMsalAccount | undefined> {
-        const tokenRequest = {
-            scopes: SCOPES,
-            authority: msalConfig.auth.authority,
-        };
-
         try {
-            const token = await acquireToken(tokenRequest.scopes);
+            const token = await acquireToken(SCOPES);
             this.cacheToken(token);
+            getAuthTokenSuccessAction(token);
 
             return token;
         } catch (e) {
@@ -107,7 +110,18 @@ class AuthService {
     public async logout() {
         tokenCache.clearCache();
         logoutFromArmAuthService();
+
+        if (this.keepUserAuthenticated) {
+            this.keepUserAuthenticated.stop();
+        }
     }
+
+    /**
+     * Function to poll the `getCachedToken` which has the side-effect of refreshing the auth token if needed.
+     * This function is a debounced version of simple interval, hence it will call the `getCachedToken` function
+     * after the `timeout` milliseconds of last `getCachedToken` token request.
+     */
+    private keepUserAuthenticated = debounceInterval(this.getCachedToken, 5 * 60 * 1000 /* 5 minutes */);
 }
 
 export const authService = new AuthService();
@@ -122,9 +136,11 @@ export async function acquireToken(scopes: string[]): Promise<ITokenWithMsalAcco
     try {
         tokenResponse = await clientApplication.acquireTokenSilent(tokenRequest);
     } catch (err) {
+        trace.warn(err);
         if (err.name === 'InteractionRequiredAuthError') {
             tokenResponse = await clientApplication.acquireTokenPopup(tokenRequest);
         } else {
+            trace.error(err);
             throw err;
         }
     }

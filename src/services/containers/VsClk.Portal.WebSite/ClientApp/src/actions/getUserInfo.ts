@@ -82,7 +82,6 @@ async function fetchMyPhoto() {
     //         },
     //         { skipParsingResponse: true }
     //     );
-    //     debugger;
     //     const imageBlob = await response.blob();
 
     //     return URL.createObjectURL(imageBlob);

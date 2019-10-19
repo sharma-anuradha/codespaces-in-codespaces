@@ -11,7 +11,7 @@ export const getAuthTokenFailureActionType = 'async.authentication.getToken.fail
 
 // Basic actions dispatched for reducers
 const getAuthTokenAction = () => action(getAuthTokenActionType);
-const getAuthTokenSuccessAction = (token: ITokenWithMsalAccount) =>
+export const getAuthTokenSuccessAction = (token: ITokenWithMsalAccount) =>
     action(getAuthTokenSuccessActionType, { token });
 const getAuthTokenFailureAction = (error: Error) => action(getAuthTokenFailureActionType, error);
 

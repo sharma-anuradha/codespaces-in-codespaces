@@ -44,12 +44,14 @@ export const getARMToken = async (expiration: number, timeout: number = 10000): 
     const cachedToken = tokenCache.getCachedToken(ARM_CACHE_TOKEN_NAME, expiration);
     if (cachedToken) {
         const expirationTime = getTokenExpiration(cachedToken);
-        if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
-            getFreshArmToken(timeout);
+        if (expirationTime > expiration) {
+            if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
+                getFreshArmToken(timeout);
+            }
+            return cachedToken;
         }
-        return cachedToken;
     }
-    return getFreshArmToken(timeout);
+    return await getFreshArmToken(timeout);
 }
 export const logout = () => {
     tokenCache.clearCache();
