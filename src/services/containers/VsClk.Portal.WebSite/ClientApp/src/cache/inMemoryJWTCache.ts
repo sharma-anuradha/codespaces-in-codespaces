@@ -9,21 +9,33 @@ export const inMemoryCacheFactory = ()=> {
 
 const inMemoryCacheSymbol = Symbol();
 
+const inMemoryPrefixSymbol = Symbol();
+
 export class InMemoryJWTCache<T> implements IJWTCache<TokenType> {
     private [inMemoryCacheSymbol]: Map<string, TokenType>;
+    private [inMemoryPrefixSymbol]: string | undefined;
 
-    constructor(inMemoryCache: Map<string, TokenType>) {
+    constructor(inMemoryCache: Map<string, TokenType>, keyPrefix?: string) {
         this[inMemoryCacheSymbol] = new Map<string, TokenType>(inMemoryCache.entries());
+        this[inMemoryPrefixSymbol] = keyPrefix;
+    }
+
+    protected getKeyName(name: string) {
+        if (!this[inMemoryPrefixSymbol]) {
+            return name;
+        }
+
+        return `${this[inMemoryPrefixSymbol]}_${name}`;
     }
 
     public cacheToken(name: string, token: TokenType): IJWTCache<TokenType> {
-        this[inMemoryCacheSymbol].set(name, token);
+        this[inMemoryCacheSymbol].set(this.getKeyName(name), token);
 
         return this;
     }
 
     public getCachedToken(name: string, expirationTime: number = 60): TokenType | undefined {
-        const cachedToken = this[inMemoryCacheSymbol].get(name);
+        const cachedToken = this[inMemoryCacheSymbol].get(this.getKeyName(name));
 
         if (cachedToken) {
             const tokenExpirationTime = ((Date.now() - cachedToken.expiresOn.getTime()) / 1000);
@@ -34,7 +46,7 @@ export class InMemoryJWTCache<T> implements IJWTCache<TokenType> {
     }
 
     public deleteCachedToken(name: string): IJWTCache<TokenType> {
-        this[inMemoryCacheSymbol].delete(name);
+        this[inMemoryCacheSymbol].delete(this.getKeyName(name));
         
         return this;
     }

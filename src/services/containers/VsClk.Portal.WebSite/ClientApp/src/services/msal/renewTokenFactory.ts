@@ -18,10 +18,14 @@ interface IRenewTokenFactoryOptions {
 
 export const renewTokenFactory = (options: IRenewTokenFactoryOptions) => {
     const { onCreateRenewEntity, getLocation, onComplete } = options;
+
+    let intervalHandle: ReturnType<typeof setInterval> | undefined;
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+
     return (renewUrl: URL, nonce: string, timeout: number = 10000) => {
         const clearTimers = () => {
-            clearInterval(intervalHandle);
-            clearTimeout(timeoutHandle);
+            clearInterval(intervalHandle!);
+            clearTimeout(timeoutHandle!);
         };
         
         const signal = new Signal<IToken | null>();
@@ -32,7 +36,7 @@ export const renewTokenFactory = (options: IRenewTokenFactoryOptions) => {
             onComplete();
         };
 
-        const timeoutHandle = setTimeout(() => {
+        timeoutHandle = setTimeout(() => {
             trace.error('No access token found.');
             complete(null);
         }, timeout);
@@ -46,7 +50,7 @@ export const renewTokenFactory = (options: IRenewTokenFactoryOptions) => {
             });
         }
 
-        const intervalHandle = setInterval(() => {
+        intervalHandle = setInterval(() => {
             const location = getLocation();
             
             if (!location) {

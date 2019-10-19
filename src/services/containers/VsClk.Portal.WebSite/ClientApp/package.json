@@ -125,7 +125,7 @@
     "build": "run-s build:client",
     "build:client": "node scripts/build",
     "test": "node scripts/test",
-    "test:ci": "cross-env NODE_ENV=test jest --reporters=\"default\" --reporters=\"default\"",
+    "test:ci": "cross-env NODE_ENV=test jest --reporters=\"default\" --reporters=\"jest-junit\"",
     "update-vscode": "node scripts/npm/update-vscode.js",
     "update-github-secret": "node scripts/npm/update-github-secret.js",
     "get-dev-cert": "node scripts/npm/get-dev-ssl-cert.js",

@@ -12,6 +12,7 @@ import { CommentThreadCollapsibleState } from 'vscode';
 import { getARMToken } from '../../services/authARMService';
 import { authService } from '../../services/authService';
 import jwtDecode from 'jwt-decode';
+import { armAPIVersion } from '../../constants';
 
 
 export interface CreatePlanPanelProps {
@@ -73,7 +74,7 @@ export class CreatePlanPanel extends Component<CreatePlanPanelProps, CreatePlanP
                     />
                     <TextField
                         label='Plan Name'
-                        placeholder='planNameExample'
+                        placeholder='My plan'
                         onChange={this.planNameChanged}
                         value={this.state.planName}
                     />
@@ -202,7 +203,7 @@ export class CreatePlanPanel extends Component<CreatePlanPanelProps, CreatePlanP
 
     private async getSubscriptions() {
        
-        const myJson = await this.getFromAzure(`https://management.azure.com/subscriptions?api-version=2019-05-10`);
+        const myJson = await this.getFromAzure(`https://management.azure.com/subscriptions?api-version=${armAPIVersion}`);
 
         const subscriptionsJsonList = [];
     
@@ -216,8 +217,9 @@ export class CreatePlanPanel extends Component<CreatePlanPanelProps, CreatePlanP
     }
 
     private async getResourceGroups(subID: string) {
-        if((this.state.selectedSubscription != undefined)){
-            const rgURL = 'https://management.azure.com/subscriptions/' + subID +'/resourcegroups?api-version=2019-05-10';
+        if (this.state.selectedSubscription !== undefined) {
+            const rgURL = `https://management.azure.com/subscriptions/${subID}/resourcegroups?api-version=${armAPIVersion}`;
+
             const myJson = await this.getFromAzure(rgURL);
             let resourceGroupJsonList = [];
 
@@ -267,7 +269,7 @@ export class CreatePlanPanel extends Component<CreatePlanPanelProps, CreatePlanP
 
         this.setState({
             selectedSubscription: option.key as string, 
-        })
+        });
 
         this.getResourceGroups(option.key as string);
 

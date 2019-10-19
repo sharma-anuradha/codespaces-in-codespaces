@@ -9,14 +9,14 @@ import { UrlUtils } from './urlUtils';
 const VSCODE_APP_ID = 'aebc6443-996d-45c2-90f0-388ff96faa56';
 const ARM_RESOURCE_ID = 'https://management.core.windows.net';
 
-export const createNavigateUrl = async (nonce: string) => {
+export const createNavigateUrl = async (tenantId: string, nonce: string) => {
     const currentToken = await authService.getCachedToken();
 
     if (!currentToken) {
         throw new Error('User is not authenticated.')
     }
 
-    const aadAuthorityUrlOrganizations = 'https://login.microsoftonline.com/organizations';
+    const aadAuthorityUrlOrganizations = `https://login.microsoftonline.com/${tenantId}`;
     const tokenRequest: AuthenticationParameters = {
         scopes: [`${ARM_RESOURCE_ID}/.default`],
         authority: aadAuthorityUrlOrganizations,

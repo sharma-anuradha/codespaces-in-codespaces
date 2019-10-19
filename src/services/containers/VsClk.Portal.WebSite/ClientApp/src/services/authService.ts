@@ -45,10 +45,6 @@ class AuthService {
         await clientApplication.loginPopup(loginRequest);
         const token = await this.acquireToken();
 
-        // try to get arm token instantly since
-        // this can trigger the second popup window
-        await getARMToken(60 * 10);
-
         return token;
     }
 
