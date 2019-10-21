@@ -17,8 +17,8 @@ import {
     FileSystemError,
 	FileSystemProviderErrorCode,
 } from './vscode';
-
 import { IndexedDBFS } from './indexedDBFS'
+import * as path from 'path';
 
 const FILE_IS_DIRECTORY_MSG = 'File is a directory';
 const FILE_NOT_FOUND_MSG = 'File not found';
@@ -30,7 +30,8 @@ export class UserDataProvider implements IFileSystemProvider {
 	public readonly onDidChangeCapabilities: Event<void> = this.onDidChangeCapabilitiesEmitter.event;
     private onDidChangeFileEmitter: Emitter<IFileChange[]> = new Emitter();
 	public readonly onDidChangeFile: Event<IFileChange[]> = this.onDidChangeFileEmitter.event;
-
+	private readonly settingsPath = path.join('/', 'User', 'settings.json');
+	private readonly keybindingsPath = path.join('/', 'User', 'keybindings.json');
 	private indexedDBFSProvider: IndexedDBFS;
 
 	constructor () {
@@ -39,6 +40,16 @@ export class UserDataProvider implements IFileSystemProvider {
 
 	public async initializeDBProvider() { 
 		await this.indexedDBFSProvider.database;
+		await this.initializeSettingFiles();
+	}
+
+	private async initializeSettingFiles() {
+		if (!(await this.fileExists(this.settingsPath))){
+			await this.indexedDBFSProvider.setValue(this.settingsPath, '{\n}');
+		}
+		if (!(await this.fileExists(this.keybindingsPath))){
+			await this.indexedDBFSProvider.setValue(this.keybindingsPath, '[\n]');
+		}
 	}
 
     watch(resource: URI, opts: IWatchOptions): Disposable {
@@ -143,5 +154,10 @@ export class UserDataProvider implements IFileSystemProvider {
 		var array = Array.from(new Uint8Array(buffer));
 		var value = String.fromCharCode.apply(String, array);
 		return value;
+	}
+
+	private async fileExists(path: string): Promise<boolean>
+	{
+		return !!(await this.indexedDBFSProvider.getValue(path));
 	}
 }
