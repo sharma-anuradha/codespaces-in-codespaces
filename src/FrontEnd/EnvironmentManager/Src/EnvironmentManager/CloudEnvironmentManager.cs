@@ -212,14 +212,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             .AddCloudEnvironment(cloudEnvironment)
                             .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentCallbackAsync)));
                     }
-                    else
-                    {
-                        // TODO: Code to recover vm.
-                        // If detaching storage from the vm failed, set it to available state.
-                        // await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, logger);
-                        // Update the database state.
-                        // await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-                    }
                 }
             }
             catch (Exception ex)
