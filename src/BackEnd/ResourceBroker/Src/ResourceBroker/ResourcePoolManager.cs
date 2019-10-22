@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue("PoolLookupRunId", Guid.NewGuid())
-                        .FluentAddBaseValue("PoolImageFamilyName", poolCode);
+                        .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, poolCode);
 
                     var trys = 0;
                     var tryAgain = false;

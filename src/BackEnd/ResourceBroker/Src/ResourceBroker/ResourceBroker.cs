@@ -33,19 +33,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="resourcePool">Resource pool that should be used.</param>
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
-        /// <param name="continuationTaskActivator">Target continuation task sctivator.</param>
+        /// <param name="resourceContinuationOperations">Target continuation task sctivator.</param>
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="mapper">Mapper that should be used.</param>
         public ResourceBroker(
             IResourcePoolManager resourcePool,
             IResourcePoolDefinitionStore resourceScalingStore,
-            IContinuationTaskActivator continuationTaskActivator,
+            IResourceContinuationOperations resourceContinuationOperations,
             ITaskHelper taskHelper,
             IMapper mapper)
         {
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
             ResourceScalingStore = Requires.NotNull(resourceScalingStore, nameof(resourceScalingStore));
-            ContinuationTaskActivator = Requires.NotNull(continuationTaskActivator, nameof(continuationTaskActivator));
+            ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IResourcePoolDefinitionStore ResourceScalingStore { get; }
 
-        private IContinuationTaskActivator ContinuationTaskActivator { get; }
+        private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -89,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                 }
                                 else
                                 {
-                                    itemLogger.FluentAddBaseValue("ResourceId", assignResult.Resource.Id);
+                                    itemLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, assignResult.Resource.Id);
                                 }
 
                                 return (Input: input, Resource: assignResult.Resource, ResourceSku: assignResult.ResourceSku);
@@ -124,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             // Trigger auto pool create to replace assigned item
                             TaskHelper.RunBackground(
                                 $"{LogBaseName}_run_create",
-                                (taskLogger) => ContinuationTaskActivator.CreateResource(
+                                (taskLogger) => ResourceContinuationOperations.CreateResource(
                                     Guid.NewGuid(), pool.Type, pool.Details, "ResourceAssignedReplace", taskLogger),
                                 childLogger);
 
@@ -145,7 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             $"{LogBaseName}_release",
                             async (itemLogger) =>
                             {
-                                itemLogger.FluentAddBaseValue("ResourceId", record.Id)
+                                itemLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, record.Id)
                                     .FluentAddBaseValue("ResourceLocation", record.Location)
                                     .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
                                     .FluentAddBaseValue("ResourceType", record.Type);
@@ -177,12 +177,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         throw new OutOfCapacityException(input.SkuName, input.Type, input.Location.ToString().ToLowerInvariant());
                     }
 
-                    childLogger.FluentAddBaseValue("ResourceId", assignResult.Resource.Id);
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, assignResult.Resource.Id);
 
                     // Trigger auto pool create to replace assigned item
                     TaskHelper.RunBackground(
                         $"{LogBaseName}_run_create",
-                        (taskLogger) => ContinuationTaskActivator.CreateResource(
+                        (taskLogger) => ResourceContinuationOperations.CreateResource(
                             Guid.NewGuid(), assignResult.ResourceSku.Type, assignResult.ResourceSku.Details, "ResourceAssignedReplace", taskLogger),
                         childLogger);
 
@@ -199,9 +199,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{LogBaseName}_deallocate",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddBaseValue("ResourceId", input.ResourceId);
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
 
-                    await ContinuationTaskActivator.DeleteResource(
+                    await ResourceContinuationOperations.DeleteResource(
                         input.ResourceId, input.Trigger, childLogger.NewChildLogger());
 
                     return new DeallocateResult { Successful = true };
@@ -217,8 +217,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{LogBaseName}_cleanup",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddBaseValue("ResourceId", input.ResourceId);
-                    await ContinuationTaskActivator.CleanupResource(input.ResourceId, input.EnvironmentId, input.Trigger, logger);
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
+                    await ResourceContinuationOperations.CleanupResource(input.ResourceId, input.EnvironmentId, input.Trigger, logger);
                     return new CleanupResult { Successful = true };
                 });
         }
@@ -232,10 +232,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{LogBaseName}_start_compute",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddBaseValue("ResourceId", input.ComputeResourceId)
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ComputeResourceId)
                         .FluentAddBaseValue("StorageResourceId", input.StorageResourceId);
 
-                    await ContinuationTaskActivator.StartEnvironment(
+                    await ResourceContinuationOperations.StartEnvironment(
                         input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, childLogger.NewChildLogger());
 
                     return new EnvironmentStartResult { Successful = true };

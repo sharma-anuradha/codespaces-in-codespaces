@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
@@ -116,14 +117,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private async Task CoreRunPoolAsync(ResourcePool resourcePool, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("TaskRunId", Guid.NewGuid())
-                .FluentAddBaseValue("PoolLocation", resourcePool.Details.Location.ToString())
-                .FluentAddBaseValue("PoolSkuName", resourcePool.Details.SkuName)
-                .FluentAddBaseValue("PoolResourceType", resourcePool.Type.ToString())
-                .FluentAddBaseValue("PoolDefinition", resourcePool.Details.GetPoolDefinition())
-                .FluentAddBaseValue("PoolVersionDefinition", resourcePool.Details.GetPoolVersionDefinition())
-                .FluentAddBaseValue("PoolTargetCount", resourcePool.TargetCount)
-                .FluentAddBaseValue("PoolImageFamilyName", resourcePool.Details.ImageFamilyName)
-                .FluentAddBaseValue("PoolImageName", resourcePool.Details.ImageName);
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolLocation, resourcePool.Details.Location.ToString())
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, resourcePool.Details.SkuName)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolResourceType, resourcePool.Type.ToString())
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolDefinition, resourcePool.Details.GetPoolDefinition())
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolVersionDefinition, resourcePool.Details.GetPoolVersionDefinition())
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolTargetCount, resourcePool.TargetCount)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, resourcePool.Details.ImageFamilyName)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, resourcePool.Details.ImageName);
 
             // Executes the action that needs to be performed on the pool
             await logger.TrackDurationAsync(

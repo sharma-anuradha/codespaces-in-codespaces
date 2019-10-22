@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
         /// <summary>
         /// Gets or sets the auth account id that should be used.
         /// </summary>
-        public string AuthAccountId { get; set; }
+        public string AccountPlanId { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this region is enabled or not.

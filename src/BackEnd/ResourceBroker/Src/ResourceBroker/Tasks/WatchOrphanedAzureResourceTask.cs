@@ -17,10 +17,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
@@ -37,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// </summary>
         /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
-        /// <param name="continuationTaskActivator">Target continuation task activator.</param>
+        /// <param name="resourceContinuationOperations">Target continuation task activator.</param>
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="capacityManager">Target capacity manager.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
@@ -46,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public WatchOrphanedAzureResourceTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceRepository resourceRepository,
-            IContinuationTaskActivator continuationTaskActivator,
+            IResourceContinuationOperations resourceContinuationOperations,
             ITaskHelper taskHelper,
             ICapacityManager capacityManager,
             IClaimedDistributedLease claimedDistributedLease,
@@ -60,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                   resourceNameBuilder)
         {
             AzureClientFactory = azureClientFactory;
-            ContinuationTaskActivator = continuationTaskActivator;
+            ResourceContinuationOperations = resourceContinuationOperations;
             ResourceRepository = resourceRepository;
         }
 
@@ -72,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private IAzureClientFactory AzureClientFactory { get; }
 
-        private IContinuationTaskActivator ContinuationTaskActivator { get; }
+        private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
         private IResourceRepository ResourceRepository { get; }
 
@@ -125,7 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 $"{LogBaseName}_run_orphaned_check",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddBaseValue("ResourceId", resource.Id)
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resource.Id)
                         .FluentAddBaseValue("ResourceType", resource.Type);
 
                     // Get record so we can tell if it exists
@@ -148,22 +145,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                         if (resourceType == ResourceType.ComputeVM)
                         {
-                            await ContinuationTaskActivator.DeleteOrphanedComputeAsync(
+                            await ResourceContinuationOperations.DeleteOrphanedComputeAsync(
                                 Guid.Parse(resource.Id),
                                 Guid.Parse(capacityUnit.Subscription.SubscriptionId),
                                 capacityUnit.ResourceGroup,
                                 resource.Name,
                                 resourceLocation,
                                 resource.ResourceTags,
+                                "OrphanedAzureResourceTask",
                                 childLogger.NewChildLogger());
                         }
                         else if (resourceType == ResourceType.StorageFileShare)
                         {
-                            await ContinuationTaskActivator.DeleteOrphanedStorageAsync(
+                            await ResourceContinuationOperations.DeleteOrphanedStorageAsync(
                                 Guid.Parse(resource.Id),
                                 Guid.Parse(capacityUnit.Subscription.SubscriptionId),
                                 capacityUnit.ResourceGroup,
                                 resource.Name,
+                                resourceLocation,
+                                resource.ResourceTags,
+                                "OrphanedAzureResourceTask",
                                 childLogger.NewChildLogger());
                         }
                     }

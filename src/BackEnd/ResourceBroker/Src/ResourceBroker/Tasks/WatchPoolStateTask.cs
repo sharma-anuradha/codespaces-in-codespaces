@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
@@ -50,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        protected override string LeaseBaseName => $"{nameof(WatchPoolStateTask)}Lease";
+        protected override string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchPoolStateTask)}Lease");
 
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchPoolStateTask;

@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public class VirtualMachineProviderQueueResult : ContinuationResult
     {
         /// <summary>
-        /// Gets or sets / Sets virutal machine queue detials.
+        /// Gets or sets / Sets virutal machine queue details.
         /// </summary>
         public QueueConnectionInfo QueueConnectionInfo { get; set; }
     }

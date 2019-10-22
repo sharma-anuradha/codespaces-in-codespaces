@@ -9,11 +9,9 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
@@ -31,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// </summary>
         /// <param name="resourceBrokerSettings">Target reesource broker settings.</param>
         /// <param name="resourcePoolManager">Target resource pool manager.</param>
-        /// <param name="continuationTaskActivator">Target continuation activator.</param>
+        /// <param name="resourceContinuationOperations">Target continuation activator.</param>
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceRepository">Target resource Repository.</param>
         /// <param name="claimedDistributedLease">Target distributed lease.</param>
@@ -41,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ResourceBrokerSettings resourceBrokerSettings,
             IResourcePoolManager resourcePoolManager,
             IResourceRepository resourceRepository,
-            IContinuationTaskActivator continuationTaskActivator,
+            IResourceContinuationOperations resourceContinuationOperations,
             IResourcePoolDefinitionStore resourceScalingStore,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
@@ -50,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             ResourcePoolManager = resourcePoolManager;
             ResourceRepository = resourceRepository;
-            ContinuationTaskActivator = continuationTaskActivator;
+            ResourceContinuationOperations = resourceContinuationOperations;
         }
 
         /// <inheritdoc/>
@@ -63,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private IResourceRepository ResourceRepository { get; }
 
-        private IContinuationTaskActivator ContinuationTaskActivator { get; }
+        private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
         /// <inheritdoc/>
         protected async override Task RunActionAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
@@ -156,19 +154,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var reason = "WatchPoolSizeIncrease";
 
             logger.FluentAddBaseValue("TaskJobIteration", iteration.ToString())
-                .FluentAddBaseValue("ResourceId", id)
-                .FluentAddBaseValue("OperationReason", reason);
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
-            await ContinuationTaskActivator.CreateResource(
+            await ResourceContinuationOperations.CreateResource(
                 id, resourcePool.Type, resourcePool.Details, reason, logger.NewChildLogger());
         }
 
         private async Task DeletePoolItemAsync(Guid id, string reason, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", id)
-                .FluentAddBaseValue("OperationReason", reason);
+            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
-            await ContinuationTaskActivator.DeleteResource(id, reason, logger.NewChildLogger());
+            await ResourceContinuationOperations.DeleteResource(id, reason, logger.NewChildLogger());
         }
     }
 }

@@ -10,18 +10,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
     public class ResourceLoggingPropertyConstants
     {
         /// <summary>
-        /// Resource location name.
+        /// Resource Id.
         /// </summary>
-        public const string ResourceLocation = nameof(ResourceLocation);
+        public const string ResourceId = nameof(ResourceId);
 
         /// <summary>
-        /// Resource sku name.
+        /// Operation Reason.
         /// </summary>
-        public const string ResourceSkuName = nameof(ResourceSkuName);
+        public const string OperationReason = nameof(OperationReason);
 
         /// <summary>
-        /// Resource type.
+        /// Operation Reason.
         /// </summary>
-        public const string ResourceType = nameof(ResourceType);
+        public const string PoolLocation = nameof(PoolLocation);
+
+        /// <summary>
+        /// Pool Sku Name.
+        /// </summary>
+        public const string PoolSkuName = nameof(PoolSkuName);
+
+        /// <summary>
+        /// Pool Resource Type.
+        /// </summary>
+        public const string PoolResourceType = nameof(PoolResourceType);
+
+        /// <summary>
+        /// Pool Definition.
+        /// </summary>
+        public const string PoolDefinition = nameof(PoolDefinition);
+
+        /// <summary>
+        /// Pool version definition.
+        /// </summary>
+        public const string PoolVersionDefinition = nameof(PoolVersionDefinition);
+
+        /// <summary>
+        /// Pool image family name.
+        /// </summary>
+        public const string PoolImageFamilyName = nameof(PoolImageFamilyName);
+
+        /// <summary>
+        /// Pool image name.
+        /// </summary>
+        public const string PoolImageName = nameof(PoolImageName);
+
+        /// <summary>
+        /// Pool image name.
+        /// </summary>
+        public const string PoolTargetCount = nameof(PoolTargetCount);
     }
 }

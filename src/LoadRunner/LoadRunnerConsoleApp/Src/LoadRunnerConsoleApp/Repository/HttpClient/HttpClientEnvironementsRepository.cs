@@ -51,11 +51,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
 
         /// <inheritdoc/>
         public async Task<CloudEnvironmentResult> ProvisionEnvironmentAsync(
-            string accountId, string environmentName, string gitRepo, string location, string skuName, IDiagnosticsLogger logger)
+            string planId, string environmentName, string gitRepo, string location, string skuName, IDiagnosticsLogger logger)
         {
             var body = new CreateCloudEnvironmentBody()
             {
-                AccountId = accountId,
+                PlanId = planId,
                 FriendlyName = environmentName,
                 Location = location,
                 SkuName = skuName,

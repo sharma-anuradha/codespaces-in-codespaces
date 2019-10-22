@@ -5,16 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
@@ -31,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// Initializes a new instance of the <see cref="WatchPoolVersionTask"/> class.
         /// </summary>
         /// <param name="resourceBrokerSettings">Target reesource broker settings.</param>
-        /// <param name="continuationTaskActivator">Target continuation activator.</param>
+        /// <param name="resourceContinuationOperations">Target continuation activator.</param>
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceRepository">Target resource Repository.</param>
         /// <param name="claimedDistributedLease">Target distributed lease.</param>
@@ -40,14 +37,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public WatchPoolVersionTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceRepository resourceRepository,
-            IContinuationTaskActivator continuationTaskActivator,
+            IResourceContinuationOperations resourceContinuationOperations,
             IResourcePoolDefinitionStore resourceScalingStore,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IResourceNameBuilder resourceNameBuilder)
             : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder)
         {
-            ContinuationTaskActivator = continuationTaskActivator;
+            ResourceContinuationOperations = resourceContinuationOperations;
             ResourceRepository = resourceRepository;
         }
 
@@ -57,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchPoolVersionTask;
 
-        private IContinuationTaskActivator ContinuationTaskActivator { get; }
+        private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
         private IResourceRepository ResourceRepository { get; }
 
@@ -123,10 +120,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             var reason = "TaskVersionChange";
 
-            logger.FluentAddBaseValue("ResourceId", id)
-                .FluentAddBaseValue("OperationReason", reason);
+            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
-            await ContinuationTaskActivator.DeleteResource(id, reason, logger.NewChildLogger());
+            await ResourceContinuationOperations.DeleteResource(id, reason, logger.NewChildLogger());
         }
     }
 }

@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
@@ -146,8 +147,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Base resource tags that will be attached
             var resourceTags = new Dictionary<string, string>()
             {
-                { ResourceTagName.ResourceId, resource.Value.Id },
+                { ResourceTagName.ResourceId, resource.Value.Id ?? "unknown" },
                 { ResourceTagName.ResourceType, resource.Value.Type.ToString() },
+                { ResourceTagName.PoolLocation, resource.Value.Location ?? "unknown" },
+                { ResourceTagName.PoolSkuName, resource.Value.PoolReference.Dimensions.GetValueOrDefault("skuName", "unknown") },
+                { ResourceTagName.PoolDefinition, resource.Value.PoolReference.Code ?? "unknown" },
+                { ResourceTagName.PoolVersionDefinition, resource.Value.PoolReference.VersionCode ?? "unknown" },
+                { ResourceTagName.PoolImageFamilyName, resource.Value.PoolReference.Dimensions.GetValueOrDefault("imageFamilyName", "unknown") },
+                { ResourceTagName.PoolImageName, resource.Value.PoolReference.Dimensions.GetValueOrDefault("imageName", "unknown") },
+                { ResourceTagName.OperationReason, input.Reason ?? "unknown" },
             };
 
             if (resource.Value.Type == ResourceType.ComputeVM)
@@ -266,7 +274,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             if (resource.Value.AzureResourceInfo == null && result.AzureResourceInfo != null)
             {
                 resource.Value.AzureResourceInfo = result.AzureResourceInfo;
-                resource.Value.PoolReference.Dimensions = input.ResourcePoolDetails.GetPoolDimensions();
 
                 resource.Value = await ResourceRepository.UpdateAsync(resource.Value, logger.WithValues(new LogValueSet()));
             }
@@ -296,6 +303,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 {
                     Code = input.ResourcePoolDetails.GetPoolDefinition(),
                     VersionCode = input.ResourcePoolDetails.GetPoolVersionDefinition(),
+                    Dimensions = input.ResourcePoolDetails.GetPoolDimensions(),
                 },
             };
 

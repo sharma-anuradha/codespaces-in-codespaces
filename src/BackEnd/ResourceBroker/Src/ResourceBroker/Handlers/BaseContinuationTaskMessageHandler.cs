@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -96,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 throw new NotSupportedException($"Provided input type does not match target input type - {typeof(TI)}");
             }
 
-            logger.FluentAddBaseValue("ResourceId", typedInput.ResourceId)
+            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, typedInput.ResourceId)
                 .FluentAddValue("HandlerTriggerSource", typedInput.Reason)
                 .FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
 
@@ -207,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         protected virtual async Task<ResourceRecordRef> FetchReferenceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             // Pull record
-            var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.WithValues(new LogValueSet()));
+            var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
             if (resource == null)
             {
                 logger.FluentAddValue("HandlerFailedToFindResource", true);
@@ -265,7 +266,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Only need to update things if something has changed
             if (stateChanged)
             {
-                record.Value = await ResourceRepository.UpdateAsync(record.Value, logger.WithValues(new LogValueSet()));
+                record.Value = await ResourceRepository.UpdateAsync(record.Value, logger.NewChildLogger());
 
                 // Trigger cleanup post fail
                 if (state == OperationState.Failed)
@@ -346,11 +347,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 try
                 {
                     // Fetch instance
-                    var continuationTaskActivator = ServiceProvider.GetService<IContinuationTaskActivator>();
+                    var resourceContinuationOperations = ServiceProvider.GetService<IResourceContinuationOperations>();
 
                     // Starts the delete workflow on the resource
-                    var deleteResult = await continuationTaskActivator.DeleteResource(
-                        Guid.Parse(record.Value.Id), trigger, logger.WithValues(new LogValueSet()));
+                    var deleteResult = await resourceContinuationOperations.DeleteResource(
+                        Guid.Parse(record.Value.Id), trigger, logger.NewChildLogger());
 
                     logger.FluentAddValue("HandlerFailCleanupPostState", deleteResult?.Status)
                         .FluentAddValue("HandlerFailCleanupPostContinuationToken", deleteResult?.NextInput?.ContinuationToken);
@@ -361,7 +362,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         .FluentAddValue("HandlerFailCleanupExceptionMessage", e.Message);
 
                     // Since we are swallowing, make sure we have a record at this level of the excpetion just in case
-                    logger.WithValues(new LogValueSet()).LogException($"{LogBaseName}_failed_cleanup_error", e);
+                    logger.NewChildLogger().LogException($"{LogBaseName}_failed_cleanup_error", e);
                 }
             }
         }
@@ -387,7 +388,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var operationResult = (ContinuationResult)null;
             try
             {
-                operationResult = await RunOperationCoreAsync(input, record, logger.WithValues(new LogValueSet()));
+                operationResult = await RunOperationCoreAsync(input, record, logger.NewChildLogger());
             }
             catch (Exception e)
             {
@@ -436,7 +437,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 .FluentAddValue($"{propertyName}Message", e.Message);
 
             // Since we are swallowing, make sure we have a record at this level of the excpetion just in case
-            logger.WithValues(new LogValueSet()).LogException($"{LogBaseName}_operation_error", e);
+            logger.NewChildLogger().LogException($"{LogBaseName}_operation_error", e);
         }
     }
 }

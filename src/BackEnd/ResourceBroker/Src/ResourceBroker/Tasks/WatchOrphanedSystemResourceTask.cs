@@ -119,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                                     // Capture consistency of keep alives
                                     var keepAlivesAreConsistent = resource.KeepAlives?.EnvironmentAlive < cutoffTime;
 
-                                    childLogger.FluentAddBaseValue("ResourceId", resource.Id)
+                                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resource.Id)
                                         .FluentAddValue("ResourceEnvironmentAliveDate", resource.KeepAlives?.EnvironmentAlive)
                                         .FluentAddValue("ResourceAzureResourceAliveDate", resource.KeepAlives?.AzureResourceAlive)
                                         .FluentAddValue("ResourceKeepAlivesAreConsistent", keepAlivesAreConsistent);
@@ -143,7 +143,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task DeleteResourceAsync(string id, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("OperationReason", "OrphanedSystemResource");
+            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, "OrphanedSystemResource");
 
             // Since we don't have the azyre resource, we are just goignt to delete this record
             await ResourceRepository.DeleteAsync(id, logger.NewChildLogger());

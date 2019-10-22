@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// Initializes a new instance of the <see cref="WatchFailedResourcesTask"/> class.
         /// </summary>
         /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
-        /// <param name="continuationTaskActivator">Target continuation task activator.</param>
+        /// <param name="resourceContinuationOperations">Target continuation task activator.</param>
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
         /// <param name="taskHelper">Target task helper.</param>
@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         public WatchFailedResourcesTask(
             ResourceBrokerSettings resourceBrokerSettings,
-            IContinuationTaskActivator continuationTaskActivator,
+            IResourceContinuationOperations resourceContinuationOperations,
             IResourcePoolDefinitionStore resourceScalingStore,
             IResourceRepository resourceRepository,
             ITaskHelper taskHelper,
@@ -48,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourceNameBuilder resourceNameBuilder)
             : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder)
         {
-            ContinuationTaskActivator = continuationTaskActivator;
+            ResourceContinuationOperations = resourceContinuationOperations;
             ResourceRepository = resourceRepository;
         }
 
@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchFailedResourcesTask;
 
-        private IContinuationTaskActivator ContinuationTaskActivator { get; }
+        private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
         private IResourceRepository ResourceRepository { get; }
 
@@ -85,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 {
 
                     childLogger.FluentAddBaseValue("TaskFailedItemRunId", Guid.NewGuid())
-                        .FluentAddBaseValue("ResourceId", record.Id);
+                        .FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, record.Id);
 
                     // Record the reason why this one is being deleted
                     var didFailStatus = false;
@@ -177,8 +177,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task DeleteResourceAsync(string id, string reason, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", id)
-                .FluentAddBaseValue("OperationReason", reason);
+            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
             // Since we don't have the azyre resource, we are just goignt to delete this record
             await ResourceRepository.DeleteAsync(id, logger.NewChildLogger());
@@ -188,10 +188,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             var reason = "WatchFailedResourcesTask";
 
-            logger.FluentAddBaseValue("ResourceId", id)
-                .FluentAddBaseValue("OperationReason", reason);
+            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
-            await ContinuationTaskActivator.DeleteResource(id, reason, logger.NewChildLogger());
+            await ResourceContinuationOperations.DeleteResource(id, reason, logger.NewChildLogger());
         }
     }
 }

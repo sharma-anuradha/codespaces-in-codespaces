@@ -59,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IResourceScalingHandler>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
             services.AddSingleton<IResourcePoolDefinitionStore>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
             services.AddSingleton<IResourceHeartBeatManager, ResourceHeartBeatManager>();
+            services.AddSingleton<IResourceContinuationOperations, ResourceContinuationOperations>();
 
             // Continuation
             services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();

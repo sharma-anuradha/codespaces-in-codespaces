@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         /// <summary>
         /// Provisioned target environement.
         /// </summary>
-        /// <param name="accountId">Target account id.</param>
+        /// <param name="planId">Target plan id.</param>
         /// <param name="environmentName">Target environment name.</param>
         /// <param name="gitRepo">Target git repo.</param>
         /// <param name="location">Target location.</param>
@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         /// <param name="logger">Target logger.</param>
         /// <returns>Cloud environment result.</returns>
         Task<CloudEnvironmentResult> ProvisionEnvironmentAsync(
-            string accountId,
+            string planId,
             string environmentName,
             string gitRepo,
             string location,

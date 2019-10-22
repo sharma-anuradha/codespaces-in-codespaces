@@ -165,8 +165,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private async Task<bool> DeleteResourceAsync(string id, IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("ResourceId", id)
-                .FluentAddBaseValue("OperationReason", "DeleteResourceContinuation");
+            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, "DeleteResourceContinuation");
 
             // Since we don't have the azyre resource, we are just goignt to delete this record
             return await ResourceRepository.DeleteAsync(id, logger.NewChildLogger());

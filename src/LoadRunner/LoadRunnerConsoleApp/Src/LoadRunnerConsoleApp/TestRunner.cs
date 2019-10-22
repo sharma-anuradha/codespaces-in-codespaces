@@ -162,7 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
                 async (region, childLogger) =>
                 {
                     var environments = new List<string>();
-                    var accountId = (string)null; // region.Value.AuthAccountId;
+                    var planId = region.Value.AccountPlanId;
                     var location = region.Key;
 
                     // Request total environments needed
@@ -182,7 +182,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
                                 {
                                     // Create environement
                                     var result = await EnvironementsRepository.ProvisionEnvironmentAsync(
-                                        accountId, $"GeneratedName_{Guid.NewGuid().ToString()}", repository, location, null, itemLogger.NewChildLogger());
+                                        planId, $"GeneratedName_{Guid.NewGuid().ToString()}", repository, location, null, itemLogger.NewChildLogger());
 
                                     // Record the environment
                                     environments.Add(result.Id);
