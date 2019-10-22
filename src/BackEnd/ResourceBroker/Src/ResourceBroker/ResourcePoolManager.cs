@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     /// <summary>
     /// Manages the underlying resource pools.
     /// </summary>
-    public class ResourcePoolManager : IResourcePoolManager, IResourcePoolSettingsHandler
+    public class ResourcePoolManager : IResourcePoolManager
     {
         private const string LogBaseName = ResourceLoggingConstants.ResourcePoolManager;
 
@@ -30,28 +30,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IResourceRepository resourceRepository)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
-            EnabledState = new Dictionary<string, bool>();
         }
 
         private IResourceRepository ResourceRepository { get; }
-
-        private IDictionary<string, bool> EnabledState { get; set; }
-
-        /// <inheritdoc/>
-        public Task UpdateResourceEnabledStateAsync(IDictionary<string, bool> enabledState)
-        {
-            EnabledState = enabledState;
-
-            return Task.CompletedTask;
-        }
-
-        /// <inheritdoc/>
-        public bool IsPoolEnabled(string poolCode)
-        {
-            var isPoolEnabledFound = EnabledState.TryGetValue(poolCode, out var isPoolEnabled);
-
-            return isPoolEnabledFound ? isPoolEnabled : true;
-        }
 
         /// <inheritdoc/>
         public Task<ResourceRecord> TryGetAsync(string poolCode, IDiagnosticsLogger logger)

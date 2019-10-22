@@ -227,8 +227,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             var details = detailCallback(target);
             return new ResourcePool
             {
-                TargetCount = distinctList.Select(poolLevelCallback).Sum(),
+                Id = details.GetPoolDefinition(),
                 Type = resourceType,
+                TargetCount = distinctList.Select(poolLevelCallback).Sum(),
                 EnvironmentSkus = distinctList.Select(y => y.Environment.SkuName),
                 Details = details,
             };

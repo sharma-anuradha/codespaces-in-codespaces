@@ -14,13 +14,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     public interface IResourcePoolManager
     {
         /// <summary>
-        /// Gets whether the given pool is enabled.
-        /// </summary>
-        /// <param name="poolCode">Target pool code.</param>
-        /// <returns>Enabled state.</returns>
-        bool IsPoolEnabled(string poolCode);
-
-        /// <summary>
         /// Tries to obtain resource record from a pool witht the target attributes.
         /// </summary>
         /// <param name="poolCode">Target pool code.</param>

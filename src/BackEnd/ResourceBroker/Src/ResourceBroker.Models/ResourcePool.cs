@@ -13,10 +13,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
     /// </summary>
     public class ResourcePool
     {
+        private int targetCount;
+        private bool isEnabled = true;
+
         /// <summary>
         /// Gets or sets the Target Count that this resource should be maintained at when pooled.
         /// </summary>
-        public int TargetCount { get; set; }
+        public int TargetCount
+        {
+            get { return OverrideTargetCount.HasValue ? OverrideTargetCount.Value : targetCount; }
+            set { targetCount = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the Override Target Count that overrides the Target count.
+        /// </summary>
+        public int? OverrideTargetCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the pool is enabled.
+        /// </summary>
+        public bool IsEnabled
+        {
+            get { return OverrideIsEnabled.HasValue ? OverrideIsEnabled.Value : isEnabled; }
+            set { isEnabled = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the Override Is Enabled that overrides the Is Enabled value.
+        /// </summary>
+        public bool? OverrideIsEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets the id.
+        /// </summary>
+        public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets the resource type.

@@ -1,11 +1,10 @@
-﻿// <copyright file="ResourceScalingBroker.cs" company="Microsoft">
+﻿// <copyright file="ResourcePoolDefinitionStore.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 

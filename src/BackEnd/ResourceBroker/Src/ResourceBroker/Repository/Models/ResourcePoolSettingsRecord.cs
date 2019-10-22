@@ -14,6 +14,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Gets or sets a value indicating whether the pool should be enabled.
         /// </summary>
-        public bool IsEnabled { get; set; }
+        public bool? IsEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets the target count.
+        /// </summary>
+        public int? TargetCount { get; set; }
     }
 }

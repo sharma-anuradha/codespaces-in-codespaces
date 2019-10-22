@@ -37,7 +37,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="resourceNameBuilder">Target resource name builder.</param>
         public WatchPoolSizeTask(
             ResourceBrokerSettings resourceBrokerSettings,
-            IResourcePoolManager resourcePoolManager,
             IResourceRepository resourceRepository,
             IResourceContinuationOperations resourceContinuationOperations,
             IResourcePoolDefinitionStore resourceScalingStore,
@@ -46,7 +45,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourceNameBuilder resourceNameBuilder)
             : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder)
         {
-            ResourcePoolManager = resourcePoolManager;
             ResourceRepository = resourceRepository;
             ResourceContinuationOperations = resourceContinuationOperations;
         }
@@ -56,8 +54,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         /// <inheritdoc/>
         protected override string LogBaseName => ResourceLoggingConstants.WatchPoolSizeTask;
-
-        private IResourcePoolManager ResourcePoolManager { get; }
 
         private IResourceRepository ResourceRepository { get; }
 
@@ -69,13 +65,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             // Determine the effective size of the pool
             var unassignedCount = await GetPoolUnassignedCountAsync(resourcePool, logger.NewChildLogger());
 
-            // Determine if the pool is currently enabled
-            var poolEnabled = ResourcePoolManager.IsPoolEnabled(resourcePool.Details.GetPoolDefinition());
-
-            logger.FluentAddValue("PoolIsEnabled", poolEnabled);
+            logger.FluentAddValue("PoolIsEnabled", resourcePool.IsEnabled)
+                .FluentAddValue("PoolOverrideIsEnabled", resourcePool.OverrideIsEnabled)
+                .FluentAddValue("PoolTargetCount", resourcePool.TargetCount)
+                .FluentAddValue("PoolOverrideTargetCount", resourcePool.OverrideTargetCount);
 
             // Short circuit things if we have a fail and drain the pool
-            if (!poolEnabled)
+            if (!resourcePool.IsEnabled)
             {
                 logger.FluentAddValue("PoolDrainCount", unassignedCount);
 
@@ -95,14 +91,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             }
             else
             {
-                // Get the desiered pool target size
-                var poolTargetCount = resourcePool.TargetCount;
-
                 // Get the delta of how many
-                var poolDeltaCount = poolTargetCount - unassignedCount;
+                var poolDeltaCount = resourcePool.TargetCount - unassignedCount;
 
                 logger.FluentAddValue("SizeCheckUnassignedCount", unassignedCount.ToString())
-                    .FluentAddValue("SizeCheckPoolTargetCount", poolTargetCount.ToString())
                     .FluentAddValue("SizeCheckPoolDeltaCount", poolDeltaCount.ToString());
 
                 // If we have any positive delta add that many jobs to the queue for processing

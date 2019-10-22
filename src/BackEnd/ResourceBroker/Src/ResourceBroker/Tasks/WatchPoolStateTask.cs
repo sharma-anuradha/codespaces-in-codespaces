@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var isReadyAtTargetCount = poolReadyUnassignedVersionCount == resourcePool.TargetCount;
             logger.FluentAddValue("PoolIsReadyAtTargetCount", isReadyAtTargetCount);
 
-            var isPoolEnabled = ResourcePoolManager.IsPoolEnabled(poolCode);
+            var isPoolEnabled = resourcePool.IsEnabled;
             logger.FluentAddValue("PoolIsEnabled", isPoolEnabled);
 
             // Setup model

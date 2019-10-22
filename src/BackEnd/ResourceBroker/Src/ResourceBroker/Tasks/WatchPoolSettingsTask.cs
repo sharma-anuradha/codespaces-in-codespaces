@@ -2,12 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
@@ -20,18 +22,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// Initializes a new instance of the <see cref="WatchPoolSettingsTask"/> class.
         /// </summary>
         /// <param name="resourcePoolSettingsRepository">Target resource pool settings repository.</param>
-        /// <param name="resourcePoolSettingsHandler">Target resource pool settings handler.</param>
+        /// <param name="resourcePoolDefinitionStore">Target resource pool definition store.</param>
         public WatchPoolSettingsTask(
             IResourcePoolSettingsRepository resourcePoolSettingsRepository,
-            IResourcePoolSettingsHandler resourcePoolSettingsHandler)
+            IResourcePoolDefinitionStore resourcePoolDefinitionStore)
         {
             ResourcePoolSettingsRepository = resourcePoolSettingsRepository;
-            ResourcePoolSettingsHandler = resourcePoolSettingsHandler;
+            ResourcePoolDefinitionStore = resourcePoolDefinitionStore;
         }
 
         private IResourcePoolSettingsRepository ResourcePoolSettingsRepository { get; }
 
-        private IResourcePoolSettingsHandler ResourcePoolSettingsHandler { get; }
+        private IResourcePoolDefinitionStore ResourcePoolDefinitionStore { get; }
 
         private bool Disposed { get; set; }
 
@@ -44,14 +46,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 $"{LogBaseName}_run",
                 async (childLogger) =>
                 {
-                    // Pull out core records
-                    var records = await ResourcePoolSettingsRepository.GetWhereAsync(x => true, childLogger.NewChildLogger());
+                    // Pull out core settings records
+                    var settings = (await ResourcePoolSettingsRepository.GetWhereAsync(x => true, childLogger.NewChildLogger()))
+                        .ToDictionary(x => x.Id);
 
-                    // Pull out settings
-                    var isEnabledSettings = records.ToDictionary(x => x.Id, x => x.IsEnabled);
-
-                    // Update pool settings
-                    await ResourcePoolSettingsHandler.UpdateResourceEnabledStateAsync(isEnabledSettings);
+                    // Run through each pool item
+                    var resourceUnits = await ResourcePoolDefinitionStore.RetrieveDefinitions();
+                    foreach (var resourceUnit in resourceUnits)
+                    {
+                        // Overrides the value if we have settings for it
+                        if (settings.TryGetValue(resourceUnit.Details.GetPoolDefinition(), out var resourceSetting))
+                        {
+                            resourceUnit.OverrideTargetCount = resourceSetting.TargetCount;
+                            resourceUnit.OverrideIsEnabled = resourceSetting.IsEnabled;
+                        }
+                        else
+                        {
+                            // Clear out any overrides if we don't have matches
+                            resourceUnit.OverrideTargetCount = null;
+                            resourceUnit.OverrideIsEnabled = null;
+                        }
+                    }
 
                     return !Disposed;
                 },

@@ -52,9 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
             // Core services
             services.AddSingleton<IResourceBroker, ResourceBroker>();
-            services.AddSingleton<ResourcePoolManager>();
-            services.AddSingleton<IResourcePoolManager>(x => x.GetRequiredService<ResourcePoolManager>());
-            services.AddSingleton<IResourcePoolSettingsHandler>(x => x.GetRequiredService<ResourcePoolManager>());
+            services.AddSingleton<IResourcePoolManager, ResourcePoolManager>();
             services.AddSingleton<ResourcePoolDefinitionStore>();
             services.AddSingleton<IResourceScalingHandler>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
             services.AddSingleton<IResourcePoolDefinitionStore>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());

@@ -24,7 +24,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
@@ -44,7 +43,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Initializes a new instance of the <see cref="CreateResourceContinuationHandler"/> class.
         /// </summary>
-        /// <param name="resourcePoolManager">Target resource pool manager.</param>
         /// <param name="computeProvider">Target compute provider.</param>
         /// <param name="storageProvider">Target storatge provider.</param>
         /// <param name="controlPlaneAzureResourceAccessor">Target control plane resource accessor.</param>
@@ -53,32 +51,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="controlPlaneAzureResourceAccessor">the control plane resource accessor.</param>
         /// <param name="controlPlaneInfo">the control plane info.</param>
         /// <param name="capacityManager">The capacity manager.</param>
-        /// <param name="resourceBrokerSettings">Resource broker settings.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service provider.</param>
         /// <param name="virtualMachineTokenProvider">Virtual machine token provider.</param>
         /// <param name="imageUrlGenerator">Image URL generator.</param>
         public CreateResourceContinuationHandler(
-            IResourcePoolManager resourcePoolManager,
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             IControlPlaneInfo controlPlaneInfo,
             ICapacityManager capacityManager,
-            ResourceBrokerSettings resourceBrokerSettings,
             IVirtualMachineTokenProvider virtualMachineTokenProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider,
             IImageUrlGenerator imageUrlGenerator)
             : base(serviceProvider, resourceRepository)
         {
-            ResourcePoolManager = resourcePoolManager;
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
             ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             ControlPlaneInfo = controlPlaneInfo;
             CapacityManager = capacityManager;
-            ResourceBrokerSettings = resourceBrokerSettings;
             VirtualMachineTokenProvider = virtualMachineTokenProvider;
             ImageUrlGenerator = imageUrlGenerator;
         }
@@ -92,8 +85,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override ResourceOperation Operation => ResourceOperation.Provisioning;
 
-        private IResourcePoolManager ResourcePoolManager { get; }
-
         private IComputeProvider ComputeProvider { get; }
 
         private IStorageProvider StorageProvider { get; }
@@ -104,28 +95,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private ICapacityManager CapacityManager { get; }
 
-        private ResourceBrokerSettings ResourceBrokerSettings { get; }
-
         private IVirtualMachineTokenProvider VirtualMachineTokenProvider { get; }
 
-        private IImageUrlGenerator ImageUrlGenerator{ get; }
-
-        /// <inheritdoc/>
-        protected override Task<ContinuationResult> QueueOperationAsync(CreateResourceContinuationInput input, ResourceRecordRef record, IDiagnosticsLogger logger)
-        {
-            // Determine if the pool is currently enabled
-            var poolEnabled = ResourcePoolManager.IsPoolEnabled(input.ResourcePoolDetails.GetPoolDefinition());
-
-            logger.FluentAddValue("HandlerIsPoolEnabled", poolEnabled);
-
-            // Short circuit things if we have a fail
-            if (!poolEnabled)
-            {
-                return Task.FromResult(new ContinuationResult() { Status = OperationState.Cancelled });
-            }
-
-            return base.QueueOperationAsync(input, record, logger);
-        }
+        private IImageUrlGenerator ImageUrlGenerator { get; }
 
         /// <inheritdoc/>
         protected override async Task<ResourceRecordRef> ObtainReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
