@@ -74,10 +74,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var body = await CreateBodyAsync("smallLinuxPreview", "WestUs2");
             var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<CreatedResult>(actionResult);
-
-            body = await CreateBodyAsync("smallWindowsPreview", "WestUs2");
-            actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
-            Assert.IsType<CreatedResult>(actionResult);
         }
 
         public static TheoryData<string> Environments = new TheoryData<string>
@@ -221,12 +217,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private ISkuCatalog LoadSkuCatalog(string environmentName)
         {
             var appSettings = LoadAppSettings(environmentName);
-
-            // Hack for Windows SKUs. They are temporary disabled in PPE and Prod.
-            // But the unit tests will act as if they are enabled for all environments.
-            appSettings.SkuCatalogSettings.CloudEnvironmentSkuSettings["standardWindows"].Enabled = true;
-            appSettings.SkuCatalogSettings.CloudEnvironmentSkuSettings["premiumWindows"].Enabled = true;
-
             var controlPlaneInfo = new Mock<IControlPlaneInfo>();
             controlPlaneInfo
                 .Setup(obj => obj.EnvironmentResourceGroupName)

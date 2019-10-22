@@ -340,7 +340,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         [Fact]
         public void AppSettings_WindowsSkus()
         {
-            const string skuName = "smallWindowsPreview";
+            const string skuName = "premiumWindows";
             var appSettings = LoadAppSettings("dev-ci");
             Assert.NotNull(appSettings);
             var controlPlaneInfo = new Mock<IControlPlaneInfo>();
@@ -355,7 +355,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             var environment = skuCatalog.CloudEnvironmentSkus[skuName];
             Assert.Equal(VmImageKind.Custom, environment.ComputeImage.ImageKind);
             Assert.Equal(ComputeOS.Windows, environment.ComputeOS);
-            Assert.Equal("Small Windows (Preview)", environment.DisplayName);
+            Assert.Equal("Premium Environment (Windows)", environment.DisplayName);
         }
 
         public static AppSettingsBase LoadAppSettings(string environmentName, string overrideName = null)

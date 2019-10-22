@@ -347,12 +347,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     cloudEnvironment.SkuName = LookupSkuName(ComputeOS.Linux, SkuTier.Standard);
                 }
 
-                // Legacy Windows SKU name conversion
-                else if (cloudEnvironment.SkuName.Equals("smallWindowsPreview", StringComparison.OrdinalIgnoreCase))
-                {
-                    cloudEnvironment.SkuName = LookupSkuName(ComputeOS.Windows, SkuTier.Standard);
-                }
-
                 // Reroute to correct location if needed
                 var owningStamp = default(IControlPlaneStampInfo);
                 try
