@@ -216,59 +216,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> BeginStartComputeAsync(VirtualMachineProviderStartComputeInput input, IDiagnosticsLogger logger)
-        {
-            var privateSettings = new Hashtable();
-            privateSettings.Add("script", GetCustomScriptForVmAssign("vm_assign.sh", input));
-            var parameters = new VirtualMachineExtensionUpdate()
-            {
-                ProtectedSettings = privateSettings,
-                ForceUpdateTag = "true",
-            };
-            try
-            {
-                var computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
-                var result = await computeClient.VirtualMachineExtensions.BeginUpdateAsync(
-                    input.AzureResourceInfo.ResourceGroup,
-                    input.AzureResourceInfo.Name,
-                    ExtensionName,
-                    parameters);
-
-                return (OperationState.InProgress, new NextStageInput(result.Name, input.AzureResourceInfo));
-            }
-            catch (Exception ex)
-            {
-                logger.LogException("linux_virtual_machine_manager_begin_start_compute_error", ex);
-                return (OperationState.Failed, default);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> CheckStartComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
-        {
-            try
-            {
-                var computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
-                var result = await computeClient.VirtualMachineExtensions
-                .GetAsync(
-                    input.AzureResourceInfo.ResourceGroup,
-                    input.AzureResourceInfo.Name,
-                    input.TrackingId);
-                return (ParseResult(result.ProvisioningState), new NextStageInput(input.TrackingId, input.AzureResourceInfo));
-            }
-            catch (Exception ex)
-            {
-                logger.LogException("linux_virtual_machine_manager_check_start_compute_error", ex);
-                if (input.RetryAttempt < 5)
-                {
-                    return (OperationState.InProgress, new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1));
-                }
-
-                return (OperationState.Failed, default);
-            }
-        }
-
-        /// <inheritdoc/>
         public async Task<(OperationState, int)> ShutdownComputeAsync(VirtualMachineProviderShutdownInput input, int retryAttempt, IDiagnosticsLogger logger)
         {
             try

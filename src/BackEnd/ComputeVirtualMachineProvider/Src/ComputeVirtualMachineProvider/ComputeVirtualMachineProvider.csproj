@@ -24,12 +24,6 @@
     <EmbeddedResource Include="Templates\Linux\template_vm.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Templates\Linux\cloudinit.yml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Templates\Linux\vm_assign.sh">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
     <EmbeddedResource Include="Templates\Linux\vm_init.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
