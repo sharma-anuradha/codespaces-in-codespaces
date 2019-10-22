@@ -6,15 +6,16 @@ import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { KeyCodes } from '@uifabric/utilities';
-import { PlanSelector } from '../planSelector/planSelector';
+import { Link } from 'office-ui-fabric-react/lib/components/Link';
+import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
+
 import { useWebClient, ServiceResponseError } from '../../actions/middleware/useWebClient';
 import { createEnvironment } from '../../actions/createEnvironment';
 import { storeGitHubCredentials } from '../../actions/getGitHubCredentials';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { GithubAuthenticationAttempt } from '../../services/gitHubAuthenticationService';
-import { Link } from 'office-ui-fabric-react/lib/components/Link';
 import { Collapsible } from '../collapsible/collapsible';
-import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
+
 import {
     normalizeGitUrl,
     getSupportedGitService,
@@ -156,6 +157,9 @@ export interface CreateEnvironmentPanelProps {
 
     gitHubAccessToken: string | null;
 
+    selectedPlanId: string | null;
+    selectedPlanLocation: string | null;
+
     autoShutdownDelayMinutes: number;
 
     storeGitHubCredentials: (accessToken: string) => void;
@@ -194,10 +198,10 @@ const initialFormState: CreateEnvironmentPanelState = {
 
 type Fields = keyof FormFields;
 
-function formToEnvironmentParams(fields: FormFields): CreateEnvironmentParams {
+function formToEnvironmentParams(planId: string, planLocation: string, fields: FormFields): CreateEnvironmentParams {
     return {
-        planId: PlanSelector.getPlanID(),
-        location: PlanSelector.getPlanLocation(),
+        planId,
+        location: planLocation,
         friendlyName: fields.friendlyName.value,
         gitRepositoryUrl: normalizeGitUrl(fields.gitRepositoryUrl.value),
         dotfilesRepository: normalizeGitUrl(fields.dotfilesRepository.value),
@@ -472,8 +476,7 @@ export class CreateEnvironmentPanelView extends Component<
                     throw new Error(validationMessages.noAccess);
                 }
 
-                this.props.onCreateEnvironment(formToEnvironmentParams(this.state));
-
+                this.props.onCreateEnvironment(this.getEnvCreationParams());
                 return;
             } catch (err) {
                 this.setTextValidationState(
@@ -490,7 +493,6 @@ export class CreateEnvironmentPanelView extends Component<
 
                 event.preventDefault();
                 event.stopPropagation();
-
                 return;
             }
         }
@@ -502,9 +504,20 @@ export class CreateEnvironmentPanelView extends Component<
             return;
         }
 
-        this.props.onCreateEnvironment(formToEnvironmentParams(this.state));
+        this.props.onCreateEnvironment(this.getEnvCreationParams());
         this.clearForm();
     };
+
+    private getEnvCreationParams() {
+        const { selectedPlanId, selectedPlanLocation } = this.props;
+
+        if (!selectedPlanId || !selectedPlanLocation) {
+            throw new Error('No plan selected.');
+        }
+
+        const envParams = formToEnvironmentParams(selectedPlanId, selectedPlanLocation, this.state);
+        return envParams;
+    }
 
     private setTextValidationState(
         field: Fields,
@@ -648,9 +661,23 @@ export class CreateEnvironmentPanelView extends Component<
 }
 
 export const CreateEnvironmentPanel = connect(
-    ({ githubAuthentication: { gitHubAccessToken } }: ApplicationState) => ({
-        gitHubAccessToken,
-    }),
+    ({ githubAuthentication: { gitHubAccessToken }, plans }: ApplicationState) => {
+        const { selectedPlan } = plans;
+
+        const selectedPlanId = (selectedPlan)
+            ? selectedPlan.id
+            : null
+
+        const selectedPlanLocation = (selectedPlan)
+            ? selectedPlan.location
+            : null
+
+        return {
+            gitHubAccessToken,
+            selectedPlanId,
+            selectedPlanLocation
+        }
+    },
     {
         storeGitHubCredentials,
     }

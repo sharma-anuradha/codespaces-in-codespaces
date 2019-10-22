@@ -5,6 +5,7 @@ import { configuration } from './configuration';
 import { environments } from './environments';
 import { githubAuthentication } from './githubAuthenticationReducer';
 import { userInfo } from './userInfo';
+import { plansReducer } from './plans-reducer';
 import { testReducer as __test } from './testReducer';
 
 import { BaseAction } from '../actions/middleware/types';
@@ -20,6 +21,7 @@ const reducers = {
     environments,
     githubAuthentication,
     userInfo,
+    plans: plansReducer,
     __test,
 };
 

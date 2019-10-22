@@ -30,6 +30,7 @@ config:
   clusterDefaultHost: online-ppe.core.vsengsaas.visualstudio.com
   portalEndpoint: https://online-ppe.core.vsengsaas.visualstudio.com
   environmentRegistrationEndpoint: https://online-ppe.core.vsengsaas.visualstudio.com/api/v1/environments
+  apiEndpoint: https://online-ppe.core.vsengsaas.visualstudio.com/api/v1
   liveShareEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com
   githubClientId: f9230262d5d51925eb34
 

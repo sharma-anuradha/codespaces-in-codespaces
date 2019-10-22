@@ -26,6 +26,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public string PortalEndpoint { get; set; } 
         
         public string EnvironmentRegistrationEndpoint { get; set; }
+        public string ApiEndpoint { get; set; }
         public string Domain { get; set; }
         public string AesKey { get; set; }
         public string AesIV { get; set; }

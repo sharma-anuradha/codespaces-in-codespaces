@@ -1,31 +1,40 @@
-import React, { Component } from 'react';
+import React, { Component, ReactComponentElement } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-
 import { connect } from 'react-redux';
+
 import { Spinner } from 'office-ui-fabric-react/lib/Spinner';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
-import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
+
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
-import { EnvironmentCard } from '../environmentCard/environment-card';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { ApplicationState } from '../../reducers/rootReducer';
-import { clamp } from '../../utils/clamp';
-import './environments.css';
-import { PlanSelector } from '../planSelector/planSelector';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
+import { PlansReducerState } from '../../reducers/plans-reducer';
+import { newPlanPath } from '../../routes';
 
-type EnvironmentsPanelProps = {
+import { NoEnvironmnets } from './no-environments';
+import { NoPlans } from './no-plans';
+import { getEnvironmentCardsForCurrentPlan } from './get-environment-cars-for-plan';
+
+import './environments.css';
+
+interface EnvironmentsPanelProps extends RouteComponentProps {
     deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
     shutdownEnvironment: (...name: Parameters<typeof shutdownEnvironment>) => void;
     environments: ILocalCloudEnvironment[];
     isLoading: boolean;
+    plansStoreState: PlansReducerState;
 };
 
 class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComponentProps> {
     private renderEnvironments() {
-        const { isLoading, environments, deleteEnvironment, shutdownEnvironment } = this.props;
+        const {
+            isLoading,
+            environments,
+            plansStoreState
+        } = this.props;
 
         if (isLoading) {
             return (
@@ -38,40 +47,32 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
             );
         }
 
-        const cards = [];
-        let i = 0;
-        for (const env of clamp(environments, 5)) {
-            if((env.planId === PlanSelector.getPlanID()) || (!env.planId)){
-                const key = env.id || env.lieId || i++;
-                cards.push(
-                    <EnvironmentCard
-                        environment={env}
-                        deleteEnvironment={deleteEnvironment}
-                        shutdownEnvironment={shutdownEnvironment}
-                        key={key}
-                    />
-                );
-            }
+        const { plans, selectedPlan } = plansStoreState;
+        if (!plans.length) {
+            return (<NoPlans onClick={this.showPlansPanel} />);
         }
+
+        const cards = getEnvironmentCardsForCurrentPlan(selectedPlan, environments);
 
         return (
             <div className='ms-Grid-row'>
                 <Stack horizontal wrap>
-                    {cards.length ? cards : this.renderNoEnvironments()}
+                    {
+                        (cards.length)
+                            ? cards
+                            : <NoEnvironmnets onClick={this.showEnvironmentsPanel} />
+                    }
                 </Stack>
             </div>
         );
     }
 
-    private renderNoEnvironments() {
-        return (
-            <div className='environments-panel__no-environments' key='no-envs'>
-                <span className='environments-panel__no-environments-label'>
-                    You don't have any environments
-                </span>
-                <Link onClick={this.showPanel}>Create your first one now!</Link>
-            </div>
-        );
+    private showPlansPanel = () => {
+        this.props.history.push(newPlanPath);
+    }
+
+    private showEnvironmentsPanel = () => {
+        this.props.history.push('/environments/new');
     }
 
     render() {
@@ -85,8 +86,8 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
                                 <PrimaryButton
                                     text='Create environment'
                                     className='environments-panel__create-button'
-                                    onClick={this.showPanel}
-                                    disabled={this.planValueSelected()}
+                                    onClick={this.showEnvironmentsPanel}
+                                    disabled={!this.planValueSelected()}
                                 />
                             </div>
                         </div>
@@ -97,23 +98,18 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps & RouteComp
         );
     }
 
-    private showPanel = () => {
-        if(PlanSelector.getPlanID() && PlanSelector.getPlanLocation()){
-            this.props.history.replace('/environments/new');
-        }
-    };
+    private planValueSelected() {
+        const { plansStoreState } = this.props;
+        const { selectedPlan } = plansStoreState;
 
-    private planValueSelected(){
-        if(PlanSelector.getPlanID() && PlanSelector.getPlanLocation()){
-            return false;
-        }
-        return true;
+        return !!selectedPlan;
     }
 }
 
-const stateToProps = ({ environments: { environments, isLoading } }: ApplicationState) => ({
+const stateToProps = ({ environments: { environments, isLoading }, plans }: ApplicationState) => ({
     environments,
     isLoading,
+    plansStoreState: plans
 });
 
 const mapDispatch = {

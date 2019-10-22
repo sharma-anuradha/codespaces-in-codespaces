@@ -31,6 +31,7 @@ config:
   clusterDefaultHost: online.visualstudio.com
   portalEndpoint: https://online.visualstudio.com
   environmentRegistrationEndpoint: https://online.visualstudio.com/api/v1/environments
+  apiEndpoint: https://online.visualstudio.com/api/v1
   liveShareEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com
   githubClientId: 15a84bcaef36dd681c52
 

@@ -10,6 +10,7 @@ import { telemetry } from '../utils/telemetry';
 import { tryGetGitHubCredentialsLocal } from './getGitHubCredentials';
 
 import { register as registerServiceWorker } from '../serviceWorker';
+import { getPlans } from './plans-actions';
 
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
@@ -41,7 +42,8 @@ export async function init() {
         });
 
         await Promise.all([dispatch(configurationPromise), dispatch(tokenPromise)]);
-        await Promise.all([dispatch(fetchEnvironments()), dispatch(getUserInfo())]);
+        await Promise.all([dispatch(getPlans()), dispatch(getUserInfo())]);
+        await Promise.all([dispatch(fetchEnvironments())]);
 
         dispatch(tryGetGitHubCredentialsLocal());
 

@@ -51,6 +51,9 @@ describe('actions - init', () => {
                     {
                         body: [],
                     },
+                    {
+                        body: [],
+                    },
                 ],
             })
         );
@@ -63,6 +66,7 @@ describe('actions - init', () => {
 
     it('uses the right configuration', async () => {
         const environmentRegistrationEndpoint = 'https://random.com/api/v1/environments';
+        const apiEndpoint = 'https://random.com/api/v1';
         jest.spyOn(Auth.authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(authenticated.token)
         );
@@ -75,9 +79,18 @@ describe('actions - init', () => {
                     json: async () =>
                         Promise.resolve({
                             environmentRegistrationEndpoint,
+                            apiEndpoint
                         }),
                 };
             }
+
+            if (url === `${apiEndpoint}/plans`) {
+                return {
+                    ok: true,
+                    json: async () => Promise.resolve([]),
+                };
+            }
+
             return {
                 ok: true,
                 json: async () => Promise.resolve({}),
@@ -138,10 +151,13 @@ describe('actions - init', () => {
                     {
                         body: defaultConfig,
                     },
-                    // get some environments (or empty ¯\_(ツ)_/¯)
                     {
-                        status: 401,
+                        body: [],
                     },
+                    {
+                        // get some environments (or empty ¯\_(ツ)_/¯)
+                        status: 401,
+                    }
                 ],
             })
         );
@@ -155,6 +171,8 @@ describe('actions - init', () => {
             'async.configuration.fetch',
             'async.authentication.getToken.success',
             'async.configuration.fetch.success',
+            'async.plans.getPlans',
+            'async.plans.getPlans.success',
             'async.environments.fetch',
             'async.authentication.clearData',
             'async.environments.fetch.failure',

@@ -1,3 +1,20 @@
+
+.create-environment-panel__overlay {
+    background: inherit;
+    opacity: .85;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    background: white;
+}
+
 .create-environment-panel__auth {
     margin-bottom: 1.8rem;
+}
+
+.create-environment-panel__dropdown {
+    margin-bottom: .4rem;
 }

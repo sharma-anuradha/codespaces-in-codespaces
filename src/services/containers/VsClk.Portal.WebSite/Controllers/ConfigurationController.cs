@@ -16,6 +16,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         //[Authorize]
         [HttpGet("/configuration")]
         public ActionResult Index() => Json(new Dictionary<string, string> {
+            { "apiEndpoint", appSettings.ApiEndpoint },
             { "environmentRegistrationEndpoint", appSettings.EnvironmentRegistrationEndpoint },
             { "liveShareEndpoint", appSettings.LiveShareEndpoint },
             { "portalEndpoint", appSettings.PortalEndpoint }
