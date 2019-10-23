@@ -24,7 +24,7 @@
                     const message = event.data;
                     if (
                         message &&
-                        message.type === 'cloudenv/connected' &&
+                        message.type === 'vsonline/connected' &&
                         message.payload.sessionId === '@Model.SessionId'
                     ) {
                         const messageElement = document.getElementById('user_message');
@@ -35,7 +35,7 @@
                     }
                     if (
                         message &&
-                        message.type === 'cloudenv/connectionFailed' &&
+                        message.type === 'vsonline/connectionFailed' &&
                         message.payload.sessionId === '@Model.SessionId'
                     ) {
                         throw new Error('Failed connecting to Visual Studio Online environment.');
@@ -59,7 +59,7 @@
 
                 // Configure the LiveShare endpoint to be used by the service worker.
                 registration.active.postMessage({
-                    type: 'cloudenv/configure',
+                    type: 'vsonline/configure',
                     payload: {
                         liveShareEndpoint: '@Model.LiveShareEndPoint',
                         features: {
@@ -70,7 +70,7 @@
 
                 // Send credentials to the service worker.
                 registration.active.postMessage({
-                    type: 'cloudenv/authenticate',
+                    type: 'vsonline/authenticate',
                     payload: {
                         token: '@Model.CascadeToken',
                         sessionId: '@Model.SessionId',

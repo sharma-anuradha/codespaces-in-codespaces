@@ -115,29 +115,34 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var redirectUriQuery = HttpUtility.ParseQueryString(string.Empty);
 
             redirectUriQuery.Set("redirectUrl", UriHelper.BuildAbsolute(Request.Scheme, Request.Host));
-            if(Uri.TryCreate(Request.GetEncodedUrl(), UriKind.Absolute, out Uri uri)) 
+            if (Uri.TryCreate(Request.GetEncodedUrl(), UriKind.Absolute, out Uri uri))
             {
                 var query = uri.ParseQueryString();
                 var path = query.Get("path");
-                if (!string.IsNullOrEmpty(path)) {
-                    if (!path.StartsWith("/")) {
+                if (!string.IsNullOrEmpty(path))
+                {
+                    if (!path.StartsWith("/"))
+                    {
                         path = "/" + path;
                     }
 
                     var pathAndQuery = path.Split("?");
-                    if (pathAndQuery.Length == 1) {
+                    if (pathAndQuery.Length == 1)
+                    {
                         redirectUriQuery.Set("redirectUrl", UriHelper.BuildAbsolute(Request.Scheme, Request.Host, pathAndQuery[0]));
-                    } else if (pathAndQuery.Length == 2){
+                    }
+                    else if (pathAndQuery.Length == 2)
+                    {
                         redirectUriQuery.Set(
-                            "redirectUrl", 
+                            "redirectUrl",
                             UriHelper.BuildAbsolute(
-                                Request.Scheme, 
-                                Request.Host, 
+                                Request.Scheme,
+                                Request.Host,
                                 path: pathAndQuery[0],
                                 query: QueryString.FromUriComponent("?" + pathAndQuery[1])));
                     }
                 }
-            } 
+            }
 
             redirectUriBuilder.Path = "/login";
             redirectUriBuilder.Query = redirectUriQuery.ToString();

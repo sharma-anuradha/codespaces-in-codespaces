@@ -86,7 +86,7 @@ export function environments(
                     dotfilesTargetPath,
                     dotfilesRepository,
                 },
-                state: StateInfo.Provisioning,
+                state: StateInfo.Creating,
                 lieId: action.payload.lieId,
             };
 

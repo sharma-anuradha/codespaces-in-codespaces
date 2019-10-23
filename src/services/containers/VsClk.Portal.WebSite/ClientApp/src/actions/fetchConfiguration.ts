@@ -2,8 +2,6 @@ import { getServiceConfiguration, IConfiguration } from '../services/configurati
 
 import { action } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
-import { postServiceWorkerMessage } from '../common/post-message';
-import { configureServiceWorker } from '../common/service-worker-messages';
 
 export const fetchConfigurationActionType = 'async.configuration.fetch';
 export const fetchConfigurationSuccessActionType = 'async.configuration.fetch.success';

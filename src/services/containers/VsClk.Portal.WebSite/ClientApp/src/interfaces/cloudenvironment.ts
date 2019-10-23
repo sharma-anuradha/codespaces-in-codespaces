@@ -13,7 +13,7 @@ export interface CreateEnvironmentParameters {
 }
 
 export enum StateInfo {
-    Provisioning = 'Provisioning',
+    Creating = 'Creating',
     Deleted = 'Deleted',
     Available = 'Available',
     Unavailable = 'Unavailable',

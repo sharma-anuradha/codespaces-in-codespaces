@@ -16,7 +16,7 @@ import { newPlanPath } from '../../routes';
 
 import { NoEnvironmnets } from './no-environments';
 import { NoPlans } from './no-plans';
-import { getEnvironmentCardsForCurrentPlan } from './get-environment-cars-for-plan';
+import { getEnvironmentCardsForCurrentPlan } from './get-environment-cards-for-plan';
 
 import './environments.css';
 

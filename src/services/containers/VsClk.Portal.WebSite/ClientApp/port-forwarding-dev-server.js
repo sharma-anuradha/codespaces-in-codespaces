@@ -3,13 +3,11 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 
-const pfxPath = path.resolve('cert.pfx');
-const passphrase = 'certificate_passphrase';
+const pfxPath = path.resolve('../dev-cert.pfx');
 
 if (!fs.existsSync(pfxPath)) {
     console.error('SSL Certificate not available.');
     console.log('To get one, run command:');
-    console.log(`dotnet dev-certs https --export-path ${pfxPath} --password ${passphrase} --trust`);
     return process.exit(1);
 }
 
@@ -20,8 +18,8 @@ if (!process.env.VSO_PF_SESSION_ID) {
 }
 
 const agentOptions = {
-    host: 'localhost',
-    port: '3000',
+    host: 'online.dev.core.vsengsaas.visualstudio.com',
+    port: '443',
     path: '/',
     rejectUnauthorized: false,
 };
@@ -36,13 +34,12 @@ var proxy = httpProxy.createProxy({
     xfwd: true,
 });
 
-const targetBaseUrl = 'https://localhost:3000/portforward';
+const targetBaseUrl = 'https://online.dev.core.vsengsaas.visualstudio.com/portforward';
 
 require('https')
     .createServer(
         {
             pfx: fs.readFileSync(pfxPath),
-            passphrase,
             agent,
         },
         (req, res) => {
@@ -65,7 +62,7 @@ require('https')
                 )}&devSessionId=${encodeURIComponent(sessionId)}`;
             }
 
-            console.log(`${req.url} => ${target}`);
+            console.log(`\n\n\n${req.url} => ${target}`);
             proxy.web(req, res, { target });
         }
     )

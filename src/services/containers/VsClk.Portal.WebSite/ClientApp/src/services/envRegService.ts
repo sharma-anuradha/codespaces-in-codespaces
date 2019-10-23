@@ -82,7 +82,7 @@ export async function createEnvironment(
             gitConfig: { userName, userEmail },
         },
         personalization,
-        state: StateInfo.Provisioning,
+        state: StateInfo.Creating,
         connection: {
             sessionId: '',
             sessionPath: '',
