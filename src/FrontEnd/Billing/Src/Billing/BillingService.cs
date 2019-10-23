@@ -183,12 +183,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Create an initial BillingWindowSlice to use as a starting point for billing calculations
                 // The previous BillingSummary is used as the StartTime and EndTime. The environments
                 // previous state comes from the list of environment details in the previous BillingSummary.
+
+                string endPreviousState;
+                if(startSummary?.UsageDetail?.Environments != null && startSummary.UsageDetail.Environments.ContainsKey(environmentEvents.Key))
+                {
+                    endPreviousState = startSummary.UsageDetail?.Environments[environmentEvents.Key].EndState;
+                }
+                else
+                {
+                    endPreviousState = CloudEnvironmentState.None.ToString();
+                }
+
                 var initialSlice = new BillingWindowSlice()
                 {
                     BillingState = BillingWindowBillingState.Active,
                     StartTime = startSummary.PeriodEnd,
                     EndTime = startSummary.PeriodEnd,
-                    LastState = ParseEnvironmentState(startSummary.UsageDetail?.Environments[environmentEvents.Key].EndState ?? "None"),
+                    LastState = ParseEnvironmentState(endPreviousState),
                 };
 
                 var currSlice = initialSlice;
@@ -213,22 +224,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     currSlice = allSlices.Last();
                 }
 
-                // Aggregate the billable units for each slice created above.
-                slices.ForEach((slice) => billable += CalculateVsoUnitsByTimeAndSku(slice, environmentDetails.Sku.Name));
-                var usageDetail = new EnvironmentUsageDetail
+                // We might not have any billable slices. If we don't, let's not do anything
+                if (slices.Any())
                 {
-                    Name = environmentDetails.Name,
-                    EndState = slices.Last().LastState.ToString(),
-                    Usage = new UsageDictionary
+                    // Aggregate the billable units for each slice created above.
+                    slices.ForEach((slice) => billable += CalculateVsoUnitsByTimeAndSku(slice, environmentDetails.Sku.Name));
+                    var usageDetail = new EnvironmentUsageDetail
+                    {
+                        Name = environmentDetails.Name,
+                        EndState = slices.Last().LastState.ToString(),
+                        Usage = new UsageDictionary
                     {
                         { meterId, billable },
                     },
-                    Sku = environmentDetails.Sku,
-                    UserId = environmentDetails.UserId,
-                };
-                environmentUsageDetails.Add(environmentEvents.Key, usageDetail);
-                userUsageDetails = AggregateUserUsageDetails(userUsageDetails, billable, environmentDetails.UserId, meterId);
-                totalBillable += billable;
+                        Sku = environmentDetails.Sku,
+                        UserId = environmentDetails.UserId,
+                    };
+                    environmentUsageDetails.Add(environmentEvents.Key, usageDetail);
+                    userUsageDetails = AggregateUserUsageDetails(userUsageDetails, billable, environmentDetails.UserId, meterId);
+                    totalBillable += billable;
+                }
             }
 
             return new BillingSummary
