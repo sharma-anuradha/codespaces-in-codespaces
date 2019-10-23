@@ -39,5 +39,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// </summary>
         [DataMember(IsRequired = false, EmitDefaultValue = false)]
         public bool Succeeded { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the message.
+        /// </summary>
+        [DataMember(IsRequired = false, EmitDefaultValue = false)]
+        public string Message { get; set; }
     }
 }
