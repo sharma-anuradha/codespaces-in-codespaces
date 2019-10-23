@@ -18,7 +18,7 @@ export enum StateInfo {
     Available = 'Available',
     Unavailable = 'Unavailable',
     Shutdown = 'Shutdown',
-    ShuttingDown = 'ShuttingDown',
+    ShuttingDown = 'Shutting Down',
     Failed = 'Failed to Create',
     Starting = 'Starting',
 }
