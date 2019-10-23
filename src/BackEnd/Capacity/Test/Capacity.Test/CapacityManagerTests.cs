@@ -205,7 +205,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
 
                     mockAzureSubscriptionCapacityProvider
                         .Setup(obj =>
-                            obj.GetAzureResourceUsageAsync(
+                            obj.LoadAzureResourceUsageAsync(
                                 It.Is<IAzureSubscription>(sub => sub.SubscriptionId == subscription.SubscriptionId),
                                 location,
                                 ServiceType.Compute,

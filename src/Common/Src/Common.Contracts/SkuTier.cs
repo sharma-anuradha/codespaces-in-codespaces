@@ -14,13 +14,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public enum SkuTier
     {
         /// <summary>
-        /// A standard tier SKU.
+        /// A standard tier SKU, 4 vCPU, FSv2 compute.
         /// </summary>
         Standard = 0,
 
         /// <summary>
-        /// A premium tier SKU.
+        /// A premium tier SKU, 8 vCPU, FSv2 compute.
         /// </summary>
         Premium = 1,
+
+        /// <summary>
+        /// A premium tier SKU, 4 vCPU, DSv3 compute.
+        /// </summary>
+        StandardDSv3 = 2,
+
+        /// <summary>
+        /// A premium tier SKU, 8 vCPU, DSv3 compute.
+        /// </summary>
+        PremiumDSv3 = 3,
     }
 }

@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                         .Where(c => c.Required > 0))
                     {
                         // Get all usage data for this subscription/location
-                        var azureResourceUsages = await AzureSubscriptionCapacity.GetAzureResourceUsageAsync(
+                        var azureResourceUsages = await AzureSubscriptionCapacity.LoadAzureResourceUsageAsync(
                             subscription,
                             location,
                             criterion.ServiceType,

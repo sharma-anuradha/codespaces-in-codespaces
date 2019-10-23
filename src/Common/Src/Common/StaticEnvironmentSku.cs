@@ -76,6 +76,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public bool Enabled { get; } = false;
 
         /// <inheritdoc/>
-        public SkuTier Tier => SkuTier.Standard;
+        public SkuTier Tier => SkuTier.PremiumDSv3;
     }
 }

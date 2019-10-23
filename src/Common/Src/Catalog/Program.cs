@@ -15,6 +15,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
     /// </summary>
     public static class Program
     {
+        private static IServiceProvider serviceProvider;
+
         /// <summary>
         /// The main program entry point.
         /// </summary>
@@ -30,6 +32,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
                     errs => 1);
         }
 
+        /// <summary>
+        /// Gets the global <see cref="IServiceProvider"/>.
+        /// </summary>
+        /// <param name="options">The command line options.</param>
+        /// <returns>The service provider instacne.</returns>
+        public static IServiceProvider GetServiceProvider(CommonOptions options)
+        {
+            if (serviceProvider is null)
+            {
+                IWebHost webHost = BuildWebHost(options);
+                serviceProvider = webHost.Services;
+            }
+
+            return serviceProvider;
+        }
+        
         private static int ShowSkus(ShowSkusOptions options)
         {
             try
@@ -50,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
             try
             {
                 var systemCatalog = LoadCatalog(options);
-                Commands.WriteAzureSubscriptionCatalog(systemCatalog.AzureSubscriptionCatalog, Console.Out);
+                Commands.WriteAzureSubscriptionCatalog(systemCatalog.AzureSubscriptionCatalog, GetServiceProvider(options), options.ShowCapacity, Console.Out).Wait();
                 return 0;
             }
             catch (Exception ex)
@@ -77,15 +95,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
 
         private static ISystemCatalog LoadCatalog(CommonOptions options)
         {
-            IWebHost webHost = BuildWebHost(options);
-            var systemCatalog = (ISystemCatalog)webHost.Services.GetService(typeof(ISystemCatalog));
+            var services = GetServiceProvider(options);
+            var systemCatalog = (ISystemCatalog)services.GetService(typeof(ISystemCatalog));
             return systemCatalog;
         }
 
         private static IControlPlaneInfo LoadControlPlaneInfo(CommonOptions options)
         {
-            IWebHost webHost = BuildWebHost(options);
-            var controlPlaneInfo = (IControlPlaneInfo)webHost.Services.GetService(typeof(IControlPlaneInfo));
+            var services = GetServiceProvider(options);
+            var controlPlaneInfo = (IControlPlaneInfo)services.GetService(typeof(IControlPlaneInfo));
             return controlPlaneInfo;
         }
 
@@ -148,6 +166,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
         [Verb("subscriptions", HelpText = "Show the subscription catalog.")]
         public class ShowSubscriptionOptions : CommonOptions
         {
+            /// <summary>
+            /// Gets or sets a value indicating whether to include the subscription capacity.
+            /// </summary>
+            [Option('c', "show-capacity", HelpText = "Show the subscription capacity.")]
+            public bool ShowCapacity { get; set; }
         }
 
         /// <summary>

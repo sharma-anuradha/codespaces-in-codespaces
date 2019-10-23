@@ -58,20 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 PlanId = (await GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
+                SkuName = "testSkuName",
                 Location = "WestUs2",
             };
             var environmentController = CreateTestEnvironmentsController();
-            var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
-            Assert.IsType<CreatedResult>(actionResult);
-        }
-
-        [Fact]
-        public async Task EnvironmentController_CloudEnvironmentAsync_LegacySkus()
-        {
-            var skuCatalog = LoadSkuCatalog("prod-rel");
-            var environmentController = CreateTestEnvironmentsController(skuCatalog);
-
-            var body = await CreateBodyAsync("smallLinuxPreview", "WestUs2");
             var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<CreatedResult>(actionResult);
         }

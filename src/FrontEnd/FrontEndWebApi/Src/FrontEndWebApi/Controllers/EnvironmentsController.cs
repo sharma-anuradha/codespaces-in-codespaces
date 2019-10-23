@@ -12,10 +12,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
@@ -23,6 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Duration = Microsoft.VsSaaS.Diagnostics.Extensions.DiagnosticsLoggerExtensions.Duration;
 
@@ -335,18 +334,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                 var cloudEnvironment = Mapper.Map<CreateCloudEnvironmentBody, CloudEnvironment>(createEnvironmentInput);
 
-                // TODO HACK: specify a temporary sku. Old clients don't specify one.
-                if (string.IsNullOrEmpty(cloudEnvironment.SkuName))
-                {
-                    cloudEnvironment.SkuName = LookupSkuName(ComputeOS.Linux, SkuTier.Standard);
-                }
-
-                // Legacy Linux SKU name conversion
-                else if (cloudEnvironment.SkuName.Equals("smallLinuxPreview", StringComparison.OrdinalIgnoreCase))
-                {
-                    cloudEnvironment.SkuName = LookupSkuName(ComputeOS.Linux, SkuTier.Standard);
-                }
-
                 // Reroute to correct location if needed
                 var owningStamp = default(IControlPlaneStampInfo);
                 try
@@ -633,17 +620,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 .AddReason($"{HttpStatusCode.BadRequest}: {message}")
                 .LogError(GetType().FormatLogErrorMessage(nameof(CreateCloudEnvironmentAsync)));
             return BadRequest(message);
-        }
-
-        private string LookupSkuName(ComputeOS computeOS, SkuTier skuTier)
-        {
-            return SkuCatalog.CloudEnvironmentSkus
-                .Where(defaultSku => defaultSku.Value.ComputeOS == computeOS)
-                .Where(defaultSku => defaultSku.Value.Tier == skuTier)
-                .Where(defaultSku => defaultSku.Value.Enabled)
-                .Single()
-                .Value
-                .SkuName;
         }
     }
 }

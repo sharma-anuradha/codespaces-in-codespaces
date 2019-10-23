@@ -337,27 +337,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.False(controlPlaneInfo.TryGetSubscriptionId(out var _));
         }
 
-        [Fact]
-        public void AppSettings_WindowsSkus()
-        {
-            const string skuName = "premiumWindows";
-            var appSettings = LoadAppSettings("dev-ci");
-            Assert.NotNull(appSettings);
-            var controlPlaneInfo = new Mock<IControlPlaneInfo>();
-            controlPlaneInfo.Setup(obj => obj.EnvironmentResourceGroupName).Returns("test-environment-rg");
-            controlPlaneInfo.Setup(obj => obj.Stamp.DataPlaneLocations).Returns(new List<AzureLocation>());
-            var subscriptionId = Guid.NewGuid().ToString();
-            var controlPlaneAzureResourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
-            controlPlaneAzureResourceAccessor.Setup(obj => obj.GetCurrentSubscriptionIdAsync()).Returns(Task.FromResult(subscriptionId));
-            var skuCatalog = new SkuCatalog(appSettings.SkuCatalogSettings, controlPlaneInfo.Object, controlPlaneAzureResourceAccessor.Object);
-            Assert.NotNull(skuCatalog);
-            Assert.Contains(skuName, skuCatalog.CloudEnvironmentSkus);
-            var environment = skuCatalog.CloudEnvironmentSkus[skuName];
-            Assert.Equal(VmImageKind.Custom, environment.ComputeImage.ImageKind);
-            Assert.Equal(ComputeOS.Windows, environment.ComputeOS);
-            Assert.Equal("Premium Environment (Windows)", environment.DisplayName);
-        }
-
         public static AppSettingsBase LoadAppSettings(string environmentName, string overrideName = null)
         {
             var builder = new ConfigurationBuilder()

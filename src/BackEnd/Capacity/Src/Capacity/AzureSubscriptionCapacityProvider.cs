@@ -54,28 +54,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// <param name="controlPlaneInfo">The control-plane resource accessor.</param>
         /// <param name="servicePrincipal">The application service principal.</param>
         /// <param name="taskHelper">The task helper.</param>
-        /// <param name="mapper">The auto-mapper.</param>
         public AzureSubscriptionCapacityProvider(
             IAzureSubscriptionCatalog azureSubscriptionCatalog,
             ICapacityRepository capacityRepository,
             IControlPlaneInfo controlPlaneInfo,
             IServicePrincipal servicePrincipal,
-            ITaskHelper taskHelper,
-            IMapper mapper)
+            ITaskHelper taskHelper)
         {
             Requires.NotNull(azureSubscriptionCatalog, nameof(azureSubscriptionCatalog));
             Requires.NotNull(capacityRepository, nameof(capacityRepository));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             Requires.NotNull(servicePrincipal, nameof(servicePrincipal));
             Requires.NotNull(taskHelper, nameof(taskHelper));
-            Requires.NotNull(mapper, nameof(mapper));
 
             AzureSubscriptionCatalog = azureSubscriptionCatalog;
             CapacityRepository = capacityRepository;
             ControlPlaneInfo = controlPlaneInfo;
             ServicePrincipal = servicePrincipal;
             TaskHelper = taskHelper;
-            Mapper = mapper;
         }
 
         private IAzureSubscriptionCatalog AzureSubscriptionCatalog { get; }
@@ -88,20 +84,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
         private ITaskHelper TaskHelper { get; }
 
-        private IMapper Mapper { get; }
-
         /// <inheritdoc/>
-        public async Task<IEnumerable<AzureResourceUsage>> GetAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger)
         {
-            logger = logger
-                .FromExisting(withActivityId: true)
-                .WithValues(
-                    new LogValueSet
-                    {
-                        { nameof(subscription), subscription.SubscriptionId },
-                        { nameof(location), location.ToString() },
-                        { nameof(serviceType), serviceType.ToString() },
-                    });
+            logger = logger.WithValues(
+                new LogValueSet
+                {
+                    { nameof(subscription), subscription.SubscriptionId },
+                    { nameof(location), location.ToString() },
+                    { nameof(serviceType), serviceType.ToString() },
+                });
 
             switch (serviceType)
             {
@@ -149,6 +141,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                         operationName,
                         () => GetAzureNetworkUsageAsync(subscription, location, subscription.NetworkQuotas.Keys));
                     break;
+
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<AzureResourceUsage>> GetAzureResourceUsageAsync(
+            IAzureSubscription subscription,
+            AzureLocation location,
+            ServiceType serviceType,
+            IDiagnosticsLogger logger)
+        {
+            logger = logger.WithValues(
+                new LogValueSet
+                {
+                    { nameof(subscription), subscription.SubscriptionId },
+                    { nameof(location), location.ToString() },
+                    { nameof(serviceType), serviceType.ToString() },
+                });
+
+            switch (serviceType)
+            {
+                case ServiceType.Compute:
+                    return await GetAzureComputeUsageAsync(subscription, location, subscription.ComputeQuotas.Keys);
+
+                case ServiceType.Storage:
+                    return await GetAzureStorageUsageAsync(subscription, location, subscription.StorageQuotas.Keys);
+
+                case ServiceType.Network:
+                    return await GetAzureNetworkUsageAsync(subscription, location, subscription.NetworkQuotas.Keys);
 
                 default:
                     throw new NotSupportedException();

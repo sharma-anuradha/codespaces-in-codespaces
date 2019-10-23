@@ -31,72 +31,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Mocks
         }
 
         /// <inheritdoc/>
-        public Task UpdateAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger)
+        public Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger)
         {
             throw new System.NotImplementedException();
         }
 
-        private async Task<IEnumerable<AzureResourceUsage>> GetComputeUsageAsync(IAzureSubscription subscription, AzureLocation location, IDiagnosticsLogger logger)
+        /// <inheritdoc/>
+        public Task UpdateAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger)
         {
-            await Task.CompletedTask;
-            Requires.NotNull(subscription, nameof(subscription));
-            Requires.NotNull(logger, nameof(logger));
-
-            var result = new List<AzureResourceUsage>();
-
-            foreach (var computeQuota in subscription.ComputeQuotas)
-            {
-                var quota = computeQuota.Key;
-                var desiredLimit = computeQuota.Value;
-                if (desiredLimit > 0)
-                {
-                    result.Add(new AzureResourceUsage(subscription.SubscriptionId, ServiceType.Compute, location, quota, desiredLimit, desiredLimit / 2));
-                }
-            }
-
-            return result;
-        }
-
-        private async Task<IEnumerable<AzureResourceUsage>> GetNetworkUsageAsync(IAzureSubscription subscription, AzureLocation location, IDiagnosticsLogger logger)
-        {
-            await Task.CompletedTask;
-            Requires.NotNull(subscription, nameof(subscription));
-            Requires.NotNull(logger, nameof(logger));
-
-            var result = new List<AzureResourceUsage>();
-
-            foreach (var networkQuota in subscription.NetworkQuotas)
-            {
-                var quota = networkQuota.Key;
-                var desiredLimit = networkQuota.Value;
-                if (desiredLimit > 0)
-                {
-                    result.Add(new AzureResourceUsage(subscription.SubscriptionId, ServiceType.Network, location, quota, desiredLimit, desiredLimit / 2));
-                }
-            }
-
-            return result;
-        }
-
-        private async Task<IEnumerable<AzureResourceUsage>> GetStorageUsageAsync(IAzureSubscription subscription, AzureLocation location, IDiagnosticsLogger logger)
-        {
-            await Task.CompletedTask;
-            Requires.NotNull(subscription, nameof(subscription));
-            Requires.NotNull(logger, nameof(logger));
-
-            var result = new List<AzureResourceUsage>();
-
-            foreach (var storageQuota in subscription.StorageQuotas)
-            {
-                var quota = storageQuota.Key;
-                var desiredLimit = storageQuota.Value;
-                if (desiredLimit > 0)
-                {
-                    result.Add(new AzureResourceUsage(subscription.SubscriptionId, ServiceType.Storage, location, quota, desiredLimit, desiredLimit / 2));
-                }
-            }
-
-            return result;
+            throw new System.NotImplementedException();
         }
     }
 }
