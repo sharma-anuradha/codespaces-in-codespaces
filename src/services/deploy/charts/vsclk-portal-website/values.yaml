@@ -1,11 +1,11 @@
 # Default values for char vsclk-portal-website.
 
 pods:
-  replicaCount: 1
-  maxReplicaCount: 5
+  replicaCount: 3
+  maxReplicaCount: 10
   minReadySeconds: 1
   progressDeadlineSeconds: 300
-  livenessProbePath:
+  livenessProbePath: /
   readinessProbePath:
   targetCpuUtilizationPercentage: 60
 
