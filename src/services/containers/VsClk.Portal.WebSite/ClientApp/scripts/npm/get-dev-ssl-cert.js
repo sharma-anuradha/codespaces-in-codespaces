@@ -7,7 +7,7 @@ const { writeFile } = require('fs-extra');
 (async () => {
     try {
         const azureCliResponse = execSync(
-            'az keyvault secret show --name "dev-core-vsengsaas-visualstudio-com-ssl" --vault-name "vsclk-core-dev-kv"',
+            'az keyvault secret show --name "dev-core-vsengsaas-visualstudio-com-ssl" --vault-name "vsclk-core-dev-kv" -ojson',
             {
                 encoding: 'utf-8',
             }
