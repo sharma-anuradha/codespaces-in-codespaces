@@ -85,5 +85,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the auto shutdown time the user specified.
         /// </summary>
         public int AutoShutdownDelayMinutes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the Sku.
+        /// </summary>
+        public string SkuName { get; set; }
     }
 }
