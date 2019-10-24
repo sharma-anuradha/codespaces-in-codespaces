@@ -37,8 +37,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [LoggingBaseName("environments_controller")]
     public class EnvironmentsController : ControllerBase /* TODO add this later IEnvironmentsHttpContract */
     {
-        private const string StartEnvironmentHttpVerb = "start";
-
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentsController"/> class.
         /// </summary>
@@ -269,7 +267,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                 // Build the service URI.
                 var displayUri = Request.GetDisplayUrl();
-                var requestUri = displayUri.Substring(0, displayUri.IndexOf(StartEnvironmentHttpVerb));
+                var requestUri = displayUri.Substring(0, displayUri.IndexOf(environmentId));
                 var serviceUri = ServiceUriBuilder.GetServiceUri(requestUri, owningStamp);
                 var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(requestUri, owningStamp).ToString();
 
