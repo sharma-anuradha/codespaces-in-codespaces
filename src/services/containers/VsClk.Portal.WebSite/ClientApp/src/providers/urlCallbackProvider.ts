@@ -118,7 +118,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         if (!authority) {
             throw new Error('No "authority" set.');
         }
-        
+
         const uri = vscode.URI.from({
             scheme: location.protocol.replace(/\:/g, ''),
             path: '/extension-auth-callback',

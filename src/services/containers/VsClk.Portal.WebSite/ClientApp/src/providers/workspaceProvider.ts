@@ -20,7 +20,7 @@ export class WorkspaceProvider implements IWorkspaceProvider {
             this.workspace = { workspaceUri };
         } else {
             const folderUri = vscode.URI.from({
-                path: folder || sessionPath,
+                path: this.normalizeVSCodePath(folder || sessionPath),
                 scheme: 'vscode-remote',
                 authority: `localhost`,
             });
@@ -28,12 +28,31 @@ export class WorkspaceProvider implements IWorkspaceProvider {
         }
     }
 
+    /**
+     * VSCode workbench fails on the windows paths,
+     * normalize for this scenario.
+     */
+    private normalizeVSCodePath(path: string = '') {
+        if (!path) {
+            return path;
+        }
+
+        path = path.trim();
+
+        // replace all backward slashes with forward ones
+        // and remove the slash at the beginning
+        const forwardSlashPath = path
+            .replace(/\\/g, '/')
+            .replace(/^\//, '');
+
+        // add the slash at the beginning
+        return `/${forwardSlashPath}`;
+    }
+
     public async open(
         workspace: IWorkspace,
         options?: { reuse?: boolean | undefined } | undefined
     ): Promise<void> {
-        let targetHref: string | undefined = undefined;
-
         const targetUrl = new URL(document.location.pathname, document.location.origin);
 
         if (!workspace) {
