@@ -116,7 +116,7 @@ self.addEventListener('message', async (event) => {
             const configuration = configurationManager.getConfigurationSafe();
             const newConfiguration = message.payload;
 
-            const configurationChanged = deepEqual(configuration, newConfiguration);
+            const configurationChanged = !deepEqual(configuration, newConfiguration);
 
             if (configurationChanged) {
                 serviceRegistry.unregisterInstance('LiveShareClient');

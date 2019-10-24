@@ -18,7 +18,7 @@ import { WorkspaceProvider } from '../../providers/workspaceProvider';
 import { ExternalUriProvider } from '../../providers/externalUriProvider';
 import { resourceUriProviderFactory } from '../../common/url-utils';
 import { postServiceWorkerMessage } from '../../common/post-message';
-import { authenticateMessageType, disconnectCloudEnv } from '../../common/service-worker-messages';
+import { disconnectCloudEnv } from '../../common/service-worker-messages';
 import { UserDataProvider } from '../../utils/userDataProvider';
 
 import { vscode } from '../../utils/vscode';
