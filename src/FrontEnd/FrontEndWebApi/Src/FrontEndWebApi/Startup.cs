@@ -201,6 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 options.HostUrl = hostUrl;
                 options.AuthKey = authKey;
                 options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
+                options.UseMultipleWriteLocations = true;
                 options.PreferredLocation = CurrentAzureLocation.ToString();
             });
 
