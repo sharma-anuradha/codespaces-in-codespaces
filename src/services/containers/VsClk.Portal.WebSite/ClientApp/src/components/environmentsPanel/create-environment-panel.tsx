@@ -118,6 +118,16 @@ function getValidationIcon(state: TextFieldState) {
     }
 }
 
+function normalizeOptionalValue(value: string): string | undefined {
+    value = value.trim();
+
+    if (!value) {
+        return undefined;
+    }
+
+    return value;
+}
+
 export const validationMessages = {
     valid: '',
     testFailed: 'Failed to check repository access, please try again.',
@@ -205,8 +215,8 @@ function formToEnvironmentParams(planId: string, planLocation: string, fields: F
         friendlyName: fields.friendlyName.value,
         gitRepositoryUrl: normalizeGitUrl(fields.gitRepositoryUrl.value),
         dotfilesRepository: normalizeGitUrl(fields.dotfilesRepository.value),
-        dotfilesTargetPath: fields.dotfilesTargetPath.value,
-        dotfilesInstallCommand: fields.dotfilesInstallCommand.value,
+        dotfilesTargetPath: normalizeOptionalValue(fields.dotfilesTargetPath.value),
+        dotfilesInstallCommand: normalizeOptionalValue(fields.dotfilesInstallCommand.value),
         autoShutdownDelayMinutes: fields.autoShutdownDelayMinutes.value,
     };
 }
