@@ -75,6 +75,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
+        public Task<bool> ExistsAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
         public async Task<EnvironmentStartResult> StartComputeAsync(EnvironmentStartInput input, IDiagnosticsLogger logger)
         {
             // TODO: get these from shared Constants.

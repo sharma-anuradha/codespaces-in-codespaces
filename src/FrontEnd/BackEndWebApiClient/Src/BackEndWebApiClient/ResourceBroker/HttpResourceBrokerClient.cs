@@ -48,6 +48,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
+        public async Task<bool> TriggerEnvironmentHeartbeatAsync(Guid resourceId, IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(resourceId, nameof(resourceId));
+            var requestUri = ResourceBrokerHttpContract.GetTriggerEnvironmentHeartbeatUri(resourceId);
+            var result = await SendAsync<string, bool>(ResourceBrokerHttpContract.TriggerEnvironmentHeartbeatMethod, requestUri, null, logger);
+            return result;
+        }
+
+        /// <inheritdoc/>
         public async Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));

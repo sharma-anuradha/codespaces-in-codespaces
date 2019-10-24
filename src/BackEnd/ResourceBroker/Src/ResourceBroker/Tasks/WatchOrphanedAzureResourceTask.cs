@@ -19,7 +19,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
@@ -143,6 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                             throw new NotSupportedException($"Resource has a location of {resource.Location} which is not supported");
                         }
 
+                        // Now we can delete the azure resource
                         if (resourceType == ResourceType.ComputeVM)
                         {
                             await ResourceContinuationOperations.DeleteOrphanedComputeAsync(
@@ -170,11 +170,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     }
                     else
                     {
-                        if (record.KeepAlives == null)
-                        {
-                            record.KeepAlives = new ResourceKeepAliveRecord();
-                        }
-
                         // Update datetime
                         record.KeepAlives.AzureResourceAlive = DateTime.UtcNow;
 

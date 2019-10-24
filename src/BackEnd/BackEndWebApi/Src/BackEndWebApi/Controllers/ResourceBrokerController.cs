@@ -118,6 +118,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <summary>
+        /// Gets a resource by id.
+        /// <para>
+        /// GET api/v1/resourcebroker/resources?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="id">Resource id token.</param>
+        /// <returns>Nothing.</returns>
+        [HttpGet("environmentheartbeat")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> EnvironmentHeartbeatAsync(
+            [FromQuery]string id)
+        {
+            var logger = HttpContext.GetLogger();
+
+            if (!Guid.TryParse(id, out var resourceId))
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid")
+                    .LogError(GetType().FormatLogErrorMessage(nameof(DeallocateAsync)));
+
+                return BadRequest();
+            }
+
+            return await logger.OperationScopeAsync(
+                GetType().FormatLogMessage(nameof(EnvironmentHeartbeatAsync)),
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("ResourceId", id);
+
+                    // Get status
+                    var result = await ResourceBrokerHttp.TriggerEnvironmentHeartbeatAsync(resourceId, childLogger);
+
+                    // return 200 vs 404 based on the result
+                    return result ? (IActionResult)Ok(result) : NotFound(result);
+                });
+        }
+
+        /// <summary>
         /// Deallocates a resource from the resource broker.
         /// <para>
         /// DELETE api/resourcebroker/resources?id={resourceId}.
@@ -143,6 +181,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
                 return BadRequest();
             }
+
+            logger.FluentAddBaseValue("ResourceId", id);
 
             try
             {
@@ -257,6 +297,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 return BadRequest();
             }
 
+            logger.FluentAddBaseValue("ResourceId", id);
+
             if (startComputeRequestBody is null)
             {
                 logger.AddDuration(duration)
@@ -326,6 +368,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         Task<ResourceBrokerResource> IResourceBrokerResourcesHttpContract.GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        Task<bool> IResourceBrokerResourcesHttpContract.TriggerEnvironmentHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            return ResourceBroker.ExistsAsync(
+                id, logger.WithValues(new LogValueSet()));
         }
 
         /// <inheritdoc/>

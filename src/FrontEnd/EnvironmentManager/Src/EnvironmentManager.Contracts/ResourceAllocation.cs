@@ -19,6 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class ResourceAllocation
     {
+        private ResourceAllocationKeepAlive keepAlive;
+
         /// <summary>
         /// Gets or sets the resource id token.
         /// </summary>
@@ -43,5 +45,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty]
         public DateTime Created { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resources keep alive.
+        /// </summary>
+        [JsonProperty]
+        public ResourceAllocationKeepAlive KeepAlive
+        {
+            get { return keepAlive ?? (keepAlive = new ResourceAllocationKeepAlive()); }
+            set { keepAlive = value; }
+        }
     }
 }

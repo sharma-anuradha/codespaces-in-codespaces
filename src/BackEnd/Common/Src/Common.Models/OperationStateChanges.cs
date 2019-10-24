@@ -16,17 +16,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <summary>
         /// Gets or sets the status that was updated.
         /// </summary>
+        [JsonProperty(PropertyName = "status")]
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState Status { get; set; }
 
         /// <summary>
         /// Gets or sets the time that the update occured.
         /// </summary>
+        [JsonProperty(PropertyName = "time")]
         public DateTime Time { get; set; }
 
         /// <summary>
         /// Gets or sets the trigger of the status update.
         /// </summary>
+        [JsonProperty(PropertyName = "trigger")]
         public string Trigger { get; set; }
     }
 }

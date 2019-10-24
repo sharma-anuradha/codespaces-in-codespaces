@@ -56,5 +56,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Task.</returns>
         Task StartComputeAsync(Guid computeResourceId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Checks to see if a given resource exists.
+        /// </summary>
+        /// <param name="id">The target resource id.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the resource exists.</returns>
+        Task<bool> TriggerEnvironmentHeartbeatAsync(Guid id, IDiagnosticsLogger logger);
     }
 }

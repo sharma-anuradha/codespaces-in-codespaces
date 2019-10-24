@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <inheritdoc/>
         public string GetBearerToken()
         {
-            return ContextAccessor.HttpContext.Items[HttpContextCurrentUserTokenKey] as string;
+            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserTokenKey] as string;
         }
 
         /// <inheritdoc/>
@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <inheritdoc/>
         public string GetProfileId()
         {
-            return ContextAccessor.HttpContext.Items[HttpContextCurrentUserIdKey] as string;
+            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdKey] as string;
         }
     }
 }

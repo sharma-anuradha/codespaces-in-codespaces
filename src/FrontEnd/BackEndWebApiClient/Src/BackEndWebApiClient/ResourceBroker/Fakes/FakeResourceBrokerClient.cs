@@ -82,11 +82,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            await Task.CompletedTask;
+            return Task.FromResult(resources.GetValueOrDefault(resourceId));
+        }
 
-            return resources.GetValueOrDefault(resourceId);
+        /// <inheritdoc/>
+        public Task<bool> TriggerEnvironmentHeartbeatAsync(Guid resourceId, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(resources.ContainsKey(resourceId));
         }
 
         /// <inheritdoc/>

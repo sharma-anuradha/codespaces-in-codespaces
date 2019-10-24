@@ -49,8 +49,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-
-        /// <inheritdoc/>
         public Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
@@ -60,6 +58,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         public Task StartComputeAsync(Guid computeResource, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> TriggerEnvironmentHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
         }
 
         /// <inheritdoc/>

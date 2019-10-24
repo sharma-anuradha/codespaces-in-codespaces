@@ -33,6 +33,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public const string StartComputeOperation = "startcompute";
 
         /// <summary>
+        /// The allocate http method.
+        /// </summary>
+        public const string TriggerEnvironmentHeartbeat = "environmentheartbeat";
+
+        /// <summary>
         /// The create resource http method.
         /// </summary>
         public static readonly HttpMethod PostResourceMethod = HttpMethod.Post;
@@ -41,6 +46,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// The create resource http method.
         /// </summary>
         public static readonly HttpMethod GetResourceMethod = HttpMethod.Get;
+
+        /// <summary>
+        /// The create resource http method.
+        /// </summary>
+        public static readonly HttpMethod TriggerEnvironmentHeartbeatMethod = HttpMethod.Get;
 
         /// <summary>
         /// The deallocate http method.
@@ -69,6 +79,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// <param name="resourceId">The resource id token.</param>
         /// <returns>Uri.</returns>
         public static string GetGetResourceUri(Guid resourceId) => GetResourceUri(resourceId);
+
+        /// <summary>
+        /// Get the get resource uri.
+        /// </summary>
+        /// <param name="resourceId">The resource id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetTriggerEnvironmentHeartbeatUri(Guid resourceId) => $"{ResourcesRoute}/{TriggerEnvironmentHeartbeat}?id={resourceId}";
 
         /// <summary>
         /// Get the deallocate uri.

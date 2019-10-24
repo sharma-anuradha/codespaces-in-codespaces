@@ -15,16 +15,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Gets or Sets latest HeartBeat message with merged collected data.
         /// </summary>
+        [JsonProperty(PropertyName = "mergedHeartBeat")]
         public ResourceHeartBeatRecord MergedHeartBeat { get; set; }
 
         /// <summary>
         /// Gets or Sets latest raw HeartBeat messages.
         /// </summary>
+        [JsonProperty(PropertyName = "latestRawHeartBeat")]
         public ResourceHeartBeatRecord LatestRawHeartBeat { get; set; }
 
         /// <summary>
         /// Gets or Sets the last heartbeat timestamp.
         /// </summary>
+        [JsonProperty(PropertyName = "lastSeen")]
         public DateTime? LastSeen { get; set; }
 
         /// <summary>

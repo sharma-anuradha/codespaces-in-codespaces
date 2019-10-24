@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Newtonsoft.Json;
 using System;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
@@ -41,16 +42,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <summary>
         /// Gets or sets the subscription id.
         /// </summary>
+        [JsonProperty(PropertyName = "subscriptionId")]
         public Guid SubscriptionId { get; set; }
 
         /// <summary>
         /// Gets or sets the resource group name.
         /// </summary>
+        [JsonProperty(PropertyName = "resourceGroup")]
         public string ResourceGroup { get; set; }
 
         /// <summary>
         /// Gets or sets the resource name.
         /// </summary>
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
         /// <inheritdoc/>

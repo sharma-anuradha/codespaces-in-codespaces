@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            var correlationId = ContextAccessor.HttpContext.GetCorrelationId();
+            var correlationId = ContextAccessor?.HttpContext?.GetCorrelationId();
             if (!string.IsNullOrEmpty(correlationId))
             {
                 request.Headers.Add(HttpConstants.CorrelationIdHeader, correlationId);

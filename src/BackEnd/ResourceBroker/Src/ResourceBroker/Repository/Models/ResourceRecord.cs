@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
@@ -18,75 +19,97 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     public class ResourceRecord : TaggedEntity
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="ResourceRecord"/> class.
+        /// </summary>
+        public ResourceRecord()
+        {
+            KeepAlives = new ResourceKeepAliveRecord();
+        }
+
+        /// <summary>
         /// Gets or sets the resource sku name.
         /// </summary>
+        [JsonProperty(PropertyName = "skuName")]
         public string SkuName { get; set; }
 
         /// <summary>
         /// Gets or sets the resource type.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
+        [JsonProperty(PropertyName = "type")]
         public ResourceType Type { get; set; }
 
         /// <summary>
         /// Gets or sets the azure resource info from the compute or storage provider.
         /// </summary>
+        [JsonProperty(PropertyName = "azureResourceInfo")]
         public AzureResourceInfo AzureResourceInfo { get; set; }
 
         /// <summary>
         /// Gets or sets the azure location.
         /// </summary>
+        [JsonProperty(PropertyName = "lzureResourceInfo")]
         public string Location { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether record is ready.
         /// </summary>
+        [JsonProperty(PropertyName = "isReady")]
         public bool IsReady { get; set; }
 
         /// <summary>
         /// Gets or sets the ready date.
         /// </summary>
+        [JsonProperty(PropertyName = "ready")]
         public DateTime? Ready { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether record is assigned.
         /// </summary>
+        [JsonProperty(PropertyName = "isAssigned")]
         public bool IsAssigned { get; set; }
 
         /// <summary>
         /// Gets or sets the assigned date.
         /// </summary>
+        [JsonProperty(PropertyName = "assigned")]
         public DateTime? Assigned { get; set; }
 
         /// <summary>
         /// Gets or sets the created date.
         /// </summary>
+        [JsonProperty(PropertyName = "created")]
         public DateTime Created { get; set; }
 
         /// <summary>
         /// Gets or sets the pool reference details.
         /// </summary>
+        [JsonProperty(PropertyName = "poolReference")]
         public ResourcePoolDefinitionRecord PoolReference { get; set; }
 
         /// <summary>
         /// Gets or sets the provisioning reason.
         /// </summary>
+        [JsonProperty(PropertyName = "provisioningReason")]
         public string ProvisioningReason { get; set; }
 
         /// <summary>
         /// Gets or sets the Provisioning Status.
         /// </summary>
+        [JsonProperty(PropertyName = "provisioningStatus")]
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? ProvisioningStatus { get; set; }
 
         /// <summary>
         /// Gets or sets the Provisioning Status Changed date.
         /// </summary>
+        [JsonProperty(PropertyName = "provisioningStatusChanged")]
         public DateTime? ProvisioningStatusChanged { get; set; }
 
         /// <summary>
         /// Gets or sets the Provisioning Status Changes.
         /// </summary>
+        [JsonProperty(PropertyName = "provisioningStatusChanges")]
         public IList<OperationStateChanges> ProvisioningStatusChanges { get; set; }
 
         /// <summary>
@@ -97,84 +120,100 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Gets or sets the Starting Status.
         /// </summary>
+        [JsonProperty(PropertyName = "startingStatus")]
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? StartingStatus { get; set; }
 
         /// <summary>
         /// Gets or sets the Starting Status Changed date.
         /// </summary>
+        [JsonProperty(PropertyName = "startingStatusChanged")]
         public DateTime? StartingStatusChanged { get; set; }
 
         /// <summary>
         /// Gets or sets the Starting Status Changes.
         /// </summary>
+        [JsonProperty(PropertyName = "startingStatusChanges")]
         public IList<OperationStateChanges> StartingStatusChanges { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether record is deleted.
         /// </summary>
+        [JsonProperty(PropertyName = "isDeleted")]
         public bool IsDeleted { get; set; }
 
         /// <summary>
         /// Gets or sets the count of how many times we have tried to delete the resource.
         /// </summary>
+        [JsonProperty(PropertyName = "deleteAttemptCount")]
         public int DeleteAttemptCount { get; set; }
 
         /// <summary>
         /// Gets or sets the starting reason.
         /// </summary>
+        [JsonProperty(PropertyName = "deletingReason")]
         public string DeletingReason { get; set; }
 
         /// <summary>
         /// Gets or sets the Deleting Status.
         /// </summary>
+        [JsonProperty(PropertyName = "deletingStatus")]
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? DeletingStatus { get; set; }
 
         /// <summary>
         /// Gets or sets the Deleting Status Changed date.
         /// </summary>
+        [JsonProperty(PropertyName = "deletingStatusChanged")]
         public DateTime? DeletingStatusChanged { get; set; }
 
         /// <summary>
         /// Gets or sets the Deleting Status Changes.
         /// </summary>
+        [JsonProperty(PropertyName = "deletingStatusChanges")]
         public IList<OperationStateChanges> DeletingStatusChanges { get; set; }
 
         /// <summary>
         /// Gets or sets the current state of the Keep Alives.
         /// </summary>
+        [JsonProperty(PropertyName = "keepAlives")]
         public ResourceKeepAliveRecord KeepAlives { get; set; }
 
         /// <summary>
         /// Gets or sets the cleanup reason.
         /// </summary>
+        [JsonProperty(PropertyName = "cleanupReason")]
         public string CleanupReason { get; set; }
 
         /// <summary>
         /// Gets or sets the cleanup status.
         /// </summary>
+        [JsonProperty(PropertyName = "cleanupStatus")]
         [JsonConverter(typeof(StringEnumConverter))]
         public OperationState? CleanupStatus { get; set; }
 
         /// <summary>
         /// Gets or sets the cleanup Status Changed date.
         /// </summary>
+        [JsonProperty(PropertyName = "cleanupStatusChanged")]
         public DateTime? CleanupStatusChanged { get; set; }
 
         /// <summary>
         /// Gets or sets the cleanup Status Changes.
         /// </summary>
+        [JsonProperty(PropertyName = "cleanupStatusChanges")]
         public IList<OperationStateChanges> CleanupStatusChanges { get; set; }
 
         /// <summary>
         /// Gets or sets the current HeartBeat.
         /// </summary>
+        [JsonProperty(PropertyName = "heartBeatSummary")]
         public ResourceHeartBeatSummaryRecord HeartBeatSummary { get; set; }
 
         /// <summary>
         /// Gets or sets the Properties.
         /// </summary>
+        [JsonProperty(PropertyName = "properties")]
         public dynamic Properties { get; set; }
 
         /// <summary>

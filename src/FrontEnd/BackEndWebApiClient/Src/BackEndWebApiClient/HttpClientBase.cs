@@ -95,10 +95,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
 
                 return resultBody;
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 logger?.TryAddDuration(duration);
-                logger?.LogError(GetType().FormatLogErrorMessage(nameof(SendRawAsync)));
+                logger?.LogException(GetType().FormatLogErrorMessage(nameof(SendRawAsync)), e);
                 throw;
             }
         }

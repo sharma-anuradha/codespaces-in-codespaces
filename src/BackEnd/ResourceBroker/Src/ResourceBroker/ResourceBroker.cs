@@ -13,16 +13,15 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
     /// <summary>
-    ///
+    /// Resource broker.
     /// </summary>
     public class ResourceBroker : IResourceBroker
     {
@@ -31,24 +30,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceBroker"/> class.
         /// </summary>
+        /// <param name="resourceRepository">Resource repository that should be used.</param>
         /// <param name="resourcePool">Resource pool that should be used.</param>
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceContinuationOperations">Target continuation task sctivator.</param>
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="mapper">Mapper that should be used.</param>
         public ResourceBroker(
+            IResourceRepository resourceRepository,
             IResourcePoolManager resourcePool,
             IResourcePoolDefinitionStore resourceScalingStore,
             IResourceContinuationOperations resourceContinuationOperations,
             ITaskHelper taskHelper,
             IMapper mapper)
         {
+            ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
             ResourceScalingStore = Requires.NotNull(resourceScalingStore, nameof(resourceScalingStore));
             ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
+
+        private IResourceRepository ResourceRepository { get; }
 
         private IResourcePoolManager ResourcePool { get; }
 
@@ -187,6 +191,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         childLogger);
 
                     return Mapper.Map<AllocateResult>(assignResult.Resource);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> ExistsAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_exists",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("ResourceId", id);
+
+                    var exists = false;
+
+                    // Try to get result
+                    var result = await ResourceRepository.GetAsync(id.ToString(), childLogger.NewChildLogger());
+                    if (result != null)
+                    {
+                        // Set keep alives
+                        result.KeepAlives.EnvironmentAlive = DateTime.UtcNow;
+
+                        // Update record
+                        await ResourceRepository.UpdateAsync(result, childLogger.NewChildLogger());
+
+                        // If null or is deleted then it doesn't exist
+                        exists = result?.IsDeleted == false;
+                    }
+
+                    childLogger.FluentAddValue("ResourceExists", exists)
+                        .FluentAddValue("ResourceIsNotNull", result != null)
+                        .FluentAddValue("ResourceIsDeleted", result != null ? (bool?)result.IsDeleted : null);
+
+                    return exists;
                 });
         }
 

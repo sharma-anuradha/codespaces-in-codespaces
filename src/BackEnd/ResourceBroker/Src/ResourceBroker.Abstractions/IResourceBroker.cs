@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -30,6 +31,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>An <see cref="AllocateResult"/> object.</returns>
         Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Checks to see if a given resource exists.
+        /// </summary>
+        /// <param name="id">The target resource id.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the resource exists.</returns>
+        Task<bool> ExistsAsync(Guid id, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Deallocate a resource.

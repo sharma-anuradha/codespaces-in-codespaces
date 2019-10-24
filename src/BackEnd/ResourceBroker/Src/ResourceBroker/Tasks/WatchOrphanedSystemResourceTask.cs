@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         idShards,
                         (idShard, itemLogger) => CoreRunUnitAsync(idShard, claimSpan, itemLogger),
                         childLogger,
-                        (idShard, itemLogger) => ObtainLease($"{LeaseBaseName}-{idShard}", claimSpan, logger));
+                        (idShard, itemLogger) => ObtainLease($"{LeaseBaseName}-{idShard}", claimSpan, itemLogger));
 
                     return !Disposed;
                 },
@@ -92,60 +92,61 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             Disposed = true;
         }
 
-        private async Task CoreRunUnitAsync(string idShard, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private Task CoreRunUnitAsync(string idShard, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("TaskResourceIdShard", idShard);
 
-            // Executes the action that needs to be performed on the pool
-            await logger.TrackDurationAsync(
-                "RunPoolAction",
-                () =>
+            var cutoffTime = DateTime.UtcNow.AddDays(-1);
+
+            // Get record so we can tell if it exists
+            return ResourceRepository.ForEachAsync(
+                x => x.KeepAlives != null
+                    && x.KeepAlives.AzureResourceAlive < cutoffTime
+                    && x.Id.StartsWith(idShard),
+                logger.NewChildLogger(),
+                (resource, innerLogger) =>
                 {
-                    var cutoffTime = DateTime.UtcNow.AddDays(-1);
+                    innerLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resource.Id);
 
-                    // Get record so we can tell if it exists
-                    return ResourceRepository.ForEachAsync(
-                        x => x.KeepAlives != null
-                            && x.KeepAlives.AzureResourceAlive < cutoffTime,
-                        logger.NewChildLogger(),
-                        (resource, innerLogger) =>
+                    // Log each item
+                    return innerLogger.OperationScopeAsync(
+                        $"{LogBaseName}_process_record",
+                        async (childLogger)
+                        =>
                         {
-                            // Log each item 
-                            return innerLogger.OperationScopeAsync(
-                                $"{LogBaseName}_process_record",
-                                async (childLogger)
-                                =>
-                                {
-                                    // Capture consistency of keep alives
-                                    var keepAlivesAreConsistent = resource.KeepAlives?.EnvironmentAlive < cutoffTime;
+                            // Capture consistency of keep alives
+                            var safeToDeleteResource = true;
+                            if (resource?.KeepAlives?.EnvironmentAlive != null)
+                            {
+                                safeToDeleteResource = !(resource.KeepAlives.EnvironmentAlive.Value > cutoffTime);
+                            }
 
-                                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resource.Id)
-                                        .FluentAddValue("ResourceEnvironmentAliveDate", resource.KeepAlives?.EnvironmentAlive)
-                                        .FluentAddValue("ResourceAzureResourceAliveDate", resource.KeepAlives?.AzureResourceAlive)
-                                        .FluentAddValue("ResourceKeepAlivesAreConsistent", keepAlivesAreConsistent);
+                            childLogger.FluentAddValue("ResourceCutoffTime", cutoffTime)
+                                .FluentAddValue("ResourceEnvironmentAliveDate", resource.KeepAlives?.EnvironmentAlive)
+                                .FluentAddValue("ResourceAzureResourceAliveDate", resource.KeepAlives?.AzureResourceAlive)
+                                .FluentAddValue("ResourceSafeToDeleteResource", safeToDeleteResource);
 
-                                    // Only remove if keep alives are consistent
-                                    if (keepAlivesAreConsistent)
-                                    {
-                                        // Trigger delete
-                                        await childLogger.OperationScopeAsync(
-                                            $"{LogBaseName}_delete_record",
-                                            (deleteLogger) => DeleteResourceAsync(resource.Id, deleteLogger));
+                            // Only remove if keep alives are consistent
+                            if (safeToDeleteResource)
+                            {
+                                // Trigger delete
+                                await childLogger.OperationScopeAsync(
+                                    $"{LogBaseName}_delete_record",
+                                    (deleteLogger) => DeleteResourceAsync(resource.Id, deleteLogger));
+                            }
 
-                                        // Pause to rate limit ourselves
-                                        await Task.Delay(QueryDelay);
-                                    }
-                                });
-                        },
-                        (_, __) => Task.Delay(QueryDelay));
-                });
+                            // Pause to rate limit ourselves
+                            await Task.Delay(QueryDelay);
+                        });
+                },
+                (_, __) => Task.Delay(QueryDelay));
         }
 
         private async Task DeleteResourceAsync(string id, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, "OrphanedSystemResource");
 
-            // Since we don't have the azyre resource, we are just goignt to delete this record
+            // Since we don't have the azyre resource, we are just goig to delete this record
             await ResourceRepository.DeleteAsync(id, logger.NewChildLogger());
         }
 
