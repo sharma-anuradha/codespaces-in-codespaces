@@ -1,0 +1,64 @@
+{
+  "properties": {
+    "name": "operations",
+    "routingType": "ProxyOnly, Tenant",
+    "regionality": "Global",
+    "endpoints": [
+      {
+        "apiVersions": [
+          "2019-07-01-preview"
+        ],
+        "locations": [
+          ""
+        ],
+        "requiredFeatures": [
+          "Microsoft.VSOnline/betaVSOAccount"
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      },
+      {
+        "apiVersions": [
+          "2019-07-01-alpha"
+        ],
+        "locations": [
+          ""
+        ],
+        "requiredFeatures": [
+          "Microsoft.VSOnline/betaVSOAccount"
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      },
+      {
+        "apiVersions": [
+          "2019-07-01-beta"
+        ],
+        "locations": [
+          ""
+        ],
+        "requiredFeatures": [
+          "Microsoft.VSOnline/betaVSOAccount"
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      }
+    ],
+    "swaggerSpecifications": [
+      {
+        "apiVersions": [
+          "2019-07-01-preview",
+          "2019-07-01-alpha",
+          "2019-07-01-beta"
+        ],
+        "swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/vsonline/resource-manager/Microsoft.VSOnline/"
+      }
+    ]
+  },
+  "name": "operations",
+  "provisioningState": "NotSpecified",
+  "location": "WestUs2",
+  "tags": {
+    "department": "DevDiv"
+  }
+}

@@ -1,0 +1,6 @@
+{
+"location":"westus2",
+"properties":{
+"userId":"userId"
+}
+}

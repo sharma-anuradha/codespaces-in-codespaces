@@ -26,7 +26,7 @@ using PlanErrorCodes = Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contrac
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
     /// <summary>
-    /// The VSO SkuPlan api called by RPSaaS.
+    /// The VSO Plan api called by RPSaaS.
     /// </summary>
     [ApiController]
     [Authorize(Policy = "RPSaaSIdentity", AuthenticationSchemes = AuthenticationBuilderRPSaasExtensions.AuthenticationScheme)]
@@ -38,8 +38,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private readonly IPlanManager planManager;
         private readonly ICurrentUserProvider currentUserProvider;
         private readonly ICloudEnvironmentManager cloudEnvironmentManager;
-        private const string planResourceType = "plans";
-        private const string resourceType = "Microsoft.VSOnline";
+        private const string PlanResourceType = "plans";
+        private const string ResourceType = "Microsoft.VSOnline";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
@@ -356,7 +356,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns></returns>
         private bool ResourceTypeIsValid(string resourceType)
         {
-            return planResourceType.Equals(resourceType, StringComparison.InvariantCultureIgnoreCase);
+            return PlanResourceType.Equals(resourceType, StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>
@@ -366,7 +366,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns></returns>
         private bool ResourceProviderIsValid(string resourceProvider)
         {
-            return resourceProvider.Equals(resourceProvider, StringComparison.InvariantCultureIgnoreCase);
+            return resourceProvider.Equals(ResourceType, StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>
