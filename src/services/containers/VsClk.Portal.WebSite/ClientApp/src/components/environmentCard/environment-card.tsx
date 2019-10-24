@@ -321,6 +321,17 @@ function UnsuccessfulUrlDialog({ accept, hidden }: UnsuccessfulUrlDialogProps) {
     );
 }
 
+const supendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {
+    if (timeoutInMinutes === 0) {
+        return "Never";
+    } else if (timeoutInMinutes < 60) {
+        return `After ${timeoutInMinutes} minutes`;
+    } else {
+        const timeoutInHours = timeoutInMinutes / 60;
+        return `After ${timeoutInHours} hours`;
+    }
+};
+
 export function EnvironmentCard(props: EnvironmentCardProps) {
     const environmentNameText = <Text variant={'large'}>{props.environment.friendlyName}</Text>;
     const environmentName =
@@ -349,6 +360,7 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
     if (props.environment.seed && props.environment.seed.moniker) {
         details.push({ key: 'Repository', value: props.environment.seed.moniker });
     }
+    details.push({ key: 'Suspend', value: supendTimeoutToDisplayName(props.environment.autoShutdownDelayMinutes) });
 
     return (
         <Stack

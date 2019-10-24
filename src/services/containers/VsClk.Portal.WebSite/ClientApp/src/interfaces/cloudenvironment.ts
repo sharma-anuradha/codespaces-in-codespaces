@@ -35,6 +35,7 @@ export interface ICloudEnvironment {
     personalization?: EnvPersonalization;
     planId?: string;
     location?: string;
+    autoShutdownDelayMinutes?: number;
 }
 
 export interface EnvPersonalization {
