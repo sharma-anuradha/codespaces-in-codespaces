@@ -15,8 +15,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly IOptions<AppSettings> appSettingsProvider;
         private readonly PresenceService presenceService;
 
-        private const int TimespanUpdateServiceSecs = 45;
-
         public PresenceBackgroundService(
             WarmupService warmupService,
             IOptions<AppSettings> appSettingsProvider,
@@ -33,16 +31,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             await this.warmupService.CompletedValueAsync();
 
-            // next block will update the backplane metrics
-            while (true)
+            await this.presenceService.RunAsync(new
             {
-                await this.presenceService.UpdateBackplaneMetrics(new
-                {
-                    stamp = AppSettings.Stamp
-                }, stoppingToken);
-
-                await Task.Delay(TimeSpan.FromSeconds(TimespanUpdateServiceSecs), stoppingToken);
-            }
+                stamp = AppSettings.Stamp
+            }, stoppingToken);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

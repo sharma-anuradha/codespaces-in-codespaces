@@ -22,7 +22,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string ContactsId = "backplaneProvider:contacts";
         private const string MessagesId = "backplaneProvider:messages";
 
-        private IDatabaseAsync databaseAsync;
+        private IDatabaseAsync DatabaseAsync => Connection.GetDatabase();
 
         private AzureRedisProvider(
             ConnectionMultiplexer connection,
@@ -48,65 +48,84 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public override int Priority => 10;
 
+        public override bool HandleException(string methodName, Exception error)
+        {
+            // Note: to avoid send to telemetry massive amounts of error we will accept
+            // Connection & Timeou exceptions as non critical
+            if (error is RedisConnectionException || error is RedisTimeoutException)
+            {
+                Logger.LogWarning(error, $"Failed to invoke method:{methodName}");
+                return true;
+            }
+
+            return base.HandleException(methodName, error);
+        }
+
         protected override Task DisposeInternalAsync()
         {
             return Task.CompletedTask;
         }
 
-        protected override async Task<List<ContactDataDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken)
+        protected override async Task<List<ContactDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken)
         {
-            var allContactsIds = await this.databaseAsync.SetMembersAsync($"{ContactsEmailIndexId}:{email}");
-            return await GetDocumentsAsync<ContactDataDocument>(allContactsIds);
+            var allContactsIds = await DatabaseAsync.SetMembersAsync($"{ContactsEmailIndexId}:{email}");
+            return await GetDocumentsAsync<ContactDocument>(allContactsIds);
         }
 
-        protected override async Task<(ContactDataDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
+        protected override async Task<(ContactDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
         {
-            var value = await this.databaseAsync.StringGetAsync(ToContactKey(contactId));
-            return (DeserializeObject<ContactDataDocument>(value), TimeSpan.FromMilliseconds(0));
+            var value = await DatabaseAsync.StringGetAsync(ToContactKey(contactId));
+            return (DeserializeObject<ContactDocument>(value), TimeSpan.FromMilliseconds(0));
         }
 
-        protected override async Task<TimeSpan> UpsertContactDocumentAsync(ContactDataDocument contactDocument, CancellationToken cancellationToken)
+        protected override async Task<TimeSpan> UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
         {
             var contactKey = ToContactKey(contactDocument.Id);
 
             if (!string.IsNullOrEmpty(contactDocument.Email))
             {
-                await this.databaseAsync.SetAddAsync($"{ContactsEmailIndexId}:{contactDocument.Email}", contactKey.ToString());
+                await DatabaseAsync.SetAddAsync($"{ContactsEmailIndexId}:{contactDocument.Email}", contactKey.ToString());
             }
 
             var json = JsonConvert.SerializeObject(contactDocument);
-            await this.databaseAsync.StringSetAsync(contactKey, json);
-            await this.databaseAsync.PublishAsync(ContactsId, json);
+            await DatabaseAsync.StringSetAsync(contactKey, json);
+            await DatabaseAsync.PublishAsync(ContactsId, json);
             return TimeSpan.FromMilliseconds(0);
         }
 
         protected override async Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken)
         {
             var json = JsonConvert.SerializeObject(messageDocument);
-            await this.databaseAsync.StringSetAsync(ToMessageKey(messageDocument.Id), json);
-            await this.databaseAsync.PublishAsync(MessagesId, json);
+            await DatabaseAsync.StringSetAsync(ToMessageKey(messageDocument.Id), json);
+            await DatabaseAsync.PublishAsync(MessagesId, json);
         }
 
         protected override async Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken)
         {
             var key = ToServiceKey(serviceDocument.Id);
-            await this.databaseAsync.SetAddAsync(ServicesIndexId, key.ToString());
+            await DatabaseAsync.SetAddAsync(ServicesIndexId, key.ToString());
             var json = JsonConvert.SerializeObject(serviceDocument);
-            await this.databaseAsync.StringSetAsync(key, json);
-            await this.databaseAsync.PublishAsync(ServicesId, json);
+            await DatabaseAsync.StringSetAsync(key, json);
+            await DatabaseAsync.PublishAsync(ServicesId, json);
         }
 
         protected override async Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken)
         {
-            var allServicesIds = await this.databaseAsync.SetMembersAsync(ServicesIndexId);
+            var allServicesIds = await DatabaseAsync.SetMembersAsync(ServicesIndexId);
             return await GetDocumentsAsync<ServiceDocument>(allServicesIds);
         }
 
         protected override async Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken)
         {
             var serviceKey = ToServiceKey(serviceId);
-            await this.databaseAsync.SetRemoveAsync(ServicesIndexId, serviceKey.ToString());
-            await this.databaseAsync.KeyDeleteAsync(serviceKey);
+            await DatabaseAsync.SetRemoveAsync(ServicesIndexId, serviceKey.ToString());
+            await DatabaseAsync.KeyDeleteAsync(serviceKey);
+        }
+
+        protected override async Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken)
+        {
+            var messageKeys = changeIds.Select(changeId => ToMessageKey(changeId)).ToArray();
+            await DatabaseAsync.KeyDeleteAsync(messageKeys);
         }
 
         private static RedisKey ToContactKey(string contactId) => $"{ContactsId}:{contactId}";
@@ -115,7 +134,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task<List<T>> GetDocumentsAsync<T>(RedisValue[] values)
         {
-            return (await this.databaseAsync.StringGetAsync(values
+            return (await DatabaseAsync.StringGetAsync(values
                 .Where(v => !v.IsNull)
                 .Select(v =>
                 {
@@ -130,7 +149,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task InitializeAsync(string serviceId)
         {
-            this.databaseAsync = Connection.GetDatabase();
             var subscriber = Connection.GetSubscriber();
 
             (await subscriber.SubscribeAsync(ServicesId)).OnMessage((message) =>

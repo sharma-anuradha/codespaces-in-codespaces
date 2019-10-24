@@ -63,7 +63,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                     this.appSettings.ImageTag,
                     this.appSettings.AuthenticateProfileServiceUri,
                     this.appSettings.UseTelemetryProvider,
-                    this.appSettings.IsPrivacyEnabled
+                    this.appSettings.IsPrivacyEnabled,
+                    this.appSettings.SubscriptionId,
+                    this.appSettings.ResourceGroupName,
+                    this.appSettings.ResourceGroupInstanceName,
                 },
                 this.startup.EnableAuthentication,
                 this.startup.UseAzureSignalR,

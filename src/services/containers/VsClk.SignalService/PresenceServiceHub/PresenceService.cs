@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,7 +10,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Common;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -26,7 +24,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly List<IBackplaneProvider> backplaneProviders = new List<IBackplaneProvider>();
 
         private readonly ConcurrentDictionary<string, StubContact> stubContacts = new ConcurrentDictionary<string, StubContact>();
-        private readonly ConcurrentDictionary<string, DateTime> backplaneChangesReceived = new ConcurrentDictionary<string, DateTime>();
+        private readonly Dictionary<string, (DateTime, DataChanged)> backplaneChanges = new Dictionary<string, (DateTime, DataChanged)>();
+        private readonly object backplaneChangesLock = new object();
 
         /// <summary>
         /// Map of self contact id <-> stub contact
@@ -48,6 +47,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             Logger.LogDebug($"Dispose");
 
+            DataChanged[] allDataChanges = null;
+            lock(this.backplaneChangesLock)
+            {
+                allDataChanges = this.backplaneChanges.Select(i => i.Value.Item2).ToArray();
+                this.backplaneChanges.Clear();
+            }
+
+            await DisposeDataChangesAsync(allDataChanges, CancellationToken.None);
             foreach (var disposable in this.backplaneProviders.Cast<VisualStudio.Threading.IAsyncDisposable>())
             {
                 await disposable.DisposeAsync();
@@ -78,34 +85,26 @@ namespace Microsoft.VsCloudKernel.SignalService
             backplaneProvider.MessageReceivedAsync = (sourceId, messageData, ct) => OnMessageReceivedAsync(backplaneProvider, sourceId, messageData, ct);
         }
 
-        public async Task UpdateBackplaneMetrics(object serviceInfo, CancellationToken cancellationToken)
+        public async Task RunAsync(object serviceInfo, CancellationToken cancellationToken)
         {
-            const long OneMb = 1024 * 1024;
+            const int TimespanUpdateSecs = 5;
+            const int UpdateMetricsSecs = 45;
 
-            var metrics = GetMetrics();
-            using (var proc = System.Diagnostics.Process.GetCurrentProcess())
+            var updateMetricsCounter = new SecondsCounter(UpdateMetricsSecs, TimespanUpdateSecs);
+            while (true)
             {
-                using (Logger.BeginScope(
-                    (LoggerScopeHelpers.MethodScope, PresenceServiceScopes.MethodUpdateBackplaneMetrics),
-                    (PresenceServiceScopes.TotalContactsScope, metrics.SelfCount),
-                    (PresenceServiceScopes.TotalConnectionsScope, metrics.TotalSelfCount),
-                    (PresenceServiceScopes.MemorySizeScope, proc.WorkingSet64 / OneMb),
-                    (PresenceServiceScopes.TotalMemoryScope, GC.GetTotalMemory(false) / OneMb)))
+                // update metrics every 45 secs
+                if (updateMetricsCounter.Next())
                 {
-                    Logger.LogInformation($"serviceInfo:{serviceInfo}");
+                    // update metrics
+                    await UpdateBackplaneMetrics(serviceInfo, cancellationToken);
                 }
-            }
 
-            foreach (var backplaneProvider in this.backplaneProviders)
-            {
-                try
-                {
-                    await backplaneProvider.UpdateMetricsAsync(ServiceId, serviceInfo, metrics, cancellationToken);
-                }
-                catch (Exception error)
-                {
-                    Logger.LogError(error, $"Failed to update metrics using backplane provider:{backplaneProvider.GetType().Name}");
-                }
+                // purge data changes (every 5 secs)
+                await DisposeExpiredDataChangesAsync((int?)null, cancellationToken);
+
+                // delay
+                await Task.Delay(TimeSpan.FromSeconds(TimespanUpdateSecs), cancellationToken);
             }
         }
 
@@ -573,6 +572,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task OnContactChangedAsync(object sender, ContactChangedEventArgs e)
         {
+            await DisposeExpiredDataChangesAsync(100, CancellationToken.None);
+
             var contact = (Contact)sender;
             var contactDataChanged = new ContactDataChanged<ConnectionProperties>(
                             Guid.NewGuid().ToString(),
@@ -590,10 +591,43 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    if (ShouldLogException(error))
-                    {
-                        Logger.LogError(error, $"Failed to update contact using backplane provider:{backplaneProvider.GetType().Name} contactId:{FormatContactId(contact.ContactId)}");
-                    }
+                    HandleBackplaneProviderException(backplaneProvider, nameof(IBackplaneProvider.UpdateContactAsync), error);
+                }
+            }
+        }
+
+        private IEnumerable<IBackplaneProvider> GetBackPlaneProviders()
+        {
+            return this.backplaneProviders.OrderByDescending(p => p.Priority);
+        }
+
+        private async Task UpdateBackplaneMetrics(object serviceInfo, CancellationToken cancellationToken)
+        {
+            const long OneMb = 1024 * 1024;
+
+            var metrics = GetMetrics();
+            using (var proc = System.Diagnostics.Process.GetCurrentProcess())
+            {
+                using (Logger.BeginScope(
+                    (LoggerScopeHelpers.MethodScope, PresenceServiceScopes.MethodUpdateBackplaneMetrics),
+                    (PresenceServiceScopes.TotalContactsScope, metrics.SelfCount),
+                    (PresenceServiceScopes.TotalConnectionsScope, metrics.TotalSelfCount),
+                    (PresenceServiceScopes.MemorySizeScope, proc.WorkingSet64 / OneMb),
+                    (PresenceServiceScopes.TotalMemoryScope, GC.GetTotalMemory(false) / OneMb)))
+                {
+                    Logger.LogInformation($"serviceInfo:{serviceInfo}");
+                }
+            }
+
+            foreach (var backplaneProvider in this.backplaneProviders)
+            {
+                try
+                {
+                    await backplaneProvider.UpdateMetricsAsync(ServiceId, serviceInfo, metrics, cancellationToken);
+                }
+                catch (Exception error)
+                {
+                    HandleBackplaneProviderException(backplaneProvider, nameof(IBackplaneProvider.UpdateMetricsAsync), error);
                 }
             }
         }
@@ -602,26 +636,24 @@ namespace Microsoft.VsCloudKernel.SignalService
             MessageData messageData,
             CancellationToken cancellationToken)
         {
-            foreach (var backplaneProvider in this.backplaneProviders.OrderByDescending(p => p.Priority))
+            await DisposeExpiredDataChangesAsync(100, cancellationToken);
+
+            foreach (var backplaneProvider in GetBackPlaneProviders())
             {
                 try
                 {
                     await backplaneProvider.SendMessageAsync(ServiceId, messageData, cancellationToken);
-                    break;
                 }
                 catch (Exception error)
                 {
-                    if (ShouldLogException(error))
-                    {
-                        Logger.LogError(error, $"Failed to send message using backplane provider:{backplaneProvider.GetType().Name}");
-                    }
+                    HandleBackplaneProviderException(backplaneProvider, nameof(IBackplaneProvider.SendMessageAsync), error);
                 }
             }
         }
 
         private async Task<ContactDataInfo> GetContactBackplaneContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
-            foreach (var backplaneProvider in this.backplaneProviders.OrderByDescending(p => p.Priority))
+            foreach (var backplaneProvider in GetBackPlaneProviders())
             {
                 try
                 {
@@ -633,10 +665,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    if (ShouldLogException(error))
-                    {
-                        Logger.LogError(error, $"Failed to get contact data entity using backplane provider:{backplaneProvider.GetType().Name} contactId:{FormatContactId(contactId)}");
-                    }
+                    HandleBackplaneProviderException(backplaneProvider, nameof(IBackplaneProvider.GetContactDataAsync), error);
                 }
             }
 
@@ -645,7 +674,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task<Dictionary<string, ContactDataInfo>> GetContactsBackplaneProvidersAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
         {
-            foreach (var backplaneProvider in this.backplaneProviders.OrderByDescending(p => p.Priority))
+            foreach (var backplaneProvider in GetBackPlaneProviders())
             {
                 try
                 {
@@ -657,14 +686,34 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 catch (Exception error)
                 {
-                    if (ShouldLogException(error))
-                    {
-                        Logger.LogError($"Failed to get contacts using backplane provider:{backplaneProvider.GetType().Name}. Error:{error}");
-                    }
+                    HandleBackplaneProviderException(backplaneProvider, nameof(IBackplaneProvider.GetContactsDataAsync), error);
                 }
             }
 
             return new Dictionary<string, ContactDataInfo>();
+        }
+
+        private async Task DisposeDataChangesAsync(
+            DataChanged[] dataChanges,
+            CancellationToken cancellationToken)
+        {
+            using (Logger.BeginSingleScope(
+                 (LoggerScopeHelpers.MethodScope, PresenceServiceScopes.MethodDisposeDataChanges)))
+            {
+                Logger.LogDebug($"size:{dataChanges.Length}");
+            }
+
+            foreach (var backplaneProvider in GetBackPlaneProviders())
+            {
+                try
+                {
+                    await backplaneProvider.DisposeDataChangesAsync(dataChanges, cancellationToken);
+                }
+                catch (Exception error)
+                {
+                    HandleBackplaneProviderException(backplaneProvider, nameof(IBackplaneProvider.DisposeDataChangesAsync), error);
+                }
+            }
         }
 
         private async Task<Dictionary<string, object>> AddSubcriptionAsync(ContactReference contactReference, string targetContactId, string[] propertyNames, CancellationToken cancellationToken)
@@ -674,29 +723,51 @@ namespace Microsoft.VsCloudKernel.SignalService
             return subscriptionResult;
         }
 
-        private bool IsDataChangedHandled(DataChanged dataChanged)
+        private async Task DisposeExpiredDataChangesAsync(int? maxCount, CancellationToken cancellationToken)
         {
-            return this.backplaneChangesReceived.ContainsKey(dataChanged.ChangeId);
-        }
+            const int SecondsExpired = 60;
+            var expiredThreshold = DateTime.Now.Subtract(TimeSpan.FromSeconds(SecondsExpired));
 
-        private void AddDataChanged(IBackplaneProvider backplaneProvider,DataChanged dataChanged)
-        {
-            // Note: next block will remove the 'stale' changes
-            var now = DateTime.Now;
-            var expiredThreshold = now.Subtract(TimeSpan.FromSeconds(60));
-            var expiredCacheItemsKeys = this.backplaneChangesReceived.Where(kvp => kvp.Value < expiredThreshold).Select(kvp => kvp.Key).ToArray();
-            if (expiredCacheItemsKeys.Length > 0)
+            KeyValuePair<string, (DateTime, DataChanged)>[] expiredCacheItems = null;
+            lock (this.backplaneChangesLock)
             {
-                Logger.LogDebug($"Remove backplane change Ids:{string.Join(",", expiredCacheItemsKeys)}");
-                foreach (var key in expiredCacheItemsKeys)
+                // Note: next block will remove the 'stale' changes
+                var possibleExpiredCacheItems = this.backplaneChanges.Where(kvp => kvp.Value.Item1 < expiredThreshold);
+                if (maxCount.HasValue)
                 {
-                    this.backplaneChangesReceived.TryRemove(key, out var itemRemoved);
+                    possibleExpiredCacheItems = possibleExpiredCacheItems.Take(maxCount.Value);
+                }
+
+                if (possibleExpiredCacheItems.Any())
+                {
+                    expiredCacheItems = possibleExpiredCacheItems.ToArray();
+                    foreach (var key in expiredCacheItems.Select(i => i.Key))
+                    {
+                        this.backplaneChanges.Remove(key);
+                    }
                 }
             }
 
-            Logger.LogDebug($"Handle backplane provider:{backplaneProvider.GetType().Name} type:{dataChanged.GetType().Name} changed Id:{dataChanged.ChangeId}");
-            // add this data changed
-            this.backplaneChangesReceived.TryAdd(dataChanged.ChangeId, now);
+            if (expiredCacheItems?.Length > 0)
+            {
+                // have the backplane providers to dispose this items
+                await DisposeDataChangesAsync(expiredCacheItems.Select(i => i.Value.Item2).ToArray(), cancellationToken);
+            }
+        }
+
+        private bool AddDataChanged(DataChanged dataChanged, CancellationToken cancellationToken)
+        {
+            lock (this.backplaneChangesLock)
+            {
+                if (this.backplaneChanges.ContainsKey(dataChanged.ChangeId))
+                {
+                    return true;
+                }
+
+                // track this data changed
+                this.backplaneChanges.Add(dataChanged.ChangeId, (DateTime.Now, dataChanged));
+                return false;
+            }
         }
 
         private async Task OnContactChangedAsync(
@@ -705,13 +776,14 @@ namespace Microsoft.VsCloudKernel.SignalService
             string[] affectedProperties,
             CancellationToken cancellationToken)
         {
-            // ignore self notifications
-            if (contactDataChanged.ServiceId == ServiceId || IsDataChangedHandled(contactDataChanged))
+            if (AddDataChanged(contactDataChanged, cancellationToken) ||
+                // ignore self notifications
+                contactDataChanged.ServiceId == ServiceId)
             {
                 return;
             }
 
-            AddDataChanged(backplaneProvider, contactDataChanged);
+            Logger.LogDebug($"OnContactChangedAsync from backplane provider:{backplaneProvider.GetType().Name} changed Id:{contactDataChanged.ChangeId}");
 
             var contactDataProvider = ContactDataProvider.CreateContactDataProvider(contactDataChanged.Data);
 
@@ -757,13 +829,14 @@ namespace Microsoft.VsCloudKernel.SignalService
             MessageData messageData,
             CancellationToken cancellationToken)
         {
-            // ignore self notifications and duplicated messages
-            if (sourceId == ServiceId || IsDataChangedHandled(messageData))
+            if (AddDataChanged(messageData, cancellationToken)
+                // ignore self notifications
+                || sourceId == ServiceId)
             {
                 return;
             }
 
-            AddDataChanged(backplaneProvider, messageData);
+            Logger.LogDebug($"OnMessageReceivedAsync from backplane provider:{backplaneProvider.GetType().Name} changed Id:{messageData.ChangeId}");
 
             if (Contacts.TryGetValue(messageData.TargetContact.Id, out var targetContact) &&
                 targetContact.CanSendMessage(messageData.TargetContact.ConnectionId))
@@ -816,6 +889,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
     
+        private void HandleBackplaneProviderException(IBackplaneProvider backplaneProvider, string methodName, Exception error)
+        {
+            if (!backplaneProvider.HandleException(methodName, error))
+            {
+                if (ShouldLogException(error))
+                {
+                    Logger.LogError(error, $"Failed to invoke method:{methodName} on provider:{backplaneProvider.GetType().Name}");
+                }
+            }
+        }
+
         /// <summary>
         /// Return true when this type of exception should be logged as an error to report in our telemetry
         /// </summary>
@@ -826,6 +910,36 @@ namespace Microsoft.VsCloudKernel.SignalService
             return ! (
                 error is OperationCanceledException ||
                 error.GetType().Name == "ServiceUnavailableException");
+        }
+
+        /// <summary>
+        /// A simple seconds counter based on rate & update seconds
+        /// </summary>
+        private struct SecondsCounter
+        {
+            private Func<bool> next;
+
+            public SecondsCounter(int updateSecs, int rate)
+            {
+                int divider = updateSecs / rate;
+                if (divider == 0)
+                {
+                    Requires.Fail("divider == 0");
+                }
+
+                int counter = 0;
+                this.next = () =>
+                {
+                    counter = (counter + 1) % divider;
+                    return counter == 0;
+                };
+            }
+
+            /// <summary>
+            /// Invoked every update seconds
+            /// </summary>
+            /// <returns></returns>
+            public bool Next() => this.next();
         }
     }
 }

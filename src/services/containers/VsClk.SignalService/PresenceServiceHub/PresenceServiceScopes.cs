@@ -20,6 +20,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string MethodMatchContacts = "MatchContacts";
         public const string MethodContactOnContactChanged = "Contact.OnContactChanged";
         public const string MethodUpdateBackplaneMetrics = "UpdateBackplaneMetrics";
+        public const string MethodDisposeDataChanges = "DisposeDataChanges";
 
         public const string ContactScope = "Contact";
         public const string ConnectionScope = "Connection";

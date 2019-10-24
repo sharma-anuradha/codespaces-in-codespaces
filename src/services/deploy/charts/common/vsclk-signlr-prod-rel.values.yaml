@@ -24,16 +24,9 @@ config:
   authRedirectUrl: https://signlr-prod.core.vsengsaas.visualstudio.com
   keyVaultName: vsclk-signlr-prod-kv
   clusterDefaultHost: signlr-prod.core.vsengsaas.visualstudio.com
-  clientId: "67831496-64b8-4cdf-9163-5123f615d965"
-
-azure-secrets:
-  # vsclk-core-dev
-  subscriptionId-dev: "86642df6-843e-4610-a956-fdd497102261"
-  # vsclk-core-ppe
-  subscriptionId-ppe: "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24"
-  # vsclk-core-prod
-  subscriptionId-prod: "979523fb-a19c-4bb0-a8ee-cef29597b0a4"
-  keyVaultName-dev: vsclk-signlr-dev-kv
-  keyVaultName-ppe: vsclk-signlr-ppe-kv
-  keyVaultName-prod: vsclk-signlr-prod-kv
+  subscriptionId: "979523fb-a19c-4bb0-a8ee-cef29597b0a4"
+  resourceGroupName: vsclk-signlr-prod
+  resourceGroupInstanceName: vsclk-signlr-prod-rel
+  cacheRedisName: vsclk-signlr-prod-rel-redis
+  cosmosDBName: vsclk-signlr-prod-rel-db
 

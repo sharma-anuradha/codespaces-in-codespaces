@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,6 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         // Logger method scopes
         private const string MethodSendMessage = "DocumentDatabaseProvider.SendMessageAsync";
         private const string MethodUpdateContact = "DocumentDatabaseProvider.UpdateContact";
+        private const string MethodDeleteMessages = "DocumentDatabaseProvider.DeleteMessages";
         private const string MethodOnServiceDocumentsChanged = "DocumentDatabaseProvider.OnServiceDocumentsChanged";
         private const string MethodOnContactDocumentsChanged = "DocumentDatabaseProvider.OnContactDocumentsChanged";
         private const string MethodOnMessageDocumentsChanged = "DocumentDatabaseProvider.OnMessageDocumentsChanged";
@@ -126,7 +128,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             contactDataInfo.UpdateConnectionProperties(contactDataChanged);
 
-            var contactDataDocument = new ContactDataDocument()
+            var contactDataDocument = new ContactDocument()
             {
                 Id = contactDataChanged.ContactId,
                 ChangeId = contactDataChanged.ChangeId,
@@ -141,7 +143,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             var requestLatency = await UpsertContactDocumentAsync(contactDataDocument, cancellationToken);
 
-
             using (Logger.BeginScope(
                 (LoggerScopeHelpers.MethodScope, MethodUpdateContact),
                 (LoggerScopeHelpers.MethodPerfScope, (requestLatency + contactDataDocumentInfo.Item2).Milliseconds)))
@@ -150,18 +151,38 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
+        public async Task DisposeDataChangesAsync(DataChanged[] dataChanges, CancellationToken cancellationToken)
+        {
+            var allMessageDataChanges = dataChanges.OfType<MessageData>().ToArray();
+
+            if (allMessageDataChanges.Length > 0)
+            {
+                var start = Stopwatch.StartNew();
+                await DeleteMessageDocumentByIds(allMessageDataChanges.Select(i => i.ChangeId).ToArray(), cancellationToken);
+                using (Logger.BeginScope(
+                    (LoggerScopeHelpers.MethodScope, MethodDeleteMessages),
+                    (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds)))
+                {
+                    Logger.LogDebug($"size:{allMessageDataChanges.Length}");
+                }
+            }
+        }
+
+        public virtual bool HandleException(string methodName, Exception error) => false;
+
         #endregion
 
         #region abstract Methods
-        
+
         protected abstract Task DisposeInternalAsync();
-        protected abstract Task<TimeSpan> UpsertContactDocumentAsync(ContactDataDocument contactDocument, CancellationToken cancellationToken);
+        protected abstract Task<TimeSpan> UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken);
         protected abstract Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken);
         protected abstract Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken);
-        protected abstract Task<List<ContactDataDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken);
-        protected abstract Task<(ContactDataDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken);
+        protected abstract Task<List<ContactDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken);
+        protected abstract Task<(ContactDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken);
         protected abstract Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken);
         protected abstract Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken);
+        protected abstract Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken);
 
         #endregion
 
@@ -193,7 +214,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     try
                     {
-                        var contact = await doc.ReadAsAsync<ContactDataDocument>();
+                        var contact = await doc.ReadAsAsync<ContactDocument>();
                         var contactDataInfoChanged = new ContactDataChanged<ContactDataInfo>(
                             contact.ChangeId,
                             contact.ServiceId,
@@ -216,7 +237,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                 (LoggerScopeHelpers.MethodScope, MethodOnContactDocumentsChanged),
                 (LoggerScopeHelpers.MethodPerfScope, sw.ElapsedMilliseconds)))
             {
+                // enable if we need to debug all the change ids being reported
+#if false
                 Logger.LogDebug($"contactIds:{string.Join(",", docs.Select(d => ToTraceText(d.Id)))}");
+#else
+                Logger.LogDebug($"count:{docs.Count}");
+#endif
             }
 
         }
@@ -226,7 +252,12 @@ namespace Microsoft.VsCloudKernel.SignalService
             using (Logger.BeginSingleScope(
                 (LoggerScopeHelpers.MethodScope, MethodOnMessageDocumentsChanged)))
             {
-                Logger.LogDebug($"messageIds:{string.Join(",", docs.Select(d => d.Id))}");
+                // enable if we need to debug all the change ids being reported
+#if false
+                Logger.LogDebug($"ids:{string.Join(",", docs.Select(d => d.Id))}");
+#else
+                Logger.LogDebug($"count:{docs.Count}");
+#endif
             }
 
             if (MessageReceivedAsync != null)
@@ -235,15 +266,15 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     try
                     {
-                        var message = await doc.ReadAsAsync<MessageDocument>();
+                        var messageDoc = await doc.ReadAsAsync<MessageDocument>();
                         await MessageReceivedAsync(
-                            message.SourceId,
+                            messageDoc.SourceId,
                             new MessageData(
-                                message.Id,
-                                new ContactReference(message.ContactId, null),
-                                new ContactReference(message.TargetContactId, message.TargetConnectionId),
-                                message.Type,
-                                JToken.FromObject(message.Body)),
+                                messageDoc.Id,
+                                new ContactReference(messageDoc.ContactId, null),
+                                new ContactReference(messageDoc.TargetContactId, messageDoc.TargetConnectionId),
+                                messageDoc.Type,
+                                JToken.FromObject(messageDoc.Body)),
                                 default(CancellationToken));
                     }
                     catch (Exception error)
@@ -278,7 +309,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.activeServices = nonStaleServices;
         }
 
-        private ContactDataInfo ToContactData(ContactDataDocument contactDataDocument)
+        private ContactDataInfo ToContactData(ContactDocument contactDataDocument)
         {
             var contactDataInfo = ((JObject)contactDataDocument.ServiceConnections).ToObject<ContactDataInfo>();
 

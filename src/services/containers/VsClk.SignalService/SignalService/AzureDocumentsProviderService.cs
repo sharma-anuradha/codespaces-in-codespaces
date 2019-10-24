@@ -11,6 +11,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class AzureDocumentsProviderService : WarmupServiceBase
     {
         private readonly IOptions<AppSettings> appSettingsProvider;
+        private readonly ApplicationServicePrincipal applicationServicePrincipal;
         private readonly PresenceService presenceService;
         private readonly IStartup startup;
         private readonly ILogger<AzureDocumentsProvider> logger;
@@ -20,6 +21,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             IList<IAsyncWarmup> warmupServices,
             IList<IHealthStatusProvider> healthStatusProviders,
             IOptions<AppSettings> appSettingsProvider,
+            ApplicationServicePrincipal applicationServicePrincipal,
             PresenceService service,
             IStartup startup,
             ILogger<AzureDocumentsProvider> logger,
@@ -27,6 +29,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             : base(warmupServices, healthStatusProviders)
         {
             this.appSettingsProvider = appSettingsProvider;
+            this.applicationServicePrincipal = applicationServicePrincipal;
             this.presenceService = service;
             this.startup = startup;
             this.logger = logger;
@@ -37,22 +40,29 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (AppSettings.IsAzureDocumentsProviderEnabled &&
-                !string.IsNullOrEmpty(AppSettings.AzureCosmosDbEndpointUrl) &&
-                !string.IsNullOrEmpty(AppSettings.AzureCosmosDbAuthKey))
-            {
-                var endpointUrl = NormalizeSetting(AppSettings.AzureCosmosDbEndpointUrl);
-                var authorizationKey = NormalizeSetting(AppSettings.AzureCosmosDbAuthKey);
+            bool isAzureCosmosConnectionDefined = false;
 
-                this.logger.LogInformation($"Creating Azure Cosmos provider with Url:'{endpointUrl}'");
+            if (AppSettings.IsAzureDocumentsProviderEnabled &&
+                ((isAzureCosmosConnectionDefined = this.applicationServicePrincipal.IsAzureCosmosConnectionDefined(AppSettings)) ||
+                (!string.IsNullOrEmpty(AppSettings.AzureCosmosDbEndpointUrl) &&
+                !string.IsNullOrEmpty(AppSettings.AzureCosmosDbAuthKey))))
+            {
                 try
                 {
+                    var cosmosConfiguration = isAzureCosmosConnectionDefined ?
+                        await this.applicationServicePrincipal.GetAzureCosmosConnection(
+                            this.logger,
+                            AppSettings,
+                            stoppingToken) : (NormalizeSetting(AppSettings.AzureCosmosDbEndpointUrl), NormalizeSetting(AppSettings.AzureCosmosDbAuthKey));
+
+                    this.logger.LogInformation($"Creating Azure Cosmos provider with Url:'{cosmosConfiguration.Item1}'");
+
                     var backplaneProvider = await AzureDocumentsProvider.CreateAsync(
                         this.presenceService.ServiceId,
                         new DatabaseSettings()
                         {
-                            EndpointUrl = endpointUrl,
-                            AuthorizationKey = authorizationKey,
+                            EndpointUrl = cosmosConfiguration.Item1,
+                            AuthorizationKey = cosmosConfiguration.Item2,
                             IsProduction = !this.startup.IsDevelopmentEnv
                         },
                         this.logger,
@@ -62,7 +72,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 catch (Exception error)
                 {
                     CompleteWarmup(false);
-                    this.logger.LogError(error, $"Failed to create Azure Cosmos provider with Url:'{endpointUrl}'");
+                    this.logger.LogError(error, $"Failed to create Azure Cosmos provider");
                     throw;
                 }
             }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
@@ -23,7 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public static readonly string DatabaseId = "presenceService";
 
         private static readonly string ServiceCollectionId = "services";
-        private static readonly string ContactDataCollectionId = "contactsData";
+        private static readonly string ContactCollectionId = "contacts";
         private static readonly string MessageCollectionId = "messages";
         private static readonly string LeaseCollectionBaseId = "leases-";
 
@@ -76,7 +77,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 try
                 {
-                    await databaseBackplaneProvider.Client.DeleteDatabaseAsync(UriFactory.CreateDatabaseUri(AzureDocumentsProvider.DatabaseId));
+                    await databaseBackplaneProvider.Client.DeleteDatabaseAsync(UriFactory.CreateDatabaseUri(DatabaseId));
                 }
                 catch (DocumentClientException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -120,10 +121,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             Client.Dispose();
         }
 
-        protected override async Task<List<ContactDataDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken)
+        protected override async Task<List<ContactDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken)
         {
-            var queryable = Client.CreateDocumentQuery<ContactDataDocument>(
-                UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactDataCollectionId))
+            var queryable = Client.CreateDocumentQuery<ContactDocument>(
+                UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId))
                 .Where(c => c.Email == email);
 
             var matchContacts = await ToListAsync(queryable, cancellationToken);
@@ -139,22 +140,22 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected override async Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken)
         {
             var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, MessageCollectionId);
-            await Client.CreateDocumentAsync(documentCollectionUri, messageDocument, cancellationToken: cancellationToken);
+            var response = await ExecuteWithRetries(() => Client.CreateDocumentAsync(documentCollectionUri, messageDocument, cancellationToken: cancellationToken));
         }
 
-        protected override async Task<TimeSpan> UpsertContactDocumentAsync(ContactDataDocument contactDocument, CancellationToken cancellationToken)
+        protected override async Task<TimeSpan> UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
         {
-            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactDataCollectionId);
-            var resonse = await Client.UpsertDocumentAsync(documentCollectionUri, contactDocument, cancellationToken: cancellationToken);
+            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId);
+            var resonse = await ExecuteWithRetries(() => Client.UpsertDocumentAsync(documentCollectionUri, contactDocument, cancellationToken: cancellationToken));
             return resonse.RequestLatency;
         }
 
-        protected override async Task<(ContactDataDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
+        protected override async Task<(ContactDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
         {
             try
             {
-                var documentUri = UriFactory.CreateDocumentUri(DatabaseId, ContactDataCollectionId, contactId);
-                var response = await Client.ReadDocumentAsync<ContactDataDocument>(documentUri, cancellationToken: cancellationToken);
+                var documentUri = UriFactory.CreateDocumentUri(DatabaseId, ContactCollectionId, contactId);
+                var response = await ExecuteWithRetries(() => Client.ReadDocumentAsync<ContactDocument>(documentUri, cancellationToken: cancellationToken));
                 return (response.Document, response.RequestLatency);
             }
             catch (DocumentClientException e) when (e.StatusCode == HttpStatusCode.NotFound)
@@ -177,6 +178,21 @@ namespace Microsoft.VsCloudKernel.SignalService
             return Client.DeleteDocumentAsync(documentUri, cancellationToken: cancellationToken);
         }
 
+        protected override async Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken)
+        {
+            foreach (var changeId in changeIds)
+            {
+                var documentUri = UriFactory.CreateDocumentUri(DatabaseId, MessageCollectionId, changeId);
+                try
+                {
+                    var response = await ExecuteWithRetries(() => Client.DeleteDocumentAsync(documentUri, cancellationToken: cancellationToken));
+                }
+                catch (DocumentClientException e) when (e.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // the record was not found
+                }
+            }
+        }
 
         /// <summary>
         /// Create a change feed processor based on a collection id
@@ -243,10 +259,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             await InitializeServiceIdAsync(serviceId);
 
             // Create 'contacts'
-            Logger.LogInformation($"Creating Collection:{ContactDataCollectionId}");
+            Logger.LogInformation($"Creating Collection:{ContactCollectionId}");
             await Client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(DatabaseId),
-                CreateDocumentCollectionDefinition(ContactDataCollectionId),
+                CreateDocumentCollectionDefinition(ContactCollectionId),
                 new RequestOptions
                 {
                     OfferThroughput = isProduction ? ContactsRUThroughput : ContactsRUThroughput_Dev
@@ -301,7 +317,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             // Create 'contacts' processor
             this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
-                ContactDataCollectionId,
+                ContactCollectionId,
                 leaseCollectionId,
                 "PresenceServiceR-Contacts",
                 OnContactDocumentsChangedAsync));
@@ -337,6 +353,43 @@ namespace Microsoft.VsCloudKernel.SignalService
         private static Task<List<T>> ToListAsync<T>(IQueryable<T> query, CancellationToken token)
         {
             return ToListAsync(query.AsDocumentQuery(), token);
+        }
+
+        private static async Task<V> ExecuteWithRetries<V>(Func<Task<V>> function)
+        {
+            while (true)
+            {
+                TimeSpan sleepTime;
+                try
+                {
+                    return await function();
+                }
+                catch (DocumentClientException de)
+                {
+                    if ((int)de.StatusCode != StatusCodes.Status429TooManyRequests)
+                    {
+                        throw;
+                    }
+                    sleepTime = de.RetryAfter;
+                }
+                catch (AggregateException ae)
+                {
+                    if (!(ae.InnerException is DocumentClientException ||
+                        ae.InnerExceptions.Any(e => e is DocumentClientException)))
+                    {
+                        throw;
+                    }
+
+                    DocumentClientException de = (DocumentClientException)ae.InnerException;
+                    if ((int)de.StatusCode != StatusCodes.Status429TooManyRequests)
+                    {
+                        throw;
+                    }
+                    sleepTime = de.RetryAfter;
+                }
+
+                await Task.Delay(sleepTime);
+            }
         }
 
         private class AzureDocument : IDocument

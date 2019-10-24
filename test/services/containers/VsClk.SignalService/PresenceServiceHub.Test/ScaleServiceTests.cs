@@ -574,7 +574,17 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 return Task.FromResult(matchContacts);
             }
 
+            public Task DisposeDataChangesAsync(DataChanged[] dataChanges, CancellationToken cancellationToken)
+            {
+                return Task.CompletedTask;
+            }
+
             public Task UpdateMetricsAsync(string serviceId, object serviceInfo, PresenceServiceMetrics metrics, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool HandleException(string methodName, Exception error)
             {
                 throw new NotImplementedException();
             }

@@ -189,7 +189,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 #endif
             });
 
+            // DI for ApplicationServicePrincipal
             var applicationServicePrincipal = Configuration.GetSection(nameof(ApplicationServicePrincipal)).Get<ApplicationServicePrincipal>();
+            services.AddSingleton((srvcProvider) => applicationServicePrincipal);
+
             var keyVaultName = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.KeyVaultName));
             // if we can eventually retrieve signalR endpoints from the key vault
             var canRetrieveKeyVaultSignalREndpoints =

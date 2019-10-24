@@ -24,7 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Contact document model
     /// </summary>
-    public class ContactDataDocument
+    public class ContactDocument
     {
         [JsonProperty("id")]
         public string Id { get; set; }

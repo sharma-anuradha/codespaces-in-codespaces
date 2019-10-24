@@ -14,6 +14,9 @@ namespace SignalService.Client.CLI
     internal class PresenceStressApp : SignalRAppBase
     {
         private int batchRequests = 1000;
+        private int numberOfContactsPerBatch = 400;
+        private int sendBatchDelayMillsecs = 500;
+
         private int currentBatchId;
         private Dictionary<int, Dictionary<string, (HubClient, PresenceServiceProxy)>> allConnections = new Dictionary<int, Dictionary<string, (HubClient, PresenceServiceProxy)>>();
         private CancellationTokenSource sendCts;
@@ -29,13 +32,7 @@ namespace SignalService.Client.CLI
         {
             if (key == '+')
             {
-                Console.Write($"Enter batch count:({this.batchRequests}):");
-                var batchCountLine = Console.ReadLine();
-                if (!string.IsNullOrEmpty(batchCountLine))
-                {
-                    this.batchRequests = int.Parse(batchCountLine);
-                }
-
+                ReadIntValue("Enter batch count:", ref this.batchRequests);
                 var tasks = new List<Task<(string, HubClient, PresenceServiceProxy)>>();
 
                 // create a new batch of connections
@@ -63,11 +60,23 @@ namespace SignalService.Client.CLI
             }
             else if (key == 's')
             {
+                ReadIntValue("Enter number of contacts per batch:", ref this.numberOfContactsPerBatch);
+                ReadIntValue("Enter batch delay in millisecs:", ref this.sendBatchDelayMillsecs);
                 var task = SendAllAsync();
             }
             else if (key == 'e')
             {
                 this.sendCts?.Cancel();
+            }
+        }
+
+        private static void ReadIntValue(string message, ref int value)
+        {
+            Console.Write($"{message}({value}):");
+            var line = Console.ReadLine();
+            if (!string.IsNullOrEmpty(line))
+            {
+                value = int.Parse(line);
             }
         }
 
@@ -156,8 +165,8 @@ namespace SignalService.Client.CLI
             {
                 foreach (var connections in allConnections.Values)
                 {
-                    await SendMessagesAsync(connections, 400, TraceSource, this.sendCts.Token);
-                    await Task.Delay(200, this.sendCts.Token);
+                    await SendMessagesAsync(connections, this.numberOfContactsPerBatch, TraceSource, this.sendCts.Token);
+                    await Task.Delay(this.sendBatchDelayMillsecs, this.sendCts.Token);
                 }
             }
         }
