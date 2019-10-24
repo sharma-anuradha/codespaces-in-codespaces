@@ -3,6 +3,8 @@ import { RequestStore } from './RequestStore';
 import { Disposable } from 'vscode-jsonrpc';
 import { createLogger } from '../../service-worker/lib/logger';
 import { wait } from '../../dependencies';
+import { broadcast } from '../../service-worker/lib/post-message-utils';
+import { tryAuthenticateMessageType } from '../../common/service-worker-messages';
 
 const trace = createLogger('InMemoryLiveShareClient');
 
@@ -13,6 +15,7 @@ export class InMemoryLiveShareClient implements ILiveShareClient, Disposable {
     private readonly workspaceInfoRequests = new RequestStore<IWorkspaceInfo | null>({
         defaultTimeout: 60 * 1000,
     });
+    private readonly requestedDetails: Set<string> = new Set();
 
     setWorkspaceInfo(invitationId: string, info: IWorkspaceInfo) {
         invitationId = invitationId.toUpperCase();
@@ -23,6 +26,17 @@ export class InMemoryLiveShareClient implements ILiveShareClient, Disposable {
 
     getWorkspaceInfo(invitationId: string): Promise<IWorkspaceInfo | null> {
         invitationId = invitationId.toUpperCase();
+
+        // In case this is the first time we are requesting access to this session
+        // there's a good chance the service worker has been woken up
+        // and should pick up all the credentials from its active clients.
+        if (!this.requestedDetails.has(invitationId)) {
+            this.requestedDetails.add(invitationId);
+
+            broadcast({
+                type: tryAuthenticateMessageType,
+            });
+        }
 
         trace.verbose('getWorkspaceInfo', { invitationId });
 

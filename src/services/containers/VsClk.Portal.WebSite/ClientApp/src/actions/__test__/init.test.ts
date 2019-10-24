@@ -18,6 +18,7 @@ jest.mock('../getUserInfo', () => {
 jest.mock('../../serviceWorker', () => {
     return {
         register: jest.fn(),
+        onMessage: jest.fn(),
     };
 });
 
@@ -79,7 +80,7 @@ describe('actions - init', () => {
                     json: async () =>
                         Promise.resolve({
                             environmentRegistrationEndpoint,
-                            apiEndpoint
+                            apiEndpoint,
                         }),
                 };
             }
@@ -157,7 +158,7 @@ describe('actions - init', () => {
                     {
                         // get some environments (or empty ¯\_(ツ)_/¯)
                         status: 401,
-                    }
+                    },
                 ],
             })
         );

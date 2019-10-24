@@ -1,5 +1,6 @@
 import { ServiceWorkerMessage } from '../../common/service-worker-messages';
 import { createLogger } from './logger';
+import { CriticalError } from './errors/CriticalError';
 
 declare var self: ServiceWorkerGlobalScope;
 
@@ -27,4 +28,14 @@ export async function broadcast(message: ServiceWorkerMessage) {
             error,
         });
     }
+}
+
+export async function postMessage(clientId: string, message: ServiceWorkerMessage) {
+    const client = (await self.clients.get(clientId)) as Client | null;
+
+    if (!client) {
+        throw new CriticalError('ClientDoesNotExist');
+    }
+
+    client.postMessage(message);
 }

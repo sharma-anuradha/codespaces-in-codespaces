@@ -1,9 +1,14 @@
 import { ServiceWorkerConfiguration } from '../../common/service-worker-configuration';
 import { createLogger, Logger } from './logger';
-import { CriticalError } from './errors/CriticalError';
+import { RequestStore } from '../../ts-agent/client/RequestStore';
 
 export class ConfigurationManager {
     private readonly logger: Logger;
+    private readonly storeKey = 'configuration';
+
+    private readonly configurationRequestStore = new RequestStore<ServiceWorkerConfiguration>({
+        defaultTimeout: 60 * 1000,
+    });
 
     private currentConfiguration?: ServiceWorkerConfiguration;
 
@@ -11,23 +16,24 @@ export class ConfigurationManager {
         this.logger = createLogger('ConfigurationManager');
     }
 
-    get configuration(): ServiceWorkerConfiguration {
-        if (!this.currentConfiguration) {
-            throw new CriticalError('NotInitialized');
+    async getConfiguration(): Promise<ServiceWorkerConfiguration> {
+        if (this.currentConfiguration) {
+            return this.currentConfiguration;
         }
 
-        return this.currentConfiguration;
+        return this.configurationRequestStore.getResponse(this.storeKey);
     }
 
-    getConfigurationSafe() {
+    getConfigurationSync() {
         return this.currentConfiguration || null;
     }
 
     updateConfiguration(configuration: ServiceWorkerConfiguration) {
         this.currentConfiguration = configuration;
+        this.configurationRequestStore.setResponse(this.storeKey, configuration);
 
         this.logger.info('Updated service worker configuration', {
-            configuration: this.configuration,
+            configuration: this.currentConfiguration,
         });
     }
 }

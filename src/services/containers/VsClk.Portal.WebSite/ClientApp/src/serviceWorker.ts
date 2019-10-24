@@ -1,11 +1,21 @@
+import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
+
 import { createTrace } from './utils/createTrace';
 import { ServiceWorkerConfiguration } from './common/service-worker-configuration';
 import { postServiceWorkerMessage } from './common/post-message';
-import { configureServiceWorker } from './common/service-worker-messages';
+import {
+    configureServiceWorker,
+    ServiceWorkerMessage,
+    isServiceWorkerMessage,
+    tryConfigureMessageType,
+} from './common/service-worker-messages';
 import { isDefined } from './utils/isDefined';
 
 const logger = createTrace('service-worker-installer');
 const serviceWorkerPath = '/service-worker.js';
+
+const onMessageEmitter: Emitter<ServiceWorkerMessage> = new Emitter();
+const onMessageEvent: Event<ServiceWorkerMessage> = onMessageEmitter.event;
 
 export function register(config: ServiceWorkerConfiguration) {
     if (!('serviceWorker' in navigator)) {
@@ -22,6 +32,23 @@ async function registerValidSW(swUrl: string, config: ServiceWorkerConfiguration
     try {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             logger.info('New service worker version is controlling this client.');
+        });
+
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (!isServiceWorkerMessage(event.data)) {
+                return;
+            }
+
+            if (event.data.type === tryConfigureMessageType) {
+                postServiceWorkerMessage({
+                    type: configureServiceWorker,
+                    payload: config,
+                });
+
+                return;
+            }
+
+            onMessageEmitter.fire(event.data);
         });
 
         const registration = await navigator.serviceWorker.register(swUrl);
@@ -84,4 +111,8 @@ export function unregister() {
             registration.unregister();
         });
     }
+}
+
+export function onMessage(listener: (message: ServiceWorkerMessage) => void): Disposable {
+    return onMessageEvent(listener);
 }

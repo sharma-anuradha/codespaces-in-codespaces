@@ -5,10 +5,12 @@ import { WebClient } from '../ts-agent/client/webClient';
 
 import {
     authenticateMessageType,
+    ServiceWorkerMessage,
+    tryConfigureMessageType,
     configureServiceWorker,
     disconnectCloudEnv,
-    ServiceWorkerMessage,
     updateLiveShareConnectionInfo,
+    LiveShareConnectionInfo,
 } from '../common/service-worker-messages';
 
 import { createLogger } from './lib/logger';
@@ -19,6 +21,10 @@ import { LiveShareConnectionFactory } from './lib/connection-factory';
 import { ConnectionManager } from './lib/connection-manager';
 import { PassThroughHttpClient, LiveShareHttpClient } from './lib/http-client';
 import { CriticalError } from './lib/errors/CriticalError';
+import { getRoutingDetails } from '../common/url-utils';
+import { ServiceWorkerConfiguration } from '../common/service-worker-configuration';
+import { postMessage } from './lib/post-message-utils';
+import { isDefined } from '../utils/isDefined';
 
 declare var self: ServiceWorkerGlobalScope;
 
@@ -74,10 +80,48 @@ async function handleUnhandledError(error: any) {
     }
 }
 
+let configurationUpdateRequest: Promise<void> | undefined = undefined;
 self.addEventListener('fetch', async (event) => {
-    const httpClient = serviceRegistry.getInstance('HttpClient', false);
-    event.respondWith(httpClient.fetch(event.request));
+    event.respondWith(
+        (async () => {
+            const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
+            const configuration = configurationManager.getConfigurationSync();
+            if (
+                !isDefined(configurationUpdateRequest) &&
+                !isDefined(configuration) &&
+                isDefined(getRoutingDetails(event.request.url))
+            ) {
+                configurationUpdateRequest = requestConfiguration(
+                    event.clientId,
+                    configurationManager
+                );
+            }
+
+            if (configurationUpdateRequest) {
+                await configurationUpdateRequest;
+                configurationUpdateRequest = undefined;
+            }
+
+            const httpClient = serviceRegistry.getInstance('HttpClient');
+            return httpClient.fetch(event.request);
+        })()
+    );
 });
+
+async function requestConfiguration(clientId: string, configurationManager: ConfigurationManager) {
+    await postMessage(clientId, {
+        type: tryConfigureMessageType,
+    });
+
+    try {
+        const newConfiguration = await configurationManager.getConfiguration();
+        await updateConfiguration(newConfiguration);
+    } catch (err) {
+        logger.error('Failed to get configuration.');
+
+        throw new CriticalError('Failed to get configuration in time.');
+    }
+}
 
 self.addEventListener('message', async (event) => {
     const message: ServiceWorkerMessage = event.data;
@@ -99,7 +143,7 @@ self.addEventListener('message', async (event) => {
                 !serviceRegistry.canResolve('LiveShareClient') ||
                 serviceRegistry.getInstance('LiveShareClient') instanceof InMemoryLiveShareClient
             ) {
-                registerWebLiveShareClient();
+                await registerWebLiveShareClient();
             }
 
             const connectionManager = serviceRegistry.getInstance('ConnectionManager');
@@ -112,26 +156,7 @@ self.addEventListener('message', async (event) => {
             return;
         }
         case configureServiceWorker: {
-            const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
-            const configuration = configurationManager.getConfigurationSafe();
-            const newConfiguration = message.payload;
-
-            const configurationChanged = !deepEqual(configuration, newConfiguration);
-
-            if (configurationChanged) {
-                serviceRegistry.unregisterInstance('LiveShareClient');
-                serviceRegistry.unregisterInstance('ConnectionFactory');
-                serviceRegistry.unregisterInstance('ConnectionManager');
-                serviceRegistry.unregisterInstance('HttpClient');
-
-                configurationManager.updateConfiguration(newConfiguration);
-            }
-
-            if (newConfiguration.features.useSharedConnection) {
-                registerInMemoryLiveShareClient();
-            } else {
-                registerWebLiveShareClient();
-            }
+            await updateConfiguration(message.payload);
 
             return;
         }
@@ -144,24 +169,45 @@ self.addEventListener('message', async (event) => {
             ) {
                 registerInMemoryLiveShareClient();
             }
-
-            const liveShareClient = serviceRegistry.getInstance(
-                'LiveShareClient'
-            ) as InMemoryLiveShareClient;
-
-            liveShareClient.setWorkspaceInfo(
-                message.payload.sessionId,
-                message.payload.workspaceInfo
-            );
-            liveShareClient.setWorkspaceAccess(
-                message.payload.workspaceInfo.id,
-                message.payload.workspaceAccess
-            );
+            updateLiveShareConnection(message);
 
             return;
         }
     }
 });
+
+async function updateConfiguration(configuration: ServiceWorkerConfiguration) {
+    const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
+
+    if (deepEqual(configuration, configurationManager.getConfigurationSync())) {
+        return;
+    }
+
+    configurationManager.updateConfiguration(configuration);
+
+    serviceRegistry.unregisterInstance('LiveShareClient');
+    serviceRegistry.unregisterInstance('ConnectionFactory');
+    serviceRegistry.unregisterInstance('ConnectionManager');
+    serviceRegistry.unregisterInstance('HttpClient');
+
+    if (configuration.features.useSharedConnection) {
+        registerInMemoryLiveShareClient();
+    } else {
+        await registerWebLiveShareClient();
+    }
+}
+
+function updateLiveShareConnection(message: LiveShareConnectionInfo) {
+    const liveShareClient = serviceRegistry.getInstance(
+        'LiveShareClient'
+    ) as InMemoryLiveShareClient;
+
+    liveShareClient.setWorkspaceInfo(message.payload.sessionId, message.payload.workspaceInfo);
+    liveShareClient.setWorkspaceAccess(
+        message.payload.workspaceInfo.id,
+        message.payload.workspaceAccess
+    );
+}
 
 function registerInMemoryLiveShareClient() {
     if (
@@ -185,10 +231,10 @@ function registerInMemoryLiveShareClient() {
     serviceRegistry.registerInstance('LiveShareClient', new InMemoryLiveShareClient());
 }
 
-function registerWebLiveShareClient() {
+async function registerWebLiveShareClient() {
     if (
         serviceRegistry.canResolve('LiveShareClient') &&
-        serviceRegistry.getInstance('LiveShareClient') instanceof InMemoryLiveShareClient
+        serviceRegistry.getInstance('LiveShareClient') instanceof WebClient
     ) {
         return;
     }
@@ -196,7 +242,7 @@ function registerWebLiveShareClient() {
     // We clean LiveShareClient and things that depend on it.
     if (
         serviceRegistry.canResolve('LiveShareClient') &&
-        serviceRegistry.getInstance('LiveShareClient') instanceof WebClient
+        serviceRegistry.getInstance('LiveShareClient') instanceof InMemoryLiveShareClient
     ) {
         serviceRegistry.unregisterInstance('LiveShareClient');
         serviceRegistry.unregisterInstance('ConnectionFactory');
@@ -205,7 +251,10 @@ function registerWebLiveShareClient() {
     }
 
     const credentialsManager = serviceRegistry.getInstance('CredentialsManager');
-    const configuration = serviceRegistry.getInstance('ConfigurationManager').configuration;
+    const configuration = await serviceRegistry
+        .getInstance('ConfigurationManager')
+        .getConfiguration();
+
     serviceRegistry.registerInstance(
         'LiveShareClient',
         new WebClient(configuration.liveShareEndpoint, {
@@ -218,6 +267,4 @@ function registerWebLiveShareClient() {
             },
         })
     );
-
-    serviceRegistry.registerInstance('LiveShareClient', new InMemoryLiveShareClient());
 }

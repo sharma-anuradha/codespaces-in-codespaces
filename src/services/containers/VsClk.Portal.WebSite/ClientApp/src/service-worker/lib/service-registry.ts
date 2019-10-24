@@ -73,6 +73,12 @@ export class ServiceRegistry {
     registerInstance(serviceHandle: 'LiveShareClient', service: ILiveShareClient): void;
     registerInstance(serviceHandle: 'HttpClient', service: IHttpClient): void;
     registerInstance(serviceHandle: string, instance: unknown) {
+        if (this.instances.has(serviceHandle)) {
+            throw new Error(
+                `Cannot overwrite existing instance of ${serviceHandle}. If this is intentional, use <unregisterInstance> to get rid of existing instance.`
+            );
+        }
+
         this.instances.set(serviceHandle, instance);
     }
     registerFactory(

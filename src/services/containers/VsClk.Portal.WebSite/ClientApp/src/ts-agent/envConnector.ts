@@ -10,6 +10,7 @@ import {
     vsCodeServerHostService,
 } from './contracts/services';
 import { SshChannelOpenner } from './sshChannelOpenner';
+import { onMessage as onServiceWorkerMessage } from '../serviceWorker';
 
 import { trace } from '../utils/trace';
 import { Signal } from '../utils/signal';
@@ -18,7 +19,10 @@ import { DEFAULT_EXTENSIONS, vscodeConfig } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { BrowserSyncService } from './services/browserSyncService';
 import { postServiceWorkerMessage } from '../common/post-message';
-import { updateLiveShareConnectionInfo } from '../common/service-worker-messages';
+import {
+    updateLiveShareConnectionInfo,
+    tryAuthenticateMessageType,
+} from '../common/service-worker-messages';
 
 export type RemoteVSCodeServerDescription = {
     readonly port: number;
@@ -36,6 +40,30 @@ export class EnvConnector {
     private readonly _onVSCodeServerStarted = new Emitter<RemoteVSCodeServerDescription>();
     public readonly onVSCodeServerStarted: Event<RemoteVSCodeServerDescription> = this
         ._onVSCodeServerStarted.event;
+
+    constructor() {
+        this.disposables.push(
+            onServiceWorkerMessage(async (message) => {
+                if (
+                    message.type !== tryAuthenticateMessageType ||
+                    !this.workspaceClient ||
+                    !this.workspaceClient.isFulfilled
+                ) {
+                    return;
+                }
+
+                const workspaceClient = await this.workspaceClient.promise;
+                postServiceWorkerMessage({
+                    type: updateLiveShareConnectionInfo,
+                    payload: {
+                        sessionId: workspaceClient.getWorkspaceInfo()!.id,
+                        workspaceInfo: workspaceClient.getWorkspaceInfo()!,
+                        workspaceAccess: workspaceClient.getWorkspaceAccess()!,
+                    },
+                });
+            })
+        );
+    }
 
     private async startVscodeServer(workspaceClient: WorkspaceClient): Promise<number> {
         if (this.vscodeServerPort && !this.vscodeServerPort.isRejected) {

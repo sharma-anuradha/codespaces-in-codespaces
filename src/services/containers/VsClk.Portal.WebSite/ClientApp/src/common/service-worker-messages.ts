@@ -1,6 +1,7 @@
 import { ConnectionDetails } from './connection-details';
 import { ServiceWorkerConfiguration } from './service-worker-configuration';
 import { IWorkspaceInfo, IWorkspaceAccess } from '../ts-agent/client/ILiveShareClient';
+import { isDefined } from '../utils/isDefined';
 
 export const authenticateMessageType = 'vsonline/authenticate';
 export type Authenticated = {
@@ -47,10 +48,26 @@ export type ConnectionFailed = {
     };
 };
 
+export const tryAuthenticateMessageType = 'vsonline/tryAuthenticate';
+export type TryAuthenticate = {
+    type: typeof tryAuthenticateMessageType;
+};
+
+export const tryConfigureMessageType = 'vsonline/tryConfigure';
+export type TryConfigure = {
+    type: typeof tryConfigureMessageType;
+};
+
 export type ServiceWorkerMessage =
+    | TryAuthenticate
+    | TryConfigure
     | Authenticated
     | Disconnect
     | Connected
     | ConnectionFailed
     | Configure
     | LiveShareConnectionInfo;
+
+export function isServiceWorkerMessage(data: any): data is ServiceWorkerMessage {
+    return isDefined(data.type);
+}
