@@ -142,6 +142,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         }
 
         [Fact]
+        public async Task EnabledInternalHardwareSelectsApplicableSkus()
+        {
+            var provider = CreateTestSystemCatalogProvider();
+            Assert.Collection(provider.SkuCatalog.EnabledInternalHardware().Values.OrderBy(s => s.SkuName),
+                sku =>
+                {
+                    Assert.Equal("test-sku-linux-standard", sku.SkuName);
+                },
+                sku =>
+                {
+                    Assert.Equal("test-sku-windows-premium", sku.SkuName);
+                });
+        }
+
+        [Fact]
         public async Task GetServicePrincipalClientSecret_Resolver()
         {
             const string secretName = "secret-name";

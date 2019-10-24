@@ -122,8 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return RedirectToLocation(owningStamp);
                 }
 
-                var skus = this.skuCatalog.CloudEnvironmentSkus.Values
-                    .Where((sku) => sku.Enabled)
+                var skus = this.skuCatalog.EnabledInternalHardware().Values
                     .Where((sku) => sku.SkuLocations.Contains(azureLocation))
                     .Select((sku) => new SkuInfoResult
                     {

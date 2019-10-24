@@ -81,17 +81,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var environmentController = CreateTestEnvironmentsController(skuCatalog);
 
             // Create each enabled sku in west us 2
-            foreach (var item in skuCatalog.CloudEnvironmentSkus)
+            foreach (var item in skuCatalog.EnabledInternalHardware())
             {
                 var skuName = item.Key;
                 var sku = item.Value;
                 var location = AzureLocation.WestUs2.ToString();
-                if (sku.Enabled)
-                {
-                    var body = await CreateBodyAsync(skuName, location);
-                    var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
-                    Assert.IsType<CreatedResult>(actionResult);
-                }
+                var body = await CreateBodyAsync(skuName, location);
+                var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
+                Assert.IsType<CreatedResult>(actionResult);
             }
         }
 

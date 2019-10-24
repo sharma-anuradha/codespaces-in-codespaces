@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public bool IsExternalHardware { get; } = true;
 
         /// <inheritdoc/>
-        public bool Enabled { get; } = false;
+        public bool Enabled { get; } = true;
 
         /// <inheritdoc/>
         public SkuTier Tier => SkuTier.PremiumDSv3;

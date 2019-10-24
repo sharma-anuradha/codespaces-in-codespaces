@@ -54,7 +54,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 var name = item.Key;
                 var sku = item.Value;
                 Assert.Equal(name, sku.SkuName);
-                if (sku.Enabled)
+            }
+            foreach (var item in skuCatalog.EnabledInternalHardware())
+            {
+                var sku = item.Value;
                 {
                     Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
                     Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);

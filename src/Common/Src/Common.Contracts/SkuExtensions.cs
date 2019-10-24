@@ -2,6 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
@@ -27,6 +30,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public static decimal GetInactiveVsoUnitsPerHour(this ICloudEnvironmentSku sku)
         {
             return sku.StorageVsoUnitsPerHour;
+        }
+
+        /// <summary>
+        /// Gets enabled, internally-managed hardware. This includes Cloud Environments and excludes Static Environments.
+        /// </summary>
+        /// <param name="catalog">SKU Catalog from which to select.</param>
+        /// <returns>Enabled, internall-managed hardware.</returns>
+        public static IReadOnlyDictionary<string, ICloudEnvironmentSku> EnabledInternalHardware(this ISkuCatalog catalog)
+        {
+            return catalog.CloudEnvironmentSkus
+                .Where(kv => kv.Value.Enabled && !kv.Value.IsExternalHardware)
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
         }
     }
 }
