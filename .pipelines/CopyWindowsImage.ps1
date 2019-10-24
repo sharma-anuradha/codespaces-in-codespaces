@@ -30,6 +30,8 @@ Write-Host "Download $SnapshotName"
 $BlobPath = Join-Path $WorkPath "$SnapshotName.vhd"
 $Access = az snapshot grant-access --duration-in-seconds 36000 -n $SnapshotName -g $SourceImage.resourceGroup | ConvertFrom-Json
 $Start = Get-Date
+# Force TLS 1.2 to try and make Invoke-WebRequest more reliable
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 Invoke-WebRequest $Access.accessSas -OutFile $BlobPath
 $Duration = (Get-Date) - $Start
 Write-Host "Download completed in $($Duration.TotalMinutes) minutes"
