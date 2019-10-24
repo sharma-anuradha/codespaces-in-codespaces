@@ -48,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Gets or sets the azure location.
         /// </summary>
-        [JsonProperty(PropertyName = "lzureResourceInfo")]
+        [JsonProperty(PropertyName = "location")]
         public string Location { get; set; }
 
         /// <summary>
