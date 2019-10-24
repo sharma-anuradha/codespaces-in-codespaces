@@ -2,6 +2,7 @@ import { ICredentialsProvider } from 'vscode-web';
 
 import { createTrace } from '../utils/createTrace';
 import { authService } from '../services/authService';
+import { isDefined } from '../utils/isDefined';
 
 const trace = createTrace('credentials-provider:info');
 
@@ -99,7 +100,7 @@ export class CredentialsProvider implements ICredentialsProvider {
 
     async deletePassword(service: string, account: string): Promise<boolean> {
         const key = this.generateGenericLocalStorageKey(service, account);
-        const isPresent = localStorage.has(key);
+        const isPresent = isDefined(localStorage.getItem(key));
 
         localStorage.removeItem(key);
         return isPresent;
