@@ -60,6 +60,17 @@ function Details({ details }: { details: { key: string; value: string }[] }) {
     return <div className='environment-card__details-table'>{rows}</div>;
 }
 
+function stateToDisplayName(state: StateInfo) {
+    switch (state) {
+        case StateInfo.Shutdown:
+            return "Suspended";
+        case StateInfo.ShuttingDown:
+            return "Suspending";
+        default:
+            return state;
+    }
+}
+
 function Status({ environment }: { environment: ILocalCloudEnvironment }) {
     let backgroundColor;
     let color;
@@ -88,7 +99,7 @@ function Status({ environment }: { environment: ILocalCloudEnvironment }) {
                 backgroundColor,
             }}
         >
-            {environment.state}
+            {stateToDisplayName(environment.state)}
         </Text>
     );
 }
@@ -168,7 +179,7 @@ const Actions = ({
                         {
                             key: 'shutdown',
                             iconProps: { iconName: 'PowerButton' },
-                            name: 'Shutdown',
+                            name: 'Suspend',
                             disabled: environmentIsALie(environment) || isNotAvailable(environment),
                             onClick: () => {
                                 if (environment.id) setShutdownDialogHidden(false);
@@ -263,8 +274,8 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Shutdown environment ${environment.friendlyName}`,
-                subText: `You are about to shutdown ${environment.friendlyName}. Are you sure?`,
+                title: `Suspend environment ${environment.friendlyName}`,
+                subText: `You are about to suspend ${environment.friendlyName}. Are you sure?`,
             }}
             modalProps={{
                 isBlocking: true,
@@ -277,7 +288,7 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
                         shutdownEnvironment(environment.id!);
                         close();
                     }}
-                    text='Shutdown'
+                    text='Suspend'
                 />
                 <DefaultButton onClick={close} text='Cancel' />
             </DialogFooter>
