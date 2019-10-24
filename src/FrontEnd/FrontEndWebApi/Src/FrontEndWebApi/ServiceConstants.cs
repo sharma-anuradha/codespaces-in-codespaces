@@ -7,26 +7,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
     /// <summary>
     /// Service constants, all on one place.
     /// </summary>
-    /// <remarks>
-    /// Nice to see all of these in once place :)
-    /// .
-    /// </remarks>
     public static class ServiceConstants
     {
         /// <summary>
         /// The service name.
         /// </summary>
-        public const string ServiceName = "CloudEnvironments";
+        public const string ServiceName = "VSOnline";
 
         /// <summary>
         /// The endput name.
         /// </summary>
-        public const string EndpointName = "CloudEnvironments API v1";
+        public const string EndpointName = "VS Online API v1";
 
         /// <summary>
         /// The service description.
         /// </summary>
-        public const string ServiceDescription = "Public APIs for managing Cloud Environments";
+        public const string ServiceDescription = "Public APIs for managing VS Online Environments";
 
         /// <summary>
         /// The current API version, for routes and swagger.
