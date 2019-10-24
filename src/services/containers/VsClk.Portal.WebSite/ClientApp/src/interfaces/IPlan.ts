@@ -1,4 +1,4 @@
-import { Locations } from './locations';
+import { Locations } from './ILocation';
 
 export interface IPlan {
     readonly id: string;

@@ -3,30 +3,42 @@ import {
     getPlansSuccessActionType,
     selectPlanActionType,
     SelectPlanAction,
+    selectPlanSuccessActionType,
+    SelectPlanSuccessAction,
+    selectPlanFailureActionType,
+    SelectPlanFailureAction,
     GetPlansAction,
     GetPlansFailureAction,
     getPlansFailureActionType,
-    getPlansActionType
-} from '../actions/plans-actions'
+} from '../actions/plans-actions';
 
 import { IPlan } from '../interfaces/IPlan';
+import { ISku } from '../interfaces/ISku';
 
 type AcceptedActions =
-    | GetPlansAction
     | SelectPlanAction
+    | SelectPlanSuccessAction
+    | SelectPlanFailureAction
+    | GetPlansAction
     | GetPlansSuccessAction
     | GetPlansFailureAction;
 
+export type ActivePlanInfo = {
+    availableSkus: ISku[];
+} & IPlan;
+
 export type PlansReducerState = {
-    isMadeInitalPlansRequest: boolean;
+    isMadeInitialPlansRequest: boolean;
+    isLoadingPlan: boolean;
     plans: IPlan[];
-    selectedPlan: IPlan | null;
+    selectedPlan: ActivePlanInfo | null;
 };
 
 const defaultState: PlansReducerState = {
-    isMadeInitalPlansRequest: false,
+    isMadeInitialPlansRequest: false,
+    isLoadingPlan: false,
     plans: [],
-    selectedPlan: null
+    selectedPlan: null,
 };
 
 const plansStoreStateKey = 'vso-plans-store-state';
@@ -36,14 +48,14 @@ const savePlansState = (state: PlansReducerState) => {
     try {
         const stateToSave = {
             ...state,
-            isMadeInitalPlansRequest: false
-        }
-        
+            isMadeInitialPlansRequest: false,
+        };
+
         localStorage.setItem(plansStoreStateKey, JSON.stringify(stateToSave));
     } catch {
         // ignore
     }
-}
+};
 
 const getDefaultPlansState = (): PlansReducerState => {
     try {
@@ -53,7 +65,7 @@ const getDefaultPlansState = (): PlansReducerState => {
     } catch {
         return defaultState;
     }
-}
+};
 
 const uniquePlans = (plans: IPlan[]) => {
     const seenPlans = new Set<string>();
@@ -66,7 +78,7 @@ const uniquePlans = (plans: IPlan[]) => {
 
         return false;
     });
-}
+};
 
 export function plansReducer(
     state: PlansReducerState = getDefaultPlansState(),
@@ -85,17 +97,17 @@ function plansReducerInternal(
 ): PlansReducerState {
     switch (action.type) {
         case getPlansSuccessActionType: {
-            let { plansList } = action.payload;
+            let { plans, selectedPlanHint } = action.payload;
             let { selectedPlan } = state;
             // there is a bug that allows to create multiple equal plans,
             // filter oout duplicates for now
-            plansList = uniquePlans(plansList);
+            const plansList = uniquePlans(plans);
 
             // if no selected plan yet and there is some plans,
             // select the first one by default
-            if (!selectedPlan && plansList.length) {
-                selectedPlan = plansList[0];
-            // if plansList is empty, deselec current selected plan
+            if (!selectedPlan && selectedPlanHint) {
+                selectedPlan = selectedPlanHint;
+                // if plansList is empty, deselec current selected plan
             } else if (!plansList.length) {
                 selectedPlan = null;
             }
@@ -103,24 +115,41 @@ function plansReducerInternal(
             return {
                 ...state,
                 selectedPlan: selectedPlan,
-                isMadeInitalPlansRequest: true,
-                plans: [ ...plansList ]
-            }
-        }
-
-        case selectPlanActionType: {
-            const { plan } = action.payload;
-
-            return {
-                ...state,
-                selectedPlan: plan
-            }
+                isMadeInitialPlansRequest: true,
+                plans: [...plansList],
+            };
         }
 
         case getPlansFailureActionType: {
             return {
                 ...state,
-                isMadeInitalPlansRequest: true
+                isMadeInitialPlansRequest: true,
+            };
+        }
+
+        case selectPlanActionType: {
+            return {
+                ...state,
+                selectedPlan: null,
+                isLoadingPlan: true,
+            };
+        }
+
+        case selectPlanSuccessActionType: {
+            const { plan } = action.payload;
+
+            return {
+                ...state,
+                selectedPlan: plan,
+                isLoadingPlan: false,
+            };
+        }
+
+        case selectPlanFailureActionType: {
+            return {
+                ...state,
+                selectedPlan: null,
+                isLoadingPlan: false,
             };
         }
 

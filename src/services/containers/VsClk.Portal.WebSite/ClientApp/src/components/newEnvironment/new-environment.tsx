@@ -12,6 +12,7 @@ export function NewEnvironment(props: RouteComponentProps) {
     const query = new URLSearchParams(props.location.search);
     const name = query.get('name');
     const repo = query.get('repo');
+    const skuName = query.get('instanceType');
 
     const hidePanel = useCallback(() => {
         // going back to environments cards (landing page)
@@ -38,6 +39,7 @@ export function NewEnvironment(props: RouteComponentProps) {
                 {...getStoredDotfilesConfiguration()}
                 defaultName={name}
                 defaultRepo={repo}
+                defaultSkuName={skuName}
                 hidePanel={hidePanel}
                 onCreateEnvironment={createEnvironmentCallback}
                 autoShutdownDelayMinutes={defaultAutoShutdownDelayMinutes}

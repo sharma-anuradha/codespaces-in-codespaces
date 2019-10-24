@@ -36,6 +36,10 @@ describe('createEnvironment', () => {
         const createdEnvironment = {
             id: '42',
             friendlyName: 'test',
+            planId: 'test',
+            location: 'WestUS2',
+            autoShutdownDelayMinutes: 30,
+            skuName: 'standardLinux',
         };
 
         test_setMockRequestFactory(
@@ -52,13 +56,16 @@ describe('createEnvironment', () => {
             configuration: defaultConfig,
         });
 
+        const createEnvironmentRequest = {
+            friendlyName: 'test',
+            planId: '/subscriptions/mockSubscription/resourceGroups/mockResourceGroup/providers/Microsoft.VSOnline/plans/test',
+            location: 'WestUS2',
+            autoShutdownDelayMinutes: 30,
+            skuName: 'standardLinux'
+        };
+
         await store.dispatch(
-            createEnvironment({
-                friendlyName: 'test',
-                planId: '/subscriptions/mockSubscription/resourceGroups/mockResourceGroup/providers/Microsoft.VSOnline/plans/test',
-                location: 'WestUS2',
-                autoShutdownDelayMinutes: 30
-            })
+            createEnvironment(createEnvironmentRequest)
         );
 
         expect(store.dispatchedActions).not.toHaveFailed();
@@ -67,6 +74,13 @@ describe('createEnvironment', () => {
             createEnvironmentSuccessActionType,
             'mock.poll'
         );
+
+        const createAction = getDispatchedAction(
+            store.dispatchedActions,
+            createEnvironmentActionType
+        );
+        expect(createAction.payload.environment).toBe(createEnvironmentRequest);
+
         const successAction = getDispatchedAction(
             store.dispatchedActions,
             createEnvironmentSuccessActionType

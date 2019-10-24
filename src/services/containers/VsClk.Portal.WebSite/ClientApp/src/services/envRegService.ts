@@ -62,6 +62,7 @@ export async function createEnvironment(
         dotfilesInstallCommand,
         dotfilesTargetPath = `~/dotfiles`,
         autoShutdownDelayMinutes,
+        skuName,
     } = environment;
 
     const personalization: EnvPersonalization = {
@@ -89,6 +90,7 @@ export async function createEnvironment(
         },        
         created: new Date(),
         autoShutdownDelayMinutes,
+        skuName,
     };
 
     const webClient = useWebClient();

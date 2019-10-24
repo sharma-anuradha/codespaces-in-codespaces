@@ -6,6 +6,7 @@ import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { KeyCodes } from '@uifabric/utilities';
+
 import { Link } from 'office-ui-fabric-react/lib/components/Link';
 import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 
@@ -14,7 +15,12 @@ import { createEnvironment } from '../../actions/createEnvironment';
 import { storeGitHubCredentials } from '../../actions/getGitHubCredentials';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { GithubAuthenticationAttempt } from '../../services/gitHubAuthenticationService';
+import { ISku } from '../../interfaces/ISku';
+import { IPlan } from '../../interfaces/IPlan';
+import { ActivePlanInfo } from '../../reducers/plans-reducer';
+import { getPlans } from '../../actions/plans-actions';
 import { Collapsible } from '../collapsible/collapsible';
+import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader';
 
 import {
     normalizeGitUrl,
@@ -137,6 +143,8 @@ export const validationMessages = {
     noAccess: 'You do not have access to this repo.',
     privateRepoNoAuth:
         'Repository doesn’t appear to exist. If it’s private, then you’ll need to authenticate.',
+    noPlanSelected: 'No plan selected - please select one',
+    noSkusAvailable: 'No instance types are available - please select a different plan',
 };
 
 enum ValidationState {
@@ -167,10 +175,12 @@ export interface CreateEnvironmentPanelProps {
 
     gitHubAccessToken: string | null;
 
-    selectedPlanId: string | null;
-    selectedPlanLocation: string | null;
+    selectedPlan: ActivePlanInfo | null;
+    isLoadingPlan?: boolean | null;
 
     autoShutdownDelayMinutes: number;
+
+    defaultSkuName?: string | null;
 
     storeGitHubCredentials: (accessToken: string) => void;
     hidePanel: () => void;
@@ -184,6 +194,7 @@ interface FormFields {
     dotfilesInstallCommand: TextFieldState;
     dotfilesTargetPath: TextFieldState;
     autoShutdownDelayMinutes: NumberFieldState;
+    skuName: TextFieldState;
 }
 
 interface CreateEnvironmentPanelState extends FormFields {
@@ -200,6 +211,7 @@ const initialFormState: CreateEnvironmentPanelState = {
     dotfilesInstallCommand: { value: '', validation: ValidationState.Valid, isRequired: false },
     dotfilesTargetPath: { value: '', validation: ValidationState.Valid, isRequired: false },
     autoShutdownDelayMinutes: { value: 30, validation: ValidationState.Valid },
+    skuName: { value: '', validation: ValidationState.Initial, isRequired: true },
     shouldTryToAuthenticateForRepo: false,
     shouldTryToAuthenticateForDotfiles: false,
     authenticationErrorMessage: undefined,
@@ -208,16 +220,17 @@ const initialFormState: CreateEnvironmentPanelState = {
 
 type Fields = keyof FormFields;
 
-function formToEnvironmentParams(planId: string, planLocation: string, fields: FormFields): CreateEnvironmentParams {
+function formToEnvironmentParams(plan: IPlan, fields: FormFields): CreateEnvironmentParams {
     return {
-        planId,
-        location: planLocation,
+        planId: plan.id,
+        location: plan.location,
         friendlyName: fields.friendlyName.value,
         gitRepositoryUrl: normalizeGitUrl(fields.gitRepositoryUrl.value),
         dotfilesRepository: normalizeGitUrl(fields.dotfilesRepository.value),
         dotfilesTargetPath: normalizeOptionalValue(fields.dotfilesTargetPath.value),
         dotfilesInstallCommand: normalizeOptionalValue(fields.dotfilesInstallCommand.value),
         autoShutdownDelayMinutes: fields.autoShutdownDelayMinutes.value,
+        skuName: fields.skuName.value,
     };
 }
 
@@ -235,6 +248,16 @@ export class CreateEnvironmentPanelView extends Component<
 > {
     public constructor(props: CreateEnvironmentPanelProps) {
         super(props);
+
+        const availableSkus = this.getAvailableSkus();
+
+        const defaultSkuSelection =
+            availableSkus && availableSkus.length
+                ? props.defaultSkuName || availableSkus[0].name
+                : '';
+
+        // Workaround for DropDown not having validateOnLoad
+        const isInitialSkuValid = this.isSkuNameValid(defaultSkuSelection, availableSkus);
 
         this.state = {
             ...initialFormState,
@@ -263,7 +286,17 @@ export class CreateEnvironmentPanelView extends Component<
                 ...initialFormState.autoShutdownDelayMinutes,
                 value: defaultAutoShutdownDelayMinutes,
             },
+            skuName: {
+                ...initialFormState.skuName,
+                value: defaultSkuSelection,
+                validation: isInitialSkuValid ? ValidationState.Valid : ValidationState.Initial,
+            },
         };
+
+        if (!availableSkus) {
+            // Forces a refresh of the plan list and selects a default one
+            getPlans();
+        }
     }
 
     componentWillUnmount() {
@@ -284,76 +317,107 @@ export class CreateEnvironmentPanelView extends Component<
                 closeButtonAriaLabel='Close'
                 onRenderFooterContent={this.onRenderFooterContent}
             >
-                <Stack tokens={{ childrenGap: 'l1' }}>
-                    <Stack tokens={{ childrenGap: 4 }}>
-                        <TextField
-                            label='Environment Name'
-                            placeholder='environmentNameExample'
-                            onKeyDown={this.submitForm}
-                            value={this.state.friendlyName.value}
-                            iconProps={getValidationIcon(this.state.friendlyName)}
-                            onChange={this.onChangeFriendlyName}
-                            onGetErrorMessage={this.onGetErrorMessageFriendlyName}
-                            onNotifyValidationResult={this.onNotifyValidationResultFriendlyName}
-                            validateOnLoad={!!this.props.defaultName}
-                            autoFocus
-                            required
-                        />
-                        <TextField
-                            label='Git Repository'
-                            placeholder='vsls-contrib/guestbook'
-                            onKeyDown={this.submitForm}
-                            value={this.state.gitRepositoryUrl.value}
-                            iconProps={getValidationIcon(this.state.gitRepositoryUrl)}
-                            onChange={this.onChangeGitRepositoryUrl}
-                            onGetErrorMessage={this.onGetErrorMessageGitRepo}
-                            onNotifyValidationResult={this.onNotifyValidationResultGitRepositoryUrl}
-                            validateOnLoad={!!this.props.defaultRepo}
-                        />
-                        <Dropdown
-                            label='Suspend idle environment after...'
-                            options={autoShutdownOptions}
-                            onChange={this.onChangeAutoShutdownDelayMinutes}
-                            selectedKey={this.state.autoShutdownDelayMinutes.value}
-                        />
-                    </Stack>
-
-                    <Collapsible tokens={{ childrenGap: 4 }} title={'Dotfiles (optional)'}>
-                        <TextField
-                            autoFocus
-                            label='Dotfiles Repository'
-                            placeholder='e.g. Org/Repo or https://github.com/Org/Repo.git'
-                            onKeyDown={this.submitForm}
-                            value={this.state.dotfilesRepository.value}
-                            iconProps={getValidationIcon(this.state.dotfilesRepository)}
-                            onChange={this.onChangeDotfilesRepository}
-                            onGetErrorMessage={this.onGetErrorMessageGitRepo}
-                            onNotifyValidationResult={
-                                this.onNotifyValidationResultDotfilesRepository
-                            }
-                            validateOnLoad={false}
-                        />
-                        <TextField
-                            label='Dotfiles Install Command'
-                            placeholder='./install.sh'
-                            onKeyDown={this.submitForm}
-                            value={this.state.dotfilesInstallCommand.value}
-                            iconProps={getValidationIcon(this.state.dotfilesInstallCommand)}
-                            onChange={this.onChangeDotfilesInstallCommand}
-                            validateOnLoad={false}
-                        />
-                        <TextField
-                            label='Dotfiles Target Path'
-                            placeholder='~/dotfiles <optional>'
-                            onKeyDown={this.submitForm}
-                            value={this.state.dotfilesTargetPath.value}
-                            iconProps={getValidationIcon(this.state.dotfilesTargetPath)}
-                            onChange={this.onChangeDotfilesTargetPath}
-                            validateOnLoad={false}
-                        />
-                    </Collapsible>
-                </Stack>
+                {this.renderCreateEnvironmentInputs()}
             </Panel>
+        );
+    }
+
+    private renderCreateEnvironmentInputs() {
+        return (
+            <Stack tokens={{ childrenGap: 'l1' }}>
+                <Stack tokens={{ childrenGap: 4 }}>
+                    <TextField
+                        label='Environment Name'
+                        placeholder='environmentNameExample'
+                        onKeyDown={this.submitForm}
+                        value={this.state.friendlyName.value}
+                        iconProps={getValidationIcon(this.state.friendlyName)}
+                        onChange={this.onChangeFriendlyName}
+                        onGetErrorMessage={this.onGetErrorMessageFriendlyName}
+                        onNotifyValidationResult={this.onNotifyValidationResultFriendlyName}
+                        validateOnLoad={!!this.props.defaultName}
+                        autoFocus
+                        required
+                    />
+                    <TextField
+                        label='Git Repository'
+                        placeholder='vsls-contrib/guestbook'
+                        onKeyDown={this.submitForm}
+                        value={this.state.gitRepositoryUrl.value}
+                        iconProps={getValidationIcon(this.state.gitRepositoryUrl)}
+                        onChange={this.onChangeGitRepositoryUrl}
+                        onGetErrorMessage={this.onGetErrorMessageGitRepo}
+                        onNotifyValidationResult={this.onNotifyValidationResultGitRepositoryUrl}
+                        validateOnLoad={!!this.props.defaultRepo}
+                    />
+                    <Dropdown
+                        label='Put environment to sleep after...'
+                        options={autoShutdownOptions}
+                        onChange={this.onChangeAutoShutdownDelayMinutes}
+                        selectedKey={this.state.autoShutdownDelayMinutes.value}
+                    />
+                    {this.renderSkuSelector()}
+                </Stack>
+
+                <Collapsible tokens={{ childrenGap: 4 }} title={'Dotfiles (optional)'}>
+                    <TextField
+                        autoFocus
+                        label='Dotfiles Repository'
+                        placeholder='e.g. Org/Repo or https://github.com/Org/Repo.git'
+                        onKeyDown={this.submitForm}
+                        value={this.state.dotfilesRepository.value}
+                        iconProps={getValidationIcon(this.state.dotfilesRepository)}
+                        onChange={this.onChangeDotfilesRepository}
+                        onGetErrorMessage={this.onGetErrorMessageGitRepo}
+                        onNotifyValidationResult={this.onNotifyValidationResultDotfilesRepository}
+                        validateOnLoad={false}
+                    />
+                    <TextField
+                        label='Dotfiles Install Command'
+                        placeholder='./install.sh'
+                        onKeyDown={this.submitForm}
+                        value={this.state.dotfilesInstallCommand.value}
+                        iconProps={getValidationIcon(this.state.dotfilesInstallCommand)}
+                        onChange={this.onChangeDotfilesInstallCommand}
+                        validateOnLoad={false}
+                    />
+                    <TextField
+                        label='Dotfiles Target Path'
+                        placeholder='~/dotfiles <optional>'
+                        onKeyDown={this.submitForm}
+                        value={this.state.dotfilesTargetPath.value}
+                        iconProps={getValidationIcon(this.state.dotfilesTargetPath)}
+                        onChange={this.onChangeDotfilesTargetPath}
+                        validateOnLoad={false}
+                    />
+                </Collapsible>
+            </Stack>
+        );
+    }
+
+    private renderSkuSelector() {
+        const availableSkus = this.getAvailableSkus();
+
+        const options = availableSkus
+            ? availableSkus.map((s) => {
+                  return { key: s.name, text: s.displayName };
+              })
+            : [];
+
+        const errorMessage = this.getSkuNameValidationMessage();
+
+        return (
+            <DropDownWithLoader
+                label='Instance Type'
+                options={options}
+                isLoading={this.props.isLoadingPlan || false}
+                loadingMessage='Loading available instance types'
+                selectedKey={this.state.skuName.value}
+                errorMessage={errorMessage}
+                disabled={!!errorMessage}
+                onChange={this.onChangeSkuName}
+                required
+            />
         );
     }
 
@@ -441,13 +505,18 @@ export class CreateEnvironmentPanelView extends Component<
         this.props.hidePanel();
     };
 
+    private getAvailableSkus() {
+        return this.props.selectedPlan && this.props.selectedPlan.availableSkus;
+    }
+
     private isCurrentStateValid() {
         return (
             this.state.friendlyName.validation === ValidationState.Valid &&
             this.state.gitRepositoryUrl.validation === ValidationState.Valid &&
             this.state.dotfilesRepository.validation === ValidationState.Valid &&
             this.state.dotfilesInstallCommand.validation === ValidationState.Valid &&
-            this.state.dotfilesTargetPath.validation === ValidationState.Valid
+            this.state.dotfilesTargetPath.validation === ValidationState.Valid &&
+            this.state.skuName.validation === ValidationState.Valid
         );
     }
 
@@ -519,13 +588,13 @@ export class CreateEnvironmentPanelView extends Component<
     };
 
     private getEnvCreationParams() {
-        const { selectedPlanId, selectedPlanLocation } = this.props;
+        const { selectedPlan } = this.props;
 
-        if (!selectedPlanId || !selectedPlanLocation) {
+        if (!selectedPlan) {
             throw new Error('No plan selected.');
         }
 
-        const envParams = formToEnvironmentParams(selectedPlanId, selectedPlanLocation, this.state);
+        const envParams = formToEnvironmentParams(selectedPlan, this.state);
         return envParams;
     }
 
@@ -603,6 +672,16 @@ export class CreateEnvironmentPanelView extends Component<
         return await validateGitRepository(value, this.props.gitHubAccessToken);
     };
 
+    private getSkuNameValidationMessage() {
+        if (!this.props.isLoadingPlan) {
+            if (!this.props.selectedPlan) {
+                return validationMessages.noPlanSelected;
+            } else if (!this.props.selectedPlan.availableSkus) {
+                return validationMessages.noSkusAvailable;
+            }
+        }
+    }
+
     private onNotifyValidationResultGitRepositoryUrl = (
         errorMessage: string | ReactElement,
         value = ''
@@ -668,25 +747,36 @@ export class CreateEnvironmentPanelView extends Component<
             );
         }
     };
+
+    private onChangeSkuName = (_event: unknown, option?: IDropdownOption, index?: number) => {
+        if (option) {
+            if (typeof option.key !== 'string') {
+                throw new Error('NotImplemented');
+            }
+
+            const newState = this.isSkuNameValid(option.key, this.getAvailableSkus())
+                ? ValidationState.Valid
+                : ValidationState.Invalid;
+
+            this.setTextValidationState('skuName', option.key, newState);
+        }
+    };
+
+    private isSkuNameValid = (skuName: string, availableSkus?: ISku[] | null) => {
+        return availableSkus && availableSkus!.filter((s) => s.name === skuName).length > 0;
+    };
 }
 
 export const CreateEnvironmentPanel = connect(
-    ({ githubAuthentication: { gitHubAccessToken }, plans }: ApplicationState) => {
-        const { selectedPlan } = plans;
-
-        const selectedPlanId = (selectedPlan)
-            ? selectedPlan.id
-            : null
-
-        const selectedPlanLocation = (selectedPlan)
-            ? selectedPlan.location
-            : null
-
+    ({
+        githubAuthentication: { gitHubAccessToken },
+        plans: { selectedPlan, isLoadingPlan },
+    }: ApplicationState) => {
         return {
             gitHubAccessToken,
-            selectedPlanId,
-            selectedPlanLocation
-        }
+            selectedPlan,
+            isLoadingPlan,
+        };
     },
     {
         storeGitHubCredentials,

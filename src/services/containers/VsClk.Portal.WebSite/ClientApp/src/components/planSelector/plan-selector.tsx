@@ -20,18 +20,34 @@ import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader
 interface PlanSelectorProps extends RouteComponentProps {
     plansList: IPlan[];
     selectedPlanId: string | null;
-    isMadeInitalPlansRequest: boolean;
+    isMadeInitialPlansRequest: boolean;
+    isLoadingPlan: boolean;
     className?: string;
 }
 
 export class PlanSelectorComponent extends Component<PlanSelectorProps> {
+    public constructor(props: PlanSelectorProps) {
+        super(props);
+
+        this.state = {
+            isLoadingPlan: false,
+        };
+    }
+
     render() {
         const {
             selectedPlanId,
             plansList,
-            isMadeInitalPlansRequest,
-            className = ''
+            isMadeInitialPlansRequest,
+            isLoadingPlan,
+            className = '',
         } = this.props;
+
+        const loadingMessage = !isMadeInitialPlansRequest
+            ? 'Fetching plan information...'
+            : isLoadingPlan
+            ? 'Fetching your plans...'
+            : '';
 
         return (
             <DropDownWithLoader
@@ -39,8 +55,8 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
                 options={this.plansToDropdownArray(plansList)}
                 onChange={this.selectedPlanChanged}
                 selectedKey={selectedPlanId || createNewPlanKey}
-                isLoading={!isMadeInitalPlansRequest}
-                loadingMessage={'Fetching your plans...'}
+                isLoading={!!loadingMessage}
+                loadingMessage={loadingMessage}
             />
         );
     }
@@ -85,11 +101,12 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
 
 const getPlansStoreState = ({ plans }: ApplicationState) => {
     const plansList = plans.plans;
-    const { selectedPlan, isMadeInitalPlansRequest } = plans;
+    const { selectedPlan, isMadeInitialPlansRequest, isLoadingPlan } = plans;
 
     return {
         plansList,
-        isMadeInitalPlansRequest,
+        isMadeInitialPlansRequest,
+        isLoadingPlan,
         selectedPlanId: selectedPlan && selectedPlan.id,
     };
 };

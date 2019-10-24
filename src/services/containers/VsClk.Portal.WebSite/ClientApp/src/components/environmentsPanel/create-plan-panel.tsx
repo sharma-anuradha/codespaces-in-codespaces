@@ -21,10 +21,9 @@ import { armAPIVersion } from '../../constants';
 import { getPlans } from '../../actions/plans-actions';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ConfigurationState } from '../../reducers/configuration';
+import { getLocations } from '../../actions/locations-actions';
 
 import { IAzureSubscription } from '../../interfaces/IAzureSubscription';
-
-import { locations } from './locations';
 
 export interface CreatePlanPanelProps {
     hidePanel: () => void;
@@ -35,6 +34,7 @@ export interface CreatePlanPanelState {
     planName?: string;
     subscriptionList: Array<{key: string, text: string}>;
     resourceGroupList: Array<{key: string, text: string}>;
+    locationsList: Array<{key: string, text: string}>;
     selectedSubscription?: string;
     selectedResourceGroup?: string;
     selectedRegion?: string;
@@ -51,6 +51,7 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
         this.state = {
             subscriptionList: [],
             resourceGroupList: [],
+            locationsList: [],
             isCreatingPlan: false,
             isGettingSubscriptions: true,
             isGettingResourceGroups: true,
@@ -68,6 +69,7 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
             isGettingClosestRegion,
             subscriptionList,
             resourceGroupList,
+            locationsList,
             selectedSubscription,
             selectedResourceGroup,
             selectedRegion,
@@ -111,7 +113,7 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
                     <DropDownWithLoader
                         label='Region'
                         onChange={this.regionChanged}
-                        options={locations}
+                        options={locationsList}
                         loadingMessage='Fetching the closest region...'
                         isLoading={isGettingClosestRegion}
                         selectedKey={selectedRegion}
@@ -299,15 +301,17 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
 
             this.setState({ isGettingClosestRegion: true });
 
-            const { apiEndpoint } = configuration;
-            const locationsResponse = await fetch(`${apiEndpoint}/locations`);
-            const locations = await locationsResponse.json();
+            const locations = await getLocations();
             const closestRegion: string = locations.current;
 
             const { selectedRegion } = this.state;
 
             this.setState({
-                selectedRegion: selectedRegion || closestRegion
+                selectedRegion: selectedRegion || closestRegion,
+                locationsList: locations.available.map((l) => { return {
+                    key: l,
+                    text: l,
+                };}),
             });
         } catch {
             // ignore

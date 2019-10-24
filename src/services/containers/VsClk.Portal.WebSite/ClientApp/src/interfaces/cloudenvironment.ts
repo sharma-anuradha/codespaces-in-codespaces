@@ -10,6 +10,7 @@ export interface CreateEnvironmentParameters {
     dotfilesTargetPath?: string;
     dotfilesInstallCommand?: string;
     autoShutdownDelayMinutes: number;
+    skuName: string;
 }
 
 export enum StateInfo {
@@ -33,8 +34,9 @@ export interface ICloudEnvironment {
     created: Date;
     updated: Date;
     personalization?: EnvPersonalization;
-    planId?: string;
-    location?: string;
+    planId: string;
+    location: string;
+    skuName: string;
     autoShutdownDelayMinutes?: number;
 }
 

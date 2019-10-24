@@ -11,6 +11,8 @@ import {
 import { configureStore } from '../store/configureStore';
 
 import {
+    createEnvironmentActionType,
+    CreateEnvironmentAction,
     createEnvironmentSuccessActionType,
     CreateEnvironmentSuccessAction,
 } from '../actions/createEnvironment';
@@ -33,6 +35,8 @@ declare global {
 
 // TODO: Figure out how to make getDispatchedAction strongly typed long term
 
+// prettier-ignore
+export function getDispatchedAction(dispatchedActions: WithMetadata<BaseAction>[], actionType: typeof createEnvironmentActionType): WithMetadata<CreateEnvironmentAction>;
 // prettier-ignore
 export function getDispatchedAction(dispatchedActions: WithMetadata<BaseAction>[], actionType: typeof createEnvironmentSuccessActionType): WithMetadata<CreateEnvironmentSuccessAction>;
 // prettier-ignore
