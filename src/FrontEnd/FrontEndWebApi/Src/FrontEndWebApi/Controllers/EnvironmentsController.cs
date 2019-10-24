@@ -351,6 +351,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 }
 
                 // Validate the requested SKU
+                ValidationUtil.IsRequired(createEnvironmentInput.SkuName, nameof(createEnvironmentInput.SkuName));
                 if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku))
                 {
                     var message = $"The requested SKU is not defined: {cloudEnvironment.SkuName}";
