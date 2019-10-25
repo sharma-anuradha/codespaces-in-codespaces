@@ -176,7 +176,7 @@ export interface CreateEnvironmentPanelProps {
     gitHubAccessToken: string | null;
 
     selectedPlan: ActivePlanInfo | null;
-    isLoadingPlan?: boolean | null;
+    isPlanLoadingFinished?: boolean | null;
 
     autoShutdownDelayMinutes: number;
 
@@ -252,9 +252,9 @@ export class CreateEnvironmentPanelView extends Component<
         const availableSkus = this.getAvailableSkus();
 
         const defaultSkuSelection =
-            availableSkus && availableSkus.length
-                ? props.defaultSkuName || availableSkus[0].name
-                : '';
+            props.defaultSkuName ||
+            (availableSkus && availableSkus.length && availableSkus[0].name) ||
+            '';
 
         // Workaround for DropDown not having validateOnLoad
         const isInitialSkuValid = this.isSkuNameValid(defaultSkuSelection, availableSkus);
@@ -410,7 +410,7 @@ export class CreateEnvironmentPanelView extends Component<
             <DropDownWithLoader
                 label='Instance Type'
                 options={options}
-                isLoading={this.props.isLoadingPlan || false}
+                isLoading={!this.props.isPlanLoadingFinished || false}
                 loadingMessage='Loading available instance types'
                 selectedKey={this.state.skuName.value}
                 errorMessage={errorMessage}
@@ -673,7 +673,7 @@ export class CreateEnvironmentPanelView extends Component<
     };
 
     private getSkuNameValidationMessage() {
-        if (!this.props.isLoadingPlan) {
+        if (this.props.isPlanLoadingFinished) {
             if (!this.props.selectedPlan) {
                 return validationMessages.noPlanSelected;
             } else if (!this.props.selectedPlan.availableSkus) {
@@ -770,12 +770,12 @@ export class CreateEnvironmentPanelView extends Component<
 export const CreateEnvironmentPanel = connect(
     ({
         githubAuthentication: { gitHubAccessToken },
-        plans: { selectedPlan, isLoadingPlan },
+        plans: { selectedPlan, isLoadingPlan, isMadeInitialPlansRequest },
     }: ApplicationState) => {
         return {
             gitHubAccessToken,
             selectedPlan,
-            isLoadingPlan,
+            isPlanLoadingFinished: isMadeInitialPlansRequest && !isLoadingPlan,
         };
     },
     {
