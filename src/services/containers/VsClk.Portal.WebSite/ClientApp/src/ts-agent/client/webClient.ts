@@ -39,6 +39,8 @@ export class WebClient implements ILiveShareClient {
     }
 
     public async getWorkspaceInfo(invitationId: string): Promise<IWorkspaceInfo | null> {
+        invitationId = invitationId.toUpperCase();
+
         trace(`${this.baseUri}/workspace/${invitationId}`);
         const response = await fetch(`${this.baseUri}/workspace/${invitationId}`, {
             method: 'GET',
@@ -48,6 +50,8 @@ export class WebClient implements ILiveShareClient {
     }
 
     public async getWorkspaceAccess(workspaceId: string): Promise<IWorkspaceAccess | null> {
+        workspaceId = workspaceId.toUpperCase();
+
         const response = await fetch(`${this.baseUri}/workspace/${workspaceId}/user`, {
             method: 'PUT',
             headers: this.getRequestHeaders(workspaceId),
