@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
@@ -123,7 +124,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 }
 
                 var skus = this.skuCatalog.EnabledInternalHardware().Values
-                    .Where((sku) => sku.SkuLocations.Contains(azureLocation))
+                    .Where((sku) => sku.SkuLocations.Contains(azureLocation));
+
+                /*
+                    Clients select default SKUs as the first item in this list.  We control the ordering of the returned SKUs so that clients
+                    will show the correct default.  Don't change this unless the clients can handle selecting the default correctly themselves.
+                */
+                var orderedSkus = OrderSkusForDisplay(skus);
+
+                var outputSkus = orderedSkus
                     .Select((sku) => new SkuInfoResult
                     {
                         Name = sku.SkuName,
@@ -131,9 +140,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         OS = sku.ComputeOS.ToString(),
                     })
                     .ToArray();
+
                 var result = new LocationInfoResult
                 {
-                    Skus = skus,
+                    Skus = outputSkus,
                 };
 
                 logger.AddDuration(duration)
@@ -160,6 +170,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 Scheme = Uri.UriSchemeHttps,
             };
             return new RedirectResult(builder.ToString(), permanent: false, preserveMethod: true);
+        }
+
+        private IEnumerable<ICloudEnvironmentSku> OrderSkusForDisplay(IEnumerable<ICloudEnvironmentSku> skus)
+        {
+            return skus.OrderBy((sku) => sku.GetActiveVsoUnitsPerHour());
         }
     }
 }
