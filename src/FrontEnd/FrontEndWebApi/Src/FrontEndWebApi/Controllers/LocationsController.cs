@@ -14,6 +14,9 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -28,12 +31,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [ApiController]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName("locations_controller")]
-    [AllowAnonymous]
+    [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
     public class LocationsController : ControllerBase
     {
         private readonly ICurrentLocationProvider locationProvider;
         private readonly IControlPlaneInfo controlPlaneInfo;
         private readonly ISkuCatalog skuCatalog;
+        private readonly ICurrentUserProvider currentUserProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LocationsController"/> class.
@@ -41,14 +45,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="locationProvider">The current location provider.</param>
         /// <param name="controlPlaneInfo">Control plane information.</param>
         /// <param name="skuCatalog">SKU catalog for the current location.</param>
+        /// <param name="currentUserProvider">The current user's profile.</param>
         public LocationsController(
             ICurrentLocationProvider locationProvider,
             IControlPlaneInfo controlPlaneInfo,
-            ISkuCatalog skuCatalog)
+            ISkuCatalog skuCatalog,
+            ICurrentUserProvider currentUserProvider)
         {
             this.locationProvider = locationProvider;
             this.controlPlaneInfo = controlPlaneInfo;
             this.skuCatalog = skuCatalog;
+            this.currentUserProvider = currentUserProvider;
         }
 
         /// <summary>
@@ -56,6 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>An object result containing the <see cref="LocationsResult"/>.</returns>
         [HttpGet]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(LocationsResult), StatusCodes.Status200OK)]
         public IActionResult GetLocations()
         {
@@ -90,6 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="location">The requested location.</param>
         /// <returns>An object result containing the <see cref="LocationInfoResult"/>.</returns>
         [HttpGet("{location}")]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(LocationInfoResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetLocationInfo([FromRoute]string location)
@@ -123,8 +132,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return RedirectToLocation(owningStamp);
                 }
 
+                var profile = currentUserProvider.GetProfile();
+
                 var skus = this.skuCatalog.EnabledInternalHardware().Values
-                    .Where((sku) => sku.SkuLocations.Contains(azureLocation));
+                    .Where((sku) => sku.SkuLocations.Contains(azureLocation))
+                    .Where((sku) => ProfileUtils.IsSkuVisibleToProfile(profile, sku));
 
                 /*
                     Clients select default SKUs as the first item in this list.  We control the ordering of the returned SKUs so that clients

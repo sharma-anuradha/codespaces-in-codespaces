@@ -9,16 +9,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     /// </summary>
     public static class ProfileExtensions
     {
-        private const string CloudEnvironmentsPreviewUserProgram = "vs.cloudenvironements.previewuser";
+        public const string VisualStudioOnlineWidowsSkuPreviewUserProgram = "vsonline.windowsskupreview";
 
         /// <summary>
-        /// Test whether the given user profile is a member of the cloud environment preview user program.
+        /// Test whether the given user profile is a member of the Windows SKU preview.
         /// </summary>
         /// <param name="profile">The user profile.</param>
         /// <returns>True if the test succeeded.</returns>
-        public static bool IsCloudEnvironmentsPreviewUser(this Profile profile)
+        public static bool IsWindowsSkuPreviewUser(this Profile profile)
         {
-            return profile.GetProgramsItem<bool>(CloudEnvironmentsPreviewUserProgram)
+            return profile.GetProgramsItem<bool>(VisualStudioOnlineWidowsSkuPreviewUserProgram)
                 || (profile.Email?.EndsWith("@microsoft.com") ?? false);
         }
 

@@ -23,6 +23,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Duration = Microsoft.VsSaaS.Diagnostics.Extensions.DiagnosticsLoggerExtensions.Duration;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
@@ -331,6 +332,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsTrue(VsoPlanInfo.TryParse(createEnvironmentInput.PlanId, out _), "Invalid plan ID.");
 
                 var cloudEnvironment = Mapper.Map<CreateCloudEnvironmentBody, CloudEnvironment>(createEnvironmentInput);
+                ValidationUtil.IsRequired(createEnvironmentInput.SkuName, nameof(createEnvironmentInput.SkuName));
 
                 // Reroute to correct location if needed
                 var owningStamp = default(IControlPlaneStampInfo);
@@ -348,9 +350,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return CreateEnvironmentBadRequest(message, duration, logger);
                 }
 
+                var currentUser = CurrentUserProvider.GetProfile();
+
                 // Validate the requested SKU
-                ValidationUtil.IsRequired(createEnvironmentInput.SkuName, nameof(createEnvironmentInput.SkuName));
-                if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku))
+                if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku) || !ProfileUtils.IsSkuVisibleToProfile(currentUser, sku))
                 {
                     var message = $"The requested SKU is not defined: {cloudEnvironment.SkuName}";
                     return CreateEnvironmentBadRequest(message, duration, logger);
@@ -369,8 +372,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return CreateEnvironmentBadRequest(message, duration, logger);
                 }
 
-                var currentUserId = CurrentUserProvider.GetProfileId();
-                var currentUserProviderId = CurrentUserProvider.GetProfile().ProviderId;
+                var currentUserId = currentUser.Id;
+                var currentUserProviderId = currentUser.ProviderId;
                 var accessToken = CurrentUserProvider.GetBearerToken();
 
                 // Build the service URI.

@@ -139,12 +139,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 return;
             }
 
-            if (!profile.IsCloudEnvironmentsPreviewUser())
-            {
-                JwtTokenFail("Not preview user");
-                return;
-            }
-
             // OK
             currentProfile.SetProfile(profile);
             return;

@@ -21,6 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
+using System.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
@@ -78,8 +79,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         public async Task EnvironmentController_CloudEnvironmentAsync_SkuCatalog(string environment)
         {
             var skuCatalog = LoadSkuCatalog(environment);
-            var environmentController = CreateTestEnvironmentsController(skuCatalog);
 
+            var currentUser = MockCurrentUserProvider(new Dictionary<string, object>
+            {
+                { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
+            });
+
+            var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog, currentUserProvider: currentUser);
+            
             // Create each enabled sku in west us 2
             foreach (var item in skuCatalog.EnabledInternalHardware())
             {
@@ -92,19 +99,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             }
         }
 
+        [Theory]
+        [MemberData(nameof(Environments))]
+        public async Task EnvironmentController_CloudEnvironmentAsync_SkuCatalog_BadRequest(string environment)
+        {
+            var skuCatalog = LoadSkuCatalog(environment);
+            var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog);
+
+            // Create each enabled sku in west us 2
+            foreach (var item in skuCatalog.EnabledInternalHardware().Where((sku) => sku.Value.ComputeOS == ComputeOS.Windows))
+            {
+                var skuName = item.Key;
+                var sku = item.Value;
+                var location = AzureLocation.WestUs2.ToString();
+                var body = await CreateBodyAsync(skuName, location);
+                var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
+                Assert.IsType<BadRequestObjectResult>(actionResult);
+            }
+        }
+
         [Fact]
         public async Task EnvironmentController_CloudEnvironmentAsync_BadResult()
         {
             var skuCatalog = LoadSkuCatalog("prod-rel");
-            var environmentController = CreateTestEnvironmentsController(skuCatalog);
+
+            var currentUser = MockCurrentUserProvider(new Dictionary<string, object>
+            {
+                { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
+            });
+
+            var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog, currentUserProvider: currentUser);
+
+            var skuName = skuCatalog.CloudEnvironmentSkus.Keys.FirstOrDefault();
 
             // Redirect location
-            var body = await CreateBodyAsync(null, AzureLocation.EastUs.ToString());
+            var body = await CreateBodyAsync(skuName, AzureLocation.EastUs.ToString());
             var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<RedirectResult>(actionResult);
 
             // Not supported location
-            body = await CreateBodyAsync(null, AzureLocation.AustraliaCentral.ToString());
+            body = await CreateBodyAsync(skuName, AzureLocation.AustraliaCentral.ToString());
             actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
             Assert.IsType<BadRequestObjectResult>(actionResult);
 
@@ -127,10 +161,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
         }
 
-        private EnvironmentsController CreateTestEnvironmentsController(ISkuCatalog skuCatalog = null)
+        private EnvironmentsController CreateTestEnvironmentsController(ISkuCatalog skuCatalog = null, ICurrentUserProvider currentUserProvider = null)
         {
             var cloudEnvironmentManager = MockCloudEnvironmentManager();
-            var currentUserProvider = MockCurrentUserProvider();
+            currentUserProvider = currentUserProvider ?? MockCurrentUserProvider();
             var controlPlaneInfo = MockControlPlaneInfo();
             var currentLocationProvider = MockCurrentLocationProvider();
             skuCatalog = skuCatalog ?? MockSkuCatalog();
@@ -308,7 +342,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         }
 
-        private ICurrentUserProvider MockCurrentUserProvider()
+        private ICurrentUserProvider MockCurrentUserProvider(Dictionary<string, object> programs = null)
         {
             var moq = new Mock<ICurrentUserProvider>();
             moq
@@ -324,6 +358,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     return new UserProfile.Profile
                     {
                         ProviderId = "mock-provider-id",
+                        Programs = programs
                     };
                 });
 
