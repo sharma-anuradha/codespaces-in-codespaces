@@ -181,6 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                    },
                 ComputeOS.Linux,
                 this.testContext.Location,
+                "Standard_D4s_v3",
                 null);
 
             var timerStartCompute = Stopwatch.StartNew();

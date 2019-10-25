@@ -260,6 +260,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 new System.Collections.Generic.Dictionary<string, string>(),
                 ComputeOS.Linux,
                 AzureLocation.WestUs2,
+                "Standard_D4s_v3",
                 continuationToken);
         }
     }

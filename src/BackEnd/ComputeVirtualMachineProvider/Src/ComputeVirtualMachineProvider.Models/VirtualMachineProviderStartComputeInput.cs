@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <param name="inputParams">The VM params.</param>
         /// <param name="computeOS">The ComputeOS.</param>
         /// <param name="location">Azure VM location.</param>
+        /// <param name="skuName">The Azure SKU name (vm size) of the compute resource.</param>
         /// <param name="continuationToken">The continuation token.</param>
         public VirtualMachineProviderStartComputeInput(
             AzureResourceInfo azureResourceInfo,
@@ -37,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             IDictionary<string, string> inputParams,
             ComputeOS computeOS,
             AzureLocation location,
+            string skuName,
             string continuationToken)
             : base(continuationToken)
         {
@@ -45,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             VmInputParams = inputParams;
             ComputeOS = computeOS;
             Location = location;
+            SkuName = skuName;
         }
 
         /// <summary>
@@ -71,5 +74,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets vm location.
         /// </summary>
         public AzureLocation Location { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Azure SKU name of the compute resource.
+        /// </summary>
+        public string SkuName { get; set; }
     }
 }

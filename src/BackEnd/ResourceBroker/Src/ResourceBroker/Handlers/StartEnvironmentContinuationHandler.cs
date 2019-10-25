@@ -87,6 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 input.EnvironmentVariables,
                 computeOs,
                 azureLocation,
+                compute.Value.SkuName,
                 null);
         }
 

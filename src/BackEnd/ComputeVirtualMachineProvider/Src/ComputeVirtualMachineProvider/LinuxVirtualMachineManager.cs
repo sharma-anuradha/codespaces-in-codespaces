@@ -188,6 +188,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 jobParameters.Add("storageShareName", input.FileShareConnection.StorageShareName);
                 jobParameters.Add("storageFileName", input.FileShareConnection.StorageFileName);
 
+                // Temporary: Add sku so the vm agent can limit memory on DS4_v3 VMs.
+                jobParameters.Add("skuName", input.SkuName);
+
                 var queueMessage = new QueueMessage
                 {
                     Command = "StartEnvironment",
