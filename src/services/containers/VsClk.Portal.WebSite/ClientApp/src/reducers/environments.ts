@@ -70,7 +70,8 @@ export function environments(
                 dotfilesInstallCommand,
                 dotfilesTargetPath,
                 dotfilesRepository,
-                autoShutdownDelayMinutes
+                autoShutdownDelayMinutes,
+                skuName
             } = action.payload.environment;
 
             const envLie: ILocalCloudEnvironment = {
@@ -89,7 +90,8 @@ export function environments(
                 },
                 state: StateInfo.Creating,
                 lieId: action.payload.lieId,
-                autoShutdownDelayMinutes
+                autoShutdownDelayMinutes,
+                skuName
             };
 
             return {

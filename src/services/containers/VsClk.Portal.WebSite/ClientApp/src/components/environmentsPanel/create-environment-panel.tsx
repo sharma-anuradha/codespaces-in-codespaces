@@ -351,7 +351,7 @@ export class CreateEnvironmentPanelView extends Component<
                         validateOnLoad={!!this.props.defaultRepo}
                     />
                     <Dropdown
-                        label='Put environment to sleep after...'
+                        label='Suspend idle environment after...'
                         options={autoShutdownOptions}
                         onChange={this.onChangeAutoShutdownDelayMinutes}
                         selectedKey={this.state.autoShutdownDelayMinutes.value}

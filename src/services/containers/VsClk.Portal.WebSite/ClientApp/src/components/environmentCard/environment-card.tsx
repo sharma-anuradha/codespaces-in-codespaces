@@ -23,6 +23,9 @@ import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { createTrace } from '../../utils/createTrace';
+import { useSelector } from 'react-redux';
+import { ApplicationState } from '../../reducers/rootReducer';
+import { ActivePlanInfo } from '../../reducers/plans-reducer';
 
 const trace = createTrace('environment-card');
 export interface EnvironmentCardProps {
@@ -321,6 +324,11 @@ function UnsuccessfulUrlDialog({ accept, hidden }: UnsuccessfulUrlDialogProps) {
     );
 }
 
+const skuToDisplayName = (selectedPlan: ActivePlanInfo, skuName: string) => {
+    const sku = selectedPlan.availableSkus.find(sku => sku.name === skuName);
+    return (sku ? sku.displayName : skuName);
+};
+
 const supendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {
     if (timeoutInMinutes === 0) {
         return "Never";
@@ -355,11 +363,17 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
             </Link>
         );
 
+    const selectedPlan = useSelector(
+        (state: ApplicationState) => state.plans.selectedPlan
+    );
+
     let details = [];
     details.push({ key: 'Created', value: moment(props.environment.created).format('LLLL') });
     if (props.environment.seed && props.environment.seed.moniker) {
         details.push({ key: 'Repository', value: props.environment.seed.moniker });
     }
+
+    details.push({ key: 'Instance', value: skuToDisplayName(selectedPlan!, props.environment.skuName!) });
     details.push({ key: 'Suspend', value: supendTimeoutToDisplayName(props.environment.autoShutdownDelayMinutes) });
 
     return (
