@@ -22,6 +22,7 @@ export enum StateInfo {
     ShuttingDown = 'ShuttingDown',
     Failed = 'Failed to Create',
     Starting = 'Starting',
+    Provisioning = 'Provisioning',
 }
 
 export interface ICloudEnvironment {

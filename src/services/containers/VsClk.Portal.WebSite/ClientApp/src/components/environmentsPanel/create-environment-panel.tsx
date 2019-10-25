@@ -350,13 +350,13 @@ export class CreateEnvironmentPanelView extends Component<
                         onNotifyValidationResult={this.onNotifyValidationResultGitRepositoryUrl}
                         validateOnLoad={!!this.props.defaultRepo}
                     />
+                    {this.renderSkuSelector()}
                     <Dropdown
                         label='Suspend idle environment after...'
                         options={autoShutdownOptions}
                         onChange={this.onChangeAutoShutdownDelayMinutes}
                         selectedKey={this.state.autoShutdownDelayMinutes.value}
                     />
-                    {this.renderSkuSelector()}
                 </Stack>
 
                 <Collapsible tokens={{ childrenGap: 4 }} title={'Dotfiles (optional)'}>
@@ -416,7 +416,6 @@ export class CreateEnvironmentPanelView extends Component<
                 errorMessage={errorMessage}
                 disabled={!!errorMessage}
                 onChange={this.onChangeSkuName}
-                required
             />
         );
     }

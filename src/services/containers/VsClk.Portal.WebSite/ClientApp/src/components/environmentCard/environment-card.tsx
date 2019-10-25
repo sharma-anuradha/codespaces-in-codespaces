@@ -65,6 +65,8 @@ function Details({ details }: { details: { key: string; value: string }[] }) {
 
 function stateToDisplayName(state: StateInfo) {
     switch (state) {
+        case StateInfo.Provisioning:
+            return StateInfo.Creating;
         case StateInfo.Shutdown:
             return "Suspended";
         case StateInfo.ShuttingDown:
