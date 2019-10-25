@@ -41,5 +41,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// Gets or sets the array of items to copy to the file share.
         /// </summary>
         public IEnumerable<StorageCopyItem> StorageCopyItems { get; set; }
+
+        /// <summary>
+        /// Gets or sets storage size.
+        /// </summary>
+        public int StorageSizeInGb { get; set; }
     }
 }

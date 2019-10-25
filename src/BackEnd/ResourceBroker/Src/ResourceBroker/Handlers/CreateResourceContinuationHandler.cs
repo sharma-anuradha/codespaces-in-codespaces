@@ -208,6 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureResourceGroup = resourceLocation.ResourceGroup,
                         StorageCopyItems = new[] { linuxCopyItem, windowsCopyItem },
                         ResourceTags = resourceTags,
+                        StorageSizeInGb = storageDetails.SizeInGB,
                     };
                 }
                 else

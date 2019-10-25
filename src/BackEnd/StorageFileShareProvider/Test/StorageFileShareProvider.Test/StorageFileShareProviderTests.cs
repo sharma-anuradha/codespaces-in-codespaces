@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .Setup(x => x.CreateFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
             providerHelperMoq
-                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageCopyItem[]>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageCopyItem[]>(), It.IsAny<int>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockPrepareTaskInfo);
 
             providerHelperMoq

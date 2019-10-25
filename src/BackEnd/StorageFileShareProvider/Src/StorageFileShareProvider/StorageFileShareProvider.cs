@@ -153,7 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         nextState = FileShareProviderCreateState.PrepareFileShare;
                         break;
                     case FileShareProviderCreateState.PrepareFileShare:
-                        prepareTaskInfo = await providerHelper.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageCopyItems, logger);
+                        prepareTaskInfo = await providerHelper.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageCopyItems, input.StorageSizeInGb, logger);
                         nextState = FileShareProviderCreateState.CheckFileShare;
                         break;
                     case FileShareProviderCreateState.CheckFileShare:

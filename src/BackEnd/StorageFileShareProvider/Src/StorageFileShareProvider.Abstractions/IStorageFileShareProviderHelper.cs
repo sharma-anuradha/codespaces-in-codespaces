@@ -39,9 +39,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         /// </summary>
         /// <param name="azureResourceInfo">Azure resource info of the storage account.</param>
         /// <param name="storageCopyItems">Array of storage items to copy.</param>
+        /// <param name="storageSizeInGb">Azure storage size in GB.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The task info that can be used to query the task.</returns>
-        Task<PrepareFileShareTaskInfo> StartPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, IEnumerable<StorageCopyItem> storageCopyItems, IDiagnosticsLogger logger);
+        Task<PrepareFileShareTaskInfo> StartPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, IEnumerable<StorageCopyItem> storageCopyItems, int storageSizeInGb, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Check if the preparation of the file share has completed.

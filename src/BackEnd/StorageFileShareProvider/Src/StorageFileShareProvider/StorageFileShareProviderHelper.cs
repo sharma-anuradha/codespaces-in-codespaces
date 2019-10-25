@@ -149,6 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         public async Task<PrepareFileShareTaskInfo> StartPrepareFileShareAsync(
             AzureResourceInfo azureResourceInfo,
             IEnumerable<StorageCopyItem> sourceCopyItems,
+            int storageSizeInGb,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
@@ -180,7 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 {
                     var destFile = fileShare.GetRootDirectoryReference().GetFileReference(GetStorageMountableFileName(copyItem.StorageType));
                     var destFileUriWithSas = destFile.Uri.AbsoluteUri + destFileSas;
-                    taskCopyCommands.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp $AZ_BATCH_NODE_SHARED_DIR/'{copyItem.SrcBlobFileName}' '{destFileUriWithSas}'");
+                    taskCopyCommands.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp /datadrive/images/'{copyItem.SrcBlobFileName}' '{destFileUriWithSas}'");
 
                     logger.FluentAddValue($"DestinationStorageFilePath-{copyItem.StorageType}", destFile.Uri.ToString());
                 }
@@ -197,7 +198,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
                 using (BatchClient batchClient = await batchClientFactory.GetBatchClient(desiredBatchLocation, logger))
                 {
-                    var job = await GetOrCreateJob(batchClient, sourceCopyItems);
+                    var job = await GetOrCreateJob(batchClient, sourceCopyItems, storageSizeInGb);
 
                     await job.AddTaskAsync(task);
 
@@ -390,7 +391,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <param name="batchClient">Batch client.</param>
         /// <param name="sourceCopyItems">Source copy items.</param>
         /// <returns>CloudJob.</returns>
-        private async Task<CloudJob> GetOrCreateJob(BatchClient batchClient, IEnumerable<StorageCopyItem> sourceCopyItems)
+        private async Task<CloudJob> GetOrCreateJob(BatchClient batchClient, IEnumerable<StorageCopyItem> sourceCopyItems, int storageSizeInGb)
         {
             for (var attempts = 0; attempts < 3; attempts++)
             {
@@ -401,7 +402,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 }
                 else
                 {
-                    job = ConstructJob(batchClient, sourceCopyItems);
+                    job = ConstructJob(batchClient, sourceCopyItems, storageSizeInGb);
                     try
                     {
                         await job.CommitAsync();
@@ -431,7 +432,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <param name="batchClient">Batch client.</param>
         /// <param name="sourceCopyItems">Source storage copy items.</param>
         /// <returns>CloudJob.</returns>
-        private CloudJob ConstructJob(BatchClient batchClient, IEnumerable<StorageCopyItem> sourceCopyItems)
+        private CloudJob ConstructJob(BatchClient batchClient, IEnumerable<StorageCopyItem> sourceCopyItems, int storageSizeInGb)
         {
             var jobPrepareCommandLines = new List<string>();
             var jobReleaseCommandLines = new List<string>();
@@ -439,8 +440,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             foreach (var copyItem in sourceCopyItems)
             {
-                jobPrepareCommandLines.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{copyItem.SrcBlobUrl}' $AZ_BATCH_NODE_SHARED_DIR/'{copyItem.SrcBlobFileName}'");
-                jobReleaseCommandLines.Add($"rm $AZ_BATCH_NODE_SHARED_DIR/'{copyItem.SrcBlobFileName}'");
+                jobPrepareCommandLines.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{copyItem.SrcBlobUrl}' /datadrive/images/'{copyItem.SrcBlobFileName}'");
+                if (copyItem.StorageType == StorageType.Linux)
+                {
+                    jobPrepareCommandLines.Add($"resize2fs -fp /datadrive/images/'{copyItem.SrcBlobFileName}' {storageSizeInGb}G");
+                }
+
+                jobReleaseCommandLines.Add($"rm /datadrive/images/'{copyItem.SrcBlobFileName}'");
                 jobMetadata.Add(new MetadataItem($"{batchJobMetadataKey}-{copyItem.StorageType}", copyItem.SrcBlobFileName));
             }
 
