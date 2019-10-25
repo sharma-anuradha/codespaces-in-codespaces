@@ -43,19 +43,20 @@ mkdir -p /.vsonline/vsoagent/bin
 cd /.vsonline/vsoagent/bin
 wget -qO- -O tmp.zip $SCRIPT_PARAM_VMAGENT_BLOB_URL && unzip tmp.zip && rm tmp.zip
 
-# To be removed in favor of line #56
+# To be removed in favor of line #57
 echo "Create vso shared folder ..."
 mkdir -p /.vsonline/.vsoshared
 
-# To be removed in favor of line #58
+# To be removed in favor of line #58 and 59
 echo "Create monitor files"
 touch /.vsonline/.vsoshared/connection-monitor.json
 chmod o+rw /.vsonline/.vsoshared/connection-monitor.json
 
 echo "Create vso shared folder with appropriate permissions"
-vsoSharedFolder="~/.vsonline/.vsoshared"
+vsoSharedFolder=~/.vsonline/.vsoshared
 mkdir -p $vsoSharedFolder
 chmod o+rw $vsoSharedFolder
+setfacl -dR -m o::rw $vsoSharedFolder
 
 echo "Install vso agent ..."
 chmod +x install_vsoagent.sh uninstall_vsoagent.sh
