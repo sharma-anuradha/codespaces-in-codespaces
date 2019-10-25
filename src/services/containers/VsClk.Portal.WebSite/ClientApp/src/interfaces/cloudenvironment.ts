@@ -14,13 +14,12 @@ export interface CreateEnvironmentParameters {
 }
 
 export enum StateInfo {
-    Creating = 'Creating',
     Deleted = 'Deleted',
     Available = 'Available',
     Unavailable = 'Unavailable',
     Shutdown = 'Shutdown',
     ShuttingDown = 'ShuttingDown',
-    Failed = 'Failed to Create',
+    Failed = 'Failed',
     Starting = 'Starting',
     Provisioning = 'Provisioning',
 }

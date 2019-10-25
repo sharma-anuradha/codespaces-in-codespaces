@@ -23,7 +23,10 @@ import {
     PollEnvironmentUpdateAction,
 } from '../actions/pollEnvironment';
 import { deleteEnvironmentActionType, DeleteEnvironmentAction } from '../actions/deleteEnvironment';
-import { stateChangeEnvironmentActionType, StateChangeEnvironmentAction } from '../actions/environmentStateChange';
+import {
+    stateChangeEnvironmentActionType,
+    StateChangeEnvironmentAction,
+} from '../actions/environmentStateChange';
 
 type EnvironmentsState = {
     environments: ILocalCloudEnvironment[];
@@ -41,7 +44,7 @@ type AcceptedActions =
     | PollEnvironmentUpdateAction
     | PollEnvironmentSuccessAction
     | DeleteEnvironmentAction
-    | StateChangeEnvironmentAction
+    | StateChangeEnvironmentAction;
 
 const defaultState: EnvironmentsState = {
     environments: [] as ILocalCloudEnvironment[],
@@ -71,7 +74,7 @@ export function environments(
                 dotfilesTargetPath,
                 dotfilesRepository,
                 autoShutdownDelayMinutes,
-                skuName
+                skuName,
             } = action.payload.environment;
 
             const envLie: ILocalCloudEnvironment = {
@@ -88,10 +91,10 @@ export function environments(
                     dotfilesTargetPath,
                     dotfilesRepository,
                 },
-                state: StateInfo.Creating,
+                state: StateInfo.Provisioning,
                 lieId: action.payload.lieId,
                 autoShutdownDelayMinutes,
-                skuName
+                skuName,
             };
 
             return {

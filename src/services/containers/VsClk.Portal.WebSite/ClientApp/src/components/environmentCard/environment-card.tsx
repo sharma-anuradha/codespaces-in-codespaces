@@ -66,11 +66,13 @@ function Details({ details }: { details: { key: string; value: string }[] }) {
 function stateToDisplayName(state: StateInfo) {
     switch (state) {
         case StateInfo.Provisioning:
-            return StateInfo.Creating;
+            return 'Creating';
+        case StateInfo.Failed:
+            return 'Failed to Create';
         case StateInfo.Shutdown:
-            return "Suspended";
+            return 'Suspended';
         case StateInfo.ShuttingDown:
-            return "Suspending";
+            return 'Suspending';
         default:
             return state;
     }
@@ -327,13 +329,13 @@ function UnsuccessfulUrlDialog({ accept, hidden }: UnsuccessfulUrlDialogProps) {
 }
 
 const skuToDisplayName = (selectedPlan: ActivePlanInfo, skuName: string) => {
-    const sku = selectedPlan.availableSkus.find(sku => sku.name === skuName);
-    return (sku ? sku.displayName : skuName);
+    const sku = selectedPlan.availableSkus.find((sku) => sku.name === skuName);
+    return sku ? sku.displayName : skuName;
 };
 
-const supendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {
+const suspendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {
     if (timeoutInMinutes === 0) {
-        return "Never";
+        return 'Never';
     } else if (timeoutInMinutes < 60) {
         return `After ${timeoutInMinutes} minutes`;
     } else {
@@ -365,9 +367,7 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
             </Link>
         );
 
-    const selectedPlan = useSelector(
-        (state: ApplicationState) => state.plans.selectedPlan
-    );
+    const selectedPlan = useSelector((state: ApplicationState) => state.plans.selectedPlan);
 
     let details = [];
     details.push({ key: 'Created', value: moment(props.environment.created).format('LLLL') });
@@ -375,8 +375,14 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
         details.push({ key: 'Repository', value: props.environment.seed.moniker });
     }
 
-    details.push({ key: 'Instance', value: skuToDisplayName(selectedPlan!, props.environment.skuName!) });
-    details.push({ key: 'Suspend', value: supendTimeoutToDisplayName(props.environment.autoShutdownDelayMinutes) });
+    details.push({
+        key: 'Instance',
+        value: skuToDisplayName(selectedPlan!, props.environment.skuName!),
+    });
+    details.push({
+        key: 'Suspend',
+        value: suspendTimeoutToDisplayName(props.environment.autoShutdownDelayMinutes),
+    });
 
     return (
         <Stack

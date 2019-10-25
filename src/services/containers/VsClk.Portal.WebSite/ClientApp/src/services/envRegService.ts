@@ -11,7 +11,7 @@ import { pollEnvironment } from '../actions/pollEnvironment';
 
 // Webpack configuration enforces isolatedModules use on typescript
 // and prevents direct re-exporting of types.
-export type CreateEnvironmentParameters = CreateEnvironmentParametersBase; 
+export type CreateEnvironmentParameters = CreateEnvironmentParametersBase;
 
 export async function fetchEnvironments(): Promise<ICloudEnvironment[]> {
     const configuration = useActionContext().state.configuration;
@@ -83,11 +83,11 @@ export async function createEnvironment(
             gitConfig: { userName, userEmail },
         },
         personalization,
-        state: StateInfo.Creating,
+        state: StateInfo.Provisioning,
         connection: {
             sessionId: '',
             sessionPath: '',
-        },        
+        },
         created: new Date(),
         autoShutdownDelayMinutes,
         skuName,
@@ -133,7 +133,10 @@ export async function shutdownEnvironment(id: string): Promise<void> {
     await webClient.post(`${environmentRegistrationEndpoint}/${id}/shutdown`, null);
 }
 
-export async function connectEnvironment(id: string, state: StateInfo): Promise<ICloudEnvironment | undefined> {
+export async function connectEnvironment(
+    id: string,
+    state: StateInfo
+): Promise<ICloudEnvironment | undefined> {
     const configuration = useActionContext().state.configuration;
     if (!configuration) {
         throw new Error('Configuration must be fetched before calling EnvReg service.');
