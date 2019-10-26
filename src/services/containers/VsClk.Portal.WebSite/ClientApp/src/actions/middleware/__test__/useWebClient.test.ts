@@ -287,4 +287,242 @@ describe('actionContextProvider', () => {
 
         expect(store.dispatchedActions).not.toHaveFailed();
     });
+
+    it('no retries by default on 500s', async () => {
+        jest.setTimeout(8000);
+
+        test_setMockRequestFactory(
+            createMockMakeRequestFactory({
+                responses: [
+                    {
+                        status: 500,
+                    },
+                    {
+                        ok: true,
+                    },
+                ],
+            })
+        );
+
+        async function act() {
+            const dispatch = useDispatch();
+            const action = useActionCreator();
+            const webClient = useWebClient();
+
+            try {
+                dispatch(action('hello'));
+                await webClient.request(
+                    '/',
+                    { method: 'GET' },
+                    { skipParsingResponse: true, requiresAuthentication: false }
+                );
+                dispatch(action('hello.success'));
+            } catch (err) {
+                dispatch(action('hello.failure', err));
+            }
+        }
+
+        await store.dispatch(act());
+
+        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+        expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+        expect(getDispatchedAction(store.dispatchedActions, 'hello.failure').error).toBeInstanceOf(
+            ServiceResponseError
+        );
+    });
+
+    it('retries on failed connection errors', async () => {
+        jest.setTimeout(8000);
+
+        test_setMockRequestFactory(
+            createMockMakeRequestFactory({
+                responses: [
+                    {
+                        shouldFailConnection: true,
+                    },
+                    {
+                        ok: true,
+                    },
+                ],
+            })
+        );
+
+        async function act() {
+            const dispatch = useDispatch();
+            const action = useActionCreator();
+            const webClient = useWebClient();
+
+            try {
+                dispatch(action('hello'));
+                await webClient.request(
+                    '/',
+                    { method: 'GET' },
+                    {
+                        requiresAuthentication: false,
+                        skipParsingResponse: true,
+                        retryCount: 2,
+                    }
+                );
+                dispatch(action('hello.success'));
+            } catch (err) {
+                dispatch(action('hello.failure', err));
+            }
+        }
+
+        await store.dispatch(act());
+
+        expect(store.dispatchedActions).not.toHaveFailed();
+    });
+
+    it('retries on 500s', async () => {
+        jest.setTimeout(8000);
+
+        test_setMockRequestFactory(
+            createMockMakeRequestFactory({
+                responses: [
+                    {
+                        status: 500,
+                    },
+                    {
+                        ok: true,
+                    },
+                ],
+            })
+        );
+
+        async function act() {
+            const dispatch = useDispatch();
+            const action = useActionCreator();
+            const webClient = useWebClient();
+
+            try {
+                dispatch(action('hello'));
+                await webClient.request(
+                    '/',
+                    { method: 'GET' },
+                    {
+                        requiresAuthentication: false,
+                        skipParsingResponse: true,
+                        retryCount: 2,
+                    }
+                );
+                dispatch(action('hello.success'));
+            } catch (err) {
+                dispatch(action('hello.failure', err));
+            }
+        }
+
+        await store.dispatch(act());
+
+        expect(store.dispatchedActions).not.toHaveFailed();
+    });
+
+    it('retries 2 times (total 3 requests), then fails', async () => {
+        jest.setTimeout(8000);
+
+        test_setMockRequestFactory(
+            createMockMakeRequestFactory({
+                responses: [
+                    {
+                        status: 500,
+                    },
+                    {
+                        status: 500,
+                    },
+                    {
+                        status: 500,
+                    },
+                    {
+                        ok: true,
+                    },
+                ],
+            })
+        );
+
+        async function act() {
+            const dispatch = useDispatch();
+            const action = useActionCreator();
+            const webClient = useWebClient();
+
+            try {
+                dispatch(action('hello'));
+                await webClient.request(
+                    '/',
+                    { method: 'GET' },
+                    {
+                        requiresAuthentication: false,
+                        skipParsingResponse: true,
+                        retryCount: 2,
+                    }
+                );
+                dispatch(action('hello.success'));
+            } catch (err) {
+                dispatch(action('hello.failure', err));
+            }
+        }
+
+        await store.dispatch(act());
+
+        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+        expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+        expect(getDispatchedAction(store.dispatchedActions, 'hello.failure').error).toBeInstanceOf(
+            ServiceResponseError
+        );
+    });
+
+    it('retry count shared between 500s and connection errors', async () => {
+        jest.setTimeout(8000);
+
+        test_setMockRequestFactory(
+            createMockMakeRequestFactory({
+                responses: [
+                    {
+                        shouldFailConnection: true,
+                    },
+                    {
+                        status: 500,
+                    },
+                    {
+                        shouldFailConnection: true,
+                    },
+                    {
+                        ok: true,
+                    },
+                ],
+            })
+        );
+
+        async function act() {
+            const dispatch = useDispatch();
+            const action = useActionCreator();
+            const webClient = useWebClient();
+
+            try {
+                dispatch(action('hello'));
+                await webClient.request(
+                    '/',
+                    { method: 'GET' },
+                    {
+                        requiresAuthentication: false,
+                        skipParsingResponse: true,
+                        retryCount: 2,
+                    }
+                );
+                dispatch(action('hello.success'));
+            } catch (err) {
+                dispatch(action('hello.failure', err));
+            }
+        }
+
+        await store.dispatch(act());
+
+        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+        expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+        expect(getDispatchedAction(store.dispatchedActions, 'hello.failure').error).toBeInstanceOf(
+            ServiceConnectionError
+        );
+    });
 });

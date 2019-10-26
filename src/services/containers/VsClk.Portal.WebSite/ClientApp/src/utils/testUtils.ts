@@ -33,8 +33,6 @@ declare global {
     }
 }
 
-// TODO: Figure out how to make getDispatchedAction strongly typed long term
-
 // prettier-ignore
 export function getDispatchedAction(dispatchedActions: WithMetadata<BaseAction>[], actionType: typeof createEnvironmentActionType): WithMetadata<CreateEnvironmentAction>;
 // prettier-ignore
@@ -138,6 +136,7 @@ export type MockMakeRequestOptions = {
         readonly redirected?: boolean;
         readonly status?: number;
         readonly statusText?: string;
+        readonly shouldFailConnection?: boolean;
         readonly trailer?: Promise<Headers>;
         readonly type?: ResponseType;
         readonly body?: string | object | null | undefined;
@@ -165,14 +164,9 @@ export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {
         statusText: 'Mock All Good',
         trailer: Promise.resolve(new Headers({})),
         type: 'default' as ResponseType,
+        shouldFailConnection: false,
     };
-    const { shouldFailConnection = false, delay = 0, responses = [] } = options;
-    if (shouldFailConnection) {
-        return async () => {
-            await wait(delay);
-            throw new Error('MockFailedConnection');
-        };
-    }
+    const { delay = 0, responses = [] } = options;
 
     const fetchMock: typeof fetch = async (
         requestOptions: RequestInfo,
@@ -188,8 +182,15 @@ export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {
             body = undefined,
             ok = responseDefaults.ok,
             status = responseDefaults.status,
+            shouldFailConnection = responseDefaults.shouldFailConnection ||
+                options.shouldFailConnection === true,
             ...rest
         } = responses.shift() || {};
+
+        if (shouldFailConnection) {
+            await wait(delay);
+            throw new Error('MockFailedConnection');
+        }
 
         const response: Response = {
             ...responseDefaults,

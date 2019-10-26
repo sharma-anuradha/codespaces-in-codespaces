@@ -82,7 +82,9 @@ export async function getPlans() {
         dispatch(getPlansAction());
 
         const webClient = useWebClient();
-        const plansList: Array<any> = await webClient.get(`${apiEndpoint}/plans`);
+        const plansList: IPlan[] = await webClient.get(`${apiEndpoint}/plans`, {
+            retryCount: 2,
+        });
 
         if (plansList.length) {
             const defaultPlan = plansList[0];

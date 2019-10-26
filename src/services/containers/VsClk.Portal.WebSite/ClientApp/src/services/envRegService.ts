@@ -106,7 +106,9 @@ export async function getEnvironment(id: string): Promise<ICloudEnvironment | un
     const { environmentRegistrationEndpoint } = configuration;
     const webClient = useWebClient();
 
-    return await webClient.get(`${environmentRegistrationEndpoint}/${id}`);
+    return await webClient.get(`${environmentRegistrationEndpoint}/${id}`, {
+        retryCount: 2,
+    });
 }
 
 export async function deleteEnvironment(id: string): Promise<void> {
@@ -118,7 +120,9 @@ export async function deleteEnvironment(id: string): Promise<void> {
     const { environmentRegistrationEndpoint } = configuration;
     const webClient = useWebClient();
 
-    await webClient.delete(`${environmentRegistrationEndpoint}/${id}`);
+    await webClient.delete(`${environmentRegistrationEndpoint}/${id}`, {
+        retryCount: 2,
+    });
 }
 
 export async function shutdownEnvironment(id: string): Promise<void> {
@@ -130,7 +134,9 @@ export async function shutdownEnvironment(id: string): Promise<void> {
     const { environmentRegistrationEndpoint } = configuration;
     const webClient = useWebClient();
 
-    await webClient.post(`${environmentRegistrationEndpoint}/${id}/shutdown`, null);
+    await webClient.post(`${environmentRegistrationEndpoint}/${id}/shutdown`, null, {
+        retryCount: 2,
+    });
 }
 
 export async function connectEnvironment(
@@ -146,7 +152,9 @@ export async function connectEnvironment(
     const webClient = useWebClient();
 
     if (state === StateInfo.Shutdown) {
-        await webClient.post(`${environmentRegistrationEndpoint}/${id}/start`, null);
+        await webClient.post(`${environmentRegistrationEndpoint}/${id}/start`, null, {
+            retryCount: 2,
+        });
         await pollEnvironment(id, StateInfo.Available);
     }
 

@@ -90,5 +90,5 @@ async function doApiGetRequest<T>(endpoint: string) {
 
     const webClient = useWebClient();
     const url = new URL(`${apiEndpoint}${endpoint}`);
-    return await webClient.get<T>(url.toString());
+    return await webClient.get<T>(url.toString(), { retryCount: 2 });
 }

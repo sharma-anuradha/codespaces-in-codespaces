@@ -2,6 +2,7 @@ import { useActionContext } from './useActionContext';
 
 import { trace as baseTrace } from '../../utils/trace';
 import { getTopLevelDomain } from '../../utils/getTopLevelDomain';
+import { wait } from '../../dependencies';
 
 const trace = baseTrace.extend('useWebClient:trace');
 // tslint:disable-next-line: no-console
@@ -10,11 +11,13 @@ trace.log = console.trace.bind(console);
 const defaultRequestOptions = {
     requiresAuthentication: true,
     skipParsingResponse: false,
+    retryCount: 0,
 } as const;
 
 type RequestOptions = {
     requiresAuthentication: boolean;
     skipParsingResponse: boolean;
+    retryCount: number;
 };
 
 async function request<TResult>(
@@ -41,6 +44,7 @@ async function request<TResult>(
     options: RequestInit,
     requestOptions: Partial<RequestOptions>
 ): Promise<TResult | Response>;
+// tslint:disable-next-line: max-func-body-length
 async function request<TResult>(
     url: string,
     options: RequestInit,
@@ -52,97 +56,119 @@ async function request<TResult>(
         throw new Error('Missing URL');
     }
 
-    requestOptions = {
-        ...defaultRequestOptions,
-        ...requestOptions,
-    };
+    const retryCount = requestOptions.retryCount || defaultRequestOptions.retryCount;
+    return await requestInternal(0);
 
-    let { headers, body, ...rest } = options;
+    async function requestInternal(retry: number): Promise<TResult | Response> {
+        requestOptions = {
+            ...defaultRequestOptions,
+            ...requestOptions,
+        };
 
-    if (requestOptions.requiresAuthentication) {
-        const {
-            state: {
-                authentication: { token },
-            },
-        } = useActionContext();
+        let { headers, body, ...rest } = options;
 
-        if (!token) {
+        if (requestOptions.requiresAuthentication) {
+            const {
+                state: {
+                    authentication: { token },
+                },
+            } = useActionContext();
+
+            if (!token) {
+                throw new ServiceAuthenticationError();
+            }
+
+            headers = {
+                Authorization: `Bearer ${token!.accessToken}`,
+                ...headers,
+            } as Record<string, string>;
+        }
+
+        let response;
+        try {
+            headers = {
+                'Content-Type': 'application/json',
+                ...headers,
+            } as Record<string, string>;
+
+            const { makeRequest } = useActionContext();
+
+            response = await makeRequest(url, {
+                ...rest,
+                credentials: 'same-origin',
+                headers,
+                body,
+            });
+        } catch (err) {
+            if (retry < retryCount) {
+                await wait(retry * 1000);
+                return requestInternal(retry + 1);
+            }
+
+            throw new ServiceConnectionError(err);
+        }
+
+        if (response.status === 500 && retry < retryCount) {
+            await wait(retry * 1000);
+            return requestInternal(retry + 1);
+        }
+
+        // if 307 from services, manually follow the redirect
+        if (response.status === 307) {
+            trace('Redirect: ', response);
+            const redirectUrl = response.headers.get('location');
+            if (redirectUrl) {
+                // allow only vs domain redirects
+                if (getTopLevelDomain(redirectUrl) === 'visualstudio.com') {
+                    const opts: RequestInit = {
+                        ...options,
+                    };
+
+                    const prevUrlOrigin = new URL(url);
+                    const redirectUrlOrigin = new URL(redirectUrl);
+
+                    if (prevUrlOrigin.origin !== redirectUrlOrigin.origin) {
+                        opts.mode = 'cors';
+                    }
+
+                    trace('Follow redirect: ', redirectUrl, opts, requestOptions);
+                    return await request(redirectUrl, opts, requestOptions);
+                }
+            }
+        }
+
+        if (response.status === 401) {
             throw new ServiceAuthenticationError();
         }
 
-        headers = {
-            Authorization: `Bearer ${token!.accessToken}`,
-            ...headers,
-        } as Record<string, string>;
-    }
-
-    let response;
-    try {
-        headers = {
-            'Content-Type': 'application/json',
-            ...headers,
-        } as Record<string, string>;
-
-        const { makeRequest } = useActionContext();
-
-        response = await makeRequest(url, {
-            ...rest,
-            credentials: 'same-origin',
-            headers,
-            body,
-        });
-    } catch (err) {
-        throw new ServiceConnectionError(err);
-    }
-
-    // if 307 from services, manually follow the redirect
-    if (response.status === 307) {
-        trace('Redirect: ', response);
-        const redirectUrl = response.headers.get('location');
-        if (redirectUrl) {
-            // allow only vs domain redirects
-            if (getTopLevelDomain(redirectUrl) === 'visualstudio.com') {
-                const opts: RequestInit = {
-                    ...options,
-                };
-
-                const prevUrlOrigin = new URL(url);
-                const redirectUrlOrigin = new URL(redirectUrl);
-
-                if (prevUrlOrigin.origin !== redirectUrlOrigin.origin) {
-                    opts.mode = 'cors';
-                }
-
-                trace('Follow redirect: ', redirectUrl, opts, requestOptions);
-                return await request(redirectUrl, opts, requestOptions);
-            }
+        if (!response.ok) {
+            throw new ServiceResponseError(url, response.status);
         }
-    }
 
-    if (response.status === 401) {
-        throw new ServiceAuthenticationError();
-    }
+        if (requestOptions.skipParsingResponse) {
+            return response;
+        }
 
-    if (!response.ok) {
-        throw new ServiceResponseError(url, response.status);
-    }
-
-    if (requestOptions.skipParsingResponse) {
-        return response;
-    }
-
-    try {
-        const content = await response.json();
-        return content as TResult;
-    } catch (err) {
-        throw new ServiceContentError(url, response.status);
+        try {
+            const content = await response.json();
+            return content as TResult;
+        } catch (err) {
+            throw new ServiceContentError(url, response.status);
+        }
     }
 }
 
-async function getRequest<TResult = {}>(url: string) {
-    return await request<TResult>(url, {
-        method: 'GET',
-    });
+async function getRequest<TResult = {}>(
+    url: string,
+    requestOptions: Partial<Omit<RequestOptions, 'skipParsingResponse'>> = {}
+) {
+    return await request<TResult>(
+        url,
+        {
+            method: 'GET',
+        },
+        { ...requestOptions, skipParsingResponse: false }
+    );
 }
 
 function isValidRequestBody(obj: RequestInit['body'] | {}): obj is RequestInit['body'] {
@@ -203,7 +229,11 @@ async function postRequest<TResult = object>(
     );
 }
 
-async function putRequest<TResult = object>(url: string, requestBody: RequestInit['body'] | {}) {
+async function putRequest<TResult = object>(
+    url: string,
+    requestBody: RequestInit['body'] | {},
+    requestOptions?: Partial<RequestOptions>
+) {
     let body: RequestInit['body'];
     if (!isValidRequestBody(requestBody)) {
         body = JSON.stringify(requestBody);
@@ -217,13 +247,16 @@ async function putRequest<TResult = object>(url: string, requestBody: RequestIni
     });
 }
 
-async function deleteRequest<TResult = void>(url: string) {
+async function deleteRequest<TResult = void>(
+    url: string,
+    requestOptions: Partial<RequestOptions> = {}
+) {
     return await request<TResult>(
         url,
         {
             method: 'DELETE',
         },
-        { skipParsingResponse: true }
+        { skipParsingResponse: true, ...requestOptions }
     );
 }
 
