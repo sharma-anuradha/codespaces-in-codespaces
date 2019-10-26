@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 if (e is OutOfCapacityException capacityException)
                 {
                     Response.Headers.Add("Retry-After", TimeSpan.FromSeconds(30).TotalSeconds.ToString());
-                    return StatusCode(StatusCodes.Status503ServiceUnavailable, e.Message);
+                    return StatusCode(StatusCodes.Status503ServiceUnavailable, e);
                 }
 
                 throw;

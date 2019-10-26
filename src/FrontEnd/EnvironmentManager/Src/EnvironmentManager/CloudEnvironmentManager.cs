@@ -473,9 +473,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
 
                 // Allocate Storage and Compute
-                var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, logger);
-                cloudEnvironment.Storage = allocationResult.Storage;
-                cloudEnvironment.Compute = allocationResult.Compute;
+                try
+                {
+                    var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, logger);
+                    cloudEnvironment.Storage = allocationResult.Storage;
+                    cloudEnvironment.Compute = allocationResult.Compute;
+                }
+                catch (RemoteInvocationException ex)
+                {
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex.Message);
+
+                    result.ErrorCode = Contracts.ErrorCodes.UnableToAllocateResources;
+                    result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
+                    return result;
+                }
 
                 // Create the Live Share workspace
                 cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger);
@@ -717,7 +730,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
         }
 
-       /// <inheritdoc/>
+        /// <inheritdoc/>
         public async Task<CloudEnvironment> GetEnvironmentByIdAsync(
             string id,
             IDiagnosticsLogger logger)
@@ -915,18 +928,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             var computeRequest = new CreateResourceRequestBody
-                {
-                    Type = ResourceType.ComputeVM,
-                    SkuName = cloudEnvironment.SkuName,
-                    Location = cloudEnvironment.Location,
-                };
+            {
+                Type = ResourceType.ComputeVM,
+                SkuName = cloudEnvironment.SkuName,
+                Location = cloudEnvironment.Location,
+            };
 
             var storageRequest = new CreateResourceRequestBody
-                {
-                    Type = ResourceType.StorageFileShare,
-                    SkuName = cloudEnvironment.SkuName,
-                    Location = cloudEnvironment.Location,
-                };
+            {
+                Type = ResourceType.StorageFileShare,
+                SkuName = cloudEnvironment.SkuName,
+                Location = cloudEnvironment.Location,
+            };
 
             var inputRequest = new List<CreateResourceRequestBody> { computeRequest, storageRequest };
 

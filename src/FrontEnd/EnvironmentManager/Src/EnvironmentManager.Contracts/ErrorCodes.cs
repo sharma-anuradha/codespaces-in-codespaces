@@ -48,5 +48,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Environment is not shutdown.
         /// </summary>
         EnvironmentNotShutdown = 7,
+
+        /// <summary>
+        /// Unable to allocate Storage or Compute resource from the pools.
+        /// </summary>
+        UnableToAllocateResources = 8,
     }
 }
