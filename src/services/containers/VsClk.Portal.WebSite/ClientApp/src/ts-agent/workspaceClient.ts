@@ -143,10 +143,14 @@ export class WorkspaceClient implements rpc.Disposable {
 
         this.workspaceClient = this.getServiceProxy<vsls.WorkspaceService>(vsls.WorkspaceService);
 
+        var clientCapabilities = new vsls.ClientCapabilities();
+        clientCapabilities.isNonInteractive = true;
+
         this.sessionInfo = await this.workspaceClient.joinWorkspaceAsync({
             id: this.workspaceInfo.id,
             connectionMode: vsls.ConnectionMode.Local, // Note "local" connection mode is correct when talking to remote service.
             joiningUserSessionToken: this.workspaceAccess.sessionToken,
+            clientCapabilities: clientCapabilities            
         });
     }
 

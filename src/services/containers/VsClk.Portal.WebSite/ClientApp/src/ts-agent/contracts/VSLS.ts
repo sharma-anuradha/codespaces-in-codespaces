@@ -846,6 +846,7 @@ export enum ConnectionMode {
 export class ClientCapabilities {
     extensionReadOnlySupport?: boolean;
     clientReadOnlySupport?: boolean;
+    isNonInteractive?: boolean;
 }
 
 export class WorkspaceJoinInfo {
