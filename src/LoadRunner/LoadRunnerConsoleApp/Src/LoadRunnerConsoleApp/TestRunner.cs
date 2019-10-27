@@ -182,7 +182,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
                                 {
                                     // Create environement
                                     var result = await EnvironementsRepository.ProvisionEnvironmentAsync(
-                                        planId, $"GeneratedName_{Guid.NewGuid().ToString()}", repository, location, null, itemLogger.NewChildLogger());
+                                        planId, $"GeneratedName_{Guid.NewGuid().ToString()}", repository, location, "standardLinux", itemLogger.NewChildLogger());
 
                                     // Record the environment
                                     environments.Add(result.Id);

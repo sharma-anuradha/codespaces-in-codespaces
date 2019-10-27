@@ -37,10 +37,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
 
+            var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20 };
+
+            var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+            mockSystemConfiguration
+                .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), planSettings.DefaultMaxPlansPerSubscription))
+                .Returns(Task.FromResult(planSettings.DefaultMaxPlansPerSubscription));
+
+            planSettings.Init(mockSystemConfiguration.Object);
+
             this.accountRepository = new MockPlanRepository();
-            this.accountManager = new PlanManager(
-                this.accountRepository,
-                new PlanManagerSettings() { MaxPlansPerSubscription = 20 });
+            this.accountManager = new PlanManager(this.accountRepository, planSettings);
         }
 
         [Fact]

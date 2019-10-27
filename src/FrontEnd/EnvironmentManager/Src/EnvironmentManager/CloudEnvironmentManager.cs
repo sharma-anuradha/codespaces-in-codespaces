@@ -425,7 +425,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 // Check for quota on # of environments per plan
                 var totalEnvironments = await ListEnvironmentsAsync(userId: null, string.Empty, plan.ResourceId, logger);
-                if (totalEnvironments.Count() >= EnvironmentManagerSettings.MaxEnvironmentsPerPlan)
+                if (totalEnvironments.Count() >= await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(plan.Subscription, logger))
                 {
                     logger.AddDuration(duration)
                         .AddCloudEnvironment(cloudEnvironment)

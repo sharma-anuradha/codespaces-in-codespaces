@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Moq;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
@@ -23,10 +25,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
 
+            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20 };
+
+            var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+            mockSystemConfiguration
+                .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), settings.DefaultMaxPlansPerSubscription))
+                .Returns(Task.FromResult(settings.DefaultMaxPlansPerSubscription));
+
+            settings.Init(mockSystemConfiguration.Object);
+
             this.planRepository = new MockPlanRepository();
-            this.planManager = new PlanManager(
-                this.planRepository,
-                new PlanManagerSettings() { MaxPlansPerSubscription = 20 });
+            this.planManager = new PlanManager(this.planRepository, settings);
         }
 
         private VsoPlan GeneratePlan(string name, string subscriptionOption = null, string userId = null)

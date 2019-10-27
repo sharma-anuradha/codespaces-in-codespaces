@@ -259,6 +259,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Use VS SaaS middleware.
             app.UseVsSaaS(!isProduction);
 
+            // Finish setting up config
+            var frontEndAppSettings = app.ApplicationServices.GetService<AppSettings>().FrontEnd;
+            var systemConfig = app.ApplicationServices.GetService<ISystemConfiguration>();
+            frontEndAppSettings.EnvironmentManagerSettings.Init(systemConfig);
+            frontEndAppSettings.PlanManagerSettings.Init(systemConfig);
+
             // Frameworks
             app.UseMvc();
 

@@ -9,10 +9,15 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.AzureCosmosDb;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Newtonsoft.Json;
@@ -129,6 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             var appSettingsConfiguration = Configuration.GetSection(AppSettingsSectionName);
             AppSettings = appSettingsConfiguration.Get<TAppSettings>();
             services.Configure<TAppSettings>(appSettingsConfiguration);
+            services.AddSingleton(AppSettings);
             return AppSettings;
         }
 
@@ -172,6 +178,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
             services.AddSingleton<ITaskHelper, TaskHelper>();
             services.AddSingleton<IImageUrlGenerator, BlobImageUrlGenerator>();
+
+            // Setup configuration
+            services.AddDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(
+                CachedCosmosDbSystemConfigurationRepository.ConfigureOptions);
+            services.AddSingleton<ISystemConfiguration, PersistedSystemConfiguration>();
         }
 
         /// <summary>

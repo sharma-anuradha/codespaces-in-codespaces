@@ -1,20 +1,19 @@
-﻿using Microsoft.VsSaaS.Common;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Xunit;
+using Moq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
@@ -54,12 +53,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.loggerFactory = new DefaultLoggerFactory();
             this.logger = loggerFactory.New();
 
+            var defaultCount = 20;
+            var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = defaultCount };
+            var environmentSettings = new EnvironmentManagerSettings() { DefaultMaxEnvironmentsPerPlan = defaultCount };
+
+            var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+            mockSystemConfiguration
+                .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), defaultCount))
+                .Returns(Task.FromResult(defaultCount));
+
+            planSettings.Init(mockSystemConfiguration.Object);
+            environmentSettings.Init(mockSystemConfiguration.Object);
+
             this.environmentRepository = new MockCloudEnvironmentRepository();
             this.planRepository = new MockPlanRepository();
             this.billingEventRepository = new MockBillingEventRepository();
-            this.accountManager = new PlanManager(
-                this.planRepository,
-                new PlanManagerSettings() { MaxPlansPerSubscription = 20 });
+            this.accountManager = new PlanManager(this.planRepository, planSettings);
             this.billingEventManager = new BillingEventManager(this.billingEventRepository,
                                                                 new MockBillingOverrideRepository());
             this.workspaceRepository = new MockClientWorkspaceRepository();
@@ -73,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.accountManager,
                 this.authRepository,
                 this.billingEventManager,
-                new EnvironmentManagerSettings() { MaxEnvironmentsPerPlan = 20 });
+                environmentSettings);
         }
 
         public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")

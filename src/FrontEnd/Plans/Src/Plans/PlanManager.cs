@@ -21,17 +21,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         private readonly IPlanRepository planRepository;
         private PlanManagerSettings planManagerSettings;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PlanManager"/> class.
+        /// </summary>
+        /// <param name="planRepository">Target plan repository.</param>
+        /// <param name="planManagerSettings">Target plan manager settings.</param>
         public PlanManager(
-                    IPlanRepository planRepository,
-                    PlanManagerSettings planManagerSettings)
+            IPlanRepository planRepository,
+            PlanManagerSettings planManagerSettings)
         {
             this.planRepository = planRepository;
             this.planManagerSettings = Requires.NotNull(planManagerSettings, nameof(planManagerSettings));
         }
 
-        /// <summary>
-        /// Creates or Updates an plan.
-        /// </summary>
+        /// <inheritdoc/>
         public async Task<PlanManagerServiceResult> CreateOrUpdateAsync(VsoPlan model, IDiagnosticsLogger logger)
         {
             var result = default(PlanManagerServiceResult);
@@ -53,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             // Validate Plan quota is not reached.
             var plans = await ListAsync(userId: null, model.Plan.Subscription, resourceGroup: null, logger);
-            if (plans.Count() >= planManagerSettings.MaxPlansPerSubscription)
+            if (plans.Count() >= await planManagerSettings.MaxPlansPerSubscriptionAsync(model.Plan.Subscription, logger))
             {
                 result.VsoPlan = null;
                 result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
@@ -65,9 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             return result;
         }
 
-        /// <summary>
-        /// Retrieves an existing plan using the provided plan info.
-        /// </summary>
+        /// <inheritdoc/>
         public async Task<PlanManagerServiceResult> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(plan, nameof(VsoPlanInfo));
@@ -77,8 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             var result = new PlanManagerServiceResult
             {
                 VsoPlan = (await this.planRepository.GetWhereAsync(
-                                                        (model) => model.Plan == plan, logger, null))
-                                                        .SingleOrDefault(),
+                    (model) => model.Plan == plan, logger, null)).SingleOrDefault(),
             };
 
             if (result.VsoPlan == null)
@@ -89,15 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             return result;
         }
 
-        /// <summary>
-        /// Retrieves an enumerable list of plans in a subscription.
-        /// </summary>
-        /// <param name="userId">ID of the owner of the plans to list, or null
-        /// to list plans owned by any user.</param>
-        /// <param name="subscriptionId">ID of the subscription containing the plans, or null
-        /// to list plans across all a user's subscriptions. Required if userId is omitted.</param>
-        /// <param name="resourceGroup">Optional name of the resource group containing the plans,
-        /// or null to list plans across all resource groups in the subscription.</param>
+        /// <inheritdoc/>
         public async Task<IEnumerable<VsoPlan>> ListAsync(
             string userId,
             string subscriptionId,
@@ -151,9 +143,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             }
         }
 
-        /// <summary>
-        /// Deletes an exisitng plan using the provided plan info.
-        /// </summary>
+        /// <inheritdoc/>
         public async Task<bool> DeleteAsync(VsoPlanInfo plan, IDiagnosticsLogger logger)
         {
             // Find model in DB
@@ -174,10 +164,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             }
 
             return await this.planRepository.DeleteAsync(
-                                    new DocumentDbKey(
-                                        modelList.Id,
-                                        new PartitionKey(modelList.Plan.Subscription)),
-                                    logger);
+                new DocumentDbKey(modelList.Id, new PartitionKey(modelList.Plan.Subscription)),
+                logger);
         }
     }
 }
