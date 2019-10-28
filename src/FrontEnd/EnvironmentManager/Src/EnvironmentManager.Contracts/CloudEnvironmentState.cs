@@ -58,5 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Environment is detaching storage in preparation for shutdown.
         /// </summary>
         ShuttingDown,
+
+        /// <summary>
+        /// The environment failed and is not recoverable.
+        /// </summary>
+        Failed,
     }
 }
