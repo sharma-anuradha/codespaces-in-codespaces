@@ -70,19 +70,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                                             new List<AzureLocation> { region },
                                                             planShard);
 
-
                     foreach (var plan in plans)
                     {
-                        Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan &&
-                                                         startTime <= bev.Time &&
-                                                         bev.Time < endTime &&
-                                                         bev.Type == BillingEventTypes.BillingSummary
-                                                         && ((BillingSummary)bev.Args).SubmissionState == BillingSubmissionState.None;
-                        var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, Logger);
-                        foreach (var summary in billingSummaries)
-                        {
-                            addedEntries |= await ProcessSummary(summary, batchID);
-                        }
+                        await Logger.OperationScopeAsync(
+                            $"{ServiceName}_submission_plan",
+                            async (_) =>
+                            {
+                                Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan &&
+                                                                    startTime <= bev.Time &&
+                                                                    bev.Time < endTime &&
+                                                                    bev.Type == BillingEventTypes.BillingSummary
+                                                                    && ((BillingSummary)bev.Args).SubmissionState == BillingSubmissionState.None;
+                                var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, Logger);
+                                foreach (var summary in billingSummaries)
+                                {
+                                    addedEntries |= await ProcessSummary(summary, batchID);
+                                }
+                            }, swallowException: true);
                     }
 
                     // If we've pushed anything, now we should create a queue entry to record the whole batch.
