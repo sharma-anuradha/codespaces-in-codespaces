@@ -100,5 +100,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             throw new NotImplementedException();
         }
+
+        public Task<int?> GetApproximateMessageCount(IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -72,7 +72,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         .FluentAddValue("QueueVisibilityTimeout", timeout);
 
                     var results = await queue.GetMessagesAsync(popCount, timeout, null, null);
-
                     childLogger.FluentAddValue("QueueFoundItems", results.Count());
 
                     return results;
@@ -95,6 +94,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     var queue = await GetQueueAsync();
 
                     await queue.DeleteMessageAsync(message);
+                });
+        }
+
+        /// <inheritdoc/>
+        public async Task<int?> GetApproximateMessageCount(IDiagnosticsLogger logger)
+        {
+           return await logger.OperationScopeAsync(
+                $"azurequeue_{LoggingDocumentName}_getCount",
+                async (childLogger) =>
+                {
+                    var queue = await GetQueueAsync();
+                    await queue.FetchAttributesAsync();
+                    return queue.ApproximateMessageCount;
                 });
         }
     }

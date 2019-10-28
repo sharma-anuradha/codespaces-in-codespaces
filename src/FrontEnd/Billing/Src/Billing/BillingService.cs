@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             IDiagnosticsLogger diagnosticsLogger,
                             IClaimedDistributedLease claimedDistributedLease,
                             ITaskHelper taskHelper)
-            : base(billingEventManager, controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, "billing-worker")
+            : base(billingEventManager, controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, "billing_worker")
         {
             Requires.NotNull(billingEventManager, nameof(billingEventManager));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
@@ -104,7 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 .FluentAddBaseValue("endCalculationTime", end);
 
             await logger.OperationScopeAsync(
-                $"{ServiceName}-begin-plan-calculations",
+                $"{ServiceName}_begin_plan_calculations",
                 async (childLogger) =>
                 {
                     // Get the last BillingSummary.

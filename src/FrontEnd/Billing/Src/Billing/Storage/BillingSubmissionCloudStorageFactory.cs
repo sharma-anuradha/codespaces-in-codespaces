@@ -10,6 +10,7 @@ using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Storage;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using queue = Microsoft.Azure.Storage.Auth;
@@ -77,10 +78,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 
                 var provider = new StorageQueueClientProvider(queueClient);
 
-                var collection = new BillingSubmissionQueueCollection(provider, healthProvider, loggerFactory, resourceNameBuilder, logValues);
-
+                var usageCollection = new BillingSubmissionQueueCollection(provider, healthProvider, loggerFactory, resourceNameBuilder, logValues);
+                var errorCollection = new BillingSubmissionErrorQueueCollection(provider, healthProvider, loggerFactory, resourceNameBuilder, logValues);
                 // cache the collection
-                BillingSubmissionCloudStorageClient storageclient = new BillingSubmissionCloudStorageClient(tableClient, collection, logger);
+                BillingSubmissionCloudStorageClient storageclient = new BillingSubmissionCloudStorageClient(tableClient, usageCollection,errorCollection, logger);
                 storedCollections.GetOrAdd(location, storageclient);
                 return storageclient;
             }

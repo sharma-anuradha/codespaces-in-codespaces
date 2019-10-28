@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -32,5 +33,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="queueSubmission">the queue entry to submit</param>
         /// <returns>a task that completed when the push completes</returns>
         Task PushBillingQueueSubmission(BillingSummaryQueueSubmission queueSubmission);
+
+        /// <summary>
+        /// Checks if there's table submission errors on the queue.
+        /// </summary>
+        /// <returns> true if there's any errors in the queue</returns>
+        Task<bool> CheckForErrorsOnQueue();
+
+        /// <summary>
+        /// Gets the next set of errors for the next 1 entry on the error PA queue.
+        /// </summary>
+        /// <returns>all the errors for a given queue.</returns>
+        Task<IEnumerable<BillSubmissionErrorResult>> GetSubmissionErrors();
     }
 }

@@ -39,15 +39,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                logger.LogInfo("BillingSummarySubmission worker is processing");
                 var duration = logger.StartDuration();
+                await logger.OperationScopeAsync(
+                  $"billSubWorker_begin",
+                  async (childLogger) =>
+                  {
+                      // Do the actual work
+                      await billingSummarySubmissionService.ProcessBillingSummariesAsync(cancellationToken);
+                      await billingSummarySubmissionService.CheckForBillingSubmissionErorrs(cancellationToken);
 
-                // Do the actual work
-                await billingSummarySubmissionService.ProcessBillingSummariesAsync(cancellationToken);
-
-                // Log
-                logger.AddDuration(duration).LogInfo(GetType().FormatLogMessage(nameof(ExecuteAsync)));
-                logger.LogInfo("BillingSummarySubmission worker is done processing a cycle");
+                  }, swallowException: true);
 
                 // Delay for 1 hour
                 var remainingTime = taskRunIntervalMinutes - TimeSpan.FromMilliseconds(duration.Elapsed.TotalMilliseconds).TotalMinutes;

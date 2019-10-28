@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var absoluteDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0, DateTimeKind.Utc);
             var start = absoluteDate.Subtract(TimeSpan.FromHours(lookBackThresholdHrs));
             var end = absoluteDate;
-            var controlPlaneRegions = controlPlaneInfo.GetAllDataPlaneLocations().Shuffle();
+            var controlPlaneRegions = controlPlaneInfo.Stamp.DataPlaneLocations.Shuffle();
             var planShards = billingEventManager.GetShards();
             var plansToRegionsShards = planShards.SelectMany(x => controlPlaneRegions, (planShard, region) => new { planShard, region });
 
@@ -72,17 +72,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Logger.FluentAddValue("endCalculationTime", end);
 
             await taskHelper.RunBackgroundEnumerableAsync(
-                $"{ServiceName}-run",
+                $"{ServiceName}_run",
                 plansToRegionsShards,
                 async (x, childlogger) =>
                 {
                     var planShard = x.planShard;
                     var region = x.region;
-                    var leaseName = $"{ServiceName}-{planShard}-{region}";
+                    var leaseName = $"{ServiceName}_{planShard}_{region}";
                     childlogger.FluentAddBaseValue("Service", "billingservices");
                     childlogger.FluentAddBaseValue("leaseName", leaseName);
                     using (var lease = await claimedDistributedLease.Obtain(
-                                                  $"{ServiceName}-leases",
+                                                  $"{ServiceName}_leases",
                                                   leaseName,
                                                   TimeSpan.FromHours(1),
                                                   childlogger))
