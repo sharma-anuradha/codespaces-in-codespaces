@@ -454,7 +454,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.StaticEnvironment, cloudEnvironment.Id, Guid.Empty, logger);
                     }
 
-                    cloudEnvironment.Seed = new SeedInfo { SeedType = SeedType.StaticEnvironment };
+                    if (cloudEnvironment.Seed == default || cloudEnvironment.Seed.SeedType != SeedType.StaticEnvironment)
+                    {
+                        cloudEnvironment.Seed = new SeedInfo { SeedType = SeedType.StaticEnvironment };
+                    }
                     cloudEnvironment.SkuName = StaticEnvironmentSku.Name;
 
                     // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.

@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string SkuName { get; } = Name;
 
         /// <inheritdoc/>
-        public string DisplayName { get; } = "Self-Hosted";
+        public string DisplayName { get; } = "Self-Hosted Environment";
 
         /// <inheritdoc/>
         public IEnumerable<AzureLocation> SkuLocations { get; } = Enum.GetValues(typeof(AzureLocation)) as AzureLocation[];
