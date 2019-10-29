@@ -2,7 +2,6 @@ export const DEFAULT_EXTENSIONS = [
     'vscode.theme-defaults',
     'ms-vsliveshare.vsliveshare',
     'visualstudioexptteam.vscodeintellicode',
-    '/.vsonline/extensions/vsonline-extensions.vsix',
     '/.vsonline/extensions/vsonline.vsix',
 ];
 
