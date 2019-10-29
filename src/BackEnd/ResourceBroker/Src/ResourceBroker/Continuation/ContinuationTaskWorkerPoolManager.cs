@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 LogBaseName,
                 (childLogger) =>
                 {
-                    logger.FluentAddValue("ContinuationStartLevel", TargetWorkerCount);
+                    childLogger.FluentAddValue("ContinuationStartLevel", TargetWorkerCount);
 
                     // Spawn other worker threads
                     for (var i = 0; i < TargetWorkerCount; i++)
@@ -101,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     var aboveMaximumCount = 0;
                     var restartedCount = 0;
 
-                    logger.FluentAddValue("WorkerLevelPreCount", WorkerPool.Count);
+                    childLogger.FluentAddValue("WorkerLevelPreCount", WorkerPool.Count);
 
                     // Move the pool level up and down based on how active the workers are
                     foreach (var entry in WorkerPool)
@@ -111,13 +111,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                             && WorkerPool.Count > MinWorkerCount)
                         {
                             overCapacityCount++;
-                            EndWorker(entry.Key, "OverCapacity", logger);
+                            EndWorker(entry.Key, "OverCapacity", childLogger);
                         }
                         else if (worker.ActivityLevel > 175
                             && WorkerPool.Count < MaxWorkerCount)
                         {
                             underCapacityCount++;
-                            StartWorker("UnderCapacity", logger);
+                            StartWorker("UnderCapacity", childLogger);
                         }
                     }
 
@@ -127,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         for (var i = WorkerPool.Count - 1; i < TargetWorkerCount; i++)
                         {
                             belowMinimumCount++;
-                            StartWorker("BelowMinimum", logger);
+                            StartWorker("BelowMinimum", childLogger);
                         }
                     }
                     else if (WorkerPool.Count > MaxWorkerCount)
@@ -137,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         foreach (var worker in workers)
                         {
                             aboveMaximumCount++;
-                            EndWorker(worker.Key, "AboveMaximum", logger);
+                            EndWorker(worker.Key, "AboveMaximum", childLogger);
                         }
                     }
 
@@ -147,12 +147,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         if (worker.Value.Disposed)
                         {
                             restartedCount++;
-                            EndWorker(worker.Key, "DisposedRemove", logger);
-                            StartWorker("DisposedAdd", logger);
+                            EndWorker(worker.Key, "DisposedRemove", childLogger);
+                            StartWorker("DisposedAdd", childLogger);
                         }
                     }
 
-                    logger.FluentAddValue("WorkerLevelPostCount", WorkerPool.Count)
+                    childLogger.FluentAddValue("WorkerLevelPostCount", WorkerPool.Count)
                         .FluentAddValue("WorkerLevelOverCapacityCount", overCapacityCount)
                         .FluentAddValue("WorkerLevelUnderCapacityCount", underCapacityCount)
                         .FluentAddValue("WorkerLevelBelowMinimumCount", belowMinimumCount)
@@ -175,7 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     var id = Guid.NewGuid();
                     var worker = ServiceProvider.GetService<IContinuationTaskWorker>();
 
-                    logger.FluentAddBaseValue("ContinuationWorkerId", id)
+                    childLogger.FluentAddBaseValue("ContinuationWorkerId", id)
                         .FluentAddValue("ContinuationWorkerStartReason", reason);
 
                     // Spin worker up in the backround
@@ -196,7 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 $"{LogBaseName}_end_worker",
                 (childLogger) =>
                 {
-                    logger.FluentAddBaseValue("ContinuationWorkerId", id)
+                    childLogger.FluentAddBaseValue("ContinuationWorkerId", id)
                         .FluentAddValue("ContinuationWorkerEndReason", reason);
 
                     // Remove from worker store
@@ -208,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         worker.Dispose();
                     }
 
-                    logger.FluentAddBaseValue("ContinuationWorkerRemoved", didRemove);
+                    childLogger.FluentAddBaseValue("ContinuationWorkerRemoved", didRemove);
                 });
         }
     }
