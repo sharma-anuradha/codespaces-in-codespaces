@@ -55,8 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             model.Id = Guid.NewGuid().ToString();
 
             // Validate Plan quota is not reached.
-            var plans = await ListAsync(userId: null, model.Plan.Subscription, resourceGroup: null, logger);
-            if (plans.Count() >= await planManagerSettings.MaxPlansPerSubscriptionAsync(model.Plan.Subscription, logger))
+            if (await IsPlanCreationAllowedAsync(model.Plan.Subscription, logger))
             {
                 result.VsoPlan = null;
                 result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
@@ -66,6 +65,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             result.VsoPlan = await this.planRepository.CreateOrUpdateAsync(model, logger);
 
             return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> IsPlanCreationAllowedAsync(string subscriptionId, IDiagnosticsLogger logger)
+        {
+            var plans = await ListAsync(userId: null, subscriptionId, resourceGroup: null, logger);
+
+            return plans.Count() >= await planManagerSettings.MaxPlansPerSubscriptionAsync(subscriptionId, logger);
         }
 
         /// <inheritdoc/>

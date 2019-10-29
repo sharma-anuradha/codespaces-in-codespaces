@@ -57,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate")]
-        public IActionResult OnResourceCreationValidate(
+        public async Task<IActionResult> OnResourceCreationValidate(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
@@ -83,6 +83,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 logger.AddDuration(duration)
                         .LogErrorWithDetail("plan_create_validate_error", ex.Message);
                 return CreateErrorResponse("NullParameters");
+            }
+
+            if (!await this.planManager.IsPlanCreationAllowedAsync(subscriptionId, logger))
+            {
+                logger.AddDuration(duration)
+                        .LogErrorWithDetail("plan_create_validate_error", "Plan creation is not allowed.");
+                return CreateErrorResponse("ValidateResourceFailed");
             }
 
             if (resource.Properties != null && resource.Properties.UserId != null)
