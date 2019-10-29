@@ -247,7 +247,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     stateChanged = false;
 
                     // Obtain a fresh record.
-                    record.Value = (await ObtainReferenceAsync(input, innerLogger)).Value;
+                    record.Value = (await FetchReferenceAsync(Guid.Parse(record.Value.Id), logger)).Value;
 
                     // Determine what needs to be updated
                     if (Operation == ResourceOperation.Starting)
