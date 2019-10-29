@@ -27,13 +27,13 @@ apt-get install -y docker.io
 # Block Azure Instance Metadata Service IP on host (OUTPUT) and also in containers (DOCKER-USER)
 # This needs to happen after the docker install for DOCKER-USER to exist in iptables.
 echo "Block Azure Instance Metadata Service ..."
-echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections \
-  && echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections \
-  && apt-get install -y iptables-persistent \
-  && INSTANCE_METADATA_IP=169.254.169.254 \
-  && iptables -I OUTPUT -d $INSTANCE_METADATA_IP -j DROP \
-  && iptables -I DOCKER-USER -d $INSTANCE_METADATA_IP -j DROP \
-  && iptables-save > /etc/iptables/rules.v4
+echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
+apt-get install -y iptables-persistent
+INSTANCE_METADATA_IP=169.254.169.254
+iptables -I OUTPUT -d $INSTANCE_METADATA_IP -j DROP
+iptables -I DOCKER-USER -d $INSTANCE_METADATA_IP -j DROP
+iptables-save > /etc/iptables/rules.v4
 
 echo "Install unzip ..."
 apt-get -yq update && apt-get install -y --no-install-recommends unzip
