@@ -64,6 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             try
             {
                 ValidateResource(heartBeat.ResourceId);
+                logger.AddBaseValue("VmResourceId", heartBeat.ResourceId.ToString());
             }
             catch (Exception e)
             {
@@ -107,12 +108,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 await Task.WhenAll(backendHeartBeatProcessingTask);
             }
-            catch (Exception e)
+            catch (HttpResponseStatusException e)
+            {
+                logger.AddDuration(duration)
+                    .AddReason("Backend heartbeat processing failed.")
+                    .LogException(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)), e);
+                return StatusCode((int)e.StatusCode);
+            }
+            catch (RemoteInvocationException e)
             {
                 logger.AddDuration(duration)
                     .AddReason("Backend heartbeat processing failed.")
                     .LogException(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)), e);
                 return UnprocessableEntity();
+            }
+            catch (Exception e)
+            {
+                logger.AddDuration(duration)
+                    .AddReason("Backend heartbeat processing failed.")
+                    .LogException(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)), e);
+                throw;
             }
 
             logger.AddDuration(duration)
@@ -125,7 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             ValidationUtil.IsTrue(HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName), "Heartbeat VMToken has invalid vmResourceId");
             ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out var vmResourceId), $"Heartbeat VMToken has invalid vmResourceId");
-            ValidationUtil.IsRequired<Guid>(resourceId, $"Heartbeat received with empty vmResourceId, from the VM {vmResourceId}");
+            ValidationUtil.IsTrue(resourceId != default, $"Heartbeat received with empty vmResourceId, from the VM {vmResourceId}");
             ValidationUtil.IsTrue(vmResourceId == resourceId, $"Heartbeat received with conflicting vmResourceId = {resourceId}, from the VM {vmResourceId}");
         }
     }

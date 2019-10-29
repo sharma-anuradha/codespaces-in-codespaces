@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
@@ -52,7 +53,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         [HttpPost("{resourceId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateHeartBeatAsync([FromRoute] Guid resourceId, [FromBody] HeartBeatBody heartBeat)
         {
             var logger = HttpContext.GetLogger();
@@ -74,6 +74,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
             {
                 await ResourceHeartBeatHttp.UpdateHeartBeatAsync(resourceId, heartBeat, logger.NewChildLogger());
             }
+            catch (ResourceNotFoundException)
+            {
+                return UnprocessableEntity();
+            }
             catch (Exception e)
             {
                 logger.AddDuration(duration)
@@ -94,20 +98,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
 
         private void ValidateResource(HeartBeatBody heartBeat, Guid resourceId)
         {
-            if (resourceId == null)
-            {
-                throw new Exception($"Heartbeat received with empty vmResourceId");
-            }
-
-            if (heartBeat.ResourceId == null)
-            {
-                throw new Exception($"Heartbeat received with empty vmResourceId");
-            }
-
-            if (heartBeat.ResourceId != resourceId)
-            {
-                throw new Exception($"Heartbeat received with conflicting vmResourceId = {heartBeat.ResourceId}, from the VM {resourceId}");
-            }
+            ValidationUtil.IsTrue(resourceId != default, $"Heartbeat received with empty vmResourceId, from the VM");
+            ValidationUtil.IsTrue(heartBeat.ResourceId != default, $"Heartbeat received with empty vmResourceId, from the VM {resourceId}");
+            ValidationUtil.IsTrue(heartBeat.ResourceId == resourceId, $"Heartbeat received with conflicting vmResourceId = {heartBeat.ResourceId}, from the VM {resourceId}");
         }
     }
 }

@@ -5,6 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 
@@ -41,7 +42,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             }
 
             var environmentData = (EnvironmentData)data;
-            ValidateState(environmentData);
+
+            // No-op if the environmentId is empty.
+            if (string.IsNullOrEmpty(environmentData.EnvironmentId))
+            {
+                return;
+            }
 
             var cloudEnvironment = await environmentManager.GetEnvironmentByIdAsync(environmentData.EnvironmentId, logger);
             ValidateCloudEnvironment(cloudEnvironment, environmentData.EnvironmentId);
@@ -51,8 +57,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
             await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, logger, newState);
 
-            // Verify if shutdown is needed
-            if (IsFlagSet(environmentData.State, VsoEnvironmentState.Idle))
+            // Shutdown if the environment is idle
+            if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
             {
                 await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, vmResourceId.ToString(), logger);
             }
@@ -60,23 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
         private void ValidateCloudEnvironment(CloudEnvironment cloudEnvironment, string inputEnvironmentId)
         {
-            if (cloudEnvironment == null)
-            {
-                throw new Exception($"No environments found matching the EnvironmentId {inputEnvironmentId} from {nameof(EnvironmentData)}");
-            }
-
-            if (cloudEnvironment.State == CloudEnvironmentState.Deleted)
-            {
-                throw new Exception($"Heartbeat received for a deleted environment {inputEnvironmentId}");
-            }
-        }
-
-        private void ValidateState(EnvironmentData environmentData)
-        {
-            if (string.IsNullOrEmpty(environmentData.EnvironmentId))
-            {
-                throw new Exception($"Environment Id is empty for {nameof(EnvironmentData)}");
-            }
+            ValidationUtil.IsTrue(cloudEnvironment != null, $"No environments found matching the EnvironmentId {inputEnvironmentId} from {nameof(EnvironmentData)}");
+            ValidationUtil.IsTrue(cloudEnvironment.State != CloudEnvironmentState.Deleted, $"Heartbeat received for a deleted environment {inputEnvironmentId}");
         }
 
         private CloudEnvironmentState DetermineNewEnvironmentState(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
@@ -84,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             switch (environmentData.EnvironmentType)
             {
                 case VsoEnvironmentType.ContainerBased:
-                    return DetermineNewStateForDockerBasedEnvironment(cloudEnvironment, environmentData);
+                    return DetermineNewStateForContainerBasedEnvironment(cloudEnvironment, environmentData);
 
                 case VsoEnvironmentType.VirtualMachineBased:
                     return DetermineNewStateForVmBasedEnvironment(cloudEnvironment, environmentData);
@@ -94,22 +85,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             }
         }
 
-        private CloudEnvironmentState DetermineNewStateForDockerBasedEnvironment(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
+        private CloudEnvironmentState DetermineNewStateForContainerBasedEnvironment(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
         {
-            // Check if all the required flags are set
-            var isEnvRunning = (environmentData.State & (VsoEnvironmentState.DockerDaemonRunning |
-                                                        VsoEnvironmentState.ContainerRunning |
-                                                        VsoEnvironmentState.CliBootstrapRunning |
-                                                        VsoEnvironmentState.VslsAgentRunning |
-                                                        VsoEnvironmentState.VslsRelayConnected))
-                                                        ==
-                                                        (VsoEnvironmentState.DockerDaemonRunning |
-                                                        VsoEnvironmentState.ContainerRunning |
-                                                        VsoEnvironmentState.CliBootstrapRunning |
-                                                        VsoEnvironmentState.VslsAgentRunning |
-                                                        VsoEnvironmentState.VslsRelayConnected);
-
-            if (isEnvRunning)
+            if (IsEnvironmentRunning(environmentData))
             {
                 // If current state is NOT Available, change status to Available (when Enviroment is fully running).
                 if (cloudEnvironment.State != CloudEnvironmentState.Available)
@@ -131,12 +109,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
         private CloudEnvironmentState DetermineNewStateForVmBasedEnvironment(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
         {
-            return default;
+            throw new NotImplementedException();
         }
 
-        private bool IsFlagSet(VsoEnvironmentState current, VsoEnvironmentState flag)
+        private bool IsEnvironmentRunning(EnvironmentData environmentData)
         {
-            return (current & flag) == flag;
+            switch (environmentData.EnvironmentType)
+            {
+                case VsoEnvironmentType.ContainerBased:
+                    return IsContainerBasedEnvironmentRunning(environmentData);
+
+                case VsoEnvironmentType.VirtualMachineBased:
+                    return IsVmBasedEnvironmentRunning(environmentData);
+
+                default:
+                    return default;
+            }
+        }
+
+        private bool IsContainerBasedEnvironmentRunning(EnvironmentData environmentData)
+        {
+            var state = environmentData.State;
+            var runningState = VsoEnvironmentState.DockerDaemonRunning
+                               | VsoEnvironmentState.ContainerRunning
+                               | VsoEnvironmentState.CliBootstrapRunning
+                               | VsoEnvironmentState.VslsAgentRunning
+                               | VsoEnvironmentState.VslsRelayConnected;
+
+            return state.HasFlag(runningState);
+        }
+
+        private bool IsVmBasedEnvironmentRunning(EnvironmentData environmentData)
+        {
+            throw new NotImplementedException();
         }
     }
 }

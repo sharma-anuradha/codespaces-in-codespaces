@@ -57,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                   {
                       var message = $"No resources found with id {heartBeatInput.ResourceId} specified in the heartbeat";
                       childLogger.LogError(message);
-                      throw new Exception(message);
+                      throw new ResourceNotFoundException(heartBeatInput.ResourceId);
                   }
 
                   ResourceHeartBeatRecord resourceHeartBeatRecord = Mapper.Map<ResourceHeartBeatRecord>(heartBeatInput);
@@ -83,21 +83,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             if (existingDataList == null || existingDataList.Count() == 0)
             {
-                return newDataList;
+                return newDataList?.Where(newData => newData != null);
             }
 
-            var mergedDataList = existingDataList.ToList();
+            var mergedDataList = existingDataList.Where(data => data != null).ToList();
             if (newDataList != null)
             {
                 foreach (var newData in newDataList)
                 {
-                    var existingdata = mergedDataList.Find(existingData => existingData.Name == newData.Name);
-                    if (existingdata != default)
+                    if (newData != null)
                     {
-                        mergedDataList.Remove(existingdata);
-                    }
+                        var existingdata = mergedDataList.Find(existingData => existingData?.Name == newData.Name);
+                        if (existingdata != default)
+                        {
+                            mergedDataList.Remove(existingdata);
+                        }
 
-                    mergedDataList.Add(newData);
+                        mergedDataList.Add(newData);
+                    }
                 }
             }
 
