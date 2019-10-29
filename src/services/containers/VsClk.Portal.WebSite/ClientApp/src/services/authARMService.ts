@@ -1,5 +1,5 @@
 import { expirationTimeBackgroundTokenRefreshThreshold, armAPIVersion } from '../constants';
-import { randomStr } from '../utils/randomStr';
+import { randomString } from '../utils/randomString';
 import { createTrace } from '../utils/createTrace';
 import { getTokenExpiration } from '../utils/getTokenExpiration';
 import { createNavigateUrl } from './msal/createNavigateUrl';
@@ -9,21 +9,27 @@ import { getFreshArmTokenSilentFactory } from './msal/getFreshArmTokenSilent';
 import { getFreshArmTokenPopup } from './msal/getFreshArmTokenPopup';
 
 import { IToken } from '../typings/IToken';
+import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 
-const tokenCache = inLocalStorageJWTTokenCacheFactory('vso-arm-token');
+const tokenCache = inLocalStorageJWTTokenCacheFactory('vsonline.arm.token');
 
 export const trace = createTrace('AuthARMService');
 
-export const getFreshArmTokenForTenant = async (tenantId: string, timeout: number = 10000) => {
+export const getFreshArmTokenForTenant = async (currentToken: ITokenWithMsalAccount, tenantId: string, timeout: number = 10000) => {
     // get the precalculated redirection URL from MSAL.js
-    const nonce = randomStr();
-    const renewUrl = await createNavigateUrl(tenantId, nonce);
+    const nonce = randomString();
+
+    if (!currentToken) {
+        throw new Error('User is not authenticated.');
+    }
+
+    const renewUrl = await createNavigateUrl(currentToken, tenantId, nonce);
     try {
         const getFreshArmTokenSilent = getFreshArmTokenSilentFactory();
         
         const token = await getFreshArmTokenSilent(renewUrl, nonce, timeout);
         if (token) {
-            tokenCache.cacheToken(tenantId, token);
+            await tokenCache.cacheToken(tenantId, token);
         }
         return token;
     } catch (e) {
@@ -31,7 +37,7 @@ export const getFreshArmTokenForTenant = async (tenantId: string, timeout: numbe
         if (e instanceof LoginRequiredError) {
             const token = await getFreshArmTokenPopup(renewUrl, nonce, timeout);
             if (token) {
-                tokenCache.cacheToken(tenantId, token);
+                await tokenCache.cacheToken(tenantId, token);
             }
             return token;
         }
@@ -65,23 +71,23 @@ const getTenantId = async (armToken: IToken): Promise<string | null> => {
     }
 }
 
-export const getARMTokenForTenant = async (tenantId: string, expiration: number, timeout: number = 10000): Promise<IToken | null> => {
-    const cachedToken = tokenCache.getCachedToken(tenantId, expiration);
+export const getARMTokenForTenant = async (token: ITokenWithMsalAccount, tenantId: string, expiration: number, timeout: number = 10000): Promise<IToken | null> => {
+    const cachedToken = await tokenCache.getCachedToken(tenantId, expiration);
     if (cachedToken) {
         const expirationTime = getTokenExpiration(cachedToken);
         if (expirationTime > expiration) {
             if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
-                getFreshArmTokenForTenant(tenantId, timeout);
+                getFreshArmTokenForTenant(token, tenantId, timeout);
             }
             return cachedToken;
         }
     }
     
-    return await getFreshArmTokenForTenant(tenantId, timeout);
+    return await getFreshArmTokenForTenant(token, tenantId, timeout);
 }
 
-export const getARMToken = async (expiration: number, timeout: number = 10000): Promise<IToken | null> => {
-    const armOrgsToken = await getARMTokenForTenant('organizations', expiration, timeout);
+export const getARMToken = async (token: ITokenWithMsalAccount, expiration: number, timeout: number = 10000): Promise<IToken | null> => {
+    const armOrgsToken = await getARMTokenForTenant(token, 'organizations', expiration, timeout);
 
     if (!armOrgsToken) {
         return null;
@@ -93,7 +99,7 @@ export const getARMToken = async (expiration: number, timeout: number = 10000): 
         return null;
     }
 
-    const armToken = await getARMTokenForTenant(tenantId, expiration, timeout);
+    const armToken = await getARMTokenForTenant(token, tenantId, expiration, timeout);
 
     return armToken;
 }

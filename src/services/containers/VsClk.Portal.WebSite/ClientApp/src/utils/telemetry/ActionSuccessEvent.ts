@@ -3,9 +3,7 @@ import { ITelemetryEvent, TelemetryPropertyValue } from './types';
 export class ActionSuccessEvent implements ITelemetryEvent {
     readonly name: string = 'vsonline/action/success';
     constructor(private readonly action: WithMetadata<BaseAction>) {}
-    getProperties(
-        defaultProperties: Record<string, TelemetryPropertyValue>
-    ): Record<string, TelemetryPropertyValue> {
+    getProperties(defaultProperties: Record<string, TelemetryPropertyValue>) {
         return {
             ...defaultProperties,
             ...this.action.metadata.telemetryProperties,

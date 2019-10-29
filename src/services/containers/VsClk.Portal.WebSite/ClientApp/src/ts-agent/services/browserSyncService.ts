@@ -3,7 +3,7 @@ import { WorkspaceClient } from '../workspaceClient';
 import { authService } from '../../services/authService';
 import { getAuthToken } from '../../actions/getAuthToken';
 import { setAuthCookie } from '../../utils/setAuthCookie';
-import { loginPath, environmentsPath } from '../../routes';
+import { loginPath, environmentsPath } from '../../routerPaths';
 
 export enum BrowserConnectorMessages {
     ConnectToEnvironment = 'VSO_BrowserSync_ConnectToEnvironment',

@@ -1,4 +1,4 @@
-import { Context } from './useActionContext';
+import { IActionContext } from '../../interfaces/IActionContext';
 import { AnyAction } from 'redux';
 import { TelemetryPropertyValue } from '../../utils/telemetry/types';
 
@@ -42,11 +42,11 @@ export type WithMetadata<T> = T & {
 export type WithType<T> = T & { type: string };
 
 export interface BaseActionWithContext<T extends string = string> {
-    (context: Context): WithMetadata<BaseAction<T>>;
+    (context: IActionContext): WithMetadata<BaseAction<T>>;
 }
 
 export interface ActionWithPayloadWithContext<T extends string = string, P = undefined> {
-    (context: Context): WithMetadata<ActionWithPayload<T, P>>;
+    (context: IActionContext): WithMetadata<ActionWithPayload<T, P>>;
 }
 
 export interface ErrorActionWithContext<
@@ -54,7 +54,7 @@ export interface ErrorActionWithContext<
     P = undefined,
     E extends Error = Error
 > {
-    (context: Context): WithMetadata<ErrorAction<T, P, E>>;
+    (context: IActionContext): WithMetadata<ErrorAction<T, P, E>>;
 }
 
 export type AutoType<T extends string, P, E> = E extends Error
@@ -82,19 +82,19 @@ export interface Dispatch {
 export interface DispatchWithContext {
     <T extends string, P, E extends Error>(
         action: ErrorActionWithContext<T, P, E>,
-        context: Context
+        context: IActionContext
     ): WithMetadata<ErrorAction<T, P, E>>;
     <T extends string, P>(
         action: ActionWithPayloadWithContext<T, P>,
-        context: Context
+        context: IActionContext
     ): WithMetadata<ActionWithPayload<T, P>>;
-    <T extends string>(action: BaseActionWithContext<T>, context: Context): WithMetadata<
+    <T extends string>(action: BaseActionWithContext<T>, context: IActionContext): WithMetadata<
         BaseAction<T>
     >;
 
     <T>(action: Promise<T>): Promise<T>;
     (action: Promise<void>): Promise<void>;
-    (action: void, context: Context): void;
+    (action: void, context: IActionContext): void;
     (action: AnyAction): any;
     (action: void): void;
 }

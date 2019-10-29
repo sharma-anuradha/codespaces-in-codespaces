@@ -9,8 +9,12 @@ import { expirationTimeBackgroundTokenRefreshThreshold, aadAuthorityUrlCommon } 
 import { debounceInterval } from '../utils/debounce-interval';
 
 import { logout as logoutFromArmAuthService, getARMToken } from './authARMService';
-import { getAuthTokenSuccessAction } from '../actions/getAuthToken';
+import { getAuthTokenSuccessAction } from '../actions/getAuthTokenActions';
 import { createTrace } from '../utils/createTrace';
+import { IToken } from '../typings/IToken';
+
+import { setIsInternal } from './isInternalUserTracker';
+import { sendTelemetry } from '../utils/telemetry';
 
 const trace = createTrace('AuthService');
 
@@ -36,6 +40,24 @@ export const clientApplication = new UserAgentApplication(msalConfig);
 
 const tokenCache = inLocalStorageJWTTokenCacheFactory();
 
+tokenCache.onTokenChange(({ name, token }) => {
+    if (!token) {
+        setIsInternal(false);
+        return;
+    }
+
+    const expirationTime = getTokenExpiration(token);
+    if (expirationTime <= 0) {
+        setIsInternal(false);
+        return;
+    }
+
+    const { email, preferred_username } = (token as ITokenWithMsalAccount).account.idTokenClaims;
+    const userEmail = email || preferred_username;
+
+    setIsInternal(!!(userEmail && userEmail.includes('@microsoft.com')));
+});
+
 class AuthService {
     public async login() {
         const loginRequest = {
@@ -49,26 +71,25 @@ class AuthService {
     }
 
     public getCachedToken = async (expiration: number = 60): Promise<ITokenWithMsalAccount | undefined> => {
-        const cachedToken = tokenCache.getCachedToken(LOCAL_STORAGE_KEY, expiration);
-
         this.keepUserAuthenticated();
+
+        const cachedToken = await tokenCache.getCachedToken(LOCAL_STORAGE_KEY, expiration);
         
         if (cachedToken) {
             const expirationTime = getTokenExpiration(cachedToken);
             
-            if (expirationTime > expiration) {
-                if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
-                    this.acquireToken();
-                }
-
-                return cachedToken as ITokenWithMsalAccount;
+            if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
+                this.acquireToken();
             }
+
+            return cachedToken as ITokenWithMsalAccount;
         }
-        
+
         try {
             return await this.acquireToken();
         } catch (e) {
             trace.error(e);
+            sendTelemetry('vsonline/auth/acquire-token/error', e);
         }
 
         return undefined;
@@ -90,7 +111,7 @@ class AuthService {
     private async acquireTokenInternal(): Promise<ITokenWithMsalAccount | undefined> {
         try {
             const token = await acquireToken(SCOPES);
-            this.cacheToken(token);
+            await tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
             getAuthTokenSuccessAction(token);
 
             return token;
@@ -99,17 +120,23 @@ class AuthService {
         }
     }
 
-    private cacheToken(token: ITokenWithMsalAccount) {
-        tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
-    }
-
     public async logout() {
-        tokenCache.clearCache();
+        await tokenCache.clearCache();
         logoutFromArmAuthService();
 
         if (this.keepUserAuthenticated) {
             this.keepUserAuthenticated.stop();
         }
+    }
+
+    public async getARMToken(expiration: number, timeout: number = 10000): Promise<IToken | null> {
+        const cachedToken = await this.getCachedToken(expiration);
+
+        if (!cachedToken) {
+            throw new Error('User is not authenticated.')
+        }
+
+        return await getARMToken(cachedToken, expiration, timeout);
     }
 
     /**

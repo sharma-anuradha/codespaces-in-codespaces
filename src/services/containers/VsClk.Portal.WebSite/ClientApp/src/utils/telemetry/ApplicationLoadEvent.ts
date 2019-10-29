@@ -6,9 +6,7 @@ export class ApplicationLoadEvent implements ITelemetryEvent {
 
     constructor() {}
 
-    getProperties(
-        defaultProperties: Record<string, TelemetryPropertyValue>
-    ): Record<string, TelemetryPropertyValue> {
+    getProperties(defaultProperties: Record<string, TelemetryPropertyValue>) {
         const { requestStart, responseEnd } = window.performance.timing;
 
         const pageRequestDuration = responseEnd - requestStart;

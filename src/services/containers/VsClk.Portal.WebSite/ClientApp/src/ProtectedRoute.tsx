@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { ApplicationState } from './reducers/rootReducer';
 import { Loader } from './components/loader/loader';
 import { telemetry } from './utils/telemetry';
-import { loginPath, environmentsPath } from './routes';
+import { loginPath, environmentsPath } from './routerPaths';
 
 const getAuthInfo = ({
     authentication: { isAuthenticated, isAuthenticating },

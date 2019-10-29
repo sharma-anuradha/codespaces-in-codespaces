@@ -1,10 +1,10 @@
 import { createMockStore, MockStore } from '../../utils/testUtils';
 
 import {
-    getAuthToken,
     getAuthTokenActionType,
     getAuthTokenSuccessActionType,
-} from '../getAuthToken';
+} from '../getAuthTokenActions';
+import { getAuthToken } from '../getAuthToken';
 import { authService } from '../../services/authService';
 
 describe('fetchConfiguration', () => {

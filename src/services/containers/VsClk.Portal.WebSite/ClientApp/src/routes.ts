@@ -7,19 +7,20 @@ import { Login } from './components/login/login';
 import { Workbench } from './components/workbench/workbench';
 import { GitHubLogin } from './components/gitHubLogin/gitHubLogin';
 import { BlogPost } from './BlogPost';
+import {
+    environmentPath,
+    environmentsPath,
+    newEnvironmentPath,
+    newPlanPath,
+    githubLoginPath,
+    loginPath,
+    rootPath
+} from './routerPaths';
 
 type Route = RouteProps & {
     authenticated: boolean;
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
 };
-
-export const rootPath = '/';
-export const environmentPath = '/environment/:id';
-export const environmentsPath = '/environments';
-export const newEnvironmentPath = '/environments/new';
-export const loginPath = '/login';
-export const githubLoginPath = '/github/login';
-export const newPlanPath = '/environments/plan';
 
 export const routes: Route[] = [
     {

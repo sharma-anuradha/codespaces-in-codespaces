@@ -13,7 +13,7 @@ import { login } from '../../actions/login';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
-import { environmentsPath } from '../../routes';
+import { environmentsPath } from '../../routerPaths';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 import { setAuthCookie } from '../../utils/setAuthCookie';
 import { blogPostUrl } from '../../BlogPost';

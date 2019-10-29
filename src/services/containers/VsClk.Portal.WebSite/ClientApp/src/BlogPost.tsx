@@ -2,7 +2,7 @@ import React, { useEffect, Fragment } from 'react';
 import { useSelector } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { ApplicationState } from './reducers/rootReducer';
-import { loginPath, environmentsPath } from './routes';
+import { loginPath, environmentsPath } from './routerPaths';
 import { RouteComponentProps } from 'react-router';
 
 export const blogPostUrl =

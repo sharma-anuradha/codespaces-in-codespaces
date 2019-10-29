@@ -41,7 +41,7 @@ const defaultState: PlansReducerState = {
     selectedPlan: null,
 };
 
-const plansStoreStateKey = 'vso-plans-store-state';
+const plansStoreStateKey = 'vsonline.plans.selector.state';
 
 // TODO: move to persisted store
 const savePlansState = (state: PlansReducerState) => {

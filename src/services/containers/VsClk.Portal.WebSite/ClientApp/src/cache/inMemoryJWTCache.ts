@@ -4,14 +4,13 @@ import { TokenType } from '../typings/TokenType';
 export const inMemoryCacheFactory = ()=> {
     const inMemoryCache = new Map<string, TokenType>();
 
-    return new InMemoryJWTCache<TokenType>(inMemoryCache);
+    return new InMemoryJWTCache(inMemoryCache);
 }
 
 const inMemoryCacheSymbol = Symbol();
-
 const inMemoryPrefixSymbol = Symbol();
 
-export class InMemoryJWTCache<T> implements IJWTCache<TokenType> {
+export class InMemoryJWTCache implements IJWTCache<TokenType> {
     private [inMemoryCacheSymbol]: Map<string, TokenType>;
     private [inMemoryPrefixSymbol]: string | undefined;
 
@@ -20,12 +19,12 @@ export class InMemoryJWTCache<T> implements IJWTCache<TokenType> {
         this[inMemoryPrefixSymbol] = keyPrefix;
     }
 
-    protected getKeyName(name: string) {
+    public getKeyName(name: string) {
         if (!this[inMemoryPrefixSymbol]) {
             return name;
         }
 
-        return `${this[inMemoryPrefixSymbol]}_${name}`;
+        return `${this[inMemoryPrefixSymbol]}.${name}`;
     }
 
     public cacheToken(name: string, token: TokenType): IJWTCache<TokenType> {

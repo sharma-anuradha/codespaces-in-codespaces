@@ -1,11 +1,11 @@
 		
 import { ensureRedirectionIframe } from './ensureRedirectionIframe';
 import { renewTokenFactory } from './renewTokenFactory';
-import { randomStr } from '../../utils/randomStr';
+import { randomString } from '../../utils/randomString';
 
 export const getFreshArmTokenSilentFactory = () => {
     let iframe: HTMLIFrameElement | undefined;
-    const iframeId = `js-vso-${randomStr()}`;
+    const iframeId = `js-vso-${randomString()}`;
     
     return renewTokenFactory({
         onCreateRenewEntity: (renewUrl: URL) => {

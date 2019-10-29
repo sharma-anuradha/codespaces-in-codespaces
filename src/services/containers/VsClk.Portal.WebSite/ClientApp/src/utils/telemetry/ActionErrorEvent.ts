@@ -4,9 +4,7 @@ import { ITelemetryEvent, TelemetryPropertyValue } from './types';
 export class ActionErrorEvent implements ITelemetryEvent {
     readonly name: string = 'vsonline/action/failure';
     constructor(private readonly action: WithMetadata<ErrorAction>) {}
-    getProperties(
-        defaultProperties: Record<string, TelemetryPropertyValue>
-    ): Record<string, TelemetryPropertyValue> {
+    getProperties(defaultProperties: Record<string, TelemetryPropertyValue>) {
         return {
             ...defaultProperties,
             ...this.action.metadata.telemetryProperties,

@@ -1,16 +1,16 @@
 import { AuthenticationParameters } from 'msal';
 
-import { authService } from '../authService';
-
 import { ServerRequestParameters } from './serverRequestParameters';
 import { AuthorityFactory } from './authorityFactory';
 import { UrlUtils } from './urlUtils';
 
+import { IToken } from '../../typings/IToken';
+import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
+
 const VSCODE_APP_ID = 'aebc6443-996d-45c2-90f0-388ff96faa56';
 const ARM_RESOURCE_ID = 'https://management.core.windows.net';
 
-export const createNavigateUrl = async (tenantId: string, nonce: string) => {
-    const currentToken = await authService.getCachedToken();
+export const createNavigateUrl = async (currentToken: ITokenWithMsalAccount, tenantId: string, nonce: string) => {
 
     if (!currentToken) {
         throw new Error('User is not authenticated.')

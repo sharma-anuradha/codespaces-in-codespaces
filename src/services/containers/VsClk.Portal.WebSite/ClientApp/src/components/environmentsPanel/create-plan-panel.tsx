@@ -12,7 +12,6 @@ import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader
 
 import { Loader } from '../loader/loader';
 
-import { getARMToken } from '../../services/authARMService';
 import { authService } from '../../services/authService';
 import { armAPIVersion } from '../../constants';
 import { getPlans } from '../../actions/plans-actions';
@@ -245,7 +244,7 @@ export class CreatePlanPanelComponent extends Component<
             this.setState({ isCreatingPlan: true });
 
             const userID = await this.getUserID();
-            const myAuthToken = await getARMToken(60);
+            const myAuthToken = await authService.getARMToken(60);
             if (!myAuthToken) {
                 return;
             }
@@ -321,9 +320,10 @@ export class CreatePlanPanelComponent extends Component<
         return apiVersion;
     }
 
-    private async getFromAzure(url: string) {
-        const myAuthToken = await getARMToken(60);
-        if (myAuthToken) {
+    private async getFromAzure(url: string){
+        const myAuthToken = await authService.getARMToken(60);
+        
+        if(myAuthToken){
             const authToken = 'Bearer ' + myAuthToken.accessToken;
             let response = await fetch(url, {
                 headers: {

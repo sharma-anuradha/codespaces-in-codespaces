@@ -1,4 +1,4 @@
-import { telemetry } from "./telemetry";
+import { isInternalUser } from '../services/isInternalUserTracker';
 
 /**
  * Function to replace all paths with [PATH] label.
@@ -34,7 +34,7 @@ export const cleanupPII = (str: string | undefined): string | undefined => {
 }
 
 export const cleanupPIIForExternal = (str?: string): string | undefined => {
-    if (telemetry.isInternal) {
+    if (isInternalUser) {
         return str;
     }
 

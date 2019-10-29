@@ -17,6 +17,7 @@
     "babel-plugin-named-asset-import": "^0.3.1",
     "babel-preset-react-app": "^7.0.2",
     "bfj": "6.1.1",
+    "buffer": "^5.4.3",
     "case-sensitive-paths-webpack-plugin": "2.2.0",
     "classnames": "^2.2.6",
     "cross-env": "^6.0.0",
@@ -93,11 +94,13 @@
     "@types/uuid": "^3.4.5",
     "@types/vscode": "^1.36.0",
     "atob": "^2.1.2",
+    "colors": "^1.4.0",
     "fork-ts-checker-notifier-webpack-plugin": "^1.0.2",
     "fork-ts-checker-webpack-plugin": "^1.5.0",
     "fs-extra": "7.0.1",
     "http-proxy-middleware": "^0.19.1",
     "jest-junit": "^8.0.0",
+    "madge": "^3.4.4",
     "nodemon": "^1.19.3",
     "npm-run-all": "^4.1.5",
     "tar": "^4.4.10",
@@ -129,7 +132,8 @@
     "update-vscode": "node scripts/npm/update-vscode.js",
     "update-github-secret": "node scripts/npm/update-github-secret.js",
     "get-dev-cert": "node scripts/npm/get-dev-ssl-cert.js",
-    "lint": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json"
+    "lint": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json && npm run circular-dependencies",
+    "circular-dependencies": "node ./scripts/circular-dependencies.js"
   },
   "eslintConfig": {
     "extends": "react-app"

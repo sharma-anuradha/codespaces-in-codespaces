@@ -1,4 +1,4 @@
-import { randomStr } from '../../utils/randomStr';
+import { randomString } from '../../utils/randomString';
 import { StringDict } from './stringDict';
 import { Account } from './account';
 import { Authority } from './authority';
@@ -126,11 +126,11 @@ export class ServerRequestParameters {
             this.scopes = [ ...scope ];
         }
 
-        this.nonce = randomStr();
-        this.state = state || randomStr();
+        this.nonce = randomString();
+        this.state = state || randomString();
 
         // TODO: Change this to user passed vs generated with the new PR
-        this.correlationId = randomStr();
+        this.correlationId = randomString();
 
         // telemetry information
         this.xClientSku = 'MSAL.JS';

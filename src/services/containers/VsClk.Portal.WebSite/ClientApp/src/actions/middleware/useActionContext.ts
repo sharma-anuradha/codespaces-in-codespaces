@@ -1,12 +1,14 @@
+import { MiddlewareAPI } from 'redux';
+
 import { createUniqueId } from '../../dependencies';
 import { DispatchWithContext } from './types';
 import { ApplicationState } from '../../reducers/rootReducer';
-import { MiddlewareAPI } from 'redux';
 import { TelemetryPropertyValue } from '../../utils/telemetry/types';
+import { IActionContext } from '../../interfaces/IActionContext';
 
 let context: Context | undefined;
 
-export class Context {
+export class Context implements IActionContext {
     private makeRequestFunc: typeof fetch = fetch;
     private test_stateOverride: Partial<ApplicationState> = {};
 
@@ -51,7 +53,7 @@ export class Context {
         this.test_stateOverride = state;
     }
 
-    dispatch(action: any) {
+    dispatch(action: any): any {
         if (!this.storeApi) {
             throw new Error('InfraError: Store API is not available yet to actions');
         }

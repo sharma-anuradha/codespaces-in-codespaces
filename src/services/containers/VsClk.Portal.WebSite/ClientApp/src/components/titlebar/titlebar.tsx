@@ -10,7 +10,7 @@ import { ApplicationState } from '../../reducers/rootReducer';
 import { PlanSelector } from '../planSelector/plan-selector';
 
 import './titlebar.css';
-import { telemetry } from '../../utils/telemetry';
+import { isInternalUser } from '../../services/isInternalUserTracker';
 
 const getDevelopmentEmojiPrefix = () => {
     const isDev = process.env.NODE_ENV === 'development';
@@ -23,9 +23,7 @@ const getDevelopmentEmojiPrefix = () => {
 };
 
 const getIsInternalEmojiPrefix = () => {
-    const { isInternal } = telemetry;
-
-    if (!isInternal) {
+    if (!isInternalUser) {
         return null;
     }
 

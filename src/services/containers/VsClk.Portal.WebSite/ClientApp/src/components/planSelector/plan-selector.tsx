@@ -3,7 +3,7 @@ import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { newPlanPath } from '../../routes';
+import { newPlanPath } from '../../routerPaths';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { selectPlan } from '../../actions/plans-actions';
 

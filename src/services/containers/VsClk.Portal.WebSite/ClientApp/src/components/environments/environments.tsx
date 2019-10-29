@@ -12,7 +12,7 @@ import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 import { PlansReducerState } from '../../reducers/plans-reducer';
-import { newPlanPath, newEnvironmentPath } from '../../routes';
+import { newPlanPath, newEnvironmentPath } from '../../routerPaths';
 
 import { NoEnvironments } from './no-environments';
 import { getEnvironmentCardsForCurrentPlan } from './get-environment-cards-for-plan';

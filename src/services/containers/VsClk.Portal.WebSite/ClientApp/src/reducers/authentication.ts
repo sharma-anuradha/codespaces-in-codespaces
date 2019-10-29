@@ -16,7 +16,7 @@ import {
     getAuthTokenActionType,
     getAuthTokenFailureActionType,
     getAuthTokenSuccessActionType,
-} from '../actions/getAuthToken';
+} from '../actions/getAuthTokenActions';
 
 type AcceptedActions =
     | GetAuthTokenAction
