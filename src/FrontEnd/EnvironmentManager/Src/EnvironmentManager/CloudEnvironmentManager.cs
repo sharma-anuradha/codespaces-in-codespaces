@@ -193,25 +193,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 if (cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
                 {
-                    if (wasSuccessful)
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, logger);
+                    var computeIdToken = cloudEnvironment.Compute?.ResourceId;
+                    cloudEnvironment.Compute = null;
+
+                    // Update the database state.
+                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+                    // Delete the allocated resources.
+                    if (computeIdToken != null)
                     {
-                        await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, logger);
-                        var computeIdToken = cloudEnvironment.Compute?.ResourceId;
-                        cloudEnvironment.Compute = null;
-
-                        // Update the database state.
-                        await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-
-                        // Delete the allocated resources.
-                        if (computeIdToken != null)
-                        {
-                            await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
-                        }
-
-                        logger.AddDuration(duration)
-                            .AddCloudEnvironment(cloudEnvironment)
-                            .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentCallbackAsync)));
+                        await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
                     }
+
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentCallbackAsync)));
                 }
             }
             catch (Exception ex)
