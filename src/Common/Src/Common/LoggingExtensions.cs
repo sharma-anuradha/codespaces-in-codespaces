@@ -83,7 +83,13 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             await logger.OperationScopeAsync(
                 name,
                 async (innerLogger) => { result = await callback(innerLogger); },
-                (e) => { result = errCallback(e); },
+                (e) =>
+                {
+                    if (errCallback != default)
+                    {
+                        result = errCallback(e);
+                    }
+                },
                 swallowException);
 
             return result;
@@ -140,7 +146,13 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             logger.OperationScope(
                 name,
                 (innerLogger) => { result = callback(innerLogger); },
-                (e) => { result = errCallback(e); },
+                (e) =>
+                {
+                    if (errCallback != default)
+                    {
+                        result = errCallback(e);
+                    }
+                },
                 swallowException);
 
             return result;
@@ -166,7 +178,13 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             await logger.RetryOperationScopeAsync(
                 name,
                 async (innerLogger) => { result = await callback(innerLogger); },
-                (e) => { result = errCallback(e); },
+                (e) =>
+                {
+                    if (errCallback != default)
+                    {
+                        result = errCallback(e);
+                    }
+                },
                 swallowException);
 
             return result;
@@ -195,11 +213,11 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                 (int attemptNumber) =>
                 {
                     return childLogger.OperationScopeAsync(
-                        $"{name}_try_complete",
+                        name,
                         async (innerLogger) =>
                         {
                             innerLogger.FluentAddBaseValue("AttemptNumber", attemptNumber)
-                                .FluentAddDuration("IterationOffset", duration);
+                                .FluentAddDuration("AttemptIterationOffset", duration);
 
                             await callback(innerLogger);
 
@@ -213,7 +231,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             childLogger.FluentAddDuration(duration);
             if (doResult.Item1)
             {
-                childLogger.LogInfo($"{name}_complete");
+                childLogger.LogInfo($"{name}_retry_scope_complete");
             }
             else
             {
@@ -222,7 +240,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                     errCallback(doResult.Item2);
                 }
 
-                childLogger.LogException($"{name}_error", doResult.Item2);
+                childLogger.LogException($"{name}_retry_scope_error", doResult.Item2);
 
                 if (!swallowException)
                 {
