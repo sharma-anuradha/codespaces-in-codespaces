@@ -86,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="environmentId">The environment id.</param>
         /// <returns>An object result containing the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet("{environmentId}")]
+        [ThrottlePerUserHigh(nameof(EnvironmentsController), nameof(GetEnvironmentAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -128,10 +129,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
-        /// Lists all cloud environments belonging to the the current user and environment name (optional)
+        /// Lists all cloud environments belonging to the the current user and environment name (optional).
         /// </summary>
         /// <returns>An object result containing the list of <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(ListEnvironmentsAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ListEnvironmentsAsync(
@@ -166,6 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="environmentId">The environment id.</param>
         /// <returns>A cloud environment.</returns>
         [HttpPost("{environmentId}/shutdown")]
+        [ThrottlePerUserHigh(nameof(EnvironmentsController), nameof(ShutdownCloudEnvironmentAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -234,6 +237,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="environmentId">The environment id.</param>
         /// <returns>A cloud environment.</returns>
         [HttpPost("{environmentId}/start")]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(StartCloudEnvironmentAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -309,6 +313,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="createEnvironmentInput">The cloud environment input.</param>
         /// <returns>An object result containing the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpPost]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(CreateCloudEnvironmentAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -448,6 +453,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="environmentId">The environment id.</param>
         /// <returns>Status code <see cref="HttpStatusCode.NoContent"/> if deleted, otherwise <see cref="HttpStatusCode.NotFound"/>.</returns>
         [HttpDelete("{environmentId}")]
+        [ThrottlePerUserHigh(nameof(EnvironmentsController), nameof(DeleteCloudEnvironmentAsync))]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -521,6 +527,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="callbackBody">The callback info.</param>
         /// <returns>An object result that containts the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpPost("{environmentId}/_callback")] // TODO: This should be PATCH not POST
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(UpdateEnvironmentCallbackAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]

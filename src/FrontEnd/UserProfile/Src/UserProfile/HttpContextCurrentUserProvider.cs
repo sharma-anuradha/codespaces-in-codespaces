@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.VsSaaS.AspNetCore.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 {
@@ -56,6 +57,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
             Requires.NotNull(profile, nameof(profile));
             ProfileCache.SetProfile(profile);
             ContextAccessor.HttpContext.Items[HttpContextCurrentUserIdKey] = profile.Id;
+
+            // TEMPORARY HACK. This needs to be reworked to use the VS SaaS SDK auth middleware
+            // which is supposed to set this for us.
+            // Needed for per-user throttling to work correctly.
+            ContextAccessor.HttpContext.SetCurrentUserId(profile.ProviderId);
         }
 
         /// <inheritdoc/>

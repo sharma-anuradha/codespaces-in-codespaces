@@ -52,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <param name="heartBeat">HeartBeat message.</param>
         /// <returns>TODO: Add documentation.</returns>
+        /// <remarks>TODO: Add throttling per VM identity.</remarks>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]

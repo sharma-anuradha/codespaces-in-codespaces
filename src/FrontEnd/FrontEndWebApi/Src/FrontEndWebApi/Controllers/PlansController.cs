@@ -56,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The name of the plan resource.</param>
         /// <returns>An object result containing the <see cref="PlanResult"/>.</returns>
         [HttpGet("{subscriptionId}/{resourceGroupName}/{resourceName}")]
+        [ThrottlePerUserHigh(nameof(PlansController), nameof(GetPlansAsync))]
         [ProducesResponseType(typeof(PlanResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -113,6 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <returns>An object result containing the list of <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet]
+        [ThrottlePerUserLow(nameof(PlansController), nameof(ListPlansByOwnerAsync))]
         [ProducesResponseType(typeof(PlanResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ListPlansByOwnerAsync()

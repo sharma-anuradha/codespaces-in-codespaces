@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Mvc.Filters.Throttling" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
