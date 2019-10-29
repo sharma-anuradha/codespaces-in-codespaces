@@ -23,11 +23,11 @@ if ($SourceImage -is [object[]]) {
 }
 
 # Download and extract the latest v10 version of azCopy to our work folder
-$azCopyZipPath = Join-Path $WorkPath "azCopy.zip"
+$AzCopyZipPath = Join-Path $WorkPath "azCopy.zip"
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-Invoke-WebRequest -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile $azCopyZipPath -UseBasicParsing
-Expand-Archive -Path $azCopyZipPath -DestinationPath $WorkPath -Force
-$azCopyExe = Get-ChildItem $WorkPath/*/azcopy.exe
+Invoke-WebRequest -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile $AzCopyZipPath -UseBasicParsing
+Expand-Archive -Path $AzCopyZipPath -DestinationPath $WorkPath -Force
+$AzCopyExe = Get-ChildItem $WorkPath/*/azcopy.exe
 
 Write-Host "Snapshot $ImageName"
 $SnapshotName = "$($ImageName)_os_disk_snapshot"
@@ -37,9 +37,7 @@ Write-Host "Download $SnapshotName"
 $BlobPath = Join-Path $WorkPath "$SnapshotName.vhd"
 $Access = az snapshot grant-access --duration-in-seconds 36000 -n $SnapshotName -g $SourceImage.resourceGroup | ConvertFrom-Json
 $Start = Get-Date
-# Force TLS 1.2 to try and make Invoke-WebRequest more reliable
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-& $azCopyExe cp $Access.accessSas $BlobPath --check-md5 LogOnly
+& $AzCopyExe cp $Access.accessSas $BlobPath --check-md5 LogOnly
 $Duration = (Get-Date) - $Start
 Write-Host "Download completed in $($Duration.TotalMinutes) minutes"
 az snapshot revoke-access -n $SnapshotName -g $SourceImage.resourceGroup
