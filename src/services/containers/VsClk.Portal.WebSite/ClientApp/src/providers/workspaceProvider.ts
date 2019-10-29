@@ -1,10 +1,11 @@
 import { IWorkspace, IWorkspaceProvider, URI } from 'vscode-web';
 import { vscode } from '../utils/vscode';
+import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 
 export class WorkspaceProvider implements IWorkspaceProvider {
     public readonly workspace: IWorkspace;
 
-    constructor(params: URLSearchParams, sessionPath: string) {
+    constructor(params: URLSearchParams, environmentInfo: ICloudEnvironment) {
         const workspace = params.get('workspace');
         const folder = params.get('folder');
         const isEmpty = params.get('ew');
@@ -15,14 +16,14 @@ export class WorkspaceProvider implements IWorkspaceProvider {
             const workspaceUri = vscode.URI.from({
                 path: workspace,
                 scheme: 'vscode-remote',
-                authority: `localhost`,
+                authority: `vsonline+${environmentInfo.id}`,
             });
             this.workspace = { workspaceUri };
         } else {
             const folderUri = vscode.URI.from({
-                path: this.normalizeVSCodePath(folder || sessionPath),
+                path: this.normalizeVSCodePath(folder || environmentInfo.connection.sessionPath),
                 scheme: 'vscode-remote',
-                authority: `localhost`,
+                authority: `vsonline+${environmentInfo.id}`,
             });
             this.workspace = { folderUri };
         }

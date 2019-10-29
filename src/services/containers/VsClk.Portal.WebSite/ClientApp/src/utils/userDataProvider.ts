@@ -20,8 +20,7 @@ import {
 import { IndexedDBFS } from './indexedDBFS'
 import * as path from 'path';
 
-const FILE_IS_DIRECTORY_MSG = 'File is a directory';
-const FILE_NOT_FOUND_MSG = 'File not found';
+const FILE_IS_DIRECTORY_MSG = 'EntryIsADirectory';
 
 export class UserDataProvider implements IFileSystemProvider {
 	readonly capabilities = FileSystemProviderCapabilities.FileReadWrite + FileSystemProviderCapabilities.PathCaseSensitive;
@@ -30,8 +29,7 @@ export class UserDataProvider implements IFileSystemProvider {
 	public readonly onDidChangeCapabilities: Event<void> = this.onDidChangeCapabilitiesEmitter.event;
     private onDidChangeFileEmitter: Emitter<IFileChange[]> = new Emitter();
 	public readonly onDidChangeFile: Event<IFileChange[]> = this.onDidChangeFileEmitter.event;
-	private readonly settingsPath = path.join('/', 'User', 'settings.json');
-	private readonly keybindingsPath = path.join('/', 'User', 'keybindings.json');
+	private readonly globalPath = path.join('/', 'User', 'state', 'global.json');
 	private indexedDBFSProvider: IndexedDBFS;
 
 	constructor () {
@@ -40,16 +38,18 @@ export class UserDataProvider implements IFileSystemProvider {
 
 	public async initializeDBProvider() { 
 		await this.indexedDBFSProvider.database;
-		await this.initializeSettingFiles();
+		await this.initializeOptions();
 	}
 
-	private async initializeSettingFiles() {
-		if (!(await this.fileExists(this.settingsPath))){
-			await this.indexedDBFSProvider.setValue(this.settingsPath, '{\n}');
-		}
-		if (!(await this.fileExists(this.keybindingsPath))){
-			await this.indexedDBFSProvider.setValue(this.keybindingsPath, '[\n]');
-		}
+	private async initializeOptions() {
+		const options =
+		[
+			[
+				'workbench.telemetryOptOutShown',
+				'true'
+			]
+		]
+		await this.indexedDBFSProvider.setValue(this.globalPath, JSON.stringify(options));
 	}
 
     watch(resource: URI, opts: IWatchOptions): Disposable {
@@ -68,7 +68,7 @@ export class UserDataProvider implements IFileSystemProvider {
 				size: content.byteLength
 			};
 		} catch (e){
-			if (e.message === FILE_IS_DIRECTORY_MSG) {
+			if (e.name && e.name.toString().startsWith(FILE_IS_DIRECTORY_MSG)) {
 				return {
 					type: FileType.Directory,
 					ctime: 0,
@@ -107,11 +107,12 @@ export class UserDataProvider implements IFileSystemProvider {
 	
     async delete(resource: URI, opts: FileDeleteOptions): Promise<void> {
 		await this.indexedDBFSProvider.deleteKey(resource.path);
-    }
+	}
+	
     async rename(from: URI, to: URI, opts: FileOverwriteOptions): Promise<void> {
 		const value = await this.indexedDBFSProvider.getValue(from.path);
 		if (!value) {
-			throw new Error(FILE_NOT_FOUND_MSG);
+			throw new FileSystemError(from, FileSystemProviderErrorCode.FileNotFound);
 		}
 		await this.indexedDBFSProvider.deleteKey(from.path);
 		await this.indexedDBFSProvider.setValue(to.path, value);
@@ -120,11 +121,12 @@ export class UserDataProvider implements IFileSystemProvider {
     async readFile(resource: URI): Promise<Uint8Array> {
 		const value = await this.indexedDBFSProvider.getValue(resource.path);
 		if (!value) {
-			throw new Error(FILE_NOT_FOUND_MSG);
+			throw new FileSystemError(resource, FileSystemProviderErrorCode.FileNotFound);
 		}
 		if (value === 'directory') {
-			throw new Error(FILE_IS_DIRECTORY_MSG);
+			throw new FileSystemError(resource, FileSystemProviderErrorCode.FileIsADirectory);
 		}
+
 		return (typeof TextEncoder !== undefined)
 				? new TextEncoder().encode(value)
 				: this.encode(value);
@@ -133,13 +135,14 @@ export class UserDataProvider implements IFileSystemProvider {
 	async writeFile(resource: URI, content: Uint8Array, opts: FileWriteOptions): Promise<void> {
 		const value = await this.indexedDBFSProvider.getValue(resource.path);
 		if (value === 'directory') {
-			throw new Error(FILE_IS_DIRECTORY_MSG);
+			throw new FileSystemError(resource, FileSystemProviderErrorCode.FileIsADirectory);
 		}
 
-		await this.indexedDBFSProvider.setValue(resource.path, 
-			(typeof TextEncoder !== undefined)
+		const decodedContent = (typeof TextEncoder !== undefined)
 			? new TextDecoder().decode(content)
-			: this.decode(content));
+			: this.decode(content);
+
+		await this.indexedDBFSProvider.setValue(resource.path, decodedContent)
 		this.onDidChangeFileEmitter.fire([{ resource, type: FileChangeType.UPDATED }]);
 	}
 	
@@ -154,10 +157,5 @@ export class UserDataProvider implements IFileSystemProvider {
 		var array = Array.from(new Uint8Array(buffer));
 		var value = String.fromCharCode.apply(String, array);
 		return value;
-	}
-
-	private async fileExists(path: string): Promise<boolean>
-	{
-		return !!(await this.indexedDBFSProvider.getValue(path));
 	}
 }

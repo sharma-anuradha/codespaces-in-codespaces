@@ -118,7 +118,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
             );
         };
 
-        const workspaceProvider = new WorkspaceProvider(this.props.params, sessionPath);
+        const workspaceProvider = new WorkspaceProvider(this.props.params, environmentInfo);
 
         const externalUriProvider = new ExternalUriProvider(
             environmentInfo,
