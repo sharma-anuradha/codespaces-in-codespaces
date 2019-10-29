@@ -821,12 +821,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public async Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger, CloudEnvironmentState newState)
         {
             cloudEnvironment.Updated = DateTime.UtcNow;
+            var changedState = false;
             if (newState != default && newState != cloudEnvironment.State)
             {
                 await SetEnvironmentStateAsync(cloudEnvironment, newState, logger);
+                changedState = true;
             }
 
-            return await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+            CloudEnvironment updatedCloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+            if (changedState)
+            {
+                logger.AddCloudEnvironment(updatedCloudEnvironment)
+                      .FluentAddValue("OldState", cloudEnvironment.State)
+                      .LogInfo(GetType().FormatLogMessage(nameof(UpdateEnvironmentAsync)));
+            }
+
+            return updatedCloudEnvironment;
         }
 
         private async Task SetEnvironmentStateAsync(
