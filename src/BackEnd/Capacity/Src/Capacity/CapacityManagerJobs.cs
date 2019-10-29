@@ -27,7 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         private const string UpdateCapacityLeaseContainerName = "update-capacity-leases";
         private const string UpdateCapacityLeasePrefix = "update-capacity-lease";
         private const string UpdateCapacityLoopPrefix = "update_capacity_loop";
-        private const string UpdateCapacityOperationName = "update_capacity_operation";
 
         // Monitor capacity constants
         private const string MonitorCapacityLeaseContainerName = "monitor-capacity-leases";
@@ -188,8 +187,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             var (subscription, location) = item;
 
             logger
-                .FluentAddValue(nameof(location), location.ToString())
-                .FluentAddValue(nameof(serviceType), serviceType.ToString());
+                .FluentAddBaseValue(nameof(location), location.ToString())
+                .FluentAddBaseValue(nameof(serviceType), serviceType.ToString());
 
             try
             {
@@ -247,7 +246,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 },
                 monitorCapacityInterval,
                 logger);
-
         }
 
         private async Task MonitorAzureResourceUsageAsync(

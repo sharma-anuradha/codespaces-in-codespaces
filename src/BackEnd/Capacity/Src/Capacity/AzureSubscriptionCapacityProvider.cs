@@ -14,6 +14,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.ServiceBus.Fluent;
 using Microsoft.Azure.Management.Storage.Fluent;
+using Microsoft.Rest.Azure;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -45,6 +46,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         public static readonly TimeSpan UpdateLeaseInterval = TimeSpan.FromMinutes(4);
 
         private const string LoggingPrefix = "azure_subscription_capacity_provider";
+        private const string VirtualNetworksQuota = "VirtualNetworks";
+        private const int VirtualNetworksDefaultLimit = 1000;
+        private const string StorageAccountsQuota = "StorageAccounts";
+        private const int StorageAccountsDefaultLimit = 250;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureSubscriptionCapacityProvider"/> class.
@@ -303,21 +308,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         {
             using (var networkClient = await CreateNetworkManagementClientAsync(subscription))
             {
-                var usage = await networkClient.Usages.ListAsync(location.ToString());
-                var usageArray = await usage.ToAsyncEnumerable().ToArray();
+                try
+                {
+                    var usage = await networkClient.Usages.ListAsync(location.ToString());
+                    var usageArray = await usage.ToAsyncEnumerable().ToArray();
 
-                var azureResourceUsage = usageArray
-                    .Where(networkUsage => quotas.Contains(networkUsage.Name.Value))
-                    .Select(networkUsage =>
-                        new AzureResourceUsage(
-                            subscription.SubscriptionId,
-                            ServiceType.Network,
-                            location,
-                            networkUsage.Name.Value,
-                            networkUsage.Limit,
-                            networkUsage.CurrentValue));
+                    var azureResourceUsage = usageArray
+                        .Where(networkUsage => quotas.Contains(networkUsage.Name.Value))
+                        .Select(networkUsage =>
+                            new AzureResourceUsage(
+                                subscription.SubscriptionId,
+                                ServiceType.Network,
+                                location,
+                                networkUsage.Name.Value,
+                                networkUsage.Limit,
+                                networkUsage.CurrentValue));
 
-                return azureResourceUsage;
+                    return azureResourceUsage;
+                }
+                catch (CloudException ex) when (ex.Message.Contains("has no usages in NRP"))
+                {
+                    // The exception message is of the form "Subscription XXX has no usages in NRP."
+                    // If no usage is reported, then return a default of zero.
+                    var defaultUsage = new AzureResourceUsage(
+                        subscription.SubscriptionId,
+                        ServiceType.Network,
+                        location,
+                        VirtualNetworksQuota,
+                        VirtualNetworksDefaultLimit,
+                        0);
+                    return new[] { defaultUsage };
+                }
             }
         }
 
@@ -328,21 +349,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         {
             using (var storageClient = await CreateStorageManagementClientAsync(subscription))
             {
-                var usage = await storageClient.Usages.ListByLocationAsync(location.ToString());
-                var usageArray = await usage.ToAsyncEnumerable().ToArray();
+                try
+                {
+                    var usage = await storageClient.Usages.ListByLocationAsync(location.ToString());
+                    var usageArray = await usage.ToAsyncEnumerable().ToArray();
 
-                var azureResourceUsage = usageArray
-                    .Where(storageUsage => quotas.Contains(storageUsage.Name.Value))
-                    .Select(storageUsage =>
-                        new AzureResourceUsage(
-                            subscription.SubscriptionId,
-                            ServiceType.Storage,
-                            location,
-                            storageUsage.Name.Value,
-                            storageUsage.Limit.GetValueOrDefault(),
-                            storageUsage.CurrentValue.GetValueOrDefault()));
+                    var azureResourceUsage = usageArray
+                        .Where(storageUsage => quotas.Contains(storageUsage.Name.Value))
+                        .Select(storageUsage =>
+                            new AzureResourceUsage(
+                                subscription.SubscriptionId,
+                                ServiceType.Storage,
+                                location,
+                                storageUsage.Name.Value,
+                                storageUsage.Limit.GetValueOrDefault(),
+                                storageUsage.CurrentValue.GetValueOrDefault()));
 
-                return azureResourceUsage;
+                    return azureResourceUsage;
+                }
+                catch (CloudException ex) when (ex.Message.Contains("was not found"))
+                {
+                    // The exception message is of the form "Subscription XXX was not found."
+                    // If no usage is reported, then return a default of zero.
+                    var defaultUsage = new AzureResourceUsage(
+                        subscription.SubscriptionId,
+                        ServiceType.Storage,
+                        location,
+                        StorageAccountsQuota,
+                        StorageAccountsDefaultLimit,
+                        0);
+                    return new[] { defaultUsage };
+                }
             }
         }
 
