@@ -97,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     if (result != null)
                     {
                         logger.FluentAddValue("ContinuationPayloadPostStatus", result.Status)
+                            .FluentAddValue("ContinuationPayloadPostErrorReason", result.ErrorReason)
                             .FluentAddValue("ContinuationPayloadPostRetryAfter", result.RetryAfter)
                             .FluentAddValue("ContinuationPayloadIsFinal", resultPayload.Input == null)
                             .FluentAddValue("ContinuationHandlerToken", result.NextInput?.ContinuationToken);

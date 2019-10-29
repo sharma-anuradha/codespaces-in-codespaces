@@ -25,5 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// Gets or sets the input for next operation phase.
         /// </summary>
         public ContinuationInput NextInput { get; set; }
+
+        /// <summary>
+        /// Gets or sets the error reason in case of failure.
+        /// </summary>
+        public string ErrorReason { get; set; }
     }
 }

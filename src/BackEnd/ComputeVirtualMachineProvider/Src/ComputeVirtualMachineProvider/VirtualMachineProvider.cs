@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(logger, nameof(logger));
 
             return logger.OperationScopeAsync(
-                "virtual_machine_compute_provider_create_step_complete",
+                "virtual_machine_compute_provider_create",
                 async (childLogger) =>
                 {
                     string resultContinuationToken = default;
@@ -77,7 +77,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                        .FluentAddValue(nameof(result.Status), result.Status.ToString());
 
                     return result;
-                });
+                },
+                (ex) => { return new VirtualMachineProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                swallowException: true);
         }
 
         /// <inheritdoc/>
@@ -108,7 +110,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                    childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
                         .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
                    return result;
-               });
+               },
+               (ex) => { return new VirtualMachineProviderShutdownResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+               swallowException: true);
         }
 
         /// <inheritdoc/>
@@ -118,7 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(logger, nameof(logger));
 
             return logger.OperationScopeAsync(
-                "virtual_machine_compute_provider_delete_step_complete",
+                "virtual_machine_compute_provider_delete",
                 async (childLogger) =>
                 {
                     string resultContinuationToken = default;
@@ -152,7 +156,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                        .FluentAddValue(nameof(result.Status), result.Status.ToString());
 
                     return result;
-                });
+                },
+                (ex) => { return new VirtualMachineProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                swallowException: true);
         }
 
         /// <inheritdoc/>
@@ -163,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             Requires.NotNull(logger, nameof(logger));
 
             return logger.OperationScopeAsync(
-                "virtual_machine_compute_provider_start_compute_step_complete",
+                "virtual_machine_compute_provider_start_compute",
                 async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString())
@@ -188,7 +194,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                        .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
 
                     return result;
-                });
+                },
+                (ex) => { return new VirtualMachineProviderStartComputeResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                swallowException: true);
         }
 
         private async Task<(AzureResourceInfo, OperationState, string)> ExecuteAsync<T>(

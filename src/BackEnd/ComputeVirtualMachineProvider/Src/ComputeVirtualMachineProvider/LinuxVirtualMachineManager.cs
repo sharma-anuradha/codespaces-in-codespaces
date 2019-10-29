@@ -146,7 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             catch (Exception ex)
             {
                 logger.LogException("linux_virtual_machine_manager_begin_create_error", ex);
-                return (OperationState.Failed, default);
+                throw;
             }
         }
 
@@ -167,7 +167,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     return (OperationState.InProgress, new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1));
                 }
 
-                return (OperationState.Failed, default);
+                throw;
             }
         }
 
@@ -214,7 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     return (OperationState.InProgress, retryAttempt + 1);
                 }
 
-                return (OperationState.Failed, retryAttempt);
+                throw;
             }
         }
 
@@ -246,7 +246,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     return (OperationState.InProgress, retryAttempt + 1);
                 }
 
-                return (OperationState.Failed, retryAttempt);
+                throw;
             }
         }
 
@@ -286,7 +286,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             catch (Exception ex)
             {
                 logger.LogException("linux_virtual_machine_manager_begin_delete_error", ex);
-                return (OperationState.Failed, default);
+                throw;
             }
         }
 
@@ -384,7 +384,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     return (OperationState.InProgress, nextStageInput);
                 }
 
-                return (OperationState.Failed, nextStageInput);
+                throw;
             }
         }
 

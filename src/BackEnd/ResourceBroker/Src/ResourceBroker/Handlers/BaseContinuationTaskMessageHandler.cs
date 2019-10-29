@@ -108,6 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
             logger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken)
                 .FluentAddValue("HandlerBasePostStatus", result.Status)
+                .FluentAddValue("HandlerBasePostErrorReason", result.ErrorReason)
                 .FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
 
             return result;
