@@ -33,3 +33,7 @@
     font-weight: bold;
     margin-bottom: 3rem;
 }
+
+.environments-panel__no-environments-image {
+    margin-bottom: 3rem;
+}
