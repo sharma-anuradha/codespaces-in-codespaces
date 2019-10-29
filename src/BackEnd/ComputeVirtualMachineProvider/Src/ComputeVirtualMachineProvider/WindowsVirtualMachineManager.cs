@@ -45,6 +45,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private const string DiskNameKey = "diskId";
         private const string QueueNameKey = "queueName";
         private const string VmNameKey = "vmName";
+
+        /// <summary>
+        /// Name of the shim script which initializes a windows vm.
+        /// The source of the shim script lives in the vsclk-cluster repository.
+        /// When updated it release scripts for vsclk-cluster should be run on dev/ppe/prod to update the script on storage.
+        /// Ideally no changes should be made to the shim script. Any init time additions should go to
+        /// WindowsInit.ps1 in the Cascade repo.
+        /// </summary>
+        private const string WindowsInitShimScript = "WindowsInitShim.ps1";
+
         private static readonly string VmTemplateJson = GetVmTemplate();
         private readonly IAzureClientFactory clientFactory;
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
@@ -113,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var storageInfo = await controlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(input.AzureVmLocation);
                 var storageAccountName = storageInfo.Item1;
                 var storageAccountAccessKey = storageInfo.Item2;
-                var vmInitScriptFileUri = $"https://{storageAccountName}.blob.core.windows.net/windows-init-shim/WindowsInitShim.ps1";
+                var vmInitScriptFileUri = $"https://{storageAccountName}.blob.core.windows.net/windows-init-shim/{WindowsInitShimScript}";
                 var userName = "vsonline";
 
                 // Required parameters forwarded to the VM agent init script.
