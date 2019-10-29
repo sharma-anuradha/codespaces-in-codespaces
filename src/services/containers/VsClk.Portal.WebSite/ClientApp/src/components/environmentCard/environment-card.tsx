@@ -329,6 +329,9 @@ function UnsuccessfulUrlDialog({ accept, hidden }: UnsuccessfulUrlDialogProps) {
 }
 
 const skuToDisplayName = (selectedPlan: ActivePlanInfo, skuName: string) => {
+    if (!selectedPlan.availableSkus) {
+        return skuName;
+    }
     const sku = selectedPlan.availableSkus.find((sku) => sku.name === skuName);
     return sku ? sku.displayName : skuName;
 };
