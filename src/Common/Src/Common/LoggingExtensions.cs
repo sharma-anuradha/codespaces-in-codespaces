@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Common;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -77,30 +78,13 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <returns>Returns the task.</returns>
         public static async Task<T> OperationScopeAsync<T>(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task<T>> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
         {
-            var childLogger = logger.WithValues(new LogValueSet());
-            var duration = Stopwatch.StartNew();
             var result = default(T);
 
-            try
-            {
-                result = await callback(childLogger);
-
-                childLogger.FluentAddDuration(duration).LogInfo($"{name}_complete");
-            }
-            catch (Exception e)
-            {
-                if (errCallback != default)
-                {
-                    result = errCallback(e);
-                }
-
-                childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
-
-                if (!swallowException)
-                {
-                    throw;
-                }
-            }
+            await logger.OperationScopeAsync(
+                name,
+                async (innerLogger) => { result = await callback(innerLogger); },
+                (e) => { result = errCallback(e); },
+                swallowException);
 
             return result;
         }
@@ -151,32 +135,100 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <returns>Returns the callback result.</returns>
         public static T OperationScope<T>(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, T> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
         {
-            var childLogger = logger.WithValues(new LogValueSet());
-            var duration = Stopwatch.StartNew();
             var result = default(T);
 
-            try
-            {
-                result = callback(childLogger);
+            logger.OperationScope(
+                name,
+                (innerLogger) => { result = callback(innerLogger); },
+                (e) => { result = errCallback(e); },
+                swallowException);
 
-                childLogger.FluentAddDuration(duration).LogInfo($"{name}_complete");
+            return result;
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope which will catch and log exceptions
+        /// as well as the successful completeion of the operation. In the case of a fail,
+        /// retries will occur.
+        /// </summary>
+        /// <typeparam name="T">Return type.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
+        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        /// <returns>Returns the callback result.</returns>
+        public static async Task<T> RetryOperationScopeAsync<T>(
+            this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task<T>> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
+        {
+            var result = default(T);
+
+            await logger.RetryOperationScopeAsync(
+                name,
+                async (innerLogger) => { result = await callback(innerLogger); },
+                (e) => { result = errCallback(e); },
+                swallowException);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope which will catch and log exceptions
+        /// as well as the successful completeion of the operation. In the case of a fail,
+        /// retries will occur.
+        /// </summary>
+        /// <typeparam name="T">Return type.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
+        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        /// <returns>Returns running task.</returns>
+        public static async Task RetryOperationScopeAsync(
+            this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task> callback, Action<Exception> errCallback = default, bool swallowException = false)
+        {
+            var childLogger = logger.WithValues(new LogValueSet());
+            var duration = Stopwatch.StartNew();
+
+            // Try executing result
+            var doResult = await Retry.DoAsync(
+                (int attemptNumber) =>
+                {
+                    return childLogger.OperationScopeAsync(
+                        $"{name}_try_complete",
+                        async (innerLogger) =>
+                        {
+                            innerLogger.FluentAddBaseValue("AttemptNumber", attemptNumber)
+                                .FluentAddDuration("IterationOffset", duration);
+
+                            await callback(innerLogger);
+
+                            return (true, null);
+                        },
+                        (e) => (false, e),
+                        true);
+                });
+
+            // Log out overall results
+            childLogger.FluentAddDuration(duration);
+            if (doResult.Item1)
+            {
+                childLogger.LogInfo($"{name}_complete");
             }
-            catch (Exception e)
+            else
             {
                 if (errCallback != default)
                 {
-                    result = errCallback(e);
+                    errCallback(doResult.Item2);
                 }
 
-                childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
+                childLogger.LogException($"{name}_error", doResult.Item2);
 
                 if (!swallowException)
                 {
-                    throw;
+                    throw doResult.Item2;
                 }
             }
-
-            return result;
         }
 
         /// <summary>

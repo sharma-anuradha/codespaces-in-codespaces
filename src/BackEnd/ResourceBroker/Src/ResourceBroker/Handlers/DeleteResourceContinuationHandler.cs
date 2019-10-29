@@ -150,7 +150,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Make sure we bring over the Resource info if we have it
             if (result.Status == OperationState.Succeeded)
             {
-                var deleted = await logger.OperationScopeAsync(
+                var deleted = await logger.RetryOperationScopeAsync(
                     $"{LogBaseName}_delete_record",
                     (childLogger) => DeleteResourceAsync(input.ResourceId.ToString(), childLogger));
 

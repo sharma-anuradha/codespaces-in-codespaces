@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public Task ReleaseGetAsync(string resourceId, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_release_get",
                 async (childLogger) =>
                 {

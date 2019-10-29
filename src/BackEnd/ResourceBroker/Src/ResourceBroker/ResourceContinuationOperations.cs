@@ -203,12 +203,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resourceId)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolLocation, resource.Location)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, resource.PoolReference.Dimensions.GetValueOrDefault("SkuName"))
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, resource.PoolReference.Dimensions.GetValueOrDefault("skuName"))
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolResourceType, resource.Type)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolDefinition, resource.PoolReference.Code)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolVersionDefinition, resource.PoolReference.VersionCode)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, resource.PoolReference.Dimensions.GetValueOrDefault("ImageFamilyName"))
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, resource.PoolReference.Dimensions.GetValueOrDefault("ImageName"));
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, resource.PoolReference.Dimensions.GetValueOrDefault("imageFamilyName"))
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, resource.PoolReference.Dimensions.GetValueOrDefault("imageName"));
         }
 
         private Task TraceAzureResource(

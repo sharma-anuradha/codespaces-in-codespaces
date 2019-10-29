@@ -197,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public Task<bool> ExistsAsync(Guid id, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_exists",
                 async (childLogger) =>
                 {

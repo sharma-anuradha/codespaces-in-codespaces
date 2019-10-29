@@ -246,9 +246,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Make sure we bring over the Resource info if we have it
             if (resource.Value.AzureResourceInfo == null && result.AzureResourceInfo != null)
             {
-                resource.Value.AzureResourceInfo = result.AzureResourceInfo;
+                // Retry till we succeed
+                await logger.RetryOperationScopeAsync(
+                    $"{LogBaseName}_record_update",
+                    async (IDiagnosticsLogger innerLogger) =>
+                    {
+                        resource.Value = (await ObtainReferenceAsync(input, innerLogger)).Value;
 
-                resource.Value = await ResourceRepository.UpdateAsync(resource.Value, logger.WithValues(new LogValueSet()));
+                        resource.Value.AzureResourceInfo = result.AzureResourceInfo;
+
+                        resource.Value = await ResourceRepository.UpdateAsync(resource.Value, logger.WithValues(new LogValueSet()));
+                    });
             }
 
             return result;

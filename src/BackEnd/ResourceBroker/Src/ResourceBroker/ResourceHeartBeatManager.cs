@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public async Task SaveHeartBeatAsync(HeartBeatInput heartBeatInput, IDiagnosticsLogger logger)
         {
-            await logger.OperationScopeAsync(
+            await logger.RetryOperationScopeAsync(
               $"{LogBaseName}_save_heartbeat",
               async (childLogger) =>
               {

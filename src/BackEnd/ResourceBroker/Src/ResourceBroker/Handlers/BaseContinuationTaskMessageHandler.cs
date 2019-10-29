@@ -4,7 +4,9 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -237,37 +239,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var stateChanged = false;
 
-            // Determine what needs to be updated
-            if (Operation == ResourceOperation.Starting)
-            {
-                record.Value.StartingReason = input.Reason;
-                stateChanged = record.Value.UpdateStartingStatus(state, trigger);
-            }
-            else if (Operation == ResourceOperation.Deleting)
-            {
-                record.Value.DeletingReason = input.Reason;
-                stateChanged = record.Value.UpdateDeletingStatus(state, trigger);
-            }
-            else if (Operation == ResourceOperation.Provisioning)
-            {
-                record.Value.ProvisioningReason = input.Reason;
-                stateChanged = record.Value.UpdateProvisioningStatus(state, trigger);
-            }
-            else if (Operation == ResourceOperation.CleanUp)
-            {
-                record.Value.CleanupReason = input.Reason;
-                stateChanged = record.Value.UpdateCleanupStatus(state, trigger);
-            }
-            else
-            {
-                throw new NotSupportedException($"Operation type is not supported - {Operation}");
-            }
+            // retry till we succeed
+            await logger.RetryOperationScopeAsync(
+                $"{LogBaseName}_status_update",
+                async (IDiagnosticsLogger innerLogger) =>
+                {
+                    stateChanged = false;
 
-            // Only need to update things if something has changed
+                    // Obtain a fresh record.
+                    record.Value = (await ObtainReferenceAsync(input, innerLogger)).Value;
+
+                    // Determine what needs to be updated
+                    if (Operation == ResourceOperation.Starting)
+                    {
+                        record.Value.StartingReason = input.Reason;
+                        stateChanged = record.Value.UpdateStartingStatus(state, trigger);
+                    }
+                    else if (Operation == ResourceOperation.Deleting)
+                    {
+                        record.Value.DeletingReason = input.Reason;
+                        stateChanged = record.Value.UpdateDeletingStatus(state, trigger);
+                    }
+                    else if (Operation == ResourceOperation.Provisioning)
+                    {
+                        record.Value.ProvisioningReason = input.Reason;
+                        stateChanged = record.Value.UpdateProvisioningStatus(state, trigger);
+                    }
+                    else if (Operation == ResourceOperation.CleanUp)
+                    {
+                        record.Value.CleanupReason = input.Reason;
+                        stateChanged = record.Value.UpdateCleanupStatus(state, trigger);
+                    }
+                    else
+                    {
+                        throw new NotSupportedException($"Operation type is not supported - {Operation}");
+                    }
+
+                    // Only need to update things if something has changed
+                    if (stateChanged)
+                    {
+                        record.Value = await ResourceRepository.UpdateAsync(record.Value, innerLogger.NewChildLogger());
+                    }
+                });
+
             if (stateChanged)
             {
-                record.Value = await ResourceRepository.UpdateAsync(record.Value, logger.NewChildLogger());
-
                 // Trigger cleanup post fail
                 if (state == OperationState.Failed)
                 {
