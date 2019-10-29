@@ -773,19 +773,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 var storageIdToken = cloudEnvironment.Storage?.ResourceId;
                 if (storageIdToken != null)
                 {
-                    await ResourceBrokerClient.DeleteResourceAsync(storageIdToken.Value, logger);
+                    await logger.OperationScopeAsync(
+                        $"{this.GetType().GetLogMessageBaseName()}_delete_storage_async",
+                        async (childLogger) =>
+                        {
+                            childLogger.FluentAddBaseValue(nameof(id), id)
+                            .FluentAddBaseValue(nameof(storageIdToken), storageIdToken.Value);
+                            await ResourceBrokerClient.DeleteResourceAsync(storageIdToken.Value, childLogger);
+                        },
+                        swallowException: true);
                 }
 
                 var computeIdToken = cloudEnvironment.Compute?.ResourceId;
                 if (computeIdToken != null)
                 {
-                    await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
+                    await logger.OperationScopeAsync(
+                       $"{this.GetType().GetLogMessageBaseName()}_delete_compute_async",
+                       async (childLogger) =>
+                       {
+                           childLogger.FluentAddBaseValue(nameof(id), id)
+                            .FluentAddBaseValue(nameof(computeIdToken), computeIdToken.Value);
+                           await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, childLogger);
+                       },
+                       swallowException: true);
                 }
             }
 
             if (cloudEnvironment.Connection?.ConnectionSessionId != null)
             {
-                await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId);
+                await logger.OperationScopeAsync(
+                    $"{this.GetType().GetLogMessageBaseName()}_delete_workspace_async",
+                    async (childLogger) =>
+                    {
+                        childLogger.FluentAddBaseValue(nameof(id), id)
+                            .FluentAddBaseValue("ConnectionSessionId", cloudEnvironment.Connection?.ConnectionSessionId);
+                        await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId);
+                    },
+                    swallowException: true);
             }
 
             await CloudEnvironmentRepository.DeleteAsync(id, logger);
