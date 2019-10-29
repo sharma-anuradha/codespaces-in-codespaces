@@ -6,13 +6,18 @@ import { CreatePlanPanel } from '../environmentsPanel/create-plan-panel';
 import { environmentsPath, newEnvironmentPath } from '../../routes';
 
 export function NewPlan(props: RouteComponentProps) {
-    const hidePanel = useCallback(() => {
-        const query = new URLSearchParams(props.location.search);
+    const hidePanel = useCallback(
+        (canContinueToEnvironment = false) => {
+            const query = new URLSearchParams(props.location.search);
 
-        const newPath = query.get('type') === 'wizard' ? newEnvironmentPath : environmentsPath;
+            const isWizard = query.get('type') === 'wizard';
+            const newPath =
+                isWizard && canContinueToEnvironment ? newEnvironmentPath : environmentsPath;
 
-        props.history.replace(newPath);
-    }, [props.history, props.location]);
+            props.history.replace(newPath);
+        },
+        [props.history, props.location]
+    );
 
     return (
         <Fragment>
