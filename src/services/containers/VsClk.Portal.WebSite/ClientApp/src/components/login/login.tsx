@@ -20,6 +20,7 @@ import { blogPostUrl } from '../../BlogPost';
 
 import './login.css';
 import loginImage from './login-image.png';
+import { Signal } from '../../utils/signal';
 
 interface LoginProps {
     redirectUrl: string | null;
@@ -47,7 +48,9 @@ function LoginView(props: LoginProps) {
             return;
         }
 
-        setAuthCookie(props.token.accessToken).then(
+        const cookieSignal = Signal.from(setAuthCookie(props.token.accessToken));
+
+        cookieSignal.promise.then(
             () => {
                 setIsAuthCookieSet(true);
             },
@@ -55,6 +58,11 @@ function LoginView(props: LoginProps) {
                 // noop
             }
         );
+
+        return () => {
+            // The cookie still gets set, but we don't get an error from updating unmounted login screen.
+            cookieSignal.cancel();
+        };
     }, [setIsAuthCookieSet, props.token]);
 
     if (!props.isAuthenticated && props.isAuthenticating) {

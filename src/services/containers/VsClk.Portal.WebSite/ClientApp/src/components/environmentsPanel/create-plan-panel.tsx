@@ -1,10 +1,7 @@
 import React, { Component, FormEvent, KeyboardEvent } from 'react';
 import { connect } from 'react-redux';
 import jwtDecode from 'jwt-decode';
-import {
-    PrimaryButton,
-    DefaultButton,
-} from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
@@ -32,9 +29,9 @@ export interface CreatePlanPanelProps {
 
 export interface CreatePlanPanelState {
     planName?: string;
-    subscriptionList: Array<{key: string, text: string}>;
-    resourceGroupList: Array<{key: string, text: string}>;
-    locationsList: Array<{key: string, text: string}>;
+    subscriptionList: { key: string; text: string }[];
+    resourceGroupList: { key: string; text: string }[];
+    locationsList: { key: string; text: string }[];
     selectedSubscription?: string;
     selectedResourceGroup?: string;
     selectedRegion?: string;
@@ -44,10 +41,13 @@ export interface CreatePlanPanelState {
     isGettingClosestRegion: boolean;
 }
 
-export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, CreatePlanPanelState>{
-    public constructor(props: CreatePlanPanelProps){
+export class CreatePlanPanelComponent extends Component<
+    CreatePlanPanelProps,
+    CreatePlanPanelState
+> {
+    public constructor(props: CreatePlanPanelProps) {
         super(props);
-        
+
         this.state = {
             subscriptionList: [],
             resourceGroupList: [],
@@ -55,9 +55,11 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
             isCreatingPlan: false,
             isGettingSubscriptions: true,
             isGettingResourceGroups: true,
-            isGettingClosestRegion: true
+            isGettingClosestRegion: true,
         };
+    }
 
+    componentDidMount() {
         this.getSubscriptions();
         this.getClosestRegion();
     }
@@ -87,7 +89,7 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
                 className='create-environment-panel'
             >
                 <Stack>
-                    { this.renderOverlay() }
+                    {this.renderOverlay()}
 
                     <DropDownWithLoader
                         label='Subscription'
@@ -126,7 +128,6 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
                         onChange={this.planNameChanged}
                         value={this.state.planName}
                     />
-
                 </Stack>
             </Panel>
         );
@@ -141,7 +142,7 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
 
         return (
             <div className='create-environment-panel__overlay'>
-                <Loader message='Creating the plan..' />
+                <Loader message='Creating the plan...' />
             </div>
         );
     }
@@ -168,59 +169,62 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
     };
 
     private createPlan = async () => {
-        if(!this.isCurrentStateValid()){
+        if (!this.isCurrentStateValid()) {
             return;
         }
         const userID = await this.getUserID();
 
         const data = {
-            "location":this.state.selectedRegion,
-            "tags":{},
-            "properties":{ 
-                "userId": userID
+            location: this.state.selectedRegion,
+            tags: {},
+            properties: {
+                userId: userID,
             },
-        }
+        };
 
         const { selectedResourceGroup, planName } = this.state;
- 
-        const url = 'https://management.azure.com'+ selectedResourceGroup // NOTE: Resource group id contains subscription id
-                    +'/providers/Microsoft.VSOnline/plans/'+ planName
-                    +'?api-version=' + this.getAPIVersion();
+
+        const url =
+            'https://management.azure.com' +
+            selectedResourceGroup + // NOTE: Resource group id contains subscription id
+            '/providers/Microsoft.VSOnline/plans/' +
+            planName +
+            '?api-version=' +
+            this.getAPIVersion();
 
         const myAuthToken = await getARMToken(60);
-        if (myAuthToken){
-            
+        if (myAuthToken) {
             try {
-                this.setState({ 'isCreatingPlan': true });
+                this.setState({ isCreatingPlan: true });
 
                 await fetch(url, {
                     method: 'PUT',
                     body: JSON.stringify(data),
                     headers: {
                         authorization: `Bearer ${myAuthToken.accessToken}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                 });
             } catch (e) {
                 throw e;
             } finally {
-                this.setState({ 'isCreatingPlan': false });
+                this.setState({ isCreatingPlan: false });
             }
 
             getPlans();
 
             this.props.hidePanel();
         }
-    }
+    };
 
-    private clearForm = () => { 
+    private clearForm = () => {
         this.setState({ planName: undefined });
         this.props.hidePanel();
     };
 
-    private async getUserID(){
+    private async getUserID() {
         let tokenString = await authService.getCachedToken();
-        const jwtToken = jwtDecode(tokenString!.accessToken) as { oid: string, tid: string };
+        const jwtToken = jwtDecode(tokenString!.accessToken) as { oid: string; tid: string };
         return `${jwtToken.tid}_${jwtToken.oid}`;
     }
 
@@ -230,52 +234,52 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
      * 2019-07-01-beta	    online-ppe.vsengsaas.visualstudio.com/api/v1
      * 2019-07-01-alpha	    online.dev.vsengsaas.visualstudio.com/api/v1
      */
-    public getAPIVersion(){  
+    public getAPIVersion() {
         const baseURL = window.location.href.split('/')[2];
         let apiVersion;
-        if(baseURL.includes('dev')){
+        if (baseURL.includes('dev')) {
             apiVersion = '2019-07-01-alpha';
-        }
-        else if(baseURL.includes('ppe')){
+        } else if (baseURL.includes('ppe')) {
             apiVersion = '2019-07-01-beta';
-        }
-        else {
+        } else {
             apiVersion = '2019-07-01-preview';
         }
         return apiVersion;
     }
 
-    private async getFromAzure(url:string){
+    private async getFromAzure(url: string) {
         const myAuthToken = await getARMToken(60);
-        if(myAuthToken){
+        if (myAuthToken) {
             const authToken = 'Bearer ' + myAuthToken.accessToken;
             let response = await fetch(url, {
                 headers: {
-                    authorization: authToken
-                }
-            })
+                    authorization: authToken,
+                },
+            });
 
-            return response.json()
+            return response.json();
         }
     }
 
     private async getSubscriptions() {
         try {
             this.setState({
-                isGettingSubscriptions: true
+                isGettingSubscriptions: true,
             });
 
-            const myJson = await this.getFromAzure(`https://management.azure.com/subscriptions?api-version=${armAPIVersion}`);
+            const myJson = await this.getFromAzure(
+                `https://management.azure.com/subscriptions?api-version=${armAPIVersion}`
+            );
 
             const subscriptionsJsonList = myJson.value.map((sub: IAzureSubscription) => {
                 return {
                     key: sub.subscriptionId,
-                    text: sub.displayName
-            }
+                    text: sub.displayName,
+                };
             });
-        
+
             this.setState({
-                subscriptionList: subscriptionsJsonList
+                subscriptionList: subscriptionsJsonList,
             });
 
             // if no subscription selected, select the first one by default
@@ -283,7 +287,6 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
             if (defaultSubscription && !this.state.selectedSubscription) {
                 this.subscriptionChanged({}, defaultSubscription);
             }
-
         } catch (e) {
             throw e;
         } finally {
@@ -308,10 +311,12 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
 
             this.setState({
                 selectedRegion: selectedRegion || closestRegion,
-                locationsList: locations.available.map((l) => { return {
-                    key: l,
-                    text: l,
-                };}),
+                locationsList: locations.available.map((l) => {
+                    return {
+                        key: l,
+                        text: l,
+                    };
+                }),
             });
         } catch {
             // ignore
@@ -326,15 +331,15 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
                 this.setState({
                     isGettingResourceGroups: true,
                     resourceGroupList: [],
-                    selectedResourceGroup: undefined
+                    selectedResourceGroup: undefined,
                 });
                 const rgURL = `https://management.azure.com/subscriptions/${subID}/resourcegroups?api-version=${armAPIVersion}`;
 
                 const myJson = await this.getFromAzure(rgURL);
                 let resourceGroupJsonList = [];
 
-                for(let resGroup of myJson.value){
-                    resourceGroupJsonList.push({key: resGroup.id, text: resGroup.name});
+                for (let resGroup of myJson.value) {
+                    resourceGroupJsonList.push({ key: resGroup.id, text: resGroup.name });
                 }
                 this.setState({
                     resourceGroupList: resourceGroupJsonList,
@@ -352,16 +357,17 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
         }
     }
 
-    private isCurrentStateValid(){
+    private isCurrentStateValid() {
         let isInvalid = false;
 
         const planName = this.state.planName && this.state.planName.trim();
         isInvalid = isInvalid || !planName || planName.length === 0;
 
-        if(!this.state.selectedResourceGroup
-            || !this.state.selectedRegion
-            || !this.state.selectedSubscription){
-
+        if (
+            !this.state.selectedResourceGroup ||
+            !this.state.selectedRegion ||
+            !this.state.selectedSubscription
+        ) {
             isInvalid = true;
         }
         return !isInvalid;
@@ -378,17 +384,16 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
         });
     };
 
-    private subscriptionChanged:( 
-        _: any,
-        option?: IDropdownOption,
-        index?: number
-    ) => void = (_e, option, index) => {
+    private subscriptionChanged: (_: any, option?: IDropdownOption, index?: number) => void = (
+        _e,
+        option
+    ) => {
         if (!option) {
             return;
         }
 
         this.setState({
-            selectedSubscription: option.key as string, 
+            selectedSubscription: option.key as string,
         });
 
         this.getResourceGroups(option.key as string);
@@ -396,17 +401,17 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
         return;
     };
 
-    private resourceGroupChanged: (
-        _: any,
-        option?: IDropdownOption,
-        index?: number
-    ) => void = (_e, option, index) => {
+    private resourceGroupChanged: (_: any, option?: IDropdownOption, index?: number) => void = (
+        _e,
+        option,
+        index
+    ) => {
         if (!option) {
             return;
         }
 
         this.setState({
-            selectedResourceGroup: option.key.toString(),   // option.key has type string | number by default
+            selectedResourceGroup: option.key.toString(), // option.key has type string | number by default
         });
     };
 
@@ -414,19 +419,17 @@ export class CreatePlanPanelComponent extends Component<CreatePlanPanelProps, Cr
         event: FormEvent<HTMLDivElement>,
         option?: IDropdownOption,
         index?: number
-    ) => void = (_e, option, index) => {
+    ) => void = (_e, option) => {
         if (!option) {
             return;
         }
 
         this.setState({
-            selectedRegion: option.key.toString(),   // option.key has type string | number by default
+            selectedRegion: option.key.toString(), // option.key has type string | number by default
         });
     };
 }
 
-export const CreatePlanPanel = connect(
-    ({ configuration }: ApplicationState) => ({
-        configuration
-    })
-)(CreatePlanPanelComponent);
+export const CreatePlanPanel = connect(({ configuration }: ApplicationState) => ({
+    configuration,
+}))(CreatePlanPanelComponent);
