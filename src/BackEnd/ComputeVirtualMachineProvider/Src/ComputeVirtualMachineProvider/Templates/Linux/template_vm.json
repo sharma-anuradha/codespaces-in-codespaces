@@ -119,8 +119,8 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "18.04-DAILY-LTS",
-            "version": "18.04.201910180"
+            "sku": "18.04-LTS",
+            "version": "latest"
           }
         },
         "networkProfile": {
