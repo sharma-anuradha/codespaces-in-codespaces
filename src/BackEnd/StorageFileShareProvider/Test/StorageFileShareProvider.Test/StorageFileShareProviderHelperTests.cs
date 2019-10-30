@@ -5,12 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Batch;
-using Microsoft.Azure.Batch.Auth;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
@@ -43,15 +40,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         // This is a limitation of the current schema for appsettings.images.json where only the image name is specified without knowledge of platform.
         // This works because both the Windows and Linux blobs are pushed at the same time with the same version, the Windows blob just has the ".disk.vhdx" postfix.
         private static readonly string fileShareTemplateBlobNameWindows = $"{fileShareTemplateBlobNameLinux}.disk.vhdx";
-        private static readonly string batchAccountResourceGroup = "vsclk-online-dev-stg-usw2";
-        private static readonly string batchAccountName = "vsodevstgusw2bausw2";
-        private static readonly string batchPoolId = "storage-worker-pool";
+        private static readonly string batchAccountResourceGroup = "vsclk-online-dev-ci-usw2";
+        private static readonly string batchAccountName = "vsodevciusw2bausw2";
+        private static readonly string batchPoolId = "storage-worker-devstamp-pool";
         private static readonly string azureLocationStr = "westus2";
         private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
+        private static readonly string azureSkuName = "Premium_LRS";
         private static readonly string azureSubscriptionName = "ignorethis";
         private static readonly int PREPARE_TIMEOUT_MINS = 60;
-        private static readonly int NUM_STORAGE_TO_CREATE = 2;
         private static readonly int STORAGE_SIZE_IN_GB = 64;
+        private static readonly int NUM_STORAGE_TO_CREATE = 2;
 
         private static IConfiguration InitConfiguration()
         {
@@ -61,9 +59,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             return config;
         }
 
-        private static string GetResourceGroupName(Guid groupGuid)
+        private static string GetResourceGroupName()
         {
-            return azureResourceGroupPrefix + groupGuid.ToString("N");
+            return azureResourceGroupPrefix + Environment.UserName;
         }
 
         private static IServicePrincipal GetServicePrincipal()
@@ -151,8 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             var logger = new DefaultLoggerFactory().New();
 
-            var resourceGroupTestGroupGuid = Guid.NewGuid();
-            var resourceGroupName = GetResourceGroupName(resourceGroupTestGroupGuid);
+            var resourceGroupName = GetResourceGroupName();
             var servicePrincipal = GetServicePrincipal();
             var catalogMoq = GetMockSystemCatalog(servicePrincipal);
             var azure = await GetAzureClient(catalogMoq.Object);
@@ -173,6 +170,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                         azureSubscriptionId,
                         azureLocationStr,
                         resourceGroupName,
+                        azureSkuName,
                         new Dictionary<string, string> { {"ResourceTag", "GeneratedFromTest"}, },
                         logger))
             );
@@ -219,7 +217,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             {
                 // Verify that we can delete the storage accounts
                 await Task.WhenAll(storageAccounts.Select(sa => providerHelper.DeleteStorageAccountAsync(sa, logger)));
-                await azure.ResourceGroups.BeginDeleteByNameAsync(resourceGroupName);
             }
         }
     }

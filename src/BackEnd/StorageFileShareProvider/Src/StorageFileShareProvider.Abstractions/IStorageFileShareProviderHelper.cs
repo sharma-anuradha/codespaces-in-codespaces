@@ -21,10 +21,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         /// <param name="azureSubscriptionId">Azure subscription id to create storage account in.</param>
         /// <param name="azureRegion">Azure region to create storage account in.</param>
         /// <param name="azureResourceGroup">Azure resource group to create storage account in.</param>
+        /// <param name="azureSkuName">Azure Sku name for the storage account.</param>
         /// <param name="resourceTags">Azure tags to attach to the storage account.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The azure resource info of the storage account.</returns>
-        Task<AzureResourceInfo> CreateStorageAccountAsync(string azureSubscriptionId, string azureRegion, string azureResourceGroup, IDictionary<string, string> resourceTags, IDiagnosticsLogger logger);
+        Task<AzureResourceInfo> CreateStorageAccountAsync(string azureSubscriptionId, string azureRegion, string azureResourceGroup, string azureSkuName, IDictionary<string, string> resourceTags, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Create a file share in the provided storage account.

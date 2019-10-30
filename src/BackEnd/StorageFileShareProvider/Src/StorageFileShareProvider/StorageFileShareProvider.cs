@@ -138,6 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     input.AzureSubscription,
                     input.AzureLocation,
                     input.AzureResourceGroup,
+                    input.AzureSkuName,
                     input.ResourceTags,
                     logger);
                 resultResourceInfo = resourceInfo;

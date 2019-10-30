@@ -7,14 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Batch;
-using Microsoft.Azure.Batch.Auth;
 using Microsoft.Azure.Batch.Common;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Storage.Fluent;
+using Microsoft.Azure.Management.Storage.Fluent.Models;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.File;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
@@ -36,8 +35,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
     /// </summary>
     public class StorageFileShareProviderHelper : IStorageFileShareProviderHelper
     {
+        private const string StorageSkuNameStandard = "Standard_LRS";
+        private const string StorageSkuNamePremium = "Premium_LRS";
         private static readonly int StorageAccountNameMaxLength = 24;
         private static readonly int StorageAccountNameGenerateMaxAttempts = 3;
+        private static readonly int StorageShareQuotaGb = 100;
         private static readonly string StorageMountableShareName = "cloudenvdata";
         private static readonly string StorageAccountNamePrefix = "vsoce";
         private static readonly string StorageLinuxMountableFilename = "dockerlib";
@@ -70,12 +72,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             string azureSubscriptionId,
             string azureRegion,
             string azureResourceGroup,
+            string azureSkuName,
             IDictionary<string, string> resourceTags,
             IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(azureRegion, nameof(azureRegion));
             Requires.NotNullOrEmpty(azureResourceGroup, nameof(azureResourceGroup));
             Requires.NotNullOrEmpty(azureSubscriptionId, nameof(azureSubscriptionId));
+            Requires.NotNullOrEmpty(azureSkuName, nameof(azureSkuName));
             Requires.NotNull(resourceTags, nameof(resourceTags));
 
             logger = logger.WithValues(new LogValueSet
@@ -84,26 +88,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 { "AzureResourceGroup", azureResourceGroup },
                 { "AzureSubscription", azureSubscriptionId },
             });
+
             var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
 
             try
             {
+                bool isPremiumSku;
+                switch (azureSkuName)
+                {
+                    case StorageSkuNamePremium:
+                        isPremiumSku = true;
+                        break;
+                    case StorageSkuNameStandard:
+                        isPremiumSku = false;
+                        break;
+                    default:
+                        throw new ArgumentException($"Unable to handle creation of storage account with sku of {azureSkuName}");
+                }
+
                 await azure.CreateResourceGroupIfNotExistsAsync(azureResourceGroup, azureRegion);
                 var storageAccountName = await GenerateStorageAccountName(azure, logger);
 
                 resourceTags.Add(ResourceTagName.ResourceName, storageAccountName);
 
-                var storageAccount = await azure.StorageAccounts.Define(storageAccountName)
-                    .WithRegion(azureRegion)
-                    .WithExistingResourceGroup(azureResourceGroup)
-                    .WithGeneralPurposeAccountKindV2()
-                    .WithOnlyHttpsTraffic()
-                    .WithSku(StorageAccountSkuType.Standard_LRS)
-                    .WithTags(resourceTags)
-                    .CreateAsync();
+                // Premium_LRS for Files requires a different kind of FileStorage
+                // See https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview#types-of-storage-accounts
+                StorageAccountCreateParameters storageCreateParams = new StorageAccountCreateParameters()
+                {
+                    Location = azureRegion,
+                    EnableHttpsTrafficOnly = true,
+                    Tags = resourceTags,
+                    Kind = isPremiumSku ? Kind.FileStorage : Kind.StorageV2,
+                    Sku = new SkuInner(isPremiumSku ? SkuName.PremiumLRS : SkuName.StandardLRS),
+                };
 
                 logger.FluentAddValue("AzureStorageAccountName", storageAccountName)
-                    .LogInfo("file_share_storage_provider_helper_create_storage_account_complete");
+                    .FluentAddValue("AzureStorageAccountRegion", azureRegion)
+                    .FluentAddValue("AzureStorageAccountKind", storageCreateParams.Kind.ToString())
+                    .FluentAddValue("AzureStorageAccountSkuName", storageCreateParams.Sku.Name.ToString());
+
+                await azure.StorageAccounts.Inner.CreateAsync(azureResourceGroup, storageAccountName, storageCreateParams);
+
+                logger.LogInfo("file_share_storage_provider_helper_create_storage_account_complete");
 
                 return new AzureResourceInfo(Guid.Parse(azureSubscriptionId), azureResourceGroup, storageAccountName);
             }
@@ -135,6 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 var cloudStorageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
                 var fileClient = cloudStorageAccount.CreateCloudFileClient();
                 var fileShare = fileClient.GetShareReference(StorageMountableShareName);
+                fileShare.Properties.Quota = StorageShareQuotaGb;
                 await fileShare.CreateIfNotExistsAsync();
                 logger.LogInfo("file_share_storage_provider_helper_create_file_share_complete");
             }

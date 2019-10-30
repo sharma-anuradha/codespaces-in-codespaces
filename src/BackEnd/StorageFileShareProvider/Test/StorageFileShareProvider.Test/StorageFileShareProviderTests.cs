@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 PrepareFileShareStatus.Succeeded,
              };
             providerHelperMoq
-                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockAzureResourceInfo);
             providerHelperMoq
                 .Setup(x => x.CreateFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
@@ -130,7 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
-                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
                 .Throws(new Exception());
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
             var input = new FileShareProviderCreateInput()
