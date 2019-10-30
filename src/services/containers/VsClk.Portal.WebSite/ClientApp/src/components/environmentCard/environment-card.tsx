@@ -130,6 +130,7 @@ const Actions = ({
     const [deleteDialogHidden, setDeleteDialogHidden] = useState(true);
     const [unsuccessfulUrlDialogHidden, setUnsuccessfulUrlDialogHidden] = useState(true);
     const [shutdownDialogHidden, setShutdownDialogHidden] = useState(true);
+    const [vscodeInstanceName, setVscodeInstanceName] = useState();
     return (
         <>
             <IconButton
@@ -146,23 +147,26 @@ const Actions = ({
                             disabled:
                                 environmentIsALie(environment) || isNotConnectable(environment),
                             onClick: async () => {
-                                if (environment.state === StateInfo.Shutdown) {
-                                    await connectEnvironment(environment.id!, environment.state);
-                                }
-
-                                const url = `ms-vsonline.vsonline/connect?environmentId=${encodeURIComponent(
-                                    environment.id!
-                                )}&sessionPath=${
-                                    environment.connection!.sessionPath
-                                }&correlationId=${createUniqueId()}`;
-
                                 try {
-                                    await tryOpeningUrl(`vscode-insiders://${url}`).catch(
-                                        async () => {
-                                            return await tryOpeningUrl(`vscode://${url}`);
-                                        }
-                                    );
+                                    await tryOpeningUrl(environment, 'vscode');
                                 } catch {
+                                    setVscodeInstanceName('VS Code');
+                                    setUnsuccessfulUrlDialogHidden(false);
+                                    
+                                }
+                            },
+                        },
+                        {
+                            key: 'open-vscode-insiders',
+                            iconProps: { iconName: 'OpenInNewWindow' },
+                            name: 'Open in VS Code Insiders',
+                            disabled:
+                                environmentIsALie(environment) || isNotConnectable(environment),
+                            onClick: async () => {
+                                try {
+                                    await tryOpeningUrl(environment, 'vscode-insiders');
+                                } catch {
+                                    setVscodeInstanceName('VS Code Insiders');
                                     setUnsuccessfulUrlDialogHidden(false);
                                 }
                             },
@@ -223,6 +227,7 @@ const Actions = ({
                 hidden={deleteDialogHidden}
             />
             <UnsuccessfulUrlDialog
+                vscodeName={vscodeInstanceName}
                 // tslint:disable-next-line: react-this-binding-issue
                 accept={() => {
                     setUnsuccessfulUrlDialogHidden(true);
@@ -306,15 +311,16 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
 type UnsuccessfulUrlDialogProps = {
     accept: () => void;
     hidden: boolean;
+    vscodeName: string;
 };
 
-function UnsuccessfulUrlDialog({ accept, hidden }: UnsuccessfulUrlDialogProps) {
+function UnsuccessfulUrlDialog({ accept, hidden, vscodeName }: UnsuccessfulUrlDialogProps) {
     return (
         <Dialog
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Could not find VSCode installation.`,
+                title: `Could not find ${vscodeName} installation.`,
             }}
             modalProps={{
                 isBlocking: true,
