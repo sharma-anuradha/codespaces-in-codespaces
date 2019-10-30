@@ -4,6 +4,7 @@
 
 using Microsoft.VsSaaS.Common;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -441,6 +442,25 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             where T : struct
         {
             return logger.FluentAddBaseValue(name, value.HasValue ? value.Value.ToString() : null);
+        }
+
+        /// <summary>
+        /// Adds multiple key/values from the input dictionary.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="keyValues">Target key/values.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger FluentAddValues(this IDiagnosticsLogger logger, IDictionary<string, string> keyValues)
+        {
+            if (keyValues != null)
+            {
+                foreach (var loggerProperty in keyValues)
+                {
+                    logger.FluentAddValue(loggerProperty.Key, loggerProperty.Value);
+                }
+            }
+
+            return logger;
         }
 
         /// <summary>

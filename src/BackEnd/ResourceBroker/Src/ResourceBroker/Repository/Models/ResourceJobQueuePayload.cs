@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 
@@ -27,12 +28,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <param name="target">Target handler.</param>
         /// <param name="created">Created date/time.</param>
         /// <param name="stepCount">What step count we are at.</param>
-        public ResourceJobQueuePayload(string trackingId, string target, DateTime created, int stepCount)
+        /// <param name="loggerProperties">Target logger properties.</param>
+        public ResourceJobQueuePayload(
+            string trackingId, string target, DateTime created, int stepCount, IDictionary<string, string> loggerProperties)
         {
             TrackingId = trackingId;
             Created = created;
             Target = target;
             StepCount = stepCount;
+            LoggerProperties = loggerProperties;
         }
 
         /// <summary>
@@ -69,6 +73,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// Gets or sets the next retry after period.
         /// </summary>
         public TimeSpan? RetryAfter { get; set; }
+
+        /// <summary>
+        /// Gets or sets the logger properties that should be flowed to each continuation.
+        /// </summary>
+        public IDictionary<string, string> LoggerProperties { get; set; }
 
         /// <summary>
         /// Converts payload to JSON.

@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private IContinuationTaskMessagePump MessagePump { get; }
 
         /// <inheritdoc/>
-        public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger, Guid? trackingId = null)
+        public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger, Guid? trackingId = null, IDictionary<string, string> loggerProperties = null)
         {
             trackingId = trackingId ?? Guid.NewGuid();
 
@@ -51,7 +51,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 Status = null,
                 Input = input,
                 Target = name,
+                LoggerProperties = loggerProperties,
             };
+
+            logger.FluentAddValues(payload.LoggerProperties);
 
             return logger.OperationScopeAsync(
                 LogBaseName,
@@ -75,7 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
                 .FluentAddValue("ContinuationPayloadCreated", payload.Created)
                 .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)
-                .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount);
+                .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount)
+                .FluentAddValues(payload.LoggerProperties);
 
             var continueFindDuration = logger.StartDuration();
 
@@ -117,7 +121,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
         {
             // Result is based off the current
-            var resultPayload = new ResourceJobQueuePayload(payload.TrackingId, payload.Target, payload.Created, payload.StepCount + 1);
+            var resultPayload = new ResourceJobQueuePayload(
+                payload.TrackingId, payload.Target, payload.Created, payload.StepCount + 1, payload.LoggerProperties);
 
             // Run the continuation
             var result = (ContinuationResult)null;

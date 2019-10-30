@@ -53,15 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             string reason,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resourceId)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolLocation, details.Location.ToString())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, details.SkuName)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolResourceType, type.ToString())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolDefinition, details.GetPoolDefinition())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolVersionDefinition, details.GetPoolVersionDefinition())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, details.ImageFamilyName)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, details.ImageName);
+            var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
 
             var input = new CreateResourceContinuationInput()
             {
@@ -72,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = CreateResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId);
+            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
         }
 
         /// <inheritdoc/>
@@ -85,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             logger.FluentAddBaseValue("StorageResourceId", storageResourceId);
 
-            await ValidateAndTraceSystemResource(computeResourceId, reason, logger);
+            var loggingProperties = await BuildLoggingProperties(computeResourceId, reason, logger);
 
             var input = new StartEnvironmentContinuationInput()
             {
@@ -96,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId);
+            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
         }
 
         /// <inheritdoc/>
@@ -105,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             string reason,
             IDiagnosticsLogger logger)
         {
-            await ValidateAndTraceSystemResource(resourceId, reason, logger);
+            var loggingProperties = await BuildLoggingProperties(resourceId, reason, logger);
 
             var input = new DeleteResourceContinuationInput()
             {
@@ -114,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = DeleteResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId);
+            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
         }
 
         /// <inheritdoc/>
@@ -124,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             string reason,
             IDiagnosticsLogger logger)
         {
-            await ValidateAndTraceSystemResource(resourceId, reason, logger);
+            var loggingProperties = await BuildLoggingProperties(resourceId, reason, logger);
 
             var input = new CleanupResourceContinuationInput()
             {
@@ -134,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = CleanupResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId);
+            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
         }
 
         /// <inheritdoc/>
@@ -148,7 +140,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             string reason,
             IDiagnosticsLogger logger)
         {
-            await TraceAzureResource(resourceId, ResourceType.StorageFileShare, resourceTags, reason, logger);
+            var loggingProperties = BuildLoggingProperties(
+                resourceId, ResourceType.StorageFileShare, resourceTags, reason);
 
             var input = new VirtualMachineProviderDeleteInput()
             {
@@ -167,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, resourceId);
+            return await Activator.Execute(target, input, logger, resourceId, loggingProperties);
         }
 
         /// <inheritdoc/>
@@ -181,7 +174,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             string reason,
             IDiagnosticsLogger logger)
         {
-            await TraceAzureResource(resourceId, ResourceType.StorageFileShare, resourceTags, reason, logger);
+            var loggingProperties = BuildLoggingProperties(
+                resourceId, ResourceType.StorageFileShare, resourceTags, reason);
 
             var input = new FileShareProviderDeleteInput()
             {
@@ -189,10 +183,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, resourceId);
+            return await Activator.Execute(target, input, logger, resourceId, loggingProperties);
         }
 
-        private async Task ValidateAndTraceSystemResource(Guid resourceId, string reason, IDiagnosticsLogger logger)
+        private IDictionary<string, string> BuildLoggingProperties(
+            Guid resourceId,
+            ResourceType type,
+            ResourcePoolResourceDetails details,
+            string reason)
+        {
+            return new Dictionary<string, string>()
+                {
+                    { ResourceLoggingPropertyConstants.ResourceId, resourceId.ToString() },
+                    { ResourceLoggingPropertyConstants.OperationReason, reason },
+                    { ResourceLoggingPropertyConstants.PoolLocation, details.Location.ToString() },
+                    { ResourceLoggingPropertyConstants.PoolSkuName, details.SkuName },
+                    { ResourceLoggingPropertyConstants.PoolResourceType, type.ToString() },
+                    { ResourceLoggingPropertyConstants.PoolDefinition, details.GetPoolDefinition() },
+                    { ResourceLoggingPropertyConstants.PoolVersionDefinition, details.GetPoolVersionDefinition() },
+                    { ResourceLoggingPropertyConstants.PoolImageFamilyName, details.ImageFamilyName },
+                    { ResourceLoggingPropertyConstants.PoolImageName, details.ImageName },
+                };
+        }
+
+        private async Task<IDictionary<string, string>> BuildLoggingProperties(
+            Guid resourceId,
+            string reason,
+            IDiagnosticsLogger logger)
         {
             var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
             if (resource == null)
@@ -200,35 +217,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 throw new ResourceNotFoundException(resourceId);
             }
 
-            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resourceId)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolLocation, resource.Location)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, resource.PoolReference.Dimensions.GetValueOrDefault("skuName"))
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolResourceType, resource.Type)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolDefinition, resource.PoolReference.Code)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolVersionDefinition, resource.PoolReference.VersionCode)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, resource.PoolReference.Dimensions.GetValueOrDefault("imageFamilyName"))
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, resource.PoolReference.Dimensions.GetValueOrDefault("imageName"));
+            return new Dictionary<string, string>()
+                {
+                    { ResourceLoggingPropertyConstants.ResourceId, resourceId.ToString() },
+                    { ResourceLoggingPropertyConstants.OperationReason, reason },
+                    { ResourceLoggingPropertyConstants.PoolLocation, resource.Location },
+                    { ResourceLoggingPropertyConstants.PoolSkuName, resource.PoolReference.Dimensions.GetValueOrDefault("skuName") },
+                    { ResourceLoggingPropertyConstants.PoolResourceType, resource.Type.ToString() },
+                    { ResourceLoggingPropertyConstants.PoolDefinition, resource.PoolReference.Code },
+                    { ResourceLoggingPropertyConstants.PoolVersionDefinition, resource.PoolReference.VersionCode },
+                    { ResourceLoggingPropertyConstants.PoolImageFamilyName, resource.PoolReference.Dimensions.GetValueOrDefault("imageFamilyName") },
+                    { ResourceLoggingPropertyConstants.PoolImageName, resource.PoolReference.Dimensions.GetValueOrDefault("imageName") },
+                };
         }
 
-        private Task TraceAzureResource(
+        private IDictionary<string, string> BuildLoggingProperties(
             Guid resourceId,
             ResourceType type,
             IDictionary<string, string> resourceTags,
-            string reason,
-            IDiagnosticsLogger logger)
+            string reason)
         {
-            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resourceId)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolLocation, resourceTags.GetValueOrDefault(ResourceTagName.PoolLocation))
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, resourceTags.GetValueOrDefault(ResourceTagName.PoolSkuName))
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolResourceType, type)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolDefinition, resourceTags.GetValueOrDefault(ResourceTagName.PoolDefinition))
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolVersionDefinition, resourceTags.GetValueOrDefault(ResourceTagName.PoolVersionDefinition))
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, resourceTags.GetValueOrDefault(ResourceTagName.PoolImageFamilyName))
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, resourceTags.GetValueOrDefault(ResourceTagName.PoolImageName));
-
-            return Task.CompletedTask;
+            return new Dictionary<string, string>()
+                {
+                    { ResourceLoggingPropertyConstants.ResourceId, resourceId.ToString() },
+                    { ResourceLoggingPropertyConstants.OperationReason, reason },
+                    { ResourceLoggingPropertyConstants.PoolLocation, resourceTags.GetValueOrDefault(ResourceTagName.PoolLocation) },
+                    { ResourceLoggingPropertyConstants.PoolSkuName, resourceTags.GetValueOrDefault(ResourceTagName.PoolSkuName) },
+                    { ResourceLoggingPropertyConstants.PoolResourceType, type.ToString() },
+                    { ResourceLoggingPropertyConstants.PoolDefinition, resourceTags.GetValueOrDefault(ResourceTagName.PoolDefinition) },
+                    { ResourceLoggingPropertyConstants.PoolVersionDefinition, resourceTags.GetValueOrDefault(ResourceTagName.PoolVersionDefinition) },
+                    { ResourceLoggingPropertyConstants.PoolImageFamilyName, resourceTags.GetValueOrDefault(ResourceTagName.PoolImageFamilyName) },
+                    { ResourceLoggingPropertyConstants.PoolImageName, resourceTags.GetValueOrDefault(ResourceTagName.PoolImageName) },
+                };
         }
     }
 }
