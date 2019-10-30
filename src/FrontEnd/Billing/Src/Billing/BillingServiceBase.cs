@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     var planShard = x.planShard;
                     var region = x.region;
-                    var leaseName = $"{ServiceName}-{planShard}-{region}2".ToLowerInvariant();
+                    var leaseName = $"{ServiceName}-{planShard}-{region}".ToLowerInvariant();
                     childlogger.FluentAddBaseValue("Service", "billingservices");
                     using (var lease = await claimedDistributedLease.Obtain(
                                                   $"{ServiceName}-leases",
