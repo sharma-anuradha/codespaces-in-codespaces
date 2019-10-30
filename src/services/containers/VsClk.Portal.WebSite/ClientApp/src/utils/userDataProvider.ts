@@ -42,14 +42,17 @@ export class UserDataProvider implements IFileSystemProvider {
 	}
 
 	private async initializeOptions() {
-		const options =
-		[
+		const value = await this.indexedDBFSProvider.getValue(this.globalPath)
+		if (!value) {
+			const options =
 			[
-				'workbench.telemetryOptOutShown',
-				'true'
+				[
+					'workbench.telemetryOptOutShown',
+					'true'
+				]
 			]
-		]
-		await this.indexedDBFSProvider.setValue(this.globalPath, JSON.stringify(options));
+			await this.indexedDBFSProvider.setValue(this.globalPath, JSON.stringify(options));
+		}		
 	}
 
     watch(resource: URI, opts: IWatchOptions): Disposable {
