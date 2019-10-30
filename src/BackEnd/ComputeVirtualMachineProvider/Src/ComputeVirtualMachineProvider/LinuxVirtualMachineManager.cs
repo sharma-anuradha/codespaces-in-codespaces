@@ -157,7 +157,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 var azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
                 var deployment = await azure.Deployments.GetByResourceGroupAsync(input.AzureResourceInfo.ResourceGroup, input.TrackingId);
-                return (ParseResult(deployment.ProvisioningState), new NextStageInput(input.TrackingId, input.AzureResourceInfo));
+
+                OperationState operationState = ParseResult(deployment.ProvisioningState);
+                if (operationState == OperationState.Failed)
+                {
+                    var errorDetails = await DeploymentUtils.ExtractDeploymentErrors(deployment);
+                    throw new VirtualMachineException(errorDetails);
+                }
+
+                return (operationState, new NextStageInput(input.TrackingId, input.AzureResourceInfo));
+            }
+            catch (VirtualMachineException vmException)
+            {
+                logger.LogException("linux_virtual_machine_manager_check_create_compute_error", vmException);
+                throw;
             }
             catch (Exception ex)
             {

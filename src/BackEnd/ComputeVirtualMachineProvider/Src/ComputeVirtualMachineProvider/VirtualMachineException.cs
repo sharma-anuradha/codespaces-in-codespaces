@@ -8,7 +8,7 @@ using System.Runtime.Serialization;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
     [Serializable]
-    internal class VirtualMachineException : Exception
+    public class VirtualMachineException : Exception
     {
         public VirtualMachineException()
         {
