@@ -3,7 +3,6 @@ import { rootReducer, ApplicationState } from '../reducers/rootReducer';
 import { trace } from '../utils/trace';
 import { setContextFactory, Context } from '../actions/middleware/useActionContext';
 import { actionContextMiddleware } from '../actions/middleware/middleware';
-import { DispatchError } from '../actions/middleware/useDispatch';
 import {
     BaseAction,
     ErrorAction,
@@ -18,9 +17,6 @@ const logger = (_store: unknown) => (next: Function) => (action: BaseAction | Er
     trace(`dispatching ${action.type}`);
 
     if (action.error) {
-        if (action.error instanceof DispatchError) {
-            trace(action.error.error);
-        }
         trace(action.error);
     }
 

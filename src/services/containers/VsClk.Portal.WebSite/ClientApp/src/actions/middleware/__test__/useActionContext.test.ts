@@ -119,28 +119,11 @@ describe('useActionContext', () => {
             }
         }
 
-        const actExecuted = act();
-        await store.dispatch(actExecuted);
-
-        expect(store.dispatchedActions).toHaveFailed();
-    });
-
-    it('unhandled async failure turns to action', async () => {
-        async function act() {
-            const dispatch = useDispatch();
-            const action = useActionCreator();
-
-            dispatch(action('sample'));
-            await wait(0);
-            dispatch(action('sample.success'));
-            throw new Error('Things went wrong. Very wrong.');
+        try {
+            await store.dispatch(act());
+        } catch {
+            expect(store.dispatchedActions).toHaveFailed();
         }
-
-        const actExecuted = act();
-        await store.dispatch(actExecuted);
-
-        expect(store.dispatchedActions).toBeHaveBeenDispatched('async.unhandled.failure');
-        expect(store.dispatchedActions).toHaveFailed();
     });
 
     it('sync actions will get new context', () => {

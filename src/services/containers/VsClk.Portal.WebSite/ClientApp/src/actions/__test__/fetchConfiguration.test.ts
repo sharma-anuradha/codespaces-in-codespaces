@@ -53,12 +53,15 @@ describe('fetchConfiguration', () => {
             })
         );
 
-        await store.dispatch(fetchConfiguration());
-
-        expect(store.dispatchedActions).toBeHaveBeenDispatched(fetchConfigurationActionType);
-        expect(store.dispatchedActions).toHaveFailed();
-        expect(
-            getDispatchedAction(store.dispatchedActions, fetchConfigurationFailureActionType)!.error
-        ).toBeInstanceOf(ServiceContentError);
+        try {
+            await store.dispatch(fetchConfiguration());
+        } catch (err) {
+            expect(store.dispatchedActions).toBeHaveBeenDispatched(fetchConfigurationActionType);
+            expect(store.dispatchedActions).toHaveFailed();
+            expect(
+                getDispatchedAction(store.dispatchedActions, fetchConfigurationFailureActionType)!
+                    .error
+            ).toBeInstanceOf(ServiceContentError);
+        }
     });
 });

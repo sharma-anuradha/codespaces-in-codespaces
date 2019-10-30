@@ -92,14 +92,16 @@ describe('actionContextProvider', () => {
                 }
             }
 
-            await store.dispatch(act());
-
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
-            expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
-            expect(
-                getDispatchedAction(store.dispatchedActions, 'hello.failure')!.error
-            ).toBeInstanceOf(ServiceAuthenticationError);
+            try {
+                await store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+                expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+                expect(
+                    getDispatchedAction(store.dispatchedActions, 'hello.failure')!.error
+                ).toBeInstanceOf(ServiceAuthenticationError);
+            }
         });
 
         it('fails on failed connection request', async () => {
@@ -126,14 +128,16 @@ describe('actionContextProvider', () => {
                 }
             }
 
-            await store.dispatch(act());
-
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
-            expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
-            expect(
-                getDispatchedAction(store.dispatchedActions, 'hello.failure').error
-            ).toBeInstanceOf(ServiceConnectionError);
+            try {
+                await store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+                expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+                expect(
+                    getDispatchedAction(store.dispatchedActions, 'hello.failure').error
+                ).toBeInstanceOf(ServiceConnectionError);
+            }
         });
 
         it('fails on 401', async () => {
@@ -165,14 +169,16 @@ describe('actionContextProvider', () => {
                 }
             }
 
-            await store.dispatch(act());
-
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
-            expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
-            expect(
-                getDispatchedAction(store.dispatchedActions, 'hello.failure').error
-            ).toBeInstanceOf(ServiceAuthenticationError);
+            try {
+                await store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+                expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+                expect(
+                    getDispatchedAction(store.dispatchedActions, 'hello.failure').error
+                ).toBeInstanceOf(ServiceAuthenticationError);
+            }
         });
 
         it('fails on non 401 error', async () => {
@@ -204,14 +210,16 @@ describe('actionContextProvider', () => {
                 }
             }
 
-            await store.dispatch(act());
-
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
-            expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
-            expect(
-                getDispatchedAction(store.dispatchedActions, 'hello.failure').error
-            ).toBeInstanceOf(ServiceResponseError);
+            try {
+                await store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+                expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+                expect(
+                    getDispatchedAction(store.dispatchedActions, 'hello.failure').error
+                ).toBeInstanceOf(ServiceResponseError);
+            }
         });
 
         it('fails on invalid content', async () => {
@@ -243,14 +251,16 @@ describe('actionContextProvider', () => {
                 }
             }
 
-            await store.dispatch(act());
-
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
-            expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
-            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
-            expect(
-                getDispatchedAction(store.dispatchedActions, 'hello.failure').error
-            ).toBeInstanceOf(ServiceContentError);
+            try {
+                await store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+                expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+                expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+                expect(
+                    getDispatchedAction(store.dispatchedActions, 'hello.failure').error
+                ).toBeInstanceOf(ServiceContentError);
+            }
         });
     });
 
@@ -322,14 +332,16 @@ describe('actionContextProvider', () => {
             }
         }
 
-        await store.dispatch(act());
-
-        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
-        expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
-        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
-        expect(getDispatchedAction(store.dispatchedActions, 'hello.failure').error).toBeInstanceOf(
-            ServiceResponseError
-        );
+        try {
+            await store.dispatch(act());
+        } catch {
+            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+            expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+            expect(
+                getDispatchedAction(store.dispatchedActions, 'hello.failure').error
+            ).toBeInstanceOf(ServiceResponseError);
+        }
     });
 
     it('retries on failed connection errors', async () => {
@@ -462,14 +474,16 @@ describe('actionContextProvider', () => {
             }
         }
 
-        await store.dispatch(act());
-
-        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
-        expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
-        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
-        expect(getDispatchedAction(store.dispatchedActions, 'hello.failure').error).toBeInstanceOf(
-            ServiceResponseError
-        );
+        try {
+            await store.dispatch(act());
+        } catch {
+            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+            expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+            expect(
+                getDispatchedAction(store.dispatchedActions, 'hello.failure').error
+            ).toBeInstanceOf(ServiceResponseError);
+        }
     });
 
     it('retry count shared between 500s and connection errors', async () => {
@@ -516,13 +530,15 @@ describe('actionContextProvider', () => {
             }
         }
 
-        await store.dispatch(act());
-
-        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
-        expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
-        expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
-        expect(getDispatchedAction(store.dispatchedActions, 'hello.failure').error).toBeInstanceOf(
-            ServiceConnectionError
-        );
+        try {
+            await store.dispatch(act());
+        } catch {
+            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello');
+            expect(store.dispatchedActions).not.toBeHaveBeenDispatched('hello.success');
+            expect(store.dispatchedActions).toBeHaveBeenDispatched('hello.failure');
+            expect(
+                getDispatchedAction(store.dispatchedActions, 'hello.failure').error
+            ).toBeInstanceOf(ServiceConnectionError);
+        }
     });
 });

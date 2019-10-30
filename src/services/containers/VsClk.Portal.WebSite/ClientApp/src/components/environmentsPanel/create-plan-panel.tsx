@@ -1,9 +1,9 @@
 import React, { Component, FormEvent, KeyboardEvent } from 'react';
 import { connect } from 'react-redux';
-import jwtDecode from 'jwt-decode';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
+import { Text } from 'office-ui-fabric-react/lib/Text';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 import { ComboBox, IComboBoxOption, IComboBoxProps } from 'office-ui-fabric-react/lib/ComboBox';
@@ -25,9 +25,14 @@ import { Collapsible } from '../collapsible/collapsible';
 import { createUniqueId } from '../../dependencies';
 import { isDefined } from '../../utils/isDefined';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
+import { PlanCreationError, PlanCreationFailureReason } from './PlanCreationError';
+import { createPlan } from '../../actions/createPlan';
+import { createResourceGroup } from '../../actions/createResourceGroup';
 
 export interface CreatePlanPanelProps {
     hidePanel: (canContinueToEnvironment?: boolean) => void;
+    createPlan: typeof createPlan;
+    createResourceGroup: typeof createResourceGroup;
     configuration: ConfigurationState;
 }
 
@@ -42,6 +47,8 @@ interface INewGroupOption extends IStringOption {
 
 const asc = (a: IStringOption, b: IStringOption) => (a.text > b.text ? 1 : -1);
 
+const subscriptionIdStorageKey = 'user_setting_planSubscription';
+
 export interface CreatePlanPanelState {
     userSpecifiedPlanName?: string;
     subscriptionList: IStringOption[];
@@ -55,6 +62,7 @@ export interface CreatePlanPanelState {
     isGettingSubscriptions: boolean;
     isGettingResourceGroups: boolean;
     isGettingClosestLocation: boolean;
+    errorMessage?: string;
 }
 
 function locationToDisplayName(location: string) {
@@ -71,6 +79,23 @@ function locationToDisplayName(location: string) {
         default:
             return location;
     }
+}
+
+function nameHasInvalidEnding(name: string) {
+    // Naming guidelines suggest names should not start or end with period or hyphen.
+    return /^[-\.]/.test(name) || /[-\.]$/.test(name);
+}
+
+function validateResourceName(name: string): string | undefined {
+    if (name.length > 60) {
+        return 'Name is too long.';
+    } else if (
+        !/^[-\w\._]+$/.test(name) || // Contains invalid characters
+        nameHasInvalidEnding(name)
+    ) {
+        return 'Name contains invalid characters.';
+    }
+    return undefined;
 }
 
 export class CreatePlanPanelComponent extends Component<
@@ -156,6 +181,7 @@ export class CreatePlanPanelComponent extends Component<
                             required
                             placeholder='My plan'
                             onChange={this.planNameChanged}
+                            onGetErrorMessage={validateResourceName}
                             value={this.planName}
                         />
                         <ComboBox
@@ -169,6 +195,7 @@ export class CreatePlanPanelComponent extends Component<
                             useComboBoxAsMenuWidth={true}
                             selectedKey={this.selectedResourceGroup}
                             text={newGroup}
+                            errorMessage={this.getResourceGroupValidation()}
                             className='create-environment-panel__dropdown'
                         />
                         {resourceGroupDescription}
@@ -176,6 +203,14 @@ export class CreatePlanPanelComponent extends Component<
                 </Stack>
             </Panel>
         );
+    }
+
+    getResourceGroupValidation(): string | undefined {
+        const { newGroup } = this.state;
+        if (newGroup && this.selectedResourceGroup && newGroup === this.selectedResourceGroup) {
+            return validateResourceName(newGroup);
+        }
+        return undefined;
     }
 
     private renderOverlay() {
@@ -194,16 +229,24 @@ export class CreatePlanPanelComponent extends Component<
 
     private onRenderFooterContent = () => {
         return (
-            <>
-                <PrimaryButton
-                    onClick={this.createPlan}
-                    style={{ marginRight: '.8rem' }}
-                    disabled={!this.isCurrentStateValid()}
-                >
-                    Create
-                </PrimaryButton>
-                <DefaultButton onClick={this.clearForm}>Cancel</DefaultButton>
-            </>
+            <Stack tokens={{ childrenGap: 'l1' }}>
+                <Stack.Item>
+                    <Text className='create-environment-panel__errorMessage'>
+                        {this.state.errorMessage}
+                    </Text>
+                </Stack.Item>
+
+                <Stack.Item>
+                    <PrimaryButton
+                        onClick={this.createPlan}
+                        style={{ marginRight: '.8rem' }}
+                        disabled={!this.isCurrentStateValid()}
+                    >
+                        Create
+                    </PrimaryButton>
+                    <DefaultButton onClick={this.clearForm}>Cancel</DefaultButton>
+                </Stack.Item>
+            </Stack>
         );
     };
 
@@ -217,61 +260,6 @@ export class CreatePlanPanelComponent extends Component<
         this.props.hidePanel();
     };
 
-    private createNewResourceGroup = async (accessToken: string): Promise<string> => {
-        if (!this.state.selectedSubscription) {
-            throw new Error('NoSubscription');
-        }
-        if (!this.selectedResourceGroup) {
-            throw new Error('NoResourceGroup');
-        }
-        if (!this.state.selectedLocation) {
-            throw new Error('NoLocation');
-        }
-
-        const subscriptionId = this.state.selectedSubscription;
-        const selectedResourceGroup = this.selectedResourceGroup;
-
-        const url = new URL(
-            `/subscriptions/${subscriptionId}/resourcegroups/${selectedResourceGroup}`,
-            'https://management.azure.com'
-        );
-        url.searchParams.set('api-version', armAPIVersion);
-
-        const resourceGroupExistsResponse = await fetch(url.toString(), {
-            method: 'HEAD',
-            headers: {
-                authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (resourceGroupExistsResponse.status !== 404) {
-            throw new Error('ResourceGroupExists');
-        }
-
-        const createResourceGroupResponse = await fetch(url.toString(), {
-            method: 'PUT',
-            body: JSON.stringify({
-                location: this.state.selectedLocation,
-            }),
-            headers: {
-                authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (
-            createResourceGroupResponse.status !== 200 &&
-            createResourceGroupResponse.status !== 201
-        ) {
-            throw new Error('FailedToCreateResourceGroup');
-        }
-
-        const responseData = await createResourceGroupResponse.json();
-
-        return responseData.id;
-    };
-
     private createPlan = async () => {
         if (!this.isCurrentStateValid()) {
             return;
@@ -280,87 +268,53 @@ export class CreatePlanPanelComponent extends Component<
         try {
             this.setState({ isCreatingPlan: true });
 
-            const userID = await this.getUserID();
-            const myAuthToken = await authService.getARMToken(60);
-            if (!myAuthToken) {
-                return;
+            if (!this.state.selectedSubscription) {
+                throw new PlanCreationError(PlanCreationFailureReason.NoSubscription);
+            }
+            if (!this.selectedResourceGroup) {
+                throw new PlanCreationError(PlanCreationFailureReason.NoResourceGroup);
+            }
+            if (!this.state.selectedLocation) {
+                throw new PlanCreationError(PlanCreationFailureReason.NoLocation);
             }
 
-            const data = {
-                location: this.state.selectedLocation,
-                tags: {},
-                properties: {
-                    userId: userID,
-                },
-            };
+            const subscriptionId = this.state.selectedSubscription;
+            const resourceGroupName = this.selectedResourceGroup;
+            const location = this.state.selectedLocation;
 
-            let resourceGroupPath: string;
-            if (this.selectedResourceGroup === this.state.newGroup) {
-                resourceGroupPath = await this.createNewResourceGroup(myAuthToken.accessToken);
-            } else if (isDefined(this.selectedResourceGroup)) {
-                resourceGroupPath = this.selectedResourceGroup;
-            } else {
-                throw new Error('Cannot create plan without a group.');
+            let resourceGroupPath = resourceGroupName;
+            if (resourceGroupName === this.state.newGroup) {
+                resourceGroupPath = await this.props.createResourceGroup(
+                    subscriptionId,
+                    resourceGroupName,
+                    location
+                );
             }
 
-            const url = new URL(
-                `${resourceGroupPath}/providers/Microsoft.VSOnline/plans/${this.planName}`,
-                'https://management.azure.com'
-            );
-            url.searchParams.set('api-version', this.getAPIVersion());
-
-            await fetch(url.toString(), {
-                method: 'PUT',
-                body: JSON.stringify(data),
-                headers: {
-                    authorization: `Bearer ${myAuthToken.accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+            await this.props.createPlan(resourceGroupPath, this.planName, location);
 
             await getPlans();
             this.props.hidePanel(true);
         } catch (e) {
-            this.setState({ isCreatingPlan: false });
+            if (e instanceof PlanCreationError) {
+                this.setState({
+                    errorMessage: e.message,
+                });
+            }
 
-            throw e;
+            this.setState({ isCreatingPlan: false });
         }
     };
 
     private clearForm = () => {
-        this.setState({ userSpecifiedPlanName: undefined });
+        this.setState({ userSpecifiedPlanName: undefined, errorMessage: undefined });
         this.props.hidePanel();
     };
 
-    private async getUserID() {
-        let tokenString = await authService.getCachedToken();
-        const jwtToken = jwtDecode(tokenString!.accessToken) as { oid: string; tid: string };
-        return `${jwtToken.tid}_${jwtToken.oid}`;
-    }
-
-    /**
-     * API Version	Endpoint URL
-     * 2019-07-01-preview	online.visualstudio.com/api/v1
-     * 2019-07-01-beta	    online-ppe.vsengsaas.visualstudio.com/api/v1
-     * 2019-07-01-alpha	    online.dev.vsengsaas.visualstudio.com/api/v1
-     */
-    public getAPIVersion() {
-        const baseURL = window.location.href.split('/')[2];
-        let apiVersion;
-        if (baseURL.includes('dev')) {
-            apiVersion = '2019-07-01-alpha';
-        } else if (baseURL.includes('ppe')) {
-            apiVersion = '2019-07-01-beta';
-        } else {
-            apiVersion = '2019-07-01-preview';
-        }
-        return apiVersion;
-    }
-
-    private async getFromAzure(url: string){
+    private async getFromAzure(url: string) {
         const myAuthToken = await authService.getARMToken(60);
-        
-        if(myAuthToken){
+
+        if (myAuthToken) {
             const authToken = 'Bearer ' + myAuthToken.accessToken;
             let response = await fetch(url, {
                 headers: {
@@ -396,7 +350,10 @@ export class CreatePlanPanelComponent extends Component<
             });
 
             // if no subscription selected, select the first one by default
-            const defaultSubscription = subscriptionList[0];
+            const maybeSubscriptionId = localStorage.getItem(subscriptionIdStorageKey);
+            const defaultSubscription =
+                subscriptionList.find((sub) => sub.key === maybeSubscriptionId) ||
+                subscriptionList[0];
             if (defaultSubscription && !this.state.selectedSubscription) {
                 this.subscriptionChanged({}, defaultSubscription);
             }
@@ -478,16 +435,18 @@ export class CreatePlanPanelComponent extends Component<
     private isCurrentStateValid() {
         let isInvalid = false;
 
-        const planName = this.planName.trim();
-        isInvalid = isInvalid || !planName;
-
-        if (
-            !this.selectedResourceGroup ||
-            !this.state.selectedLocation ||
-            !this.state.selectedSubscription
-        ) {
+        if (!this.state.selectedLocation || !this.state.selectedSubscription) {
             isInvalid = true;
         }
+
+        isInvalid =
+            isInvalid ||
+            !this.selectedResourceGroup ||
+            isNotNullOrEmpty(validateResourceName(this.selectedResourceGroup));
+
+        const planName = this.planName.trim();
+        isInvalid = isInvalid || !planName || isNotNullOrEmpty(validateResourceName(planName));
+
         return !isInvalid;
     }
 
@@ -499,6 +458,7 @@ export class CreatePlanPanelComponent extends Component<
     ) => void = (_event, planName) => {
         this.setState({
             userSpecifiedPlanName: planName,
+            errorMessage: undefined,
         });
     };
 
@@ -531,7 +491,12 @@ export class CreatePlanPanelComponent extends Component<
         this.setState({
             selectedSubscription: option.key,
             resourceGroupList: [],
+            errorMessage: undefined,
         });
+
+        if (this.state.selectedSubscription) {
+            localStorage.setItem(subscriptionIdStorageKey, option.key);
+        }
 
         return;
     };
@@ -567,17 +532,20 @@ export class CreatePlanPanelComponent extends Component<
                 this.setState({
                     newGroup: option.key,
                     userSelectedResourceGroup: undefined,
+                    errorMessage: undefined,
                 });
             } else {
                 this.setState({
                     newGroup: undefined,
                     userSelectedResourceGroup: option.key,
+                    errorMessage: undefined,
                 });
             }
         } else if (value) {
             this.setState({
                 newGroup: value,
                 userSelectedResourceGroup: undefined,
+                errorMessage: undefined,
             });
 
             updateNewResourceGroupItem(value);
@@ -602,11 +570,18 @@ export class CreatePlanPanelComponent extends Component<
         }
 
         this.setState({
-            selectedLocation: option.key.toString(), // option.key has type string | number by default
+            selectedLocation: option.key,
+            errorMessage: undefined,
         });
     };
 }
 
-export const CreatePlanPanel = connect(({ configuration }: ApplicationState) => ({
-    configuration,
-}))(CreatePlanPanelComponent);
+export const CreatePlanPanel = connect(
+    ({ configuration }: ApplicationState) => ({
+        configuration,
+    }),
+    {
+        createResourceGroup,
+        createPlan,
+    }
+)(CreatePlanPanelComponent);

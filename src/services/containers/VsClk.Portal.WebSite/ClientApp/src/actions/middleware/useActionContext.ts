@@ -13,7 +13,6 @@ export class Context implements IActionContext {
     private test_stateOverride: Partial<ApplicationState> = {};
 
     public storeApi?: MiddlewareAPI<DispatchWithContext, ApplicationState>;
-    public shouldThrowFailedActionsAsErrors = false;
 
     readonly __id: string;
     readonly __instanceId = createUniqueId();

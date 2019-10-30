@@ -1,6 +1,5 @@
 import moment from 'moment';
 import { isNumber } from 'util';
-import { DispatchError } from '../../actions/middleware/useDispatch';
 import { ITelemetryEvent, TelemetryPropertyValue } from './types';
 export class TelemetryEventSerializer {
     serialize(
@@ -24,8 +23,6 @@ export class TelemetryEventSerializer {
                 properties[name] = moment(value)
                     .utc()
                     .format('YYYY-MM-DD HH:mm:ss.SSS');
-            } else if (value instanceof DispatchError) {
-                properties[name] = this.stripPii(value.error);
             } else if (value instanceof Error) {
                 properties[name] = this.stripPii(value);
             } else if (typeof value === 'boolean') {

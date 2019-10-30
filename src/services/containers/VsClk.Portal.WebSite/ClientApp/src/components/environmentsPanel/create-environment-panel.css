@@ -18,3 +18,7 @@
 .create-environment-panel__dropdown {
     margin-bottom: .4rem;
 }
+
+.create-environment-panel__errorMessage {
+    color: #a4262c;
+}

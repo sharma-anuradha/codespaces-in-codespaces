@@ -202,27 +202,14 @@ describe('useDispatch', () => {
                 }
             }
 
-            await store.dispatch(act());
-
-            expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
-                'async.failed',
-                'error.handler'
-            );
-        });
-
-        it('dispatches unhandled error action when parent no action handles the error', async () => {
-            async function act() {
-                const dispatch = useDispatch();
-                const action = useActionCreator();
-
-                await dispatch(failedAsyncAction());
-                dispatch(action('no.not.this.one'));
+            try {
+                await store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
+                    'async.failed',
+                    'error.handler'
+                );
             }
-            await store.dispatch(act());
-            expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
-                'async.failed',
-                'async.unhandled.failure'
-            );
         });
 
         it('throws an error only once', async () => {
@@ -253,16 +240,18 @@ describe('useDispatch', () => {
                     dispatch(action('act.failure', err));
                 }
             }
-
-            await store.dispatch(act());
-            expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
-                'act',
-                'failedAsyncAction',
-                'successfulAsyncAction.success',
-                'failedAsyncAction.failed',
-                'failedAsyncAction.failed',
-                'act.failure'
-            );
+            try {
+                await store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
+                    'act',
+                    'failedAsyncAction',
+                    'successfulAsyncAction.success',
+                    'failedAsyncAction.failed',
+                    'failedAsyncAction.failed',
+                    'act.failure'
+                );
+            }
         });
 
         it('handles reducer throwing error', () => {
@@ -276,9 +265,11 @@ describe('useDispatch', () => {
                 }
             }
 
-            store.dispatch(act());
-
-            expect(store.dispatchedActions).toHaveBeenDispatchedInOrder('act.failure');
+            try {
+                store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toHaveBeenDispatchedInOrder('act.failure');
+            }
         });
 
         // TODO: Fix creation of async context
@@ -330,9 +321,11 @@ describe('useDispatch', () => {
                 }
             }
 
-            await store.dispatch(act());
-
-            expect(store.dispatchedActions).toHaveBeenDispatchedInOrder('act.failure');
+            try {
+                await store.dispatch(act());
+            } catch {
+                expect(store.dispatchedActions).toHaveBeenDispatchedInOrder('act.failure');
+            }
         });
     });
 });

@@ -10,7 +10,6 @@ export interface IActionContext {
     readonly state: ApplicationState;
     test_setApplicationState: (state: Partial<ApplicationState>) => void;
     dispatch: (action: any) => any;
-    shouldThrowFailedActionsAsErrors: boolean;
     readonly __id: string;
     readonly __instanceId: string;
     getTelemetryProperties: (obj: Record<string, TelemetryPropertyValue>) => any;

@@ -1,6 +1,5 @@
 import { Middleware } from 'redux';
 import { recreateContext, Context } from './useActionContext';
-import { unhandledAsyncError } from '../unhandledAsyncError';
 import { isThenable } from '../../utils/isThenable';
 import { createTrace } from '../../utils/createTrace';
 import { DispatchWithContext } from './types';
@@ -40,22 +39,6 @@ export const actionContextMiddleware: ActionContextMiddleware = (api) => (next) 
             // Run the result through the middleware again
             return api.dispatch(action, context);
         });
-
-        if (!context.shouldThrowFailedActionsAsErrors) {
-            newPromise = newPromise.catch((err) => {
-                trace.verbose('executeAction: action failed', action);
-
-                api.dispatch(unhandledAsyncError(err), context);
-
-                if (process.env.NODE_ENV === 'development') {
-                    // Console has special handling in dev mode where we want to see this as much as possible.
-                    // tslint:disable-next-line: no-console
-                    console.error(err);
-                }
-
-                return undefined;
-            });
-        }
 
         return newPromise;
     }

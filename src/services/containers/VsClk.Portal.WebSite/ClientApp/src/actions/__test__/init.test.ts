@@ -127,16 +127,18 @@ describe('actions - init', () => {
             })
         );
 
-        await store.dispatch(init());
-
-        expect(store.dispatchedActions).toHaveFailed();
-        expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
-            'async.app.init',
-            'async.authentication.getToken',
-            'async.configuration.fetch',
-            'async.authentication.getToken.failure',
-            'async.app.init.failure'
-        );
+        try {
+            await store.dispatch(init());
+        } catch {
+            expect(store.dispatchedActions).toHaveFailed();
+            expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
+                'async.app.init',
+                'async.authentication.getToken',
+                'async.configuration.fetch',
+                'async.authentication.getToken.failure',
+                'async.app.init.failure'
+            );
+        }
     });
 
     it('fails to fetch environments', async () => {
@@ -163,21 +165,23 @@ describe('actions - init', () => {
             })
         );
 
-        await store.dispatch(init());
-
-        expect(store.dispatchedActions).toHaveFailed();
-        expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
-            'async.app.init',
-            'async.authentication.getToken',
-            'async.configuration.fetch',
-            'async.authentication.getToken.success',
-            'async.configuration.fetch.success',
-            'async.plans.getPlans',
-            'async.plans.getPlans.success',
-            'async.environments.fetch',
-            'async.authentication.clearData',
-            'async.environments.fetch.failure',
-            'async.app.init.failure'
-        );
+        try {
+            await store.dispatch(init());
+        } catch {
+            expect(store.dispatchedActions).toHaveFailed();
+            expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
+                'async.app.init',
+                'async.authentication.getToken',
+                'async.configuration.fetch',
+                'async.authentication.getToken.success',
+                'async.configuration.fetch.success',
+                'async.plans.getPlans',
+                'async.plans.getPlans.success',
+                'async.environments.fetch',
+                'async.authentication.clearData',
+                'async.environments.fetch.failure',
+                'async.app.init.failure'
+            );
+        }
     });
 });

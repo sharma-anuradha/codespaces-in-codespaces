@@ -15,9 +15,6 @@ export type Dispatch = ReturnType<typeof useDispatch>;
 export function useDispatch() {
     const context = useActionContext();
 
-    const shouldThrow = context.shouldThrowFailedActionsAsErrors;
-    context.shouldThrowFailedActionsAsErrors = true;
-
     type Action =
         | BaseAction
         | ActionWithPayload
@@ -49,18 +46,11 @@ export function useDispatch() {
             return result;
         }
 
-        if (shouldThrow && result.failed) {
-            throw new DispatchError(result.error);
+        if (result.failed) {
+            throw result.error;
         }
 
         return result;
     }
     return customDispatch;
-}
-export class DispatchError extends Error {
-    constructor(public error: Error) {
-        super('DispatchError');
-
-        Error.captureStackTrace(this, DispatchError);
-    }
 }
