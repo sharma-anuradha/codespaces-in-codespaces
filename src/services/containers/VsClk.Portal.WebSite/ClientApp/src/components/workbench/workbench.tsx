@@ -10,7 +10,7 @@ import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 
 import { ApplicationState } from '../../reducers/rootReducer';
-import { isEnvironmentAvailable } from '../../utils/environmentUtils';
+import { isEnvironmentAvailable, isNotAvailable } from '../../utils/environmentUtils';
 
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { credentialsProvider } from '../../providers/credentialsProvider';
@@ -27,6 +27,8 @@ import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/clou
 import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-web';
 import { telemetry } from '../../utils/telemetry';
 import { defaultConfig } from '../../services/configurationService';
+import { isDefined } from '../../utils/isDefined';
+import { environmentsPath } from '../../routerPaths';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareEndpoint: string;
@@ -43,6 +45,13 @@ class WorkbenchView extends Component<WorkbenchProps> {
     componentDidUpdate() {
         const { environmentInfo } = this.props;
         if (!isEnvironmentAvailable(environmentInfo)) {
+            if (
+                isDefined(environmentInfo) &&
+                isDefined(environmentInfo.state) &&
+                isNotAvailable(environmentInfo)
+            ) {
+                this.props.history.push(environmentsPath);
+            }
             return;
         }
 
