@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             }
 
             var jobResult = (JobResult)data;
-            await this.cloudEnvironmentManager.ShutdownEnvironmentCallbackAsync(jobResult.Id, jobResult.JobState == JobState.Succeeded, logger);
+            await this.cloudEnvironmentManager.ShutdownEnvironmentCallbackAsync(jobResult.Id, logger);
         }
     }
 }

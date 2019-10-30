@@ -112,8 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     };
                 }
 
-                if (cloudEnvironment.State == CloudEnvironmentState.Shutdown ||
-                    cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
+                if (cloudEnvironment.State == CloudEnvironmentState.Shutdown)
                 {
                     return new CloudEnvironmentServiceResult
                     {
@@ -122,8 +121,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     };
                 }
 
-                if (cloudEnvironment.State == CloudEnvironmentState.Available ||
-                    cloudEnvironment.State == CloudEnvironmentState.Starting)
+                if (cloudEnvironment.State != CloudEnvironmentState.Available)
+                {
+                    // If the environment is not in an available state during shutdown,
+                    // force clean the environment details, to put it in a recoverable state.
+                    await ForceEnvironmentShutdownAsync(id, logger);
+                }
+                else
                 {
                     await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, logger);
 
@@ -132,23 +136,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Start the cleanup operation to shutdown environment.
                     await ResourceBrokerClient.CleanupResourceAsync(cloudEnvironment.Compute.ResourceId, cloudEnvironment.Id, logger);
-
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentAsync)));
-
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = cloudEnvironment,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
                 }
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(cloudEnvironment)
+                    .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentAsync)));
 
                 return new CloudEnvironmentServiceResult
                 {
-                    CloudEnvironment = null,
-                    ErrorCode = Contracts.ErrorCodes.EnvironmentNotAvailable,
-                    HttpStatusCode = StatusCodes.Status400BadRequest,
+                    CloudEnvironment = cloudEnvironment,
+                    HttpStatusCode = StatusCodes.Status200OK,
                 };
             }
             catch (Exception ex)
@@ -164,7 +161,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public async Task ShutdownEnvironmentCallbackAsync(
             string id,
-            bool wasSuccessful,
             IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
@@ -193,18 +189,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 if (cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
                 {
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, logger);
-                    var computeIdToken = cloudEnvironment.Compute?.ResourceId;
-                    cloudEnvironment.Compute = null;
-
-                    // Update the database state.
-                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-
-                    // Delete the allocated resources.
-                    if (computeIdToken != null)
-                    {
-                        await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
-                    }
+                    await ForceEnvironmentShutdownAsync(id, logger);
 
                     logger.AddDuration(duration)
                         .AddCloudEnvironment(cloudEnvironment)
@@ -455,6 +440,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         cloudEnvironment.Seed = new SeedInfo { SeedType = SeedType.StaticEnvironment };
                     }
+
                     cloudEnvironment.SkuName = StaticEnvironmentSku.Name;
 
                     // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.
@@ -835,6 +821,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
 
             return updatedCloudEnvironment;
+        }
+
+        /// <inheritdoc/>
+        public async Task ForceEnvironmentShutdownAsync(string id, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(id, nameof(id));
+            Requires.NotNull(logger, nameof(logger));
+
+            await logger.OperationScopeAsync(
+                $"{this.GetType().GetLogMessageBaseName()}_force_shutdown_async",
+                async (childLogger) =>
+                {
+                    var cloudEnvironment = await GetEnvironmentByIdAsync(id, logger);
+                    if (cloudEnvironment == null)
+                    {
+                        return;
+                    }
+
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, logger);
+                    var computeIdToken = cloudEnvironment.Compute?.ResourceId;
+                    cloudEnvironment.Compute = null;
+
+                    // Update the database state.
+                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+                    // Delete the allocated resources.
+                    if (computeIdToken != null)
+                    {
+                        await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
+                    }
+                }, swallowException: true);
         }
 
         private async Task SetEnvironmentStateAsync(

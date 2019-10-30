@@ -118,9 +118,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Callback to be executed after running shutdown on the vm.
         /// </summary>
         /// <param name="id">The environment id.</param>
-        /// <param name="wasSuccessful">Whether the shutdown was successful.</param>
         /// <param name="logger">Diagnostics logger.</param>
         /// <returns>A task.</returns>
-        Task ShutdownEnvironmentCallbackAsync(string id, bool wasSuccessful, IDiagnosticsLogger logger);
+        Task ShutdownEnvironmentCallbackAsync(string id, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Force suspends an environment.
+        /// </summary>
+        /// <param name="id">The environment id.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>A task.</returns>
+        Task ForceEnvironmentShutdownAsync(string id, IDiagnosticsLogger logger);
     }
 }

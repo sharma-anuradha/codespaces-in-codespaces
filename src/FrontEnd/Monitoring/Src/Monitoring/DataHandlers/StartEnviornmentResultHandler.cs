@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
                        {
                            // Shutdown the environment if the environment has failed to start.
-                           await this.cloudEnvironmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, vmResourceId.ToString(), childLogger);
+                           await this.cloudEnvironmentManager.ForceEnvironmentShutdownAsync(cloudEnvironment.Id, childLogger);
                            return;
                        }
                    }
