@@ -78,11 +78,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     var planShard = x.planShard;
                     var region = x.region;
-                    var leaseName = $"{ServiceName}_{planShard}_{region}";
+                    var leaseName = $"{ServiceName}-{planShard}-{region}2".ToLowerInvariant();
                     childlogger.FluentAddBaseValue("Service", "billingservices");
-                    childlogger.FluentAddBaseValue("leaseName", leaseName);
                     using (var lease = await claimedDistributedLease.Obtain(
-                                                  $"{ServiceName}_leases",
+                                                  $"{ServiceName}-leases",
                                                   leaseName,
                                                   TimeSpan.FromHours(1),
                                                   childlogger))

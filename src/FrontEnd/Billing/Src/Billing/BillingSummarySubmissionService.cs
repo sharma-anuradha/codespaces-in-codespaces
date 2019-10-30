@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IBillingSubmissionCloudStorageFactory billingStorageFactory,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper)
-            : base(billingEventManager, controlPlanInfo, logger, claimedDistributedLease, taskHelper, "billingsub_worker")
+            : base(billingEventManager, controlPlanInfo, logger, claimedDistributedLease, taskHelper, "billingsub-worker")
         {
             this.controlPlanInfo = controlPlanInfo;
             this.billingEventManager = billingEventManager;

@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             IDiagnosticsLogger diagnosticsLogger,
                             IClaimedDistributedLease claimedDistributedLease,
                             ITaskHelper taskHelper)
-            : base(billingEventManager, controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, "billing_worker")
+            : base(billingEventManager, controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, "billing-worker")
         {
             Requires.NotNull(billingEventManager, nameof(billingEventManager));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
