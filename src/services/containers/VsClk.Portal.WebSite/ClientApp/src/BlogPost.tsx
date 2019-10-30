@@ -5,8 +5,7 @@ import { ApplicationState } from './reducers/rootReducer';
 import { loginPath, environmentsPath } from './routerPaths';
 import { RouteComponentProps } from 'react-router';
 
-export const blogPostUrl =
-    'https://devblogs.microsoft.com/visualstudio/intelligent-productivity-and-collaboration-from-anywhere/';
+export const blogPostUrl = 'https://aka.ms/vso-landing';
 
 export function BlogPost(props: RouteComponentProps) {
     if (process.env.NODE_ENV === 'development') {
