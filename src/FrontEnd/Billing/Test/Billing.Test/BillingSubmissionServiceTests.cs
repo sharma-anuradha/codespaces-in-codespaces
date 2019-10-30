@@ -79,7 +79,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             Mock<IControlPlaneInfo> controlPlane = new Mock<IControlPlaneInfo>();
             IEnumerable<AzureLocation> locations = new List<AzureLocation>() { AzureLocation.WestUs2 };
-            controlPlane.Setup(x => x.GetAllDataPlaneLocations()).Returns(locations);
+            Mock<IControlPlaneStampInfo> stampInfo = new Mock<IControlPlaneStampInfo>();
+            controlPlane.SetupGet(x => x.Stamp).Returns(stampInfo.Object);
+            stampInfo.SetupGet(x => x.DataPlaneLocations).Returns(locations);
 
             Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
             Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();

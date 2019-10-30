@@ -123,12 +123,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <inheritdoc />
         public async Task CheckForBillingSubmissionErorrs(CancellationToken cancellationToken)
         {
-            var regions = controlPlanInfo.GetAllDataPlaneLocations();
+            var regions = controlPlanInfo.Stamp.DataPlaneLocations;
             foreach (var region in regions)
             {
-                var leaseName = $"billsub_errorCheck_{region.ToString()}";
+                var leaseName = $"billsub-errorCheck-{region.ToString()}";
                 using (var lease = await claimedDistributedLease.Obtain(
-                                                $"{ServiceName}_leases",
+                                                $"{ServiceName}-leases",
                                                 leaseName,
                                                 TimeSpan.FromHours(1),
                                                 Logger))
