@@ -29,7 +29,7 @@ export type PollEnvironmentSuccessAction = ReturnType<typeof pollEnvironmentSucc
 export type PollEnvironmentFailureAction = ReturnType<typeof pollEnvironmentFailureAction>;
 
 // Exposed - callable actions that have side-effects
-export async function pollEnvironment(id: string, pollForState: StateInfo) {
+export async function pollEnvironment(id: string, state: StateInfo, pollAgainst: boolean = false) {
     const dispatch = useDispatch();
     try {
         dispatch(pollEnvironmentAction(id));
@@ -68,7 +68,11 @@ export async function pollEnvironment(id: string, pollForState: StateInfo) {
             return;
         }
 
-        if (environment.state.toString() === pollForState) {
+        if (pollAgainst) {
+            if (environment.state.toString() !== state) {
+                return environment;
+            }
+        } else if (environment.state.toString() === state) {
             return environment;
         }
 

@@ -12,7 +12,7 @@ export async function shutdownEnvironment(id: string) {
         dispatch(stateChangeEnvironmentAction(id, StateInfo.ShuttingDown));
         await envRegService.shutdownEnvironment(id);
         try {
-            dispatch(pollEnvironment(id, StateInfo.Shutdown));
+            dispatch(pollEnvironment(id, StateInfo.ShuttingDown, true));
         } catch (err) {
             // Noop
         }

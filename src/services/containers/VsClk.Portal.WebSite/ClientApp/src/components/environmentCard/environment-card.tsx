@@ -17,7 +17,7 @@ import {
 } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
-import { environmentIsALie, isNotAvailable, isNotConnectable } from '../../utils/environmentUtils';
+import { environmentIsALie, isNotConnectable, isNotSuspendable } from '../../utils/environmentUtils';
 import { createUniqueId } from '../../dependencies';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
@@ -187,7 +187,7 @@ const Actions = ({
                             key: 'shutdown',
                             iconProps: { iconName: 'PowerButton' },
                             name: 'Suspend',
-                            disabled: environmentIsALie(environment) || isNotAvailable(environment),
+                            disabled: environmentIsALie(environment) || isNotSuspendable(environment),
                             onClick: () => {
                                 if (environment.id) setShutdownDialogHidden(false);
                             },
