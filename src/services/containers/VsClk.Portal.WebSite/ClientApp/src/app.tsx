@@ -50,14 +50,14 @@ class AppRoot extends Component<AppProps, AppState> {
         return (
             <Provider store={store}>
                 <Router>
-                    <div className='vssass'>{routeConfig}</div>
+                    <div className='vsonline'>{routeConfig}</div>
                 </Router>
             </Provider>
         );
     }
     render() {
         return (
-            <div className='vssass' key='main-app'>
+            <div className='vsonline' key='main-app'>
                 {this.renderMain()}
             </div>
         );

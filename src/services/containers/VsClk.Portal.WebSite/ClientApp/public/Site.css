@@ -1,0 +1,65 @@
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+    font-size: 10px;
+    overflow: hidden;
+}
+.vsonline-titlebar {
+    background-color: #141414;
+    min-height: 4.8rem;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+.vsonline-titlebar__caption {
+    color: white;
+    font-size: 14px;
+    letter-spacing: .025rem;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.vsonline-titlebar__logo {
+    background-image: url('/ms-logo.svg');
+    width: 11.3rem;
+    height: 2.4rem;
+    margin: 0 1.6rem;
+}
+.vsonline-titlebar__separator {
+    height: 2.4rem;
+}
+.vsonline-titlebar__caption-text {
+    margin: 0 3rem 0 1.6rem;
+    font-size: 1.6rem;
+    line-height: 2.1rem;
+}
+.vsonline__spinner {
+    background-color: white;
+    background-image: url('/spinner-dark.svg');
+    display: block;
+    width: 10.3rem;
+    height: 10.4rem;
+    margin-left: auto;
+    margin-right: auto;
+    background-size: 10.3rem;
+    background-repeat: no-repeat;
+}
+
+.vsonline__exception {
+    display: block;
+    text-align: center;
+    font-size: 1.4rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+}

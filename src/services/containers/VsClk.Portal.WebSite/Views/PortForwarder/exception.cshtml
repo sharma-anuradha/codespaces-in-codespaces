@@ -4,39 +4,36 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Port Forwarding exceptions...</title>
 </head>
 <body>
-    <div>
+    <div class="vsonline__exception">
         @switch (@Model.FailureReason) {
             case PortForwardingFailure.InvalidPath:
                 <p>Failed connecting to Visual Studio Online environment.</p>
                 break;
 
             case PortForwardingFailure.InvalidCookiePayload:
-                <p>Bad Cookie, redirecting back to the portal...</p>
-
-                <p>In case you were not redirected automatically, <a href="@Model.RedirectUrl">Redirect</a></p>
+                <p>Redirecting back to the portal...</p>
+                <p>Click <a href="@Model.RedirectUrl">here</a> if your browser does not automatically redirect.</p>
+                <div class="vsonline__spinner"></div>
                 
                 <script type="text/javaScript">
                     setTimeout(function() {
                         window.location = "@Model.RedirectUrl";
-                    }, 1000);
+                    }, 5000);
                 </script>
                 break;
 
             case PortForwardingFailure.NotAuthenticated:
                 <p>You need to sign in first, redirecting...</p>
-
-                <p>In case you were not redirected automatically, <a href="@Model.RedirectUrl">Redirect</a></p>
+                <p>Click <a href="@Model.RedirectUrl">here</a> if your browser does not automatically redirect.</p>
+                <div class="vsonline__spinner"></div>
 
                 <script type="text/javaScript">
                     setTimeout(function() {
                         window.location = "@Model.RedirectUrl";
-                    }, 1000);
+                    }, 5000);
                 </script>
                 break;
 
@@ -51,7 +48,6 @@
             default:
                 <p>PortForwarder Failed due to unknown reason.</p>
                 <a href="@Model.RedirectUrl">Reload</a>
-
                 break;
         }
     </div>
