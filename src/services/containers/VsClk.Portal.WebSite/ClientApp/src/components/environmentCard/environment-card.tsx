@@ -17,7 +17,7 @@ import {
 } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
-import { environmentIsALie, isNotConnectable, isNotSuspendable } from '../../utils/environmentUtils';
+import { environmentIsALie, isNotConnectable, isNotSuspendable, isSelfHostedEnvironment } from '../../utils/environmentUtils';
 import { createUniqueId } from '../../dependencies';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
@@ -195,7 +195,7 @@ const Actions = ({
                         {
                             key: 'delete',
                             iconProps: { iconName: 'Delete' },
-                            name: 'Delete',
+                            name: isSelfHostedEnvironment(environment) ? 'Unregister' : 'Delete',
                             disabled: environmentIsALie(environment),
                             onClick: () => {
                                 if (environment.id) setDeleteDialogHidden(false);
@@ -328,7 +328,11 @@ function UnsuccessfulUrlDialog({ accept, hidden }: UnsuccessfulUrlDialogProps) {
     );
 }
 
-const skuToDisplayName = (selectedPlan: ActivePlanInfo, skuName: string) => {
+const getSkuDisplayName = (selectedPlan: ActivePlanInfo, environment: ILocalCloudEnvironment) => {
+    if (environment.skuDisplayName) {
+        return environment.skuDisplayName;
+    }
+    const skuName = environment.skuName;
     if (!selectedPlan.availableSkus) {
         return skuName;
     }
@@ -371,7 +375,6 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
         );
 
     const selectedPlan = useSelector((state: ApplicationState) => state.plans.selectedPlan);
-
     let details = [];
     details.push({ key: 'Created', value: moment(props.environment.created).format('LLLL') });
     if (props.environment.seed && props.environment.seed.moniker) {
@@ -380,12 +383,14 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
 
     details.push({
         key: 'Instance',
-        value: skuToDisplayName(selectedPlan!, props.environment.skuName!),
+        value: getSkuDisplayName(selectedPlan!, props.environment!),
     });
-    details.push({
-        key: 'Suspend',
-        value: suspendTimeoutToDisplayName(props.environment.autoShutdownDelayMinutes),
-    });
+    if (!isSelfHostedEnvironment(props.environment!)) {
+        details.push({
+            key: 'Suspend',
+            value: suspendTimeoutToDisplayName(props.environment.autoShutdownDelayMinutes),
+        });
+    }
 
     return (
         <Stack

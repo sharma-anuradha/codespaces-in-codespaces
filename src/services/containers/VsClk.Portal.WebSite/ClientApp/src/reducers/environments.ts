@@ -1,4 +1,4 @@
-import { ILocalCloudEnvironment, StateInfo } from '../interfaces/cloudenvironment';
+import { ILocalCloudEnvironment, StateInfo, EnvironmentType } from '../interfaces/cloudenvironment';
 import { replaceAtIndex } from './reducerUtils';
 
 import {
@@ -67,7 +67,7 @@ export function environments(
             };
         case createEnvironmentActionType:
             const {
-                type = 'cloudEnvironment',
+                type = EnvironmentType.CloudEnvironment,
                 friendlyName,
                 gitRepositoryUrl,
                 dotfilesInstallCommand,

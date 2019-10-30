@@ -4,6 +4,7 @@
 
 using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
@@ -22,19 +23,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddModelMapper(this IServiceCollection services)
         {
-            var config = new MapperConfiguration(cfg =>
+            services.AddSingleton(serviceProvider =>
             {
-                cfg.CreateMap<CloudEnvironment, CloudEnvironmentResult>();
-                cfg.CreateMap<CreateCloudEnvironmentBody, CloudEnvironment>();
-                cfg.CreateMap<ConnectionInfoBody, ConnectionInfo>();
-                cfg.CreateMap<SeedInfoBody, SeedInfo>();
-                cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
-                cfg.CreateMap<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>();
-                cfg.CreateMap<EnvironmetnRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
-                cfg.CreateMap<PlanResource, VsoPlan>();
+                var skuCatalog = serviceProvider.GetService<ISkuCatalog>();
+                var config = new MapperConfiguration(cfg =>
+                {
+                    cfg.CreateMap<CloudEnvironment, CloudEnvironmentResult>().ForMember(dest => dest.SkuDisplayName, opt => opt.MapFrom(new SkuDisplayNameMapper(skuCatalog)));
+                    cfg.CreateMap<CreateCloudEnvironmentBody, CloudEnvironment>();
+                    cfg.CreateMap<ConnectionInfoBody, ConnectionInfo>();
+                    cfg.CreateMap<SeedInfoBody, SeedInfo>();
+                    cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
+                    cfg.CreateMap<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>();
+                    cfg.CreateMap<EnvironmetnRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
+                    cfg.CreateMap<PlanResource, VsoPlan>();
+                });
+                return config.CreateMapper();
             });
-            var mapper = config.CreateMapper();
-            services.AddSingleton(mapper);
             return services;
         }
     }

@@ -1,5 +1,5 @@
 export interface CreateEnvironmentParameters {
-    type?: 'cloudEnvironment' | 'staticEnvironment';
+    type?: EnvironmentType;
     friendlyName: string;
     planId: string;
     location: string;
@@ -24,9 +24,14 @@ export enum StateInfo {
     Provisioning = 'Provisioning',
 }
 
+export enum EnvironmentType {
+    CloudEnvironment = 'CloudEnvironment',
+    StaticEnvironment = 'StaticEnvironment',
+}
+
 export interface ICloudEnvironment {
     id: string;
-    type: 'cloudEnvironment' | 'staticEnvironment';
+    type: EnvironmentType;
     friendlyName: string;
     state: StateInfo;
     seed: Seed;
@@ -37,6 +42,7 @@ export interface ICloudEnvironment {
     planId: string;
     location: string;
     skuName: string;
+    skuDisplayName: string;
     autoShutdownDelayMinutes?: number;
 }
 
@@ -46,7 +52,7 @@ export interface EnvPersonalization {
     dotfilesInstallCommand?: string;
 }
 
-type RequiredLocalEnvironmentProperties = 'state' | 'seed' | 'friendlyName' | 'created' | 'updated';
+type RequiredLocalEnvironmentProperties = 'state' | 'seed' | 'friendlyName' | 'created' | 'updated' | 'skuName';
 export type ILocalCloudEnvironment = { lieId?: string } & Partial<
     Omit<ICloudEnvironment, RequiredLocalEnvironmentProperties>
 > &
