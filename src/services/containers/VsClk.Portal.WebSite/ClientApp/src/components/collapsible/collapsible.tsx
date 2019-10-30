@@ -1,21 +1,40 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, MouseEventHandler, useMemo, FC } from 'react';
 import classnames from 'classnames';
 
 import { Stack, IStackProps, StackItem } from 'office-ui-fabric-react/lib/Stack';
 import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
 
 import './collapsible.css';
+import { isDefined } from '../../utils/isDefined';
 
-type Props = { title: string } & IStackProps;
+type Props = {
+    title: string;
+    collapsed?: boolean;
+    onCollapsedChanged?: MouseEventHandler<HTMLButtonElement>;
+} & IStackProps;
 
-export function Collapsible(props: React.PropsWithChildren<Props>) {
-    const { title } = props;
+export const Collapsible: FC<Props> = ({
+    title,
+    collapsed: controlledCollapsed,
+    onCollapsedChanged,
+    children,
+    ...stackProps
+}) => {
+    const [internalCollapsed, setInternalCollapsed] = useState(true);
 
-    const [collapsed, setCollapsed] = useState(true);
+    const collapsed = isDefined(controlledCollapsed) ? controlledCollapsed : internalCollapsed;
+    const toggle: MouseEventHandler<HTMLButtonElement> = useCallback(
+        (event) => {
+            if (onCollapsedChanged) {
+                onCollapsedChanged(event);
+            }
 
-    const toggle = useCallback(() => {
-        setCollapsed(!collapsed);
-    }, [collapsed, setCollapsed]);
+            if (!event.isDefaultPrevented() && !isDefined(controlledCollapsed)) {
+                setInternalCollapsed(!internalCollapsed);
+            }
+        },
+        [internalCollapsed, controlledCollapsed, onCollapsedChanged]
+    );
 
     return (
         <Stack>
@@ -40,13 +59,13 @@ export function Collapsible(props: React.PropsWithChildren<Props>) {
                     {title}
                 </DefaultButton>
             </StackItem>
-            <div
+            <StackItem
                 className={classnames('collapsible__content', {
                     'collapsible__content-collapsed': collapsed,
                 })}
             >
-                {props.children}
-            </div>
+                <Stack {...stackProps}>{children}</Stack>
+            </StackItem>
         </Stack>
     );
-}
+};
