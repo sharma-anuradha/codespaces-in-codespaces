@@ -22,6 +22,7 @@ static_analysis_options:
       - 'scripts\build.js'
       - 'scripts\start.js'
       - 'scripts\test.js'
+      - 'scripts\circular-dependencies.js'
       - 'scripts\npm\constants.js'
       - 'scripts\npm\preinstall.js'
       - 'scripts\npm\postinstall.js'
@@ -36,4 +37,3 @@ static_analysis_options:
       - 'config-overrides.js'
       - 'webpack.config.worker.js'
       - 'port-forwarding-dev-server.js'
-      - 'circular-dependencies.js'

@@ -20,11 +20,17 @@ export function environmentIsALie({ lieId }: ILocalCloudEnvironment) {
     return lieId != null;
 }
 
+export function isNotAvailable({ state }: ILocalCloudEnvironment): boolean {
+    return state !== StateInfo.Available;
+}
+
 export function isNotSuspendable({ state }: ILocalCloudEnvironment): boolean {
-    return state === StateInfo.Provisioning ||
-            state === StateInfo.Failed ||
-            state === StateInfo.Shutdown ||
-            state === StateInfo.Deleted
+    return (
+        state === StateInfo.Provisioning ||
+        state === StateInfo.Failed ||
+        state === StateInfo.Shutdown ||
+        state === StateInfo.Deleted
+    );
 }
 
 export function isNotConnectable({ state }: ILocalCloudEnvironment): boolean {
