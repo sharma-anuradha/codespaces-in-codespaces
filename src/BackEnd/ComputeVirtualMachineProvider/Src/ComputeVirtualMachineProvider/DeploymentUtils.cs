@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     /// </summary>
     public static class DeploymentUtils
     {
-        private static readonly int MaxLength = 6000;
+        private static readonly int MaxLength = 1000;
 
         /// <summary>
         /// Create exception for ARM deployment failures.
@@ -32,17 +32,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 if (op.ProvisioningState == "Failed" && op.TargetResource != null)
                 {
                     // Log ResourceId, StatusCode and Status Message
+                    var errorMessage = op.StatusMessage.ToString();
+                    var startIndex = (errorMessage.Length > MaxLength) ? errorMessage.Length - MaxLength : 0;
+                    errorMessage = errorMessage.Substring(startIndex);
+
                     var errorDetails = new DeploymentErrorDetails()
                     {
                         Id = op.TargetResource?.Id,
                         StatusCode = op.StatusCode,
-                        ErrorMessage = op.StatusMessage.ToString(),
+                        ErrorMessage = errorMessage,
                     };
 
                     var opDetailsString = JsonConvert.SerializeObject(errorDetails);
-                    return (opDetailsString.Length > MaxLength)
-                        ? opDetailsString.Substring(0, MaxLength)
-                        : opDetailsString;
+                    return opDetailsString;
                 }
             }
 

@@ -805,6 +805,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             cloudEnvironment.Updated = DateTime.UtcNow;
             var changedState = false;
+            var oldState = cloudEnvironment.State;
             if (newState != default && newState != cloudEnvironment.State)
             {
                 await SetEnvironmentStateAsync(cloudEnvironment, newState, logger);
@@ -816,7 +817,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (changedState)
             {
                 logger.AddCloudEnvironment(updatedCloudEnvironment)
-                      .FluentAddValue("OldState", cloudEnvironment.State)
+                      .FluentAddValue("OldState", oldState)
                       .LogInfo(GetType().FormatLogMessage(nameof(UpdateEnvironmentAsync)));
             }
 
