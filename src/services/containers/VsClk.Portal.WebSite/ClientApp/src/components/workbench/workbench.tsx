@@ -37,6 +37,16 @@ export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     params: URLSearchParams;
 }
 
+const managementFavicon = "favicon.ico";
+const vscodeFavicon = "static/web-standalone/favicon.ico";
+function updateFavicon(isMounting: boolean = true) {
+    const link = document.querySelector("link[rel='shortcut icon']");
+    if (link) {
+        const iconPath = isMounting ? vscodeFavicon : managementFavicon;
+        link.setAttribute("href", iconPath);
+    }
+}
+
 class WorkbenchView extends Component<WorkbenchProps> {
     // Since we have external scripts running outside of react scope,
     // we'll mange the instantiation flag outside of state as well.
@@ -59,12 +69,18 @@ class WorkbenchView extends Component<WorkbenchProps> {
     }
 
     componentDidMount() {
+        updateFavicon(true);
+
         const { environmentInfo } = this.props;
         if (!isEnvironmentAvailable(environmentInfo)) {
             return;
         }
 
         this.mountWorkbench(environmentInfo);
+    }
+
+    componentWillUnmount() {
+        updateFavicon(false);
     }
 
     async mountWorkbench(environmentInfo: ICloudEnvironment) {
