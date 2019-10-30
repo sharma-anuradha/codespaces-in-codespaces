@@ -22,7 +22,7 @@ export class ExternalUriProvider {
             port,
             this.liveShareEndpoint
         );
-
+        uri.scheme = 'https';
         uri.authority = `${this.environmentInfo.connection.sessionId}-${port}.app.${window.location.hostname}`;
         return uri;
     }
