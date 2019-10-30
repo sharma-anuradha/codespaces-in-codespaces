@@ -126,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
                     return !Disposed;
                 },
-                (e) => !Disposed,
+                (e, childLogger) => !Disposed,
                 swallowException: true);
         }
 

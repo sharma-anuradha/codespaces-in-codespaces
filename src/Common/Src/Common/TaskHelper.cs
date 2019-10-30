@@ -39,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             TimeSpan? schedule = null,
             IDiagnosticsLogger logger = null,
             bool autoLogLoopOperation = false,
-            Func<Exception, bool> errLoopCallback = default)
+            Func<Exception, IDiagnosticsLogger, bool> errLoopCallback = default)
         {
             Task.Run(() => RunBackgroundLoopAsync(
                 name, callback, schedule, logger, autoLogLoopOperation, errLoopCallback));
@@ -52,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             TimeSpan? schedule = null,
             IDiagnosticsLogger logger = null,
             bool autoLogLoopOperation = false,
-            Func<Exception, bool> errLoopCallback = default)
+            Func<Exception, IDiagnosticsLogger, bool> errLoopCallback = default)
         {
             logger = (logger ?? Logger)
                 .FluentAddBaseValue("TaskWorkerLoopRunId", Guid.NewGuid())
@@ -87,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             bool autoLogOperation = true,
-            Action<Exception> errCallback = default,
+            Action<Exception, IDiagnosticsLogger> errCallback = default,
             TimeSpan? delay = null)
         {
             if (delay == null)
@@ -107,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             bool autoLogOperation = true,
-            Action<Exception> errCallback = default,
+            Action<Exception, IDiagnosticsLogger> errCallback = default,
             TimeSpan? delay = null)
         {
             if (delay == null)
@@ -128,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
            Func<T, IDiagnosticsLogger, Task> callback,
            IDiagnosticsLogger logger = null,
            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
-           Action<T, Exception> errItemCallback = default,
+           Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
            int concurrentLimit = 3,
            int successDelay = 250,
            int failDelay = 100)
@@ -149,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
-            Action<T, Exception> errItemCallback = default,
+            Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
             int concurrentLimit = 3,
             int successDelay = 250,
             int failDelay = 100)
@@ -248,12 +248,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task<bool>> callback,
             IDiagnosticsLogger logger,
             bool autoLogOperation,
-            Func<Exception, bool> errItemCallback)
+            Func<Exception, IDiagnosticsLogger, bool> errItemCallback)
         {
             if (autoLogOperation)
             {
                 return logger.OperationScopeAsync(
-                    name, callback, (e) => errItemCallback != null ? errItemCallback(e) : true, swallowException: true);
+                    name, callback, (e, childLogger) => errItemCallback != null ? errItemCallback(e, childLogger) : true, swallowException: true);
             }
             else
             {
@@ -268,7 +268,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     // Log unhandled exception
                     logger.LogException("task_run_error", e);
 
-                    return Task.FromResult(errItemCallback != null ? errItemCallback(e) : true);
+                    return Task.FromResult(errItemCallback != null ? errItemCallback(e, logger) : true);
                 }
             }
         }
@@ -278,7 +278,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger,
             bool autoLogOperation,
-            Action<Exception> errCallback)
+            Action<Exception, IDiagnosticsLogger> errCallback)
         {
             logger = (logger ?? Logger)
                 .FluentAddBaseValue("TaskBackgroundRunId", Guid.NewGuid())
@@ -307,7 +307,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         // Run error callback if needed
                         if (errCallback != null)
                         {
-                            errCallback(e);
+                            errCallback(e, logger);
                         }
 
                         return Task.CompletedTask;
@@ -322,7 +322,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
            Func<T, IDiagnosticsLogger, Task> callback,
            IDiagnosticsLogger logger,
            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease,
-           Action<T, Exception> errItemCallback,
+           Action<T, Exception, IDiagnosticsLogger> errItemCallback,
            int concurrentLimit,
            int successDelay,
            int failDelay)
@@ -410,7 +410,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                                                     localCompletion.SetResult(null);
                                                 },
                                             itemTryLogger,
-                                            errCallback: (e) =>
+                                            errCallback: (e, executeLogger) =>
                                                 {
                                                     // Track completion
                                                     localCompletion.SetResult(e);
@@ -418,7 +418,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                                                     // Execute users callback if needed
                                                     if (errItemCallback != null)
                                                     {
-                                                        errItemCallback(item, e);
+                                                        errItemCallback(item, e, executeLogger);
                                                     }
                                                 });
 

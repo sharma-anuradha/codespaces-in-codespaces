@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
                     return !Disposed;
                 },
-                (e) => !Disposed);
+                (e, IDiagnosticsLogger) => !Disposed);
         }
 
         /// <inheritdoc/>

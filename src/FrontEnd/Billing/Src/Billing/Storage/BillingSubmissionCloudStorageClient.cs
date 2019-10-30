@@ -76,6 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var messageCount = await cloudErrorQueue.GetApproximateMessageCount(logger);
             return messageCount > 0;
         }
+
         /// <inheritdoc />
         public async Task<IEnumerable<BillSubmissionErrorResult>> GetSubmissionErrors()
         {

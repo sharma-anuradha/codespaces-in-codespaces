@@ -84,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
                     return !Disposed;
                 },
-                (e) => !Disposed,
+                (e, childLogger) => !Disposed,
                 swallowException: true);
         }
 

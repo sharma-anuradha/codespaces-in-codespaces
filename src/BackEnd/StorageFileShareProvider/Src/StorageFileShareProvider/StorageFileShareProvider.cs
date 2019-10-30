@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                               .FluentAddValue(nameof(r.Status), r.Status.ToString());
                         return r;
                     },
-                    (ex) => new FileShareProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message },
+                    (ex, childLogger) => new FileShareProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message },
                     swallowException: true);
 
             return result;
@@ -80,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                           .FluentAddValue(nameof(r.Status), r.Status.ToString());
                     return r;
                 },
-                (ex) => new FileShareProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message },
+                (ex, childLogger) => new FileShareProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message },
                 swallowException: true);
         }
 
@@ -109,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         .FluentAddValue(nameof(r.Status), r.Status.ToString());
                     return r;
                 },
-                (ex) => new FileShareProviderAssignResult() { Status = OperationState.Failed , ErrorReason = ex.Message},
+                (ex, childLogger) => new FileShareProviderAssignResult() { Status = OperationState.Failed , ErrorReason = ex.Message},
                 swallowException: true);
         }
 

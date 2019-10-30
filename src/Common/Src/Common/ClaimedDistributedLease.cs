@@ -53,8 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
-                        .FluentAddBaseValue("LeaseContainerName", containerName)
-                        .FluentAddBaseValue("LeaseName", name)
+                        .FluentAddBaseValue("LeasePreContainerName", containerName)
+                        .FluentAddBaseValue("LeasePreName", name)
                         .FluentAddBaseValue("LeaseClaimTimeSpan", timeSpan);
 
                     // If you set the schedule to be once per hour, it will round the current time, such as 5:43:20 AM,
@@ -94,6 +94,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var stopwatch = Stopwatch.StartNew();
 
             name = EnsureBlobSafeName(name);
+            containerName = EnsureBlobSafeName(containerName);
+
+            logger.FluentAddBaseValue("LeasePostContainerName", containerName)
+                .FluentAddBaseValue("LeasePostName", name);
 
             // Setup blob details
             var container = BlobStorageClientProvider.GetCloudBlobContainer(containerName);

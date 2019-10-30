@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                     return result;
                 },
-                (ex) => { return new VirtualMachineProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                (ex, childLogger) => { return new VirtualMachineProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
                 swallowException: true);
         }
 
@@ -111,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
                    return result;
                },
-               (ex) => { return new VirtualMachineProviderShutdownResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+               (ex, childLogger) => { return new VirtualMachineProviderShutdownResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
                swallowException: true);
         }
 
@@ -157,7 +157,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                     return result;
                 },
-                (ex) => { return new VirtualMachineProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                (ex, childLogger) => { return new VirtualMachineProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
                 swallowException: true);
         }
 
@@ -195,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                     return result;
                 },
-                (ex) => { return new VirtualMachineProviderStartComputeResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                (ex, childLogger) => { return new VirtualMachineProviderStartComputeResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
                 swallowException: true);
         }
 

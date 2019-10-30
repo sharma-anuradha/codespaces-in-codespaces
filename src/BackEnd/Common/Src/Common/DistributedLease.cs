@@ -57,8 +57,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
-                        .FluentAddBaseValue("LeaseContainerName", containerName)
-                        .FluentAddBaseValue("LeaseName", name);
+                        .FluentAddBaseValue("LeasePreContainerName", containerName)
+                        .FluentAddBaseValue("LeasePreName", name);
 
                     var result = default(IDisposable);
                     try
@@ -87,8 +87,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue("LeaseObtainId", Guid.NewGuid())
-                        .FluentAddBaseValue("LeaseContainerName", containerName)
-                        .FluentAddBaseValue("LeaseName", name);
+                        .FluentAddBaseValue("LeasePreContainerName", containerName)
+                        .FluentAddBaseValue("LeasePreName", name);
 
                     var result = default(IDisposable);
                     var tryCount = 1;
@@ -121,6 +121,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var stopwatch = Stopwatch.StartNew();
 
             name = EnsureBlobSafeName(name);
+            containerName = EnsureBlobSafeName(containerName);
+
+            logger.FluentAddBaseValue("LeasePostContainerName", containerName)
+                .FluentAddBaseValue("LeasePostName", name);
 
             // Create blob if needed
             var blob = await BlobCache.GetOrAdd($"{containerName}_{name}", async (x) =>

@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             TimeSpan? schedule = null,
             IDiagnosticsLogger logger = null,
             bool autoLogLoopOperation = false,
-            Func<Exception, bool> errLoopCallback = default);
+            Func<Exception, IDiagnosticsLogger, bool> errLoopCallback = default);
 
         /// <summary>
         /// Runs a TRPL Task fire-and-forget style on a repeated schedule,
@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             TimeSpan? schedule = null,
             IDiagnosticsLogger logger = null,
             bool autoLogLoopOperation = false,
-            Func<Exception, bool> errLoopCallback = default);
+            Func<Exception, IDiagnosticsLogger, bool> errLoopCallback = default);
 
         /// <summary>
         /// Runs a TPL Task fire-and-forget style, the right way - in the
@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             bool autoLogOperation = true,
-            Action<Exception> errCallback = default,
+            Action<Exception, IDiagnosticsLogger> errCallback = default,
             TimeSpan? delay = null);
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             bool autoLogOperation = true,
-            Action<Exception> errCallback = default,
+            Action<Exception, IDiagnosticsLogger> errCallback = default,
             TimeSpan? delay = null);
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
-            Action<T, Exception> errItemCallback = default,
+            Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
             int concurrentLimit = 3,
             int successDelay = 250,
             int failDelay = 100);
@@ -164,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
-            Action<T, Exception> errItemCallback = default,
+            Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
             int concurrentLimit = 3,
             int successDelay = 250,
             int failDelay = 100);

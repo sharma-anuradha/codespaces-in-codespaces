@@ -27,32 +27,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             throw new NotImplementedException();
         }
 
-        public void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception> errCallback = null, TimeSpan? delay = null)
+        public void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception, IDiagnosticsLogger> errCallback = null, TimeSpan? delay = null)
         {
             throw new NotImplementedException();
         }
 
-        public void RunBackgroundEnumerable<T>(string name, IEnumerable<T> list, Func<T, IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null, Action<T, Exception> errItemCallback = null, int concurrentLimit = 3, int successDelay = 250, int failDelay = 100)
+        public void RunBackgroundEnumerable<T>(string name, IEnumerable<T> list, Func<T, IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null, Action<T, Exception, IDiagnosticsLogger> errItemCallback = null, int concurrentLimit = 3, int successDelay = 250, int failDelay = 100)
         {
             callback(list.First(), logger);
         }
 
-        public Task RunBackgroundEnumerableAsync<T>(string name, IEnumerable<T> list, Func<T, IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null, Action<T, Exception> errItemCallback = null, int concurrentLimit = 3, int successDelay = 250, int failDelay = 100)
+        public Task RunBackgroundEnumerableAsync<T>(string name, IEnumerable<T> list, Func<T, IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null, Action<T, Exception, IDiagnosticsLogger> errItemCallback = null, int concurrentLimit = 3, int successDelay = 250, int failDelay = 100)
         {
             return callback(list.First(), logger);
         }
 
-        public void RunBackgroundLong(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception> errCallback = null, TimeSpan? delay = null)
+        public void RunBackgroundLong(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception, IDiagnosticsLogger> errCallback = null, TimeSpan? delay = null)
         {
             throw new NotImplementedException();
         }
 
-        public void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null, bool autoLogLoopOperation = false, Func<Exception, bool> errLoopCallback = null)
+        public void RunBackgroundLoop(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null, bool autoLogLoopOperation = false, Func<Exception, IDiagnosticsLogger, bool> errLoopCallback = null)
         {
             throw new NotImplementedException();
         }
 
-        public Task RunBackgroundLoopAsync(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null, bool autoLogLoopOperation = false, Func<Exception, bool> errLoopCallback = null)
+        public Task RunBackgroundLoopAsync(string name, Func<IDiagnosticsLogger, Task<bool>> callback, TimeSpan? schedule = null, IDiagnosticsLogger logger = null, bool autoLogLoopOperation = false, Func<Exception, IDiagnosticsLogger, bool> errLoopCallback = null)
         {
             throw new NotImplementedException();
         }

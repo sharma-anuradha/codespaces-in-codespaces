@@ -41,7 +41,12 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions should be swallowed.</param>
         /// <returns>Returns the task.</returns>
-        public static async Task OperationScopeAsync(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task> callback, Action<Exception> errCallback = default, bool swallowException = false)
+        public static async Task OperationScopeAsync(
+            this IDiagnosticsLogger logger,
+            string name,
+            Func<IDiagnosticsLogger, Task> callback,
+            Action<Exception, IDiagnosticsLogger> errCallback = default,
+            bool swallowException = false)
         {
             var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
@@ -54,7 +59,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
             catch (Exception e)
             {
-                errCallback?.Invoke(e);
+                errCallback?.Invoke(e, childLogger);
 
                 childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
@@ -76,18 +81,23 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the task.</returns>
-        public static async Task<T> OperationScopeAsync<T>(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task<T>> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
+        public static async Task<T> OperationScopeAsync<T>(
+            this IDiagnosticsLogger logger,
+            string name,
+            Func<IDiagnosticsLogger, Task<T>> callback,
+            Func<Exception, IDiagnosticsLogger, T> errCallback = default,
+            bool swallowException = false)
         {
             var result = default(T);
 
             await logger.OperationScopeAsync(
                 name,
                 async (innerLogger) => { result = await callback(innerLogger); },
-                (e) =>
+                (e, innerLogger) =>
                 {
                     if (errCallback != default)
                     {
-                        result = errCallback(e);
+                        result = errCallback(e, innerLogger);
                     }
                 },
                 swallowException);
@@ -104,7 +114,12 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="callback">Callback that should be executed.</param>
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
-        public static void OperationScope(this IDiagnosticsLogger logger, string name, Action<IDiagnosticsLogger> callback, Action<Exception> errCallback = default, bool swallowException = false)
+        public static void OperationScope(
+            this IDiagnosticsLogger logger,
+            string name,
+            Action<IDiagnosticsLogger> callback,
+            Action<Exception, IDiagnosticsLogger> errCallback = default,
+            bool swallowException = false)
         {
             var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
@@ -117,7 +132,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
             catch (Exception e)
             {
-                errCallback?.Invoke(e);
+                errCallback?.Invoke(e, childLogger);
 
                 childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
@@ -139,18 +154,23 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the callback result.</returns>
-        public static T OperationScope<T>(this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, T> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
+        public static T OperationScope<T>(
+            this IDiagnosticsLogger logger,
+            string name,
+            Func<IDiagnosticsLogger, T> callback,
+            Func<Exception, IDiagnosticsLogger, T> errCallback = default,
+            bool swallowException = false)
         {
             var result = default(T);
 
             logger.OperationScope(
                 name,
                 (innerLogger) => { result = callback(innerLogger); },
-                (e) =>
+                (e, innerLogger) =>
                 {
                     if (errCallback != default)
                     {
-                        result = errCallback(e);
+                        result = errCallback(e, innerLogger);
                     }
                 },
                 swallowException);
@@ -171,18 +191,22 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the callback result.</returns>
         public static async Task<T> RetryOperationScopeAsync<T>(
-            this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task<T>> callback, Func<Exception, T> errCallback = default, bool swallowException = false)
+            this IDiagnosticsLogger logger,
+            string name,
+            Func<IDiagnosticsLogger, Task<T>> callback,
+            Func<Exception, IDiagnosticsLogger, T> errCallback = default,
+            bool swallowException = false)
         {
             var result = default(T);
 
             await logger.RetryOperationScopeAsync(
                 name,
                 async (innerLogger) => { result = await callback(innerLogger); },
-                (e) =>
+                (e, innerLogger) =>
                 {
                     if (errCallback != default)
                     {
-                        result = errCallback(e);
+                        result = errCallback(e, innerLogger);
                     }
                 },
                 swallowException);
@@ -203,7 +227,11 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns running task.</returns>
         public static async Task RetryOperationScopeAsync(
-            this IDiagnosticsLogger logger, string name, Func<IDiagnosticsLogger, Task> callback, Action<Exception> errCallback = default, bool swallowException = false)
+            this IDiagnosticsLogger logger,
+            string name,
+            Func<IDiagnosticsLogger, Task> callback,
+            Action<Exception, IDiagnosticsLogger> errCallback = default,
+            bool swallowException = false)
         {
             var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
@@ -223,7 +251,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
 
                             return (true, null);
                         },
-                        (e) => (false, e),
+                        (e, innerLogger) => (false, e),
                         true);
                 });
 
@@ -237,7 +265,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             {
                 if (errCallback != default)
                 {
-                    errCallback(doResult.Item2);
+                    errCallback(doResult.Item2, childLogger);
                 }
 
                 childLogger.LogException($"{name}_retry_scope_error", doResult.Item2);
