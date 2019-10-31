@@ -46,6 +46,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             {
                 return await FetchStaticAsset("favicon.ico", "image/x-icon");
             }
+            if (path == "Site.css")
+            {
+                return await FetchStaticAsset("site.css", "text/css");
+            }
+            if (path == "spinner-dark.svg")
+            {
+                return await FetchStaticAsset("spinner-dark.svg", "image/svg+xml");
+            }
 
             if (devSessionId != null && devSessionId.EndsWith('/'))
             {
