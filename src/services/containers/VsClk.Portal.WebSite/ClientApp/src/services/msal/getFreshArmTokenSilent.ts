@@ -14,9 +14,16 @@ export const getFreshArmTokenSilentFactory = () => {
             iframe.src = renewUrl.toString();
         },
         getLocation: () => {
-            return (!iframe!.contentWindow)
+            try {
+                const location = (!iframe!.contentWindow)
                 ? null
                 : iframe!.contentWindow.location;
+
+                return location;
+            } catch {
+                // ignore
+                return null;
+            }
         },
         onComplete: () => {
             const iframeEl = document.getElementById(iframeId);

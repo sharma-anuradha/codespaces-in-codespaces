@@ -15,7 +15,7 @@ export const ensureRedirectionIframe = (iframeId: string = DEFAULT_ARM_IFRAME_ID
         iframe.style.position = 'absolute';
         iframe.style.width = iframe.style.height = '0';
         iframe.style.border = '0';
-        iframe.setAttribute('sandbox', 'allow-same-origin');
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
 
         document.body.appendChild(iframe);
 
