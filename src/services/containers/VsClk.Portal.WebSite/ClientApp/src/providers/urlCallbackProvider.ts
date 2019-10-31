@@ -11,11 +11,14 @@ import { vscodeConfig } from '../constants';
 
 const callbackSymbol = Symbol('URICallbackSymbol');
 
-const VSO_AUTHORITY_PARAM_NAME = 'vso-authority';
-const VSO_PATH_PARAM_NAME = 'vso-path';
 const VSO_NONCE_PARAM_NAME = 'vso-nonce';
 
 const LOCAL_STORAGE_KEY = 'vsonline.redirect.url';
+
+interface IExpectedNonceRecord {
+    authority: string;
+    path: string;
+}
 
 export class UrlCallbackProvider implements IURLCallbackProvider {
     private [callbackSymbol] = new Emitter<URI>();
@@ -29,7 +32,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         };
     }
 
-    private expectedNonceSet = new Set<string>();
+    private expectedNonceMap = new Map<string, IExpectedNonceRecord>();
 
     private onStorage = (e: StorageEvent) => {
         const { key, newValue } = e;
@@ -39,41 +42,33 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         }
 
         const [nonce, keyName] = key.split('::');
+        
+        if (!nonce || (keyName !== LOCAL_STORAGE_KEY)) {
+            return;
+        }
 
-        if (!nonce
-            || !this.expectedNonceSet.has(nonce)
-            || (keyName !== LOCAL_STORAGE_KEY))
+        const expectedRedirectRecord = this.expectedNonceMap.get(nonce);
+
+        if (!expectedRedirectRecord)
         {
             return;
         }
 
         localStorage.removeItem(key);
-        this.expectedNonceSet.delete(nonce);
+        this.expectedNonceMap.delete(nonce);
 
         const url = newValue;
         const queryParams = getQueryParams(url);
 
-        if (!queryParams.get(VSO_AUTHORITY_PARAM_NAME)) {
-            throw new Error('No "authority" param is set on redirect URL.');
-        }
-
-        if (!queryParams.get(VSO_PATH_PARAM_NAME)) {
-            throw new Error('No "path" param is set on redirect URL.');
-        }
-
         // please use the https://github.com/microsoft/vscode/blob/2320972f5f1206d6e9a047e3850b4d0bee4d2e87/src/vs/base/common/uri.ts#L99
         // for the Uri format refrence
         const protocolHandlerUri = vscode.URI.from({
-            authority: queryParams.get(VSO_AUTHORITY_PARAM_NAME)!,
+            authority: expectedRedirectRecord.authority,
             query: this.cleanQueryFromVsoParams(queryParams).toString(),
             scheme: this.getVSCodeScheme(),
-            path: queryParams.get(VSO_PATH_PARAM_NAME)!,
+            path: expectedRedirectRecord.path,
             fragment: ''
         });
-
-        // keeping this console in to demostrate the issue to the VSCode team
-        // tslint:=next-line: no-console
-        console.log(`Firing [UrlCallbackProvider.onCallback] with the next argument: `, protocolHandlerUri);
 
         this[callbackSymbol].fire(protocolHandlerUri);
     }
@@ -87,8 +82,6 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
     private cleanQueryFromVsoParams(queryParams: URLSearchParams) {
         const queryParamsWithoutVSOParams = new URLSearchParams(queryParams.toString());
 
-        queryParamsWithoutVSOParams.delete(VSO_AUTHORITY_PARAM_NAME);
-        queryParamsWithoutVSOParams.delete(VSO_PATH_PARAM_NAME);
         queryParamsWithoutVSOParams.delete(VSO_NONCE_PARAM_NAME);
 
         return queryParamsWithoutVSOParams;
@@ -98,11 +91,9 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
 
     private generateUrlCallbackParams(authority: string, path: string, query: string) {
         const nonce = randomString();
-        this.expectedNonceSet.add(nonce);
+        this.expectedNonceMap.set(nonce, { authority, path });
 
         const params = new URLSearchParams(query);
-        params.append(VSO_AUTHORITY_PARAM_NAME, authority);
-        params.append(VSO_PATH_PARAM_NAME, path);
         params.append(VSO_NONCE_PARAM_NAME, nonce);
 
         return params.toString();
