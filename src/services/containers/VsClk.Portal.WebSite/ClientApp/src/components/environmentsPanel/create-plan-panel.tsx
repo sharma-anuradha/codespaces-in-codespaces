@@ -291,6 +291,8 @@ export class CreatePlanPanelComponent extends Component<
                 );
             }
 
+            await this.checkResourceProvider(subscriptionId);
+
             await this.props.createPlan(resourceGroupPath, this.planName, location);
 
             await getPlans();
@@ -311,6 +313,31 @@ export class CreatePlanPanelComponent extends Component<
         this.props.hidePanel();
     };
 
+    private async checkResourceProvider(subscription:string) {
+        const url = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.VSOnline?api-version=2019-08-01`;
+        let response = await this.getFromAzure(url);
+        const myAuthToken = await authService.getARMToken(60);
+        if(myAuthToken){
+            const token = `Bearer ${myAuthToken.accessToken}`;
+        
+            if(!response || (response.registrationState != "Registered")){
+                const registerUrl = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.VSOnline/register?api-version=2019-08-01`
+                let resp = await fetch(registerUrl, {
+                    method: 'POST',
+                    headers: {
+                        authorization: token,
+                    },
+                });
+                if(resp.status != 200){
+                    throw new PlanCreationError(PlanCreationFailureReason.FailedToRegisterResourceProvider);
+                }
+            }  
+        }
+        else{
+            throw new PlanCreationError(PlanCreationFailureReason.NotAuthenticated);
+        }
+    }
+
     private async getFromAzure(url: string) {
         const myAuthToken = await authService.getARMToken(60);
 
@@ -321,8 +348,19 @@ export class CreatePlanPanelComponent extends Component<
                     authorization: authToken,
                 },
             });
-
-            return response.json();
+            if(!response){
+                throw new Error(`Azure GET request failed`);
+            }
+            if(response.status === 200){
+                return response.json();
+            }
+            else{ 
+                console.error(`Request to ${response.url} failed with status ${response.status}`);
+                return null;
+            }
+        }
+        else{
+            throw new PlanCreationError(PlanCreationFailureReason.NotAuthenticated);
         }
     }
 
@@ -335,27 +373,29 @@ export class CreatePlanPanelComponent extends Component<
             const myJson = await this.getFromAzure(
                 `https://management.azure.com/subscriptions?api-version=${armAPIVersion}`
             );
+            
+            if(myJson){
+                const subscriptionList: IStringOption[] = myJson.value.map(
+                    (sub: IAzureSubscription) => {
+                        return {
+                            key: sub.subscriptionId,
+                            text: sub.displayName,
+                        };
+                    }
+                );
+            
+                this.setState({
+                    subscriptionList: subscriptionList.sort(asc),
+                });
 
-            const subscriptionList: IStringOption[] = myJson.value.map(
-                (sub: IAzureSubscription) => {
-                    return {
-                        key: sub.subscriptionId,
-                        text: sub.displayName,
-                    };
+                // if no subscription selected, select the first one by default
+                const maybeSubscriptionId = localStorage.getItem(subscriptionIdStorageKey);
+                const defaultSubscription =
+                    subscriptionList.find((sub) => sub.key === maybeSubscriptionId) ||
+                    subscriptionList[0];
+                if (defaultSubscription && !this.state.selectedSubscription) {
+                    this.subscriptionChanged({}, defaultSubscription);
                 }
-            );
-
-            this.setState({
-                subscriptionList: subscriptionList.sort(asc),
-            });
-
-            // if no subscription selected, select the first one by default
-            const maybeSubscriptionId = localStorage.getItem(subscriptionIdStorageKey);
-            const defaultSubscription =
-                subscriptionList.find((sub) => sub.key === maybeSubscriptionId) ||
-                subscriptionList[0];
-            if (defaultSubscription && !this.state.selectedSubscription) {
-                this.subscriptionChanged({}, defaultSubscription);
             }
         } finally {
             this.setState({ isGettingSubscriptions: false });
@@ -410,24 +450,26 @@ export class CreatePlanPanelComponent extends Component<
         );
         url.searchParams.set('api-version', armAPIVersion);
 
-        const myJson = await this.getFromAzure(url.toString());
         let resourceGroupList: INewGroupOption[] = [];
+        const myJson = await this.getFromAzure(url.toString());
 
-        if (this.state.newGroup) {
-            resourceGroupList.push({
-                key: this.state.newGroup,
-                text: this.state.newGroup,
-                isNewGroup: true,
+        if(myJson){
+            if (this.state.newGroup) {
+                resourceGroupList.push({
+                    key: this.state.newGroup,
+                    text: this.state.newGroup,
+                    isNewGroup: true,
+                });
+            }
+
+            for (let resGroup of myJson.value) {
+                resourceGroupList.push({ key: resGroup.id, text: resGroup.name });
+            }
+
+            this.setState({
+                resourceGroupList: resourceGroupList.sort(asc),
             });
         }
-
-        for (let resGroup of myJson.value) {
-            resourceGroupList.push({ key: resGroup.id, text: resGroup.name });
-        }
-
-        this.setState({
-            resourceGroupList: resourceGroupList.sort(asc),
-        });
 
         return resourceGroupList;
     };

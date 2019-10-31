@@ -17,6 +17,7 @@ export enum PlanCreationFailureReason {
     NewResourceGroupAlreadyExists,
     FailedToCreateResourceGroup,
     ResourceGroupProvisioningNotSuccessful,
+    FailedToRegisterResourceProvider,
     NotAuthenticated,
     FailedToCreatePlan,
 }
