@@ -33,6 +33,7 @@ import {
 import './create-environment-panel.css';
 import { isDefined } from '../../utils/isDefined';
 import { Loader } from '../loader/loader';
+import { Signal } from '../../utils/signal';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
@@ -253,6 +254,8 @@ export class CreateEnvironmentPanelView extends Component<
     CreateEnvironmentPanelProps,
     CreateEnvironmentPanelState
 > {
+    private creationInProgress?: Signal<void>;
+
     public constructor(props: CreateEnvironmentPanelProps) {
         super(props);
 
@@ -556,6 +559,17 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     private createEnvironment = async (event: SyntheticEvent<any, any>) => {
+        if (this.creationInProgress) {
+            return this.creationInProgress.promise;
+        }
+
+        this.creationInProgress = Signal.from(this.runCreateEnvironment(event));
+
+        await this.creationInProgress.promise;
+        this.creationInProgress = undefined;
+    };
+
+    private runCreateEnvironment = async (event: SyntheticEvent<any, any>) => {
         event.persist();
 
         if (
