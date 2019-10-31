@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.VsSaaS.Common.Models;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
@@ -14,11 +15,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Gets or sets a value indicating whether the pool should be enabled.
         /// </summary>
+        [JsonProperty(PropertyName = "isEnabled")]
         public bool? IsEnabled { get; set; }
 
         /// <summary>
         /// Gets or sets the target count.
         /// </summary>
+        [JsonProperty(PropertyName = "targetCount")]
         public int? TargetCount { get; set; }
     }
 }

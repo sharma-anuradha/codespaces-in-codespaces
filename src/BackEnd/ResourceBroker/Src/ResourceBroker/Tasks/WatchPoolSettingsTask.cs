@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
@@ -50,22 +51,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     var settings = (await ResourcePoolSettingsRepository.GetWhereAsync(x => true, childLogger.NewChildLogger()))
                         .ToDictionary(x => x.Id);
 
-                    // Run through each pool item
+                    childLogger.FluentAddValue("SettingsFoundCount", settings.Count)
+                        .FluentAddValue("SettingsFoundData", JsonConvert.SerializeObject(
+                            settings, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
+
+                    // Fetch current pool items
                     var resourceUnits = await ResourcePoolDefinitionStore.RetrieveDefinitions();
+
+                    childLogger.FluentAddValue("SettingsFoundPoolDefinitionCount", resourceUnits.Count());
+
+                    // Run through each pool item
                     foreach (var resourceUnit in resourceUnits)
                     {
-                        // Overrides the value if we have settings for it
-                        if (settings.TryGetValue(resourceUnit.Details.GetPoolDefinition(), out var resourceSetting))
-                        {
-                            resourceUnit.OverrideTargetCount = resourceSetting.TargetCount;
-                            resourceUnit.OverrideIsEnabled = resourceSetting.IsEnabled;
-                        }
-                        else
-                        {
-                            // Clear out any overrides if we don't have matches
-                            resourceUnit.OverrideTargetCount = null;
-                            resourceUnit.OverrideIsEnabled = null;
-                        }
+                        childLogger.OperationScope(
+                            $"{LogBaseName}_run_unit_check",
+                            (itemLogger) =>
+                            {
+                                var poolDefinition = resourceUnit.Details.GetPoolDefinition();
+
+                                itemLogger.FluentAddValue("SettingsFoundPool", poolDefinition)
+                                    .FluentAddValue("SettingPreOverrideTargetCount", resourceUnit.OverrideTargetCount)
+                                    .FluentAddValue("SettingPreOverrideIsEnabled", resourceUnit.OverrideIsEnabled);
+
+                                // Overrides the value if we have settings for it
+                                if (settings.TryGetValue(poolDefinition, out var resourceSetting))
+                                {
+                                    resourceUnit.OverrideTargetCount = resourceSetting.TargetCount;
+                                    resourceUnit.OverrideIsEnabled = resourceSetting.IsEnabled;
+                                }
+                                else
+                                {
+                                    // Clear out any overrides if we don't have matches
+                                    resourceUnit.OverrideTargetCount = null;
+                                    resourceUnit.OverrideIsEnabled = null;
+                                }
+
+                                itemLogger.FluentAddValue("SettingPostOverrideTargetCount", resourceUnit.OverrideTargetCount)
+                                    .FluentAddValue("SettingPostOverrideIsEnabled", resourceUnit.OverrideIsEnabled);
+                            });
                     }
 
                     return !Disposed;
