@@ -7,13 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.ResponseCaching.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
@@ -52,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// <param name="azureSubscriptionCapacityProvider">The azure subscription capacity.</param>
         /// <param name="controlPlaneInfo">The control plane info.</param>
         /// <param name="azureSubscriptionCatalog">The subscription catalog.</param>
+        /// <param name="azureClientFactory">The azure client factory.</param>
         /// <param name="claimedDistributedLease">The distributed lease helper.</param>
         /// <param name="taskHelper">The task helper.</param>
         /// <param name="resourceNameBuilder">Resource name builder, for lease names.</param>
@@ -60,6 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             IAzureSubscriptionCapacityProvider azureSubscriptionCapacityProvider,
             IControlPlaneInfo controlPlaneInfo,
             IAzureSubscriptionCatalog azureSubscriptionCatalog,
+            IAzureClientFactory azureClientFactory,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IResourceNameBuilder resourceNameBuilder,
@@ -67,6 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         {
             Requires.NotNull(azureSubscriptionCapacityProvider, nameof(azureSubscriptionCapacityProvider));
             Requires.NotNull(azureSubscriptionCatalog, nameof(azureSubscriptionCatalog));
+            Requires.NotNull(azureClientFactory, nameof(azureClientFactory));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             Requires.NotNull(claimedDistributedLease, nameof(claimedDistributedLease));
             Requires.NotNull(taskHelper, nameof(taskHelper));
@@ -74,6 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
             AzureSubscriptionCapacityProvider = azureSubscriptionCapacityProvider;
             AzureSubscriptionCatalog = azureSubscriptionCatalog;
+            AzureClientFactory = azureClientFactory;
             ControlPlaneInfo = controlPlaneInfo;
             ClaimedDistributedLease = claimedDistributedLease;
             TaskHelper = taskHelper;
@@ -86,6 +90,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
         private IAzureSubscriptionCatalog AzureSubscriptionCatalog { get; }
+
+        private IAzureClientFactory AzureClientFactory { get; }
 
         private IClaimedDistributedLease ClaimedDistributedLease { get; }
 
@@ -100,7 +106,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// <inheritdoc/>
         public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
         {
-            await Task.CompletedTask;
+            // Make sure that the required providers are registered -- or no capacity!
+            RegisterArmProvidersForDataPlaneSubscriptions(logger.NewChildLogger());
 
             // Determine the work to be done in this control-plane.
             var dataPlaneLocations = new HashSet<AzureLocation>(ControlPlaneInfo.Stamp.DataPlaneLocations);
@@ -149,6 +156,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             // Monitor the network capacity
             await DelayBetweenLoops();
             MonitorAzureResourceUsageBackgroundLoop(ServiceType.Network, subscriptionLocationGroups, monitorCapacityInterval, logger);
+        }
+
+        private void RegisterArmProvidersForDataPlaneSubscriptions(IDiagnosticsLogger logger)
+        {
+            var dataPlaneSubscriptions = AzureSubscriptionCatalog.AzureSubscriptions.Where(sub => sub.Enabled).ToArray();
+            var providers = new[]
+            {
+                "Microsoft.Compute",
+                "Microsoft.Network",
+                "Microsoft.Storage",
+            };
+
+            foreach (var subscription in dataPlaneSubscriptions)
+            {
+                TaskHelper.RunBackground(
+                    $"register_arm_providers_for_{subscription.DisplayName}",
+                    async (childLogger) =>
+                    {
+                        var id = Guid.Parse(subscription.SubscriptionId);
+                        childLogger
+                            .FluentAddBaseValue("subscriptionId", id)
+                            .FluentAddBaseValue("subscriptionName", subscription.DisplayName);
+
+                        using (var client = await AzureClientFactory.GetResourceManagementClient(id))
+                        {
+                            // Note: not using TaskHelper here because I need to maintain the client object between iterations.
+                            var tasksWithThisClient = new List<Task>();
+
+                            foreach (var provider in providers)
+                            {
+                                var task = client.Providers.RegisterWithHttpMessagesAsync(provider)
+                                    .ContinueWith((t) =>
+                                    {
+                                        var innerLogger = childLogger.NewChildLogger();
+                                        innerLogger.AddValue("provider", provider);
+
+                                        if (t.IsFaulted)
+                                        {
+                                            innerLogger.LogException("register_arm_provider_error", t.Exception);
+                                        }
+                                        else
+                                        {
+                                            innerLogger.LogInfo("register_arm_provider");
+                                        }
+                                    });
+
+                                tasksWithThisClient.Add(task);
+                            }
+
+                            try
+                            {
+                                await Task.WhenAll(tasksWithThisClient);
+                            }
+                            catch (Exception)
+                            {
+                                // Exceptions already logged in individual tasks.
+                            }
+                        }
+                    },
+                    logger);
+            }
         }
 
         // Temporal offset to distribute inital load of recuring tasks
