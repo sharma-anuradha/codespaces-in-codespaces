@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                     return !Disposed;
                 },
-                (e, IDiagnosticsLogger) => !Disposed);
+                (e, childLogger) => !Disposed);
         }
 
         /// <inheritdoc/>

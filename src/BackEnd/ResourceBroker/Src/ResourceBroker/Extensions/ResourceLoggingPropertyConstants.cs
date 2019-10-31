@@ -58,5 +58,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Pool image name.
         /// </summary>
         public const string PoolTargetCount = nameof(PoolTargetCount);
+
+        /// <summary>
+        /// Pool image name.
+        /// </summary>
+        public const string PoolOverrideTargetCount = nameof(PoolOverrideTargetCount);
+
+        /// <summary>
+        /// Pool image name.
+        /// </summary>
+        public const string PoolIsEnabled = nameof(PoolIsEnabled);
+
+        /// <summary>
+        /// Pool image name.
+        /// </summary>
+        public const string PoolOverrideIsEnabled = nameof(PoolOverrideIsEnabled);
     }
 }
