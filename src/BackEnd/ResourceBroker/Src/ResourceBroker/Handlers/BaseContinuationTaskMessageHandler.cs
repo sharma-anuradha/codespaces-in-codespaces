@@ -354,13 +354,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             var shouldTriggerDelete = Operation == ResourceOperation.Provisioning || Operation == ResourceOperation.Starting;
 
-            logger.FluentAddValue("HandlerFailCleanupTriggered", shouldTriggerDelete);
+            trigger = $"{Operation}_{trigger}";
+
+            logger.FluentAddValue("HandlerFailCleanupTriggered", shouldTriggerDelete)
+                .FluentAddValue("HandlerFailCleanupTrigger", trigger);
 
             // Only delete if we aren't already deleting
             if (shouldTriggerDelete)
             {
-                logger.FluentAddValue("HandlerFailCleanupTrigger", trigger);
-
                 try
                 {
                     // Fetch instance
