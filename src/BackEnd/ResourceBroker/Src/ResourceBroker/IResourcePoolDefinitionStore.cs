@@ -17,6 +17,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// Return latest scaling levels that has been reported by the Scaling Engine.
         /// </summary>
         /// <returns>Latest scaling levels list.</returns>
-        Task<IEnumerable<ResourcePool>> RetrieveDefinitions();
+        Task<IList<ResourcePool>> RetrieveDefinitions();
     }
 }

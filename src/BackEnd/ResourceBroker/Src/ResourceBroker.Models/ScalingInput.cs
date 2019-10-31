@@ -14,6 +14,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// <summary>
         /// Gets or sets the pools that are bing targetted.
         /// </summary>
-        public IEnumerable<ResourcePool> Pools { get; set; }
+        public IList<ResourcePool> Pools { get; set; }
     }
 }

@@ -151,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceScalingStore = new Mock<IResourcePoolDefinitionStore>();
             resourceScalingStore
                 .Setup(x => x.RetrieveDefinitions())
-                .Returns(Task.FromResult((IEnumerable<ResourcePool>)definition));
+                .Returns(Task.FromResult((IList<ResourcePool>)definition));
 
             return resourceScalingStore;
         }

@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     /// </summary>
     public class ResourcePoolDefinitionStore : IResourcePoolDefinitionStore, IResourceScalingHandler
     {
-        private IEnumerable<ResourcePool> ResourceScaleLevels { get; set; }
+        private IList<ResourcePool> ResourceScaleLevels { get; set; }
 
         /// <inheritdoc/>
         public Task<ScalingResult> UpdateResourceScaleLevels(ScalingInput scalingInputs)
@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<ResourcePool>> RetrieveDefinitions()
+        public Task<IList<ResourcePool>> RetrieveDefinitions()
         {
             // If we don't have a result, wait a short time to see if it comes
             if (ResourceScaleLevels == null)
