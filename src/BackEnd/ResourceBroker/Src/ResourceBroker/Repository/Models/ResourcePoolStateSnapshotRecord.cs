@@ -77,5 +77,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// Gets or sets the time the pool was last updated.
         /// </summary>
         public DateTime Updated { get; set; }
+
+        /// <summary>
+        /// Gets or sets the override is enabled.
+        /// </summary>
+        public bool? OverrideIsEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets the override target count.
+        /// </summary>
+        public int? OverrideTargetCount { get; set; }
     }
 }

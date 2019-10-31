@@ -92,15 +92,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var isReadyAtTargetCount = poolReadyUnassignedVersionCount == resourcePool.TargetCount;
             logger.FluentAddValue("PoolIsReadyAtTargetCount", isReadyAtTargetCount);
 
-            var isPoolEnabled = resourcePool.IsEnabled;
-            logger.FluentAddValue("PoolIsEnabled", isPoolEnabled);
-
             // Setup model
             var record = new ResourcePoolStateSnapshotRecord()
             {
                 Id = poolCode,
                 VersionCode = poolVersionCode,
                 TargetCount = resourcePool.TargetCount,
+                OverrideTargetCount = resourcePool.OverrideTargetCount,
                 IsAtTargetCount = isAtTargetCount,
                 IsReadyAtTargetCount = isReadyAtTargetCount,
                 UnassignedCount = poolUnassignedCount,
@@ -110,7 +108,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 ReadyUnassignedVersionCount = poolReadyUnassignedVersionCount,
                 ReadyUnassignedNotVersionCount = poolReadyUnassignedNotVersionCount,
                 Dimensions = resourcePool.Details.GetPoolDimensions(),
-                IsEnabled = isPoolEnabled,
+                IsEnabled = resourcePool.IsEnabled,
+                OverrideIsEnabled = resourcePool.OverrideIsEnabled,
                 Updated = DateTime.UtcNow,
             };
 
