@@ -3,10 +3,12 @@ import {
     CreateEnvironmentParameters,
 } from '../services/envRegService';
 import { createUniqueId } from '../dependencies';
-import { ICloudEnvironment } from '../interfaces/cloudenvironment';
+import { ICloudEnvironment, EnvironmentErrorCodes } from '../interfaces/cloudenvironment';
 import { action } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
 import { getUserInfo } from './getUserInfo';
+import { ServiceResponseError } from './middleware/useWebClient';
+import { environmentErrorCodeToString } from '../utils/environmentUtils';
 
 type PartialEnvironmentInfo = Omit<CreateEnvironmentParameters, 'userEmail' | 'userName'>;
 
@@ -19,8 +21,8 @@ const createEnvironmentAction = (lieId: string, environment: PartialEnvironmentI
     action(createEnvironmentActionType, { lieId, environment });
 const createEnvironmentSuccessAction = (lieId: string, environment: ICloudEnvironment) =>
     action(createEnvironmentSuccessActionType, { lieId, environment });
-const createEnvironmentFailureAction = (lieId: string, error: Error) =>
-    action(createEnvironmentFailureActionType, { lieId }, error);
+const createEnvironmentFailureAction = (lieId: string, errorMessage: string, error: Error) =>
+    action(createEnvironmentFailureActionType, { lieId, errorMessage }, error);
 
 // Types to register with reducers
 export type CreateEnvironmentAction = ReturnType<typeof createEnvironmentAction>;
@@ -54,6 +56,16 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
         const environment = await createCloudEnvironment(environmentParameters);
         dispatch(createEnvironmentSuccessAction(lieId, environment));
     } catch (err) {
-        dispatch(createEnvironmentFailureAction(lieId, err));
+        if (err instanceof ServiceResponseError) {
+            const code = (await err.response.json()) as EnvironmentErrorCodes;
+
+            dispatch(
+                createEnvironmentFailureAction(lieId, environmentErrorCodeToString(code), err)
+            );
+
+            throw new Error(environmentErrorCodeToString(code));
+        }
+
+        dispatch(createEnvironmentFailureAction(lieId, err.errorMessage, err));
     }
 }

@@ -1,10 +1,13 @@
-import React, { Fragment, useCallback } from 'react';
+import React, { Fragment, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { createEnvironment } from '../../actions/createEnvironment';
 import { EnvironmentsPanel } from '../environments/environments';
-import { CreateEnvironmentPanel, defaultAutoShutdownDelayMinutes } from '../environmentsPanel/create-environment-panel';
+import {
+    CreateEnvironmentPanel,
+    defaultAutoShutdownDelayMinutes,
+} from '../environmentsPanel/create-environment-panel';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
@@ -19,18 +22,25 @@ export function NewEnvironment(props: RouteComponentProps) {
         props.history.replace('/environments');
     }, [props.history]);
 
+    const [errorMessage, setErrorMessage] = useState(undefined as undefined | string);
+
     const dispatch = useDispatch();
-
     const createEnvironmentCallback = useCallback(
-        (parameters: CreateEnvironmentParams) => {
-            dispatch(createEnvironment(parameters));
+        async (parameters: CreateEnvironmentParams) => {
+            try {
+                await dispatch(createEnvironment(parameters));
 
-            storeDotfilesConfiguration(parameters);
+                storeDotfilesConfiguration(parameters);
 
-            hidePanel();
+                hidePanel();
+            } catch (err) {
+                setErrorMessage(err.message);
+            }
         },
-        [dispatch, hidePanel]
+        [hidePanel]
     );
+
+    const hideError = useCallback(() => setErrorMessage(undefined), []);
 
     return (
         <Fragment>
@@ -41,6 +51,8 @@ export function NewEnvironment(props: RouteComponentProps) {
                 defaultRepo={repo}
                 defaultSkuName={skuName}
                 hidePanel={hidePanel}
+                errorMessage={errorMessage}
+                hideErrorMessage={hideError}
                 onCreateEnvironment={createEnvironmentCallback}
                 autoShutdownDelayMinutes={defaultAutoShutdownDelayMinutes}
             />

@@ -20,6 +20,7 @@ import './environments.css';
 import { isDefined } from '../../utils/isDefined';
 import { fetchEnvironments } from '../../actions/fetchEnvironments';
 import { pollActivatingEnvironments } from '../../actions/pollEnvironment';
+import { environmentIsALie } from '../../utils/environmentUtils';
 
 interface EnvironmentsPanelProps extends RouteComponentProps {
     deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
@@ -131,9 +132,14 @@ function getPlanEnvironments(
         return [];
     }
 
-    return environments.filter((env) => {
-        return !env.planId || env.planId === plan.id;
-    });
+    return (
+        environments
+            .filter((env) => {
+                return !env.planId || env.planId === plan.id;
+            })
+            // TODO: reintroduce lies once we get better error messaging for environment creation.
+            .filter((e) => !environmentIsALie(e))
+    );
 }
 
 const stateToProps = ({

@@ -71,3 +71,15 @@ export interface GitConfig {
     userName?: string;
     userEmail?: string;
 }
+
+export enum EnvironmentErrorCodes {
+    unknown = 0,
+    exceededQuota = 1,
+    environmentNameAlreadyExists = 2,
+    environmentDoesNotExist = 3,
+    shutdownStaticEnvironment = 4,
+    startStaticEnvironment = 5,
+    environmentNotAvailable = 6,
+    environmentNotShutdown = 7,
+    unableToAllocateResources = 8,
+}

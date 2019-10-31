@@ -76,21 +76,34 @@ export function environments(
                         activatingEnvironments: [],
                     };
                 }
+
+                const activatingEnvironments = state.environments.reduce(
+                    (envs, env) => {
+                        if (env.planId && plan.id !== env.planId) {
+                            return envs;
+                        }
+                        if (env.id && isActivating(env)) {
+                            envs.push(env.id);
+                        }
+                        return envs;
+                    },
+                    [] as string[]
+                );
+
                 return {
                     ...state,
                     selectedPlanId: plan.id,
+                    activatingEnvironments,
                 };
             })(state, action);
 
         case fetchEnvironmentsSuccessActionType:
-            const activatingEnvironments: string[] = action.payload.environments.reduce(
+            const activatingEnvironments = action.payload.environments.reduce(
                 (envs, env) => {
-                    if (state.selectedPlanId == null) {
+                    if (state.selectedPlanId && state.selectedPlanId !== env.planId) {
                         return envs;
                     }
-                    if (env.planId && state.selectedPlanId !== env.planId) {
-                        return envs;
-                    }
+
                     if (isActivating(env)) {
                         envs.push(env.id);
                     }

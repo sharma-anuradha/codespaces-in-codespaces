@@ -27,6 +27,10 @@ export async function pollActivatingEnvironments() {
         environments: { activatingEnvironments },
     } = context.state;
 
+    if (activatingEnvironments.length === 0) {
+        return;
+    }
+
     await Promise.all(activatingEnvironments.map((id) => pollActivatingEnvironment(id)));
 }
 

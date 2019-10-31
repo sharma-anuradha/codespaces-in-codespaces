@@ -9,6 +9,7 @@ import {
 } from '../../../utils/testUtils';
 import { useDispatch } from '../useDispatch';
 import { useActionCreator } from '../useActionCreator';
+import { wait } from '../../../dependencies';
 
 import {
     useWebClient,
@@ -540,5 +541,102 @@ describe('actionContextProvider', () => {
                 getDispatchedAction(store.dispatchedActions, 'hello.failure').error
             ).toBeInstanceOf(ServiceConnectionError);
         }
+    });
+
+    it('retries based on provided func', async () => {
+        jest.setTimeout(8000);
+
+        test_setMockRequestFactory(
+            createMockMakeRequestFactory({
+                responses: [
+                    {
+                        shouldFailConnection: true,
+                    },
+                    {
+                        ok: false,
+                    },
+                    {
+                        ok: true,
+                    },
+                ],
+            })
+        );
+
+        async function act() {
+            const dispatch = useDispatch();
+            const action = useActionCreator();
+            const webClient = useWebClient();
+
+            try {
+                dispatch(action('hello'));
+                await webClient.request(
+                    '/',
+                    { method: 'GET' },
+                    {
+                        requiresAuthentication: false,
+                        skipParsingResponse: true,
+                        shouldRetry() {
+                            return true;
+                        },
+                    }
+                );
+                dispatch(action('hello.success'));
+            } catch (err) {
+                dispatch(action('hello.failure', err));
+            }
+        }
+
+        await store.dispatch(act());
+
+        expect(store.dispatchedActions).not.toHaveFailed();
+    });
+
+    it('retries based on provided func', async () => {
+        jest.setTimeout(8000);
+
+        test_setMockRequestFactory(
+            createMockMakeRequestFactory({
+                responses: [
+                    {
+                        shouldFailConnection: true,
+                    },
+                    {
+                        ok: false,
+                    },
+                    {
+                        ok: true,
+                    },
+                ],
+            })
+        );
+
+        async function act() {
+            const dispatch = useDispatch();
+            const action = useActionCreator();
+            const webClient = useWebClient();
+
+            try {
+                dispatch(action('hello'));
+                await webClient.request(
+                    '/',
+                    { method: 'GET' },
+                    {
+                        requiresAuthentication: false,
+                        skipParsingResponse: true,
+                        async shouldRetry() {
+                            await wait(10);
+                            return true;
+                        },
+                    }
+                );
+                dispatch(action('hello.success'));
+            } catch (err) {
+                dispatch(action('hello.failure', err));
+            }
+        }
+
+        await store.dispatch(act());
+
+        expect(store.dispatchedActions).not.toHaveFailed();
     });
 });

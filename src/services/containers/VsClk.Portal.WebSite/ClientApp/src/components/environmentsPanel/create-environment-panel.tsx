@@ -5,6 +5,7 @@ import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button'
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { KeyCodes } from '@uifabric/utilities';
 
 import { Link } from 'office-ui-fabric-react/lib/components/Link';
@@ -30,6 +31,8 @@ import {
 } from '../../utils/gitUrlNormalization';
 
 import './create-environment-panel.css';
+import { isDefined } from '../../utils/isDefined';
+import { Loader } from '../loader/loader';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
@@ -182,9 +185,12 @@ export interface CreateEnvironmentPanelProps {
 
     defaultSkuName?: string | null;
 
+    errorMessage: string | undefined;
+    hideErrorMessage: () => void;
+
     storeGitHubCredentials: (accessToken: string) => void;
     hidePanel: () => void;
-    onCreateEnvironment: (environmentInfo: CreateEnvironmentParams) => void;
+    onCreateEnvironment: (environmentInfo: CreateEnvironmentParams) => Promise<void>;
 }
 
 interface FormFields {
@@ -202,6 +208,7 @@ interface CreateEnvironmentPanelState extends FormFields {
     shouldTryToAuthenticateForDotfiles: boolean;
     authenticationErrorMessage: string | undefined;
     authenticationAttempt?: GithubAuthenticationAttempt;
+    isCreatingEnvironment?: boolean;
 }
 
 const initialFormState: CreateEnvironmentPanelState = {
@@ -317,8 +324,24 @@ export class CreateEnvironmentPanelView extends Component<
                 closeButtonAriaLabel='Close'
                 onRenderFooterContent={this.onRenderFooterContent}
             >
+                {this.renderOverlay()}
+
                 {this.renderCreateEnvironmentInputs()}
             </Panel>
+        );
+    }
+
+    private renderOverlay() {
+        const { isCreatingEnvironment } = this.state;
+
+        if (!isCreatingEnvironment) {
+            return null;
+        }
+
+        return (
+            <div className='create-environment-panel__overlay'>
+                <Loader message='Creating the environment...' />
+            </div>
         );
     }
 
@@ -463,20 +486,33 @@ export class CreateEnvironmentPanelView extends Component<
                 ? 'Auth & Create'
                 : 'Create';
 
+        const errorMessage = isDefined(this.props.errorMessage) ? (
+            <MessageBar
+                messageBarType={MessageBarType.error}
+                isMultiline={true}
+                onDismiss={this.props.hideErrorMessage}
+            >
+                {this.props.errorMessage}
+            </MessageBar>
+        ) : null;
+
         return (
-            <Fragment>
-                {authStatusMessage}
-                <PrimaryButton
-                    onClick={this.createEnvironment}
-                    style={{ marginRight: '.8rem' }}
-                    disabled={creationDisabled}
-                >
-                    {label}
-                </PrimaryButton>
-                <DefaultButton style={{ marginRight: '.8rem' }} onClick={this.clearForm}>
-                    Cancel
-                </DefaultButton>
-            </Fragment>
+            <Stack tokens={{ childrenGap: 'l1' }}>
+                <Stack.Item>{authStatusMessage}</Stack.Item>
+                <Stack.Item>{errorMessage}</Stack.Item>
+                <Stack.Item>
+                    <PrimaryButton
+                        onClick={this.createEnvironment}
+                        style={{ marginRight: '.8rem' }}
+                        disabled={creationDisabled}
+                    >
+                        {label}
+                    </PrimaryButton>
+                    <DefaultButton style={{ marginRight: '.8rem' }} onClick={this.dismissPanel}>
+                        Cancel
+                    </DefaultButton>
+                </Stack.Item>
+            </Stack>
         );
     };
 
@@ -494,14 +530,14 @@ export class CreateEnvironmentPanelView extends Component<
 
     private dismissPanel = () => {
         this.clearForm();
+
+        this.props.hidePanel();
     };
 
     private clearForm = () => {
         this.setState(() => ({
             ...initialFormState,
         }));
-
-        this.props.hidePanel();
     };
 
     private getAvailableSkus() {
@@ -554,7 +590,8 @@ export class CreateEnvironmentPanelView extends Component<
                     throw new Error(validationMessages.noAccess);
                 }
 
-                this.props.onCreateEnvironment(this.getEnvCreationParams());
+                this.setState({ isCreatingEnvironment: true });
+                await this.props.onCreateEnvironment(this.getEnvCreationParams());
                 return;
             } catch (err) {
                 this.setTextValidationState(
@@ -567,6 +604,7 @@ export class CreateEnvironmentPanelView extends Component<
                     shouldTryToAuthenticateForDotfiles: false,
                     authenticationErrorMessage: undefined,
                     authenticationAttempt: undefined,
+                    isCreatingEnvironment: false,
                 });
 
                 event.preventDefault();
@@ -582,8 +620,12 @@ export class CreateEnvironmentPanelView extends Component<
             return;
         }
 
-        this.props.onCreateEnvironment(this.getEnvCreationParams());
-        this.clearForm();
+        this.setState({ isCreatingEnvironment: true });
+
+        await this.props.onCreateEnvironment(this.getEnvCreationParams());
+        if (this.props.errorMessage) {
+            this.setState({ isCreatingEnvironment: false });
+        }
     };
 
     private getEnvCreationParams() {

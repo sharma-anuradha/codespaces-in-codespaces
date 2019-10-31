@@ -5,6 +5,7 @@ import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 import { ComboBox, IComboBoxOption, IComboBoxProps } from 'office-ui-fabric-react/lib/ComboBox';
 import { KeyCodes } from '@uifabric/utilities';
@@ -227,14 +228,26 @@ export class CreatePlanPanelComponent extends Component<
         );
     }
 
+    private hideErrorMessage = () => {
+        this.setState({
+            errorMessage: undefined,
+        });
+    };
+
     private onRenderFooterContent = () => {
+        const errorMessage = this.state.errorMessage ? (
+            <MessageBar
+                messageBarType={MessageBarType.error}
+                isMultiline={true}
+                onDismiss={this.hideErrorMessage}
+            >
+                {this.state.errorMessage}
+            </MessageBar>
+        ) : null;
+
         return (
             <Stack tokens={{ childrenGap: 'l1' }}>
-                <Stack.Item>
-                    <Text className='create-environment-panel__errorMessage'>
-                        {this.state.errorMessage}
-                    </Text>
-                </Stack.Item>
+                <Stack.Item>{errorMessage}</Stack.Item>
 
                 <Stack.Item>
                     <PrimaryButton
@@ -313,27 +326,28 @@ export class CreatePlanPanelComponent extends Component<
         this.props.hidePanel();
     };
 
-    private async checkResourceProvider(subscription:string) {
+    private async checkResourceProvider(subscription: string) {
         const url = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.VSOnline?api-version=2019-08-01`;
         let response = await this.getFromAzure(url);
         const myAuthToken = await authService.getARMToken(60);
-        if(myAuthToken){
+        if (myAuthToken) {
             const token = `Bearer ${myAuthToken.accessToken}`;
-        
-            if(!response || (response.registrationState != "Registered")){
-                const registerUrl = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.VSOnline/register?api-version=2019-08-01`
+
+            if (!response || response.registrationState != 'Registered') {
+                const registerUrl = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.VSOnline/register?api-version=2019-08-01`;
                 let resp = await fetch(registerUrl, {
                     method: 'POST',
                     headers: {
                         authorization: token,
                     },
                 });
-                if(resp.status != 200){
-                    throw new PlanCreationError(PlanCreationFailureReason.FailedToRegisterResourceProvider);
+                if (resp.status != 200) {
+                    throw new PlanCreationError(
+                        PlanCreationFailureReason.FailedToRegisterResourceProvider
+                    );
                 }
-            }  
-        }
-        else{
+            }
+        } else {
             throw new PlanCreationError(PlanCreationFailureReason.NotAuthenticated);
         }
     }
@@ -348,18 +362,16 @@ export class CreatePlanPanelComponent extends Component<
                     authorization: authToken,
                 },
             });
-            if(!response){
+            if (!response) {
                 throw new Error(`Azure GET request failed`);
             }
-            if(response.status === 200){
+            if (response.status === 200) {
                 return response.json();
-            }
-            else{ 
+            } else {
                 console.error(`Request to ${response.url} failed with status ${response.status}`);
                 return null;
             }
-        }
-        else{
+        } else {
             throw new PlanCreationError(PlanCreationFailureReason.NotAuthenticated);
         }
     }
@@ -373,8 +385,8 @@ export class CreatePlanPanelComponent extends Component<
             const myJson = await this.getFromAzure(
                 `https://management.azure.com/subscriptions?api-version=${armAPIVersion}`
             );
-            
-            if(myJson){
+
+            if (myJson) {
                 const subscriptionList: IStringOption[] = myJson.value.map(
                     (sub: IAzureSubscription) => {
                         return {
@@ -383,7 +395,7 @@ export class CreatePlanPanelComponent extends Component<
                         };
                     }
                 );
-            
+
                 this.setState({
                     subscriptionList: subscriptionList.sort(asc),
                 });
@@ -453,7 +465,7 @@ export class CreatePlanPanelComponent extends Component<
         let resourceGroupList: INewGroupOption[] = [];
         const myJson = await this.getFromAzure(url.toString());
 
-        if(myJson){
+        if (myJson) {
             if (this.state.newGroup) {
                 resourceGroupList.push({
                     key: this.state.newGroup,

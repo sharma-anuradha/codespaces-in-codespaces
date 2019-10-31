@@ -18,6 +18,7 @@ type RequestOptions = {
     requiresAuthentication: boolean;
     skipParsingResponse: boolean;
     retryCount: number;
+    shouldRetry?: (response: Response | undefined, retry: number) => boolean | Promise<boolean>;
 };
 
 async function request<TResult>(
@@ -59,6 +60,7 @@ async function request<TResult>(
     const retryCount = requestOptions.retryCount || defaultRequestOptions.retryCount;
     return await requestInternal(0);
 
+    // tslint:disable-next-line: max-func-body-length
     async function requestInternal(retry: number): Promise<TResult | Response> {
         requestOptions = {
             ...defaultRequestOptions,
@@ -100,7 +102,11 @@ async function request<TResult>(
                 body,
             });
         } catch (err) {
-            if (retry < retryCount) {
+            if (requestOptions.shouldRetry && (await requestOptions.shouldRetry(response, retry))) {
+                return requestInternal(retry + 1);
+            }
+
+            if (!requestOptions.shouldRetry && retry < retryCount) {
                 await wait(retry * 1000);
                 return requestInternal(retry + 1);
             }
@@ -108,7 +114,15 @@ async function request<TResult>(
             throw new ServiceConnectionError(err);
         }
 
-        if (response.status === 500 && retry < retryCount) {
+        if (
+            !response.ok &&
+            requestOptions.shouldRetry &&
+            (await requestOptions.shouldRetry(response, retry))
+        ) {
+            return requestInternal(retry + 1);
+        }
+
+        if (!requestOptions.shouldRetry && response.status === 500 && retry < retryCount) {
             await wait(retry * 1000);
             return requestInternal(retry + 1);
         }
@@ -142,7 +156,7 @@ async function request<TResult>(
         }
 
         if (!response.ok) {
-            throw new ServiceResponseError(url, response.status);
+            throw new ServiceResponseError(url, response.status, response);
         }
 
         if (requestOptions.skipParsingResponse) {
@@ -241,10 +255,14 @@ async function putRequest<TResult = object>(
         body = requestBody;
     }
 
-    return await request<TResult>(url, {
-        method: 'PUT',
-        body,
-    });
+    return await request<TResult>(
+        url,
+        {
+            method: 'PUT',
+            body,
+        },
+        requestOptions || defaultRequestOptions
+    );
 }
 
 async function deleteRequest<TResult = void>(
@@ -279,7 +297,11 @@ export class ServiceError extends Error {
 }
 
 export class ServiceResponseError extends ServiceError {
-    constructor(public url: string, public statusCode: number) {
+    constructor(
+        public readonly url: string,
+        public readonly statusCode: number,
+        public readonly response: Response
+    ) {
         super('Service request failed');
         Error.captureStackTrace(this, ServiceResponseError);
     }

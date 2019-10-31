@@ -4,6 +4,7 @@ import {
     ICloudEnvironment,
     StateInfo,
     EnvironmentType,
+    EnvironmentErrorCodes,
 } from '../interfaces/cloudenvironment';
 
 export function isEnvironmentAvailable(
@@ -55,5 +56,28 @@ export function isActivating({ state }: Pick<ILocalCloudEnvironment | ICloudEnvi
 
         default:
             return false;
+    }
+}
+
+export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
+    switch (code) {
+        case EnvironmentErrorCodes.exceededQuota:
+            return 'You have exceeded the environment quota.';
+        case EnvironmentErrorCodes.environmentNameAlreadyExists:
+            return 'Cloud environment already exists.';
+        case EnvironmentErrorCodes.environmentDoesNotExist:
+            return 'Cloud environment does not exist.';
+        case EnvironmentErrorCodes.environmentNotAvailable:
+            return 'Environment is not in available state.';
+        case EnvironmentErrorCodes.environmentNotShutdown:
+            return 'Environment is not in suspended state.';
+        case EnvironmentErrorCodes.unableToAllocateResources:
+            return 'Please try again in a few minutes or select a plan in another location.';
+
+        case EnvironmentErrorCodes.shutdownStaticEnvironment:
+        case EnvironmentErrorCodes.startStaticEnvironment:
+        case EnvironmentErrorCodes.unknown:
+        default:
+            return EnvironmentErrorCodes[code];
     }
 }

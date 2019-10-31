@@ -15,6 +15,8 @@ import {
     CreateEnvironmentAction,
     createEnvironmentSuccessActionType,
     CreateEnvironmentSuccessAction,
+    createEnvironmentFailureActionType,
+    CreateEnvironmentFailureAction,
 } from '../actions/createEnvironment';
 
 jest.setTimeout(1000);
@@ -35,6 +37,8 @@ declare global {
 
 // prettier-ignore
 export function getDispatchedAction(dispatchedActions: WithMetadata<BaseAction>[], actionType: typeof createEnvironmentActionType): WithMetadata<CreateEnvironmentAction>;
+// prettier-ignore
+export function getDispatchedAction(dispatchedActions: WithMetadata<BaseAction>[], actionType: typeof createEnvironmentFailureActionType): WithMetadata<CreateEnvironmentFailureAction>;
 // prettier-ignore
 export function getDispatchedAction(dispatchedActions: WithMetadata<BaseAction>[], actionType: typeof createEnvironmentSuccessActionType): WithMetadata<CreateEnvironmentSuccessAction>;
 // prettier-ignore
