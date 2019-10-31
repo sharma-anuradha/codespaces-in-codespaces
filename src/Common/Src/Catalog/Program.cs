@@ -6,6 +6,7 @@ using System;
 using CommandLine;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
@@ -96,6 +97,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
         private static ISystemCatalog LoadCatalog(CommonOptions options)
         {
             var services = GetServiceProvider(options);
+            var appSettings = (AppSettingsBase)services.GetService(typeof(AppSettingsBase));
+            if (string.IsNullOrEmpty(appSettings.ControlPlaneSettings.SubscriptionId))
+            {
+                appSettings.ControlPlaneSettings.SubscriptionId = Guid.Empty.ToString();
+            }
+
             var systemCatalog = (ISystemCatalog)services.GetService(typeof(ISystemCatalog));
             return systemCatalog;
         }

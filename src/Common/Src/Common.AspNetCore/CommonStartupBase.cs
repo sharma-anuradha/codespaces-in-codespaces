@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             }
 
             // Load the local file if not running in azure.
-            if (!IsRunningInAzure())
+            if (!IsRunningInAzure() && hostingEnvironment.IsDevelopment())
             {
                 // Loading from user profile so that it will even work with git clean or a new repo.
                 var userAppSettings = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "CEDev", "appsettings.json");
