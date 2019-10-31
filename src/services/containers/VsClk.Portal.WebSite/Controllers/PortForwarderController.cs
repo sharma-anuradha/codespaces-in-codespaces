@@ -46,7 +46,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             {
                 return await FetchStaticAsset("favicon.ico", "image/x-icon");
             }
-            if (path == "Site.css")
+            if (path == "site.css")
             {
                 return await FetchStaticAsset("site.css", "text/css");
             }
