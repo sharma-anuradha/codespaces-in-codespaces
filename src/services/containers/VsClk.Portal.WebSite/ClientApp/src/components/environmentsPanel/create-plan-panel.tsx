@@ -493,10 +493,12 @@ export class CreatePlanPanelComponent extends Component<
             isInvalid = true;
         }
 
-        isInvalid =
-            isInvalid ||
-            !this.selectedResourceGroup ||
-            isNotNullOrEmpty(validateResourceName(this.selectedResourceGroup));
+        if (this.state.newGroup && this.selectedResourceGroup === this.state.newGroup) {
+            isInvalid =
+                isInvalid || isNotNullOrEmpty(validateResourceName(this.state.newGroup));
+        }
+
+        isInvalid = isInvalid || !this.selectedResourceGroup;
 
         const planName = this.planName.trim();
         isInvalid = isInvalid || !planName || isNotNullOrEmpty(validateResourceName(planName));
