@@ -6,6 +6,8 @@ let win: Window | null;
 let cancellationTokenSource: CancellationTokenSource | null;
 
 export const getFreshArmTokenPopup = renewTokenFactory({
+    paramOfInterest: 'access_token',
+    mode: 'hash',
     onCreateRenewEntity: (renewUrl: URL) => {
         const popUpWidth = 485;
         const popUpHeight = 600;

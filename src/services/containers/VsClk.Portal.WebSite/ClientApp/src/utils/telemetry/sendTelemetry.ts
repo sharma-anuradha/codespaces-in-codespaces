@@ -6,6 +6,7 @@ type SendTelemetryProps = ['vsonline/cipher/decrypt', IDecryptionTelemetryEventP
                         | ['vsonline/cipher/error', Error]
                         | ['vsonline/cipher/no-decryption-key', INoDecryptionKeyTelemetryEventProperties]
                         | ['vsonline/auth/acquire-token/error', Error]
+                        | ['vsonline/auth/acquire-auth-code', IAcquireAuthCodeTelemetryEventProperties]
 
 export function sendTelemetry(...args: SendTelemetryProps): void;
 export function sendTelemetry(telemetryEventName: any, properties: any) {
@@ -31,3 +32,6 @@ interface IEncryptionTelemetryEventProperties {
 }
 
 interface INoDecryptionKeyTelemetryEventProperties {}
+interface IAcquireAuthCodeTelemetryEventProperties {
+    isCodeAcquired: boolean;
+}

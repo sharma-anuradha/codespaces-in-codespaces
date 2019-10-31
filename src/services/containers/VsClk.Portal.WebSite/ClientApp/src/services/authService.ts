@@ -1,44 +1,31 @@
-import * as msal from 'msal';
-import { UserAgentApplication, AuthResponse } from 'msal';
-import jwtDecode from 'jwt-decode';
 
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 import { inLocalStorageJWTTokenCacheFactory } from '../cache/localstorageJWTCache';
 import { getTokenExpiration } from '../utils/getTokenExpiration';
-import { expirationTimeBackgroundTokenRefreshThreshold, aadAuthorityUrlCommon } from '../constants';
+import { expirationTimeBackgroundTokenRefreshThreshold } from '../constants';
 import { debounceInterval } from '../utils/debounce-interval';
 
-import { logout as logoutFromArmAuthService, getARMToken } from './authARMService';
+import { logout as logoutFromArmAuthService, getARMToken, getFreshArmAuthCodeForTenant } from './authARMService';
 import { getAuthTokenSuccessAction } from '../actions/getAuthTokenActions';
-import { createTrace } from '../utils/createTrace';
 import { IToken } from '../typings/IToken';
 
 import { setIsInternal } from './isInternalUserTracker';
 import { sendTelemetry } from '../utils/telemetry';
+import { clientApplication } from './msalConfig';
+import { acquireToken } from './acquireToken';
 
-const trace = createTrace('AuthService');
+import { autServiceTrace } from './autServiceTrace';
 
 const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'];
 
-const msalConfig: msal.Configuration = {
-    auth: {
-        clientId: 'a3037261-2c94-4a2e-b53f-090f6cdd712a',
-        authority: aadAuthorityUrlCommon,
-        validateAuthority: false,
-        navigateToLoginRequestUrl: false,
-        redirectUri: location.origin,
-    },
-    cache: {
-        cacheLocation: 'localStorage',
-        storeAuthStateInCookie: true,
-    },
-};
-
 const LOCAL_STORAGE_KEY = 'vsonline.default.account';
 
-export const clientApplication = new UserAgentApplication(msalConfig);
-
 const tokenCache = inLocalStorageJWTTokenCacheFactory();
+
+interface IAuthCode {
+    code: string;
+    redirectionUrl: string;
+}
 
 tokenCache.onTokenChange(({ name, token }) => {
     if (!token) {
@@ -88,7 +75,7 @@ class AuthService {
         try {
             return await this.acquireToken();
         } catch (e) {
-            trace.error(e);
+            autServiceTrace.error(e);
             sendTelemetry('vsonline/auth/acquire-token/error', e);
         }
 
@@ -145,46 +132,31 @@ class AuthService {
      * after the `timeout` milliseconds of last `getCachedToken` token request.
      */
     private keepUserAuthenticated = debounceInterval(this.getCachedToken, 5 * 60 * 1000 /* 5 minutes */);
+
+    /**
+     * A temporary spolution for Azure Acccount for ignite.
+     * We should move to `refreshToken`-based solution in the nearest future.
+     */
+    getAuthCode = async (): Promise<IAuthCode | null> => {
+        const cachedToken = await authService.getCachedToken(60) as ITokenWithMsalAccount;
+
+        if (!cachedToken) {
+            throw new Error('User is not authenticated.');
+        }
+    
+        const authCode = await getFreshArmAuthCodeForTenant(cachedToken, 'common');
+
+        sendTelemetry('vsonline/auth/acquire-auth-code', { isCodeAcquired: !!authCode });
+    
+        if (!authCode) {
+            return null;
+        }
+    
+        return {
+            code: authCode,
+            redirectionUrl: location.origin
+        }
+    }
 }
 
 export const authService = new AuthService();
-
-export async function acquireToken(scopes: string[]): Promise<ITokenWithMsalAccount> {
-    const tokenRequest = {
-        scopes,
-        authority: msalConfig.auth.authority,
-    };
-
-    let tokenResponse: AuthResponse;
-    try {
-        tokenResponse = await clientApplication.acquireTokenSilent(tokenRequest);
-    } catch (err) {
-        trace.warn(err);
-        if (err.name === 'InteractionRequiredAuthError') {
-            tokenResponse = await clientApplication.acquireTokenPopup(tokenRequest);
-        } else {
-            trace.error(err);
-            throw err;
-        }
-    }
-
-    return tokenFromTokenResponse(tokenResponse);
-}
-
-export function tokenFromTokenResponse(tokenResponse: AuthResponse): ITokenWithMsalAccount {
-    const { accessToken, account } = tokenResponse;
-
-    let msTime = 0;
-    try {
-        const jwtToken = jwtDecode(accessToken) as { exp: number };
-        msTime = (jwtToken.exp - 10) * 1000;
-    } catch {/* ignore */}
-
-    const token = {
-        accessToken,
-        expiresOn: new Date(msTime),
-        account,
-    };
-
-    return token;
-}

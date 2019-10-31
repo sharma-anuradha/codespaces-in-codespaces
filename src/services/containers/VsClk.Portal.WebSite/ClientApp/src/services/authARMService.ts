@@ -10,6 +10,7 @@ import { getFreshArmTokenPopup } from './msal/getFreshArmTokenPopup';
 
 import { IToken } from '../typings/IToken';
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
+import { parseJWTToken } from '../utils/parseJWTToken';
 
 const tokenCache = inLocalStorageJWTTokenCacheFactory('vsonline.arm.token');
 
@@ -25,9 +26,16 @@ export const getFreshArmTokenForTenant = async (currentToken: ITokenWithMsalAcco
 
     const renewUrl = await createNavigateUrl(currentToken, tenantId, nonce);
     try {
-        const getFreshArmTokenSilent = getFreshArmTokenSilentFactory();
+        const getFreshArmTokenSilent = getFreshArmTokenSilentFactory('access_token', 'hash');
         
-        const token = await getFreshArmTokenSilent(renewUrl, nonce, timeout);
+        const tokenString = await getFreshArmTokenSilent(renewUrl, nonce, timeout);
+
+        if (!tokenString) {
+            return null;
+        }
+
+        const token = parseJWTToken(tokenString);
+
         if (token) {
             await tokenCache.cacheToken(tenantId, token);
         }
@@ -35,13 +43,47 @@ export const getFreshArmTokenForTenant = async (currentToken: ITokenWithMsalAcco
     } catch (e) {
         // if login is required, popup window for the user
         if (e instanceof LoginRequiredError) {
-            const token = await getFreshArmTokenPopup(renewUrl, nonce, timeout);
+            const tokenString = await getFreshArmTokenPopup(renewUrl, nonce, timeout);
+            if (!tokenString) {
+                return null;
+            }
+
+            const token = parseJWTToken(tokenString);
+
             if (token) {
                 await tokenCache.cacheToken(tenantId, token);
             }
             return token;
         }
     }
+    return null;
+}
+
+export const getFreshArmAuthCodeForTenant = async (currentToken: ITokenWithMsalAccount, tenantId: string, timeout: number = 10000): Promise<string | null> => {
+    // get the precalculated redirection URL from MSAL.js
+    const nonce = randomString();
+
+    if (!currentToken) {
+        throw new Error('User is not authenticated.');
+    }
+
+    const renewUrl = await createNavigateUrl(currentToken, tenantId, nonce);
+
+    try {
+        const getFreshArmAuthCodeSilent = getFreshArmTokenSilentFactory('code', 'query');
+
+        renewUrl.searchParams.set('response_type', 'code');
+
+        renewUrl.pathname = '/common/oauth2/authorize';
+
+        const tokenString = await getFreshArmAuthCodeSilent(renewUrl, nonce, timeout);
+
+
+        return tokenString;
+    } catch {
+        // ignore
+    }
+
     return null;
 }
 

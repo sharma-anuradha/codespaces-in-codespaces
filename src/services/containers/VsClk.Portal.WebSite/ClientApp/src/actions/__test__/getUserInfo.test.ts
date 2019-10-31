@@ -10,7 +10,7 @@ import {
 import { getUserInfo, getUserInfoActionType, getUserInfoSuccessActionType } from '../getUserInfo';
 
 import { defaultConfig } from '../../services/configurationService';
-import * as Auth from '../../services/authService';
+import * as acquireTokenModule from '../../services/acquireToken';
 
 describe('getUserInfo', () => {
     let store: MockStore;
@@ -27,7 +27,7 @@ describe('getUserInfo', () => {
     });
 
     it('gets user info from graph', async () => {
-        jest.spyOn(Auth, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
+        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
 
         test_setMockRequestFactory(
             createMockMakeRequestFactory({

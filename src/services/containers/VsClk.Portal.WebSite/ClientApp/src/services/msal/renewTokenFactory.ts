@@ -1,8 +1,7 @@
-import { Signal } from '../../utils/signal';
-import { parseJWTToken } from '../../utils/parseJWTToken';
-import { IToken } from '../../typings/IToken';
-import { createTrace } from '../../utils/createTrace';
 import { CancellationToken } from 'vscode-jsonrpc';
+
+import { Signal } from '../../utils/signal';
+import { createTrace } from '../../utils/createTrace';
 
 export const trace = createTrace('RenewTokenFactory');
 
@@ -10,7 +9,9 @@ export class LoginRequiredError extends Error {}
 
 const REDIRECT_POLL_INTERVAL = 50;
 
-interface IRenewTokenFactoryOptions {
+export interface IRenewTokenFactoryOptions {
+    paramOfInterest: string;
+    mode: 'hash' | 'query';
     onCreateRenewEntity: (renewUrl: URL) => CancellationToken | void;
     getLocation: () => Location | null;
     onComplete: () => void;
@@ -28,9 +29,9 @@ export const renewTokenFactory = (options: IRenewTokenFactoryOptions) => {
             clearTimeout(timeoutHandle!);
         };
         
-        const signal = new Signal<IToken | null>();
+        const signal = new Signal<string | null>();
         
-        const complete = (data: IToken | null) => {
+        const complete = (data: string | null) => {
             signal.complete(data);
             clearTimers();
             onComplete();
@@ -57,9 +58,18 @@ export const renewTokenFactory = (options: IRenewTokenFactoryOptions) => {
                 return;
             }
 
-            let { href, hash } = location;
-            if (href && hash) {
-                const searchParams = new URLSearchParams(hash.replace('#', ''));
+            const { href, hash, search } = location;
+
+            const query = (options.mode === 'hash')
+                ? hash
+                : search;
+
+            if (href && query) {
+                const replace = (options.mode === 'hash')
+                    ? '#'
+                    : '?';
+
+                const searchParams = new URLSearchParams(query.replace(replace, ''));
                 
                 const error = searchParams.get('error');
                 if (error) {
@@ -86,16 +96,14 @@ export const renewTokenFactory = (options: IRenewTokenFactoryOptions) => {
                     return;
                 }
 
-                const accessToken = searchParams.get('access_token');
-                if (!accessToken) {
-                    trace.error('No access token found.');
+                const paramOfInterest = searchParams.get(options.paramOfInterest);
+                if (!paramOfInterest) {
+                    trace.error(`No "${options.paramOfInterest}" found.`);
                     complete(null);
                     return;
                 }
                 
-                const token = parseJWTToken(accessToken);
-
-                complete(token);
+                complete(paramOfInterest);
             }
         }, REDIRECT_POLL_INTERVAL);
 

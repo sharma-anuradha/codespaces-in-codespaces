@@ -56,6 +56,31 @@ class AADv2BrowserSyncStrategy implements IAuthStrategy {
     }
 }
 
+/**
+ * A temporary spolution for Azure Acccount for ignite.
+ * We should move to `refreshToken`-based solution in the nearest future.
+ */
+class AzureAccountStrategy implements IAuthStrategy {
+    canHandleService(service: string, account: string): boolean {
+        return ((service === 'VS Code Azure') && (account === 'Azure'));
+    }
+
+    async getToken(): Promise<string | null> {
+        const authCode = await authService.getAuthCode();
+
+        if (!authCode) {
+            return null;
+        }
+
+        try {
+            return JSON.stringify(authCode);
+        } catch {
+            // ignore
+            return null;
+        }
+    }
+}
+
 const GENERIC_PREFIX = 'vsonline.keytar';
 
 export class CredentialsProvider implements ICredentialsProvider {
@@ -86,6 +111,7 @@ export class CredentialsProvider implements ICredentialsProvider {
         }
 
         const token = await strategy.getToken(service, account);
+
         if (!token) {
             trace.warn('No token available.');
         }
@@ -118,4 +144,5 @@ export class CredentialsProvider implements ICredentialsProvider {
 export const credentialsProvider = new CredentialsProvider([
     new AADv2BrowserSyncStrategy(),
     new MsalAuthStrategy(),
+    new AzureAccountStrategy()
 ]);
