@@ -7,7 +7,7 @@ import {
 
 import { useWebClient } from '../actions/middleware/useWebClient';
 import { useActionContext } from '../actions/middleware/useActionContext';
-import { pollEnvironment } from '../actions/pollEnvironment';
+import { pollActivatingEnvironment } from '../actions/pollEnvironment';
 
 // Webpack configuration enforces isolatedModules use on typescript
 // and prevents direct re-exporting of types.
@@ -155,7 +155,7 @@ export async function connectEnvironment(
         await webClient.post(`${environmentRegistrationEndpoint}/${id}/start`, null, {
             retryCount: 2,
         });
-        await pollEnvironment(id, StateInfo.Available);
+        await pollActivatingEnvironment(id);
     }
 
     return await getEnvironment(id);

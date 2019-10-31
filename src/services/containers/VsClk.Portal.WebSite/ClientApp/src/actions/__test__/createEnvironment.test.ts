@@ -16,9 +16,6 @@ import {
 
 import { defaultConfig } from '../../services/configurationService';
 
-jest.mock('../pollEnvironment', () => {
-    return { pollEnvironment: jest.fn().mockReturnValue({ type: 'mock.poll' }) };
-});
 jest.mock('../getUserInfo', () => {
     return {
         getUserInfo: jest.fn().mockReturnValue({ mail: 'test@test.com', displayName: 'test' }),
@@ -58,21 +55,19 @@ describe('createEnvironment', () => {
 
         const createEnvironmentRequest = {
             friendlyName: 'test',
-            planId: '/subscriptions/mockSubscription/resourceGroups/mockResourceGroup/providers/Microsoft.VSOnline/plans/test',
+            planId:
+                '/subscriptions/mockSubscription/resourceGroups/mockResourceGroup/providers/Microsoft.VSOnline/plans/test',
             location: 'WestUS2',
             autoShutdownDelayMinutes: 30,
-            skuName: 'standardLinux'
+            skuName: 'standardLinux',
         };
 
-        await store.dispatch(
-            createEnvironment(createEnvironmentRequest)
-        );
+        await store.dispatch(createEnvironment(createEnvironmentRequest));
 
         expect(store.dispatchedActions).not.toHaveFailed();
         expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
             createEnvironmentActionType,
-            createEnvironmentSuccessActionType,
-            'mock.poll'
+            createEnvironmentSuccessActionType
         );
 
         const createAction = getDispatchedAction(

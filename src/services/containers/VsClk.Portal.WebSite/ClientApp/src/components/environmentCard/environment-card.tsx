@@ -8,6 +8,7 @@ import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
+import { ProgressIndicator } from 'office-ui-fabric-react/lib/ProgressIndicator';
 import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
 
 import {
@@ -17,7 +18,13 @@ import {
 } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
-import { environmentIsALie, isNotConnectable, isNotSuspendable, isSelfHostedEnvironment } from '../../utils/environmentUtils';
+import {
+    environmentIsALie,
+    isNotConnectable,
+    isNotSuspendable,
+    isSelfHostedEnvironment,
+    isActivating,
+} from '../../utils/environmentUtils';
 import { createUniqueId } from '../../dependencies';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
@@ -191,7 +198,8 @@ const Actions = ({
                             key: 'shutdown',
                             iconProps: { iconName: 'PowerButton' },
                             name: 'Suspend',
-                            disabled: environmentIsALie(environment) || isNotSuspendable(environment),
+                            disabled:
+                                environmentIsALie(environment) || isNotSuspendable(environment),
                             onClick: () => {
                                 if (environment.id) setShutdownDialogHidden(false);
                             },
@@ -398,6 +406,12 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
         });
     }
 
+    const indicator = isActivating(props.environment) ? (
+        <ProgressIndicator className={'environment-card__thin-progress'} />
+    ) : (
+        <ThinSeparator />
+    );
+
     return (
         <Stack
             style={{
@@ -415,7 +429,8 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
                 <Status environment={props.environment} />
             </Stack>
 
-            <ThinSeparator />
+            {indicator}
+
             <Stack style={{ flexGrow: 1 }}>
                 <Details details={details} />
             </Stack>

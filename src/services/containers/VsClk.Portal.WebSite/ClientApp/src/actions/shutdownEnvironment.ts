@@ -1,6 +1,5 @@
 ﻿import * as envRegService from '../services/envRegService';
 import { useDispatch } from './middleware/useDispatch';
-import { pollEnvironment } from './pollEnvironment';
 import { StateInfo } from '../interfaces/cloudenvironment';
 import { stateChangeEnvironmentAction } from './environmentStateChange';
 
@@ -11,11 +10,6 @@ export async function shutdownEnvironment(id: string) {
     try {
         dispatch(stateChangeEnvironmentAction(id, StateInfo.ShuttingDown));
         await envRegService.shutdownEnvironment(id);
-        try {
-            dispatch(pollEnvironment(id, StateInfo.ShuttingDown, true));
-        } catch (err) {
-            // Noop
-        }
     } catch (err) {
         let e = await envRegService.getEnvironment(id);
         dispatch(stateChangeEnvironmentAction(id, e!.state));

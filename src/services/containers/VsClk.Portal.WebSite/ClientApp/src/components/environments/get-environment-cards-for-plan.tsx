@@ -1,39 +1,42 @@
-import React, { ReactComponentElement } from 'react';
+import React, { FC, Fragment } from 'react';
 
+import { NoEnvironments } from './no-environments';
 import { EnvironmentCard } from '../environmentCard/environment-card';
 
-import { IPlan } from '../../interfaces/IPlan';
 import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
 
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 
+interface IProps {
+    environments: ILocalCloudEnvironment[];
+    openCreateEnvironmentForm: () => void;
+    deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
+    shutdownEnvironment: (...name: Parameters<typeof shutdownEnvironment>) => void;
+}
 
-export const getEnvironmentCardsForCurrentPlan = (
-    selectedPlan: IPlan | null,
-    environments: ILocalCloudEnvironment[]
-): ReactComponentElement<typeof EnvironmentCard>[] => {
-    if (!selectedPlan) {
-        return [];
+export const EnvironmentList: FC<IProps> = ({
+    environments,
+    openCreateEnvironmentForm,
+    deleteEnvironment,
+    shutdownEnvironment,
+}) => {
+    if (environments.length === 0) {
+        return <NoEnvironments onClick={openCreateEnvironmentForm} />;
     }
 
-    const selectedPlanEnvironments = environments.filter((env) => {
-        return (!env.planId || (env.planId === selectedPlan.id));
+    const cards = environments.map((env) => {
+        const key = env.id || env.lieId;
+
+        return (
+            <EnvironmentCard
+                environment={env}
+                deleteEnvironment={deleteEnvironment}
+                shutdownEnvironment={shutdownEnvironment}
+                key={key}
+            />
+        );
     });
 
-    const cards: ReactComponentElement<typeof EnvironmentCard>[] = selectedPlanEnvironments
-        .map((env, i) => {
-            const key = env.id || env.lieId || i++;
-
-            return (
-                <EnvironmentCard
-                    environment={env}
-                    deleteEnvironment={deleteEnvironment}
-                    shutdownEnvironment={shutdownEnvironment}
-                    key={key}
-                />
-            );
-        });
-
-    return cards;
-}
+    return <Fragment>{cards}</Fragment>;
+};

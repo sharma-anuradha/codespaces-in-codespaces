@@ -17,20 +17,25 @@ import {
     CreateEnvironmentFailureAction,
 } from '../actions/createEnvironment';
 import {
-    pollEnvironmentUpdateActionType,
-    pollEnvironmentSuccessActionType,
-    PollEnvironmentSuccessAction,
-    PollEnvironmentUpdateAction,
+    pollActivatingEnvironmentsActionType,
+    pollActivatingEnvironmentsUpdateActionType,
+    PollActivatingEnvironmentsAction,
+    PollActivatingEnvironmentsUpdateAction,
 } from '../actions/pollEnvironment';
 import { deleteEnvironmentActionType, DeleteEnvironmentAction } from '../actions/deleteEnvironment';
 import {
     stateChangeEnvironmentActionType,
     StateChangeEnvironmentAction,
 } from '../actions/environmentStateChange';
+import { isActivating } from '../utils/environmentUtils';
+import { ApplicationState } from './rootReducer';
+import { selectPlanSuccessActionType, SelectPlanSuccessAction } from '../actions/plans-actions';
 
 type EnvironmentsState = {
     environments: ILocalCloudEnvironment[];
     deletedEnvironments: ILocalCloudEnvironment[];
+    activatingEnvironments: string[];
+    selectedPlanId: string | null;
     isLoading: boolean;
 };
 
@@ -41,14 +46,17 @@ type AcceptedActions =
     | CreateEnvironmentAction
     | CreateEnvironmentSuccessAction
     | CreateEnvironmentFailureAction
-    | PollEnvironmentUpdateAction
-    | PollEnvironmentSuccessAction
+    | PollActivatingEnvironmentsAction
+    | PollActivatingEnvironmentsUpdateAction
     | DeleteEnvironmentAction
-    | StateChangeEnvironmentAction;
+    | StateChangeEnvironmentAction
+    | SelectPlanSuccessAction;
 
 const defaultState: EnvironmentsState = {
     environments: [] as ILocalCloudEnvironment[],
     deletedEnvironments: [] as ILocalCloudEnvironment[],
+    activatingEnvironments: [] as string[],
+    selectedPlanId: null,
     isLoading: true,
 } as const;
 
@@ -58,11 +66,44 @@ export function environments(
     action: AcceptedActions
 ): EnvironmentsState {
     switch (action.type) {
+        case selectPlanSuccessActionType:
+            return ((state, action) => {
+                const { plan } = action.payload;
+                if (!plan) {
+                    return {
+                        ...state,
+                        selectedPlanId: null,
+                        activatingEnvironments: [],
+                    };
+                }
+                return {
+                    ...state,
+                    selectedPlanId: plan.id,
+                };
+            })(state, action);
+
         case fetchEnvironmentsSuccessActionType:
+            const activatingEnvironments: string[] = action.payload.environments.reduce(
+                (envs, env) => {
+                    if (state.selectedPlanId == null) {
+                        return envs;
+                    }
+                    if (env.planId && state.selectedPlanId !== env.planId) {
+                        return envs;
+                    }
+                    if (isActivating(env)) {
+                        envs.push(env.id);
+                    }
+                    return envs;
+                },
+                [] as string[]
+            );
+
             return {
                 ...state,
                 isLoading: false,
                 environments: action.payload.environments,
+                activatingEnvironments,
                 deletedEnvironments: [],
             };
         case createEnvironmentActionType:
@@ -138,36 +179,7 @@ export function environments(
                 return {
                     ...state,
                     environments: replaceAtIndex(state.environments, index, environment),
-                };
-            })(state, action);
-
-        case pollEnvironmentUpdateActionType:
-            return ((state, action) => {
-                const { environment } = action.payload;
-                const index = state.environments.findIndex((e) => e.id === environment.id);
-
-                if (index < 0) {
-                    throw new Error(`${action.type} returned an environment we are not tracking.`);
-                }
-
-                return {
-                    ...state,
-                    environments: replaceAtIndex(state.environments, index, environment),
-                };
-            })(state, action);
-
-        case pollEnvironmentSuccessActionType:
-            return ((state, action) => {
-                const { environment } = action.payload;
-                const updatedIndex = state.environments.findIndex((e) => e.id === environment.id);
-
-                if (updatedIndex < 0) {
-                    throw new Error(`${action.type} returned an environment we are not tracking.`);
-                }
-
-                return {
-                    ...state,
-                    environments: replaceAtIndex(state.environments, updatedIndex, environment),
+                    activatingEnvironments: [...state.activatingEnvironments, environment.id],
                 };
             })(state, action);
 
@@ -182,11 +194,15 @@ export function environments(
                     ...state,
                     environments: restOfEnvironments,
                     deletedEnvironments: [...environmentToDelete, ...state.deletedEnvironments],
+                    activatingEnvironments: state.activatingEnvironments.filter(
+                        (eId) => eId !== id
+                    ),
                 };
             })(state, action);
 
         case stateChangeEnvironmentActionType:
             return ((state, action) => {
+                let { activatingEnvironments } = state;
                 const { id, environmentState } = action.payload;
                 const index = state.environments.findIndex((e) => e.id === id);
 
@@ -194,11 +210,47 @@ export function environments(
                     throw new Error(`${action.type} returned an environment we are not tracking.`);
                 }
 
-                var environment = state.environments[index];
-                environment.state = environmentState;
+                const environment = {
+                    ...state.environments[index],
+                    state: environmentState,
+                };
+
+                if (isActivating({ state: environmentState })) {
+                    activatingEnvironments = activatingEnvironments.filter((eId) => eId !== id);
+                    activatingEnvironments.push(id);
+                }
+
                 return {
                     ...state,
                     environments: replaceAtIndex(state.environments, index, environment),
+                    activatingEnvironments,
+                };
+            })(state, action);
+
+        case pollActivatingEnvironmentsActionType:
+            return ((state, action) => {
+                const { id } = action.payload;
+                let { activatingEnvironments } = state;
+
+                activatingEnvironments = activatingEnvironments.filter((eId) => eId !== id);
+
+                return {
+                    ...state,
+                    activatingEnvironments,
+                };
+            })(state, action);
+
+        case pollActivatingEnvironmentsUpdateActionType:
+            return ((state, action) => {
+                const { id } = action.payload;
+                let { activatingEnvironments } = state;
+
+                activatingEnvironments = activatingEnvironments.filter((eId) => eId !== id);
+                activatingEnvironments.push(id);
+
+                return {
+                    ...state,
+                    activatingEnvironments,
                 };
             })(state, action);
 
