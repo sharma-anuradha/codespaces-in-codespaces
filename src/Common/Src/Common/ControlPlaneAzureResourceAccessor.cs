@@ -17,6 +17,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -36,14 +37,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="controlPlaneInfo">The control plane info.</param>
         /// <param name="servicePrincipal">The application service principal.</param>
         /// <param name="httpClient">The http client singleton.</param>
+        /// <param name="cache">The cache to use for caching various Azure keys to reduce load on ARM.</param>
         public ControlPlaneAzureResourceAccessor(
             IControlPlaneInfo controlPlaneInfo,
             IServicePrincipal servicePrincipal,
-            HttpClientWrapper httpClient)
+            HttpClientWrapper httpClient,
+            IManagedCache cache)
         {
             ServicePrincipal = Requires.NotNull(servicePrincipal, nameof(servicePrincipal));
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             HttpClient = Requires.NotNull(httpClient, nameof(httpClient));
+            Cache = Requires.NotNull(cache, nameof(cache));
         }
 
         private IServicePrincipal ServicePrincipal { get; }
@@ -51,6 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
         private HttpClientWrapper HttpClient { get; }
+
+        private IManagedCache Cache { get; }
 
         private string CurrentSubscriptionId { get; set; }
 
@@ -67,6 +73,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private IStorageManagementClient StorageManagementClient { get; set; }
 
         private IBatchManagementClient BatchManagementClient { get; set; }
+
+        private TimeSpan CacheExpiration { get; } = TimeSpan.FromHours(1);
 
         /// <inheritdoc/>
         public async Task<string> GetCurrentSubscriptionIdAsync()
@@ -119,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var allDNSNames = this.ControlPlaneInfo.AllStamps.Values.Select(s => $"https://{s.DnsHostName}")
                 .Distinct()
                 .ToList();
-            
+
             allDNSNames.Add($"https://{this.ControlPlaneInfo.DnsHostName}");
 
             return allDNSNames;
@@ -214,24 +222,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             var resourceGroup = ControlPlaneInfo.Stamp.StampResourceGroupName;
             var accountName = ControlPlaneInfo.Stamp.GetStampBatchAccountName(location);
-            try
+
+            var cacheKey = $"batchKey:{resourceGroup}:{accountName}";
+            var cacheEndpointKey = $"batchEndpoint:{resourceGroup}:{accountName}";
+
+            var key = await Cache.GetAsync<string>(cacheKey, logger);
+            var endpoint = await Cache.GetAsync<string>(cacheEndpointKey, logger);
+            if (key == null || endpoint == null)
             {
-                var batchManagementClient = await GetBatchManagementClientAsync();
-                var batchAccount = await batchManagementClient.BatchAccount.GetAsync(
-                    resourceGroup,
-                    accountName);
-                var accountKeys = await batchManagementClient.BatchAccount.GetKeysAsync(
-                    resourceGroup,
-                    accountName);
-                return (batchAccount.Name, accountKeys.Primary, $"https://{batchAccount.AccountEndpoint}");
+                try
+                {
+                    var batchManagementClient = await GetBatchManagementClientAsync();
+                    var batchAccount = await batchManagementClient.BatchAccount.GetAsync(
+                        resourceGroup,
+                        accountName);
+                    var accountKeys = await batchManagementClient.BatchAccount.GetKeysAsync(
+                        resourceGroup,
+                        accountName);
+
+                    key = accountKeys.Primary;
+                    endpoint = $"https://{batchAccount.AccountEndpoint}";
+                }
+                catch (Exception)
+                {
+                    logger.FluentAddValue(nameof(accountName), accountName)
+                        .FluentAddValue(nameof(resourceGroup), resourceGroup)
+                        .LogError("get_batch_account_error");
+                    throw;
+                }
+
+                await Cache.SetAsync(cacheKey, key, CacheExpiration, logger);
+                await Cache.SetAsync(cacheEndpointKey, endpoint, CacheExpiration, logger);
             }
-            catch (Exception)
-            {
-                logger.FluentAddValue(nameof(accountName), accountName)
-                    .FluentAddValue(nameof(resourceGroup), resourceGroup)
-                    .LogError("get_batch_account_error");
-                throw;
-            }
+
+            return (accountName, key, endpoint);
         }
 
         /// <inheritdoc/>
@@ -282,19 +306,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(resourceGroup, nameof(resourceGroup));
             Requires.NotNull(accountName, nameof(accountName));
 
-            var storageManagementClient = await GetStorageManagementClientAsync();
-            try
+            var cacheKey = $"storageKey:{resourceGroup}:{accountName}";
+            var key = await Cache.GetAsync<string>(cacheKey, logger);
+            if (key == null)
             {
-                var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
-                return (accountName, keys.Keys.First().Value);
+                var storageManagementClient = await GetStorageManagementClientAsync();
+                try
+                {
+                    var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
+                    key = keys.Keys.First().Value;
+                }
+                catch (Exception)
+                {
+                    logger?.FluentAddValue(nameof(accountName), accountName)
+                        .FluentAddValue(nameof(resourceGroup), resourceGroup)
+                        .LogError("get_storage_account_error");
+                    throw;
+                }
+
+                await Cache.SetAsync(cacheKey, key, CacheExpiration, logger);
             }
-            catch (Exception)
-            {
-                logger?.FluentAddValue(nameof(accountName), accountName)
-                    .FluentAddValue(nameof(resourceGroup), resourceGroup)
-                    .LogError("get_storage_account_error");
-                throw;
-            }
+
+            return (accountName, key);
         }
 
         private async Task<ICosmosDBManager> GetCosmosDBManagerAsync()
