@@ -59,11 +59,11 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
         if (err instanceof ServiceResponseError) {
             const code = (await err.response.json()) as EnvironmentErrorCodes;
 
+            err.message = environmentErrorCodeToString(code);
+
             dispatch(
                 createEnvironmentFailureAction(lieId, environmentErrorCodeToString(code), err)
             );
-
-            throw new Error(environmentErrorCodeToString(code));
         }
 
         dispatch(createEnvironmentFailureAction(lieId, err.errorMessage, err));
