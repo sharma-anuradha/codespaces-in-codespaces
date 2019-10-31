@@ -139,6 +139,7 @@ function getPlanEnvironments(
             })
             // TODO: reintroduce lies once we get better error messaging for environment creation.
             .filter((e) => !environmentIsALie(e))
+            .sort((a, b) => (a.friendlyName > b.friendlyName ? 1 : -1))
     );
 }
 
