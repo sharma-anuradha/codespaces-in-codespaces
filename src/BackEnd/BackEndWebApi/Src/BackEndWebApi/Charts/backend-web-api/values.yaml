@@ -10,14 +10,14 @@ appSettings:
 
 pods:
   minReplicaCount: 3
-  maxReplicaCount: 5
+  maxReplicaCount: 10
   minReadySeconds: 1
   progressDeadlineSeconds: 300
   livenessProbePath: /health
-  livenessProbeDelaySeconds: 5
+  livenessProbeDelaySeconds: 15
   livenessProbeDelayTimeoutSeconds:
   readinessProbePath: /warmup
-  readinessProbeDelaySeconds: 5
+  readinessProbeDelaySeconds: 15
   readinessProbeTimeoutSeconds: 60
   targetCpuUtilizationPercentage: 80
 
