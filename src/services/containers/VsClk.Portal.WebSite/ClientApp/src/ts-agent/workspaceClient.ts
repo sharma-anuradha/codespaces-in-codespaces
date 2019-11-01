@@ -144,7 +144,7 @@ export class WorkspaceClient implements rpc.Disposable {
         this.workspaceClient = this.getServiceProxy<vsls.WorkspaceService>(vsls.WorkspaceService);
 
         var clientCapabilities = new vsls.ClientCapabilities();
-        clientCapabilities.isNonInteractive = true;
+        clientCapabilities.isNonInteractive = false;
 
         this.sessionInfo = await this.workspaceClient.joinWorkspaceAsync({
             id: this.workspaceInfo.id,
