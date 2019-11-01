@@ -49,6 +49,7 @@ const savePlansState = (state: PlansReducerState) => {
         const stateToSave = {
             ...state,
             isMadeInitialPlansRequest: false,
+            isLoadingPlan: false,
         };
 
         localStorage.setItem(plansStoreStateKey, JSON.stringify(stateToSave));

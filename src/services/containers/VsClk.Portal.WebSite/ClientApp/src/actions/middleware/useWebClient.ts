@@ -292,7 +292,10 @@ export function useWebClient() {
 export class ServiceError extends Error {
     constructor(message: string) {
         super(message);
-        Error.captureStackTrace(this, ServiceError);
+
+        if (typeof Error.captureStackTrace === 'function') {
+            Error.captureStackTrace(this, ServiceError);
+        }
     }
 }
 
@@ -303,14 +306,20 @@ export class ServiceResponseError extends ServiceError {
         public readonly response: Response
     ) {
         super('Service request failed');
-        Error.captureStackTrace(this, ServiceResponseError);
+
+        if (typeof Error.captureStackTrace === 'function') {
+            Error.captureStackTrace(this, ServiceResponseError);
+        }
     }
 }
 
 export class ServiceContentError extends ServiceError {
     constructor(public url: string, public statusCode: number) {
         super('Service content not valid JSON.');
-        Error.captureStackTrace(this, ServiceContentError);
+
+        if (typeof Error.captureStackTrace === 'function') {
+            Error.captureStackTrace(this, ServiceContentError);
+        }
     }
 }
 
@@ -318,13 +327,18 @@ export class ServiceConnectionError extends ServiceError {
     constructor(public error: Error) {
         super('Service connection failed. ' + error.message);
 
-        Error.captureStackTrace(this, ServiceConnectionError);
+        if (typeof Error.captureStackTrace === 'function') {
+            Error.captureStackTrace(this, ServiceConnectionError);
+        }
     }
 }
 
 export class ServiceAuthenticationError extends ServiceError {
     constructor() {
         super('Authentication Failed.');
-        Error.captureStackTrace(this, ServiceAuthenticationError);
+
+        if (typeof Error.captureStackTrace === 'function') {
+            Error.captureStackTrace(this, ServiceAuthenticationError);
+        }
     }
 }

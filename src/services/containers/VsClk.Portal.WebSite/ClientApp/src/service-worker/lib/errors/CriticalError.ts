@@ -1,6 +1,9 @@
 export class CriticalError extends Error {
     constructor(message: string) {
         super(message);
-        Error.captureStackTrace(this, CriticalError);
+
+        if (typeof Error.captureStackTrace === 'function') {
+            Error.captureStackTrace(this, CriticalError);
+        }
     }
 }
