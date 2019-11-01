@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Sql.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -21,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
     /// </summary>
     public class CapacityManager : ICapacityManager
     {
-        private const double UsageThresholdPercent = 0.80;
+        private const double LowUsageThresholdPercent = 0.25;
         private const int MaxResourceGroupsPerSubscription = 980;
 
         /// <summary>
@@ -151,39 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 throw new CapacityNotAvailableException(location, criteria.Select(c => $"{c.ServiceType}/{c.Quota}"));
             }
 
-            /*
-            // Now we have a set of subscriptions that match the minimal criteria.
-            // We want to fill all subscriptions to 80%, starting with the ones with the highest limit.
-            // We then want to fill all subscriptions to capacity, starting with the ones with the highest available.
-            // In case of a tie-breaker, sort by the subscdription id
-            */
-
-            var subscriptionsUnderUsageThresholdByHighestLimit =
-                from item in subscriptionsWithAllCriteria
-                let subscription = item.Key
-                let usage = item.Value
-                let limit = usage.Limit
-                let current = usage.CurrentValue
-                let available = limit - current
-                let percentUsed = limit > 0 ? (double)current / (double)limit : 0.0
-                where percentUsed < UsageThresholdPercent
-                orderby limit descending, subscription.SubscriptionId
-                select subscription;
-
-            var subscriptionsByHighestAbsoluteAvailable =
-                from item in subscriptionsWithAllCriteria
-                let subscription = item.Key
-                let usage = item.Value
-                let limit = usage.Limit
-                let current = usage.CurrentValue
-                let available = limit - current
-                orderby available descending, subscription.SubscriptionId
-                select subscription;
-
-            // Select one random subscription of the selected ones
-            var theSubscription =
-                subscriptionsUnderUsageThresholdByHighestLimit.FirstOrDefault() ??
-                subscriptionsByHighestAbsoluteAvailable.First();
+            var theSubscription = SelectSubscription(subscriptionsWithAllCriteria);
             var stampResourceGroupName = ControlPlaneInfo.Stamp.StampResourceGroupName;
             var resourceGroupName = GetBaseResourceGroupName();
 
@@ -227,6 +196,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             }
 
             return results;
+        }
+
+        private static IEnumerable<KeyValuePair<IAzureSubscription, AzureResourceUsage>> SubscriptionsByAvailableDescending(
+            Dictionary<IAzureSubscription, AzureResourceUsage> subscriptionUsageMap)
+        {
+            return
+                from item in subscriptionUsageMap
+                let subscription = item.Key
+                let usage = item.Value
+                let limit = usage.Limit
+                let current = usage.CurrentValue
+                let available = limit - current
+                orderby available descending
+                select item;
+        }
+
+        private static IAzureSubscription SelectSubscription(Dictionary<IAzureSubscription, AzureResourceUsage> subscriptionsWithAllCriteria)
+        {
+            /*
+            // How to select a subscription that is most likely to succeed, knowing that
+            // the usage data may be stale, and a subscription might get overloaded until
+            // the next capacity update?
+            //
+            // Get the set of subscriptions that represent the top 50th percentile and pick
+            // randomly from that set.
+            */
+
+            var subscriptionCount = subscriptionsWithAllCriteria.Count;
+            var totalCapacity = subscriptionsWithAllCriteria.Values.Sum(usage => usage.Limit - usage.CurrentValue);
+            var subscriptionsByAvailableDescending = SubscriptionsByAvailableDescending(subscriptionsWithAllCriteria).ToArray();
+            var topHalf = new List<IAzureSubscription>();
+            var sumCapacity = 0L;
+            const int minimumCount = 3;
+            const double percentile = 0.5;
+            foreach (var item in subscriptionsByAvailableDescending)
+            {
+                topHalf.Add(item.Key);
+                if (subscriptionCount > minimumCount)
+                {
+                    sumCapacity += item.Value.Limit - item.Value.CurrentValue;
+                    if (((double)sumCapacity / (double)totalCapacity) > percentile)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            var theSubscription = topHalf.RandomOrDefault();
+            return theSubscription;
         }
 
         private string GetBaseResourceGroupName()
