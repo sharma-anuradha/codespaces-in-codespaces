@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                var result = await ResourceBrokerHttp.CreateResourceSetAsync(createResourcesRequestBody, logger);
+                var result = await ResourceBrokerHttp.CreateResourceSetAsync(createResourcesRequestBody, logger.NewChildLogger());
 
                 logger
                     .AddDuration(duration)
@@ -148,7 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                     childLogger.FluentAddBaseValue("ResourceId", id);
 
                     // Get status
-                    var result = await ResourceBrokerHttp.TriggerEnvironmentHeartbeatAsync(resourceId, childLogger);
+                    var result = await ResourceBrokerHttp.TriggerEnvironmentHeartbeatAsync(resourceId, childLogger.NewChildLogger());
 
                     // return 200 vs 404 based on the result
                     return result ? (IActionResult)Ok(result) : NotFound(result);
@@ -186,7 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                if (!await ResourceBrokerHttp.DeleteResourceAsync(resourceId, logger))
+                if (!await ResourceBrokerHttp.DeleteResourceAsync(resourceId, logger.NewChildLogger()))
                 {
                     logger.AddDuration(duration)
                         .AddResourceId(resourceId)
@@ -242,7 +242,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                if (!await ResourceBrokerHttp.CleanupResourceAsync(resourceId, environmentId, logger))
+                if (!await ResourceBrokerHttp.CleanupResourceAsync(resourceId, environmentId, logger.NewChildLogger()))
                 {
                     logger.AddDuration(duration)
                         .AddResourceId(resourceId)
@@ -311,7 +311,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                await ResourceBrokerHttp.StartComputeAsync(computeResourceId, startComputeRequestBody, logger);
+                await ResourceBrokerHttp.StartComputeAsync(computeResourceId, startComputeRequestBody, logger.NewChildLogger());
 
                 logger.AddDuration(duration)
                     .AddResourceId(computeResourceId)

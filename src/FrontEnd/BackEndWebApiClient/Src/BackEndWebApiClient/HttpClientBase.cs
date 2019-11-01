@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             TInput input,
             IDiagnosticsLogger logger)
         {
-            var rawResult = await SendRawAsync(method, requestUri, input, logger);
+            var rawResult = await SendRawAsync(method, requestUri, input, logger.NewChildLogger());
 
             try
             {
@@ -70,9 +70,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             {
                 Path = requestUri,
             }.Uri;
-            logger?
-                .FluentAddValue(LoggingConstants.HttpRequestMethod, method.ToString())
-                .FluentAddValue(LoggingConstants.HttpRequestUri, fullRequestUri.ToString());
+
+            logger?.FluentAddValue($"Client{LoggingConstants.HttpRequestMethod}", method.ToString())
+                .FluentAddValue($"Client{LoggingConstants.HttpRequestUri}", fullRequestUri.ToString());
 
             // TODO: add the correlation id header..any other interesting headers.
             httpRequestMessage.Headers.Add("Accept", "application/json");
@@ -85,6 +85,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             try
             {
                 httpResponseMessage = await HttpClientProvider.HttpClient.SendAsync(httpRequestMessage);
+
+                logger?.FluentAddValue($"Client{LoggingConstants.HttpResponseStatus}", httpResponseMessage.StatusCode.ToString());
+
                 await httpResponseMessage.ThrowIfFailedAsync();
 
                 // Get the response body

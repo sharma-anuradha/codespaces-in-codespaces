@@ -125,7 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             {
                 // The bearer token must be set in order to read the user profile.
                 currentProfile.SetBearerToken(jwtToken.RawData);
-                profile = await profileRepository.GetCurrentUserProfileAsync(logger);
+                profile = await profileRepository.GetCurrentUserProfileAsync(logger.NewChildLogger());
             }
             catch (Exception ex)
             {

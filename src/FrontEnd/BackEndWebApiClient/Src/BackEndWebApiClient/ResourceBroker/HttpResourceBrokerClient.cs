@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
@@ -34,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             var requestUri = ResourceBrokerHttpContract.GetCreateResourceUri();
             var result = await SendAsync<IEnumerable<CreateResourceRequestBody>, IEnumerable<ResourceBrokerResource>>(
-                ResourceBrokerHttpContract.PostResourceMethod, requestUri, input, logger);
+                ResourceBrokerHttpContract.PostResourceMethod, requestUri, input, logger.NewChildLogger());
             return result;
         }
 
@@ -43,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetGetResourceUri(resourceId);
-            var result = await SendAsync<string, ResourceBrokerResource>(ResourceBrokerHttpContract.GetResourceMethod, requestUri, null, logger);
+            var result = await SendAsync<string, ResourceBrokerResource>(ResourceBrokerHttpContract.GetResourceMethod, requestUri, null, logger.NewChildLogger());
             return result;
         }
 
@@ -52,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetTriggerEnvironmentHeartbeatUri(resourceId);
-            var result = await SendAsync<string, bool>(ResourceBrokerHttpContract.TriggerEnvironmentHeartbeatMethod, requestUri, null, logger);
+            var result = await SendAsync<string, bool>(ResourceBrokerHttpContract.TriggerEnvironmentHeartbeatMethod, requestUri, null, logger.NewChildLogger());
             return result;
         }
 
@@ -61,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(resourceId);
-            await SendRawAsync<string>(ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, null, logger);
+            await SendRawAsync<string>(ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, null, logger.NewChildLogger());
             return true;
         }
 
@@ -71,10 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             Requires.NotEmpty(computeResourceId, nameof(computeResourceId));
             var requestUri = ResourceBrokerHttpContract.GetStartComputeUri(computeResourceId);
             _ = await SendAsync<StartComputeRequestBody, string>(
-                ResourceBrokerHttpContract.StartComputeMethod,
-                requestUri,
-                startComputeRequestBody,
-                logger);
+                ResourceBrokerHttpContract.StartComputeMethod, requestUri, startComputeRequestBody, logger.NewChildLogger());
             return;
         }
 
@@ -83,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetCleanupResourceUri(resourceId, environmentId);
-            await SendRawAsync<string>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, null, logger);
+            await SendRawAsync<string>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, null, logger.NewChildLogger());
             return true;
         }
     }

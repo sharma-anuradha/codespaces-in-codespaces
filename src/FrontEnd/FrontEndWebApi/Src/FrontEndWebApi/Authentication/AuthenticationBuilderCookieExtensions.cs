@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -65,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             var currentUserProvider = context.HttpContext.RequestServices.GetService<ICurrentUserProvider>();
 
             // Make the user's id, display name, email easier to access over the lifetime of the request
-            var profile = await profileRepository.GetCurrentUserProfileAsync(logger);
+            var profile = await profileRepository.GetCurrentUserProfileAsync(logger.NewChildLogger());
             if (profile == null)
             {
                 context.RejectPrincipal();

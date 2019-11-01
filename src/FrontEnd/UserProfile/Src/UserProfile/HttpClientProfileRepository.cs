@@ -17,6 +17,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     /// </summary>
     public class HttpClientProfileRepository : IProfileRepository
     {
+        private const string LogErrorMessage = "httpclientprofilerepository_getcurrentuserprofileasync_error";
+        private const string LogMessage = "httpclientprofilerepository_getcurrentuserprofileasync_complete";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientProfileRepository"/> class.
         /// </summary>
@@ -33,11 +36,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <inheritdoc/>
         public async Task<Profile> GetCurrentUserProfileAsync(IDiagnosticsLogger logger)
         {
-            const string LogErrorMessage = "httpclientprofilerepository_getcurrentuserprofileasync_error";
-
             var response = await HttpClientProvider.HttpClient.GetAsync("profile?scope=programs");
-            logger?.AddValue(LoggingConstants.HttpRequestUri, response.RequestMessage.RequestUri.AbsoluteUri);
-            logger?.AddValue(LoggingConstants.HttpResponseStatus, response.StatusCode.ToString());
+
+            logger?.FluentAddValue($"Client{LoggingConstants.HttpRequestUri}", response.RequestMessage.RequestUri.AbsoluteUri)
+                .FluentAddValue($"Client{LoggingConstants.HttpResponseStatus}", response.StatusCode.ToString())
+                .FluentAddValue($"Client{LoggingConstants.HttpRequestMethod}", response.RequestMessage.Method.ToString());
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
@@ -56,6 +59,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
             }
 
             var profile = await response.Content.ReadAsAsync<Profile>();
+
+            logger?.LogInfo(LogMessage);
+
             return profile;
         }
     }
