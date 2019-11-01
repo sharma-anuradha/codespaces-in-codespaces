@@ -18,6 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
     /// </summary>
     public class StorageFileShareProvider : IStorageProvider
     {
+        private const int StorageCreationRetryAfterSeconds = 60;
         private readonly IStorageFileShareProviderHelper providerHelper;
 
         /// <summary>
@@ -169,7 +170,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         }
                         else
                         {
-                            resultRetryAfter = TimeSpan.FromMinutes(1);
+                            resultRetryAfter = TimeSpan.FromSeconds(StorageCreationRetryAfterSeconds);
                             nextState = FileShareProviderCreateState.CheckFileShare;
                             prepareTaskInfo = prevContinuation.PrepareTaskInfo;
                         }

@@ -81,9 +81,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         // Pull out typed message content
                         var payload = GetTypedPayload(message);
 
-                        childLogger.FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                        childLogger.FluentAddValue("MessageDequeueCount", message.DequeueCount)
+                            .FluentAddValue("MessageExpirationTime", message.ExpirationTime)
+                            .FluentAddValue("MessageInsertionTime", message.InsertionTime)
+                            .FluentAddValue("MessageNextVisibleTime", message.NextVisibleTime)
+                            .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
                             .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
                             .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
+                            .FluentAddValue("ContinuationPayloadPreRetryAfter", payload.RetryAfter)
                             .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
                             .FluentAddValue("ContinuationPayloadCreated", payload.Created)
                             .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)

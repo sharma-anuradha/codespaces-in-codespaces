@@ -63,5 +63,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// Gets or sets Environment Skus that use this Resource Unit.
         /// </summary>
         public IEnumerable<string> EnvironmentSkus { get; set; }
+
+        /// <summary>
+        /// Gets the Max Create Batch Count.
+        /// </summary>
+        public int MaxCreateBatchCount
+        {
+            get { return 25; }
+        }
+
+        /// <summary>
+        /// Gets the Max Delete Batch Count.
+        /// </summary>
+        public int MaxDeleteBatchCount
+        {
+            get { return 25; }
+        }
     }
 }

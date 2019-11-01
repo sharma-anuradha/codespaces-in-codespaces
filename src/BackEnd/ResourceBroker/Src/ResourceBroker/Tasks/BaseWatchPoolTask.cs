@@ -127,7 +127,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolIsEnabled, resourcePool.IsEnabled)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolOverrideIsEnabled, resourcePool.OverrideIsEnabled)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, resourcePool.Details.ImageFamilyName)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, resourcePool.Details.ImageName);
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, resourcePool.Details.ImageName)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.MaxCreateBatchCount, resourcePool.MaxCreateBatchCount)
+                .FluentAddBaseValue(ResourceLoggingPropertyConstants.MaxDeleteBatchCount, resourcePool.MaxDeleteBatchCount);
 
             // Executes the action that needs to be performed on the pool
             await logger.TrackDurationAsync(

@@ -83,7 +83,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 $"{LogBaseName}_run_fail_cleanup",
                 async (childLogger) =>
                 {
-
                     childLogger.FluentAddBaseValue("TaskFailedItemRunId", Guid.NewGuid())
                         .FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, record.Id);
 

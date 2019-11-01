@@ -28,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// Initializes a new instance of the <see cref="WatchPoolSizeTask"/> class.
         /// </summary>
         /// <param name="resourceBrokerSettings">Target reesource broker settings.</param>
-        /// <param name="resourcePoolManager">Target resource pool manager.</param>
+        /// <param name="resourceRepository">Target resource repository.</param>
         /// <param name="resourceContinuationOperations">Target continuation activator.</param>
         /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceRepository">Target resource Repository.</param>
@@ -75,6 +75,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             {
                 logger.FluentAddValue("PoolDrainCount", unassignedCount);
 
+                unassignedCount = Math.Min(unassignedCount, resourcePool.MaxDeleteBatchCount);
+
                 // Get the ids of the items in the pool so that we drain them off
                 var unassignedIds = await GetPoolUnassignedAsync(resourcePool, unassignedCount, logger);
 
@@ -100,6 +102,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 // If we have any positive delta add that many jobs to the queue for processing
                 if (poolDeltaCount > 0)
                 {
+                    // Limits the amount that can be created at any one time
+                    poolDeltaCount = Math.Min(poolDeltaCount, resourcePool.MaxCreateBatchCount);
+
                     // Add each of the times that we need to have
                     for (var i = 0; i < poolDeltaCount; i++)
                     {
@@ -111,8 +116,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 }
                 else if (poolDeltaCount < 0)
                 {
+                    // Limits the amount that can be created at any one time
+                    poolDeltaCount = Math.Min(poolDeltaCount * -1, resourcePool.MaxDeleteBatchCount);
+
                     // Get some items we can delete
-                    var unassignedIds = await GetPoolUnassignedAsync(resourcePool, poolDeltaCount * -1, logger);
+                    var unassignedIds = await GetPoolUnassignedAsync(resourcePool, poolDeltaCount, logger);
 
                     logger.FluentAddValue("PoolDrainCountFound", unassignedIds.Count());
 

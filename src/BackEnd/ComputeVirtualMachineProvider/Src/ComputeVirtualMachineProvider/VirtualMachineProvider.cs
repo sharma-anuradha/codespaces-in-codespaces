@@ -20,8 +20,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     /// </summary>
     public class VirtualMachineProvider : IComputeProvider
     {
-        private const int VmCreationRetryAfterSeconds = 15;
-        private const int VmDeletionRetryAfterSeconds = 5;
+        private const int VmCreationRetryAfterSeconds = 60;
+        private const int VmDeletionRetryAfterSeconds = 60;
         private IEnumerable<IDeploymentManager> managers = null;
 
         /// <summary>

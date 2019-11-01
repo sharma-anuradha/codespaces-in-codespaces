@@ -55,23 +55,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string PoolImageName = nameof(PoolImageName);
 
         /// <summary>
-        /// Pool image name.
+        /// Pool Target Count name.
         /// </summary>
         public const string PoolTargetCount = nameof(PoolTargetCount);
 
         /// <summary>
-        /// Pool image name.
+        /// Pool Override Target Count name.
         /// </summary>
         public const string PoolOverrideTargetCount = nameof(PoolOverrideTargetCount);
 
         /// <summary>
-        /// Pool image name.
+        /// Pool Is Enabled name.
         /// </summary>
         public const string PoolIsEnabled = nameof(PoolIsEnabled);
 
         /// <summary>
-        /// Pool image name.
+        /// Pool Override Is Enabled name.
         /// </summary>
         public const string PoolOverrideIsEnabled = nameof(PoolOverrideIsEnabled);
+
+        /// <summary>
+        /// Max Create Batch Count name.
+        /// </summary>
+        public const string MaxCreateBatchCount = nameof(MaxCreateBatchCount);
+
+        /// <summary>
+        /// Max Delete Batch Count name.
+        /// </summary>
+        public const string MaxDeleteBatchCount = nameof(MaxDeleteBatchCount);
     }
 }

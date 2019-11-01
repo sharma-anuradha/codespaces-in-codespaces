@@ -42,11 +42,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <inheritdoc/>
         public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger, Guid? trackingId = null, IDictionary<string, string> loggerProperties = null)
         {
-            trackingId = trackingId ?? Guid.NewGuid();
+            var trackingInstanceId = Guid.NewGuid();
+            trackingId = trackingId ?? trackingInstanceId;
 
             var payload = new ResourceJobQueuePayload
             {
                 TrackingId = trackingId.ToString(),
+                TrackingInstanceId = trackingInstanceId.ToString(),
                 Created = DateTime.UtcNow,
                 Status = null,
                 Input = input,
@@ -73,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         {
             logger.FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid())
                 .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                .FluentAddBaseValue("ContinuationPayloadTrackingInstanceId", payload.TrackingInstanceId)
                 .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
                 .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
                 .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
@@ -122,7 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         {
             // Result is based off the current
             var resultPayload = new ResourceJobQueuePayload(
-                payload.TrackingId, payload.Target, payload.Created, payload.StepCount + 1, payload.LoggerProperties);
+                payload.TrackingId, payload.TrackingInstanceId, payload.Target, payload.Created, payload.StepCount + 1, payload.LoggerProperties);
 
             // Run the continuation
             var result = (ContinuationResult)null;
@@ -151,17 +154,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     .FluentAddValue("ContinuationHandlerExceptionMessage", e.Message);
             }
 
-            logger.FluentAddValue("ContinuationHandlerFailed", result == null);
+            var isRunningTimeValid = resultPayload.Created > DateTime.UtcNow.AddHours(-1);
+
+            logger.FluentAddValue("ContinuationHandlerFailed", result == null)
+                .FluentAddValue("ContinuationIsRunningTimeValid", isRunningTimeValid);
 
             // Make sure that the handler didn't fail
-            if (result != null)
+            if (result != null && isRunningTimeValid)
             {
                 // Setup next payload
                 resultPayload.Status = result.Status;
                 resultPayload.Input = result.NextInput;
                 resultPayload.RetryAfter = result.RetryAfter;
 
-                // Put onto quueue if not finished
+                // Put onto queue if not finished
                 if (!result.Status.IsFinal())
                 {
                     await MessagePump.PushMessageAsync(resultPayload, result.RetryAfter, logger.WithValues(new LogValueSet()));
@@ -171,6 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             {
                 // If we don't have a result we are in an error state
                 resultPayload.Status = OperationState.Failed;
+                result = null;
             }
 
             return (resultPayload, result);
