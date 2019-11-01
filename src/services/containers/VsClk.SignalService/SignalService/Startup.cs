@@ -56,7 +56,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public bool UseAzureSignalR { get; private set; }
         public bool EnableAuthentication { get; private set; }
         public string Environment => this._hostEnvironment.EnvironmentName;
-        public bool IsDevelopmentEnv => this._hostEnvironment.IsDevelopment();
+        public bool IsDevelopmentEnv => !this._hostEnvironment.IsProduction();
 
         #endregion
 

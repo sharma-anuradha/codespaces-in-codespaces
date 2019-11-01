@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 pods:
-  replicaCount: 1
+  replicaCount: 3
   maxReplicaCount: 5
   minReadySeconds: 1
   progressDeadlineSeconds: 300
