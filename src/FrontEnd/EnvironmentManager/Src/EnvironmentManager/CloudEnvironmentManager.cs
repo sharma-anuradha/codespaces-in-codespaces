@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -19,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositorie
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -286,7 +286,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
 
                 // Allocate Compute
-                cloudEnvironment.Compute = await AllocateComputeAsync(cloudEnvironment, logger);
+                try
+                {
+                    cloudEnvironment.Compute = await AllocateComputeAsync(cloudEnvironment, logger);
+                }
+                catch (Exception ex) when (ex is RemoteInvocationException || ex is HttpResponseStatusException)
+                {
+                    logger.AddDuration(duration)
+                        .AddCloudEnvironment(cloudEnvironment)
+                        .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), ex.Message);
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        ErrorCode = Contracts.ErrorCodes.UnableToAllocateResourcesWhileStarting,
+                        HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
+                    };
+                }
 
                 // Create the Live Share workspace
                 cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger);
@@ -465,7 +480,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     cloudEnvironment.Storage = allocationResult.Storage;
                     cloudEnvironment.Compute = allocationResult.Compute;
                 }
-                catch (RemoteInvocationException ex)
+                catch (Exception ex) when (ex is RemoteInvocationException || ex is HttpResponseStatusException)
                 {
                     logger.AddDuration(duration)
                         .AddCloudEnvironment(cloudEnvironment)

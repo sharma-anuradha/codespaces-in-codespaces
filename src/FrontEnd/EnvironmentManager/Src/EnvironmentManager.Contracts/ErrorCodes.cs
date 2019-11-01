@@ -53,5 +53,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Unable to allocate Storage or Compute resource from the pools.
         /// </summary>
         UnableToAllocateResources = 8,
+
+        /// <summary>
+        /// Unable to allocate Compute resource while starting a suspended environment.
+        /// </summary>
+        UnableToAllocateResourcesWhileStarting = 9,
     }
 }
