@@ -158,7 +158,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
 
         const config: IWorkbenchConstructionOptions = {
             workspaceProvider,
-            remoteAuthority: `localhost`,
+            remoteAuthority: `vsonline+${environmentInfo.id}`,
             webSocketFactory: VSLSWebSocketFactory,
             urlCallbackProvider: new UrlCallbackProvider(),
             connectionToken: vscodeConfig.commit,
