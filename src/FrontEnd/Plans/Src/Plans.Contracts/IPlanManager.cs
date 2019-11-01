@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
@@ -16,7 +17,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     {
         Task<PlanManagerServiceResult> CreateOrUpdateAsync(VsoPlan model, IDiagnosticsLogger logger);
 
+        bool IsPlanCreationAllowedForUser(Profile currentUser, IDiagnosticsLogger logger);
+
         Task<bool> IsPlanCreationAllowedAsync(string subscriptionId, IDiagnosticsLogger logger);
+
+        Task RefreshTotalPlansCountAsync(IDiagnosticsLogger logger);
 
         Task<PlanManagerServiceResult> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger);
 

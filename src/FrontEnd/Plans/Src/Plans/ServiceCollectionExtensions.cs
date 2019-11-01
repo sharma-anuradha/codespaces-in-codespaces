@@ -41,5 +41,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             return services;
         }
+
+        /// <summary>
+        /// Add the <see cref="PlanWorker"/> to the service collection.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <returns>service instance.</returns>
+        public static IServiceCollection AddPlanWorker(
+            this IServiceCollection services)
+        {
+            // The Plan worker
+            services.AddHostedService<PlanWorker>();
+
+            return services;
+        }
     }
 }

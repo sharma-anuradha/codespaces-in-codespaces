@@ -1,8 +1,10 @@
 ﻿// <copyright file="PlanRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
-
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
@@ -48,6 +50,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             {
                 return new PartitionKey(((VsoPlan)entity).Plan?.Subscription);
             };
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetCountAsync(IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(@"SELECT VALUE COUNT(1) FROM c");
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var count = items.FirstOrDefault();
+
+            return count;
         }
     }
 }

@@ -2,11 +2,13 @@
 using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
 
@@ -25,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
 
-            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20 };
+            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20, GlobalPlanLimit = 100 };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
             mockSystemConfiguration
@@ -193,6 +195,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             var listSecond = modelListSecond.ToList();
             Assert.NotNull(listSecond);
             Assert.Equal(2, listSecond.Count());
+        }
+
+        [Fact]
+        public async Task ValidateUserCanCreatePlansWithLimits()
+        {
+            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20, GlobalPlanLimit = 2 };
+            var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+            mockSystemConfiguration
+                .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), settings.DefaultMaxPlansPerSubscription))
+                .Returns(Task.FromResult(settings.DefaultMaxPlansPerSubscription));
+            settings.Init(mockSystemConfiguration.Object);
+
+            var planManager = new PlanManager(this.planRepository, settings);
+
+            var whiteListedUser = new Profile() { Programs = new Dictionary<string, object> { { "vs.cloudenvironements.previewuser", true }, } };
+            var normalUser = new Profile() { Programs = new Dictionary<string, object> { } };
+
+            Assert.True(planManager.IsPlanCreationAllowedForUser(whiteListedUser, logger));
+            Assert.True(planManager.IsPlanCreationAllowedForUser(normalUser, logger));
+
+            const string testUser = "test";
+            var subscriptionGuid = Guid.NewGuid().ToString();
+            await planManager.CreateOrUpdateAsync(GeneratePlan("Model1", subscriptionGuid, testUser), logger);
+            await planManager.CreateOrUpdateAsync(GeneratePlan("Model2", subscriptionGuid, testUser), logger);
+            await planManager.CreateOrUpdateAsync(GeneratePlan("Model3", subscriptionGuid, testUser), logger);
+            await planManager.RefreshTotalPlansCountAsync(logger);
+
+            Assert.True(planManager.IsPlanCreationAllowedForUser(whiteListedUser, logger));
+            Assert.False(planManager.IsPlanCreationAllowedForUser(normalUser, logger));
         }
     }
 }

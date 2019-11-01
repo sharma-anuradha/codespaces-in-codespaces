@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
@@ -19,7 +20,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     public class PlanManager : IPlanManager
     {
         private readonly IPlanRepository planRepository;
-        private PlanManagerSettings planManagerSettings;
+        private readonly PlanManagerSettings planManagerSettings;
+
+        private int cachedTotalPlansCount;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PlanManager"/> class.
@@ -68,11 +71,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
+        public bool IsPlanCreationAllowedForUser(Profile currentUser, IDiagnosticsLogger logger)
+        {
+            return planManagerSettings.GlobalPlanLimit <= 0
+                || cachedTotalPlansCount < planManagerSettings.GlobalPlanLimit
+                || currentUser.IsCloudEnvironmentsPreviewUser();
+        }
+
+        /// <inheritdoc/>
         public async Task<bool> IsPlanCreationAllowedAsync(string subscriptionId, IDiagnosticsLogger logger)
         {
             var plans = await ListAsync(userId: null, subscriptionId, resourceGroup: null, logger);
 
             return plans.Count() >= await planManagerSettings.MaxPlansPerSubscriptionAsync(subscriptionId, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task RefreshTotalPlansCountAsync(IDiagnosticsLogger logger)
+        {
+            this.cachedTotalPlansCount = await this.planRepository.GetCountAsync(logger);
         }
 
         /// <inheritdoc/>

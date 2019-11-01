@@ -101,6 +101,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add the account manager and the account management repository
             services.AddPlanManager(frontEndAppSettings.PlanManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment);
 
+            // Add the plan background worker
+            services.AddPlanWorker();
+
             // Add the billing event manager and the billing event repository
             services.AddBillingEventManager(frontEndAppSettings.UseMocksForLocalDevelopment);
 

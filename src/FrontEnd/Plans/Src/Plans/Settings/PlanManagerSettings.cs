@@ -18,6 +18,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
         /// </summary>
         public int DefaultMaxPlansPerSubscription { get; set; }
 
+        /// <summary>
+        /// Gets or sets the global Plan Quota.
+        /// </summary>
+        public int GlobalPlanLimit { get; set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>

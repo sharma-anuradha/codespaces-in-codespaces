@@ -117,6 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ThrottlePerUserLow(nameof(PlansController), nameof(ListPlansByOwnerAsync))]
         [ProducesResponseType(typeof(PlanResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         public async Task<IActionResult> ListPlansByOwnerAsync()
         {
             var logger = HttpContext.GetLogger();
@@ -124,17 +125,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             try
             {
+                var currentUser = CurrentUserProvider.GetProfile();
+
                 // Match on provider ID instead of profile ID because clients dont have
                 // the profile ID when the create the plan resource via ARM.
                 // (The provider ID is a combination of "tid" and "oid" claims from the token.)
-                var currentUserProviderId = CurrentUserProvider.GetProfile().ProviderId;
+                var currentUserProviderId = currentUser.ProviderId;
                 var plans = await PlanManager.ListAsync(
                     currentUserProviderId, subscriptionId: null, resourceGroup: null, logger);
 
                 logger.AddDuration(duration)
                     .LogInfo(GetType().FormatLogMessage(nameof(ListPlansByOwnerAsync)));
-                return Ok(plans.Select((a) => MapAccountToResult(a, logger))
-                    .Where((a) => a != null).ToArray());
+
+                var result = plans.Select((a) => MapAccountToResult(a, logger))
+                    .Where((a) => a != null).ToArray();
+
+                // If the global limit of plans is exceeded, the client should block new users from creating plans
+                var isUserAllowedToCreatePlans =
+                    result.Length > 0 || PlanManager.IsPlanCreationAllowedForUser(currentUser, logger);
+
+                if (isUserAllowedToCreatePlans)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status503ServiceUnavailable);
+                }
             }
             catch (Exception ex)
             {
