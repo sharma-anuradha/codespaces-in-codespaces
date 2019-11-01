@@ -54,6 +54,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             {
                 return await FetchStaticAsset("spinner-dark.svg", "image/svg+xml");
             }
+            if (path == "ms-logo.svg")
+            {
+                return await FetchStaticAsset("ms-logo.svg", "image/svg+xml");
+            }
 
             if (devSessionId != null && devSessionId.EndsWith('/'))
             {
