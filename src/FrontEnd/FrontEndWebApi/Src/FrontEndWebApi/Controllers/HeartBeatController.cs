@@ -4,12 +4,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
@@ -17,6 +19,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers;
+using Newtonsoft.Json;
+using static Microsoft.VsSaaS.Diagnostics.Extensions.DiagnosticsLoggerExtensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -64,14 +68,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             try
             {
                 ValidateResource(heartBeat.ResourceId);
-                logger.AddBaseValue("VmResourceId", heartBeat.ResourceId.ToString());
+                logger.FluentAddBaseValue("VmResourceId", heartBeat.ResourceId.ToString());
             }
             catch (Exception e)
             {
-                logger.AddDuration(duration)
-                    .AddReason(e.Message)
-                    .LogError(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)));
-
+                LogHeartBeatException(e, e.Message, logger, duration, heartBeat);
                 return UnprocessableEntity();
             }
 
@@ -80,6 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             if (heartBeat.CollectedDataList != null && heartBeat.CollectedDataList.Count() > 0)
             {
+                var processingExceptions = new List<Exception>();
                 foreach (var data in heartBeat.CollectedDataList)
                 {
                     var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
@@ -92,15 +94,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         }
                         catch (Exception e)
                         {
-                            logger.AddDuration(duration)
-                                .LogException($"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", e);
+                            LogHeartBeatException(e, $"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", logger, duration, heartBeat);
+
+                            // Collect exceptions inorder to give a chance to every CollectedData object to go through processing before throwing
+                            processingExceptions.Add(e);
                         }
                     }
                     else
                     {
                         logger.AddDuration(duration)
+                            .FluentAddValue("HeartbeatMessage", JsonConvert.SerializeObject(heartBeat))
                             .LogWarning($"No handlers found for processing the data {data?.Name} received from Virtual Machine {heartBeat.ResourceId}");
                     }
+                }
+
+                if (processingExceptions.Any())
+                {
+                    // If all the exceptions are ValidationException, then return 422, to prevent agent from retrying.
+                    if (processingExceptions.All(e => e is ValidationException))
+                    {
+                        return UnprocessableEntity();
+                    }
+
+                    // If any of the handlers returned an exception other than ValidationException, then return 500 to make the agent retry.
+                    LogHeartBeatException(new AggregateException(processingExceptions), $"One or more handlers failed due to unexpected exceptions.", logger, duration, heartBeat);
+                    return InternalServerError();
                 }
             }
 
@@ -110,30 +128,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
             catch (HttpResponseStatusException e)
             {
-                logger.AddDuration(duration)
-                    .AddReason("Backend heartbeat processing failed.")
-                    .LogException(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)), e);
+                LogHeartBeatException(e, $"Backend heartbeat processing failed with http status code {e.StatusCode}", logger, duration, heartBeat);
                 return StatusCode((int)e.StatusCode);
             }
+
+            // Currently exceptions from backend heartbeat controller will always result in HttpResponseStatusException, as it doesn't respond with errordetails in body.
             catch (RemoteInvocationException e)
             {
-                logger.AddDuration(duration)
-                    .AddReason("Backend heartbeat processing failed.")
-                    .LogException(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)), e);
+                LogHeartBeatException(e, "Backend heartbeat processing failed with RemoteInvocationException.", logger, duration, heartBeat);
                 return UnprocessableEntity();
             }
             catch (Exception e)
             {
-                logger.AddDuration(duration)
-                    .AddReason("Backend heartbeat processing failed.")
-                    .LogException(GetType().FormatLogErrorMessage(nameof(ProcessHeartBeatAsync)), e);
-                throw;
+                LogHeartBeatException(e, "Backend heartbeat processing failed.", logger, duration, heartBeat);
+                return InternalServerError();
             }
 
             logger.AddDuration(duration)
                     .LogInfo(GetType().FormatLogMessage(nameof(ProcessHeartBeatAsync)));
 
             return NoContent();
+        }
+
+        private IActionResult InternalServerError() => StatusCode(StatusCodes.Status500InternalServerError);
+
+        private void LogHeartBeatException(Exception e, string message, IDiagnosticsLogger logger, Duration startDuration, HeartBeatBody heartBeat)
+        {
+            logger.AddDuration(startDuration)
+                    .FluentAddValue("HeartbeatMessage", JsonConvert.SerializeObject(heartBeat))
+                    .LogException(message, e);
         }
 
         private void ValidateResource(Guid resourceId)

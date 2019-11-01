@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Newtonsoft.Json;
@@ -55,10 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        childLogger.LogError($"Start Environment job failed for virtaul machine : {vmResourceId}");
 
                        // Mark environment provision to failed status
-                       if (string.IsNullOrEmpty(jobResultData.EnvironmentId))
-                       {
-                           throw new ArgumentException($"Environment id is null or empty for Start environment job result from virtual machine, {vmResourceId}");
-                       }
+                       ValidationUtil.IsRequired(jobResultData.EnvironmentId, "Environment Id");
 
                        var cloudEnvironment = await cloudEnvironmentManager.GetEnvironmentByIdAsync(jobResultData.EnvironmentId, childLogger);
                        if (cloudEnvironment == default)
