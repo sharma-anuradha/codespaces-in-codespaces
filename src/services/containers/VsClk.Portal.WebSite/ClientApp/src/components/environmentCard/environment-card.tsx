@@ -1,4 +1,12 @@
-import React, { useState } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useCallback,
+    useMemo,
+    Fragment,
+    MouseEvent,
+    KeyboardEvent,
+} from 'react';
 import moment from 'moment';
 
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
@@ -11,11 +19,7 @@ import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { ProgressIndicator } from 'office-ui-fabric-react/lib/ProgressIndicator';
 import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
 
-import {
-    ILocalCloudEnvironment,
-    StateInfo,
-    ICloudEnvironment,
-} from '../../interfaces/cloudenvironment';
+import { ILocalCloudEnvironment, StateInfo } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 import {
@@ -25,7 +29,6 @@ import {
     isSelfHostedEnvironment,
     isActivating,
 } from '../../utils/environmentUtils';
-import { createUniqueId } from '../../dependencies';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
 import { connectEnvironment } from '../../actions/connectEnvironment';
@@ -33,6 +36,12 @@ import { createTrace } from '../../utils/createTrace';
 import { useSelector } from 'react-redux';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ActivePlanInfo } from '../../reducers/plans-reducer';
+import { Spinner, SpinnerSize, SpinnerType } from 'office-ui-fabric-react/lib/Spinner';
+import { Signal, CancellationError } from '../../utils/signal';
+import { MessageBarType, MessageBar } from 'office-ui-fabric-react/lib/MessageBar';
+import { CancellationTokenSource, CancellationToken } from 'vscode-jsonrpc';
+import { isDefined } from '../../utils/isDefined';
+import { isMacOs } from '../../utils/os-detection';
 
 const trace = createTrace('environment-card');
 export interface EnvironmentCardProps {
@@ -122,9 +131,7 @@ type ActionProps = {
     environment: ILocalCloudEnvironment;
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
     shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
-    connectEnvironment: (
-        ...name: Parameters<typeof connectEnvironment>
-    ) => Promise<ICloudEnvironment | undefined>;
+    connect: (event: MouseEvent | KeyboardEvent | undefined) => void;
 };
 
 // tslint:disable-next-line: max-func-body-length
@@ -132,12 +139,13 @@ const Actions = ({
     environment,
     deleteEnvironment,
     shutdownEnvironment,
-    connectEnvironment,
+    connect: connectToEnvironment,
 }: ActionProps) => {
     const [deleteDialogHidden, setDeleteDialogHidden] = useState(true);
     const [unsuccessfulUrlDialogHidden, setUnsuccessfulUrlDialogHidden] = useState(true);
     const [shutdownDialogHidden, setShutdownDialogHidden] = useState(true);
     const [vscodeInstanceName, setVscodeInstanceName] = useState();
+
     return (
         <>
             <IconButton
@@ -159,7 +167,6 @@ const Actions = ({
                                 } catch {
                                     setVscodeInstanceName('VS Code');
                                     setUnsuccessfulUrlDialogHidden(false);
-                                    
                                 }
                             },
                         },
@@ -184,15 +191,7 @@ const Actions = ({
                             name: 'Connect',
                             disabled:
                                 environmentIsALie(environment) || isNotConnectable(environment),
-                            onClick: async () => {
-                                let result = await connectEnvironment(
-                                    environment.id!,
-                                    environment.state
-                                );
-                                if (result) {
-                                    location.assign(`/environment/${environment.id}`);
-                                }
-                            },
+                            onClick: connectToEnvironment,
                         },
                         {
                             key: 'shutdown',
@@ -289,6 +288,15 @@ type ShutdownDialogProps = {
 };
 
 function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: ShutdownDialogProps) {
+    const suspendEnvironment = useCallback(() => {
+        if (!environment.id) {
+            return;
+        }
+
+        shutdownEnvironment(environment.id);
+        close();
+    }, [shutdownEnvironment, close, environment.id]);
+
     return (
         <Dialog
             hidden={hidden}
@@ -303,13 +311,7 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
             }}
         >
             <DialogFooter>
-                <PrimaryButton
-                    onClick={() => {
-                        shutdownEnvironment(environment.id!);
-                        close();
-                    }}
-                    text='Suspend'
-                />
+                <PrimaryButton onClick={suspendEnvironment} text='Suspend' />
                 <DefaultButton onClick={close} text='Cancel' />
             </DialogFooter>
         </Dialog>
@@ -342,6 +344,41 @@ function UnsuccessfulUrlDialog({ accept, hidden, vscodeName }: UnsuccessfulUrlDi
     );
 }
 
+type EnvironmentConnectionFailedDialogProps = {
+    clearErrorMessage: () => void;
+    errorMessage: string | undefined;
+};
+
+function EnvironmentConnectionFailedDialog({
+    errorMessage,
+    clearErrorMessage,
+}: EnvironmentConnectionFailedDialogProps) {
+    if (!errorMessage) {
+        return null;
+    }
+
+    return (
+        <Dialog
+            hidden={false}
+            dialogContentProps={{
+                type: DialogType.close,
+                title: 'We are getting things ready.',
+            }}
+            modalProps={{
+                isBlocking: true,
+                styles: { main: { maxWidth: 450 } },
+            }}
+            onDismiss={clearErrorMessage}
+        >
+            <div className='environment-card__connection-dialog-content'>
+                <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
+                    {errorMessage}
+                </MessageBar>
+            </div>
+        </Dialog>
+    );
+}
+
 const getSkuDisplayName = (selectedPlan: ActivePlanInfo, environment: ILocalCloudEnvironment) => {
     if (environment.skuDisplayName) {
         return environment.skuDisplayName;
@@ -365,28 +402,128 @@ const suspendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {
     }
 };
 
+type EnvironmentNameProps = {
+    environment: ILocalCloudEnvironment;
+    connect: () => void;
+};
+function EnvironmentName({ environment, connect }: Readonly<EnvironmentNameProps>) {
+    const environmentNameText = (
+        <Stack horizontal verticalAlign='center'>
+            <Icon
+                iconName='ThisPC'
+                style={{ color: getTheme().palette.themePrimary }}
+                className='environment-card__environment-icon'
+            />
+            <div className='environment-card__environment-name'>
+                <Text variant='large'>{environment.friendlyName}</Text>
+            </div>
+            <Status environment={environment} />
+        </Stack>
+    );
+
+    if (environmentIsALie(environment) || isNotConnectable(environment)) {
+        return environmentNameText;
+    }
+
+    return (
+        <Link className='environment-card__environment-link' onClick={connect}>
+            {environmentNameText}
+        </Link>
+    );
+}
+
+let currentConnectingEnvironment: Signal<void> | undefined;
+
+// tslint:disable-next-line: max-func-body-length
 export function EnvironmentCard(props: EnvironmentCardProps) {
-    const environmentNameText = <Text variant={'large'}>{props.environment.friendlyName}</Text>;
-    const environmentName =
-        environmentIsALie(props.environment) || isNotConnectable(props.environment) ? (
-            <div className='environment-card__environment-name'>{environmentNameText}</div>
-        ) : (
-            <Link
-                className='environment-card__environment-name'
-                onClick={async () => {
-                    let result = await connectEnvironment(
-                        props.environment.id!,
-                        props.environment.state
-                    );
-                    trace.info('Connect to environment done.', result);
-                    if (result) {
-                        window.location.assign(`environment/${props.environment.id!}`);
+    const [errorMessage, setErrorMessage] = useState(undefined as string | undefined);
+    const clearErrorMessage = useCallback(() => {
+        setErrorMessage(undefined);
+    }, []);
+
+    const connectEnv = useCallback(
+        async (event?: MouseEvent | KeyboardEvent | undefined) => {
+            if (!props.environment.id) {
+                return;
+            }
+
+            if (event) {
+                // We'll keep the react event around for async.
+                event.persist();
+            }
+
+            let shouldOpenInNewTab = false;
+            if (event && isDefined((event as MouseEvent).buttons)) {
+                const isMiddleClick = (event as MouseEvent).button === 1;
+                const isMacOpenNewTab =
+                    isMacOs() && (event as MouseEvent).button === 0 && event.metaKey;
+                const isWinOpenNewTab =
+                    !isMacOs() && (event as MouseEvent).button === 0 && event.ctrlKey;
+                shouldOpenInNewTab = isMiddleClick || isMacOpenNewTab || isWinOpenNewTab;
+            }
+
+            if (currentConnectingEnvironment) {
+                currentConnectingEnvironment.cancel();
+            }
+
+            const cancellationTokenSource = new CancellationTokenSource();
+            currentConnectingEnvironment = Signal.from(
+                connect(
+                    props.environment.id,
+                    props.environment.state,
+                    cancellationTokenSource.token
+                )
+            );
+
+            await currentConnectingEnvironment.promise.then(
+                () => {},
+                (err) => {
+                    if (err instanceof CancellationError) {
+                        cancellationTokenSource.cancel();
+                        if (props.environment.id) {
+                            shutdownEnvironment(props.environment.id);
+                        }
+                        return;
                     }
-                }}
-            >
-                {environmentNameText}
-            </Link>
-        );
+
+                    throw err;
+                }
+            );
+
+            async function connect(
+                id: string,
+                state: StateInfo,
+                cancellationToken: CancellationToken
+            ) {
+                try {
+                    let result = await connectEnvironment(id, state);
+                    trace.verbose('Connect to environment done.', result);
+
+                    if (cancellationToken.isCancellationRequested) {
+                        return;
+                    }
+
+                    currentConnectingEnvironment = undefined;
+
+                    if (result) {
+                        const fullUrl = new URL(
+                            `/environment/${id}`,
+                            window.location.origin
+                        ).toString();
+
+                        if (shouldOpenInNewTab) {
+                            window.open(fullUrl, '_blank');
+                        } else {
+                            window.location.assign(fullUrl);
+                        }
+                    }
+                } catch (err) {
+                    setErrorMessage(err.message);
+                }
+            }
+        },
+        [props.environment.id]
+    );
 
     const selectedPlan = useSelector((state: ApplicationState) => state.plans.selectedPlan);
     let details = [];
@@ -419,15 +556,7 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
             }}
             className='environment-card'
         >
-            <Stack horizontal verticalAlign='center'>
-                <Icon
-                    iconName='ThisPC'
-                    style={{ color: getTheme().palette.themePrimary }}
-                    className='environment-card__environment-icon'
-                />
-                {environmentName}
-                <Status environment={props.environment} />
-            </Stack>
+            <EnvironmentName environment={props.environment} connect={connectEnv} />
 
             {indicator}
 
@@ -441,9 +570,13 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
                     environment={props.environment}
                     deleteEnvironment={props.deleteEnvironment}
                     shutdownEnvironment={props.shutdownEnvironment}
-                    connectEnvironment={connectEnvironment}
+                    connect={connectEnv}
                 />
             </Stack>
+            <EnvironmentConnectionFailedDialog
+                errorMessage={errorMessage}
+                clearErrorMessage={clearErrorMessage}
+            />
         </Stack>
     );
 }
