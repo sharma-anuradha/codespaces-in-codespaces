@@ -1,4 +1,4 @@
-import { AuthResponse } from 'msal';
+import { AuthResponse } from '@vs/msal';
 import jwtDecode from 'jwt-decode';
 
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';

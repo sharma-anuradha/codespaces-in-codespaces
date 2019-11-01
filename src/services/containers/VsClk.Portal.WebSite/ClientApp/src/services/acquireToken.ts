@@ -1,4 +1,4 @@
-import { AuthResponse } from 'msal';
+import { AuthResponse } from '@vs/msal';
 
 import { clientApplication, msalConfig } from './msalConfig';
 import { autServiceTrace } from "./autServiceTrace";

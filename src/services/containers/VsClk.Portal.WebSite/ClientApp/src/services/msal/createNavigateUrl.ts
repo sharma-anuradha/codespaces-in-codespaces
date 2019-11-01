@@ -1,10 +1,9 @@
-import { AuthenticationParameters } from 'msal';
+import { AuthenticationParameters } from '@vs/msal';
 
 import { ServerRequestParameters } from './serverRequestParameters';
 import { AuthorityFactory } from './authorityFactory';
 import { UrlUtils } from './urlUtils';
 
-import { IToken } from '../../typings/IToken';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 
 const VSCODE_APP_ID = 'aebc6443-996d-45c2-90f0-388ff96faa56';

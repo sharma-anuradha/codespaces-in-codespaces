@@ -1,4 +1,4 @@
-import * as msal from 'msal';
+import * as msal from '@vs/msal';
 
 import { wait } from '../dependencies';
 import { ApplicationState } from '../reducers/rootReducer';

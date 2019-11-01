@@ -1,4 +1,4 @@
-import { Account as MsalAccount } from 'msal';
+import { Account as MsalAccount } from '@vs/msal';
 
 import { IToken } from './IToken';
 

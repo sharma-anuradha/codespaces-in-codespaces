@@ -3,13 +3,12 @@ import { Emitter } from 'vscode-jsonrpc';
 import { IJWTCache, IJWTAsyncCache } from '../typings/IJWTCache';
 import { inMemoryCacheFactory } from './inMemoryJWTCache';
 import { TokenType } from '../typings/TokenType';
+import { localStorageKeyVault } from './localStorageKeyVaultInstance';
 
-import { localStorageKeyVaultFactory } from './localStorageKeyVault/localStorageKeyVault';
 import { IKeyVault } from '../interfaces/IKeyVault';
 
 export const inLocalStorageJWTTokenCacheFactory = (keyPrefix?: string)=> {
     const inMemoryCache = inMemoryCacheFactory();
-    const localStorageKeyVault = localStorageKeyVaultFactory();
 
     return new InLocalStorageJWTCache(inMemoryCache, localStorageKeyVault, keyPrefix);
 }

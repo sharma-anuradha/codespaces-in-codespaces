@@ -1692,6 +1692,13 @@
     office-ui-fabric-react "^7.11.0"
     tslib "^1.7.1"
 
+"@vs/msal@^1.2.0":
+  version "1.2.0"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/msal/-/msal-1.2.0.tgz#aadad99bdea7446597ad0982794b1fd5c065dc80"
+  integrity sha1-qtrZm96nRGWXrQmCeUsf1cBl3IA=
+  dependencies:
+    tslib "^1.10.0"
+
 "@vs/vs-ssh@1.0.84":
   version "1.0.84"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-1.0.84.tgz#dc1dbb7cea374f55959205efcf6c9da3dae29d89"
@@ -7669,14 +7676,6 @@ ms@^2.1.1:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha1-0J0fNXtEP0kzgqjrPM0YOHKuYAk=
 
-msal@^1.0.2:
-  version "1.1.1"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/msal/-/msal-1.1.1.tgz#715099697ee0b5b7cb5f00d6f0f4766cdcdaa557"
-  integrity sha1-cVCZaX7gtbfLXwDW8PR2bNzapVc=
-  dependencies:
-    tslib "^1.9.3"
-    uuid "^3.3.2"
-
 multicast-dns-service-types@^1.1.0:
   version "1.1.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/multicast-dns-service-types/-/multicast-dns-service-types-1.1.0.tgz#899f11d9686e5e05cb91b35d5f0e63b773cfc901"
@@ -11145,7 +11144,7 @@ ts-pnp@^1.0.0:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/ts-pnp/-/ts-pnp-1.1.2.tgz#be8e4bfce5d00f0f58e0666a82260c34a57af552"
   integrity sha1-vo5L/OXQDw9Y4GZqgiYMNKV69VI=
 
-tslib@^1.7.1, tslib@^1.8.0, tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
+tslib@^1.10.0, tslib@^1.7.1, tslib@^1.8.0, tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
   version "1.10.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/tslib/-/tslib-1.10.0.tgz#c3c19f95973fb0a62973fb09d90d961ee43e5c8a"
   integrity sha1-w8GflZc/sKYpc/sJ2Q2WHuQ+XIo=

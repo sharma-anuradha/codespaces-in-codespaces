@@ -12,6 +12,12 @@ import { IKeyVaultKey } from '../../interfaces/IKeyVaultKey';
 
 export const trace = createTrace('LocalStorageKeyVault');
 
+const ENTRIES_STORED_KEY = 'vsonline.keyvault.keys';
+
+interface IStoredKeys {
+    [key: string]: boolean;
+}
+
 export class LocalStorageKeyVault implements IKeyVault {
     constructor(
         private readonly keys: IKeyVaultKey[]
@@ -27,6 +33,45 @@ export class LocalStorageKeyVault implements IKeyVault {
         this.keys.sort((item: IKeyVaultKey) => {
             return -(item.expiresOn);
         });
+    }
+
+    private readBookKeepingKeys(): IStoredKeys {
+        try {
+            const storedKeys = localStorage.getItem(ENTRIES_STORED_KEY);
+            
+            if (!storedKeys) {
+                return {};
+            }
+
+            const keys = JSON.parse(storedKeys);
+            return keys || {};
+        } catch {
+            return {};
+        }
+    }
+
+    private writeBookKeeingKeys(keys: IStoredKeys) {
+        try {
+            localStorage.setItem(ENTRIES_STORED_KEY, JSON.stringify(keys));
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    private bookkeepKey(key: string) {
+        const keys = this.readBookKeepingKeys();
+
+        keys[key] = true;
+
+        this.writeBookKeeingKeys(keys);
+    }
+
+    private removeBookkeepKey(key: string) {
+        const keys = this.readBookKeepingKeys();
+
+        delete keys[key];
+
+        this.writeBookKeeingKeys(keys);
     }
 
     async get(key: string) {
@@ -84,6 +129,7 @@ export class LocalStorageKeyVault implements IKeyVault {
             const encryptedTextToSet = JSON.stringify(cipherRecord);
 
             localStorage.setItem(keyToSet, encryptedTextToSet);
+            this.bookkeepKey(keyToSet);
         } catch (error) {
             trace.error(error);
             sendTelemetry('vsonline/cipher/error', error);
@@ -93,6 +139,7 @@ export class LocalStorageKeyVault implements IKeyVault {
     async delete(key: string) {
         try {
             localStorage.removeItem(key);
+            this.removeBookkeepKey(key);
         } catch (error) {
             trace.error(error);
             sendTelemetry('vsonline/cipher/error', error);
@@ -124,6 +171,32 @@ export class LocalStorageKeyVault implements IKeyVault {
         const delta = new Date(key.expiresOn).getTime() - Date.now();
 
         return (delta > 0);
+    }
+
+    public getAllKeys() {
+        const keys = this.readBookKeepingKeys();
+
+        if (!keys) {
+            return [];
+        }
+
+        return Object.keys(keys);
+    }
+
+    public async deleteAll() {
+        const keysObject = this.readBookKeepingKeys();
+
+        const keys = Object.keys(keysObject);
+
+        for (let key of keys) {
+            await this.delete(key);
+        }
+    }
+
+    public has(key: string | number): boolean {
+        const keys = this.readBookKeepingKeys();
+
+        return !!keys[key];
     }
 }
 

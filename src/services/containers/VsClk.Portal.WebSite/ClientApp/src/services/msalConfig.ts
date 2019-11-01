@@ -1,5 +1,7 @@
-import * as msal from 'msal';
+import * as msal from '@vs/msal';
 import { aadAuthorityUrlCommon } from '../constants';
+
+import { storageAdapter } from './StorageAdapter';
 
 export const msalConfig: msal.Configuration = {
     auth: {
@@ -10,8 +12,7 @@ export const msalConfig: msal.Configuration = {
         redirectUri: location.origin,
     },
     cache: {
-        cacheLocation: 'localStorage',
-        storeAuthStateInCookie: true,
+        cacheLocation: storageAdapter
     },
 };
 

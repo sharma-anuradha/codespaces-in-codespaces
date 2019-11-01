@@ -2,7 +2,7 @@ import { ICredentialsProvider } from 'vscode-web';
 
 import { createTrace } from '../utils/createTrace';
 import { authService } from '../services/authService';
-import { isDefined } from '../utils/isDefined';
+import { localStorageKeyVault } from '../cache/localStorageKeyVaultInstance';
 
 const trace = createTrace('credentials-provider:info');
 
@@ -95,7 +95,7 @@ export class CredentialsProvider implements ICredentialsProvider {
 
         // generic keytar request
         const genericKey = this.generateGenericLocalStorageKey(service, account);
-        const password = localStorage.getItem(genericKey);
+        const password = await localStorageKeyVault.get(genericKey);
         if (password) {
             return password;
         }
@@ -121,14 +121,15 @@ export class CredentialsProvider implements ICredentialsProvider {
 
     async setPassword(service: string, account: string, password: string): Promise<void> {
         const key = this.generateGenericLocalStorageKey(service, account);
-        localStorage.setItem(key, password);
+        await localStorageKeyVault.set(key, password);
     }
 
     async deletePassword(service: string, account: string): Promise<boolean> {
         const key = this.generateGenericLocalStorageKey(service, account);
-        const isPresent = isDefined(localStorage.getItem(key));
+        const isPresent = localStorageKeyVault.has(key);
 
-        localStorage.removeItem(key);
+        await localStorageKeyVault.delete(key);
+
         return isPresent;
     }
 
