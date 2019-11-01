@@ -102,23 +102,23 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
         }
     };
 
-    render() {
-        const { isLoading } = this.props;
+    private renderSpinner() {
+        return (
+            <Spinner
+                className='environments-panel__environments-spinner'
+                label='Fetching your environments...'
+                ariaLive='assertive'
+                labelPosition='right'
+            />
+        );
+    }
 
-        if (isLoading) {
-            return (
-                <Spinner
-                    className='environments-panel__environments-spinner'
-                    label='Fetching your environments...'
-                    ariaLive='assertive'
-                    labelPosition='right'
-                />
-            );
-        }
+    render() {
+        const content = this.props.isLoading ? this.renderSpinner() : this.renderEnvironments();
 
         return (
             <PortalLayout>
-                <div className='environments-panel'>{this.renderEnvironments()}</div>
+                <div className='environments-panel'>{content}</div>
             </PortalLayout>
         );
     }
@@ -145,10 +145,10 @@ function getPlanEnvironments(
 
 const stateToProps = ({
     environments: { environments, isLoading },
-    plans: { selectedPlan },
+    plans: { selectedPlan, isLoadingPlan, isMadeInitialPlansRequest },
 }: ApplicationState) => ({
     environments: getPlanEnvironments(selectedPlan, environments),
-    isLoading,
+    isLoading: isLoading || isLoadingPlan || !isMadeInitialPlansRequest,
     shouldOpenPlanCreation: !isDefined(selectedPlan),
 });
 

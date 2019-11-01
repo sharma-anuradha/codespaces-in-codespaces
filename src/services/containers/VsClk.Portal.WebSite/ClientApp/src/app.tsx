@@ -28,7 +28,11 @@ class AppRoot extends Component<AppProps, AppState> {
         window.performance.measure(ApplicationLoadEvent.markName);
         telemetry.track(new ApplicationLoadEvent());
 
-        this.props.init();
+        try {
+            this.props.init();
+        } catch {
+            // noop
+        }
     }
 
     private renderMain() {
