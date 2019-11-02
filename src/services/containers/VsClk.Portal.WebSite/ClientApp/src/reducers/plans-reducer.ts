@@ -101,21 +101,21 @@ function plansReducerInternal(
             let { plans, selectedPlanHint } = action.payload;
             let { selectedPlan } = state;
             // there is a bug that allows to create multiple equal plans,
-            // filter oout duplicates for now
+            // filter out duplicates for now
             const plansList = uniquePlans(plans);
 
             // if no selected plan yet and there is some plans,
             // select the first one by default
             if (!selectedPlan && selectedPlanHint) {
                 selectedPlan = selectedPlanHint;
-                // if plansList is empty, deselec current selected plan
+                // if plansList is empty, deselect current selected plan
             } else if (!plansList.length) {
                 selectedPlan = null;
             }
 
             return {
                 ...state,
-                selectedPlan: selectedPlan,
+                selectedPlan,
                 isMadeInitialPlansRequest: true,
                 plans: [...plansList],
             };
@@ -124,6 +124,7 @@ function plansReducerInternal(
         case getPlansFailureActionType: {
             return {
                 ...state,
+                plans: [],
                 isMadeInitialPlansRequest: true,
             };
         }

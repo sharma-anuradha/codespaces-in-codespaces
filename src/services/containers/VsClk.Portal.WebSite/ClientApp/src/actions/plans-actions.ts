@@ -1,12 +1,17 @@
 import { action } from './middleware/useActionCreator';
 
-import { useWebClient, ServiceResponseError } from './middleware/useWebClient';
+import {
+    useWebClient,
+    ServiceResponseError,
+    ServiceAuthenticationError,
+} from './middleware/useWebClient';
 import { useDispatch } from './middleware/useDispatch';
 import { IPlan } from '../interfaces/IPlan';
 import { useActionContext } from './middleware/useActionContext';
 import { ActivePlanInfo } from '../reducers/plans-reducer';
 import { getLocation } from './locations-actions';
 import { serviceUnavailableAtTheMoment } from './serviceUnavailable';
+import { clearAuthToken } from './clearAuthToken';
 
 export const selectPlanActionType = 'async.plan.select';
 export const selectPlanSuccessActionType = 'async.plan.select.success';
@@ -55,7 +60,7 @@ export const selectPlan = async (plan: IPlan | null) => {
 
             const activePlan = {
                 ...plan,
-                availableSkus: locationInfo && locationInfo.skus,
+                availableSkus: (locationInfo && locationInfo.skus) || [],
             };
 
             dispatch(selectPlanSuccessAction(activePlan));
@@ -63,6 +68,10 @@ export const selectPlan = async (plan: IPlan | null) => {
             dispatch(selectPlanSuccessAction(null));
         }
     } catch (err) {
+        if (err instanceof ServiceAuthenticationError) {
+            dispatch(clearAuthToken());
+        }
+
         return dispatch(selectPlanFailureAction(err));
     }
 };
@@ -112,6 +121,10 @@ export async function getPlans() {
 
         return plansList;
     } catch (err) {
+        if (err instanceof ServiceAuthenticationError) {
+            dispatch(clearAuthToken());
+        }
+
         return dispatch(getPlansFailureAction(err));
     }
 }
