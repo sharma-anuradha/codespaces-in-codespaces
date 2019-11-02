@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
         /// <summary>
         /// Gets or sets the global Plan Quota.
         /// </summary>
-        public int GlobalPlanLimit { get; set; }
+        public int DefaultGlobalPlanLimit { get; set; }
 
         private ISystemConfiguration SystemConfiguration { get; set; }
 
@@ -46,6 +46,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetSubscriptionValueAsync("quota:max-plans-per-sub", subscriptionId, logger, DefaultMaxPlansPerSubscription);
+        }
+
+        /// <summary>
+        /// Gets the system-wide (global) limit of plans in the VSO service.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<int> GetGlobalPlanLimitAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("quota:global-max-plans", logger, DefaultGlobalPlanLimit);
         }
     }
 }

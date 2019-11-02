@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
 
-            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20, GlobalPlanLimit = 100 };
+            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20, DefaultGlobalPlanLimit = 100 };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
             mockSystemConfiguration
@@ -200,8 +200,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task ValidateUserCanCreatePlansWithLimits()
         {
-            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20, GlobalPlanLimit = 2 };
+            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20, DefaultGlobalPlanLimit = 2 };
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+            mockSystemConfiguration
+                .Setup(x => x.GetValueAsync<int>(It.Is<string>(y => y == "quota:global-max-plans"), It.IsAny<IDiagnosticsLogger>(), settings.DefaultGlobalPlanLimit))
+                .Returns(Task.FromResult(settings.DefaultGlobalPlanLimit));
             mockSystemConfiguration
                 .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), settings.DefaultMaxPlansPerSubscription))
                 .Returns(Task.FromResult(settings.DefaultMaxPlansPerSubscription));
@@ -212,8 +215,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             var whiteListedUser = new Profile() { Programs = new Dictionary<string, object> { { "vs.cloudenvironements.previewuser", true }, } };
             var normalUser = new Profile() { Programs = new Dictionary<string, object> { } };
 
-            Assert.True(planManager.IsPlanCreationAllowedForUser(whiteListedUser, logger));
-            Assert.True(planManager.IsPlanCreationAllowedForUser(normalUser, logger));
+            Assert.True(await planManager.IsPlanCreationAllowedForUserAsync(whiteListedUser, logger));
+            Assert.True(await planManager.IsPlanCreationAllowedForUserAsync(normalUser, logger));
 
             const string testUser = "test";
             var subscriptionGuid = Guid.NewGuid().ToString();
@@ -222,8 +225,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             await planManager.CreateOrUpdateAsync(GeneratePlan("Model3", subscriptionGuid, testUser), logger);
             await planManager.RefreshTotalPlansCountAsync(logger);
 
-            Assert.True(planManager.IsPlanCreationAllowedForUser(whiteListedUser, logger));
-            Assert.False(planManager.IsPlanCreationAllowedForUser(normalUser, logger));
+            Assert.True(await planManager.IsPlanCreationAllowedForUserAsync(whiteListedUser, logger));
+            Assert.False(await planManager.IsPlanCreationAllowedForUserAsync(normalUser, logger));
         }
     }
 }

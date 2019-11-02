@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     {
         Task<PlanManagerServiceResult> CreateOrUpdateAsync(VsoPlan model, IDiagnosticsLogger logger);
 
-        bool IsPlanCreationAllowedForUser(Profile currentUser, IDiagnosticsLogger logger);
+        Task<bool> IsPlanCreationAllowedForUserAsync(Profile currentUser, IDiagnosticsLogger logger);
 
         Task<bool> IsPlanCreationAllowedAsync(string subscriptionId, IDiagnosticsLogger logger);
 

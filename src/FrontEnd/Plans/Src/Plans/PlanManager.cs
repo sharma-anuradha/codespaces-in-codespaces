@@ -71,11 +71,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public bool IsPlanCreationAllowedForUser(Profile currentUser, IDiagnosticsLogger logger)
+        public async Task<bool> IsPlanCreationAllowedForUserAsync(Profile currentUser, IDiagnosticsLogger logger)
         {
-            return planManagerSettings.GlobalPlanLimit <= 0
-                || cachedTotalPlansCount < planManagerSettings.GlobalPlanLimit
-                || currentUser.IsCloudEnvironmentsPreviewUser();
+            if (currentUser.IsCloudEnvironmentsPreviewUser())
+            {
+                return true;
+            }
+
+            var globalPlanLimit = await planManagerSettings.GetGlobalPlanLimitAsync(logger);
+            return globalPlanLimit <= 0 || cachedTotalPlansCount < globalPlanLimit;
         }
 
         /// <inheritdoc/>

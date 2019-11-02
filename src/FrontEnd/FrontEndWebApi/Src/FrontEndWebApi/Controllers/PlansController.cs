@@ -142,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                 // If the global limit of plans is exceeded, the client should block new users from creating plans
                 var isUserAllowedToCreatePlans =
-                    result.Length > 0 || PlanManager.IsPlanCreationAllowedForUser(currentUser, logger);
+                    result.Length > 0 || await PlanManager.IsPlanCreationAllowedForUserAsync(currentUser, logger);
 
                 if (isUserAllowedToCreatePlans)
                 {

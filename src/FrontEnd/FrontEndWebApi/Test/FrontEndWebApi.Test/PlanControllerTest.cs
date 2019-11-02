@@ -69,8 +69,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Returns(Task.FromResult(plans));
 
             mockPlanManager
-                .Setup(obj => obj.IsPlanCreationAllowedForUser(It.IsAny<UserProfile.Profile>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns(isWhiteListed);
+                .Setup(obj => obj.IsPlanCreationAllowedForUserAsync(It.IsAny<UserProfile.Profile>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(isWhiteListed));
 
             var controller = CreateTestPlansController(mockPlanManager.Object);
 
