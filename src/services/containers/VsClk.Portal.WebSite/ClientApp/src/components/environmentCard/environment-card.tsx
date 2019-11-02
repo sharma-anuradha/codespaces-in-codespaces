@@ -41,7 +41,7 @@ import { Signal, CancellationError } from '../../utils/signal';
 import { MessageBarType, MessageBar } from 'office-ui-fabric-react/lib/MessageBar';
 import { CancellationTokenSource, CancellationToken } from 'vscode-jsonrpc';
 import { isDefined } from '../../utils/isDefined';
-import { isMacOs } from '../../utils/os-detection';
+import { isMacOs } from '../../utils/detection';
 
 const trace = createTrace('environment-card');
 export interface EnvironmentCardProps {

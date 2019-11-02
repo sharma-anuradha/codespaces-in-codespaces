@@ -9,3 +9,7 @@ body, html {
   background: white;
   overflow: hidden;
 }
+
+.supported-browser .portal-layout, .supported-browser .vsonline-workbench {
+  top: 32px
+}
