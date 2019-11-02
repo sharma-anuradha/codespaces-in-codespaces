@@ -1,15 +1,17 @@
 import React, { Component, KeyboardEvent, SyntheticEvent, ReactElement, Fragment } from 'react';
 import { connect } from 'react-redux';
 
-import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, DefaultButton, IconButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
-import { KeyCodes } from '@uifabric/utilities';
+import { KeyCodes, IRenderFunction } from '@uifabric/utilities';
 
 import { Link } from 'office-ui-fabric-react/lib/components/Link';
-import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
+import { Dropdown, IDropdownOption, IDropdown, IDropdownProps } from 'office-ui-fabric-react/lib/Dropdown';
+import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { ISelectableOption } from 'office-ui-fabric-react/lib/utilities/selectableOption/SelectableOption.types';
 
 import { useWebClient, ServiceResponseError } from '../../actions/middleware/useWebClient';
 import { createEnvironment } from '../../actions/createEnvironment';
@@ -37,6 +39,9 @@ import { Signal } from '../../utils/signal';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
+
+const SKU_SHOW_PRICING_KEY = 'show-pricing';
+const SKU_PRICING_LABEL = 'Show pricing information...';
 
 async function queryGitService(url: string, bearerToken?: string): Promise<boolean> {
     const webClient = useWebClient();
@@ -422,10 +427,12 @@ export class CreateEnvironmentPanelView extends Component<
         );
     }
 
+    private skuDropdownRef = React.createRef<IDropdown>();
+
     private renderSkuSelector() {
         const availableSkus = this.getAvailableSkus();
 
-        const options = availableSkus
+        const options: IDropdownOption[] = availableSkus
             ? availableSkus.map((s) => {
                   return { key: s.name, text: s.displayName };
               })
@@ -433,8 +440,15 @@ export class CreateEnvironmentPanelView extends Component<
 
         const errorMessage = this.getSkuNameValidationMessage();
 
+        options.push({
+            key: SKU_SHOW_PRICING_KEY,
+            text: SKU_PRICING_LABEL,
+            data: { icon: 'OpenInNewTab' }
+        });
+
         return (
             <DropDownWithLoader
+                componentRef={this.skuDropdownRef}
                 label='Instance Type'
                 options={options}
                 isLoading={!this.props.isPlanLoadingFinished || false}
@@ -443,9 +457,41 @@ export class CreateEnvironmentPanelView extends Component<
                 errorMessage={errorMessage}
                 disabled={!!errorMessage}
                 onChange={this.onChangeSkuName}
+                onRenderOption={this.onSkuOptionRender as IRenderFunction<ISelectableOption>}
+                onRenderLabel={this.onSkuLabelRender as IRenderFunction<IDropdownProps>}
             />
         );
     }
+
+    private openSKUPricingWindow = () => {
+        window.open('https://aka.ms/vso-pricing', '_blank');
+    }
+
+    private onSkuLabelRender = (props: IDropdownProps) => {
+        return (
+            <Stack horizontal verticalAlign="center">
+              <span style={{ fontWeight: 600 }}>{props.label}</span>
+              <IconButton
+                iconProps={{ iconName: 'Info' }}
+                title={SKU_PRICING_LABEL}
+                ariaLabel={SKU_PRICING_LABEL}
+                styles={{ root: { marginBottom: -3 } }}
+                onClick={this.openSKUPricingWindow}
+            />
+            </Stack>
+        );
+    }
+
+    private onSkuOptionRender = (option: IDropdownOption) => {
+        return (
+            <div>
+                {option.data && option.data.icon && (
+                    <Icon style={{ marginRight: '8px' }} iconName={option.data.icon} aria-hidden="true" title={option.data.icon} />
+                )}
+                <span>{option.text}</span>
+            </div>
+        );
+    };
 
     private onRenderFooterContent = () => {
         let authStatusMessage;
@@ -805,17 +851,25 @@ export class CreateEnvironmentPanelView extends Component<
     };
 
     private onChangeSkuName = (_event: unknown, option?: IDropdownOption, index?: number) => {
-        if (option) {
-            if (typeof option.key !== 'string') {
-                throw new Error('NotImplemented');
-            }
-
-            const newState = this.isSkuNameValid(option.key, this.getAvailableSkus())
-                ? ValidationState.Valid
-                : ValidationState.Invalid;
-
-            this.setTextValidationState('skuName', option.key, newState);
+        if (!option) {
+            return;
         }
+
+        if (typeof option.key !== 'string') {
+            throw new Error('NotImplemented');
+        }
+
+        if (option.key === SKU_SHOW_PRICING_KEY) {
+            setTimeout(() => { this.skuDropdownRef.current && this.skuDropdownRef.current.focus(true); });
+            this.openSKUPricingWindow();
+            return;
+        }
+
+        const newState = this.isSkuNameValid(option.key, this.getAvailableSkus())
+            ? ValidationState.Valid
+            : ValidationState.Invalid;
+
+        this.setTextValidationState('skuName', option.key, newState);
     };
 
     private isSkuNameValid = (skuName: string, availableSkus?: ISku[] | null) => {
