@@ -1,5 +1,5 @@
 import React, { FormEvent, Component } from 'react';
-import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
+import { IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
@@ -23,6 +23,7 @@ interface PlanSelectorProps extends RouteComponentProps {
     isMadeInitialPlansRequest: boolean;
     isLoadingPlan: boolean;
     className?: string;
+    isServiceAvailable: boolean;
 }
 
 export class PlanSelectorComponent extends Component<PlanSelectorProps> {
@@ -30,9 +31,11 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
         super(props);
         const query = new URLSearchParams(props.location.search);
         const selectedPlanName = query.get('plan');
-        
-        if(selectedPlanName){
-            const selectedPlanObj: IPlan | undefined = this.props.plansList.find(item => (item.name.toLowerCase() === selectedPlanName.toLowerCase()));
+
+        if (selectedPlanName) {
+            const selectedPlanObj: IPlan | undefined = this.props.plansList.find(
+                (item) => item.name.toLowerCase() === selectedPlanName.toLowerCase()
+            );
 
             if (selectedPlanObj) {
                 selectPlan(selectedPlanObj);
@@ -41,6 +44,10 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
     }
 
     render() {
+        if (!this.props.isServiceAvailable) {
+            return null;
+        }
+
         const {
             selectedPlanId,
             plansList,
@@ -105,7 +112,7 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
     };
 }
 
-const getPlansStoreState = ({ plans }: ApplicationState) => {
+const getPlansStoreState = ({ plans, serviceStatus: { isServiceAvailable } }: ApplicationState) => {
     const plansList = plans.plans;
     const { selectedPlan, isMadeInitialPlansRequest, isLoadingPlan } = plans;
 
@@ -113,6 +120,7 @@ const getPlansStoreState = ({ plans }: ApplicationState) => {
         plansList,
         isMadeInitialPlansRequest,
         isLoadingPlan,
+        isServiceAvailable,
         selectedPlanId: selectedPlan && selectedPlan.id,
     };
 };

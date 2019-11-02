@@ -1,5 +1,5 @@
 import React, { Fragment, useCallback, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { createEnvironment } from '../../actions/createEnvironment';
@@ -8,10 +8,22 @@ import {
     CreateEnvironmentPanel,
     defaultAutoShutdownDelayMinutes,
 } from '../environmentsPanel/create-environment-panel';
+import { ApplicationState } from '../../reducers/rootReducer';
+import { Loader } from '../loader/loader';
+import { Redirect } from 'react-router';
+import { newPlanPath } from '../../routerPaths';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
 export function NewEnvironment(props: RouteComponentProps) {
+    const { selectedPlan, isLoadingPlan, isMadeInitialPlansRequest } = useSelector(
+        (state: ApplicationState) => ({
+            selectedPlan: state.plans.selectedPlan,
+            isLoadingPlan: state.plans.isLoadingPlan,
+            isMadeInitialPlansRequest: state.plans.isMadeInitialPlansRequest,
+        })
+    );
+
     const query = new URLSearchParams(props.location.search);
     const name = query.get('name');
     const repo = query.get('repo');
@@ -41,6 +53,14 @@ export function NewEnvironment(props: RouteComponentProps) {
     );
 
     const hideError = useCallback(() => setErrorMessage(undefined), []);
+
+    if (!isMadeInitialPlansRequest || isLoadingPlan) {
+        return <Loader message='Fetching your billing plans...' />;
+    }
+
+    if (!selectedPlan) {
+        return <Redirect to={newPlanPath} />;
+    }
 
     return (
         <Fragment>

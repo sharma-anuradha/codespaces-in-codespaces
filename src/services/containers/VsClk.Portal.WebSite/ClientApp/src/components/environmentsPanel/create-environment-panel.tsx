@@ -34,6 +34,7 @@ import './create-environment-panel.css';
 import { isDefined } from '../../utils/isDefined';
 import { Loader } from '../loader/loader';
 import { Signal } from '../../utils/signal';
+import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
@@ -731,7 +732,7 @@ export class CreateEnvironmentPanelView extends Component<
         if (this.props.isPlanLoadingFinished) {
             if (!this.props.selectedPlan) {
                 return validationMessages.noPlanSelected;
-            } else if (!this.props.selectedPlan.availableSkus) {
+            } else if (!isNotNullOrEmpty(this.props.selectedPlan.availableSkus)) {
                 return validationMessages.noSkusAvailable;
             }
         }

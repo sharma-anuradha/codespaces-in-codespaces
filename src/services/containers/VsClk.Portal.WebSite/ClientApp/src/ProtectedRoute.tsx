@@ -6,18 +6,13 @@ import { ApplicationState } from './reducers/rootReducer';
 import { Loader } from './components/loader/loader';
 import { telemetry } from './utils/telemetry';
 import { loginPath, environmentsPath } from './routerPaths';
-
-const getAuthInfo = ({
-    authentication: { isAuthenticated, isAuthenticating },
-}: ApplicationState) => ({
-    isAuthenticated,
-    isAuthenticating,
-});
+import { ServiceUnavailable } from './components/ServiceUnavailable/ServiceUnavailable';
 
 type Props = {
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
     isAuthenticated: boolean;
     isAuthenticating: boolean;
+    isServiceAvailable: boolean;
 } & RouteProps &
     RouteComponentProps;
 
@@ -28,7 +23,17 @@ const ProtectedRouteView = (props: Props) => {
         telemetry.setCurrentEnvironmentId(undefined);
     }
 
-    const { isAuthenticating, isAuthenticated, component: Component, ...rest } = props;
+    const {
+        isServiceAvailable,
+        isAuthenticating,
+        isAuthenticated,
+        component: Component,
+        ...rest
+    } = props;
+
+    if (!isServiceAvailable) {
+        return <ServiceUnavailable />;
+    }
 
     if (isAuthenticating && !isAuthenticated) {
         return <Loader message='Signing in...' />;
@@ -54,7 +59,16 @@ const ProtectedRouteView = (props: Props) => {
     return <Component {...rest} />;
 };
 
-const AuthenticatedRoute = connect(getAuthInfo)(ProtectedRouteView);
+const getAccessInfo = ({
+    authentication: { isAuthenticated, isAuthenticating },
+    serviceStatus: { isServiceAvailable },
+}: ApplicationState) => ({
+    isAuthenticated,
+    isAuthenticating,
+    isServiceAvailable,
+});
+
+const AuthenticatedRoute = connect(getAccessInfo)(ProtectedRouteView);
 
 type ProtectedRouteProps = RouteProps & {
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;

@@ -4,7 +4,6 @@ import { Redirect } from 'react-router-dom';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Link } from 'office-ui-fabric-react/lib/Link';
-import { Image } from 'office-ui-fabric-react/lib/Image';
 import { Stack, StackItem } from 'office-ui-fabric-react/lib/Stack';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import { PortalLayout } from '../portalLayout/portalLayout';
@@ -17,10 +16,10 @@ import { environmentsPath } from '../../routerPaths';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 import { setAuthCookie } from '../../utils/setAuthCookie';
 import { blogPostUrl } from '../../BlogPost';
+import { Signal } from '../../utils/signal';
+import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
 
 import './login.css';
-import loginImage from './login-image.png';
-import { Signal } from '../../utils/signal';
 
 interface LoginProps {
     redirectUrl: string | null;
@@ -104,7 +103,7 @@ function LoginView(props: LoginProps) {
                 </Stack.Item>
 
                 <StackItem>
-                    <Image src={loginImage} width={326} height={193} />
+                    <EverywhereImage />
                 </StackItem>
 
                 <Stack.Item>

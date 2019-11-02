@@ -1,11 +1,12 @@
 import { action } from './middleware/useActionCreator';
 
-import { useWebClient } from './middleware/useWebClient';
+import { useWebClient, ServiceResponseError } from './middleware/useWebClient';
 import { useDispatch } from './middleware/useDispatch';
 import { IPlan } from '../interfaces/IPlan';
 import { useActionContext } from './middleware/useActionContext';
 import { ActivePlanInfo } from '../reducers/plans-reducer';
 import { getLocation } from './locations-actions';
+import { serviceUnavailableAtTheMoment } from './serviceUnavailable';
 
 export const selectPlanActionType = 'async.plan.select';
 export const selectPlanSuccessActionType = 'async.plan.select.success';
@@ -78,14 +79,23 @@ export async function getPlans() {
 
     const { apiEndpoint } = configuration;
 
+    let plansList: IPlan[];
     try {
         dispatch(getPlansAction());
 
         const webClient = useWebClient();
-        const plansList: IPlan[] = await webClient.get(`${apiEndpoint}/plans`, {
+        plansList = await webClient.get(`${apiEndpoint}/plans`, {
             retryCount: 2,
         });
+    } catch (err) {
+        if (err instanceof ServiceResponseError && err.statusCode === 503) {
+            return dispatch(serviceUnavailableAtTheMoment());
+        }
 
+        return dispatch(getPlansFailureAction(err));
+    }
+
+    try {
         if (plansList.length) {
             const defaultPlan = plansList[0];
             const locationInfo = await getLocation(defaultPlan.location);
@@ -93,7 +103,7 @@ export async function getPlans() {
             dispatch(
                 getPlansSuccessAction(plansList, {
                     ...defaultPlan,
-                    availableSkus: locationInfo && locationInfo.skus,
+                    availableSkus: (locationInfo && locationInfo.skus) || [],
                 })
             );
         } else {
