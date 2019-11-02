@@ -14,7 +14,7 @@ export async function connectEnvironment(
     const dispatch = useDispatch();
     try {
         if (environmentState === StateInfo.Shutdown) {
-            dispatch(stateChangeEnvironmentAction(id, StateInfo.Starting));
+            dispatch(stateChangeEnvironmentAction(id, StateInfo.Starting, true));
         }
 
         return await envRegService.connectEnvironment(id, environmentState);
@@ -50,7 +50,7 @@ export async function connectEnvironment(
         if (environmentState === StateInfo.Shutdown) {
             // If starting environment failed, put it to right state.
             let e = await envRegService.getEnvironment(id);
-            dispatch(stateChangeEnvironmentAction(id, e!.state));
+            dispatch(stateChangeEnvironmentAction(id, e!.state, true));
         }
 
         throw err;

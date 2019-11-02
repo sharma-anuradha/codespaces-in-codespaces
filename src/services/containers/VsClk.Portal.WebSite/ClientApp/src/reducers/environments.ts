@@ -216,7 +216,7 @@ export function environments(
         case stateChangeEnvironmentActionType:
             return ((state, action) => {
                 let { activatingEnvironments } = state;
-                const { id, environmentState } = action.payload;
+                const { id, environmentState, isUiUpdate } = action.payload;
                 const index = state.environments.findIndex((e) => e.id === id);
 
                 if (index < 0) {
@@ -228,7 +228,9 @@ export function environments(
                     state: environmentState,
                 };
 
-                if (isActivating({ state: environmentState })) {
+                if (!isUiUpdate && isActivating({ state: environmentState })) {
+                    // Add the environment to activating environments only when it's state has
+                    // changed in the service.
                     activatingEnvironments = activatingEnvironments.filter((eId) => eId !== id);
                     activatingEnvironments.push(id);
                 }

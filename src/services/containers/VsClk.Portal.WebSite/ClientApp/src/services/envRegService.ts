@@ -128,7 +128,8 @@ export async function deleteEnvironment(id: string): Promise<void> {
 }
 
 export async function shutdownEnvironment(id: string): Promise<void> {
-    const configuration = useActionContext().state.configuration;
+    const actionContext = useActionContext();
+    const configuration = actionContext.state.configuration;
     if (!configuration) {
         throw new Error('Configuration must be fetched before calling EnvReg service.');
     }
@@ -139,6 +140,20 @@ export async function shutdownEnvironment(id: string): Promise<void> {
     await webClient.post(`${environmentRegistrationEndpoint}/${id}/shutdown`, null, {
         retryCount: 2,
     });
+
+    await pollActivatingEnvironment(id);
+
+    // And then wait for status to change
+    let environmentNotSuspended = true;
+    while (environmentNotSuspended) {
+        const env = actionContext.state.environments.environments.find((env) => env.id === id);
+        if (!env) {
+            throw new Error('InvalidId');
+        }
+
+        environmentNotSuspended = isActivating(env);
+        await wait(1000);
+    }
 }
 
 export async function connectEnvironment(
