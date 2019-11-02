@@ -26,6 +26,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserSubscriptions;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -77,26 +78,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddCors(options =>
                 {
                     var currentOrigins = ControlPlaneAzureResourceAccessor.GetStampOrigins();
-                    options.AddPolicy("ProdCORSPolicy",
+                    options.AddPolicy(
+                        "ProdCORSPolicy",
                         builder => builder
                             .WithOrigins(currentOrigins.ToArray())
                             .AllowAnyHeader()
-                            .AllowAnyMethod()
-                        );
+                            .AllowAnyMethod());
 
                     var currentOriginsDev = currentOrigins.GetRange(0, currentOrigins.Count);
                     currentOriginsDev.Add("https://localhost:3000");
 
-                    options.AddPolicy("NonProdCORSPolicy",
+                    options.AddPolicy(
+                        "NonProdCORSPolicy",
                         builder => builder
                             .WithOrigins(
-                                currentOriginsDev.ToArray()
-                            )
+                                currentOriginsDev.ToArray())
                             .AllowAnyHeader()
-                            .AllowAnyMethod()
-                        );
-                }
-            );
+                            .AllowAnyMethod());
+                });
 
             // Add the account manager and the account management repository
             services.AddPlanManager(frontEndAppSettings.PlanManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment);
@@ -210,6 +209,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Add HeartBeat data handlers
             services.AddHeartBeatDataHandlers();
+
+            // Add user-subscriptions
+            services.AddDocumentDbCollection<UserSubscription, IUserSubscriptionRepository, UserSubscriptionRepository>(UserSubscriptionRepository.ConfigureOptions);
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>
