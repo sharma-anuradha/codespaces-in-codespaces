@@ -8,6 +8,7 @@ import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 import { ComboBox, IComboBoxOption, IComboBoxProps } from 'office-ui-fabric-react/lib/ComboBox';
+import { Link } from 'office-ui-fabric-react/lib/Link';
 import { KeyCodes } from '@uifabric/utilities';
 
 import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader';
@@ -139,6 +140,11 @@ export class CreatePlanPanelComponent extends Component<
             ? 'We will create a new resource group for you automatically.'
             : null;
 
+        const isSubscriptionEmpty =
+            !this.state.isGettingSubscriptions &&
+            this.state.subscriptionList &&
+            this.state.subscriptionList.length === 0;
+
         return (
             <Panel
                 isOpen={true}
@@ -160,11 +166,16 @@ export class CreatePlanPanelComponent extends Component<
                             onChange={this.subscriptionChanged}
                             options={subscriptionList}
                             isLoading={isGettingSubscriptions}
+                            disabled={isSubscriptionEmpty}
                             loadingMessage='Fetching your subscriptions...'
                             selectedKey={selectedSubscription}
                             className='create-environment-panel__dropdown'
                         />
-
+                        {isSubscriptionEmpty && (
+                            <Link href='https://azure.microsoft.com/en-us/free/' target='_blank'>
+                                Create a free Azure account
+                            </Link>
+                        )}
                         <DropDownWithLoader
                             label='Location'
                             onChange={this.locationChanged}
@@ -494,8 +505,7 @@ export class CreatePlanPanelComponent extends Component<
         }
 
         if (this.state.newGroup && this.selectedResourceGroup === this.state.newGroup) {
-            isInvalid =
-                isInvalid || isNotNullOrEmpty(validateResourceName(this.state.newGroup));
+            isInvalid = isInvalid || isNotNullOrEmpty(validateResourceName(this.state.newGroup));
         }
 
         isInvalid = isInvalid || !this.selectedResourceGroup;
