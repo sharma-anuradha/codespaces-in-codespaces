@@ -4,7 +4,6 @@ import { RouteComponentProps } from 'react-router-dom';
 import { withRouter } from 'react-router';
 
 import { Persona, PersonaSize } from 'office-ui-fabric-react/lib/Persona';
-import { Separator } from 'office-ui-fabric-react/lib/Separator';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { PlanSelector } from '../planSelector/plan-selector';
@@ -67,7 +66,7 @@ function TitleBarNoRouter(props: RouteComponentProps) {
         <div className='vsonline-titlebar part'>
             <div className='vsonline-titlebar__caption' aria-label='Visual Studio logo'>
                 <div className='vsonline-titlebar__logo' />
-                <Separator vertical className='vsonline-titlebar__separator' />
+                <div className='vsonline-titlebar__separator' />
                 <div className='vsonline-titlebar__caption-text'>
                     {getDevelopmentEmojiPrefix()}
                     {getIsInternalEmojiPrefix()}

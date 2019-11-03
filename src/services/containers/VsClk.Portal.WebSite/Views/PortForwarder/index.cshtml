@@ -7,7 +7,7 @@
     <title>Connecting to the forwarded port... </title>
 </head>
 <body>
-    <p id="user_message">Connecting to the forwarded port...</p>
+    <p class="vsonline-port-forwarding__status">Connecting to the forwarded port...</p>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker
@@ -24,10 +24,6 @@
                         message.type === 'vsonline/connected' &&
                         message.payload.sessionId === '@Model.SessionId'
                     ) {
-                        const messageElement = document.getElementById('user_message');
-                        if (messageElement) {
-                            messageElement.textContent = 'Connected to server. Refreshing page';
-                        }
                         location.reload();
                     }
                     if (
