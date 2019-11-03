@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { PrimaryButton, DefaultButton, IconButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
-import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { TextField, ITextFieldProps } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { KeyCodes, IRenderFunction } from '@uifabric/utilities';
 
@@ -42,6 +42,7 @@ type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
 const SKU_SHOW_PRICING_KEY = 'show-pricing';
 const SKU_PRICING_LABEL = 'Show pricing information...';
+const SKU_PRICING_URL = 'https://aka.ms/vso-pricing';
 
 async function queryGitService(url: string, bearerToken?: string): Promise<boolean> {
     const webClient = useWebClient();
@@ -256,6 +257,27 @@ const autoShutdownOptions: IDropdownOption[] = [
     { key: 0, text: 'Never' },
 ];
 
+const openExternalUrl = (url: string) => {
+    window.open(url, '_blank');
+}
+
+function createLabelRenderCallback(title: string, onClickUrl: string) {
+    return (props: IDropdownProps) => {    
+        return (
+            <Stack horizontal verticalAlign="center">
+            <span style={{ fontWeight: 600 }}>{props.label}</span>
+            <IconButton
+                iconProps={{ iconName: 'Info' }}
+                title={title}
+                ariaLabel={title}
+                styles={{ root: { marginBottom: -3 } }}
+                onClick={openExternalUrl.bind(null, onClickUrl)}
+            />
+            </Stack>
+        );
+    }
+}
+
 export class CreateEnvironmentPanelView extends Component<
     CreateEnvironmentPanelProps,
     CreateEnvironmentPanelState
@@ -355,6 +377,9 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     private renderCreateEnvironmentInputs() {
+        const onSuspendRenderLabel = createLabelRenderCallback('View suspend behavior details', 'https://aka.ms/vso-docs/how-to/suspend');
+        const onDotfilesRenderLabel = createLabelRenderCallback('View dotfiles details', 'https://aka.ms/vso-docs/reference/personalizing');
+        
         return (
             <Stack tokens={{ childrenGap: 'l1' }}>
                 <Stack tokens={{ childrenGap: 4 }}>
@@ -388,6 +413,7 @@ export class CreateEnvironmentPanelView extends Component<
                         options={autoShutdownOptions}
                         onChange={this.onChangeAutoShutdownDelayMinutes}
                         selectedKey={this.state.autoShutdownDelayMinutes.value}
+                        onRenderLabel={onSuspendRenderLabel  as IRenderFunction<IDropdownProps>}
                     />
                 </Stack>
 
@@ -403,6 +429,7 @@ export class CreateEnvironmentPanelView extends Component<
                         onGetErrorMessage={this.onGetErrorMessageGitRepo}
                         onNotifyValidationResult={this.onNotifyValidationResultDotfilesRepository}
                         validateOnLoad={false}
+                        onRenderLabel={onDotfilesRenderLabel as IRenderFunction<ITextFieldProps>}
                     />
                     <TextField
                         label='Dotfiles Install Command'
@@ -446,6 +473,7 @@ export class CreateEnvironmentPanelView extends Component<
             data: { icon: 'OpenInNewTab' }
         });
 
+        const onSkuLabelRender = createLabelRenderCallback(SKU_PRICING_LABEL, SKU_PRICING_URL);
         return (
             <DropDownWithLoader
                 componentRef={this.skuDropdownRef}
@@ -458,27 +486,8 @@ export class CreateEnvironmentPanelView extends Component<
                 disabled={!!errorMessage}
                 onChange={this.onChangeSkuName}
                 onRenderOption={this.onSkuOptionRender as IRenderFunction<ISelectableOption>}
-                onRenderLabel={this.onSkuLabelRender as IRenderFunction<IDropdownProps>}
+                onRenderLabel={onSkuLabelRender as IRenderFunction<IDropdownProps>}
             />
-        );
-    }
-
-    private openSKUPricingWindow = () => {
-        window.open('https://aka.ms/vso-pricing', '_blank');
-    }
-
-    private onSkuLabelRender = (props: IDropdownProps) => {
-        return (
-            <Stack horizontal verticalAlign="center">
-              <span style={{ fontWeight: 600 }}>{props.label}</span>
-              <IconButton
-                iconProps={{ iconName: 'Info' }}
-                title={SKU_PRICING_LABEL}
-                ariaLabel={SKU_PRICING_LABEL}
-                styles={{ root: { marginBottom: -3 } }}
-                onClick={this.openSKUPricingWindow}
-            />
-            </Stack>
         );
     }
 
@@ -861,7 +870,7 @@ export class CreateEnvironmentPanelView extends Component<
 
         if (option.key === SKU_SHOW_PRICING_KEY) {
             setTimeout(() => { this.skuDropdownRef.current && this.skuDropdownRef.current.focus(true); });
-            this.openSKUPricingWindow();
+            openExternalUrl(SKU_PRICING_URL);
             return;
         }
 
