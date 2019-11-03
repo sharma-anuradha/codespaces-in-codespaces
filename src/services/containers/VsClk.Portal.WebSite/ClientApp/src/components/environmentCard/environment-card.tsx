@@ -386,7 +386,7 @@ const getSkuDisplayName = (selectedPlan: ActivePlanInfo, environment: ILocalClou
         return skuName;
     }
     const sku = selectedPlan.availableSkus.find((sku) => sku.name === skuName);
-    return sku ? getSkuSpecLabel(sku) : (environment.skuDisplayName || skuName);
+    return sku ? getSkuSpecLabel(sku) : environment.skuDisplayName || skuName;
 };
 
 const suspendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {
@@ -478,9 +478,6 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
                 (err) => {
                     if (err instanceof CancellationError) {
                         cancellationTokenSource.cancel();
-                        if (props.environment.id) {
-                            shutdownEnvironment(props.environment.id);
-                        }
                         return;
                     }
 
