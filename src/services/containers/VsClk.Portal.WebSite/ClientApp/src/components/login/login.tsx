@@ -15,11 +15,11 @@ import { Loader } from '../loader/loader';
 import { environmentsPath } from '../../routerPaths';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 import { setAuthCookie } from '../../utils/setAuthCookie';
-import { blogPostUrl } from '../../BlogPost';
 import { Signal } from '../../utils/signal';
 import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
 
 import './login.css';
+import { blogPostUrl, pricingInfoUrl } from '../../constants';
 
 interface LoginProps {
     redirectUrl: string | null;
@@ -107,13 +107,28 @@ function LoginView(props: LoginProps) {
                 </StackItem>
 
                 <Stack.Item>
-                    <PrimaryButton onClick={props.login}>Sign in</PrimaryButton>
+                    <PrimaryButton
+                        onClick={props.login}
+                        className='login-page__login-button'>
+                    Sign in
+                </PrimaryButton>
                 </Stack.Item>
 
                 <Stack.Item className='login-page__learn-more-wrapper'>
                     <Link className='login-page__learn-more' href={blogPostUrl}>
                         <span className='login-page__learn-more'>
                             <span>Learn more</span>
+                            <span>
+                                <Icon
+                                    iconName='ChevronRight'
+                                    className='login-page__learn-more-icon'
+                                />
+                            </span>
+                        </span>
+                    </Link>
+                    <Link className='login-page__learn-more' href={pricingInfoUrl}>
+                        <span className='login-page__learn-more'>
+                            <span>Pricing</span>
                             <span>
                                 <Icon
                                     iconName='ChevronRight'

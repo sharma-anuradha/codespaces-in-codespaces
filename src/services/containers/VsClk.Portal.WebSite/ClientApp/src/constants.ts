@@ -29,3 +29,7 @@ export const aadAuthorityUrlCommon = 'https://login.microsoftonline.com/common';
 export const armAPIVersion = '2019-05-10';
 
 export const expirationTimeBackgroundTokenRefreshThreshold = 3000;
+
+export const blogPostUrl = 'https://aka.ms/vso-landing';
+
+export const pricingInfoUrl = 'https://aka.ms/vso-pricing';

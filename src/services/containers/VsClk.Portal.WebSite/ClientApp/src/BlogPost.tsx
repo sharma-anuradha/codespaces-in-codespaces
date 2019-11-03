@@ -4,8 +4,7 @@ import { Redirect } from 'react-router-dom';
 import { ApplicationState } from './reducers/rootReducer';
 import { loginPath, environmentsPath } from './routerPaths';
 import { RouteComponentProps } from 'react-router';
-
-export const blogPostUrl = 'https://aka.ms/vso-landing';
+import { blogPostUrl } from './constants';
 
 export function BlogPost(props: RouteComponentProps) {
     if (process.env.NODE_ENV === 'development') {

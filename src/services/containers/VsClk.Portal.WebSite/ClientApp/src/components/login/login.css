@@ -1,3 +1,21 @@
+.login-page {
+   /* normalize for visual weight  */
+   margin-top: -5rem;
+}
+
+@media screen and (max-height: 740px) {
+   .login-page {
+      margin-top: -1rem;
+   }
+}
+
+@media screen and (max-height: 500px) {
+   .login-page {
+      margin-top: 5rem;
+      justify-content: flex-start;
+   }
+}
+
 .login-page__title {
    font-size: 2.8rem;
    font-weight: 600;
@@ -8,19 +26,25 @@
 }
 
 .login-page > .login-page__learn-more-wrapper {
-   margin-top: .8rem;
+   margin-top: 3rem;
 }
 
 .login-page__learn-more {
-   display: flex;
-   flex-wrap: nowrap;
-   align-items: center;
-   justify-content: flex-start;
+   display: inline-block;
 }
+
+.login-page__learn-more + .login-page__learn-more {
+   margin-left: 3rem;
+}
+
 .login-page__learn-more-icon {
    font-size: 1.1rem;
    width: 1.1rem;
    height: 1.1rem;
    text-align: center;
    vertical-align: middle;
+}
+
+.login-page__login-button {
+   margin-top: 2rem;
 }
