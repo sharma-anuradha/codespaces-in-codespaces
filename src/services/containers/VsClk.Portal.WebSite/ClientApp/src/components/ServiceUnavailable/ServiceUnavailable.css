@@ -10,3 +10,14 @@
     text-align: center;
  }
  
+ .email-form__text-field div {
+   border-top-right-radius: 0;
+   border-bottom-right-radius: 0;
+
+   width: 30rem;
+ }
+
+ .email-form__button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+ }
