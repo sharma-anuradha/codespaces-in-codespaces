@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// </summary>
         public int MaxDeleteBatchCount
         {
-            get { return 25; }
+            get { return 35; }
         }
     }
 }

@@ -81,10 +81,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 {
                     // Get 20% items to delete
                     var dropCount = (int)Math.Ceiling(resourcePool.TargetCount * 0.2);
+
+                    logger.FluentAddValue("VersionDropCount", dropCount);
+
+                    dropCount = Math.Min(resourcePool.MaxDeleteBatchCount, dropCount);
+
                     var nonCurrentIds = await GetPoolUnassignedNotVersionAsync(resourcePool, dropCount, logger);
 
-                    logger.FluentAddValue("VersionDropCount", dropCount)
-                        .FluentAddValue("VersionDropFoundCount", nonCurrentIds.Count());
+                    logger.FluentAddValue("VersionDropFoundCount", nonCurrentIds.Count());
 
                     // Delete each of the items that are not current
                     foreach (var nonCurrentId in nonCurrentIds)

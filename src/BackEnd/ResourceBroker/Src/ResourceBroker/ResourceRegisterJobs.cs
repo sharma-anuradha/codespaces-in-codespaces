@@ -123,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             await Task.Delay(Random.Next(5000, 7500));
 
             // Job: Watch Pool Version
-            var watchPoolVersionTaskSpan = TimeSpan.FromMinutes(2);
+            var watchPoolVersionTaskSpan = TimeSpan.FromMinutes(1);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchPoolVersionTask}_run",
                 (childLogger) => WatchPoolVersionTask.RunAsync(watchPoolVersionTaskSpan, childLogger),
