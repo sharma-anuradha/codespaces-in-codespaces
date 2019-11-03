@@ -399,7 +399,7 @@ export class CreateEnvironmentPanelView extends Component<
                     />
                     <TextField
                         label='Git Repository'
-                        placeholder='vsls-contrib/guestbook'
+                        placeholder='microsoft/vsonline-quickstart'
                         onKeyDown={this.submitForm}
                         value={this.state.gitRepositoryUrl.value}
                         iconProps={getValidationIcon(this.state.gitRepositoryUrl)}

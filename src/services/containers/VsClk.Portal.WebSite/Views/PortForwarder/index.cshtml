@@ -1,76 +1,68 @@
 ﻿@using Microsoft.VsCloudKernel.Services.Portal.WebSite
 @model LiveShareConnectionDetails
 
-<!doctype html>
-<html lang="en">
-<head>
-    <title>Connecting to the forwarded port... </title>
-</head>
-<body>
-    <p class="vsonline-port-forwarding__status">Connecting to the forwarded port...</p>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker
-                .register('/service-worker.js', { scope: '/' })
-                .catch(() => {
-                    location.replace('/error');
-                });
-
-            navigator.serviceWorker.addEventListener('message', (event) => {
-                try {
-                    const message = event.data;
-                    if (
-                        message &&
-                        message.type === 'vsonline/connected' &&
-                        message.payload.sessionId === '@Model.SessionId'
-                    ) {
-                        location.reload();
-                    }
-                    if (
-                        message &&
-                        message.type === 'vsonline/connectionFailed' &&
-                        message.payload.sessionId === '@Model.SessionId'
-                    ) {
-                        throw new Error('Failed connecting to Visual Studio Online environment.');
-                    }
-                } catch (err) {
-                    navigator.serviceWorker.ready.then((registration) => {
-                        registration.unregister();
-
-                        location.replace('/error');
-                    });
-                }
+<p class="vsonline-port-forwarding__status">Connecting to the forwarded port...</p>
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker
+            .register('/service-worker.js', { scope: '/' })
+            .catch(() => {
+                location.replace('/error');
             });
 
-            navigator.serviceWorker.ready.then((registration) => {
-                if (!registration.active) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            try {
+                const message = event.data;
+                if (
+                    message &&
+                    message.type === 'vsonline/connected' &&
+                    message.payload.sessionId === '@Model.SessionId'
+                ) {
+                    location.reload();
+                }
+                if (
+                    message &&
+                    message.type === 'vsonline/connectionFailed' &&
+                    message.payload.sessionId === '@Model.SessionId'
+                ) {
+                    throw new Error('Failed connecting to Visual Studio Online environment.');
+                }
+            } catch (err) {
+                navigator.serviceWorker.ready.then((registration) => {
                     registration.unregister();
 
                     location.replace('/error');
-                    return;
-                }
-
-                // Configure the LiveShare endpoint to be used by the service worker.
-                registration.active.postMessage({
-                    type: 'vsonline/configure',
-                    payload: {
-                        liveShareEndpoint: '@Model.LiveShareEndPoint',
-                        features: {
-                            useSharedConnection: false,
-                        },
-                    },
                 });
+            }
+        });
 
-                // Send credentials to the service worker.
-                registration.active.postMessage({
-                    type: 'vsonline/authenticate',
-                    payload: {
-                        token: '@Model.CascadeToken',
-                        sessionId: '@Model.SessionId',
+        navigator.serviceWorker.ready.then((registration) => {
+            if (!registration.active) {
+                registration.unregister();
+
+                location.replace('/error');
+                return;
+            }
+
+            // Configure the LiveShare endpoint to be used by the service worker.
+            registration.active.postMessage({
+                type: 'vsonline/configure',
+                payload: {
+                    liveShareEndpoint: '@Model.LiveShareEndPoint',
+                    features: {
+                        useSharedConnection: false,
                     },
-                });
+                },
             });
-        }
-    </script>
-</body>
-</html>
+
+            // Send credentials to the service worker.
+            registration.active.postMessage({
+                type: 'vsonline/authenticate',
+                payload: {
+                    token: '@Model.CascadeToken',
+                    sessionId: '@Model.SessionId',
+                },
+            });
+        });
+    }
+</script>

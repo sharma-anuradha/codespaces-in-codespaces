@@ -34,7 +34,10 @@
 }
 
 .vsonline-titlebar__separator {
+    background-color: #fff;
     height: 2.4rem;
+    margin: 0 4px;
+    width: 1px;
 }
 
 .vsonline-titlebar__caption-text {
