@@ -19,6 +19,16 @@ import {
     ServiceContentError,
 } from '../useWebClient';
 
+jest.mock('../../../services/authService', () => {
+    return {
+        authService: {
+            getCachedToken: async () => {
+                return 'AAD token value';
+            }
+        },
+    };
+});
+
 describe('actionContextProvider', () => {
     let store: MockStore;
 

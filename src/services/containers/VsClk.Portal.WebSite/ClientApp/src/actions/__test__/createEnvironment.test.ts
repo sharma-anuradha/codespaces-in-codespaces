@@ -20,6 +20,16 @@ import { defaultConfig } from '../../services/configurationService';
 import { ServiceResponseError } from '../middleware/useWebClient';
 import { environmentErrorCodeToString } from '../../utils/environmentUtils';
 
+jest.mock('../../services/authService', () => {
+    return {
+        authService: {
+            getCachedToken: async () => {
+                return 'AAD token value';
+            }
+        },
+    };
+});
+
 jest.mock('../getUserInfo', () => {
     return {
         getUserInfo: jest.fn().mockReturnValue({ mail: 'test@test.com', displayName: 'test' }),

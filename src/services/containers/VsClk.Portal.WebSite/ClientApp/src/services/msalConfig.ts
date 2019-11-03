@@ -12,7 +12,8 @@ export const msalConfig: msal.Configuration = {
         redirectUri: location.origin,
     },
     cache: {
-        cacheLocation: storageAdapter
+        cacheLocation: storageAdapter,
+        storeAuthStateInCookie: true
     },
 };
 

@@ -61,15 +61,17 @@ class AuthService {
         this.keepUserAuthenticated();
 
         const cachedToken = await tokenCache.getCachedToken(LOCAL_STORAGE_KEY, expiration);
-        
+
         if (cachedToken) {
             const expirationTime = getTokenExpiration(cachedToken);
-            
-            if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
-                this.acquireToken();
-            }
 
-            return cachedToken as ITokenWithMsalAccount;
+            if (expirationTime >= expiration) {
+                if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
+                    this.acquireToken();
+                }
+                
+                return cachedToken as ITokenWithMsalAccount;
+            }
         }
 
         try {

@@ -3,6 +3,7 @@ import { useActionContext } from './useActionContext';
 import { trace as baseTrace } from '../../utils/trace';
 import { getTopLevelDomain } from '../../utils/getTopLevelDomain';
 import { wait } from '../../dependencies';
+import { authService } from '../../services/authService';
 
 const trace = baseTrace.extend('useWebClient:trace');
 // tslint:disable-next-line: no-console
@@ -70,11 +71,9 @@ async function request<TResult>(
         let { headers, body, ...rest } = options;
 
         if (requestOptions.requiresAuthentication) {
-            const {
-                state: {
-                    authentication: { token },
-                },
-            } = useActionContext();
+            // TODO: @Oleg+@Peter converge on single place for token storage
+            // get a fresh token from the auth service
+            const token = await authService.getCachedToken();
 
             if (!token) {
                 throw new ServiceAuthenticationError();

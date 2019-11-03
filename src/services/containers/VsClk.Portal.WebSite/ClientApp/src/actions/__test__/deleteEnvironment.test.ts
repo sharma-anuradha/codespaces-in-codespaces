@@ -15,6 +15,16 @@ import {
 } from '../deleteEnvironment';
 import { defaultConfig } from '../../services/configurationService';
 
+jest.mock('../../services/authService', () => {
+    return {
+        authService: {
+            getCachedToken: async () => {
+                return 'AAD token value';
+            }
+        },
+    };
+});
+
 describe('deleteEnvironment', () => {
     let store: MockStore;
 
