@@ -52,7 +52,13 @@ export interface EnvPersonalization {
     dotfilesInstallCommand?: string;
 }
 
-type RequiredLocalEnvironmentProperties = 'state' | 'seed' | 'friendlyName' | 'created' | 'updated' | 'skuName';
+type RequiredLocalEnvironmentProperties =
+    | 'state'
+    | 'seed'
+    | 'friendlyName'
+    | 'created'
+    | 'updated'
+    | 'skuName';
 export type ILocalCloudEnvironment = { lieId?: string } & Partial<
     Omit<ICloudEnvironment, RequiredLocalEnvironmentProperties>
 > &
@@ -82,4 +88,5 @@ export enum EnvironmentErrorCodes {
     environmentNotAvailable = 6,
     environmentNotShutdown = 7,
     unableToAllocateResources = 8,
+    unableToAllocateResourcesWhileStarting = 9,
 }

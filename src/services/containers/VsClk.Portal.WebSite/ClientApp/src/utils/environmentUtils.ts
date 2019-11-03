@@ -74,6 +74,8 @@ export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
             return 'Environment is not in suspended state.';
         case EnvironmentErrorCodes.unableToAllocateResources:
             return 'Please try again in a few minutes or select a plan in another location.';
+        case EnvironmentErrorCodes.unableToAllocateResourcesWhileStarting:
+            return 'Unable to start the environment. Please try again in a few minutes.';
 
         case EnvironmentErrorCodes.shutdownStaticEnvironment:
         case EnvironmentErrorCodes.startStaticEnvironment:
