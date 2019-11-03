@@ -37,6 +37,7 @@ import { isDefined } from '../../utils/isDefined';
 import { Loader } from '../loader/loader';
 import { Signal } from '../../utils/signal';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
+import { getSkuSpecLabel } from '../../utils/environmentUtils';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
@@ -461,7 +462,8 @@ export class CreateEnvironmentPanelView extends Component<
 
         const options: IDropdownOption[] = availableSkus
             ? availableSkus.map((s) => {
-                  return { key: s.name, text: s.displayName };
+                const text = getSkuSpecLabel(s);
+                  return { key: s.name, text };
               })
             : [];
 

@@ -28,6 +28,7 @@ import {
     isNotSuspendable,
     isSelfHostedEnvironment,
     isActivating,
+    getSkuSpecLabel,
 } from '../../utils/environmentUtils';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
@@ -380,15 +381,12 @@ function EnvironmentConnectionFailedDialog({
 }
 
 const getSkuDisplayName = (selectedPlan: ActivePlanInfo, environment: ILocalCloudEnvironment) => {
-    if (environment.skuDisplayName) {
-        return environment.skuDisplayName;
-    }
     const skuName = environment.skuName;
     if (!selectedPlan.availableSkus) {
         return skuName;
     }
     const sku = selectedPlan.availableSkus.find((sku) => sku.name === skuName);
-    return sku ? sku.displayName : skuName;
+    return sku ? getSkuSpecLabel(sku) : (environment.skuDisplayName || skuName);
 };
 
 const suspendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {

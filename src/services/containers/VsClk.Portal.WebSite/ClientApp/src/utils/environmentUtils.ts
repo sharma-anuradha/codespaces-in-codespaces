@@ -6,6 +6,7 @@ import {
     EnvironmentType,
     EnvironmentErrorCodes,
 } from '../interfaces/cloudenvironment';
+import { ISku } from '../interfaces/ISku';
 
 export function isEnvironmentAvailable(
     local: ILocalCloudEnvironment | undefined
@@ -79,5 +80,20 @@ export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
         case EnvironmentErrorCodes.unknown:
         default:
             return EnvironmentErrorCodes[code];
+    }
+}
+
+const STANDARD_SPECS = '4 cores, 8 GB RAM';
+const PREMIUM_SPECS = '8 cores, 16 GB RAM';
+export function getSkuSpecLabel(sku: ISku) {
+    switch (sku.name) {
+        case 'standardLinux':
+            return `Standard (Linux): ${STANDARD_SPECS}`;
+        case 'premiumLinux':
+            return `Premium (Linux): ${PREMIUM_SPECS}`;
+        case 'premiumWindows':
+            return `Premium (Windows): ${PREMIUM_SPECS}`;
+        default:
+            return sku.displayName;
     }
 }
