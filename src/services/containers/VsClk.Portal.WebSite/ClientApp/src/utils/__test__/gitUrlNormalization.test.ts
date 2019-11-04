@@ -20,6 +20,7 @@ describe('git url utils', () => {
             repositoryName
             ${'vso/test'}
             ${'VSO/test'}
+            ${'VSO/1.test'}
             ${'VSO/_test'}
             ${'VSO/-test'}
             ${'VSO/1test_'}
@@ -85,6 +86,7 @@ describe('git url utils', () => {
         test.each`
             url
             ${'https://github.com/vso/test.git'}
+            ${'https://github.com/vso/1.test.git'}
             ${'https://vso@bitbucket.org/vso/test.git'}
             ${'https://gitlab.com/vso/test.git'}
             ${'https://gitlab.com/vso/test/'}
@@ -110,6 +112,7 @@ describe('git url utils', () => {
         test.each`
             shortHandRepositoryName | fullRepositoryUrl
             ${'vso/test'}           | ${'https://github.com/vso/test.git'}
+            ${'vso/1.test'}         | ${'https://github.com/vso/1.test.git'}
             ${'microsoft/vscode'}   | ${'https://github.com/microsoft/vscode.git'}
         `(
             'transforms "$shortHandRepositoryName" into "$fullRepositoryUrl"',

@@ -28,8 +28,8 @@ export function getSupportedGitService(url: string): SupportedGitService {
 
 function isGitHubRepositoryName(repositoryName: string) {
     // GitHub allows organization names to contain alphanumeric characters + hyphens. They cannot start or end in hyphen.
-    // For repository names they turn all non-hyphen symbols to hyphens and allow underscores and hyphens in the beginning and end.
-    const shortGitHubUrlRegex = /^([a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]|[a-zA-Z0-9]+)\/[_\-a-zA-Z0-9]+$/;
+    // For repository names they turn all non-hyphen symbols to hyphens and allow underscores, dots, and hyphens in the beginning and end.
+    const shortGitHubUrlRegex = /^([a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]|[a-zA-Z0-9]+)\/[_\-a-zA-Z0-9\.]+$/;
 
     return shortGitHubUrlRegex.test(repositoryName);
 }
