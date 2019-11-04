@@ -19,9 +19,7 @@ interface IStoredKeys {
 }
 
 export class LocalStorageKeyVault implements IKeyVault {
-    constructor(
-        private readonly keys: IKeyVaultKey[]
-    ) {
+    constructor(private readonly keys: IKeyVaultKey[]) {
         if (!this.keys || !this.keys.length) {
             const noKeysError = new Error('No keys provided.');
 
@@ -30,15 +28,13 @@ export class LocalStorageKeyVault implements IKeyVault {
         }
 
         // longer expiration times are in the beginning
-        this.keys.sort((item: IKeyVaultKey) => {
-            return -(item.expiresOn);
-        });
+        this.keys.sort((a, b) => b.expiresOn - a.expiresOn);
     }
 
     private readBookKeepingKeys(): IStoredKeys {
         try {
             const storedKeys = localStorage.getItem(ENTRIES_STORED_KEY);
-            
+
             if (!storedKeys) {
                 return {};
             }
@@ -92,10 +88,7 @@ export class LocalStorageKeyVault implements IKeyVault {
                 return;
             }
 
-            const decryptedValue = await decryptCipherRecord(
-                storedRecord,
-                aesKey
-            );
+            const decryptedValue = await decryptCipherRecord(storedRecord, aesKey);
 
             if (!decryptedValue) {
                 return;
@@ -112,10 +105,7 @@ export class LocalStorageKeyVault implements IKeyVault {
         try {
             const encryptionKey = this.getKeyToEncrypt();
 
-            const payload = await encryptCipherPayload(
-                value,
-                encryptionKey
-            );
+            const payload = await encryptCipherPayload(value, encryptionKey);
 
             if (!payload) {
                 return;
@@ -123,8 +113,8 @@ export class LocalStorageKeyVault implements IKeyVault {
 
             const cipherRecord: ICipherRecord = {
                 ...payload,
-                keyId: encryptionKey.id
-            }
+                keyId: encryptionKey.id,
+            };
 
             const encryptedTextToSet = JSON.stringify(cipherRecord);
 
@@ -148,7 +138,7 @@ export class LocalStorageKeyVault implements IKeyVault {
 
     private getKeyToDecrypt(keyId: string): IKeyVaultKey | undefined {
         const aesKey = this.keys.find((key: IKeyVaultKey) => {
-            return (key.id === keyId);
+            return key.id === keyId;
         });
 
         return aesKey;
@@ -170,7 +160,7 @@ export class LocalStorageKeyVault implements IKeyVault {
     private isValidAesKey(key: IKeyVaultKey) {
         const delta = new Date(key.expiresOn).getTime() - Date.now();
 
-        return (delta > 0);
+        return delta > 0;
     }
 
     public getAllKeys() {
@@ -207,8 +197,8 @@ export const localStorageKeyVaultFactory = () => {
         key: new Buffer('0123456789ABCDEF'),
         expiresOn: Date.now() + 10 * 24 * 60 * 60 * 1000,
         method: 'AES',
-        methodMode: 'CBC'
+        methodMode: 'CBC',
     };
 
-    return new LocalStorageKeyVault([{ ...record, expiresOn: Date.now() }, record]);
+    return new LocalStorageKeyVault([record]);
 };
