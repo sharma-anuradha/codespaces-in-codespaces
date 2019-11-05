@@ -107,8 +107,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         {
                             await RunOrphanedCheckAsync(resource, resourceGroup, childLogger);
 
-                            // Need to slow things down so we don't blow the RUs
-                            await Task.Delay(100);
+                            // Slow down for Database RUs
+                            await Task.Delay(LoopDelay);
                         }
                     });
             }

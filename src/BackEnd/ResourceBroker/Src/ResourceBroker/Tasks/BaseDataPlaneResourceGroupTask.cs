@@ -53,6 +53,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// </summary>
         protected abstract string LogBaseName { get; }
 
+        /// <summary>
+        /// Loop delay.
+        /// </summary>
+        protected static TimeSpan LoopDelay = TimeSpan.FromMilliseconds(500);
+
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{TaskName}Lease");
 
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
@@ -67,6 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private bool Disposed { get; set; }
 
+
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
         {
@@ -78,13 +84,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                     logger.FluentAddValue("TaskCountResourceGroups", dataPlaneResourceGroups.Count().ToString());
 
-                    // Run through found resources in the background
-                    TaskHelper.RunBackgroundEnumerable(
-                        $"{LogBaseName}_run_resourcegroup",
-                        dataPlaneResourceGroups,
-                        (resourceGroup, itemLogger) => CoreRunResourceGroupAsync(resourceGroup, itemLogger),
-                        childLogger,
-                        (resourceGroup, itemLogger) => ObtainLease($"{LeaseBaseName}-{resourceGroup.Subscription.SubscriptionId}-{resourceGroup.ResourceGroup}", taskInterval, itemLogger));
+                    foreach (var resourceGroup in dataPlaneResourceGroups)
+                    {
+                        using (var lease = await ObtainLease($"{LeaseBaseName}-{resourceGroup.Subscription.SubscriptionId}-{resourceGroup.ResourceGroup}", taskInterval, logger.NewChildLogger()))
+                        {
+                            logger.FluentAddValue("LeaseNotFound", lease == null);
+                            if (lease != null)
+                            {
+                                await CoreRunResourceGroupAsync(resourceGroup, childLogger.NewChildLogger());
+                                await Task.Delay(LoopDelay);
+                            }
+                        }
+                    }
 
                     return !Disposed;
                 },
