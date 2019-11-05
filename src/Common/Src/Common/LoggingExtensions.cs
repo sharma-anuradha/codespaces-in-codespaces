@@ -246,7 +246,8 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                         async (innerLogger) =>
                         {
                             innerLogger.FluentAddBaseValue("AttemptNumber", attemptNumber)
-                                .FluentAddDuration("AttemptIterationOffset", duration);
+                                .FluentAddDuration("AttemptIterationOffset", duration)
+                                .FluentAddValue("AttemptIsProgress", attemptNumber != (Retry.DefaultMaxRetryOperationCount - 1));
 
                             await callback(innerLogger);
 
