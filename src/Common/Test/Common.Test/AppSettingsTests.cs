@@ -59,8 +59,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             {
                 var sku = item.Value;
                 {
-                    Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
-                    Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);
+                    // for launch we're disabling windows billing
+                    if (!sku.SkuName.Equals("premiumWindows"))
+                    {
+                        Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
+                        Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);
+                    }
                     Assert.True(sku.StoragePoolLevel > 0);
                     Assert.True(sku.ComputePoolLevel > 0);
                 }
@@ -119,7 +123,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         {
             var controlPlaneInfo = LoadControlPlaneInfo("dev-ci", null, AzureLocation.WestUs2);
 
-            void westUs2Stamp(IControlPlaneStampInfo s) {
+            void westUs2Stamp(IControlPlaneStampInfo s)
+            {
                 Assert.Equal(AzureLocation.WestUs2, s.Location);
                 Assert.Equal("westus2-ci-online.dev.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-dev-ci-usw2", s.StampResourceGroupName);
