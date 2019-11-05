@@ -408,6 +408,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                                                     // Track completion
                                                     localCompletion.SetResult(null);
+
+                                                    // Make sure we reduce the count, even if there was an error
+                                                    concurrentCount--;
                                                 },
                                             itemTryLogger,
                                             errCallback: (e, executeLogger) =>
@@ -415,15 +418,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                                                     // Track completion
                                                     localCompletion.SetResult(e);
 
+                                                    // Make sure we reduce the count, even if there was an error
+                                                    concurrentCount--;
+
                                                     // Execute users callback if needed
                                                     if (errItemCallback != null)
                                                     {
                                                         errItemCallback(item, e, executeLogger);
                                                     }
                                                 });
-
-                                        // Make sure we reduce the count, even if there was an error
-                                        concurrentCount--;
                                     }
                                     else
                                     {
