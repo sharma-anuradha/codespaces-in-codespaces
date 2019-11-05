@@ -25,6 +25,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// </summary>
     public class DeleteResourceGroupDeploymentsTask : BaseDataPlaneResourceGroupTask, IDeleteResourceGroupDeploymentsTask
     {
+        private const int DeleteDelayInMin = 30;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DeleteResourceGroupDeploymentsTask"/> class.
         /// </summary>
@@ -85,9 +87,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         // Find the completed deployments
                         // https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-async-operations#provisioningstate-values
                         var deployments = records.Where(x =>
-                            x.Properties?.ProvisioningState == "Succeeded" ||
+                            (x.Properties?.ProvisioningState == "Succeeded" ||
                             x.Properties?.ProvisioningState == "Failed" ||
-                            x.Properties?.ProvisioningState == "Canceled");
+                            x.Properties?.ProvisioningState == "Canceled")
+                            &&
+                            (!x.Name.StartsWith("Create", StringComparison.OrdinalIgnoreCase) ||
+                            x.Properties?.Timestamp < (DateTime.UtcNow - TimeSpan.FromMinutes(DeleteDelayInMin))));
 
                         foreach (var deployment in deployments)
                         {
