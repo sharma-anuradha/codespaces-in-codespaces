@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
@@ -20,13 +20,16 @@ import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
 
 import './login.css';
 import { blogPostUrl, pricingInfoUrl } from '../../constants';
+import { createTrace } from '../../utils/createTrace';
+
+const trace = createTrace('Login');
 
 interface LoginProps {
     redirectUrl: string | null;
     token: ITokenWithMsalAccount | undefined;
     isAuthenticated: boolean;
     isAuthenticating: boolean;
-    login: (...name: Parameters<typeof login>) => void;
+    login: (...name: Parameters<typeof login>) => Promise<unknown>;
 }
 
 function withAllowedSubdomain(targetUrl: URL) {
@@ -39,8 +42,15 @@ function withAllowedSubdomain(targetUrl: URL) {
     return new URL(environmentsPath, location.origin).toString();
 }
 
+// tslint:disable-next-line: max-func-body-length
 function LoginView(props: LoginProps) {
     const [isAuthCookieSet, setIsAuthCookieSet] = useState(false);
+
+    const loginClick = useCallback(() => {
+        props.login().catch((error) => {
+            trace.error('Login failed', { error });
+        });
+    }, [props.login]);
 
     useEffect(() => {
         if (!props.token) {
@@ -107,11 +117,9 @@ function LoginView(props: LoginProps) {
                 </StackItem>
 
                 <Stack.Item>
-                    <PrimaryButton
-                        onClick={props.login}
-                        className='login-page__login-button'>
-                    Sign in
-                </PrimaryButton>
+                    <PrimaryButton onClick={loginClick} className='login-page__login-button'>
+                        Sign in
+                    </PrimaryButton>
                 </Stack.Item>
 
                 <Stack.Item className='login-page__learn-more-wrapper'>

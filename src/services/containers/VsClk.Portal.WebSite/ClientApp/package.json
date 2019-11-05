@@ -9,7 +9,7 @@
     "@svgr/webpack": "4.1.0",
     "@types/deep-equal": "^1.0.1",
     "@uifabric/fluent-theme": "^7.0.4",
-    "@vs/msal": "^1.2.0",
+    "@vs/msal": "^1.2.1",
     "@vs/vs-ssh": "1.0.84",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "9.0.0",

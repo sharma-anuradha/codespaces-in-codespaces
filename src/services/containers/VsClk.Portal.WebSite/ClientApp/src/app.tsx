@@ -34,7 +34,7 @@ class AppRoot extends Component<AppProps, AppState> {
         telemetry.track(new ApplicationLoadEvent());
 
         try {
-            this.props.init();
+            await this.props.init();
         } catch {
             // noop
         }
