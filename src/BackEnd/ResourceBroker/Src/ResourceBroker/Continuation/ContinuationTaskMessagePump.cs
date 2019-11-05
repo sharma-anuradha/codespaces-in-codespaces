@@ -21,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
     public class ContinuationTaskMessagePump : IContinuationTaskMessagePump
     {
         private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskMessagePump;
+        private static TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2.5);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContinuationTaskMessagePump"/> class.
@@ -62,7 +63,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         childLogger.FluentAddValue("PumpFillDidTrigger", true.ToString());
 
                         // Fetch items
-                        var items = await ResourceJobQueueRepository.GetAsync(targetMessageCacheLength - MessageCache.Count, childLogger.WithValues(new LogValueSet()));
+                        var items = await ResourceJobQueueRepository.GetAsync(
+                            targetMessageCacheLength - MessageCache.Count,
+                            childLogger.WithValues(new LogValueSet()),
+                            DefaultTimeout);
 
                         childLogger.FluentAddValue("PumpFoundItems", items.Count().ToString());
 
@@ -97,7 +101,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     // matter if a cache miss happens here, its a nice to have not a necessity.
                     if (!cacheHit)
                     {
-                        message = await ResourceJobQueueRepository.GetAsync(childLogger.WithValues(new LogValueSet()));
+                        message = await ResourceJobQueueRepository.GetAsync(
+                            childLogger.WithValues(new LogValueSet()),
+                            DefaultTimeout);
                     }
 
                     childLogger.FluentAddValue("PumpFoundMessage", message != null);

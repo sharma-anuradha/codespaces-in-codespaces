@@ -86,12 +86,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             await ResourceRepository.UpdateAsync(resource, Logger);
         }
 
-        public Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger)
+        public Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger, TimeSpan? timeout = null)
         {
             throw new NotImplementedException();
         }
 
-        public Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger)
+        public Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger, TimeSpan? timeout = null)
         {
             throw new NotImplementedException();
         }

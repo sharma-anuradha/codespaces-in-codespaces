@@ -59,19 +59,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger, TimeSpan? timeout = null)
         {
             return await logger.OperationScopeAsync(
                 $"azurequeue_{LoggingDocumentName}_get",
                 async (childLogger) =>
                 {
                     var queue = await GetQueueAsync();
-                    var timeout = TimeSpan.FromMinutes(5);
+
+                    timeout = timeout ?? TimeSpan.FromMinutes(5);
 
                     childLogger.FluentAddValue("QueuePopCount", popCount)
                         .FluentAddValue("QueueVisibilityTimeout", timeout);
 
                     var results = await queue.GetMessagesAsync(popCount, timeout, null, null);
+
                     childLogger.FluentAddValue("QueueFoundItems", results.Count());
 
                     return results;
@@ -79,9 +81,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger)
+        public async Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger, TimeSpan? timeout = null)
         {
-            return (await GetAsync(1, logger)).FirstOrDefault();
+            return (await GetAsync(1, logger, timeout)).FirstOrDefault();
         }
 
         /// <inheritdoc/>

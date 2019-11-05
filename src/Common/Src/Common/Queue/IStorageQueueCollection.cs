@@ -29,15 +29,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         /// <param name="popCount">How many messages are requested.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="timeout">Target timeout.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger, TimeSpan? timeout = null);
 
         /// <summary>
         /// Pulls single messages from the queue.
         /// </summary>
         /// <param name="logger">Target logger.</param>
+        /// <param name="timeout">Target timeout.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger);
+        Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger, TimeSpan? timeout = null);
 
         /// <summary>
         /// Deletes message from the queue.
