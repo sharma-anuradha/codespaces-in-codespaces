@@ -15,7 +15,7 @@ export class UnhandledRejectionTelemetryEvent implements ITelemetryEvent {
 
     constructor(private readonly rejection: PromiseRejectionEvent) {}
 
-    getProperties() {
+    get properties() {
         return {
             reason: this.rejection.reason,
             detail: (this.rejection as any).detail,
@@ -30,7 +30,7 @@ export class UnhandledErrorTelemetryEvent implements ITelemetryEvent {
         readonly name: string = unhandledErrorEventName
     ) {}
 
-    getProperties() {
+    get properties() {
         const { name, message, stack } = this.error;
 
         return {
@@ -52,7 +52,7 @@ export class UnhandledOnErrorTelemetryEvent implements ITelemetryEvent {
         private readonly error?: Error
     ) {}
 
-    getProperties() {
+    get properties() {
         const { name = '', message = '', stack = '' } = this.error || {};
 
         return {

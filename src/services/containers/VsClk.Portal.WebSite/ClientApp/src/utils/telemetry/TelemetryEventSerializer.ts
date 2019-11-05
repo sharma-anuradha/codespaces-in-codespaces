@@ -11,7 +11,7 @@ export class TelemetryEventSerializer {
     } {
         const properties: Record<string, string> = {};
         const measurements: Record<string, number> = {};
-        const allData = event.getProperties(defaultProperties);
+        const allData = { ...defaultProperties, ...event.properties };
         for (const [name, value] of Object.entries(allData)) {
             if (value === undefined) {
                 properties[name] = 'undefined';

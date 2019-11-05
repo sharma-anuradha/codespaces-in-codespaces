@@ -1,4 +1,4 @@
-import { ITelemetryEvent, TelemetryPropertyValue } from './types';
+import { ITelemetryEvent } from './types';
 
 export class ApplicationLoadEvent implements ITelemetryEvent {
     static readonly markName: string = 'vsonline/application/loaded';
@@ -6,7 +6,7 @@ export class ApplicationLoadEvent implements ITelemetryEvent {
 
     constructor() {}
 
-    getProperties(defaultProperties: Record<string, TelemetryPropertyValue>) {
+    get properties() {
         const { requestStart, responseEnd } = window.performance.timing;
 
         const pageRequestDuration = responseEnd - requestStart;
@@ -16,8 +16,6 @@ export class ApplicationLoadEvent implements ITelemetryEvent {
         );
 
         return {
-            ...defaultProperties,
-
             pageRequestDuration,
             applicationLoadedDuration: applicationLoadMark.duration,
         };

@@ -9,7 +9,7 @@ import { ITelemetryEvent } from './types';
 import { matchPath } from '../../routes';
 
 import { ITelemetryContext } from '../../interfaces/ITelemetryContext';
-;
+
 class TelemetryService {
     private appInsights: ApplicationInsights;
     private context!: ITelemetryContext;
@@ -66,8 +66,7 @@ class TelemetryService {
                 window.sessionStorage.setItem('vso_sessionId', sessionId);
             }
             return sessionId;
-        }
-        catch (error) {
+        } catch (error) {
             this.logger.error('Failed to get session id.', {
                 error,
             });
