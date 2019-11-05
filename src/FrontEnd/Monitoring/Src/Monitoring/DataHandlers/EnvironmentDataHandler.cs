@@ -5,9 +5,11 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 {
@@ -41,27 +43,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                 throw new Exception($"Collected data of type {data?.GetType().Name} cannot be processed by {nameof(EnvironmentDataHandler)}.");
             }
 
-            var environmentData = (EnvironmentData)data;
+            await logger.OperationScopeAsync(
+               "environment_data_handler_process",
+               async (childLogger) =>
+               {
+                   var environmentData = (EnvironmentData)data;
 
-            // No-op if the environmentId is empty.
-            if (string.IsNullOrEmpty(environmentData.EnvironmentId))
-            {
-                return;
-            }
+                   childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(environmentData));
 
-            var cloudEnvironment = await environmentManager.GetEnvironmentByIdAsync(environmentData.EnvironmentId, logger);
-            ValidateCloudEnvironment(cloudEnvironment, environmentData.EnvironmentId);
+                   // No-op if the environmentId is empty.
+                   if (string.IsNullOrEmpty(environmentData.EnvironmentId))
+                   {
+                       return;
+                   }
 
-            cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
-            cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
-            var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
-            await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, logger, newState);
+                   childLogger.FluentAddBaseValue("CloudEnvironmentId", environmentData.EnvironmentId);
 
-            // Shutdown if the environment is idle
-            if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
-            {
-                await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, vmResourceId.ToString(), logger);
-            }
+                   var cloudEnvironment = await environmentManager.GetEnvironmentByIdAsync(environmentData.EnvironmentId, childLogger);
+                   ValidateCloudEnvironment(cloudEnvironment, environmentData.EnvironmentId);
+
+                   cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
+                   cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
+                   var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
+                   await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, childLogger, newState);
+
+                   // Shutdown if the environment is idle
+                   if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
+                   {
+                       await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, vmResourceId.ToString(), childLogger);
+                   }
+               });
         }
 
         private void ValidateCloudEnvironment(CloudEnvironment cloudEnvironment, string inputEnvironmentId)

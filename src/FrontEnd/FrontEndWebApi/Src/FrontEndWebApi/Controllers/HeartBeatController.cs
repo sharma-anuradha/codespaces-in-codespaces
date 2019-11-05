@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             try
             {
                 ValidateResource(heartBeat.ResourceId);
-                logger.FluentAddBaseValue("VmResourceId", heartBeat.ResourceId.ToString());
+                logger.FluentAddBaseValue("ComputeId", heartBeat.ResourceId.ToString());
             }
             catch (Exception e)
             {

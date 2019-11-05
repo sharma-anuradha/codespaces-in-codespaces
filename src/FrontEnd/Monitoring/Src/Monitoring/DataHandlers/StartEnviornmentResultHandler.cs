@@ -47,10 +47,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        throw new InvalidOperationException($"Collected data of type {data?.GetType().Name}, name  {data?.Name} cannot be processed by {nameof(StartEnviornmentResultHandler)}.");
                    }
 
-                   childLogger.FluentAddBaseValue(nameof(data.Name), data.Name)
-                         .FluentAddBaseValue("JobResult", JsonConvert.SerializeObject(data));
-
                    var jobResultData = (JobResult)data;
+
+                   childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(jobResultData))
+                        .FluentAddBaseValue("CloudEnvironmentId", jobResultData.EnvironmentId);
+
                    if (jobResultData.JobState != JobState.Succeeded)
                    {
                        childLogger.LogError($"Start Environment job failed for virtaul machine : {vmResourceId}");

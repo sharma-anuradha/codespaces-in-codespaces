@@ -5,8 +5,10 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 {
@@ -42,8 +44,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                 throw new ArgumentException($"Cannot process {data.Name} by {nameof(ShutdownJobHandler)}");
             }
 
-            var jobResult = (JobResult)data;
-            await this.cloudEnvironmentManager.ShutdownEnvironmentCallbackAsync(jobResult.Id, logger);
+            await logger.OperationScopeAsync(
+                "shutdown_job_handler_process",
+                async (childLogger) =>
+               {
+                   var jobResult = (JobResult)data;
+
+                   childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(jobResult))
+                        .FluentAddBaseValue("CloudEnvironmentId", jobResult.EnvironmentId);
+
+                   await this.cloudEnvironmentManager.ShutdownEnvironmentCallbackAsync(jobResult.Id, logger);
+               });
         }
     }
 }
