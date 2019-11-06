@@ -6,6 +6,21 @@ import { tokenFromTokenResponse } from "./tokenFromTokenResponse";
 
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 
+export async function acquireTokenSilent(scopes: string[]): Promise<ITokenWithMsalAccount | undefined> {
+    const tokenRequest = {
+        scopes,
+        authority: msalConfig.auth.authority,
+    };
+    try {
+        const tokenResponse = await clientApplication.acquireTokenSilent(tokenRequest);
+
+        return tokenFromTokenResponse(tokenResponse);
+    }
+    catch (err) {
+        autServiceTrace.error('Acquire token silent:', err);
+    }
+}
+
 export async function acquireToken(scopes: string[]): Promise<ITokenWithMsalAccount> {
     const tokenRequest = {
         scopes,

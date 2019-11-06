@@ -12,7 +12,7 @@ import { IToken } from '../typings/IToken';
 import { setIsInternal } from './isInternalUserTracker';
 import { sendTelemetry } from '../utils/telemetry';
 import { clientApplication } from './msalConfig';
-import { acquireToken } from './acquireToken';
+import { acquireToken, acquireTokenSilent } from './acquireToken';
 
 import { autServiceTrace } from './autServiceTrace';
 
@@ -67,7 +67,7 @@ class AuthService {
 
             if (expirationTime >= expiration) {
                 if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
-                    this.acquireToken();
+                    this.acquireTokenSilent();
                 }
                 
                 return cachedToken as ITokenWithMsalAccount;
@@ -96,6 +96,24 @@ class AuthService {
         this.tokenAcquirePromise = undefined;
         return token;
     }
+
+    private async acquireTokenSilent(): Promise<ITokenWithMsalAccount | undefined> {
+        try {
+            const token = await acquireTokenSilent(SCOPES);
+
+            if (!token) {
+                return;
+            }
+            
+            await tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
+            getAuthTokenSuccessAction(token);
+
+            return token;
+        } catch (e) {
+            return;
+        }
+    }
+
 
     private async acquireTokenInternal(): Promise<ITokenWithMsalAccount | undefined> {
         try {
