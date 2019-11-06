@@ -1,8 +1,8 @@
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
 
 import {
-	IFileSystemProvider,
-	IFileChange,
+    IFileSystemProvider,
+    IFileChange,
     URI,
     IWatchOptions,
     IStat,
@@ -11,154 +11,156 @@ import {
     FileWriteOptions,
 } from 'vscode-web';
 import {
-	FileChangeType,
-	FileType,
+    FileChangeType,
+    FileType,
     FileSystemProviderCapabilities,
     FileSystemError,
-	FileSystemProviderErrorCode,
+    FileSystemProviderErrorCode,
 } from './vscode';
-import { IndexedDBFS } from './indexedDBFS'
+import { IndexedDBFS, IAsyncStorage, InMemoryAsyncStorage } from './indexedDBFS';
 import * as path from 'path';
 
 const FILE_IS_DIRECTORY_MSG = 'EntryIsADirectory';
 
 export class UserDataProvider implements IFileSystemProvider {
-	readonly capabilities = FileSystemProviderCapabilities.FileReadWrite + FileSystemProviderCapabilities.PathCaseSensitive;
+    readonly capabilities =
+        FileSystemProviderCapabilities.FileReadWrite +
+        FileSystemProviderCapabilities.PathCaseSensitive;
 
-    private onDidChangeCapabilitiesEmitter: Emitter<void> = new Emitter();
-	public readonly onDidChangeCapabilities: Event<void> = this.onDidChangeCapabilitiesEmitter.event;
-    private onDidChangeFileEmitter: Emitter<IFileChange[]> = new Emitter();
-	public readonly onDidChangeFile: Event<IFileChange[]> = this.onDidChangeFileEmitter.event;
-	private readonly globalPath = path.join('/', 'User', 'state', 'global.json');
-	private indexedDBFSProvider: IndexedDBFS;
+    private readonly onDidChangeCapabilitiesEmitter: Emitter<void> = new Emitter();
+    public readonly onDidChangeCapabilities: Event<void> = this.onDidChangeCapabilitiesEmitter
+        .event;
+    private readonly onDidChangeFileEmitter: Emitter<IFileChange[]> = new Emitter();
+    public readonly onDidChangeFile: Event<IFileChange[]> = this.onDidChangeFileEmitter.event;
+    private readonly globalPath = path.join('/', 'User', 'state', 'global.json');
+    private storageProvider!: IAsyncStorage;
 
-	constructor () {
-		this.indexedDBFSProvider = new IndexedDBFS();
-	}
+    constructor() {}
 
-	public async initializeDBProvider() { 
-		await this.indexedDBFSProvider.database;
-		await this.initializeOptions();
-	}
+    public async initializeDBProvider() {
+        try {
+            const storage = new IndexedDBFS();
+            await storage.initialize();
+            this.storageProvider = storage;
+        } catch {
+            this.storageProvider = new InMemoryAsyncStorage();
+        }
 
-	private async initializeOptions() {
-		const value = await this.indexedDBFSProvider.getValue(this.globalPath)
-		if (!value) {
-			const options =
-			[
-				[
-					'workbench.telemetryOptOutShown',
-					'true'
-				]
-			]
-			await this.indexedDBFSProvider.setValue(this.globalPath, JSON.stringify(options));
-		}		
-	}
+        await this.initializeOptions();
+    }
+
+    private async initializeOptions() {
+        const value = await this.storageProvider.getValue(this.globalPath);
+        if (!value) {
+            const options = [['workbench.telemetryOptOutShown', 'true']];
+            await this.storageProvider.setValue(this.globalPath, JSON.stringify(options));
+        }
+    }
 
     watch(resource: URI, opts: IWatchOptions): Disposable {
         return {
-            dispose() {}
-		};
+            dispose() {},
+        };
     }
 
     async stat(resource: URI): Promise<IStat> {
-		try {
-			const content = await this.readFile(resource);
-			return {
-				type: FileType.File,
-				ctime: 0,
-				mtime: 0,
-				size: content.byteLength
-			};
-		} catch (e){
-			if (e.name && e.name.toString().startsWith(FILE_IS_DIRECTORY_MSG)) {
-				return {
-					type: FileType.Directory,
-					ctime: 0,
-					mtime: 0,
-					size: 0
-				};
-			}
-		}
-		throw new FileSystemError(resource, FileSystemProviderErrorCode.FileNotFound);
-	}
-	
-    async mkdir(resource: URI): Promise<void> {
-		await this.indexedDBFSProvider.setValue(resource.path, 'directory');
-	}
-	
-    async readdir(resource: URI): Promise<[string, FileType][]> {
-		const directoryPath = resource.path + '/';
-		const keys = await this.indexedDBFSProvider.getAllKeys();
-		const files: Map<string, [string, FileType]> = new Map<string, [string, FileType]>();
-
-		for (const key of keys) {
-			if (key.startsWith(directoryPath)) {
-				const path = key.substring(directoryPath.length, key.length);
-				if (path) {
-					const segments = path.split('/');
-					const file: [string, FileType] = [
-						segments[0], //Root name
-						segments.length === 1 ? FileType.File : FileType.Directory
-					]
-					files.set(segments[0], file);
-				}
-			}
-		}
-		return Array.from(files.values());
-	}
-	
-    async delete(resource: URI, opts: FileDeleteOptions): Promise<void> {
-		await this.indexedDBFSProvider.deleteKey(resource.path);
-	}
-	
-    async rename(from: URI, to: URI, opts: FileOverwriteOptions): Promise<void> {
-		const value = await this.indexedDBFSProvider.getValue(from.path);
-		if (!value) {
-			throw new FileSystemError(from, FileSystemProviderErrorCode.FileNotFound);
-		}
-		await this.indexedDBFSProvider.deleteKey(from.path);
-		await this.indexedDBFSProvider.setValue(to.path, value);
-	}
-	
-    async readFile(resource: URI): Promise<Uint8Array> {
-		const value = await this.indexedDBFSProvider.getValue(resource.path);
-		if (!value) {
-			throw new FileSystemError(resource, FileSystemProviderErrorCode.FileNotFound);
-		}
-		if (value === 'directory') {
-			throw new FileSystemError(resource, FileSystemProviderErrorCode.FileIsADirectory);
-		}
-
-		return (typeof TextEncoder !== undefined)
-				? new TextEncoder().encode(value)
-				: this.encode(value);
+        try {
+            const content = await this.readFile(resource);
+            return {
+                type: FileType.File,
+                ctime: 0,
+                mtime: 0,
+                size: content.byteLength,
+            };
+        } catch (e) {
+            if (e.name && e.name.toString().startsWith(FILE_IS_DIRECTORY_MSG)) {
+                return {
+                    type: FileType.Directory,
+                    ctime: 0,
+                    mtime: 0,
+                    size: 0,
+                };
+            }
+        }
+        throw new FileSystemError(resource, FileSystemProviderErrorCode.FileNotFound);
     }
 
-	async writeFile(resource: URI, content: Uint8Array, opts: FileWriteOptions): Promise<void> {
-		const value = await this.indexedDBFSProvider.getValue(resource.path);
-		if (value === 'directory') {
-			throw new FileSystemError(resource, FileSystemProviderErrorCode.FileIsADirectory);
-		}
+    async mkdir(resource: URI): Promise<void> {
+        await this.storageProvider.setValue(resource.path, 'directory');
+    }
 
-		const decodedContent = (typeof TextEncoder !== undefined)
-			? new TextDecoder().decode(content)
-			: this.decode(content);
+    async readdir(resource: URI): Promise<[string, FileType][]> {
+        const directoryPath = resource.path + '/';
+        const keys = await this.storageProvider.getAllKeys();
+        const files: Map<string, [string, FileType]> = new Map<string, [string, FileType]>();
 
-		await this.indexedDBFSProvider.setValue(resource.path, decodedContent)
-		this.onDidChangeFileEmitter.fire([{ resource, type: FileChangeType.UPDATED }]);
-	}
-	
-	private encode(value: string): Uint8Array{
-		var array = new Uint8Array(value.length);
-		for(var i=0; i < value.length; i++ )
-			array[i] = value.charCodeAt(i);
-		return array;
-	}
-	
-	private decode(buffer: Uint8Array): string{
-		var array = Array.from(new Uint8Array(buffer));
-		var value = String.fromCharCode.apply(String, array);
-		return value;
-	}
+        for (const key of keys) {
+            if (key.startsWith(directoryPath)) {
+                const path = key.substring(directoryPath.length, key.length);
+                if (path) {
+                    const segments = path.split('/');
+                    const file: [string, FileType] = [
+                        segments[0], //Root name
+                        segments.length === 1 ? FileType.File : FileType.Directory,
+                    ];
+                    files.set(segments[0], file);
+                }
+            }
+        }
+        return Array.from(files.values());
+    }
+
+    async delete(resource: URI, opts: FileDeleteOptions): Promise<void> {
+        await this.storageProvider.deleteKey(resource.path);
+    }
+
+    async rename(from: URI, to: URI, opts: FileOverwriteOptions): Promise<void> {
+        const value = await this.storageProvider.getValue(from.path);
+        if (!value) {
+            throw new FileSystemError(from, FileSystemProviderErrorCode.FileNotFound);
+        }
+        await this.storageProvider.deleteKey(from.path);
+        await this.storageProvider.setValue(to.path, value);
+    }
+
+    async readFile(resource: URI): Promise<Uint8Array> {
+        const value = await this.storageProvider.getValue(resource.path);
+        if (!value) {
+            throw new FileSystemError(resource, FileSystemProviderErrorCode.FileNotFound);
+        }
+        if (value === 'directory') {
+            throw new FileSystemError(resource, FileSystemProviderErrorCode.FileIsADirectory);
+        }
+
+        return typeof TextEncoder !== undefined
+            ? new TextEncoder().encode(value)
+            : this.encode(value);
+    }
+
+    async writeFile(resource: URI, content: Uint8Array, opts: FileWriteOptions): Promise<void> {
+        const value = await this.storageProvider.getValue(resource.path);
+        if (value === 'directory') {
+            throw new FileSystemError(resource, FileSystemProviderErrorCode.FileIsADirectory);
+        }
+
+        const decodedContent =
+            typeof TextEncoder !== undefined
+                ? new TextDecoder().decode(content)
+                : this.decode(content);
+
+        await this.storageProvider.setValue(resource.path, decodedContent);
+        this.onDidChangeFileEmitter.fire([{ resource, type: FileChangeType.UPDATED }]);
+    }
+
+    private encode(value: string): Uint8Array {
+        var array = new Uint8Array(value.length);
+        for (var i = 0; i < value.length; i++) array[i] = value.charCodeAt(i);
+        return array;
+    }
+
+    private decode(buffer: Uint8Array): string {
+        var array = Array.from(new Uint8Array(buffer));
+        var value = String.fromCharCode.apply(String, array);
+        return value;
+    }
 }
