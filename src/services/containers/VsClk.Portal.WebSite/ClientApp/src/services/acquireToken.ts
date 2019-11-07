@@ -5,6 +5,9 @@ import { autServiceTrace } from "./autServiceTrace";
 import { tokenFromTokenResponse } from "./tokenFromTokenResponse";
 
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
+import { useDispatch } from 'react-redux';
+
+import { signal2FARequired } from '../actions/login';
 
 export async function acquireTokenSilent(scopes: string[]): Promise<ITokenWithMsalAccount | undefined> {
     const tokenRequest = {
@@ -21,24 +24,25 @@ export async function acquireTokenSilent(scopes: string[]): Promise<ITokenWithMs
     }
 }
 
-export async function acquireToken(scopes: string[]): Promise<ITokenWithMsalAccount> {
+export async function acquireToken(scopes: string[]): Promise<ITokenWithMsalAccount | null> {
     const tokenRequest = {
         scopes,
         authority: msalConfig.auth.authority,
     };
-    let tokenResponse: AuthResponse;
+
     try {
-        tokenResponse = await clientApplication.acquireTokenSilent(tokenRequest);
+        const tokenResponse = await clientApplication.acquireTokenSilent(tokenRequest);
+        return tokenFromTokenResponse(tokenResponse);
     }
     catch (err) {
-        autServiceTrace.warn(err);
         if (err.name === 'InteractionRequiredAuthError') {
-            tokenResponse = await clientApplication.acquireTokenPopup(tokenRequest);
+            signal2FARequired();
+            return null;
         }
-        else {
-            autServiceTrace.error(err);
-            throw err;
-        }
+
+        autServiceTrace.error(err);
+        throw err;
     }
-    return tokenFromTokenResponse(tokenResponse);
+
+    return null;
 }

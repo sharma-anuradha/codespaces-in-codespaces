@@ -52,7 +52,7 @@ class AuthService {
         };
 
         await clientApplication.loginPopup(loginRequest);
-        const token = await this.acquireToken();
+        const token = await clientApplication.acquireTokenSilent(loginRequest)
 
         return token;
     }
@@ -118,12 +118,16 @@ class AuthService {
     private async acquireTokenInternal(): Promise<ITokenWithMsalAccount | undefined> {
         try {
             const token = await acquireToken(SCOPES);
+            if (!token) {
+                return;
+            }
+
             await tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
             getAuthTokenSuccessAction(token);
 
             return token;
         } catch (e) {
-            return undefined;
+            autServiceTrace.verbose(e);
         }
     }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Fragment } from 'react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
@@ -8,7 +8,7 @@ import { Stack, StackItem } from 'office-ui-fabric-react/lib/Stack';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import { PortalLayout } from '../portalLayout/portalLayout';
 
-import { login } from '../../actions/login';
+import { login, complete2FA } from '../../actions/login';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
@@ -29,6 +29,8 @@ interface LoginProps {
     token: ITokenWithMsalAccount | undefined;
     isAuthenticated: boolean;
     isAuthenticating: boolean;
+    isInteractionRequired: boolean;
+    complete2FA: () => Promise<ITokenWithMsalAccount>;
     login: (...name: Parameters<typeof login>) => Promise<unknown>;
 }
 
@@ -42,15 +44,89 @@ function withAllowedSubdomain(targetUrl: URL) {
     return new URL(environmentsPath, location.origin).toString();
 }
 
-// tslint:disable-next-line: max-func-body-length
-function LoginView(props: LoginProps) {
-    const [isAuthCookieSet, setIsAuthCookieSet] = useState(false);
-
+const LoginPageSignInForm = (props: LoginProps) => {
     const loginClick = useCallback(() => {
         props.login().catch((error) => {
             trace.error('Login failed', { error });
         });
     }, [props.login]);
+
+    return (
+        <Fragment>
+            <Stack.Item>
+                <Text className='login-page__title'>Visual Studio Online</Text>
+            </Stack.Item>
+            <Stack.Item>
+                <Text className='login-page__subtitle'>
+                    Cloud-powered dev environments accessible from anywhere
+                </Text>
+            </Stack.Item>
+
+            <StackItem>
+                <EverywhereImage />
+            </StackItem>
+
+            <Stack.Item>
+                <PrimaryButton
+                    onClick={loginClick}
+                    className='login-page__login-button'>
+                Sign in
+                </PrimaryButton>
+            </Stack.Item>
+            <Stack.Item className='login-page__learn-more-wrapper'>
+                <Link className='login-page__learn-more' href={blogPostUrl}>
+                    <span className='login-page__learn-more'>
+                        <span>Learn more</span>
+                        <span>
+                            <Icon
+                                iconName='ChevronRight'
+                                className='login-page__learn-more-icon'
+                            />
+                        </span>
+                    </span>
+                </Link>
+                <Link className='login-page__learn-more' href={pricingInfoUrl}>
+                    <span className='login-page__learn-more'>
+                        <span>Pricing</span>
+                        <span>
+                            <Icon
+                                iconName='ChevronRight'
+                                className='login-page__learn-more-icon'
+                            />
+                        </span>
+                    </span>
+                </Link>
+            </Stack.Item>
+        </Fragment>
+    );
+};
+
+const LoginPage2FAStepForm = (props: LoginProps) => {
+    return (
+        <Fragment>
+            <Stack.Item>
+                <PrimaryButton
+                    onClick={props.complete2FA}
+                    className='login-page__login-button'
+                >
+                    Complete 2-factor authentication
+                </PrimaryButton>
+            </Stack.Item>
+        </Fragment>
+    )
+};
+
+const LoginForm = (props: LoginProps) => {
+    if (!props.isInteractionRequired) {
+        return <LoginPageSignInForm {...props} />;
+    }
+
+    return <LoginPage2FAStepForm {...props} />;
+};
+
+// tslint:disable-next-line: max-func-body-length
+function LoginView(props: LoginProps) {
+    const [isAuthCookieSet, setIsAuthCookieSet] = useState(false);
 
     useEffect(() => {
         if (!props.token) {
@@ -74,7 +150,15 @@ function LoginView(props: LoginProps) {
         };
     }, [setIsAuthCookieSet, props.token]);
 
-    if (!props.isAuthenticated && props.isAuthenticating) {
+    const {
+        isAuthenticated,
+        isAuthenticating,
+        isInteractionRequired,
+        complete2FA,
+        login
+    } = props;
+
+    if (!isAuthenticated && isAuthenticating && !isInteractionRequired) {
         return <Loader message='Signing in...' />;
     }
     if (props.isAuthenticated) {
@@ -103,49 +187,7 @@ function LoginView(props: LoginProps) {
                 tokens={{ childrenGap: 'l1' }}
                 className='login-page'
             >
-                <Stack.Item>
-                    <Text className='login-page__title'>Visual Studio Online</Text>
-                </Stack.Item>
-                <Stack.Item>
-                    <Text className='login-page__subtitle'>
-                        Cloud-powered dev environments accessible from anywhere
-                    </Text>
-                </Stack.Item>
-
-                <StackItem>
-                    <EverywhereImage />
-                </StackItem>
-
-                <Stack.Item>
-                    <PrimaryButton onClick={loginClick} className='login-page__login-button'>
-                        Sign in
-                    </PrimaryButton>
-                </Stack.Item>
-
-                <Stack.Item className='login-page__learn-more-wrapper'>
-                    <Link className='login-page__learn-more' href={blogPostUrl}>
-                        <span className='login-page__learn-more'>
-                            <span>Learn more</span>
-                            <span>
-                                <Icon
-                                    iconName='ChevronRight'
-                                    className='login-page__learn-more-icon'
-                                />
-                            </span>
-                        </span>
-                    </Link>
-                    <Link className='login-page__learn-more' href={pricingInfoUrl}>
-                        <span className='login-page__learn-more'>
-                            <span>Pricing</span>
-                            <span>
-                                <Icon
-                                    iconName='ChevronRight'
-                                    className='login-page__learn-more-icon'
-                                />
-                            </span>
-                        </span>
-                    </Link>
-                </Stack.Item>
+                <LoginForm {...props} />
             </Stack>
         </PortalLayout>
     );
@@ -153,12 +195,11 @@ function LoginView(props: LoginProps) {
 
 const getAuthState = (state: ApplicationState) => ({
     redirectUrl: new URLSearchParams(location.search).get('redirectUrl'),
-    token: state.authentication.token,
-    isAuthenticated: state.authentication.isAuthenticated,
-    isAuthenticating: state.authentication.isAuthenticating,
+    ...state.authentication
 });
 const actions = {
     login,
+    complete2FA
 };
 
 export const LoginConnected = connect(

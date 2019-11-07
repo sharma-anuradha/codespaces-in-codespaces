@@ -8,6 +8,8 @@ import {
     loginActionType,
     loginFailureActionType,
     loginSuccessActionType,
+    loginInteractionRequiredActionType,
+    loginInteractionRequiredAction,
 } from '../actions/login';
 import {
     GetAuthTokenAction,
@@ -25,18 +27,21 @@ type AcceptedActions =
     | ClearAuthTokenAction
     | loginAction
     | loginFailureAction
-    | loginSuccessAction;
+    | loginSuccessAction
+    | loginInteractionRequiredAction;
 
 type AuthenticationState = {
     token: ITokenWithMsalAccount | undefined;
     isAuthenticating: boolean;
     isAuthenticated: boolean;
+    isInteractionRequired: boolean;
 };
 
 const defaultState: AuthenticationState = {
     token: undefined,
     isAuthenticated: false,
     isAuthenticating: true,
+    isInteractionRequired: false
 };
 
 export function authentication(
@@ -45,36 +50,51 @@ export function authentication(
 ): AuthenticationState {
     switch (action.type) {
         case loginActionType:
-        case getAuthTokenActionType:
+        case getAuthTokenActionType: {
             return {
                 ...state,
                 isAuthenticating: true,
             };
+        }
 
         case loginFailureActionType:
-        case getAuthTokenFailureActionType:
+        case getAuthTokenFailureActionType: {
             return {
+                ...state,
                 token: undefined,
                 isAuthenticated: false,
-                isAuthenticating: false,
+                isAuthenticating: false
             };
+        }
 
         case loginSuccessActionType:
-        case getAuthTokenSuccessActionType:
+        case getAuthTokenSuccessActionType: {
             return {
                 token: action.payload.token,
                 isAuthenticated: true,
                 isAuthenticating: false,
+                isInteractionRequired: false,
             };
+        }
 
-        case clearAuthTokenActionType:
+        case clearAuthTokenActionType: {
             return {
                 isAuthenticated: false,
                 isAuthenticating: false,
                 token: undefined,
+                isInteractionRequired: false,
             };
+        }
 
-        default:
+        case loginInteractionRequiredActionType: {
+            return {
+                ...defaultState,
+                isInteractionRequired: true
+            };
+        }
+
+        default: {
             return state;
+        }
     }
 }

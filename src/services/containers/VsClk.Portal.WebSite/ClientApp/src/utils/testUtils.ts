@@ -157,6 +157,7 @@ export const authenticated = {
     },
     isAuthenticated: true,
     isAuthenticating: false,
+    isInteractionRequired: false,
 };
 
 export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {}): typeof fetch {
