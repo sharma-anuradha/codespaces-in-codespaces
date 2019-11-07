@@ -49,3 +49,23 @@
 .vsonline-titlebar__plan-selector {
     width: 18rem;
 }
+
+.vsonline-titlebar-persona-button {
+    background-color: black;
+    border: none;
+    padding: 0;
+    width: 28px;
+    margin-right: 2rem;
+}
+
+.vsonline-titlebar__persona-card {
+    width: 12rem;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vsonline-titlebar__persona-card-signout-button {
+    border: none
+}

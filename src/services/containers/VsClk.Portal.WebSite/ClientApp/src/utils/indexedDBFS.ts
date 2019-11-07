@@ -122,3 +122,18 @@ export class IndexedDBFS implements IAsyncStorage {
         return transaction.objectStore(INDEXEDDB_LOGS_OBJECT_STORE);
     }
 }
+
+export async function deleteDatabase(name: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const request = window.indexedDB.deleteDatabase(name);
+        request.onerror = (err) => reject(request.error);
+        request.onsuccess = () => {
+            const db = request.result;
+            if (!db) {
+                resolve();
+            } else {
+                reject(request.error);
+            }
+        };
+    });
+}

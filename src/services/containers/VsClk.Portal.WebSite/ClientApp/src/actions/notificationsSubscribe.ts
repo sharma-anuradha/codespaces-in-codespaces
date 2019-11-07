@@ -2,7 +2,7 @@ import { action } from './middleware/useActionCreator';
 import { useWebClient } from './middleware/useWebClient';
 import { useDispatch } from './middleware/useDispatch';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
-import { clearAuthToken } from './clearAuthToken';
+import { logout } from './logout';
 import { useActionContext } from './middleware/useActionContext';
 
 export const notificationsSubscribeActionType = 'async.notifications.subscribe';
@@ -47,7 +47,7 @@ export async function notificationsSubscribe(email: string) {
         dispatch(notificationsSubscribeSuccessAction());
     } catch (err) {
         if (err instanceof ServiceAuthenticationError) {
-            dispatch(clearAuthToken());
+            dispatch(logout());
         }
 
         dispatch(notificationsSubscribeFailureAction(err));

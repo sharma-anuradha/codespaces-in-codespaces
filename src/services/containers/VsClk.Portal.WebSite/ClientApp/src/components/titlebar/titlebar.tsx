@@ -4,9 +4,13 @@ import { RouteComponentProps } from 'react-router-dom';
 import { withRouter } from 'react-router';
 
 import { Persona, PersonaSize } from 'office-ui-fabric-react/lib/Persona';
+import { HoverCard, HoverCardType, IPlainCardProps } from 'office-ui-fabric-react/lib/HoverCard';
+import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { KeyCodes } from 'office-ui-fabric-react/lib/Utilities';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { PlanSelector } from '../planSelector/plan-selector';
+import { logout } from '../../actions/logout';
 
 import './titlebar.css';
 import { isInternalUser } from '../../services/isInternalUserTracker';
@@ -50,13 +54,36 @@ function TitleBarNoRouter(props: RouteComponentProps) {
     let planSelector = null;
     let persona = null;
     if (isAuthenticated) {
+        const plainCardProps: IPlainCardProps = {
+            onRenderPlainCard: () => (
+                <div className='vsonline-titlebar__persona-card'>
+                    <DefaultButton
+                        className='vsonline-titlebar__persona-card-signout-button'
+                        onClick={logout}
+                    >
+                        Sign out
+                    </DefaultButton>
+                </div>
+            ),
+        };
+
         persona = (
-            <Persona
-                className='titlebar__main-avatar'
-                size={PersonaSize.size28}
-                imageUrl={photoUrl}
-                title={title}
-            />
+            <HoverCard
+                cardDismissDelay={500}
+                type={HoverCardType.plain}
+                plainCardProps={plainCardProps}
+                openHotKey={KeyCodes.enter}
+                trapFocus={true}
+            >
+                <button className='vsonline-titlebar-persona-button'>
+                    <Persona
+                        className='titlebar__main-avatar'
+                        size={PersonaSize.size28}
+                        imageUrl={photoUrl}
+                        title={title}
+                    />
+                </button>
+            </HoverCard>
         );
 
         planSelector = <PlanSelector className='vsonline-titlebar__plan-selector' {...props} />;

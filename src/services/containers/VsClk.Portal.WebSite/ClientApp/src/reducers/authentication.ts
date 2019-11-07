@@ -1,6 +1,6 @@
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 
-import { ClearAuthTokenAction, clearAuthTokenActionType } from '../actions/clearAuthToken';
+import { LogoutAction, logoutActionType } from '../actions/logout';
 import {
     loginAction,
     loginFailureAction,
@@ -24,7 +24,7 @@ type AcceptedActions =
     | GetAuthTokenAction
     | GetAuthTokenFailureAction
     | GetAuthTokenSuccessAction
-    | ClearAuthTokenAction
+    | LogoutAction
     | loginAction
     | loginFailureAction
     | loginSuccessAction
@@ -41,7 +41,7 @@ const defaultState: AuthenticationState = {
     token: undefined,
     isAuthenticated: false,
     isAuthenticating: true,
-    isInteractionRequired: false
+    isInteractionRequired: false,
 };
 
 export function authentication(
@@ -63,7 +63,7 @@ export function authentication(
                 ...state,
                 token: undefined,
                 isAuthenticated: false,
-                isAuthenticating: false
+                isAuthenticating: false,
             };
         }
 
@@ -77,7 +77,7 @@ export function authentication(
             };
         }
 
-        case clearAuthTokenActionType: {
+        case logoutActionType: {
             return {
                 isAuthenticated: false,
                 isAuthenticating: false,
@@ -89,7 +89,7 @@ export function authentication(
         case loginInteractionRequiredActionType: {
             return {
                 ...defaultState,
-                isInteractionRequired: true
+                isInteractionRequired: true,
             };
         }
 

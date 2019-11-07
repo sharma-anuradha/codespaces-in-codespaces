@@ -11,7 +11,7 @@ import { useActionContext } from './middleware/useActionContext';
 import { ActivePlanInfo } from '../reducers/plans-reducer';
 import { getLocation } from './locations-actions';
 import { serviceUnavailableAtTheMoment } from './serviceUnavailable';
-import { clearAuthToken } from './clearAuthToken';
+import { logout } from './logout';
 
 export const selectPlanActionType = 'async.plan.select';
 export const selectPlanSuccessActionType = 'async.plan.select.success';
@@ -69,7 +69,7 @@ export const selectPlan = async (plan: IPlan | null) => {
         }
     } catch (err) {
         if (err instanceof ServiceAuthenticationError) {
-            dispatch(clearAuthToken());
+            dispatch(logout());
         }
 
         return dispatch(selectPlanFailureAction(err));
@@ -122,7 +122,7 @@ export async function getPlans() {
         return plansList;
     } catch (err) {
         if (err instanceof ServiceAuthenticationError) {
-            dispatch(clearAuthToken());
+            dispatch(logout());
         }
 
         return dispatch(getPlansFailureAction(err));

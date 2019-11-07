@@ -1,11 +1,14 @@
-
 import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 import { inLocalStorageJWTTokenCacheFactory } from '../cache/localstorageJWTCache';
 import { getTokenExpiration } from '../utils/getTokenExpiration';
 import { expirationTimeBackgroundTokenRefreshThreshold } from '../constants';
 import { debounceInterval } from '../utils/debounce-interval';
 
-import { logout as logoutFromArmAuthService, getARMToken, getFreshArmAuthCodeForTenant } from './authARMService';
+import {
+    logout as logoutFromArmAuthService,
+    getARMToken,
+    getFreshArmAuthCodeForTenant,
+} from './authARMService';
 import { getAuthTokenSuccessAction } from '../actions/getAuthTokenActions';
 import { IToken } from '../typings/IToken';
 
@@ -57,7 +60,9 @@ class AuthService {
         return token;
     }
 
-    public getCachedToken = async (expiration: number = 60): Promise<ITokenWithMsalAccount | undefined> => {
+    public getCachedToken = async (
+        expiration: number = 60
+    ): Promise<ITokenWithMsalAccount | undefined> => {
         this.keepUserAuthenticated();
 
         const cachedToken = await tokenCache.getCachedToken(LOCAL_STORAGE_KEY, expiration);
@@ -69,7 +74,7 @@ class AuthService {
                 if (expirationTime <= expirationTimeBackgroundTokenRefreshThreshold) {
                     this.acquireTokenSilent();
                 }
-                
+
                 return cachedToken as ITokenWithMsalAccount;
             }
         }
@@ -82,7 +87,7 @@ class AuthService {
         }
 
         return undefined;
-    }
+    };
 
     private tokenAcquirePromise: Promise<ITokenWithMsalAccount | undefined> | undefined;
 
@@ -134,6 +139,7 @@ class AuthService {
     public async logout() {
         await tokenCache.clearCache();
         logoutFromArmAuthService();
+        clientApplication.logout();
 
         if (this.keepUserAuthenticated) {
             this.keepUserAuthenticated.stop();
@@ -144,7 +150,7 @@ class AuthService {
         const cachedToken = await this.getCachedToken(expiration);
 
         if (!cachedToken) {
-            throw new Error('User is not authenticated.')
+            throw new Error('User is not authenticated.');
         }
 
         return await getARMToken(cachedToken, expiration, timeout);
@@ -155,32 +161,35 @@ class AuthService {
      * This function is a debounced version of simple interval, hence it will call the `getCachedToken` function
      * after the `timeout` milliseconds of last `getCachedToken` token request.
      */
-    private keepUserAuthenticated = debounceInterval(this.getCachedToken, 5 * 60 * 1000 /* 5 minutes */);
+    private keepUserAuthenticated = debounceInterval(
+        this.getCachedToken,
+        5 * 60 * 1000 /* 5 minutes */
+    );
 
     /**
      * A temporary spolution for Azure Acccount for ignite.
      * We should move to `refreshToken`-based solution in the nearest future.
      */
     getAuthCode = async (): Promise<IAuthCode | null> => {
-        const cachedToken = await authService.getCachedToken(60) as ITokenWithMsalAccount;
+        const cachedToken = (await authService.getCachedToken(60)) as ITokenWithMsalAccount;
 
         if (!cachedToken) {
             throw new Error('User is not authenticated.');
         }
-    
+
         const authCode = await getFreshArmAuthCodeForTenant(cachedToken, 'common');
 
         sendTelemetry('vsonline/auth/acquire-auth-code', { isCodeAcquired: !!authCode });
-    
+
         if (!authCode) {
             return null;
         }
-    
+
         return {
             code: authCode,
-            redirectionUrl: location.origin
-        }
-    }
+            redirectionUrl: location.origin,
+        };
+    };
 }
 
 export const authService = new AuthService();
