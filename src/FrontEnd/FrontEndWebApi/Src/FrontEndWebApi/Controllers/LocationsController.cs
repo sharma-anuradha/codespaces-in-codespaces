@@ -34,6 +34,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
     public class LocationsController : ControllerBase
     {
+        private static readonly IComparer<ICloudEnvironmentSku> DisplaySkuComparer = new SkuComparer();
+
         private readonly ICurrentLocationProvider locationProvider;
         private readonly IControlPlaneInfo controlPlaneInfo;
         private readonly ISkuCatalog skuCatalog;
@@ -186,7 +188,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
         private IEnumerable<ICloudEnvironmentSku> OrderSkusForDisplay(IEnumerable<ICloudEnvironmentSku> skus)
         {
-            return skus.OrderBy((sku) => sku.GetActiveVsoUnitsPerHour());
+            return skus.OrderBy((s) => s, DisplaySkuComparer);
+        }
+
+        /// <summary>
+        /// Compares SKUs for display in clients where the first SKU will be the default for display.
+        /// Sort order will place Linux SKUs before Windows, and cheaper SKUs first within an OS.
+        /// </summary>
+        private class SkuComparer : IComparer<ICloudEnvironmentSku>
+        {
+            private static readonly Dictionary<ComputeOS, int> OSPriorities = new[]
+            {
+                ComputeOS.Linux,
+                ComputeOS.Windows,
+            }.Select((s, i) => new { OS = s, Priority = i, })
+                .ToDictionary((x) => x.OS, x => x.Priority);
+
+            public int Compare(ICloudEnvironmentSku x, ICloudEnvironmentSku y)
+            {
+                if (x.ComputeOS != y.ComputeOS)
+                {
+                    var xPriority = GetOSPriority(x.ComputeOS);
+                    var yPriority = GetOSPriority(y.ComputeOS);
+
+                    return xPriority.CompareTo(yPriority);
+                }
+                else
+                {
+                    var xPriority = x.GetActiveVsoUnitsPerHour();
+                    var yPriority = y.GetActiveVsoUnitsPerHour();
+
+                    return xPriority.CompareTo(yPriority);
+                }
+            }
+
+            private static int GetOSPriority(ComputeOS os)
+            {
+                if (OSPriorities.TryGetValue(os, out var priority))
+                {
+                    return priority;
+                }
+                else
+                {
+                    // Sort unhandled OS at the end, but still differentiated by OS
+                    return OSPriorities.Count + (int)os;
+                }
+            }
         }
     }
 }
