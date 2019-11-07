@@ -12,6 +12,7 @@ param(
 )
 $ProgressPreference = 'SilentlyContinue'
 $SourceSubscription = 'cd02057e-7b97-4159-b924-e8392142ee1e'
+$LocationShortCodes = @{eastus='use';westus2='usw2';westeurope='euw';southeastasia='asse'}
 
 az account set -s $SourceSubscription
 
@@ -31,12 +32,13 @@ Expand-Archive -Path $AzCopyZipPath -DestinationPath $WorkPath -Force
 $AzCopyExe = Get-ChildItem $WorkPath/*/azcopy.exe
 
 Write-Host "Snapshot $ImageName"
-$SnapshotName = "$($ImageName)_snapshot_$($TargetSubscription -replace '-', '_')"
+$SnapshotName = "$($ImageName)_snapshot_$($TargetSubscription -replace '-', '_')_$($LocationShortCodes.$TargetLocation)"
 az snapshot create -n $SnapshotName -g $SourceImage.resourceGroup --source $SourceImage.storageProfile.osDisk.managedDisk.id
 
-$TempStorageName = $ImageName.ToLower()
+$TempStorageName = "$ImageName$($LocationShortCodes.$TargetLocation)".ToLower()
 Write-Host "Create $TempStorageName Storage Account"
-$Storage = az storage account create -n $TempStorageName -g $TargetGroupName -l $TargetLocation --subscription $TargetSubscription --sku Premium_LRS --https-only true | ConvertFrom-Json
+$Storage = az storage account create -n $TempStorageName -g $TargetGroupName -l $TargetLocation --subscription $TargetSubscription --kind StorageV2 --sku Premium_LRS --https-only true | ConvertFrom-Json
+$Storage
 
 $TempContainerName = "snapshot"
 Write-Host "Create $TempContainerName Storage Container"
@@ -48,13 +50,11 @@ $ExpiryDate = (Get-Date).AddSeconds(36000).ToUniversalTime().ToString('s') + "Z"
 $TargetAccess = az storage blob generate-sas --container-name $TempContainerName --account-name $TempStorageName --name $ImageName --permissions acdrw --full-uri --expiry $ExpiryDate --subscription $TargetSubscription
 
 Write-Host "Copy $SnapshotName from $SourceSubscription to $TargetSubscription"
-$Start = Get-Date
 & $AzCopyExe copy $SourceAccess.accessSas $TargetAccess
-$Duration = (Get-Date) - $Start
-Write-Host "Copy completed in $($Duration.TotalMinutes) minutes"
 
 Write-Host "Snapshot $ImageName"
 $Snapshot = az snapshot create -n $SnapshotName -g $TargetGroupName -l $TargetLocation --source "$($Storage.primaryEndpoints.blob)$TempContainerName/$ImageName" --subscription $TargetSubscription | ConvertFrom-Json
+$Snapshot
 
 Write-Host "Create $ImageName Image"
 az image create -n $ImageName -g $TargetGroupName -l $TargetLocation --os-type $SourceImage.storageProfile.osDisk.osType --source $Snapshot.id --subscription $TargetSubscription
