@@ -22,6 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingEventManager : IBillingEventManager
     {
+        private readonly TimeSpan pagingDelay = TimeSpan.FromSeconds(2);
         private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
         private readonly IBillingEventRepository billingEventRepository;
         private readonly IBillingOverrideRepository billingOverrideRepository;
@@ -82,7 +83,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 throw;
             }
         }
-
 
         /// <summary>
         /// Updates a new billing event entity in the repository
@@ -196,11 +196,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     where = bev => start <= bev.Time && bev.Time < end.Value && bev.Plan.Subscription.StartsWith(shard);
                 }
 
-                // TODO: pagedcallback 200ms delay
                 // TODO: move locations.Contains() to Expression definition
                 var plans = (await this.billingEventRepository.QueryAsync(
-                    q => q.Where(where).Select(bev => bev.Plan).Distinct(),
-                    logger)).Where(t => locations.Contains(t.Location));
+                            q => q.Where(where).Select(bev => bev.Plan).Distinct(),
+                            logger,
+                            (_, childlogger) => {
+                                return Task.Delay(pagingDelay);
+                            }))
+                            .Where(t => locations.Contains(t.Location));
 
                 logger.AddDuration(duration)
                     .LogInfo(GetType().FormatLogMessage(nameof(GetPlansByShardAsync)));
@@ -369,7 +372,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         where = x => timeRangeCondition(x)
                                     && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
                                     && x.Plan == plan
-                                    && (x.Sku !=null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
+                                    && (x.Sku != null && sku.Name.Equals(x.Sku.Name, StringComparison.OrdinalIgnoreCase));
                         candidates.AddRange(billingOverrideCache.Where(where));
                     }
                 }
