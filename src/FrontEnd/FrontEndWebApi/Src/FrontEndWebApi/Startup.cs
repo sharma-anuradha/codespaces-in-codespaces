@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Health;
@@ -77,22 +78,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             services.AddCors(options =>
                 {
+                    var vssaasHeaders = new string[] {
+                        HttpConstants.CorrelationIdHeader,
+                        HttpConstants.RequestIdHeader,
+                    };
+
                     var currentOrigins = ControlPlaneAzureResourceAccessor.GetStampOrigins();
                     options.AddPolicy(
                         "ProdCORSPolicy",
                         builder => builder
                             .WithOrigins(currentOrigins.ToArray())
                             .AllowAnyHeader()
+                            .WithExposedHeaders(vssaasHeaders)
                             .AllowAnyMethod());
 
                     var currentOriginsDev = currentOrigins.GetRange(0, currentOrigins.Count);
-                    currentOriginsDev.Add("https://localhost:3000");
+                    // Port forwarding proxy server.
+                    currentOriginsDev.Add("https://localhost:4000");
 
                     options.AddPolicy(
                         "NonProdCORSPolicy",
                         builder => builder
                             .WithOrigins(
                                 currentOriginsDev.ToArray())
+                            .WithExposedHeaders(vssaasHeaders)
                             .AllowAnyHeader()
                             .AllowAnyMethod());
                 });

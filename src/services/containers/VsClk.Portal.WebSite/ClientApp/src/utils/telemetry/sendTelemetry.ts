@@ -1,18 +1,21 @@
 import { PropertiesTelemetryEvent, ExceptionTelemetryEvent } from './TelemetryEvents';
 import { telemetryCore } from '../../utils/telemetry/TelemetryService';
 
-type SendTelemetryProps = ['vsonline/cipher/decrypt', IDecryptionTelemetryEventProperties]
-                        | ['vsonline/cipher/encrypt', IEncryptionTelemetryEventProperties]
-                        | ['vsonline/cipher/error', Error]
-                        | ['vsonline/cipher/no-decryption-key', INoDecryptionKeyTelemetryEventProperties]
-                        | ['vsonline/auth/acquire-token/error', Error]
-                        | ['vsonline/auth/acquire-auth-code', IAcquireAuthCodeTelemetryEventProperties]
+type SendTelemetryProps =
+    | ['vsonline/cipher/decrypt', IDecryptionTelemetryEventProperties]
+    | ['vsonline/cipher/encrypt', IEncryptionTelemetryEventProperties]
+    | ['vsonline/cipher/error', Error]
+    | ['vsonline/cipher/no-decryption-key', INoDecryptionKeyTelemetryEventProperties]
+    | ['vsonline/auth/acquire-token/error', Error]
+    | ['vsonline/auth/acquire-auth-code', IAcquireAuthCodeTelemetryEventProperties]
+    | ['vsonline/request', IResponse];
 
 export function sendTelemetry(...args: SendTelemetryProps): void;
 export function sendTelemetry(telemetryEventName: any, properties: any) {
-    const event = (properties instanceof Error)
-        ? new ExceptionTelemetryEvent(telemetryEventName, properties)
-        : new PropertiesTelemetryEvent(telemetryEventName, properties);
+    const event =
+        properties instanceof Error
+            ? new ExceptionTelemetryEvent(telemetryEventName, properties)
+            : new PropertiesTelemetryEvent(telemetryEventName, properties);
 
     telemetryCore.track(event);
 }
@@ -34,4 +37,8 @@ interface IEncryptionTelemetryEventProperties {
 interface INoDecryptionKeyTelemetryEventProperties {}
 interface IAcquireAuthCodeTelemetryEventProperties {
     isCodeAcquired: boolean;
+}
+
+interface IResponse {
+    requestId: string;
 }

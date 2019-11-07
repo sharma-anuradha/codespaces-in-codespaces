@@ -2,12 +2,16 @@ import { useActionContext } from './useActionContext';
 
 import { trace as baseTrace } from '../../utils/trace';
 import { getTopLevelDomain } from '../../utils/getTopLevelDomain';
-import { wait } from '../../dependencies';
+import { wait, createUniqueId } from '../../dependencies';
 import { authService } from '../../services/authService';
+import { sendTelemetry } from '../../utils/telemetry';
+import { isDefined } from '../../utils/isDefined';
 
 const trace = baseTrace.extend('useWebClient:trace');
 // tslint:disable-next-line: no-console
 trace.log = console.trace.bind(console);
+
+const requestIdHeader = 'vssaas-request-id';
 
 const defaultRequestOptions = {
     requiresAuthentication: true,
@@ -111,6 +115,13 @@ async function request<TResult>(
             }
 
             throw new ServiceConnectionError(err);
+        }
+
+        const responseRequestId = response.headers.get(requestIdHeader);
+        if (isDefined(responseRequestId)) {
+            sendTelemetry('vsonline/request', {
+                requestId: responseRequestId,
+            });
         }
 
         if (

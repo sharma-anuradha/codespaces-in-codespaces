@@ -42,7 +42,9 @@ describe('actions - init', () => {
         jest.spyOn(authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(authenticated.token)
         );
-        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
+        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(
+            Promise.resolve(authenticated.token)
+        );
 
         test_setMockRequestFactory(
             createMockMakeRequestFactory({
@@ -74,30 +76,35 @@ describe('actions - init', () => {
         jest.spyOn(authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(authenticated.token)
         );
-        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
+        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(
+            Promise.resolve(authenticated.token)
+        );
 
         const mockFetch = jest.fn().mockImplementation((url: string) => {
             if (url === configurationEndpoint) {
                 return {
                     ok: true,
-                    json: async () =>
+                    json: () =>
                         Promise.resolve({
                             environmentRegistrationEndpoint,
                             apiEndpoint,
                         }),
+                    headers: new Headers(),
                 };
             }
 
             if (url === `${apiEndpoint}/plans`) {
                 return {
                     ok: true,
-                    json: async () => Promise.resolve([]),
+                    json: () => Promise.resolve([]),
+                    headers: new Headers(),
                 };
             }
 
             return {
                 ok: true,
-                json: async () => Promise.resolve({}),
+                json: () => Promise.resolve({}),
+                headers: new Headers(),
             };
         });
         test_setMockRequestFactory(mockFetch);
@@ -148,7 +155,9 @@ describe('actions - init', () => {
         jest.spyOn(authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(authenticated.token)
         );
-        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
+        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(
+            Promise.resolve(authenticated.token)
+        );
 
         test_setMockRequestFactory(
             createMockMakeRequestFactory({

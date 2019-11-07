@@ -19,6 +19,10 @@ import {
     CreateEnvironmentFailureAction,
 } from '../actions/createEnvironment';
 
+jest.mock('./telemetry', () => ({
+    sendTelemetry: jest.fn(),
+}));
+
 jest.setTimeout(1000);
 
 jest.spyOn(window, 'fetch').mockImplementation(() => {
