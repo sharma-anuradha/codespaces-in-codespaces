@@ -81,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     var idShards = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
 
                     // Run through found resources in the background
-                    await TaskHelper.RunBackgroundEnumerableAsync(
+                    await TaskHelper.RunConcurrentEnumerableAsync(
                         $"{LogBaseName}_run_unit_check",
                         idShards,
                         (idShard, itemLogger) => CoreRunUnitAsync(idShard, claimSpan, itemLogger),

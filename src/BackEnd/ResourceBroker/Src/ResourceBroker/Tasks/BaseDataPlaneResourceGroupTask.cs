@@ -10,7 +10,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
@@ -84,22 +83,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                     logger.FluentAddValue("TaskCountResourceGroups", dataPlaneResourceGroups.Count().ToString());
 
-                    foreach (var resourceGroup in dataPlaneResourceGroups)
-                    {
-                        using (var lease = await ObtainLease($"{LeaseBaseName}-{resourceGroup.Subscription.SubscriptionId}-{resourceGroup.ResourceGroup}", taskInterval, logger.NewChildLogger()))
-                        {
-                            logger.FluentAddValue("LeaseNotFound", lease == null);
-                            if (lease != null)
-                            {
-                                await CoreRunResourceGroupAsync(resourceGroup, childLogger.NewChildLogger());
-                                await Task.Delay(LoopDelay);
-                            }
-                        }
-                    }
+                    // Run through found resources in the background
+                    await TaskHelper.RunEnumerableAsync(
+                        $"{LogBaseName}_run_resourcegroup",
+                        dataPlaneResourceGroups,
+                        (resourceGroup, itemLogger) => CoreRunResourceGroupAsync(resourceGroup, itemLogger),
+                        childLogger,
+                        (resourceGroup, itemLogger) => ObtainLease($"{LeaseBaseName}-{resourceGroup.Subscription.SubscriptionId}-{resourceGroup.ResourceGroup}", taskInterval, itemLogger));
 
                     return !Disposed;
                 },
-                (e, childLogger) => !Disposed);
+                (e, childLogger) => !Disposed,
+                swallowException: true);
         }
 
         /// <inheritdoc/>

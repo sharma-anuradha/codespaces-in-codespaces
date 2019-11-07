@@ -103,8 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             TimeSpan? delay = null);
 
         /// <summary>
-        /// Simple, lightweight worker implementation that allows for x amount of items in an enumeration
-        /// to be worked on at once.
+        /// In serial, iterates through each item in the enumerable in the background.
         /// </summary>
         /// <typeparam name="T">Type of the item enumerable.</typeparam>
         /// <param name="name">Target name.</param>
@@ -114,26 +113,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="obtainLease">
         /// Target lease, that if provided, will be obtained once per item in the enumeration.
         /// </param>
-        /// <param name="errItemCallback">Callback that will be run on execution of each item.</param>
-        /// <param name="concurrentLimit">Target number of concurrent workers that will run.</param>
-        /// <param name="successDelay">
+        /// <param name="itemDelay">
         /// Target delay, that if provided, will space out successful executions. This is intended to allow other
         /// workers on other machines a chance to work through the items (used mainly in conjuntion with a
         /// distributed leas).
         /// </param>
-        /// <param name="failDelay">
-        /// Target delay, that if provided, will space out retry attempts by the workers to pick up items from the list.
-        /// </param>
         void RunBackgroundEnumerable<T>(
+           string name,
+           IEnumerable<T> list,
+           Func<T, IDiagnosticsLogger, Task> callback,
+           IDiagnosticsLogger logger = null,
+           Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
+           int itemDelay = 250);
+
+        /// <summary>
+        /// In serial, iterates through each item in the enumerable.
+        /// </summary>
+        /// <typeparam name="T">Type of the item enumerable.</typeparam>
+        /// <param name="name">Target name.</param>
+        /// <param name="list">Target list.</param>
+        /// <param name="callback">Target callback that will be once item in the enumeration.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="obtainLease">
+        /// Target lease, that if provided, will be obtained once per item in the enumeration.
+        /// </param>
+        /// <param name="itemDelay">
+        /// Target delay, that if provided, will space out successful executions. This is intended to allow other
+        /// workers on other machines a chance to work through the items (used mainly in conjuntion with a
+        /// distributed leas).
+        /// </param>
+        /// <returns>Running tasks.</returns>
+        Task RunEnumerableAsync<T>(
             string name,
             IEnumerable<T> list,
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
-            Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
-            int concurrentLimit = 3,
-            int successDelay = 250,
-            int failDelay = 100);
+            int itemDelay = 250);
 
         /// <summary>
         /// Simple, lightweight worker implementation that allows for x amount of items in an enumeration
@@ -154,11 +170,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// workers on other machines a chance to work through the items (used mainly in conjuntion with a
         /// distributed leas).
         /// </param>
-        /// <param name="failDelay">
-        /// Target delay, that if provided, will space out retry attempts by the workers to pick up items from the list.
-        /// </param>
-        /// <returns>Running tasks.</returns>
-        Task RunBackgroundEnumerableAsync<T>(
+        void RunBackgroundConcurrentEnumerable<T>(
             string name,
             IEnumerable<T> list,
             Func<T, IDiagnosticsLogger, Task> callback,
@@ -166,8 +178,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
             Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
             int concurrentLimit = 3,
-            int successDelay = 250,
-            int failDelay = 100);
+            int successDelay = 250);
+
+        /// <summary>
+        /// Simple, lightweight worker implementation that allows for x amount of items in an enumeration
+        /// to be worked on at once.
+        /// </summary>
+        /// <typeparam name="T">Type of the item enumerable.</typeparam>
+        /// <param name="name">Target name.</param>
+        /// <param name="list">Target list.</param>
+        /// <param name="callback">Target callback that will be once item in the enumeration.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="obtainLease">
+        /// Target lease, that if provided, will be obtained once per item in the enumeration.
+        /// </param>
+        /// <param name="errItemCallback">Callback that will be run on execution of each item.</param>
+        /// <param name="concurrentLimit">Target number of concurrent workers that will run.</param>
+        /// <param name="successDelay">
+        /// Target delay, that if provided, will space out successful executions. This is intended to allow other
+        /// workers on other machines a chance to work through the items (used mainly in conjuntion with a
+        /// distributed leas).
+        /// </param>
+        /// <returns>Running tasks.</returns>
+        Task RunConcurrentEnumerableAsync<T>(
+            string name,
+            IEnumerable<T> list,
+            Func<T, IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger = null,
+            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
+            Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
+            int concurrentLimit = 3,
+            int successDelay = 250);
 
         /// <summary>
         /// Continues running a task until its success or timeout occurs.

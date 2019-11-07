@@ -75,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     var dataPlaneLocations = ControlPlaneInfo.Stamp.DataPlaneLocations;
 
                     // Run through data plane locations in the background
-                    TaskHelper.RunBackgroundEnumerable(
+                    TaskHelper.RunBackgroundConcurrentEnumerable(
                         $"{LogBaseName}_run_dataplanelocation",
                         dataPlaneLocations,
                         (location, itemLogger) => RunOnDataPlaneLocationAsync(location, itemLogger),

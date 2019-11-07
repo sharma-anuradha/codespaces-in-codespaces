@@ -237,7 +237,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 loopName,
                 async (loopLogger) =>
                 {
-                    await TaskHelper.RunBackgroundEnumerableAsync(
+                    await TaskHelper.RunConcurrentEnumerableAsync(
                         loopName,
                         subscriptionLocations,
                         (item, childLogger) => UpdateAzureResourceUsageAsync(serviceType, item, childLogger),
@@ -303,7 +303,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 loopName,
                 async (loopLogger) =>
                 {
-                    await TaskHelper.RunBackgroundEnumerableAsync(
+                    await TaskHelper.RunConcurrentEnumerableAsync(
                         loopName,
                         subscriptionLocationGroups,
                         (item, childLogger) => MonitorAzureResourceUsageAsync(serviceType, item, childLogger),

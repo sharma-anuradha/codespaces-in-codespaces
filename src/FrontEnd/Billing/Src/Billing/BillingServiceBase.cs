@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Logger.FluentAddValue("startCalculationTime", start);
             Logger.FluentAddValue("endCalculationTime", end);
 
-            await taskHelper.RunBackgroundEnumerableAsync(
+            await taskHelper.RunConcurrentEnumerableAsync(
                 $"{ServiceName}_run",
                 plansToRegionsShards,
                 async (x, childlogger) =>

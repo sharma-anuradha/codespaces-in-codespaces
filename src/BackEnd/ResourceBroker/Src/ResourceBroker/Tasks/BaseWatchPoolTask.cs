@@ -87,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     childLogger.FluentAddValue("TaskCountResourceUnits", resourceUnits.Count().ToString());
 
                     // Run through found resources in the background
-                    TaskHelper.RunBackgroundEnumerable(
+                    await TaskHelper.RunConcurrentEnumerableAsync(
                         $"{LogBaseName}_run_unit_check",
                         resourceUnits,
                         (resourceUnit, itemLogger) => CoreRunPoolAsync(resourceUnit, claimSpan, itemLogger),

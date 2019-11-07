@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -128,22 +129,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
            Func<T, IDiagnosticsLogger, Task> callback,
            IDiagnosticsLogger logger = null,
            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
-           Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
-           int concurrentLimit = 3,
-           int successDelay = 250,
-           int failDelay = 100)
+           int itemDelay = 250)
         {
             // Trigger to run things in the background
             RunBackground(
                 "task_helper_run_background_enumerable",
-                (childLogger) => RunBackgroundEnumerableAsync(
-                    name, list, callback, childLogger, obtainLease, errItemCallback, concurrentLimit, successDelay, failDelay),
+                (childLogger) => RunEnumerableAsync(
+                    name, list, callback, childLogger, obtainLease, itemDelay),
                 logger,
                 autoLogOperation: false);
         }
 
         /// <inheritdoc/>
-        public Task RunBackgroundEnumerableAsync<T>(
+        public Task RunEnumerableAsync<T>(
+            string name,
+            IEnumerable<T> list,
+            Func<T, IDiagnosticsLogger, Task> callback,
+            IDiagnosticsLogger logger = null,
+            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
+            int itemDelay = 250)
+        {
+            logger = logger ?? Logger;
+
+            // Log the main task
+            return logger.OperationScopeAsync(
+                "task_helper_run_background_enumerable",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("TaskWorkerEnumerableRunId", Guid.NewGuid())
+                        .FluentAddBaseValue("TaskEnumerableRunName", name)
+                        .FluentAddBaseValue("TasksRunName", name);
+
+                    // Trigger core runner
+                    await RunEnumerableCoreAsync(
+                        name, list, callback, childLogger, obtainLease, itemDelay);
+                });
+        }
+
+        /// <inheritdoc/>
+        public void RunBackgroundConcurrentEnumerable<T>(
+           string name,
+           IEnumerable<T> list,
+           Func<T, IDiagnosticsLogger, Task> callback,
+           IDiagnosticsLogger logger = null,
+           Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
+           Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
+           int concurrentLimit = 3,
+           int successDelay = 250)
+        {
+            // Trigger to run things in the background
+            RunBackground(
+                "task_helper_run_background_concurrent_enumerable",
+                (childLogger) => RunConcurrentEnumerableAsync(
+                    name, list, callback, childLogger, obtainLease, errItemCallback, concurrentLimit, successDelay),
+                logger,
+                autoLogOperation: false);
+        }
+
+        /// <inheritdoc/>
+        public Task RunConcurrentEnumerableAsync<T>(
             string name,
             IEnumerable<T> list,
             Func<T, IDiagnosticsLogger, Task> callback,
@@ -151,8 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
             Action<T, Exception, IDiagnosticsLogger> errItemCallback = default,
             int concurrentLimit = 3,
-            int successDelay = 250,
-            int failDelay = 100)
+            int successDelay = 250)
         {
             logger = logger ?? Logger;
 
@@ -162,17 +205,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // Log the main task
             return logger.OperationScopeAsync(
-                "task_helper_run_background_enumerable",
+                "task_helper_run_background_concurrent_enumerable",
                 async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue("TaskWorkerEnumerableRunId", Guid.NewGuid())
                         .FluentAddBaseValue("TaskEnumerableRunName", name)
-                        .FluentAddBaseValue("TasksRunName", name)
-                        .FluentAddValue("IterateItemCount", list.Count());
+                        .FluentAddBaseValue("TasksRunName", name);
 
                     // Trigger core runner
-                    await RunBackgroundEnumerableCore(
-                        name, list, callback, childLogger, obtainLease, errItemCallback, concurrentLimit, successDelay, failDelay);
+                    await RunConcurrentEnumerableCoreAsync(
+                        name, list, callback, childLogger, obtainLease, errItemCallback, concurrentLimit, successDelay);
                 });
         }
 
@@ -316,7 +358,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
         }
 
-        private async Task RunBackgroundEnumerableCore<T>(
+        private async Task RunConcurrentEnumerableCoreAsync<T>(
            string name,
            IEnumerable<T> list,
            Func<T, IDiagnosticsLogger, Task> callback,
@@ -324,129 +366,70 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease,
            Action<T, Exception, IDiagnosticsLogger> errItemCallback,
            int concurrentLimit,
-           int successDelay,
-           int failDelay)
+           int successDelay)
         {
+            var semaphoreThrottleWait = new Stopwatch();
+            var semaphore = new SemaphoreSlim(concurrentLimit, concurrentLimit);
             var results = new List<TaskCompletionSource<Exception>>();
-            var localLock = new object();
-            var concurrentCount = 0;
             var index = 0;
 
             // Run through each item in the list
             foreach (var item in list)
             {
-                var tryCount = 0;
-                var lockAchieved = false;
-
                 // Task tracking
                 var localCompletion = new TaskCompletionSource<Exception>();
                 results.Add(localCompletion);
 
-                // Track a log statement per item
-                await logger.OperationScopeAsync(
+                // Spawn work to take place in the background, this allows for the
+                // concurrent worker limit to be achived, otherwise we would only
+                // be running one at time.
+                RunBackground(
                     "task_helper_run_background_enumerable_item",
                     async (itemLogger) =>
                     {
                         itemLogger.FluentAddBaseValue("TaskItemRunId", Guid.NewGuid())
-                            .FluentAddValue("IterateItemCount", list.Count())
                             .FluentAddValue("IterateItemIndex", index)
                             .FluentAddValue("LockConcurrentLimit", concurrentLimit)
-                            .FluentAddValue("LockConcurrentPreCount", concurrentCount);
+                            .FluentAddValue("LockConcurrentSemaphoreCount", semaphore.CurrentCount);
 
-                        // Continue trying to obtain lock till we do
-                        do
+                        // Wait for worker space to free up
+                        var semaphoreWait = Stopwatch.StartNew();
+                        await semaphore.WaitAsync();
+                        itemLogger.FluentAddDuration("LockConcurrentSemaphore", semaphoreWait);
+
+                        try
                         {
-                            // Track a log statement per try
-                            await itemLogger.OperationScopeAsync(
-                                "task_helper_run_background_enumerable_item_try",
-                                async (itemTryLogger) =>
-                                {
-                                    itemTryLogger.FluentAddBaseValue("TaskItemRunTryId", Guid.NewGuid())
-                                        .FluentAddValue("IterateItemCount", list.Count())
-                                        .FluentAddValue("IterateItemIndex", index)
-                                        .FluentAddValue("LockConcurrentLimit", concurrentLimit)
-                                        .FluentAddValue("LockConcurrentPreCount", concurrentCount)
-                                        .FluentAddValue("LockTryCount", tryCount);
+                            // Core task execution
+                            await RunEnumerableItemCoreAsync(
+                                name, item, callback, itemLogger, obtainLease, successDelay);
 
-                                    // Try and get lock to do the work
-                                    if (concurrentCount < concurrentLimit)
-                                    {
-                                        lock (localLock)
-                                        {
-                                            if (concurrentCount < concurrentLimit)
-                                            {
-                                                lockAchieved = true;
-                                                concurrentCount++;
-                                            }
-                                        }
-                                    }
-
-                                    itemTryLogger.FluentAddValue("LockAchived", lockAchieved)
-                                        .FluentAddValue("LockConcurrentPostCount", concurrentCount);
-
-                                    // If we got the lock run the background task
-                                    if (lockAchieved)
-                                    {
-                                        // Spawn work to take place in the background, this allows for the
-                                        // concurrent worker limit to be achived, otherwise we would only
-                                        // be running one at time.
-                                        RunBackground(
-                                            "task_helper_run_background_enumerable_item_try_task",
-                                            async (executeLogger) =>
-                                                {
-                                                    // Core task execution
-                                                    var didExecute = await RunBackgroundEnumerableItemCore(
-                                                        name, item, callback, executeLogger, obtainLease);
-
-                                                    // Pause to give some time between runs (mainly to give other
-                                                    // workers on other machines a case to work through things)
-                                                    if (didExecute && successDelay > 0)
-                                                    {
-                                                        var delayDifference = (int)(successDelay * 0.1);
-                                                        await Task.Delay(Random.Next(successDelay - delayDifference, successDelay + delayDifference));
-                                                    }
-
-                                                    // Track completion
-                                                    localCompletion.SetResult(null);
-
-                                                    // Make sure we reduce the count, even if there was an error
-                                                    concurrentCount--;
-                                                },
-                                            itemTryLogger,
-                                            errCallback: (e, executeLogger) =>
-                                                {
-                                                    // Track completion
-                                                    localCompletion.SetResult(e);
-
-                                                    // Make sure we reduce the count, even if there was an error
-                                                    concurrentCount--;
-
-                                                    // Execute users callback if needed
-                                                    if (errItemCallback != null)
-                                                    {
-                                                        errItemCallback(item, e, executeLogger);
-                                                    }
-                                                });
-                                    }
-                                    else
-                                    {
-                                        // Pause to give some time between runs (mainly to give other running
-                                        // tasks a chance to finish)
-                                        if (failDelay > 0)
-                                        {
-                                            var delayDifference = (int)(failDelay * 0.1);
-                                            await Task.Delay(Random.Next(failDelay - delayDifference, failDelay + delayDifference));
-                                        }
-                                    }
-                                });
-
-                            tryCount++;
+                            // Track completion
+                            localCompletion.SetResult(null);
                         }
-                        while (!lockAchieved);
+                        catch (Exception e)
+                        {
+                            // Track completion
+                            localCompletion.SetResult(e);
 
-                        itemLogger.FluentAddValue("LockTryCount", tryCount)
-                            .FluentAddValue("LockConcurrentPostCount", concurrentCount);
-                    });
+                            throw;
+                        }
+                        finally
+                        {
+                            // Release worker space
+                            semaphore.Release();
+                        }
+                    },
+                    logger);
+
+                // Throttle the amount of tasks being generated
+                if (index % 10 == 0)
+                {
+                    semaphoreThrottleWait.Start();
+                    await Task.WhenAll(results.Select(x => x.Task));
+                    semaphoreThrottleWait.Stop();
+
+                    logger.FluentAddDuration("IterateSemaphoreThrottleWait", semaphoreThrottleWait);
+                }
 
                 index++;
             }
@@ -455,20 +438,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var exceptions = (await Task.WhenAll(results.Select(x => x.Task)))
                 .Where(x => x != null);
 
-            logger.FluentAddValue("IterateExceptionCount", exceptions.Count());
+            logger.FluentAddValue("IterateItemCount", index)
+                .FluentAddValue("IterateExceptionCount", exceptions.Count())
+                .FluentAddDuration("IterateSemaphoreThrottleWait", semaphoreThrottleWait);
 
+            // Throw aggregate exception
             if (exceptions.Any())
             {
                 throw new AggregateException("Run Background Enumerable items threw excpetions", exceptions);
             }
         }
 
-        private async Task<bool> RunBackgroundEnumerableItemCore<T>(
+        private async Task RunEnumerableCoreAsync<T>(
+            string name, IEnumerable<T> list, Func<T, IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger, Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease, int successDelay)
+        {
+            var index = 0;
+
+            // Run through each item in the list
+            foreach (var item in list)
+            {
+                // Track a log statement per item
+                await logger.OperationScopeAsync(
+                    "task_helper_run_background_enumerable_item",
+                    async (itemLogger) =>
+                    {
+                        itemLogger.FluentAddBaseValue("TaskItemRunId", Guid.NewGuid())
+                            .FluentAddValue("IterateItemIndex", index);
+
+                        // Core task execution
+                        await RunEnumerableItemCoreAsync(
+                            name, item, callback, itemLogger, obtainLease, successDelay);
+                    });
+
+                index++;
+            }
+
+            logger.FluentAddValue("IterateItemCount", index);
+        }
+
+        private async Task<bool> RunEnumerableItemCoreAsync<T>(
             string name,
             T item,
             Func<T, IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger,
-            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease)
+            Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease,
+            int successDelay)
         {
             var success = false;
 
@@ -499,6 +513,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         await logger.OperationScopeAsync(name, wrappedCallback);
                     }
                 }
+            }
+
+            // Pause to give some time between runs (mainly to give other
+            // workers on other machines a case to work through things)
+            if (success && successDelay > 0)
+            {
+                var delayDifference = (int)(successDelay * 0.1);
+                await Task.Delay(Random.Next(successDelay - delayDifference, successDelay + delayDifference));
             }
 
             return success;
