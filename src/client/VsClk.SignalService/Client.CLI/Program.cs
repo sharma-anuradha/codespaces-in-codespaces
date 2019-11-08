@@ -64,7 +64,7 @@ namespace SignalService.Client.CLI
                     "If we want to connect to the presence hub endpoint",
                     CommandOptionType.NoValue);
 
-                app.OnExecute(() => new PresenceApp(contactIdOption, emailOption, nameOption, usePresenceHubNameOption).RunAsync(cli));
+                app.OnExecute(() => new ContactApp(contactIdOption, emailOption, nameOption, usePresenceHubNameOption).RunAsync(cli));
             });
 
             cli.Command("run-relay", app =>
@@ -79,7 +79,11 @@ namespace SignalService.Client.CLI
 
             cli.Command("run-presence-stress", app =>
             {
-                app.OnExecute(() => new PresenceStressApp().RunAsync(cli));
+                var contactsFilePathOption = cli.Option(
+                    "--contactsFile",
+                    "File with contacts info",
+                    CommandOptionType.SingleValue);
+                app.OnExecute(() => new ContactStressApp(contactsFilePathOption).RunAsync(cli));
             });
 
             try

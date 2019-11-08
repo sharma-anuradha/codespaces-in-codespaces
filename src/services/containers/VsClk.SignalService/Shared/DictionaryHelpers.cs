@@ -13,7 +13,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
     /// </summary>
     internal static class DictionaryHelpers
     {
-        public static string ConvertToString(this IDictionary<string, object> properties, IHubFormatProvider provider)
+        public static string ConvertToString(this IDictionary<string, object> properties, IDataFormatProvider provider)
         {
             if (properties == null)
             {
@@ -56,7 +56,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             return defaultValue;
         }
 
-        private static string FormatValue(IHubFormatProvider provider, string propertyName, object value)
+        private static string FormatValue(IDataFormatProvider provider, string propertyName, object value)
         {
             var format = provider?.GetPropertyFormat(propertyName);
             return string.Format(provider, string.IsNullOrEmpty(format) ? "{0}" : $"{{0:{format}}}", value);

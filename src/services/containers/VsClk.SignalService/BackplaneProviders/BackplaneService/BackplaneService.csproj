@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.BackplaneService</AssemblyName>
+    <LangVersion>7.1</LangVersion>
+    <Timestamp>$([System.DateTime]::Now.ToString("yyyyMMdd.HHmmss"))</Timestamp>
+    <IsPublishable>true</IsPublishable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
+    <Compile Include="..\..\Shared\SecondsCounter.cs" Link="Shared\SecondsCounter.cs" />
+    <Compile Include="..\..\Shared\ConcurrentHashSet.cs" Link="Shared\ConcurrentHashSet.cs" />
+    <Compile Include="..\..\Shared\ConcurrentHelpers.cs" Link="Shared\ConcurrentHelpers.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Note: remove next package when we move to 3.0 -->
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSVersion)" />
+    <PackageReference Include="StreamJsonRpc" Version="$(StreamJsonRpcVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common.AspNetCore\Common.SignalR.AspNetCore.csproj" />
+    <ProjectReference Include="..\AzureDocumentsProvider.AspNetCore\AzureDocumentsProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\AzureRedisProvider.AspNetCore\AzureRedisProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\ContactBackplane.Common\ContactBackplane.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DockerFiles Include="Dockerfile" />
+    <DockerFiles Include="docker-compose.yml" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="appsettings.Debug.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <Target Name="CopyDeploymentFiles" AfterTargets="Publish">
+    <Copy SourceFiles="@(DockerFiles)" DestinationFolder="$(Outdir)\%(RecursiveDir)" SkipUnchangedFiles="false" />
+    <ItemGroup>
+      <FileWrites Include="$(OutDir)\**\*.*" />
+    </ItemGroup>
+  </Target>
+
+</Project>

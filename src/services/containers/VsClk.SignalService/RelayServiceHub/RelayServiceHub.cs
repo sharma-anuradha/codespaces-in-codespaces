@@ -15,7 +15,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly RelayService relayService;
         private readonly ILogger logger;
 
-        public static string Name = nameof(RelayServiceHub).ToCamelCase();
+        /// <summary>
+        /// Hub context name when used in a SignalRHubContextHost
+        /// </summary>
+        public static string HubContextName = "relayServiceHub";
 
         public RelayServiceHub(RelayService relayService, ILogger<RelayServiceHub> logger)
         {

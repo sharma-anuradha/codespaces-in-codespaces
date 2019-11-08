@@ -19,11 +19,11 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class HealthServiceHub : Hub
     {
         private readonly AppSettings appSettings;
-        private readonly PresenceService presenceService;
+        private readonly ContactService presenceService;
 
         public HealthServiceHub(
             IOptions<AppSettings> appSettingsProvider,
-            PresenceService presenceService)
+            ContactService presenceService)
         {
             this.appSettings = appSettingsProvider.Value;
             this.presenceService = presenceService;

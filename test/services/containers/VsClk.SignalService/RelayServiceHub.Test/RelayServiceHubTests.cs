@@ -25,7 +25,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
             var trace = new TraceSource("RelayServiceServiceHubTests");
             this.relayService = new RelayService(
-                new RelayServiceOptions() { Id = "mock" },
+                new HubServiceOptions() { Id = "mock" },
                 MockUtils.CreateSingleHubContextHostMock<RelayServiceHub>(this.clientProxies),
                 serviceLogger.Object);
         }

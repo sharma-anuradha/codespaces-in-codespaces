@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  vsls.backplaneservice:
+    image: vsclk.backplaneservice
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+        - 80
+        - 3015

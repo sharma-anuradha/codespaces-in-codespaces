@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ using StackExchange.Redis;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Implements IScaleServiceProvider based on an Azure redis cache
+    /// Implements IBackplaneProvider based on an Azure redis cache
     /// </summary>
     public class AzureRedisProvider : DocumentDatabaseProvider
     {
@@ -36,13 +37,13 @@ namespace Microsoft.VsCloudKernel.SignalService
         private ConnectionMultiplexer Connection { get; }
 
         public static async Task<AzureRedisProvider> CreateAsync(
-            string serviceId,
+            (string ServiceId, string Stamp) serviceInfo,
             ConnectionMultiplexer connection,
             ILogger<AzureRedisProvider> logger,
             IFormatProvider formatProvider)
         {
             var redisBackplaneProvider = new AzureRedisProvider(connection, logger, formatProvider);
-            await redisBackplaneProvider.InitializeAsync(serviceId);
+            await redisBackplaneProvider.InitializeAsync(serviceInfo);
             return redisBackplaneProvider;
         }
 
@@ -74,12 +75,14 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task<(ContactDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
         {
+            var start = Stopwatch.StartNew();
             var value = await DatabaseAsync.StringGetAsync(ToContactKey(contactId));
-            return (DeserializeObject<ContactDocument>(value), TimeSpan.FromMilliseconds(0));
+            return (DeserializeObject<ContactDocument>(value), TimeSpan.FromMilliseconds(start.ElapsedMilliseconds));
         }
 
         protected override async Task<TimeSpan> UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
         {
+            var start = Stopwatch.StartNew();
             var contactKey = ToContactKey(contactDocument.Id);
 
             if (!string.IsNullOrEmpty(contactDocument.Email))
@@ -90,7 +93,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             var json = JsonConvert.SerializeObject(contactDocument);
             await DatabaseAsync.StringSetAsync(contactKey, json);
             await DatabaseAsync.PublishAsync(ContactsId, json);
-            return TimeSpan.FromMilliseconds(0);
+
+            return TimeSpan.FromMilliseconds(start.ElapsedMilliseconds);
         }
 
         protected override async Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken)
@@ -147,8 +151,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                 .ToList();
         }
 
-        private async Task InitializeAsync(string serviceId)
+        private async Task InitializeAsync((string ServiceId, string Stamp) serviceInfo)
         {
+            // define service Id
+            await InitializeServiceIdAsync(serviceInfo);
+
             var subscriber = Connection.GetSubscriber();
 
             (await subscriber.SubscribeAsync(ServicesId)).OnMessage((message) =>
@@ -163,9 +170,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 return OnMessageDocumentsChangedAsync(new IDocument[] { new Document(message.Message.ToString()) });
             });
-
-            // define service Id
-            await InitializeServiceIdAsync(serviceId);
         }
 
         private static T DeserializeObject<T>(RedisValue value)

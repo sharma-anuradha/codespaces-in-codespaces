@@ -11,11 +11,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         [JsonProperty("id")]
         public string Id { get; set; }
 
-        [JsonProperty("serviceInfo")]
-        public object ServiceInfo { get; set; }
+        [JsonProperty("stamp")]
+        public string Stamp { get; set; }
 
         [JsonProperty("metrics")]
-        public PresenceServiceMetrics Metrics { get; set; }
+        public ContactServiceMetrics Metrics { get; set; }
 
         [JsonProperty("lastUpdate")]
         public DateTime LastUpdate { get; set; }

@@ -1,0 +1,12 @@
+<Project>
+
+  <Import Project="$(ThisFileDirectory)../../../../Directory.Build.props" />
+  <!-- NuGet Package Versions -->
+  <PropertyGroup>
+    <LoggingVersion>2.2.0</LoggingVersion>
+    <SignalRVersion>1.1.0</SignalRVersion>
+    <VsSaaSVersion>0.1.46</VsSaaSVersion>
+    <VisualStudioThreadingVersion>16.0.102</VisualStudioThreadingVersion>
+    <StreamJsonRpcVersion>2.0.167</StreamJsonRpcVersion>
+  </PropertyGroup>
+</Project>

@@ -5,6 +5,12 @@
     <UseVsSaaSSdk>false</UseVsSaaSSdk>
   </PropertyGroup>
 
+  <!-- NuGet Package Versions -->
+  <PropertyGroup>
+    <Microsoft_Extensions_Logging_Console_Version>3.0.0</Microsoft_Extensions_Logging_Console_Version>
+    <VisualStudioThreadingVersion>16.0.102</VisualStudioThreadingVersion>
+  </PropertyGroup>
+  
   <Import Project="$(ThisFileDirectory)../Directory.Build.props" />
 
 </Project>

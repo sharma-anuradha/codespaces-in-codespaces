@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vsclk-backplaneservice.fullname" . }}
+  labels:
+{{ include "vsclk-backplaneservice.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 3150
+      targetPort: 3150
+      protocol: TCP
+      name: bckpln-vsclk-backplaneservice
+  selector:
+    app.kubernetes.io/name: {{ include "vsclk-backplaneservice.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.ContactBackplaneServiceProvider</AssemblyName>
+    <ClientDir>..\..\..\..\..\client</ClientDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ClientDir)\Shared\TraceSourceExtensions.cs" Link="Client\TraceSourceExtensions.cs" />
+    <Compile Include="$(ClientDir)\VsClk.SignalService\Client\ExponentialBackoff.cs" Link="Client\ExponentialBackoff.cs" />
+    <Compile Include="$(ClientDir)\VsClk.SignalService\Client\HubConnectionHelpers.cs" Link="Client\HubConnectionHelpers.cs" />
+    <Compile Include="..\..\Shared\LoggerAdapterListener.cs" Link="Shared\LoggerAdapterListener.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(SignalRVersion)" />
+    <PackageReference Include="StreamJsonRpc" Version="$(StreamJsonRpcVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\Common.SignalR.csproj" />
+    <ProjectReference Include="..\..\ContactServiceHub.Contracts\ContactServiceHub.Contracts.csproj" />
+  </ItemGroup>
+
+
+</Project>

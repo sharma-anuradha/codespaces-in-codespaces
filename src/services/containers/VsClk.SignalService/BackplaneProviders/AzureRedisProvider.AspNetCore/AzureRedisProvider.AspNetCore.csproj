@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.AzureRedisProvider.AspNetCore</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Note: remove next package when we move to 3.0 -->
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+
+    <PackageReference Include="Microsoft.Azure.Management.Redis.Fluent" Version="1.27.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common.AspNetCore\Common.SignalR.AspNetCore.csproj" />
+    <ProjectReference Include="..\AzureRedisProvider\AzureRedisProvider.csproj" />
+  </ItemGroup>
+</Project>

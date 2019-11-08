@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.ContactServiceHub</AssemblyName>
+    <RootNamespace>Microsoft.VsCloudKernel.SignalService.ContactServiceHub</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
+    <Compile Include="..\Shared\ConcurrentHashSet.cs" Link="Shared\ConcurrentHashSet.cs" />
+    <Compile Include="..\Shared\ConcurrentHelpers.cs" Link="Shared\ConcurrentHelpers.cs" />
+    <Compile Include="..\Shared\SecondsCounter.cs" Link="Shared\SecondsCounter.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="$(VisualStudioThreadingVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.SignalR.csproj" />
+    <ProjectReference Include="..\ContactServiceHub.Contracts\ContactServiceHub.Contracts.csproj" />
+    <ProjectReference Include="..\HubCore\HubCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Shared\" />
+  </ItemGroup>
+</Project>

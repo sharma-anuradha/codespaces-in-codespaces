@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="RelayHubStream.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;

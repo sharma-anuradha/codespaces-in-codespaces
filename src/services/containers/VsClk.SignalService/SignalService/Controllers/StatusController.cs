@@ -15,10 +15,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         private const string EndpointPrefix = "Endpoint=";
 
         private readonly AppSettings appSettings;
-        private readonly PresenceService presenceService;
+        private readonly ContactService presenceService;
         private readonly RelayService relayService;
         private readonly HealthService healthService;
-        private readonly IStartup startup;
+        private readonly Startup startup;
         private readonly IList<ServiceEndpoint> serviceEndpoints;
 
         private IConfigurationRoot Configuration => this.startup.Configuration;
@@ -26,10 +26,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
 
         public StatusController(
             IOptions<AppSettings> appSettingsProvider,
-            PresenceService presenceService,
+            ContactService presenceService,
             RelayService relayService,
             HealthService healthService,
-            IStartup startup,
+            Startup startup,
             IList<ServiceEndpoint> serviceEndpoints)
         {
             this.appSettings = appSettingsProvider.Value;
@@ -71,7 +71,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                 this.startup.EnableAuthentication,
                 this.startup.UseAzureSignalR,
                 AzureSignalRConnections = GetAllAzureSignalRConnections(),
-                BackplaneProviderTypes = this.presenceService.BackplaneProviders.Select(f => f.GetType().Name).ToArray(),
+                BackplaneProviderTypes = this.presenceService.BackplaneManager.BackplaneProviders.Select(f => f.GetType().Name).ToArray(),
                 PresenceMetrics = this.presenceService.GetMetrics(),
                 RelayMetrics = this.relayService.GetMetrics(),
             };

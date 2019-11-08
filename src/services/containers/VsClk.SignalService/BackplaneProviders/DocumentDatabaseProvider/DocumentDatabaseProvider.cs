@@ -17,11 +17,10 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Base class to all our backplane providers that are based on a document database 
     /// </summary>
-    public abstract class DocumentDatabaseProvider : VisualStudio.Threading.IAsyncDisposable, IBackplaneProvider
+    public abstract class DocumentDatabaseProvider : VisualStudio.Threading.IAsyncDisposable, IContactBackplaneProvider
     {
-        private const int StaleServiceSeconds = 120;
-
         // Logger method scopes
+        private const string MethodLoadActiveServices = "DocumentDatabaseProvider.LoadActiveServices";
         private const string MethodSendMessage = "DocumentDatabaseProvider.SendMessageAsync";
         private const string MethodUpdateContact = "DocumentDatabaseProvider.UpdateContact";
         private const string MethodDeleteMessages = "DocumentDatabaseProvider.DeleteMessages";
@@ -59,12 +58,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public virtual int Priority => 0;
 
-        public async Task UpdateMetricsAsync(string serviceId, object serviceInfo, PresenceServiceMetrics metrics, CancellationToken cancellationToken)
+        public async Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
         {
             var serviceDocument = new ServiceDocument()
             {
-                Id = serviceId,
-                ServiceInfo = serviceInfo,
+                Id = serviceInfo.ServiceId,
+                Stamp = serviceInfo.Stamp,
                 Metrics = metrics,
                 LastUpdate = DateTime.UtcNow
             };
@@ -74,7 +73,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
         {
-            var emailPropertyValue = matchProperties.TryGetProperty<string>(Properties.Email)?.ToLowerInvariant();
+            var emailPropertyValue = matchProperties.TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant();
             if (string.IsNullOrEmpty(emailPropertyValue))
             {
                 return new Dictionary<string, ContactDataInfo>();
@@ -92,12 +91,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
         {
-            using (Logger.BeginSingleScope(
-                (LoggerScopeHelpers.MethodScope, MethodSendMessage)))
-            {
-                Logger.LogDebug($"contactId:{ToTraceText(messageData.FromContact.Id)} targetContactId:{ToTraceText(messageData.TargetContact.Id)}");
-            }
-
             var messageDocument = new MessageDocument()
             {
                 Id = messageData.ChangeId,
@@ -110,10 +103,18 @@ namespace Microsoft.VsCloudKernel.SignalService
                 LastUpdate = DateTime.UtcNow
             };
 
+            var start = Stopwatch.StartNew();
             await InsertMessageDocumentAsync(messageDocument, cancellationToken);
+
+            using (Logger.BeginScope(
+                (LoggerScopeHelpers.MethodScope, MethodSendMessage),
+                (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds)))
+            {
+                Logger.LogDebug($"contactId:{ToTraceText(messageData.FromContact.Id)} targetContactId:{ToTraceText(messageData.TargetContact.Id)}");
+            }
         }
 
-        public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
+        public async Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
             ContactDataInfo contactDataInfo;
             var contactDataDocumentInfo = await GetContactDataDocumentAsync(contactDataChanged.ContactId, cancellationToken);
@@ -134,9 +135,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 ChangeId = contactDataChanged.ChangeId,
                 ServiceId = contactDataChanged.ServiceId,
                 ConnectionId = contactDataChanged.ConnectionId,
-                UpdateType = contactDataChanged.Type,
+                UpdateType = contactDataChanged.ChangeType,
                 Properties = contactDataChanged.Data.Keys.ToArray(),
-                Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(Properties.Email)?.ToLowerInvariant() ?? contactDataDocumentInfo.Item1?.Email,
+                Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant() ?? contactDataDocumentInfo.Item1?.Email,
                 ServiceConnections = JObject.FromObject(contactDataInfo),
                 LastUpdate = DateTime.UtcNow
             };
@@ -149,6 +150,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 Logger.LogDebug($"contactId:{ToTraceText(contactDataChanged.ContactId)}");
             }
+
+            return contactDataInfo;
         }
 
         public async Task DisposeDataChangesAsync(DataChanged[] dataChanges, CancellationToken cancellationToken)
@@ -186,9 +189,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         #endregion
 
-        protected async Task InitializeServiceIdAsync(string serviceId)
+        protected async Task InitializeServiceIdAsync((string ServiceId, string Stamp) serviceInfo)
         {
-            await UpdateMetricsAsync(serviceId, null, default, CancellationToken.None);
+            await UpdateMetricsAsync(serviceInfo, default, CancellationToken.None);
             // load initial services
             await LoadActiveServicesAsync(default);
         }
@@ -289,8 +292,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         private async Task LoadActiveServicesAsync(CancellationToken cancellationToken)
         {
             var allServices = await GetServiceDocuments(cancellationToken);
+            Logger.LogMethodScope(LogLevel.Debug,$"services:{string.Join(",", allServices.Select(s => $"[{s.Id}-{s.Stamp}]"))}", MethodLoadActiveServices);
+
             var utcNow = DateTime.UtcNow;
-            var nonStaleServices = new HashSet<string>(allServices.Where(i => (utcNow - i.LastUpdate).TotalSeconds < StaleServiceSeconds).Select(d => d.Id));
+            var nonStaleServices = new HashSet<string>(allServices.Where(i => (utcNow - i.LastUpdate).TotalSeconds < BackplaneManagerConst.StaleServiceSeconds).Select(d => d.Id));
 
             // next block will delete stale documents
             foreach (var doc in allServices)
@@ -299,6 +304,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     try
                     {
+                        Logger.LogDebug($"Delete stale service id:{doc.Id}");
                         await DeleteServiceDocumentById(doc.Id, cancellationToken);
                     }
                     catch { }

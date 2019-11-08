@@ -24,7 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private readonly IHubProxy hubProxy;
         private readonly ConcurrentDictionary<string, RelayHubProxy> relayHubs = new ConcurrentDictionary<string, RelayHubProxy>();
-        private readonly IHubFormatProvider formatProvider;
+        private readonly IDataFormatProvider formatProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RelayServiceProxy"/> class.
@@ -46,7 +46,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         {
             this.hubProxy = Requires.NotNull(hubProxy, nameof(hubProxy));
             Requires.NotNull(trace, nameof(trace));
-            this.formatProvider = formatProvider != null ? HubFormatProvider.Create(formatProvider) : null;
+            this.formatProvider = formatProvider != null ? DataFormatProvider.Create(formatProvider) : null;
 
             this.hubProxy.On(
                 RelayHubMethods.MethodReceiveData,

@@ -9,37 +9,31 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\Shared\LoggerScopeHelpers.cs" Link="Shared\LoggerScopeHelpers.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- Note: remove next package when we move to 3.0 -->
     <PackageReference Include="Microsoft.AspNetCore.App" />
     
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="2.3.2" />
     
-    <PackageReference Include="Microsoft.Azure.Management.CosmosDB.Fluent" Version="1.27.0" />
-    <PackageReference Include="Microsoft.Azure.Management.Redis.Fluent" Version="1.27.0" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.1.0-preview1-10442" />
     <PackageReference Include="@(MicrosoftVisualStudioValidationPackageReference)" />
     <PackageReference Include="@(NewtonsoftJsonPackageReference)" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.2" />
-    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.TelemetryProvider" Version="0.1.46" />
-    <PackageReference Include="Microsoft.VsSaaS.Common" Version="0.1.46" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="1.1.0" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.TelemetryProvider" Version="$(VsSaaSVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(SignalRVersion)" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="$(SignalRVersion)" />
+    <PackageReference Include="StreamJsonRpc" Version="$(StreamJsonRpcVersion)" />
 
     <!-- For .NET Core 3.0+ -->
     <!--<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.0.0" />-->
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BackplaneProviders\AzureDocumentsProvider\AzureDocumentsProvider.csproj" />
-    <ProjectReference Include="..\BackplaneProviders\AzureRedisProvider\AzureRedisProvider.csproj" />
-    <ProjectReference Include="..\PresenceServiceHub\PresenceServiceHub.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\AzureDocumentsProvider.AspNetCore\AzureDocumentsProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\AzureRedisProvider.AspNetCore\AzureRedisProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\ContactBackplane.Common\ContactBackplane.Common.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\ContactBackplaneServiceProvider\ContactBackplaneServiceProvider.csproj" />
+    <ProjectReference Include="..\Common.AspNetCore\Common.SignalR.AspNetCore.csproj" />
+    <ProjectReference Include="..\ContactServiceHub\ContactServiceHub.csproj" />
     <ProjectReference Include="..\RelayServiceHub\RelayServiceHub.csproj" />
   </ItemGroup>
 

@@ -7,25 +7,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.VsSaaS.AspNetCore.TelemetryProvider;
-using Microsoft.VsSaaS.Common.Warmup;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    public interface IStartup
+    public class Startup : StartupBase<AppSettings>
     {
-        bool UseAzureSignalR { get; }
-        bool EnableAuthentication { get; }
-        string Environment { get; }
-        IConfigurationRoot Configuration { get; }
-        bool IsDevelopmentEnv { get; }
-    }
-
-    public class Startup : IStartup
-    {
-        Func<Type, ILogger> loggerFactory;
-        private ILogger logger;
-
         /// <summary>
         /// Map to the universal hub signalR
         /// </summary>
@@ -51,78 +37,26 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// </summary>
         internal const string HealthHubMap = "/healthhub";
 
-        #region IStartup
-
-        public bool UseAzureSignalR { get; private set; }
-        public bool EnableAuthentication { get; private set; }
-        public string Environment => this._hostEnvironment.EnvironmentName;
-        public bool IsDevelopmentEnv => !this._hostEnvironment.IsProduction();
-
-        #endregion
-
-        private readonly IHostingEnvironment _hostEnvironment;
-
-
         public Startup(ILoggerFactory loggerFactory,IHostingEnvironment env)
+            : base(loggerFactory, env)
         {
-            this.loggerFactory = (t) => loggerFactory.CreateLogger(t.FullName);
-
-            this._hostEnvironment = env;
-
-            // Build configuration
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-#if DEBUG
-                .AddJsonFile("appsettings.Development.json", optional: true)
-                .AddJsonFile("appsettings.Debug.json", optional: true)
-#else
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-#endif
-                .AddEnvironmentVariables();
-
-            Configuration = builder.Build();
         }
 
-        public IConfigurationRoot Configuration { get; }
+        public bool UseAzureSignalR { get; private set; }
+
+        public bool EnableAuthentication { get; private set; }
+
+        protected override Type AppType => typeof(Startup);
+
+        protected override string ServiceType => "SignalR";
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Configuration
-            var appSettingsConfiguration = Configuration.GetSection("AppSettings");
-            services.Configure<AppSettings>(appSettingsConfiguration);
-
-            // create a unique service Id
-            var serviceId = Guid.NewGuid().ToString();
-
-            // define the stamp
-            var stamp = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.Stamp));
-
-            // If telemetry console provider is wanted
-            if (appSettingsConfiguration.GetValue<bool>(nameof(AppSettings.UseTelemetryProvider)))
-            {
-                // inject the Telemetry logger provider
-                services.ReplaceConsoleTelemetry((opts) =>
-                {
-                    // Our options on every telemetry log
-                    opts.FactoryOptions = new Dictionary<string, object>()
-                    {
-                        { "Service", "signlr" },
-                        { "ServiceId", serviceId },
-                        { "Stamp", stamp }
-                    };
-                });
-
-                var serviceProvider = services.BuildServiceProvider();
-                this.loggerFactory = (t) => serviceProvider.GetService(t) as ILogger;
-            }
-
-            this.logger = this.loggerFactory(typeof(ILogger<Startup>));
-            this.logger.LogInformation($"ConfigureServices -> env:{this._hostEnvironment.EnvironmentName}");
+            ConfigureCommonServices(services);
 
             // Frameworks
-            services.AddMvc()
+            services.AddMvc().AddApplicationPart(typeof(StartupBase<>).Assembly).AddControllersAsServices()
 #if _NETCORE3_
                 .AddMvcOptions(options => options.EnableEndpointRouting = false)
 #endif
@@ -131,52 +65,45 @@ namespace Microsoft.VsCloudKernel.SignalService
             // provide IHttpClientFactory
             services.AddHttpClient();
 
-            // define list of IAsyncWarmup implementation available
-            var warmupServices = new List<IAsyncWarmup>();
-            services.AddSingleton<IList<IAsyncWarmup>>((srvcProvider) => warmupServices);
-
-            // define list of IHealthStatusProvider implementation available
-            var healthStatusProviders = new List<IHealthStatusProvider>();
-            services.AddSingleton<IList<IHealthStatusProvider>>((srvcProvider) => healthStatusProviders);
-
-            // define our overall warmup service
-            services.AddSingleton<WarmupService>();
-
-            // define our overall health service
-            services.AddSingleton<HealthService>();
 
             // Next block will enable authentication based on a Profile service Uri
-            var authenticateProfileServiceUri = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.AuthenticateProfileServiceUri));
+            var authenticateProfileServiceUri = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.AuthenticateProfileServiceUri));
             if (!string.IsNullOrEmpty(authenticateProfileServiceUri))
             {            
-                this.logger.LogInformation("Authentication enabled...");
+                Logger.LogInformation("Authentication enabled...");
 
                 EnableAuthentication = true;
                 services.AddProfileServiceJwtBearer(
                     authenticateProfileServiceUri,
-                    this.loggerFactory(typeof(ILogger<Authenticate>)),
-                    $"signlr-{serviceId}-{stamp}");
+                    CreateLoggerInstance(typeof(Authenticate)),
+                    $"signlr-{ServiceId}-{Stamp}");
             }
 
-            // Create the Azure Cosmos backplane provider service
-            services.AddHostedService<AzureDocumentsProviderService>();
+            if (!string.IsNullOrEmpty(AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.BackplaneJsonRpcServer))))
+            {
+                // add json Rpc backplane support
+                services.AddHostedService<JsonRpcContactBackplaneServiceProviderService>();
+            }
+            else if (!string.IsNullOrEmpty(AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.BackplaneServiceUri))))
+            {
+                // will signalR backplane support
+                services.AddHostedService<HubContactBackplaneServiceProviderService>();
+            }
+            else
+            {
+                // Create the Azure Cosmos backplane provider service
+                services.AddHostedService<AzureDocumentsProviderService>();
 
-            // Create the Azure Redis backplane provider service
-            services.AddHostedService<AzureRedisProviderService>();
+                // Create the Azure Redis backplane provider service
+                services.AddHostedService<AzureRedisProviderService>();
+            }
 
             // Service options
-            services.AddSingleton((srvcProvider) => new PresenceServiceOptions() { Id = serviceId });
-            services.AddSingleton((srvcProvider) => new RelayServiceOptions() { Id = serviceId });
-
-            if (appSettingsConfiguration.GetValue<bool>(nameof(AppSettings.IsPrivacyEnabled)))
-            {
-                this.logger.LogInformation("Privacy enabled...");
-                // define our IHubFormatProvider
-                services.AddSingleton<IHubFormatProvider, DataFormatter>();
-            }
+            services.AddSingleton((srvcProvider) => new HubServiceOptions() { Id = ServiceId, Stamp = Stamp });
 
             // SignalR support services
-            services.AddSingleton<PresenceService>();
+            services.AddSingleton<ContactService>();
+
             services.AddSingleton<RelayService>();
 
             var signalRService = services.AddSignalR().AddJsonProtocol(options => {
@@ -189,17 +116,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 #endif
             });
 
-            // DI for ApplicationServicePrincipal
-            var applicationServicePrincipal = Configuration.GetSection(nameof(ApplicationServicePrincipal)).Get<ApplicationServicePrincipal>();
-            services.AddSingleton((srvcProvider) => applicationServicePrincipal);
-
-            var keyVaultName = appSettingsConfiguration.GetValue<string>(nameof(AppSettings.KeyVaultName));
+            var keyVaultName = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.KeyVaultName));
             // if we can eventually retrieve signalR endpoints from the key vault
             var canRetrieveKeyVaultSignalREndpoints =
-                !string.IsNullOrEmpty(applicationServicePrincipal?.ClientId) &&
-                !string.IsNullOrEmpty(applicationServicePrincipal?.ClientPassword) &&
+                !string.IsNullOrEmpty(ServicePrincipal?.ClientId) &&
+                !string.IsNullOrEmpty(ServicePrincipal?.ClientPassword) &&
                 !string.IsNullOrEmpty(keyVaultName) &&
-                !string.IsNullOrEmpty(stamp);
+                !string.IsNullOrEmpty(Stamp);
 
             var serviceEndpoints = new List<ServiceEndpoint>();
             // inject the list of available endpoints
@@ -207,16 +130,16 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (Configuration.HasAzureSignalRConnections() || canRetrieveKeyVaultSignalREndpoints)
             {
-                this.logger.LogInformation($"Add Azure SignalR");
+                Logger.LogInformation($"Add Azure SignalR");
                 if (canRetrieveKeyVaultSignalREndpoints)
                 {
                     try
                     {
-                        serviceEndpoints.AddRange(applicationServicePrincipal.GetAzureSignalRServiceEndpointsAsync(keyVaultName, stamp).Result);
+                        serviceEndpoints.AddRange(ServicePrincipal.GetAzureSignalRServiceEndpointsAsync(keyVaultName, Stamp).Result);
                     }
                     catch(Exception e)
                     {
-                        this.logger.LogError(e, $"Failed to retrieve endpoints from Azure key vault:{keyVaultName}");
+                        Logger.LogError(e, $"Failed to retrieve endpoints from Azure key vault:{keyVaultName}");
                     }
                 }
 
@@ -235,36 +158,34 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // support dispatching for universal signalR hub
-            services.AddSingleton(new HubDispatcher(PresenceServiceHub.Name, EnableAuthentication ? typeof(AuthorizedPresenceServiceHub) : typeof(PresenceServiceHub)));
-            services.AddSingleton(new HubDispatcher(RelayServiceHub.Name, EnableAuthentication ? typeof(AuthorizedRelayServiceHub) : typeof(RelayServiceHub)));
+            services.AddSingleton(new HubDispatcher(ContactServiceHub.HubContextName, EnableAuthentication ? typeof(AuthorizedContactServiceHub) : typeof(ContactServiceHub)));
+            services.AddSingleton(new HubDispatcher(RelayServiceHub.HubContextName, EnableAuthentication ? typeof(AuthorizedRelayServiceHub) : typeof(RelayServiceHub)));
 
             // hub context hosts definition
             if (EnableAuthentication)
             {
                 // support for custom presence endpoint
-                services.AddSingleton<IHubContextHost, HubContextHost<PresenceServiceHub, AuthorizedPresenceServiceHub>>();
+                services.AddSingleton<IHubContextHost, HubContextHost<ContactServiceHub, AuthorizedContactServiceHub>>();
 
                 // universal hub supported contexts
-                services.AddSingleton<IHubContextHost, SignalRHubContextHost<PresenceServiceHub, AuthorizedSignalRHub>>();
+                services.AddSingleton<IHubContextHost, SignalRHubContextHost<ContactServiceHub, AuthorizedSignalRHub>>();
                 services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub, AuthorizedSignalRHub>>();
             }
 
             if (IsDevelopmentEnv || !EnableAuthentication)
             {
-                services.AddSingleton<IHubContextHost, HubContextHost<PresenceServiceHub, PresenceServiceHub>>();
+                services.AddSingleton<IHubContextHost, HubContextHost<ContactServiceHub, ContactServiceHub>>();
 
-                services.AddSingleton<IHubContextHost, SignalRHubContextHost<PresenceServiceHub, SignalRHub>>();
+                services.AddSingleton<IHubContextHost, SignalRHubContextHost<ContactServiceHub, SignalRHub>>();
                 services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub, SignalRHub>>();
             }
 
-            // a background service to control lifetime of the presence service
-            services.AddHostedService<PresenceBackgroundService>();
+            // backplane manager support
+            services.AddSingleton<IContactBackplaneManager, ContactBackplaneManager>();
+            services.AddHostedService<ContactBackplaneManagerHostedService<ContactService>>();
 
             // define long running health echo provider
             services.AddHostedService<SignalRHealthStatusProvider>();
-
-            // IStartup
-            services.AddSingleton<IStartup>(this);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -283,7 +204,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             // SignalR configure
             if (UseAzureSignalR)
             {
-                this.logger.LogInformation($"Using Azure SignalR");
+                Logger.LogInformation($"Using Azure SignalR");
 
                 // configure Azure SignalR service
                 app.UseAzureSignalR(routes =>
@@ -291,17 +212,17 @@ namespace Microsoft.VsCloudKernel.SignalService
                     if (EnableAuthentication)
                     {
                         routes.MapHub<AuthorizedSignalRHub>(SignalRHubMap);
-                        routes.MapHub<AuthorizedPresenceServiceHub>(PresenceHubMap);
+                        routes.MapHub<AuthorizedContactServiceHub>(PresenceHubMap);
                         if (IsDevelopmentEnv)
                         {
-                            routes.MapHub<PresenceServiceHub>(PresenceHubDevMap);
+                            routes.MapHub<ContactServiceHub>(PresenceHubDevMap);
                             routes.MapHub<SignalRHub>(SignalRHubDevMap);
                         }
                     }
                     else
                     {
                         routes.MapHub<SignalRHub>(SignalRHubMap);
-                        routes.MapHub<PresenceServiceHub>(PresenceHubMap);
+                        routes.MapHub<ContactServiceHub>(PresenceHubMap);
                     }
 
                     routes.MapHub<HealthServiceHub>(HealthHubMap);
@@ -315,17 +236,17 @@ namespace Microsoft.VsCloudKernel.SignalService
                     if (EnableAuthentication)
                     {
                         routes.MapHub<AuthorizedSignalRHub>(SignalRHubMap);
-                        routes.MapHub<AuthorizedPresenceServiceHub>(PresenceHubMap);
+                        routes.MapHub<AuthorizedContactServiceHub>(PresenceHubMap);
                         if (IsDevelopmentEnv)
                         {
-                            routes.MapHub<PresenceServiceHub>(PresenceHubDevMap);
+                            routes.MapHub<ContactServiceHub>(PresenceHubDevMap);
                             routes.MapHub<SignalRHub>(SignalRHubDevMap);
                         }
                     }
                     else
                     {
                         routes.MapHub<SignalRHub>(SignalRHubMap);
-                        routes.MapHub<PresenceServiceHub>(PresenceHubMap);
+                        routes.MapHub<ContactServiceHub>(PresenceHubMap);
                     }
 
                     routes.MapHub<HealthServiceHub>(HealthHubMap);

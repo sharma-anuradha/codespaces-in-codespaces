@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="VsClk.Portal.WebSite\VsClk.Portal.WebSite.csproj" />
     <ProjectReference Include="VsClk.SignalService\SignalService\SignalService.csproj" />
+    <ProjectReference Include="VsClk.SignalService\BackplaneProviders\BackplaneService\BackplaneService.csproj" />
   </ItemGroup>
 
 </Project>

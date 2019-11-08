@@ -69,6 +69,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             var exponentialBackoff = new ExponentialBackoff(maxRetries, delayMilliseconds, maxDelayMilliseconds);
             while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
                     traceSource.Verbose($"hubConnection.StartAsync -> retries:{exponentialBackoff.Retries}");
@@ -79,13 +80,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 }
                 catch (Exception err)
                 {
-                    if (err is OperationCanceledException || err is TaskCanceledException)
-                    {
-                        throw;
-                    }
-
                     int delay = exponentialBackoff.NextDelayMilliseconds();
-                    traceSource.Error($"Failed to connect-> delay:{delay} err:{err.Message}");
+                    traceSource.Error($"Failed to connect-> delay:{delay} name:{err.GetType().Name} err:{err.Message}");
                     delay = await onConnectCallback(exponentialBackoff.Retries, delay, err);
                     await Task.Delay(delay, cancellationToken);
                 }

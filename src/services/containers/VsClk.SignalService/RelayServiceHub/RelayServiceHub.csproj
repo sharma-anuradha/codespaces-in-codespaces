@@ -10,15 +10,13 @@
     <Compile Include="..\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
     <Compile Include="..\Shared\ConcurrentHashSet.cs" Link="Shared\ConcurrentHashSet.cs" />
     <Compile Include="..\Shared\ConcurrentHelpers.cs" Link="Shared\ConcurrentHelpers.cs" />
-    <Compile Include="..\Shared\LoggerScopeHelpers.cs" Link="Shared\LoggerScopeHelpers.cs" />
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="16.0.102" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="$(VisualStudioThreadingVersion)" />
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj" />
+    <ProjectReference Include="..\HubCore\HubCore.csproj" />
   </ItemGroup>
 </Project>

@@ -13,7 +13,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// The non Hub Service class instance that manage all the relay hubs
     /// </summary>
-    public class RelayService : HubService<RelayServiceHub>
+    public class RelayService : HubService<RelayServiceHub, HubServiceOptions>
     {
         private const string HubIdScope = "HubId";
         private const string ConnectionScope = "Connection";
@@ -22,11 +22,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         private ConcurrentDictionary<string, ConcurrentHashSet<RelayHub>> connectionHubs = new ConcurrentDictionary<string, ConcurrentHashSet<RelayHub>>();
 
         public RelayService(
-            RelayServiceOptions options,
+            HubServiceOptions options,
             IEnumerable<IHubContextHost> hubContextHosts,
             ILogger<RelayService> logger,
-            IHubFormatProvider formatProvider = null)
-            : base(options.Id, hubContextHosts, logger, formatProvider)
+            IDataFormatProvider formatProvider = null)
+            : base(options, hubContextHosts, logger, formatProvider)
         {
         }
 

@@ -17,9 +17,9 @@ using Newtonsoft.Json;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Implements IScaleServiceProvider based on an Azure Cosmos database
+    /// Implements IBackplaneProvider based on an Azure Cosmos database
     /// </summary>
-    public class AzureDocumentsProvider : DocumentDatabaseProvider, IBackplaneProvider
+    public class AzureDocumentsProvider : DocumentDatabaseProvider, IContactBackplaneProvider
     {
         public static readonly string DatabaseId = "presenceService";
 
@@ -65,7 +65,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         public static async Task<AzureDocumentsProvider> CreateAsync(
-            string serviceId,
+            (string ServiceId, string Stamp) serviceInfo,
             DatabaseSettings databaseSettings,
             ILogger<AzureDocumentsProvider> logger,
             IFormatProvider formatProvider,
@@ -85,7 +85,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
 
-            await databaseBackplaneProvider.InitializeAsync(serviceId, databaseSettings.IsProduction);
+            await databaseBackplaneProvider.InitializeAsync(serviceInfo, databaseSettings.IsProduction);
             return databaseBackplaneProvider;
         }
 
@@ -238,7 +238,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return feedProcessor;
         }
 
-        private async Task InitializeAsync(string serviceId, bool isProduction)
+        private async Task InitializeAsync((string ServiceId, string Stamp) serviceInfo, bool isProduction)
         {
             Logger.LogInformation($"Creating database:{DatabaseId} if not exists");
 
@@ -256,7 +256,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 });
 
             // Ensure we create an entry that backup our leases collection
-            await InitializeServiceIdAsync(serviceId);
+            await InitializeServiceIdAsync(serviceInfo);
 
             // Create 'contacts'
             Logger.LogInformation($"Creating Collection:{ContactCollectionId}");
@@ -297,7 +297,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
 
-            var leaseCollectionId = $"{LeaseCollectionBaseId}{serviceId}";
+            var leaseCollectionId = $"{LeaseCollectionBaseId}{serviceInfo.ServiceId}";
             // Create 'leases'
             Logger.LogInformation($"Creating Collection:{leaseCollectionId}");
             this.providerLeaseColletion = (await Client.CreateDocumentCollectionIfNotExistsAsync(

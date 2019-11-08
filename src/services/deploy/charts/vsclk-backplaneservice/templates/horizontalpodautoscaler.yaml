@@ -1,0 +1,14 @@
+{{- if .Values.pods.autoscaling }}
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "vsclk-backplaneservice.fullname" . }}
+spec:
+  minReplicas: {{ .Values.pods.minReplicaCount }}
+  maxReplicas: {{ .Values.pods.maxReplicaCount }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "vsclk-backplaneservice.fullname" . }}
+  targetCPUUtilizationPercentage: {{ .Values.pods.targetCpuUtilizationPercentage }}
+{{- end }}

@@ -47,5 +47,18 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
                 valuesSet.RemoveValues(values);
             }
         }
+
+        public static V AddOrUpdate<T, U, V>(
+            this ConcurrentDictionary<T, U> dictionary,
+            T key,
+            Func<T, V> addValueFactory,
+            Func<T, V, V> updateValueFactory)
+            where U : Lazy<V>
+        {
+            U lazy = dictionary.AddOrUpdate(key,
+                        (U)new Lazy<V>(() => addValueFactory(key)),
+                        (k, oldValue) => (U)new Lazy<V>(() => updateValueFactory(k, oldValue.Value)));
+            return lazy.Value;
+        }
     }
 }

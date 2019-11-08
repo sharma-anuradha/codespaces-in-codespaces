@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Options to send data
+    /// Options to send data.
     /// </summary>
     public enum SendOption
     {
         None,
-        ExcludeSelf
+        ExcludeSelf,
     }
 
     /// <summary>

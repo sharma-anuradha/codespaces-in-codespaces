@@ -13,25 +13,33 @@
     <CollectSymbols>true</CollectSymbols>
 
     <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
+    <ContactServiceContracts>$(ServiceRoot)\ContactServiceHub.Contracts</ContactServiceContracts>
+    <RelayServiceHubContracts>$(ServiceRoot)\RelayServiceHub\Contracts</RelayServiceHubContracts>
   </PropertyGroup>
   
   <ItemGroup>
+    <Compile Include="$(ContactServiceContracts)\IContactServiceHub.cs" Link="ContactServiceHub.Contracts\IContactServiceHub.cs" />
+    <Compile Include="$(ContactServiceContracts)\ContactHubMethods.cs" Link="ContactServiceHub.Contracts\ContactHubMethods.cs" />
+    <Compile Include="$(ContactServiceContracts)\ConnectionChangeType.cs" Link="ContactServiceHub.Contracts\ConnectionChangeType.cs" />
+    <Compile Include="$(ContactServiceContracts)\ContactReference.cs" Link="ContactServiceHub.Contracts\ContactReference.cs" />
+    <Compile Include="$(ContactServiceContracts)\ContactUpdateType.cs" Link="ContactServiceHub.Contracts\ContactUpdateType.cs" />
+    <Compile Include="$(ContactServiceContracts)\IContactServiceClientHub.cs" Link="ContactServiceHub.Contracts\IContactServiceClientHub.cs" />
+    <Compile Include="$(ContactServiceContracts)\ContactProperties.cs" Link="ContactServiceHub.Contracts\ContactProperties.cs" />
+    <Compile Include="$(ContactServiceContracts)\PropertyValue.cs" Link="ContactServiceHub.Contracts\PropertyValue.cs" />
+    <Compile Include="$(ContactServiceContracts)\SearchProperty.cs" Link="ContactServiceHub.Contracts\SearchProperty.cs" />
 
-    <Compile Include="$(ServiceRoot)\PresenceServiceHub.Contracts\*.cs" Exclude="**\IBackplaneProvider.cs;**\PresenceServiceMetrics.cs;**\IPresenceServiceClientHub.cs">
-      <Link>PresenceServiceHub.Contracts\%(Filename)%(Extension)</Link>
-    </Compile>
     
-    <Compile Include="$(ServiceRoot)\RelayServiceHub\Contracts\*.cs" Exclude="**\IRelayServiceClientHub.cs;**\RelayServiceMetrics.cs">
+    <Compile Include="$(RelayServiceHubContracts)\*.cs" Exclude="**\IRelayServiceClientHub.cs;**\RelayServiceMetrics.cs">
       <Link>RelayServiceHub.Contracts\%(Filename)%(Extension)</Link>
     </Compile>
 
-    <Compile Include="$(ServiceRoot)\Core\IHubFormatProvider.cs" />
-    <Compile Include="$(ServiceRoot)\SignalService\FormatHelpers.cs" />
+    <Compile Include="$(ServiceRoot)\Common\IDataFormatProvider.cs" />
+    <Compile Include="$(ServiceRoot)\Common.AspNetCore\FormatHelpers.cs" />
     <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
     <Compile Include="..\..\Shared\TraceSourceExtensions.cs" Link="Shared\TraceSourceExtensions.cs" />
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="15.6.56" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="$(VisualStudioThreadingVersion)" />
   </ItemGroup>
   </Project>
