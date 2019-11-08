@@ -7,6 +7,7 @@ import { Login } from './components/login/login';
 import { Workbench } from './components/workbench/workbench';
 import { GitHubLogin } from './components/gitHubLogin/gitHubLogin';
 import { BlogPost } from './BlogPost';
+import { PageNotFound } from './components/pageNotFound/pageNotFound';
 import {
     environmentPath,
     environmentsPath,
@@ -14,7 +15,8 @@ import {
     newPlanPath,
     githubLoginPath,
     loginPath,
-    rootPath
+    rootPath,
+    pageNotFoundPath
 } from './routerPaths';
 
 type Route = RouteProps & {
@@ -65,8 +67,13 @@ export const routes: Route[] = [
         exact: true,
         component: BlogPost,
     },
+    {
+        authenticated: false,
+        component: PageNotFound,
+    },
 ];
 
+// Match path is for telemetry only.
 export function matchPath(pathname: string): match<{}> | null {
     for (const route of routes) {
         const match = routerMatch(pathname, route);
@@ -75,5 +82,9 @@ export function matchPath(pathname: string): match<{}> | null {
         }
     }
 
-    return null;
+    // if router match didnt happen routing user to page not found.
+    return routerMatch(pathname, {
+        path: pageNotFoundPath,
+        component: PageNotFound,
+    });
 }

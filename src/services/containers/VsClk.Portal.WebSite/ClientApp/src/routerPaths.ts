@@ -5,3 +5,4 @@ export const newEnvironmentPath = '/environments/new';
 export const loginPath = '/login';
 export const githubLoginPath = '/github/login';
 export const newPlanPath = '/environments/plan';
+export const pageNotFoundPath = '/pageNotFound';

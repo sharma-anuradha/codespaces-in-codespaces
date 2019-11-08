@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { connect, Provider } from 'react-redux';
 import { configureStore } from './store/configureStore';
 import { init } from './actions/init';
@@ -59,7 +59,9 @@ class AppRoot extends Component<AppProps, AppState> {
         return (
             <Provider store={store}>
                 <Router>
-                    <div className='vsonline'>{routeConfig}</div>
+                    <div className='vsonline'>
+                        <Switch>{routeConfig}</Switch>
+                    </div>
                 </Router>
             </Provider>
         );
