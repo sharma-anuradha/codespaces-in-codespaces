@@ -1,4 +1,6 @@
 export type ITelemetryContext = {
+    portalVersion: string;
+
     sessionId: string;
     pageLoadId: string;
 

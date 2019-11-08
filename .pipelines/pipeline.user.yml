@@ -24,6 +24,7 @@ static_analysis_options:
       - 'scripts\test.js'
       - 'scripts\circular-dependencies.js'
       - 'scripts\npm\constants.js'
+      - 'scripts\npm\generate-version-file.js'
       - 'scripts\npm\preinstall.js'
       - 'scripts\npm\postinstall.js'
       - 'scripts\npm\update-vscode.js'

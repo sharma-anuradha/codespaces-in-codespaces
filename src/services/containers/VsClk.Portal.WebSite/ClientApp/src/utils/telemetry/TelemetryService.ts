@@ -7,6 +7,7 @@ import { createTrace } from '../createTrace';
 import { TelemetryEventSerializer } from './TelemetryEventSerializer';
 import { ITelemetryEvent } from './types';
 import { matchPath } from '../../routes';
+import versionFile from '../../version.json';
 
 import { ITelemetryContext } from '../../interfaces/ITelemetryContext';
 
@@ -35,6 +36,7 @@ class TelemetryService {
         const info = detect();
         const pathMatch = matchPath(location.pathname);
         this.context = {
+            portalVersion: versionFile.version,
             sessionId: this.getSessionId(),
             pageLoadId: this.getPageLoadId(),
             host: location.host,
