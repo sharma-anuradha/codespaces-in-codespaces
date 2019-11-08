@@ -21,6 +21,7 @@ import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/F
 
 import { ILocalCloudEnvironment, StateInfo } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
+import { useActionContext } from '../../actions/middleware/useActionContext';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 import {
     environmentIsALie,
@@ -43,6 +44,7 @@ import { MessageBarType, MessageBar } from 'office-ui-fabric-react/lib/MessageBa
 import { CancellationTokenSource, CancellationToken } from 'vscode-jsonrpc';
 import { isDefined } from '../../utils/isDefined';
 import { isMacOs } from '../../utils/detection';
+import { createUniqueId } from '../../dependencies';
 
 const trace = createTrace('environment-card');
 export interface EnvironmentCardProps {
@@ -491,7 +493,11 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
                 cancellationToken: CancellationToken
             ) {
                 try {
-                    let result = await connectEnvironment(id, state);
+                    const resultPromise = connectEnvironment(id, state);
+                    const actionContext = useActionContext();
+                    const correlationId = actionContext.__id;
+                    const result = await resultPromise;
+
                     trace.verbose('Connect to environment done.', result);
 
                     if (cancellationToken.isCancellationRequested) {
@@ -501,15 +507,13 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
                     currentConnectingEnvironment = undefined;
 
                     if (result) {
-                        const fullUrl = new URL(
-                            `/environment/${id}`,
-                            window.location.origin
-                        ).toString();
+                        const fullUrl = new URL(`/environment/${id}`, window.location.origin);
+                        fullUrl.searchParams.set('correlationId', correlationId);
 
                         if (shouldOpenInNewTab) {
-                            window.open(fullUrl, '_blank');
+                            window.open(fullUrl.toString(), '_blank');
                         } else {
-                            window.location.assign(fullUrl);
+                            window.location.assign(fullUrl.toString());
                         }
                     }
                 } catch (err) {

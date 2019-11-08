@@ -8,7 +8,8 @@ type SendTelemetryProps =
     | ['vsonline/cipher/no-decryption-key', INoDecryptionKeyTelemetryEventProperties]
     | ['vsonline/auth/acquire-token/error', Error]
     | ['vsonline/auth/acquire-auth-code', IAcquireAuthCodeTelemetryEventProperties]
-    | ['vsonline/request', IResponse];
+    | ['vsonline/vscode/connect', IVSCodeConnectProperties]
+    | ['vsonline/request', IResponseProperties];
 
 export function sendTelemetry(...args: SendTelemetryProps): void;
 export function sendTelemetry(telemetryEventName: any, properties: any) {
@@ -39,6 +40,12 @@ interface IAcquireAuthCodeTelemetryEventProperties {
     isCodeAcquired: boolean;
 }
 
-interface IResponse {
+interface IResponseProperties {
     requestId: string;
+}
+
+interface IVSCodeConnectProperties {
+    connectionCorrelationId: string;
+    isFirstConnection: boolean;
+    connectionNumber: number;
 }

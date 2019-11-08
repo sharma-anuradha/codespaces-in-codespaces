@@ -9,6 +9,7 @@ import { trace as baseTrace } from '../utils/trace';
 import { createTrace } from '../utils/createTrace';
 
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
+import { sendTelemetry } from '../utils/telemetry';
 
 const TRACE_NAME = 'vsls-web-socket';
 const { verbose, info, error } = createTrace(TRACE_NAME);
@@ -19,6 +20,8 @@ logContent.log =
     typeof console.debug === 'function' ? console.debug.bind(console) : console.log.bind(console);
 
 export const envConnector = new EnvConnector();
+
+let connectionNumber = 0;
 
 export class VSLSWebSocket implements IWebSocket {
     private id: number;
@@ -68,7 +71,8 @@ export class VSLSWebSocket implements IWebSocket {
         private readonly url: string,
         private readonly accessToken: string,
         private readonly environmentInfo: ICloudEnvironment,
-        private readonly liveShareEndpoint: string
+        private readonly liveShareEndpoint: string,
+        private readonly correlationId: string
     ) {
         this.id = VSLSWebSocket.socketCnt++;
         this.initializeChannel(url);
@@ -111,6 +115,11 @@ export class VSLSWebSocket implements IWebSocket {
 
             verbose(`[${this.getWebSocketIdentifier()}] Ssh channel open.`);
             this._onOpen.fire();
+            sendTelemetry('vsonline/vscode/connect', {
+                connectionCorrelationId: this.correlationId,
+                isFirstConnection: connectionNumber === 0,
+                connectionNumber: connectionNumber++,
+            });
             this.channel = channel;
         } catch (err) {
             error(`[${this.getWebSocketIdentifier()}] Ssh channel failed to open.`);

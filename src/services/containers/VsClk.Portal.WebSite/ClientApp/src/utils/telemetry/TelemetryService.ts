@@ -76,16 +76,20 @@ class TelemetryService {
     private getPageLoadId(): string {
         return createUniqueId();
     }
-    public track(event: ITelemetryEvent) {
-        const { properties, measurements } = this.telemetryEventSerializer.serialize(event, {
+    public track(userEvent: ITelemetryEvent) {
+        const { properties, measurements } = this.telemetryEventSerializer.serialize(userEvent, {
             ...this.context,
             date: new Date(),
         });
-        this.appInsights.trackEvent({
-            name: event.name,
+
+        const event = {
+            name: userEvent.name,
             properties,
             measurements,
-        });
+        };
+        this.logger.verbose('TelemetryService.track', event);
+
+        this.appInsights.trackEvent(event);
     }
 }
 

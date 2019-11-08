@@ -29,21 +29,23 @@ import { telemetry } from '../../utils/telemetry';
 import { defaultConfig } from '../../services/configurationService';
 import { isDefined } from '../../utils/isDefined';
 import { environmentsPath } from '../../routerPaths';
+import { createUniqueId } from '../../dependencies';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareEndpoint: string;
     token: ITokenWithMsalAccount | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
     params: URLSearchParams;
+    correlationId?: string | null;
 }
 
-const managementFavicon = "favicon.ico";
-const vscodeFavicon = "static/web-standalone/favicon.ico";
+const managementFavicon = 'favicon.ico';
+const vscodeFavicon = 'static/web-standalone/favicon.ico';
 function updateFavicon(isMounting: boolean = true) {
     const link = document.querySelector("link[rel='shortcut icon']");
     if (link) {
         const iconPath = isMounting ? vscodeFavicon : managementFavicon;
-        link.setAttribute("href", iconPath);
+        link.setAttribute('href', iconPath);
     }
 }
 
@@ -51,6 +53,10 @@ class WorkbenchView extends Component<WorkbenchProps> {
     // Since we have external scripts running outside of react scope,
     // we'll mange the instantiation flag outside of state as well.
     private workbenchMounted: boolean = false;
+
+    // Not used in rendering and we change it from props by navigating
+    // away so user isn't left with dangling correlationId query param.
+    private correlationId?: string;
 
     componentDidUpdate() {
         const { environmentInfo } = this.props;
@@ -70,6 +76,14 @@ class WorkbenchView extends Component<WorkbenchProps> {
 
     componentDidMount() {
         updateFavicon(true);
+
+        this.correlationId = this.props.correlationId || createUniqueId();
+        const searchParams = new URLSearchParams(this.props.location.search);
+        searchParams.delete('correlationId');
+        this.props.history.replace({
+            ...location,
+            search: searchParams.toString(),
+        });
 
         const { environmentInfo } = this.props;
         if (!isEnvironmentAvailable(environmentInfo)) {
@@ -118,14 +132,24 @@ class WorkbenchView extends Component<WorkbenchProps> {
             envConnector
         );
 
-        const { sessionPath } = environmentInfo.connection;
         const userDataProvider = new UserDataProvider();
         await userDataProvider.initializeDBProvider();
+
+        const correlationId = this.correlationId;
+        if (!correlationId) {
+            throw new Error('correlationId must be set at this point');
+        }
 
         const { liveShareEndpoint } = this.props;
         const VSLSWebSocketFactory: IWebSocketFactory = {
             create(url: string) {
-                return new VSLSWebSocket(url, accessToken, environmentInfo, liveShareEndpoint);
+                return new VSLSWebSocket(
+                    url,
+                    accessToken,
+                    environmentInfo,
+                    liveShareEndpoint,
+                    correlationId
+                );
             },
         };
 
@@ -205,6 +229,7 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         environmentInfo,
         params,
         liveShareEndpoint,
+        correlationId: params.get('correlationId'),
     };
 };
 

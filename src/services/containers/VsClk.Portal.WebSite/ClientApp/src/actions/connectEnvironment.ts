@@ -4,6 +4,19 @@ import { StateInfo, ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { stateChangeEnvironmentAction } from './environmentStateChange';
 import { ServiceResponseError } from './middleware/useWebClient';
 import { environmentErrorCodeToString } from '../utils/environmentUtils';
+import { action } from './middleware/useActionCreator';
+
+export const connectEnvironmentActionType = 'async.environments.connectEnvironment';
+export const connectEnvironmentSuccessActionType = 'async.environments.connectEnvironment.success';
+export const connectEnvironmentFailureActionType = 'async.environments.connectEnvironment.failure';
+
+// Basic actions dispatched for reducers
+export const connectEnvironmentAction = (environmentId: string) =>
+    action(connectEnvironmentActionType, { environmentId });
+export const connectEnvironmentSuccessAction = (environmentId: string) =>
+    action(connectEnvironmentSuccessActionType, { environmentId });
+export const connectEnvironmentFailureAction = (environmentId: string, error: Error) =>
+    action(connectEnvironmentFailureActionType, { environmentId }, error);
 
 // Exposed - callable actions that have side-effects
 export async function connectEnvironment(
@@ -12,12 +25,18 @@ export async function connectEnvironment(
 ): Promise<ICloudEnvironment | undefined> {
     // 1. Try to connect environment
     const dispatch = useDispatch();
+
+    dispatch(connectEnvironmentAction(id));
+
     try {
         if (environmentState === StateInfo.Shutdown) {
             dispatch(stateChangeEnvironmentAction(id, StateInfo.Starting, true));
         }
 
-        return await envRegService.connectEnvironment(id, environmentState);
+        const environment = await envRegService.connectEnvironment(id, environmentState);
+        dispatch(connectEnvironmentSuccessAction(id));
+
+        return environment;
     } catch (err) {
         if (err instanceof ServiceResponseError) {
             await updateErrorMessage();
@@ -53,6 +72,6 @@ export async function connectEnvironment(
             dispatch(stateChangeEnvironmentAction(id, e!.state, true));
         }
 
-        throw err;
+        return dispatch(connectEnvironmentFailureAction(id, err));
     }
 }
