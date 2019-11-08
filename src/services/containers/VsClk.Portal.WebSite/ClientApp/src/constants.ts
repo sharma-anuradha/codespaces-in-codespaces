@@ -2,7 +2,7 @@ export const DEFAULT_EXTENSIONS = [
     'vscode.theme-defaults',
     'ms-vsliveshare.vsliveshare',
     'visualstudioexptteam.vscodeintellicode',
-    '/.vsonline/extensions/vsonline.vsix',
+    'ms-vsonline.vsonline',
 ];
 
 const packageJson: { name: string; vscodeCommit: string } = require('../package.json');
