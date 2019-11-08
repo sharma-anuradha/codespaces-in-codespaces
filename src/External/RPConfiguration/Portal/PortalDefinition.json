@@ -1,0 +1,22 @@
+{
+    "name": "MicrosoftVSOnlinePlans",
+    "singularDisplayName": "Visual Studio Online-Plan",
+    "pluralDisplayName": "Visual Studio Online Plans",
+    "lowerSingularDisplayName": "visual studio online plan",
+    "lowerPluralDisplayName": "visual studio online plans",
+    "browseType": 1,
+    "privateBrowse": true,
+    "resourceType": {
+        "resourceTypeName": "Microsoft.VSOnline/Plans",
+        "apiVersion": "2019-07-01-preview"
+    },
+    "icon": {
+        "type": 258
+    },
+    "links": [
+        {
+            "title": "Learn more about Visual Studio Online",
+            "uri": "https://online.visualstudio.com"
+        }
+    ]
+}

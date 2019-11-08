@@ -11,10 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="RPaasConfiguration\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
   </ItemGroup>
 

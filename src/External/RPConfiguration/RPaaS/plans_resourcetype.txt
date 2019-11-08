@@ -9,9 +9,6 @@
           "West Us 2",
           "Southeast Asia"],
 "timeout": "PT2M",
-"requiredFeatures": [
-                        "Microsoft.VSOnline/betaVSOAccount"
-                    ],
 "extensions": [{
             "endpointUri": "https://online.visualstudio.com/api/v1/",
             "extensionCategories": [
@@ -26,9 +23,6 @@
 "apiVersions": [ "2019-07-01-alpha"],
 "locations": ["West Europe","East US","West Us 2","Southeast Asia"],
 "timeout": "PT2M",
-"requiredFeatures": [
-                        "Microsoft.VSOnline/betaVSOAccount"
-                    ],
 "extensions": [{
             "endpointUri": "https://online.dev.core.vsengsaas.visualstudio.com/api/v1/",
             "extensionCategories": [
@@ -46,9 +40,6 @@
           "West Us 2",
           "Southeast Asia"],
 "timeout": "PT2M",
-"requiredFeatures": [
-                        "Microsoft.VSOnline/betaVSOAccount"
-                    ],
 "extensions": [{
             "endpointUri": "https://online-ppe.core.vsengsaas.visualstudio.com/api/v1/",
             "extensionCategories": [

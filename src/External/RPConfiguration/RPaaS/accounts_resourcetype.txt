@@ -6,27 +6,18 @@
 "apiVersions": [ "2019-07-01-preview"],
 "locations": ["West Europe","East US","West Us 2","Southeast Asia"],
 "timeout": "PT2M",
-"requiredFeatures": [
-                        "Microsoft.VSOnline/betaVSOAccount"
-                    ],
 "extensions": []
 },
 {
 "apiVersions": [ "2019-07-01-alpha"],
 "locations": ["West Europe","East US","West Us 2","Southeast Asia"],
 "timeout": "PT2M",
-"requiredFeatures": [
-                        "Microsoft.VSOnline/betaVSOAccount"
-                    ],
 "extensions": []
 },
 {
 "apiVersions": [ "2019-07-01-beta" ],
 "locations": ["West Europe","East US","West Us 2","Southeast Asia"],
 "timeout": "PT2M",
-"requiredFeatures": [
-                        "Microsoft.VSOnline/betaVSOAccount"
-                    ],
 "extensions": []
 }], 
 "swaggerSpecifications": [

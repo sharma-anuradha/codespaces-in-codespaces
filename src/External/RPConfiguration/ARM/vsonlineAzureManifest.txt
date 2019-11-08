@@ -17,9 +17,6 @@
           "locations": [
             "West Europe"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -29,9 +26,6 @@
           "endpointUri": "https://eastus.metarp.azure.com",
           "locations": [
             "East US"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -43,9 +37,6 @@
           "locations": [
             "West Us 2"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -55,9 +46,6 @@
           "endpointUri": "https://southeastasia.metarp.azure.com",
           "locations": [
             "Southeast Asia"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -69,9 +57,6 @@
           "locations": [
             "West Europe"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -81,9 +66,6 @@
           "endpointUri": "https://eastus.metarp.azure.com",
           "locations": [
             "East US"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -95,9 +77,6 @@
           "locations": [
             "West Us 2"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -107,9 +86,6 @@
           "endpointUri": "https://southeastasia.metarp.azure.com",
           "locations": [
             "Southeast Asia"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -121,9 +97,6 @@
           "locations": [
             "West Europe"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -133,9 +106,6 @@
           "endpointUri": "https://eastus.metarp.azure.com",
           "locations": [
             "East US"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -147,9 +117,6 @@
           "locations": [
             "West Us 2"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -159,9 +126,6 @@
           "endpointUri": "https://southeastasia.metarp.azure.com",
           "locations": [
             "Southeast Asia"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         }
@@ -179,9 +143,6 @@
           "locations": [
             "West Europe"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -191,9 +152,6 @@
           "endpointUri": "https://eastus.metarp.azure.com",
           "locations": [
             "East US"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -205,9 +163,6 @@
           "locations": [
             "West Us 2"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -217,9 +172,6 @@
           "endpointUri": "https://southeastasia.metarp.azure.com",
           "locations": [
             "Southeast Asia"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -231,9 +183,6 @@
           "locations": [
             "West Europe"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -243,9 +192,6 @@
           "endpointUri": "https://eastus.metarp.azure.com",
           "locations": [
             "East US"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -257,9 +203,6 @@
           "locations": [
             "West Us 2"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -269,9 +212,6 @@
           "endpointUri": "https://southeastasia.metarp.azure.com",
           "locations": [
             "Southeast Asia"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -283,9 +223,6 @@
           "locations": [
             "West Europe"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -295,9 +232,6 @@
           "endpointUri": "https://eastus.metarp.azure.com",
           "locations": [
             "East US"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         },
@@ -309,9 +243,6 @@
           "locations": [
             "West Us 2"
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -321,9 +252,6 @@
           "endpointUri": "https://southeastasia.metarp.azure.com",
           "locations": [
             "Southeast Asia"
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         }
@@ -341,9 +269,6 @@
           "locations": [
             ""
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -354,9 +279,6 @@
           "locations": [
             ""
           ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
-          ],
           "timeout": "PT2M"
         },
         {
@@ -366,9 +288,6 @@
           "endpointUri": "https://westus.metarp.azure.com",
           "locations": [
             ""
-          ],
-          "requiredFeatures": [
-            "Microsoft.VSOnline/betaVSOAccount"
           ],
           "timeout": "PT2M"
         }

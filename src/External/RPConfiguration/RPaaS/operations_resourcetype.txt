@@ -11,9 +11,6 @@
         "locations": [
           ""
         ],
-        "requiredFeatures": [
-          "Microsoft.VSOnline/betaVSOAccount"
-        ],
         "extensions": [],
         "timeout": "PT2M"
       },
@@ -24,9 +21,6 @@
         "locations": [
           ""
         ],
-        "requiredFeatures": [
-          "Microsoft.VSOnline/betaVSOAccount"
-        ],
         "extensions": [],
         "timeout": "PT2M"
       },
@@ -36,9 +30,6 @@
         ],
         "locations": [
           ""
-        ],
-        "requiredFeatures": [
-          "Microsoft.VSOnline/betaVSOAccount"
         ],
         "extensions": [],
         "timeout": "PT2M"

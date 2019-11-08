@@ -1,0 +1,11 @@
+{
+  "views": [
+    {
+      "kind": "Overview",
+      "properties": {
+        "header": "Thank you for creating a Visual Studio Online Plan!",
+        "description": "[Create and manage](https://online.visualstudio.com/login) environments at [online.visualstudio.com](https://online.visualstudio.com).\n\nVisit the [documentation](https://aka.ms/vso-docs) to learn more."
+      }
+    }
+  ]
+}
