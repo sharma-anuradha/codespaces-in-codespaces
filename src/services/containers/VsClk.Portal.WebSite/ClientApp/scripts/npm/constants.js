@@ -1,7 +1,7 @@
 const path = require('path');
 
 // possible qualities - insider, stable, exploration
-const quality = 'insider';
+const quality = 'stable';
 // can also be the server (server-linux-x64-web) if you need a server
 const assetName = 'web-standalone';
 

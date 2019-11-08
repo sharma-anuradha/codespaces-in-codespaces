@@ -15,7 +15,7 @@ export interface VSCodeConfig {
 export const packageName = packageJson.name;
 export const vscodeConfig: VSCodeConfig = {
     commit: packageJson.vscodeCommit,
-    quality: 'insider',
+    quality: 'stable',
 };
 
 export interface IPackageJson {
