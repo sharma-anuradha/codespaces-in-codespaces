@@ -51,13 +51,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var cookiePayloadString = JsonConvert.SerializeObject(cookiePayload);
             var encryptedCookie = AesEncryptor.EncryptStringToBytes_Aes(cookiePayloadString, AppSettings.AesKey, AppSettings.AesIV);
 
-            CookieOptions option = new CookieOptions();
-
-            option.Path = "/";
-            option.Domain = $"{AppSettings.Domain}";
-            option.HttpOnly = true;
-            option.Secure = true;
-            option.SameSite = SameSiteMode.Lax;
+            CookieOptions option = CreateCookieOptions();
             option.Expires = DateTime.Now.AddDays(Constants.PortForwarderCookieExpirationDays);
 
             Response.Cookies.Append(Constants.PFCookieName, encryptedCookie, option);
@@ -68,8 +62,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [HttpPost("~/logout-port-forwarder")]
         public IActionResult LogoutPortForwarder()
         {
-            Response.Cookies.Delete(Constants.PFCookieName);
+            CookieOptions option = CreateCookieOptions();
+            option.Expires = DateTime.Now.AddDays(-100);
 
+            Response.Cookies.Append(Constants.PFCookieName, string.Empty, option);
+            
             return Ok();
         }
 
@@ -101,6 +98,20 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             [JsonProperty("id")]
             public string Id { get; set; }
+        }
+
+        private CookieOptions CreateCookieOptions()
+        {
+            CookieOptions option = new CookieOptions
+            {
+                Path = "/",
+                Domain = $"{AppSettings.Domain}",
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax
+            };
+
+            return option;
         }
     }
 }

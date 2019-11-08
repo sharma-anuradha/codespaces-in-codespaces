@@ -7,6 +7,10 @@ jest.mock('../../utils/indexedDBFS', () => ({
     deleteDatabase: jest.fn(),
 }));
 
+jest.mock('../../utils/setAuthCookie', () => ({
+    deleteAuthCookie: jest.fn(),
+}));
+
 describe('logout', () => {
     let store: MockStore;
 

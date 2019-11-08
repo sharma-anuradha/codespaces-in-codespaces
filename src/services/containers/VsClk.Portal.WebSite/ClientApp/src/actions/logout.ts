@@ -4,6 +4,7 @@ import { authService } from '../services/authService';
 import { useDispatch } from './middleware/useDispatch';
 
 import { INDEXEDDB_VSONLINE_DB, deleteDatabase as deleteIndexedDb } from '../utils/indexedDBFS';
+import { deleteAuthCookie } from '../utils/setAuthCookie';
 
 export const logoutActionType = 'async.authentication.clearData';
 
@@ -36,4 +37,13 @@ export async function logout() {
     try {
         await authService.logout();
     } catch {}
+
+    // clear cookie and auth cookie
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        const cookieName = cookies[i].split('=')[0];
+        document.cookie = cookieName + '=;expires=Thu, 21 Sep 1979 00:00:01 UTC;';
+    }
+
+    await deleteAuthCookie();
 }

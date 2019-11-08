@@ -28,6 +28,7 @@ jest.mock('../../serviceWorker', () => {
 jest.mock('../../utils/setAuthCookie', () => {
     return {
         setAuthCookie: jest.fn().mockReturnValue(Promise.resolve()),
+        deleteAuthCookie: jest.fn(),
     };
 });
 

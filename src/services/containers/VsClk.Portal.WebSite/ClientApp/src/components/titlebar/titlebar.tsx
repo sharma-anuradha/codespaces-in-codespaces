@@ -69,11 +69,13 @@ function TitleBarNoRouter(props: RouteComponentProps) {
 
         persona = (
             <HoverCard
-                cardDismissDelay={500}
                 type={HoverCardType.plain}
+                cardOpenDelay={60 * 1000}
+                sticky={true}
                 plainCardProps={plainCardProps}
                 openHotKey={KeyCodes.enter}
                 trapFocus={true}
+                instantOpenOnClick={true}
             >
                 <button className='vsonline-titlebar-persona-button'>
                     <Persona
