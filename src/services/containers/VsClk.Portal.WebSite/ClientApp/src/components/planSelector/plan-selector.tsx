@@ -16,6 +16,7 @@ import {
 import { IPlan } from '../../interfaces/IPlan';
 import { IPlansDropdownOption } from '../../interfaces/IPlansDropdownOption';
 import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader';
+import { locationToDisplayName } from '../../utils/locations';
 
 interface PlanSelectorProps extends RouteComponentProps {
     plansList: IPlan[];
@@ -77,10 +78,13 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
     private plansToDropdownArray(plans: IPlan[]): IPlansDropdownOption[] {
         const planOptions = plans.map(
             (plan: IPlan): IPlansDropdownOption => {
+                const friendlyLocation = locationToDisplayName(plan.location);
+
                 return {
                     key: plan.id,
                     text: plan.name,
                     plan,
+                    title: `Subscription Id: ${plan.subscription}\nResource Group: ${plan.resourceGroup}\nLocation: ${friendlyLocation}`,
                 };
             }
         );

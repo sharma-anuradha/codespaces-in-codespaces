@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
-import { Text } from 'office-ui-fabric-react/lib/Text';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
@@ -30,6 +29,7 @@ import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
 import { PlanCreationError, PlanCreationFailureReason } from './PlanCreationError';
 import { createPlan } from '../../actions/createPlan';
 import { createResourceGroup } from '../../actions/createResourceGroup';
+import { locationToDisplayName } from '../../utils/locations';
 
 export interface CreatePlanPanelProps {
     hidePanel: (canContinueToEnvironment?: boolean) => void;
@@ -65,22 +65,6 @@ export interface CreatePlanPanelState {
     isGettingResourceGroups: boolean;
     isGettingClosestLocation: boolean;
     errorMessage?: string;
-}
-
-function locationToDisplayName(location: string) {
-    switch (location) {
-        case 'EastUs':
-            return 'East US';
-        case 'SouthEastAsia':
-            return 'Southeast Asia';
-        case 'WestEurope':
-            return 'West Europe';
-        case 'WestUs2':
-            return 'West US 2';
-
-        default:
-            return location;
-    }
 }
 
 function nameHasInvalidEnding(name: string) {
@@ -403,6 +387,7 @@ export class CreatePlanPanelComponent extends Component<
                         return {
                             key: sub.subscriptionId,
                             text: sub.displayName,
+                            title: `Subscription Id: ${sub.subscriptionId}`,
                         };
                     }
                 );
