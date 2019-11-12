@@ -8,6 +8,8 @@ param(
     [Parameter(Mandatory)]
     [string]$TargetLocation,
     [Parameter(Mandatory)]
+    [string]$Environment,
+    [Parameter(Mandatory)]
     [string]$WorkPath
 )
 $ProgressPreference = 'SilentlyContinue'
@@ -32,10 +34,10 @@ Expand-Archive -Path $AzCopyZipPath -DestinationPath $WorkPath -Force
 $AzCopyExe = Get-ChildItem $WorkPath/*/azcopy.exe
 
 Write-Host "Snapshot $ImageName"
-$SnapshotName = "$($ImageName)_snapshot_$($TargetSubscription -replace '-', '_')_$($LocationShortCodes.$TargetLocation)"
+$SnapshotName = "$($ImageName)_snapshot_$($Environment)_$($LocationShortCodes.$TargetLocation)"
 az snapshot create -n $SnapshotName -g $SourceImage.resourceGroup --source $SourceImage.storageProfile.osDisk.managedDisk.id
 
-$TempStorageName = "$ImageName$($LocationShortCodes.$TargetLocation)".ToLower()
+$TempStorageName = "$ImageName$Environment$($LocationShortCodes.$TargetLocation)".ToLower()
 Write-Host "Create $TempStorageName Storage Account"
 $Storage = az storage account create -n $TempStorageName -g $TargetGroupName -l $TargetLocation --subscription $TargetSubscription --kind StorageV2 --sku Premium_LRS --https-only true | ConvertFrom-Json
 $Storage
