@@ -37,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -49,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -65,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -77,6 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -90,6 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -106,6 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -118,6 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -131,6 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -144,6 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             },
             new BillingEvent
             {
+                Id = Guid.NewGuid().ToString(),
                 Plan = testPlan,
                 Args = new BillingStateChange
                 {
@@ -566,7 +575,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 // Current billing summary is null
                 null,
-
                 BillingSummaryOutputNoCurrentEvents
             };
         }
@@ -597,6 +605,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             BillingSummary inputSummary,
             BillingSummary expectedSummary)
         {
+            foreach (var input in inputEvents)
+            {
+                await repository.CreateAsync(input, logger);
+            }
             // Billing Service
             var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow);
 
@@ -633,7 +645,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
            BillingSummary inputSummary,
            BillingSummary expectedSummary)
         {
-
+            foreach (var input in inputEvents)
+            {
+                await repository.CreateAsync(input, logger);
+            }
 
             var billOverride = new BillingOverride()
             {
@@ -661,9 +676,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             BillingOverride billingOverride,
             double expectedBilledTime)
         {
-
+            foreach (var input in inputEvents)
+            {
+                await repository.CreateAsync(input, logger);
+            }
             await this.overrideRepository.CreateAsync(billingOverride, logger);
-
             // Billing Service
             var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow);
 
@@ -680,6 +697,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         [InlineData(48)]
         public async Task BillingSummaryIsCreatedNoNewEvents(int billDuration)
         {
+            var billEventAvailable = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Created),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironment,
+                Time = TestTimeNow.AddHours(-(billDuration+2)),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+            var billEventShutdown = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Available),
+                    NewValue = nameof(CloudEnvironmentState.Shutdown),
+                },
+                Environment = testEnvironment2,
+                Time = TestTimeNow.AddHours(-(billDuration + 6)),
+                Type = BillingEventTypes.EnvironmentStateChange
+
+            };
+
+            var billEventDeleted = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Available),
+                    NewValue = nameof(CloudEnvironmentState.Deleted),
+                },
+                Environment = testEnvironment3,
+                Time = TestTimeNow.AddHours(-(billDuration + 6)),
+                Type = BillingEventTypes.EnvironmentStateChange
+
+            };
+
+            await repository.CreateAsync(billEventAvailable, logger);
+            await repository.CreateAsync(billEventShutdown, logger);
+            await repository.CreateAsync(billEventDeleted, logger);
 
             double billableActiveHours = 127 * billDuration;
             double billableShutdownHours = 2 * billDuration;
