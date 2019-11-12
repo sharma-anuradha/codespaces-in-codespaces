@@ -143,24 +143,23 @@ namespace Microsoft.VsCloudKernel.SignalService
             var response = await ExecuteWithRetries(() => Client.CreateDocumentAsync(documentCollectionUri, messageDocument, cancellationToken: cancellationToken));
         }
 
-        protected override async Task<TimeSpan> UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
+        protected override async Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
         {
             var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId);
             var resonse = await ExecuteWithRetries(() => Client.UpsertDocumentAsync(documentCollectionUri, contactDocument, cancellationToken: cancellationToken));
-            return resonse.RequestLatency;
         }
 
-        protected override async Task<(ContactDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
+        protected override async Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
         {
             try
             {
                 var documentUri = UriFactory.CreateDocumentUri(DatabaseId, ContactCollectionId, contactId);
                 var response = await ExecuteWithRetries(() => Client.ReadDocumentAsync<ContactDocument>(documentUri, cancellationToken: cancellationToken));
-                return (response.Document, response.RequestLatency);
+                return response.Document;
             }
             catch (DocumentClientException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
-                return (null, TimeSpan.FromMilliseconds(0));
+                return null;
             }
         }
 

@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\Shared\SecondsCounter.cs" Link="Shared\SecondsCounter.cs" />
+    <Compile Include="..\..\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
   </ItemGroup>
 
   <ItemGroup>

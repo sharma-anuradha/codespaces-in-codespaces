@@ -262,7 +262,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task SendMessageAsync(ContactReference contactReference, ContactReference targetContactReference, string messageType, object body, CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(ContactServiceScopes.MethodSendMessage, contactReference, FormatProvider))
+            using (Logger.BeginContactReferenceScope(ContactServiceScopes.MethodSendMessage, contactReference, FormatProvider, (ContactServiceScopes.MessageTypeScope, messageType)))
             {
                 Logger.LogDebug($"targetContact:{targetContactReference.ToString(FormatProvider)} messageType:{messageType} body:{Format("{0:K}", body?.ToString())}");
             }

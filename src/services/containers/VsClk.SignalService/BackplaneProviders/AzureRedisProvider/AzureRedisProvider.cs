@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -73,16 +72,14 @@ namespace Microsoft.VsCloudKernel.SignalService
             return await GetDocumentsAsync<ContactDocument>(allContactsIds);
         }
 
-        protected override async Task<(ContactDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
+        protected override async Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
         {
-            var start = Stopwatch.StartNew();
             var value = await DatabaseAsync.StringGetAsync(ToContactKey(contactId));
-            return (DeserializeObject<ContactDocument>(value), TimeSpan.FromMilliseconds(start.ElapsedMilliseconds));
+            return DeserializeObject<ContactDocument>(value);
         }
 
-        protected override async Task<TimeSpan> UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
+        protected override async Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
         {
-            var start = Stopwatch.StartNew();
             var contactKey = ToContactKey(contactDocument.Id);
 
             if (!string.IsNullOrEmpty(contactDocument.Email))
@@ -93,8 +90,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             var json = JsonConvert.SerializeObject(contactDocument);
             await DatabaseAsync.StringSetAsync(contactKey, json);
             await DatabaseAsync.PublishAsync(ContactsId, json);
-
-            return TimeSpan.FromMilliseconds(start.ElapsedMilliseconds);
         }
 
         protected override async Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken)

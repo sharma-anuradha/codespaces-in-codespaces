@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Common;
 using Newtonsoft.Json.Linq;
 
@@ -21,12 +19,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         // Logger method scopes
         private const string MethodLoadActiveServices = "DocumentDatabaseProvider.LoadActiveServices";
-        private const string MethodSendMessage = "DocumentDatabaseProvider.SendMessageAsync";
-        private const string MethodUpdateContact = "DocumentDatabaseProvider.UpdateContact";
-        private const string MethodDeleteMessages = "DocumentDatabaseProvider.DeleteMessages";
         private const string MethodOnServiceDocumentsChanged = "DocumentDatabaseProvider.OnServiceDocumentsChanged";
-        private const string MethodOnContactDocumentsChanged = "DocumentDatabaseProvider.OnContactDocumentsChanged";
-        private const string MethodOnMessageDocumentsChanged = "DocumentDatabaseProvider.OnMessageDocumentsChanged";
 
         private readonly IFormatProvider formatProvider;
         private HashSet<string> activeServices;
@@ -43,7 +36,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task DisposeAsync()
         {
-            Logger.LogDebug($"StorageBackplaneProvider.Dispose");
+            Logger.LogDebug($"DocumentDatabaseProvider.Dispose");
 
             await DisposeInternalAsync();
         }
@@ -85,7 +78,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
-            var contactDataCoument = (await GetContactDataDocumentAsync(contactId, cancellationToken)).Item1;
+            var contactDataCoument = (await GetContactDataDocumentAsync(contactId, cancellationToken));
             return contactDataCoument != null ? ToContactData(contactDataCoument) : null;
         }
 
@@ -103,33 +96,25 @@ namespace Microsoft.VsCloudKernel.SignalService
                 LastUpdate = DateTime.UtcNow
             };
 
-            var start = Stopwatch.StartNew();
             await InsertMessageDocumentAsync(messageDocument, cancellationToken);
-
-            using (Logger.BeginScope(
-                (LoggerScopeHelpers.MethodScope, MethodSendMessage),
-                (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds)))
-            {
-                Logger.LogDebug($"contactId:{ToTraceText(messageData.FromContact.Id)} targetContactId:{ToTraceText(messageData.TargetContact.Id)}");
-            }
         }
 
         public async Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
             ContactDataInfo contactDataInfo;
-            var contactDataDocumentInfo = await GetContactDataDocumentAsync(contactDataChanged.ContactId, cancellationToken);
-            if (contactDataDocumentInfo.Item1 == null)
+            var contactDataDocument = await GetContactDataDocumentAsync(contactDataChanged.ContactId, cancellationToken);
+            if (contactDataDocument == null)
             {
                 contactDataInfo = new Dictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>();
             }
             else
             {
-                contactDataInfo = ToContactData(contactDataDocumentInfo.Item1);
+                contactDataInfo = ToContactData(contactDataDocument);
             }
 
             contactDataInfo.UpdateConnectionProperties(contactDataChanged);
 
-            var contactDataDocument = new ContactDocument()
+            var updateContactDataDocument = new ContactDocument()
             {
                 Id = contactDataChanged.ContactId,
                 ChangeId = contactDataChanged.ChangeId,
@@ -137,20 +122,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                 ConnectionId = contactDataChanged.ConnectionId,
                 UpdateType = contactDataChanged.ChangeType,
                 Properties = contactDataChanged.Data.Keys.ToArray(),
-                Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant() ?? contactDataDocumentInfo.Item1?.Email,
+                Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant() ?? contactDataDocument?.Email,
                 ServiceConnections = JObject.FromObject(contactDataInfo),
                 LastUpdate = DateTime.UtcNow
             };
 
-            var requestLatency = await UpsertContactDocumentAsync(contactDataDocument, cancellationToken);
-
-            using (Logger.BeginScope(
-                (LoggerScopeHelpers.MethodScope, MethodUpdateContact),
-                (LoggerScopeHelpers.MethodPerfScope, (requestLatency + contactDataDocumentInfo.Item2).Milliseconds)))
-            {
-                Logger.LogDebug($"contactId:{ToTraceText(contactDataChanged.ContactId)}");
-            }
-
+            await UpsertContactDocumentAsync(updateContactDataDocument, cancellationToken);
             return contactDataInfo;
         }
 
@@ -160,14 +137,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (allMessageDataChanges.Length > 0)
             {
-                var start = Stopwatch.StartNew();
                 await DeleteMessageDocumentByIds(allMessageDataChanges.Select(i => i.ChangeId).ToArray(), cancellationToken);
-                using (Logger.BeginScope(
-                    (LoggerScopeHelpers.MethodScope, MethodDeleteMessages),
-                    (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds)))
-                {
-                    Logger.LogDebug($"size:{allMessageDataChanges.Length}");
-                }
             }
         }
 
@@ -178,11 +148,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         #region abstract Methods
 
         protected abstract Task DisposeInternalAsync();
-        protected abstract Task<TimeSpan> UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken);
+        protected abstract Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken);
         protected abstract Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken);
         protected abstract Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken);
         protected abstract Task<List<ContactDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken);
-        protected abstract Task<(ContactDocument, TimeSpan)> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken);
+        protected abstract Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken);
         protected abstract Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken);
         protected abstract Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken);
         protected abstract Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken);
@@ -235,34 +205,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                 }
             }
-
-            using (Logger.BeginScope(
-                (LoggerScopeHelpers.MethodScope, MethodOnContactDocumentsChanged),
-                (LoggerScopeHelpers.MethodPerfScope, sw.ElapsedMilliseconds)))
-            {
-                // enable if we need to debug all the change ids being reported
-#if false
-                Logger.LogDebug($"contactIds:{string.Join(",", docs.Select(d => ToTraceText(d.Id)))}");
-#else
-                Logger.LogDebug($"count:{docs.Count}");
-#endif
-            }
-
         }
 
         protected async Task OnMessageDocumentsChangedAsync(IReadOnlyList<IDocument> docs)
         {
-            using (Logger.BeginSingleScope(
-                (LoggerScopeHelpers.MethodScope, MethodOnMessageDocumentsChanged)))
-            {
-                // enable if we need to debug all the change ids being reported
-#if false
-                Logger.LogDebug($"ids:{string.Join(",", docs.Select(d => d.Id))}");
-#else
-                Logger.LogDebug($"count:{docs.Count}");
-#endif
-            }
-
             if (MessageReceivedAsync != null)
             {
                 foreach (var doc in docs)

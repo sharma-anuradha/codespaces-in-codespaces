@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,10 +29,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly List<IContactBackplaneProvider> backplaneProviders = new List<IContactBackplaneProvider>();
         private readonly Dictionary<string, (DateTime, DataChanged)> backplaneChanges = new Dictionary<string, (DateTime, DataChanged)>();
         private readonly object backplaneChangesLock = new object();
+        private readonly IDataFormatProvider formatProvider;
 
-        public ContactBackplaneManager(ILogger<ContactBackplaneManager> logger)
+        public ContactBackplaneManager(ILogger<ContactBackplaneManager> logger, IDataFormatProvider formatProvider = null)
         {
             Logger = Requires.NotNull(logger, nameof(logger));
+            this.formatProvider = formatProvider;
         }
 
         public event OnContactChangedAsync ContactChangedAsync;
@@ -119,34 +122,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             ContactServiceMetrics metrics,
             CancellationToken cancellationToken)
         {
-            foreach (var backplaneProvider in BackplaneProviders)
-            {
-                try
-                {
-                    await backplaneProvider.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken);
-                }
-                catch (Exception error)
-                {
-                    HandleBackplaneProviderException(backplaneProvider, nameof(IContactBackplaneProvider.UpdateMetricsAsync), error);
-                }
-            }
+            await WaitAll(
+                BackplaneProviders.Select(p => (p.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken), p)),
+                nameof(IContactBackplaneProvider.UpdateMetricsAsync),
+                $"serviceId:{serviceInfo.ServiceId}");
         }
 
         public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
             await DisposeExpiredDataChangesAsync(100, CancellationToken.None);
-
-            foreach (var backplaneProvider in BackplaneProviders)
-            {
-                try
-                {
-                    await backplaneProvider.UpdateContactAsync(contactDataChanged, cancellationToken);
-                }
-                catch (Exception error)
-                {
-                    HandleBackplaneProviderException(backplaneProvider, nameof(IContactBackplaneProvider.UpdateContactAsync), error);
-                }
-            }
+            await WaitAll(
+                BackplaneProviders.Select(p => (p.UpdateContactAsync(contactDataChanged, cancellationToken) as Task, p)),
+                nameof(IContactBackplaneProvider.UpdateContactAsync),
+                $"contactId:{ToTraceText(contactDataChanged.ContactId)}");
         }
 
         public async Task SendMessageAsync(
@@ -155,60 +143,30 @@ namespace Microsoft.VsCloudKernel.SignalService
             CancellationToken cancellationToken)
         {
             await DisposeExpiredDataChangesAsync(100, cancellationToken);
-
-            foreach (var backplaneProvider in GetBackPlaneProvidersByPriority())
-            {
-                try
-                {
-                    await backplaneProvider.SendMessageAsync(serviceId, messageData, cancellationToken);
-                }
-                catch (Exception error)
-                {
-                    HandleBackplaneProviderException(backplaneProvider, nameof(IContactBackplaneProvider.SendMessageAsync), error);
-                }
-            }
+            await WaitAll(
+                BackplaneProviders.Select(p => (p.SendMessageAsync(serviceId, messageData, cancellationToken), p)),
+                nameof(IContactBackplaneProvider.SendMessageAsync),
+                $"from:{ToTraceText(messageData.FromContact.Id)} to:{ToTraceText(messageData.TargetContact.Id)}");
         }
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
-            foreach (var backplaneProvider in GetBackPlaneProvidersByPriority())
-            {
-                try
-                {
-                    var contactData = await backplaneProvider.GetContactDataAsync(contactId, cancellationToken);
-                    if (contactData != null)
-                    {
-                        return contactData;
-                    }
-                }
-                catch (Exception error)
-                {
-                    HandleBackplaneProviderException(backplaneProvider, nameof(IContactBackplaneProvider.GetContactDataAsync), error);
-                }
-            }
-
-            return null;
+            return await WaitFirstOrDefault(
+                GetBackPlaneProvidersByPriority().Select(p => (p.GetContactDataAsync(contactId, cancellationToken), p)).ToList(),
+                nameof(IContactBackplaneProvider.GetContactDataAsync),
+                (contactDataInfo) => $"contactId:{ToTraceText(contactId)} result count:{contactDataInfo?.Count}",
+                r => r != null);
         }
 
         public async Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
         {
-            foreach (var backplaneProvider in GetBackPlaneProvidersByPriority())
-            {
-                try
-                {
-                    var contacts = await backplaneProvider.GetContactsDataAsync(matchProperties, cancellationToken);
-                    if (contacts?.Count > 0)
-                    {
-                        return contacts;
-                    }
-                }
-                catch (Exception error)
-                {
-                    HandleBackplaneProviderException(backplaneProvider, nameof(IContactBackplaneProvider.GetContactsDataAsync), error);
-                }
-            }
+            var result = await WaitFirstOrDefault(
+                GetBackPlaneProvidersByPriority().Select(p => (p.GetContactsDataAsync(matchProperties, cancellationToken), p)).ToList(),
+                nameof(IContactBackplaneProvider.GetContactsDataAsync),
+                (matches) => $"matchProperties:{matchProperties.ConvertToString(this.formatProvider)} result count:{matches?.Count}",
+                r => r?.Count > 0);
 
-            return new Dictionary<string, ContactDataInfo>();
+            return result ?? new Dictionary<string, ContactDataInfo>();
         }
 
         public async Task DisposeExpiredDataChangesAsync(int? maxCount, CancellationToken cancellationToken)
@@ -279,12 +237,15 @@ namespace Microsoft.VsCloudKernel.SignalService
                 return;
             }
 
-            Logger.LogDebug($"OnContactChangedAsync from backplane provider:{backplaneProvider.GetType().Name} changed Id:{contactDataChanged.ChangeId}");
-
+            var stopWatch = Stopwatch.StartNew();
             if (ContactChangedAsync != null)
             {
                 await ContactChangedAsync.Invoke(contactDataChanged, affectedProperties, cancellationToken);
             }
+
+            Logger.LogScope(LogLevel.Debug, $"provider:{backplaneProvider.GetType().Name} changed Id:{contactDataChanged.ChangeId}",
+                (LoggerScopeHelpers.MethodScope, nameof(OnContactChangedAsync)),
+                (LoggerScopeHelpers.MethodPerfScope, stopWatch.ElapsedMilliseconds));
         }
 
         private async Task OnMessageReceivedAsync(
@@ -298,12 +259,15 @@ namespace Microsoft.VsCloudKernel.SignalService
                 return;
             }
 
-            Logger.LogDebug($"OnMessageReceivedAsync from backplane provider:{backplaneProvider.GetType().Name} changed Id:{messageData.ChangeId}");
- 
+            var stopWatch = Stopwatch.StartNew();
             if (MessageReceivedAsync != null)
             {
                 await MessageReceivedAsync.Invoke(sourceId, messageData, cancellationToken);
             }
+
+            Logger.LogScope(LogLevel.Debug, $"provider:{backplaneProvider.GetType().Name} changed Id:{messageData.ChangeId}",
+                (LoggerScopeHelpers.MethodScope, nameof(OnMessageReceivedAsync)),
+                (LoggerScopeHelpers.MethodPerfScope, stopWatch.ElapsedMilliseconds));
         }
 
         private Task UpdateBackplaneMetricsWithLogging(
@@ -333,23 +297,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             DataChanged[] dataChanges,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginSingleScope(
-                 (LoggerScopeHelpers.MethodScope, MethodDisposeDataChanges)))
-            {
-                Logger.LogDebug($"size:{dataChanges.Length}");
-            }
-
-            foreach (var backplaneProvider in GetBackPlaneProvidersByPriority())
-            {
-                try
-                {
-                    await backplaneProvider.DisposeDataChangesAsync(dataChanges, cancellationToken);
-                }
-                catch (Exception error)
-                {
-                    HandleBackplaneProviderException(backplaneProvider, nameof(IContactBackplaneProvider.DisposeDataChangesAsync), error);
-                }
-            }
+            await WaitAll(
+                BackplaneProviders.Select(p => (p.DisposeDataChangesAsync(dataChanges, cancellationToken), p)),
+                nameof(IContactBackplaneProvider.DisposeDataChangesAsync),
+                $"size:{dataChanges.Length}");
         }
 
         private IEnumerable<IContactBackplaneProvider> GetBackPlaneProvidersByPriority()
@@ -366,6 +317,85 @@ namespace Microsoft.VsCloudKernel.SignalService
                     Logger.LogWarning(error, $"Failed to invoke method:{methodName} on provider:{backplaneProvider.GetType().Name}");
                 }
             }
+        }
+
+        private async Task WaitAll(
+            IEnumerable<(Task, IContactBackplaneProvider)> tasks,
+            string methodName,
+            string logText)
+        {
+            var start = Stopwatch.StartNew();
+            var taskItems = tasks.Select(i =>(i.Item1, i.Item2, Stopwatch.StartNew())).ToList();
+            var completedItems = new List<(Task, IContactBackplaneProvider, Stopwatch)>();
+
+            while (taskItems.Count > 0)
+            {
+                var t = await Task.WhenAny(taskItems.Select(i => i.Item1));
+                var taskItem = taskItems.First(i => i.Item1 == t);
+                taskItem.Item3.Stop();
+                completedItems.Add(taskItem);
+                taskItems.Remove(taskItem);
+                try
+                {
+                    await t;
+                }
+                catch (Exception error)
+                {
+                    HandleBackplaneProviderException(taskItem.Item2, methodName, error);
+                }
+            }
+
+            // all the tasks completed or failed
+            var perTaskElapsed = completedItems.Select(i => $"{i.Item2.GetType().Name}:{i.Item3.ElapsedMilliseconds}");
+            Logger.LogScope(LogLevel.Debug, $"{logText} -> [{string.Join(",", perTaskElapsed)}]",
+                (LoggerScopeHelpers.MethodScope, methodName),
+                (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds));
+        }
+
+        private async Task<T> WaitFirstOrDefault<T>(
+            IEnumerable<(Task<T>, IContactBackplaneProvider)> tasks,
+            string methodName,
+            Func<T, string> logTextCallback,
+            Func<T, bool> resultCallback = null)
+        {
+            var start = Stopwatch.StartNew();
+            var taskItems = tasks.Select(i => (i.Item1, i.Item2, Stopwatch.StartNew())).ToList();
+            var completedItems = new List<(Task, IContactBackplaneProvider, Stopwatch)>();
+
+            T resultT = default(T);
+            while (taskItems.Count > 0)
+            {
+                var t = await Task.WhenAny(taskItems.Select(i => i.Item1));
+                var taskItem = taskItems.First(i => i.Item1 == t);
+                taskItem.Item3.Stop();
+                completedItems.Add(taskItem);
+                taskItems.Remove(taskItem);
+                try
+                {
+                    var result = await t;
+                    if (resultCallback == null || resultCallback(result))
+                    {
+                        resultT = result;
+                        break;
+                    }
+                }
+                catch (Exception error)
+                {
+                    HandleBackplaneProviderException(taskItem.Item2, methodName, error);
+                }
+            }
+
+            var perTaskElapsed = completedItems.Select(i => $"{i.Item2.GetType().Name}:{i.Item3.ElapsedMilliseconds}");
+            Logger.LogScope(LogLevel.Debug, $"{logTextCallback(resultT)} -> [{string.Join(",", perTaskElapsed)}]",
+                (LoggerScopeHelpers.MethodScope, methodName),
+                (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds));
+
+            return resultT;
+        }
+
+        private string ToTraceText(string s)
+        {
+            return string.Format(this.formatProvider, "{0:T}", s);
         }
 
         /// <summary>

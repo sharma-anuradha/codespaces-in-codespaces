@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.VsCloudKernel.SignalService.Common;
 
@@ -22,18 +23,28 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public const string ContactScope = "Contact";
         public const string ConnectionScope = "Connection";
+        public const string MessageTypeScope = "MessageType";
 
-        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, ContactReference contactReference, IFormatProvider formatProvider)
+        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, ContactReference contactReference, IFormatProvider formatProvider, params (string, object)[] scopes)
         {
-            return BeginContactReferenceScope(logger, method, contactReference.Id, contactReference.ConnectionId, formatProvider);
+            return BeginContactReferenceScope(logger, method, contactReference.Id, contactReference.ConnectionId, formatProvider, scopes);
         }
 
-        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, string contactId, string connectionId, IFormatProvider formatProvider)
+        public static IDisposable BeginContactReferenceScope(this ILogger logger, string method, string contactId, string connectionId, IFormatProvider formatProvider, params (string, object)[] scopes)
         {
-            return logger.BeginScope(
-                    (LoggerScopeHelpers.MethodScope, method),
-                    (ContactScope, string.Format(formatProvider,"{0:T}", contactId)),
-                    (ConnectionScope, connectionId));
+            var allScopes = new List<(string, object)>()
+            {
+                (LoggerScopeHelpers.MethodScope, method),
+                (ContactScope, string.Format(formatProvider,"{0:T}", contactId)),
+                (ConnectionScope, connectionId)
+            };
+
+            if (scopes != null)
+            {
+                allScopes.AddRange(scopes);
+            }
+
+            return LoggerScopeHelpers.BeginScope(logger, allScopes.ToArray());
         }
     }
 }
