@@ -19,21 +19,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="imageName">The full image url.</param>
         /// <param name="imageVersion">The image version.</param>
         /// <param name="vmImageSubscriptionId">The vm image subscription id.</param>
-        /// <param name="vmImageResourceGroup">The vm image resource group.</param>
+        /// <param name="vmImageResourceGroupPrefix">The prefix for the vm image resource group name.</param>
         public VmImageFamily(
             string imageFamilyName,
             VmImageKind imageKind,
             string imageName,
             string imageVersion,
             string vmImageSubscriptionId,
-            string vmImageResourceGroup)
+            string vmImageResourceGroupPrefix)
         {
             Requires.NotNullOrEmpty(imageFamilyName, nameof(imageFamilyName));
             Requires.NotNullOrEmpty(imageName, nameof(imageName));
             Requires.NotNullOrEmpty(imageVersion, nameof(imageVersion));
             if (imageKind == VmImageKind.Custom)
             {
-                Requires.NotNullOrEmpty(vmImageResourceGroup, nameof(vmImageResourceGroup));
+                Requires.NotNullOrEmpty(vmImageResourceGroupPrefix, nameof(vmImageResourceGroupPrefix));
                 Requires.NotNullOrEmpty(vmImageSubscriptionId, nameof(vmImageSubscriptionId));
             }
 
@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ImageName = imageName;
             ImageVersion = imageVersion;
             VmImageSubscriptionId = vmImageSubscriptionId;
-            VmImageResourceGroup = vmImageResourceGroup;
+            VmImageResourceGroupPrefix = vmImageResourceGroupPrefix;
         }
 
         /// <inheritdoc/>
@@ -57,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private string VmImageSubscriptionId { get; }
 
-        private string VmImageResourceGroup { get; }
+        private string VmImageResourceGroupPrefix { get; }
 
         /// <inheritdoc/>
         public string GetCurrentImageUrl(AzureLocation location)
@@ -68,7 +68,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     return $"{ImageName}:{ImageVersion}";
 
                 case VmImageKind.Custom:
-                    return $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{VmImageResourceGroup}/providers/Microsoft.Compute/galleries/VmImages/images/{ImageName}/versions/{ImageVersion}";
+                    var imageResourceGroup = $"{VmImageResourceGroupPrefix}-images-{location.ToString().ToLowerInvariant()}";
+                    var imageResourcePrefix = imageResourceGroup.Replace("-", "_");
+                    var imageGallery = $"{imageResourcePrefix}_gallery";
+                    var imageDefinition = $"{imageResourcePrefix}_imagedef";
+                    return $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{imageResourceGroup}/providers/Microsoft.Compute/galleries/{imageGallery}/images/{imageDefinition}/versions/{ImageVersion}";
 
                 default:
                     throw new NotSupportedException($"Image kind '{ImageKind}' is not supported.");
