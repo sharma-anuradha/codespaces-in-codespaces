@@ -122,18 +122,12 @@ az batch pool create --account-endpoint $BATCH_ENDPOINT --account-name $BATCH_NA
 ## Testing
 
 ### Compute Provider Integration Tests
-
-Switch to the dev subscription then create an SDK auth file using Azure CLI:
-```
-az account set --subscription 86642df6-843e-4610-a956-fdd497102261
-az ad sp create-for-rbac --sdk-auth > .../bin/debug/ComputeVirtualMachineProvider.Test/azureauth.properties
-```
 Create a `appsettings.test.json` like below in the directory of the tests:
 ```
 {
-  "AZURE_AUTH_LOCATION": "azureauth.properties",
-  "AZURE_SUBSCRIPTION": "86642df6-843e-4610-a956-fdd497102261",
-  "VM_AGENT_SOURCE_URL": "vso_agent_blob_url_with_sas_token"
+  "CLIENT_ID": "b720128c-1a02-4cbe-8aa8-004cdf393123",
+  "CLIENT_SECRET": "...",
+  "TENANT_ID": "72f988bf-86f1-41af-91ab-2d7cd011db47"
 }
 ```
 

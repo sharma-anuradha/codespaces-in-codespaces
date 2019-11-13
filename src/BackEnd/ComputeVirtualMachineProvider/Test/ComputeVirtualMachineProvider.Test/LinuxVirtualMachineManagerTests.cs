@@ -4,54 +4,66 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Blob;
+using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
+using Moq;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Test
 {
-    public class LinuxVmProviderTests : IClassFixture<AzureVmProviderTestsBase>
+    public class LinuxVirtualMachineManagerTests : IClassFixture<AzureComputeProviderTestsBase>
     {
         private const int TargetVmCount = 1;
-        private AzureVmProviderTestsBase testContext;
-        public LinuxVmProviderTests(AzureVmProviderTestsBase data)
+        private AzureComputeProviderTestsBase testContext;
+        private const string ComputeVsoAgentImageBlobName = "VSOAgent_linux_3236380.zip";
+
+        public LinuxVirtualMachineManagerTests(AzureComputeProviderTestsBase data)
         {
             this.testContext = data;
         }
 
         [Trait("Category", "IntegrationTest")]
         [Fact]
-        public async Task<AzureResourceInfo> Create_Compute_Ok()
+        public async Task LinuxCompute_Create_Start_Delete_Ok()
         {
-            var logger = new DefaultLoggerFactory().New();
-            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
+            var clientFactory = new AzureClientFactory(testContext.SystemCatalog);
             var azureDeploymentManager = new LinuxVirtualMachineManager(
                 clientFactory,
-                new MockControlPlaneAzureResourceAccessor(clientFactory));
-
+               testContext.ResourceAccessor);
             var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
+
+            var vmResourceInfo = await Create_Compute_Ok(computeProvider, ComputeOS.Linux, "Standard_F4s_v2", "Canonical.UbuntuServer.18.04-LTS.latest", ComputeVsoAgentImageBlobName);
+            await Start_Compute_Ok(computeProvider, vmResourceInfo);
+            await Delete_Compute_Ok(computeProvider, vmResourceInfo, ComputeOS.Linux);
+        }
+
+        public async Task<AzureResourceInfo> Create_Compute_Ok(IComputeProvider computeProvider, ComputeOS computeOS, string azureSku, string vmImage, string vsoBlobName)
+        {
+            var logger = new DefaultLoggerFactory().New();
             Guid subscriptionId = this.testContext.SubscriptionId;
             AzureLocation location = testContext.Location;
             string rgName = testContext.ResourceGroupName;
-            string blobUrl = UploadToBlobStorage();
+            string blobUrl = await testContext.GetSrcBlobUrlAsync(vsoBlobName);
             VirtualMachineProviderCreateInput input = new VirtualMachineProviderCreateInput()
             {
                 VMToken = Guid.NewGuid().ToString(),
                 AzureVmLocation = location,
                 AzureResourceGroup = rgName,
                 AzureSubscription = subscriptionId,
-                AzureVirtualMachineImage = "Canonical.UbuntuServer.18.04-LTS.latest",
-                AzureSkuName = "Standard_F4s_v2",
+                AzureVirtualMachineImage = vmImage,
+                AzureSkuName = azureSku,
                 ResourceTags = new Dictionary<string, string> {
                     {"ResourceTag", "GeneratedFromTest"},
                 },
-                ComputeOS = ComputeOS.Linux,
+                ComputeOS = computeOS,
                 VmAgentBlobUrl = blobUrl,
                 ResourceId = Guid.NewGuid().ToString(),
                 FrontDnsHostName = "frontend.service.com",
@@ -88,96 +100,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             return statusCheckResult.AzureResourceInfo;
         }
 
-        [Trait("Category", "IntegrationTest")]
-        [Fact]
-        public async Task Create_Multiple_Compute_Ok()
+        internal async Task Start_Compute_Ok(IComputeProvider computeProvider, AzureResourceInfo vmResourceInfo)
         {
             var logger = new DefaultLoggerFactory().New();
-            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
-            var azureDeploymentManager = new LinuxVirtualMachineManager(
-                clientFactory,
-                new MockControlPlaneAzureResourceAccessor(clientFactory));
+            var storageAccountName = GetConfigOrDefault("FILE_STORE_ACCOUNT", "teststorageaccount");
+            var storageAccountKey = GetConfigOrDefault("FILE_STORE_KEY", "teststorageaccountkey");
 
-            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
-            Guid subscriptionId = this.testContext.SubscriptionId;
-            AzureLocation location = testContext.Location;
-            string rgName = testContext.ResourceGroupName;
-
-            VirtualMachineProviderCreateInput input = new VirtualMachineProviderCreateInput()
-            {
-                VMToken = Guid.NewGuid().ToString(),
-                AzureVmLocation = location,
-                AzureResourceGroup = rgName,
-                AzureSubscription = subscriptionId,
-                AzureVirtualMachineImage = "Canonical.UbuntuServer.18.04-LTS.latest",
-                AzureSkuName = "Standard_F4s_v2",
-                ComputeOS = ComputeOS.Linux,
-            };
-
-            var timerCreate = Stopwatch.StartNew();
-            VirtualMachineProviderCreateResult[] initiateVmCreationList = await Task.WhenAll(Enumerable.Range(0, TargetVmCount).Select(x => computeProvider.CreateAsync(input, logger)));
-            timerCreate.Stop();
-            Console.WriteLine($"Time taken to begin create 10 VMs {timerCreate.Elapsed.TotalSeconds}");
-
-            var timerWait = Stopwatch.StartNew();
-            VirtualMachineProviderCreateResult[] vmStatus = await Task.WhenAll(initiateVmCreationList.Select(x => WaitForVMCreation(computeProvider, input, logger)));
-            timerWait.Stop();
-            Console.WriteLine($"Time taken to create VM {timerWait.Elapsed.TotalSeconds}");
-        }
-
-        public string UploadToBlobStorage()
-        {
-            var config = this.testContext.Config;
-            var accountName = config["STORAGE_ACCOUNT_NAME"];
-            var keyValue = config["STORAGE_KEY"];
-
-            var creds = new Microsoft.Azure.Storage.Auth.StorageCredentials(accountName, keyValue);
-            var blobStorageUri = new Uri($"https://{accountName}.blob.core.windows.net");
-            var blobClient = new CloudBlobClient(blobStorageUri, creds);
-            var container = blobClient.GetContainerReference("vsoagent");
-            var blob = container.GetBlockBlobReference(config["VSO_AGENT_ZIP_FILE_NAME"]);
-            blob.UploadFromFile(config["VSO_AGENT_ZIP_FILE_PATH"]);
-            var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
-            {
-                Permissions = SharedAccessBlobPermissions.Read,
-                SharedAccessExpiryTime = DateTime.UtcNow.AddDays(7),
-            });
-
-            string blobUrl = blob.Uri + sas;
-            return blobUrl;
-        }
-
-        [Trait("Category", "IntegrationTest")]
-        [Fact]
-        public async Task Start_Compute_Ok()
-        {
-            var logger = new DefaultLoggerFactory().New();
-            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
-            var azureDeploymentManager = new LinuxVirtualMachineManager(
-                clientFactory,
-                new MockControlPlaneAzureResourceAccessor(clientFactory));
-            var prereqexsit = ValidatePrereqConfig("startCompute");
-            Assert.True(prereqexsit, "Failed, as required config is not set.");
-  
-            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
-            var fileShareInfo = new ShareConnectionInfo(this.testContext.Config["FILE_STORE_ACCOUNT"],
-                                                       this.testContext.Config["FILE_STORE_KEY"],
+            var fileShareInfo = new ShareConnectionInfo(storageAccountName,
+                                                       storageAccountKey,
                                                        "cloudenvdata",
                                                        "dockerlib");
 
-            var vmResourceInfo = (await this.Create_Compute_Ok());
             var startComputeInput = new VirtualMachineProviderStartComputeInput(
                 vmResourceInfo,
                 fileShareInfo,
                 new Dictionary<string, string>()
                    {
-                        { "CLOUDENV_ENVIRONMENT_ID", this.testContext.Config["SESSION_ID"] },
-                        { "SESSION_ID", this.testContext.Config["SESSION_ID"] },
-                        { "SESSION_TOKEN", this.testContext.Config["SESSION_TOKEN"] },
-                        { "SESSION_CASCADE_TOKEN", this.testContext.Config["SESSION_CASCADE_TOKEN"] },
-                        { "SESSION_CALLBACK",this.testContext.Config["SESSION_CALLBACK"] },
-                        { "GIT_CONFIG_USER_NAME", "anu sharma" },
-                        { "GIT_CONFIG_USER_EMAIL", "anush@microsoft.com" },
+                        { "CLOUDENV_ENVIRONMENT_ID", GetConfigOrDefault("CLOUDENV_ENVIRONMENT_ID", "CLOUDENV_ENVIRONMENT_ID") },
+                        { "SESSION_ID", GetConfigOrDefault("SESSION_ID","SESSION_ID") },
+                        { "SESSION_TOKEN",  GetConfigOrDefault("SESSION_TOKEN","SESSION_TOKEN") },
+                        { "SESSION_CASCADE_TOKEN", GetConfigOrDefault("SESSION_CASCADE_TOKEN","SESSION_CASCADE_TOKEN") },
+                        { "SESSION_CALLBACK", GetConfigOrDefault("SESSION_CALLBACK","SESSION_CALLBACK") },
+                        { "GIT_CONFIG_USER_NAME", GetConfigOrDefault("USER_NAME", "GIT_CONFIG_USER_NAME") },
+                        { "GIT_CONFIG_USER_EMAIL",  GetConfigOrDefault("USER_EMAIL","GIT_CONFIG_USER_EMAIL")},
                    },
                 ComputeOS.Linux,
                 this.testContext.Location,
@@ -191,24 +136,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Assert.Equal(OperationState.Succeeded, startComputeResult.Status);
         }
 
-        [Trait("Category", "IntegrationTest")]
-        [Fact]
-        public async Task Delete_Compute_Ok()
+        internal async Task Delete_Compute_Ok(IComputeProvider computeProvider, AzureResourceInfo vmResourceInfo, ComputeOS computeOS)
         {
             var logger = new DefaultLoggerFactory().New();
             var deleteTimer = Stopwatch.StartNew();
-            AzureClientFactoryMock clientFactory = new AzureClientFactoryMock(testContext.AuthFilePath);
-            var azureDeploymentManager = new LinuxVirtualMachineManager(
-                clientFactory,
-                new MockControlPlaneAzureResourceAccessor(clientFactory));
-            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
-
-            var vmResourceInfo = (await this.Create_Compute_Ok());
             var input = new VirtualMachineProviderDeleteInput
             {
                 AzureResourceInfo = vmResourceInfo,
-                AzureVmLocation = AzureLocation.WestUs2,
-                ComputeOS = ComputeOS.Linux,
+                AzureVmLocation = testContext.Location,
+                ComputeOS = computeOS,
             };
 
             var deleteResult = await computeProvider.DeleteAsync(input, logger);
@@ -234,21 +170,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Console.WriteLine($"Time taken to start environment on VM {timerWait.Elapsed.TotalSeconds}");
         }
 
-        private bool ValidatePrereqConfig(string scenario)
-        {
-            switch (scenario)
-            {
-                case "startCompute":
-                    return !string.IsNullOrEmpty(this.testContext.Config["FILE_STORE_ACCOUNT"])
-                            && !string.IsNullOrEmpty(this.testContext.Config["FILE_STORE_KEY"])
-                            && !string.IsNullOrEmpty(this.testContext.Config["SESSION_ID"])
-                            && !string.IsNullOrEmpty(this.testContext.Config["SESSION_TOKEN"])
-                            && !string.IsNullOrEmpty(this.testContext.Config["SESSION_CALLBACK"]);
-                default:
-                    return true;
-            }
-        }
-
         private static async Task<VirtualMachineProviderCreateResult> WaitForVMCreation(VirtualMachineProvider computeProvider, VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
         {
             VirtualMachineProviderCreateResult statusCheckResult = default;
@@ -265,6 +186,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 }
             } while (statusCheckResult.Status.Equals(OperationState.InProgress));
             return statusCheckResult;
+        }
+
+        private string GetConfigOrDefault(string configKey, string defaultValue)
+        {
+            var result = this.testContext.Config["FILE_STORE_ACCOUNT"];
+            result = string.IsNullOrEmpty(result) ? defaultValue : defaultValue;
+            return result;
         }
     }
 }
