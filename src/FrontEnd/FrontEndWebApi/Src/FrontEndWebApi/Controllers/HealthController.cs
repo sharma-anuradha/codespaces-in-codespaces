@@ -15,8 +15,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [ApiController]
     public class HealthController : Controller
     {
-        private IHealthProvider HealthProvider { get; set; }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="HealthController"/> class.
         /// </summary>
@@ -26,6 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             HealthProvider = healthProvider;
         }
+
+        private IHealthProvider HealthProvider { get; set; }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]

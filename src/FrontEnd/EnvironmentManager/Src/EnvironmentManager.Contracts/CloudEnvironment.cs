@@ -54,6 +54,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public CloudEnvironmentState State { get; set; }
 
         /// <summary>
+        /// Gets or sets the updated date and time for state change.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "lastStateUpdated")]
+        public DateTime LastStateUpdated { get; set; }
+
+        /// <summary>
+        /// Gets or sets the reason for state change.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "lastStateUpdateReason")]
+        public string LastStateUpdateReason { get; set; }
+
+        /// <summary>
         /// Gets or sets the continer image name.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "containerImage")]

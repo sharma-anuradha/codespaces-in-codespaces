@@ -20,6 +20,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueStorageId = "StorageId";
         private const string LogValueType = "Type";
         private const string LogValueState = "State";
+        private const string LogValueAutoShutdownDelay = "AutoShutdownDelay";
+        private const string LogValueLastStateUpdateReason = "LastStateUpdateReason";
 
         /// <summary>
         /// Add logging fields for an <see cref="CloudEnvironment"/> instance.
@@ -37,10 +39,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddEnvironmentId(cloudEnvironment.Id)
                     .AddOwnerId(cloudEnvironment.OwnerId)
                     .AddCloudEnvironmentType(cloudEnvironment.Type)
-                    .AddCloudEnvironmentState(cloudEnvironment.State)
                     .AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId)
                     .AddComputeId(cloudEnvironment.Compute?.ResourceId)
-                    .AddStorageId(cloudEnvironment.Storage?.ResourceId);
+                    .AddStorageId(cloudEnvironment.Storage?.ResourceId)
+                    .AddAutoShutdownDelay(cloudEnvironment.AutoShutdownDelayMinutes)
+                    .AddCloudEnvironmentState(cloudEnvironment.State)
+                    .AddLastStateUpdateReason(cloudEnvironment.LastStateUpdateReason);
             }
 
             return logger;
@@ -89,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="storageId">The environment connection storage id.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddStorageId(this IDiagnosticsLogger logger, Guid? storageId)
-            => logger.FluentAddValue(LogValueStorageId, storageId.ToString());
+            => logger.FluentAddValue(LogValueStorageId, storageId?.ToString());
 
         /// <summary>
         /// Add the environment type to the logger.
@@ -108,5 +112,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddCloudEnvironmentState(this IDiagnosticsLogger logger, CloudEnvironmentState state)
             => logger.FluentAddValue(LogValueState, state.ToString());
+
+        /// <summary>
+        /// Add the environment state to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="autoShutdownDelay">The cloud environment auto shutdown delay in minutes.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddAutoShutdownDelay(this IDiagnosticsLogger logger, int? autoShutdownDelay)
+            => logger.FluentAddValue(LogValueAutoShutdownDelay, autoShutdownDelay?.ToString());
+
+        /// <summary>
+        /// Add the environment state to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="reason">The cloud environment state change reason.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddLastStateUpdateReason(this IDiagnosticsLogger logger, string reason)
+            => logger.FluentAddValue(LogValueLastStateUpdateReason, reason);
     }
 }

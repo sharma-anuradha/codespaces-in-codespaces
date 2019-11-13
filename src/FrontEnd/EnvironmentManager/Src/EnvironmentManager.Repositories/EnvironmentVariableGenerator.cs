@@ -218,7 +218,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     }
 
     /// <summary>
-    /// Generate the environment id variable 
+    /// Generate the environment id variable.
     /// </summary>
     public class EnvVarEnvironmentId : EnvironmentVariableStrategy
     {

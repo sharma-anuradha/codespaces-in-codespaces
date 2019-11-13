@@ -8,7 +8,6 @@ using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
-
     /// <summary>
     /// Represents a backend resources keepalive info in the context of the frontent.
     /// </summary>

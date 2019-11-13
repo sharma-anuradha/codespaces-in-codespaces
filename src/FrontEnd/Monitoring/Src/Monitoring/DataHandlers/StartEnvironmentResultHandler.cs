@@ -9,22 +9,23 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 {
     /// <summary>
-    /// 
+    /// Process start environment job result.
     /// </summary>
-    public class StartEnviornmentResultHandler : IDataHandler
+    public class StartEnvironmentResultHandler : IDataHandler
     {
         private readonly ICloudEnvironmentManager cloudEnvironmentManager;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StartEnviornmentResultHandler"/> class.
+        /// Initializes a new instance of the <see cref="StartEnvironmentResultHandler"/> class.
         /// </summary>
         /// <param name="environmentManager">Environment Manager.</param>
-        public StartEnviornmentResultHandler(ICloudEnvironmentManager environmentManager)
+        public StartEnvironmentResultHandler(ICloudEnvironmentManager environmentManager)
         {
             this.cloudEnvironmentManager = environmentManager;
         }
@@ -44,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                {
                    if (!CanProcess(data))
                    {
-                       throw new InvalidOperationException($"Collected data of type {data?.GetType().Name}, name  {data?.Name} cannot be processed by {nameof(StartEnviornmentResultHandler)}.");
+                       throw new InvalidOperationException($"Collected data of type {data?.GetType().Name}, name  {data?.Name} cannot be processed by {nameof(StartEnvironmentResultHandler)}.");
                    }
 
                    var jobResultData = (JobResult)data;
@@ -70,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        {
                            cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
                            var newState = CloudEnvironmentState.Failed;
-                           await cloudEnvironmentManager.UpdateEnvironmentAsync(cloudEnvironment, childLogger, newState);
+                           await cloudEnvironmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateReasons.StartEnvironmentJobFailed, childLogger);
                            return;
                        }
                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)

@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
@@ -65,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
                    cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
                    var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
-                   await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, childLogger, newState);
+                   await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateReasons.Heartbeat, childLogger);
 
                    // Shutdown if the environment is idle
                    if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))

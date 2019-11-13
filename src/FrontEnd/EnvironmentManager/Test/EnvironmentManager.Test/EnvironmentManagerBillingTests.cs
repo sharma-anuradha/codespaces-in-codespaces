@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test;
 using Xunit;

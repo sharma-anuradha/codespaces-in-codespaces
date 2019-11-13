@@ -101,10 +101,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Update Environment.
         /// </summary>
         /// <param name="cloudEnvironment">Cloud Environemnt that needs to be updated.</param>
-        /// <param name="logger">The diagnostics logger.</param>
         /// <param name="newState">New state, if the state needs to be updated.</param>
+        /// <param name="reason">Reason for state change, if the state needs to be updated.</param>
+        /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the updated <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger, CloudEnvironmentState newState = default);
+        Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string reason, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Get environment by id.
