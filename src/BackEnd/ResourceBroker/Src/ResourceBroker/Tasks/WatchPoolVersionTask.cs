@@ -72,18 +72,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 // See how many are current ready for use in the pool
                 var readyUnassignedCount = await GetPoolReadyUnassignedCountAsync(resourcePool, logger);
                 var readyUnassignedRate = (double)readyUnassignedCount / resourcePool.TargetCount;
+                var dropCount = readyUnassignedCount - (int)(resourcePool.TargetCount * 0.8);
 
                 logger.FluentAddValue("VersionReadyUnassignedCount", readyUnassignedCount)
-                    .FluentAddValue("VersionReadyUnassignedRate", readyUnassignedRate);
+                    .FluentAddValue("VersionReadyUnassignedRate", readyUnassignedRate)
+                    .FluentAddValue("VersionDropCount", dropCount);
 
                 // We only will do anything if the pool has 80% resources ready for actual use
-                if (readyUnassignedRate >= 0.8)
+                if (dropCount > 0)
                 {
-                    // Get 20% items to delete
-                    var dropCount = (int)Math.Ceiling(resourcePool.TargetCount * 0.2);
-
-                    logger.FluentAddValue("VersionDropCount", dropCount);
-
                     dropCount = Math.Min(resourcePool.MaxDeleteBatchCount, dropCount);
 
                     var nonCurrentIds = await GetPoolUnassignedNotVersionAsync(resourcePool, dropCount, logger);
