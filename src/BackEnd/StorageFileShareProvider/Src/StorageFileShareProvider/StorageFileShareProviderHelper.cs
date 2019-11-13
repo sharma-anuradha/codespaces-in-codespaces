@@ -196,36 +196,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 var fileClient = cloudStorageAccount.CreateCloudFileClient();
                 var fileShare = fileClient.GetShareReference(StorageMountableShareName);
 
-                // The SaS tokens applies to the entire file share where all items are copied to.
-                var destFileSas = fileShare.GetSharedAccessSignature(new SharedAccessFilePolicy()
-                {
-                    Permissions = SharedAccessFilePermissions.Read | SharedAccessFilePermissions.Write,
-                    SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4),
-                });
-
-                var taskCopyCommands = new List<string>();
-                foreach (var copyItem in sourceCopyItems)
-                {
-                    var destFile = fileShare.GetRootDirectoryReference().GetFileReference(GetStorageMountableFileName(copyItem.StorageType));
-                    var destFileUriWithSas = destFile.Uri.AbsoluteUri + destFileSas;
-                    taskCopyCommands.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp /datadrive/images/'{copyItem.SrcBlobFileName}' '{destFileUriWithSas}'");
-
-                    logger.FluentAddValue($"DestinationStorageFilePath-{copyItem.StorageType}", destFile.Uri.ToString());
-                }
-
-                // Define the task
-                var taskCommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", taskCopyCommands)}\"";
-                var taskId = azureResourceInfo.Name;
-                var task = new CloudTask(taskId, taskCommandLine)
-                {
-                    Constraints = new TaskConstraints(maxTaskRetryCount: 3, maxWallClockTime: TimeSpan.FromMinutes(10), retentionTime: TimeSpan.FromDays(1)),
-                };
-
                 var desiredBatchLocation = storageAccount.RegionName;
 
                 using (BatchClient batchClient = await batchClientFactory.GetBatchClient(desiredBatchLocation, logger))
                 {
                     var job = await GetOrCreateJob(batchClient, sourceCopyItems, storageSizeInGb);
+
+                    var taskId = azureResourceInfo.Name;
+                    var task = ConstructTask(job.Id, taskId, fileShare, sourceCopyItems, logger);
 
                     await job.AddTaskAsync(task);
 
@@ -408,7 +386,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// </summary>
         /// <param name="sourceCopyItems">Source copy items.</param>
         /// <returns>A job id.</returns>
-        private string GetBatchJobIdFromBlobFilename(IEnumerable<StorageCopyItem> sourceCopyItems) => (storageProviderSettings.WorkerBatchPoolId + JoinCopyItemFileNames(sourceCopyItems)).GetDeterministicHashCode();
+        private string GetBatchJobIdFromBlobFilename(IEnumerable<StorageCopyItem> sourceCopyItems, int jobSuffix) => $"{(storageProviderSettings.WorkerBatchPoolId + JoinCopyItemFileNames(sourceCopyItems)).GetDeterministicHashCode()}_{jobSuffix}";
+
+        private string GetJobWorkingDirectory(string jobId) => $"/datadrive/images/{jobId}/";
 
         /// <summary>
         /// Gets an Azure Batch job that can have tasks added to it.
@@ -420,16 +400,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <returns>CloudJob.</returns>
         private async Task<CloudJob> GetOrCreateJob(BatchClient batchClient, IEnumerable<StorageCopyItem> sourceCopyItems, int storageSizeInGb)
         {
-            for (var attempts = 0; attempts < 3; attempts++)
+            var jobSuffix = 0;
+            var attempts = 0;
+            for (; attempts < 3; attempts++)
             {
-                var job = await GetExistingJob(batchClient, sourceCopyItems);
+                var jobId = GetBatchJobIdFromBlobFilename(sourceCopyItems, jobSuffix);
+                var job = await GetExistingJob(batchClient, jobId);
                 if (job != null)
                 {
+                    // If job is in an active/available state, return it.
+                    if (job.State != JobState.Active)
+                    {
+                        // Increment job suffix so we can try a new unique job id
+                        jobSuffix++;
+                        continue;
+                    }
+
                     return job;
                 }
                 else
                 {
-                    job = ConstructJob(batchClient, sourceCopyItems, storageSizeInGb);
+                    job = ConstructJob(batchClient, jobId, sourceCopyItems, storageSizeInGb);
                     try
                     {
                         await job.CommitAsync();
@@ -438,6 +429,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     }
                     catch (BatchException ex)
                     {
+                        // The job didn't exist so we tried to create it but someone beat us to it!
+                        // Continue the loop to get the job that someone else created.
                         if (ex.Message != null && ex.Message.Contains("Conflict"))
                         {
                             continue;
@@ -448,7 +441,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 }
             }
 
-            throw new StorageCreateException("Unable to get an Azure Batch job.");
+            throw new StorageCreateException($"Unable to get an Azure Batch job after {attempts} attempt(s).");
         }
 
         /// <summary>
@@ -457,27 +450,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// It's the caller's responsibility to call this after getting the CloudJob object back.
         /// </summary>
         /// <param name="batchClient">Batch client.</param>
+        /// <param name="jobId">Id of the job to construct.</param>
         /// <param name="sourceCopyItems">Source storage copy items.</param>
         /// <returns>CloudJob.</returns>
-        private CloudJob ConstructJob(BatchClient batchClient, IEnumerable<StorageCopyItem> sourceCopyItems, int storageSizeInGb)
+        private CloudJob ConstructJob(BatchClient batchClient, string jobId, IEnumerable<StorageCopyItem> sourceCopyItems, int storageSizeInGb)
         {
             var jobPrepareCommandLines = new List<string>();
             var jobReleaseCommandLines = new List<string>();
             var jobMetadata = new List<MetadataItem>();
+            var jobWorkingDir = GetJobWorkingDirectory(jobId);
 
             foreach (var copyItem in sourceCopyItems)
             {
-                jobPrepareCommandLines.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{copyItem.SrcBlobUrl}' /datadrive/images/'{copyItem.SrcBlobFileName}'");
+                jobPrepareCommandLines.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{copyItem.SrcBlobUrl}' {jobWorkingDir}{copyItem.SrcBlobFileName}");
                 if (copyItem.StorageType == StorageType.Linux)
                 {
-                    jobPrepareCommandLines.Add($"resize2fs -fp /datadrive/images/'{copyItem.SrcBlobFileName}' {storageSizeInGb}G");
+                    jobPrepareCommandLines.Add($"resize2fs -fp {jobWorkingDir}{copyItem.SrcBlobFileName} {storageSizeInGb}G");
                 }
 
-                jobReleaseCommandLines.Add($"rm /datadrive/images/'{copyItem.SrcBlobFileName}'");
                 jobMetadata.Add(new MetadataItem($"{batchJobMetadataKey}-{copyItem.StorageType}", copyItem.SrcBlobFileName));
             }
 
-            var jobId = GetBatchJobIdFromBlobFilename(sourceCopyItems);
+            jobReleaseCommandLines.Add($"rm -rf {jobWorkingDir}");
+
             var poolInformation = new PoolInformation { PoolId = storageProviderSettings.WorkerBatchPoolId, };
             var job = batchClient.JobOperations.CreateJob(jobId, poolInformation);
 
@@ -510,11 +505,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             return job;
         }
 
-        private async Task<CloudJob> GetExistingJob(BatchClient batchClient, IEnumerable<StorageCopyItem> sourceCopyItems)
+        private CloudTask ConstructTask(
+            string jobId,
+            string taskId,
+            CloudFileShare fileShare,
+            IEnumerable<StorageCopyItem> sourceCopyItems,
+            IDiagnosticsLogger logger)
+        {
+            var jobWorkingDir = GetJobWorkingDirectory(jobId);
+
+            // The SaS tokens applies to the entire file share where all items are copied to.
+            var destFileSas = fileShare.GetSharedAccessSignature(new SharedAccessFilePolicy()
+            {
+                Permissions = SharedAccessFilePermissions.Read | SharedAccessFilePermissions.Write,
+                SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4),
+            });
+
+            var taskCopyCommands = new List<string>();
+            foreach (var copyItem in sourceCopyItems)
+            {
+                var destFile = fileShare.GetRootDirectoryReference().GetFileReference(GetStorageMountableFileName(copyItem.StorageType));
+                var destFileUriWithSas = destFile.Uri.AbsoluteUri + destFileSas;
+                taskCopyCommands.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp {jobWorkingDir}{copyItem.SrcBlobFileName} '{destFileUriWithSas}'");
+
+                logger.FluentAddValue($"DestinationStorageFilePath-{copyItem.StorageType}", destFile.Uri.ToString());
+            }
+
+            // Define the task
+            var taskCommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", taskCopyCommands)}\"";
+
+            var task = new CloudTask(taskId, taskCommandLine)
+            {
+                Constraints = new TaskConstraints(maxTaskRetryCount: 3, maxWallClockTime: TimeSpan.FromMinutes(10), retentionTime: TimeSpan.FromDays(1)),
+            };
+            return task;
+        }
+
+        private async Task<CloudJob> GetExistingJob(BatchClient batchClient, string jobId)
         {
             try
             {
-                var job = await batchClient.JobOperations.GetJobAsync(GetBatchJobIdFromBlobFilename(sourceCopyItems));
+                var job = await batchClient.JobOperations.GetJobAsync(jobId);
                 return job;
             }
             catch (BatchException ex)
