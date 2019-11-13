@@ -5,7 +5,7 @@ import { TELEMETRY_KEY } from '../../constants';
 import { createUniqueId } from '../../dependencies';
 import { createTrace } from '../createTrace';
 import { TelemetryEventSerializer } from './TelemetryEventSerializer';
-import { ITelemetryEvent } from './types';
+import { ITelemetryEvent, TelemetryPropertyValue } from './types';
 import { matchPath } from '../../routes';
 import versionFile from '../../version.json';
 
@@ -16,6 +16,7 @@ class TelemetryService {
     private context!: ITelemetryContext;
     private logger: ReturnType<typeof createTrace>;
     private telemetryEventSerializer: TelemetryEventSerializer;
+
     constructor() {
         this.logger = createTrace('TelemetryService');
         this.telemetryEventSerializer = new TelemetryEventSerializer();
@@ -27,39 +28,61 @@ class TelemetryService {
                 autoTrackPageVisitTime: false,
                 disableExceptionTracking: true,
                 disableAjaxTracking: true,
+                isCookieUseDisabled: true,
             },
         });
         this.appInsights.loadAppInsights();
         this.initializeContext();
     }
+
     initializeContext() {
         const info = detect();
-        const pathMatch = matchPath(location.pathname);
         this.context = {
             portalVersion: versionFile.version,
+            machineId: this.machineId,
             sessionId: this.getSessionId(),
             pageLoadId: this.getPageLoadId(),
             host: location.host,
-            path: pathMatch ? pathMatch.path : location.pathname,
             browserName: (info && info.name) || '<unknown>',
             browserVersion: (info && info.version) || '<unknown>',
             browserOS: (info && info.os) || '<unknown>',
         };
     }
+
     getContext() {
         return {
             ...this.context,
         };
     }
+
     setCurrentEnvironmentId(id: string | undefined) {
         this.context.environmentId = id;
     }
+
     setIsInternal(isInternal: boolean) {
         this.context.isInternal = isInternal;
     }
+
     get isInternal(): boolean {
         return !!this.context.isInternal;
     }
+
+    private get machineId(): string {
+        try {
+            let machineId = window.localStorage.getItem('vso_machine_id');
+            if (!machineId) {
+                machineId = createUniqueId();
+                window.localStorage.setItem('vso_machine_id', machineId);
+            }
+            return machineId;
+        } catch (error) {
+            this.logger.error('Failed to get session id.', {
+                error,
+            });
+            return createUniqueId();
+        }
+    }
+
     private getSessionId(): string {
         try {
             let sessionId = window.sessionStorage.getItem('vso_sessionId');
@@ -75,14 +98,27 @@ class TelemetryService {
             return createUniqueId();
         }
     }
+
     private getPageLoadId(): string {
         return createUniqueId();
     }
+
     public track(userEvent: ITelemetryEvent) {
-        const { properties, measurements } = this.telemetryEventSerializer.serialize(userEvent, {
+        const defaultProperties: Record<string, TelemetryPropertyValue> = {
             ...this.context,
             date: new Date(),
-        });
+            telemetryEventId: createUniqueId(),
+        };
+
+        const knownPath = matchPath(location.pathname);
+        if (knownPath) {
+            defaultProperties['path'] = knownPath.path;
+        }
+
+        const { properties, measurements } = this.telemetryEventSerializer.serialize(
+            userEvent,
+            defaultProperties
+        );
 
         const event = {
             name: userEvent.name,

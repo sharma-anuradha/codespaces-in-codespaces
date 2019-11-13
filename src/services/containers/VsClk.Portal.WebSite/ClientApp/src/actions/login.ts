@@ -8,14 +8,15 @@ import { tokenFromTokenResponse } from '../services/tokenFromTokenResponse';
 import { clientApplication } from '../services/msalConfig';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
 
-export const loginActionType = 'async.authentication.getToken';
-export const loginSuccessActionType = 'async.authentication.getToken.success';
-export const loginFailureActionType = 'async.authentication.getToken.failure';
-export const loginInteractionRequiredActionType = 'async.authentication.interaction.required';
+export const loginActionType = 'async.authentication.login';
+export const loginSuccessActionType = 'async.authentication.login.success';
+export const loginFailureActionType = 'async.authentication.login.failure';
+export const loginInteractionRequiredActionType = 'async.authentication.login.interaction.required';
 
 // Basic actions dispatched for reducers
 const loginAction = () => action(loginActionType);
-const loginSuccessAction = (token: ITokenWithMsalAccount) => action(loginSuccessActionType, { token });
+const loginSuccessAction = (token: ITokenWithMsalAccount) =>
+    action(loginSuccessActionType, { token });
 const loginFailureAction = (error: Error) => action(loginFailureActionType, error);
 const loginInteractionRequiredAction = () => action(loginInteractionRequiredActionType);
 
@@ -55,15 +56,15 @@ export async function login() {
 
 export const complete2FA = async () => {
     const tokenRequest = {
-        scopes: ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All']
-    }
+        scopes: ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'],
+    };
 
     const tokenResponse = await clientApplication.acquireTokenPopup(tokenRequest);
 
     const token = tokenFromTokenResponse(tokenResponse);
 
     const dispatch = useDispatch();
-    
+
     dispatch(loginSuccessAction(token));
     dispatch(init());
 
@@ -74,4 +75,4 @@ export const signal2FARequired = () => {
     const dispatch = useDispatch();
 
     dispatch(loginInteractionRequiredAction());
-}
+};

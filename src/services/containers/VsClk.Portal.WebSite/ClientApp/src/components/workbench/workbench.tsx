@@ -160,7 +160,7 @@ class WorkbenchView extends Component<WorkbenchProps> {
                 (commonProperties, property) => {
                     return {
                         ...commonProperties,
-                        [`vso_${property}`]: vsoContextProperties[property],
+                        [`vso.${property}`]: vsoContextProperties[property],
                     };
                 },
                 {} as { [key: string]: any }

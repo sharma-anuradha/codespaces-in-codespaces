@@ -8,6 +8,7 @@ export interface BaseAction<
     TCustomError = unknown
 > {
     type: TType;
+    date: Date;
     payload?: TPayload;
     failed: boolean;
     error?: TCustomError;

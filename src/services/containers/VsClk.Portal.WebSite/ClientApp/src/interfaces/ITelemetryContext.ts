@@ -1,11 +1,11 @@
 export type ITelemetryContext = {
     portalVersion: string;
 
+    machineId: string;
     sessionId: string;
     pageLoadId: string;
 
     host: string;
-    path: string;
 
     browserName: string;
     browserVersion: string;

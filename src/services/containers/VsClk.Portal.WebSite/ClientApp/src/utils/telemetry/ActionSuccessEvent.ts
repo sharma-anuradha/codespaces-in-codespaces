@@ -8,6 +8,7 @@ export class ActionSuccessEvent implements ITelemetryEvent {
             ...this.action.metadata.telemetryProperties,
             action: this.action.type,
             correlationId: this.action.metadata.correlationId,
+            date: this.action.date,
         };
     }
 }

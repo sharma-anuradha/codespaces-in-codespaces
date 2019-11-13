@@ -77,6 +77,7 @@ export function action(type: any, payload?: any, error?: any) {
     if (payload != null && error != null) {
         return {
             type,
+            date: new Date(),
             payload,
             error,
             failed: true,
@@ -84,18 +85,21 @@ export function action(type: any, payload?: any, error?: any) {
     } else if (payload != null && payload instanceof Error) {
         return {
             type,
+            date: new Date(),
             error: payload,
             failed: true,
         };
     } else if (payload != null) {
         return {
             type,
+            date: new Date(),
             payload,
             failed: false,
         };
     } else if (error != null) {
         return {
             type,
+            date: new Date(),
             payload,
             error,
             failed: true,
@@ -103,6 +107,7 @@ export function action(type: any, payload?: any, error?: any) {
     } else {
         return {
             type,
+            date: new Date(),
             failed: false,
         };
     }
