@@ -386,7 +386,7 @@ export class CreateEnvironmentPanelView extends Component<
                 <Stack tokens={{ childrenGap: 4 }}>
                     <TextField
                         label='Environment Name'
-                        placeholder='environmentNameExample'
+                        placeholder=''
                         onKeyDown={this.submitForm}
                         value={this.state.friendlyName.value}
                         iconProps={getValidationIcon(this.state.friendlyName)}
@@ -399,7 +399,7 @@ export class CreateEnvironmentPanelView extends Component<
                     />
                     <TextField
                         label='Git Repository'
-                        placeholder='microsoft/vsonline-quickstart'
+                        placeholder=''
                         onKeyDown={this.submitForm}
                         value={this.state.gitRepositoryUrl.value}
                         iconProps={getValidationIcon(this.state.gitRepositoryUrl)}
@@ -422,7 +422,7 @@ export class CreateEnvironmentPanelView extends Component<
                     <TextField
                         autoFocus
                         label='Dotfiles Repository'
-                        placeholder='e.g. Org/Repo or https://github.com/Org/Repo.git'
+                        placeholder=''
                         onKeyDown={this.submitForm}
                         value={this.state.dotfilesRepository.value}
                         iconProps={getValidationIcon(this.state.dotfilesRepository)}
@@ -443,7 +443,7 @@ export class CreateEnvironmentPanelView extends Component<
                     />
                     <TextField
                         label='Dotfiles Target Path'
-                        placeholder='~/dotfiles <optional>'
+                        placeholder='~/dotfiles'
                         onKeyDown={this.submitForm}
                         value={this.state.dotfilesTargetPath.value}
                         iconProps={getValidationIcon(this.state.dotfilesTargetPath)}
