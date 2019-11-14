@@ -89,6 +89,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private string AccountShortUniquePrefix { get; }
 
         /// <inheritdoc/>
+        public string GetImageGalleryNameForWindowsImages(AzureLocation azureLocation)
+        {
+            ValidateLocation(azureLocation);
+
+            return $"gallery_{RegionCodes[azureLocation]}";
+        }
+
+        /// <inheritdoc/>
+        public string GetResourceGroupNameForWindowsImages(AzureLocation azureLocation)
+        {
+            ValidateLocation(azureLocation);
+
+            return $"{ControlPlaneInfo.EnvironmentResourceGroupName}-images-{RegionCodes[azureLocation]}";
+        }
+
+        /// <inheritdoc/>
         public string GetStampStorageAccountNameForComputeQueues(AzureLocation computeVmLocation)
         {
             return MakeStorageAccountName(ComputeQueueKind, computeVmLocation);
@@ -115,10 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public string GetStampBatchAccountName(AzureLocation azureLocation)
         {
-            if (!DataPlaneLocations.Contains(azureLocation))
-            {
-                throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{this.StampResourceGroupName}'");
-            }
+            ValidateLocation(azureLocation);
 
             var regionCode = RegionCodes[azureLocation];
             var accountName = $"{AccountShortUniquePrefix}{ControlPlaneStampSettings.StampName}{BatchAccountKind}{regionCode}".ToLowerInvariant();
@@ -157,6 +170,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
 
             return accountName;
+        }
+
+        private void ValidateLocation(AzureLocation azureLocation)
+        {
+            if (!DataPlaneLocations.Contains(azureLocation))
+            {
+                throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{this.StampResourceGroupName}'");
+            }
         }
     }
 }

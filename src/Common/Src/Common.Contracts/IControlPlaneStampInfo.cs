@@ -43,6 +43,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         IEnumerable<AzureLocation> DataPlaneLocations { get; }
 
         /// <summary>
+        /// Gets the Windows image gallery name for an AzureLocation.
+        /// </summary>
+        /// <param name="azureLocation">The AzureLocation to convert.</param>
+        /// <returns>The image gallery name.</returns>
+        string GetImageGalleryNameForWindowsImages(AzureLocation azureLocation);
+
+        /// <summary>
+        /// Gets the Windows images resource group name for an AzureLocation.
+        /// </summary>
+        /// <param name="azureLocation">The AzureLocation to convert.</param>
+        /// <returns>The images resource group name.</returns>
+        string GetResourceGroupNameForWindowsImages(AzureLocation azureLocation);
+
+        /// <summary>
         /// Gets the control-plane stamp storage account name for use with compute job queues.
         /// </summary>
         /// <param name="computeVmLocation">The compute vm location.</param>

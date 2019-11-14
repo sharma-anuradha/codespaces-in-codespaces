@@ -71,12 +71,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         "agentImageFamily",
                         "agentImageName"),
                     new VmImageFamily(
+                        MockControlPlaneInfo().Stamp,
                         "vmImageFamilyName",
                         VmImageKind.Canonical,
                         "vmImageName",
                         "vmImageVersion",
-                        "vmImageSubscriptionId",
-                        "vmImageResourceGroup"),
+                        "vmImageSubscriptionId"),
                     "storageSkuName",
                     new BuildArtifactImageFamily(
                         "storageImageFamily",
@@ -172,13 +172,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private IControlPlaneInfo MockControlPlaneInfo()
         {
             var moq = new Mock<IControlPlaneInfo>();
+            var moq2 = new Mock<IControlPlaneStampInfo>();
             moq
                 .Setup(obj => obj.GetOwningControlPlaneStamp(It.IsAny<AzureLocation>()))
                 .Returns((AzureLocation location) =>
                 {
                     if (location == AzureLocation.WestUs2 || location == AzureLocation.EastUs)
                     {
-                        var moq2 = new Mock<IControlPlaneStampInfo>();
                         moq2
                             .Setup(obj2 => obj2.Location)
                             .Returns(location);
@@ -187,6 +187,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
                     throw new NotSupportedException();
                 });
+            moq
+                .Setup(obj => obj.Stamp)
+                .Returns(moq2.Object);
 
             return moq.Object;
 

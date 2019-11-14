@@ -5,9 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Data;
 using System.Linq;
-using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -59,7 +57,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // Get the subscription id
             var subscriptionId = controlPlaneAzureResourceAccessor.GetCurrentSubscriptionIdAsync().Result;
-            var vmImageResourceGroup = controlPlaneInfo.EnvironmentResourceGroupName;
 
             foreach (var item in skuCatalogSettings.CloudEnvironmentSkuSettings)
             {
@@ -131,10 +128,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 // Get the VM and storage image familes.
                 var computeImageFamily = NewVmImageFamily(
+                    controlPlaneInfo.Stamp,
                     skuConfiguration.ComputeImageFamily,
                     skuCatalogSettings.ComputeImageFamilies,
-                    subscriptionId,
-                    vmImageResourceGroup);
+                    subscriptionId);
 
                 var vmAgentImageFamily = CreateBuildArtifactImageFamily(
                     skuConfiguration.VmAgentImageFamily,
@@ -187,10 +184,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private Dictionary<string, ICloudEnvironmentSku> Skus { get; } = new Dictionary<string, ICloudEnvironmentSku>();
 
         private static IVmImageFamily NewVmImageFamily(
+            IControlPlaneStampInfo stampInfo,
             string imageFamilyName,
             IDictionary<string, VmImageFamilySettings> imageFamilies,
-            string vmImageSubscriptionId,
-            string vmImageResourceGroup)
+            string vmImageSubscriptionId)
         {
             if (!imageFamilies.TryGetValue(imageFamilyName, out var imageFamilySettings))
             {
@@ -198,12 +195,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
 
             var imageFamily = new VmImageFamily(
+                stampInfo,
                 imageFamilyName,
                 imageFamilySettings.ImageKind,
                 imageFamilySettings.ImageName,
                 imageFamilySettings.ImageVersion,
-                vmImageSubscriptionId,
-                vmImageResourceGroup);
+                vmImageSubscriptionId);
 
             return imageFamily;
         }
