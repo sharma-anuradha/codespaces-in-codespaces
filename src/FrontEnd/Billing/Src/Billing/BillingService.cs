@@ -94,55 +94,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         /// <param name="plan"></param>
         /// <param name="start"></param>
-        /// <param name="end"></param>
+        /// <param name="desiredBillEndTime"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
-        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime end, IDiagnosticsLogger logger)
+        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger)
         {
             logger.AddVsoPlan(plan)
                 .FluentAddBaseValue("startCalculationTime", start)
-                .FluentAddBaseValue("endCalculationTime", end);
+                .FluentAddBaseValue("endCalculationTime", desiredBillEndTime);
 
             await logger.OperationScopeAsync(
                 $"{ServiceName}_begin_plan_calculations",
                 async (childLogger) =>
                 {
-                    // Get the last BillingSummary.
-                    var summaryEvents = await billingEventManager.GetPlanEventsAsync(plan, start, end, new string[] { billingSummaryType }, logger);
-                    BillingEvent latestSummary = new BillingEvent();
+                    var currentTime = DateTime.UtcNow;
+
+                    // Get the last BillingSummary based on the current time.
+                    var summaryEvents = await billingEventManager.GetPlanEventsAsync(plan, start, currentTime, new string[] { billingSummaryType }, logger);
+                    BillingEvent latestBillingEventSummary;
                     if (!summaryEvents.Any())
                     {
                         // No summary events exist for this plan eg. first run of the BillingWorker
                         // Create a generic BillingSummary to use as a starting point for the following
                         // billing calculations, and seed it with this billing period's start time.
-                        latestSummary.Time = start;
-                        latestSummary.Args = new BillingSummary
+                        latestBillingEventSummary = new BillingEvent
                         {
-                            PeriodEnd = start,
+                            Time = start,
+                            Args = new BillingSummary
+                            {
+                                PeriodEnd = start,
+                            },
                         };
                     }
                     else
                     {
-                        latestSummary = summaryEvents.OrderByDescending(b => b.Time).First();
+                        latestBillingEventSummary = summaryEvents.Last();
 
-                        // If the lastSummary is less than 5 minutes old, we do not want to generate another summary
-                        // This helps give some buffer to the background tasks picking up work.
-                        if (DateTime.UtcNow.Subtract(latestSummary.Time).TotalMinutes < 5)
+                        // Check if the last summary's PeriodEnd matches the end time we are trying to bill for.
+                        if (((BillingSummary)latestBillingEventSummary.Args).PeriodEnd >= desiredBillEndTime)
                         {
+                            // there is no work to do since the last summary we found matches the time we were going to generate a new summary for.
                             return;
                         }
                     }
 
-                    var summary = (BillingSummary)latestSummary.Args;
+                    var latestBillingSummary = (BillingSummary)latestBillingEventSummary.Args;
 
                     // Get EnvironmentStateChnage events for the given plan during the given period.
-                    var billingEvents = await billingEventManager.GetPlanEventsAsync(plan, summary.PeriodEnd, end, new string[] { BillingEventTypes.EnvironmentStateChange }, logger);
+                    var billingEvents = await billingEventManager.GetPlanEventsAsync(plan, latestBillingSummary.PeriodEnd, desiredBillEndTime, new string[] { BillingEventTypes.EnvironmentStateChange }, logger);
 
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
-                    var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestSummary.Args, end);
+                    var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime);
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
-                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestSummary, end);
+                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestBillingEventSummary, desiredBillEndTime);
                     await billingEventManager.CreateEventAsync(plan, null, billingSummaryType, totalBillingSummary, logger);
                 },
                 swallowException: true);
