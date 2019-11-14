@@ -35,10 +35,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             var jsonRpc = JsonRpc.Attach(stream, this);
             this.rpcSessions.Add(jsonRpc);
 
+            Logger.LogMethodScope(LogLevel.Information, $"connections:{this.rpcSessions.Count}", nameof(StartSession));
+
             jsonRpc.Disconnected += (s, e) =>
             {
                 BackplaneService.OnDisconnected(null, e.Exception);
                 this.rpcSessions.TryRemove(jsonRpc);
+                Logger.LogInformation($"rpc disonnected -> connections:{this.rpcSessions.Count}");
             };
         }
 

@@ -74,14 +74,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         public void RegisterService(string serviceId)
         {
             Interlocked.Increment(ref this.numOfConnections);
-            Logger.LogInformation($"RegisterService -> serviceId:{serviceId} numOfConnections:{this.numOfConnections}");
+            Logger.LogMethodScope(LogLevel.Information, $"serviceId:{serviceId} numOfConnections:{this.numOfConnections}", nameof(RegisterService));
         }
 
         public void OnDisconnected(string serviceId, Exception exception)
         {
             Interlocked.Decrement(ref this.numOfConnections);
-            Logger.LogInformation(exception, $"OnDisconnectedAsync -> serviceId:{serviceId} numOfConnections:{this.numOfConnections} error:{exception?.Message}");
-
+            Logger.LogMethodScope(LogLevel.Error, exception, $"OnDisconnectedAsync -> serviceId:{serviceId} numOfConnections:{this.numOfConnections}", nameof(OnDisconnected));
         }
 
         public Task UpdateMetricsAsync(

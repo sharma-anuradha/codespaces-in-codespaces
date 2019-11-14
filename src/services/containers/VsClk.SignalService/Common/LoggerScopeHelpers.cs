@@ -50,5 +50,13 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
                 logger.Log(logLevel, message);
             }
         }
+
+        public static void LogMethodScope(this ILogger logger, LogLevel logLevel,Exception exception, string message, string methodScope)
+        {
+            using (BeginMethodScope(logger, methodScope))
+            {
+                logger.Log(logLevel, exception, message);
+            }
+        }
     }
 }

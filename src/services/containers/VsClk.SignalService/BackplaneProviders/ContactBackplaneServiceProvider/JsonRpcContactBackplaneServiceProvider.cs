@@ -113,7 +113,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.jsonRpc = JsonRpc.Attach(tcpStream, this);
             this.jsonRpc.Disconnected += (s, e) =>
             {
-                Logger.LogDebug(e.Exception, $"Disconnected reason:{e.Reason}");
+                Logger.LogError(e.Exception, $"Disconnected reason:{e.Reason}");
                 this.jsonRpc = null;
                 Task.Run(() => AttemptConnectAsync(StoppingToken)).Forget();
             };

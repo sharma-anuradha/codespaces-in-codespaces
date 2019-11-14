@@ -80,32 +80,38 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
         {
+            var tasks = new List<Task>();
             var contactKey = ToContactKey(contactDocument.Id);
 
             if (!string.IsNullOrEmpty(contactDocument.Email))
             {
-                await DatabaseAsync.SetAddAsync($"{ContactsEmailIndexId}:{contactDocument.Email}", contactKey.ToString());
+                tasks.Add(DatabaseAsync.SetAddAsync($"{ContactsEmailIndexId}:{contactDocument.Email}", contactKey.ToString()));
             }
 
             var json = JsonConvert.SerializeObject(contactDocument);
-            await DatabaseAsync.StringSetAsync(contactKey, json);
-            await DatabaseAsync.PublishAsync(ContactsId, json);
+            tasks.Add(DatabaseAsync.StringSetAsync(contactKey, json));
+            tasks.Add(DatabaseAsync.PublishAsync(ContactsId, json));
+            await Task.WhenAll(tasks);
         }
 
         protected override async Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken)
         {
             var json = JsonConvert.SerializeObject(messageDocument);
-            await DatabaseAsync.StringSetAsync(ToMessageKey(messageDocument.Id), json);
-            await DatabaseAsync.PublishAsync(MessagesId, json);
+            var tasks = new List<Task>();
+            tasks.Add(DatabaseAsync.StringSetAsync(ToMessageKey(messageDocument.Id), json));
+            tasks.Add(DatabaseAsync.PublishAsync(MessagesId, json));
+            await Task.WhenAll(tasks);
         }
 
         protected override async Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken)
         {
             var key = ToServiceKey(serviceDocument.Id);
-            await DatabaseAsync.SetAddAsync(ServicesIndexId, key.ToString());
+            var tasks = new List<Task>();
+            tasks.Add(DatabaseAsync.SetAddAsync(ServicesIndexId, key.ToString()));
             var json = JsonConvert.SerializeObject(serviceDocument);
-            await DatabaseAsync.StringSetAsync(key, json);
-            await DatabaseAsync.PublishAsync(ServicesId, json);
+            tasks.Add(DatabaseAsync.StringSetAsync(key, json));
+            tasks.Add(DatabaseAsync.PublishAsync(ServicesId, json));
+            await Task.WhenAll(tasks);
         }
 
         protected override async Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken)
@@ -117,8 +123,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected override async Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken)
         {
             var serviceKey = ToServiceKey(serviceId);
-            await DatabaseAsync.SetRemoveAsync(ServicesIndexId, serviceKey.ToString());
-            await DatabaseAsync.KeyDeleteAsync(serviceKey);
+            var tasks = new List<Task>();
+            tasks.Add(DatabaseAsync.SetRemoveAsync(ServicesIndexId, serviceKey.ToString()));
+            tasks.Add(DatabaseAsync.KeyDeleteAsync(serviceKey));
+            await Task.WhenAll(tasks);
         }
 
         protected override async Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken)

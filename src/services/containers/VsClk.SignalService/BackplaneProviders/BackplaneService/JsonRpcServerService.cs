@@ -29,7 +29,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var listener = CreateListener(3150);
+            var listener = CreateListener(JsonPort);
             listener.Start();
 
             while (true)
