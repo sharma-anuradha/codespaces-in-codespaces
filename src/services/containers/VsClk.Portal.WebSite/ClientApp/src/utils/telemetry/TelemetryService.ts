@@ -103,7 +103,7 @@ class TelemetryService {
         return createUniqueId();
     }
 
-    public track(userEvent: ITelemetryEvent) {
+    track(userEvent: ITelemetryEvent) {
         const defaultProperties: Record<string, TelemetryPropertyValue> = {
             ...this.context,
             date: new Date(),
@@ -128,6 +128,10 @@ class TelemetryService {
         this.logger.verbose('TelemetryService.track', event);
 
         this.appInsights.trackEvent(event);
+    }
+
+    flush() {
+        this.appInsights.flush();
     }
 }
 

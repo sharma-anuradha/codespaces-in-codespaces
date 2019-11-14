@@ -6,6 +6,7 @@ import { initializeIcons } from '@uifabric/icons';
 import { App } from './app';
 import { store } from './store/store';
 
+import { sendTelemetry, telemetry } from './utils/telemetry';
 import { trackUnhandled } from './utils/telemetry/unhandledErrors';
 
 import './index.css';
@@ -13,6 +14,11 @@ import './index.css';
 function startApplication() {
     trackUnhandled();
     initializeIcons();
+
+    window.addEventListener('beforeunload', () => {
+        sendTelemetry('vsonline/application/before-unload', {});
+        telemetry.flush();
+    });
 
     const baseUrl = (document.getElementById('public_url') as HTMLBaseElement).getAttribute('href');
     const rootElement = document.getElementById('root');

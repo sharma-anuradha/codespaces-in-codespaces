@@ -8,6 +8,7 @@ type SendTelemetryProps =
     | ['vsonline/cipher/no-decryption-key', INoDecryptionKeyTelemetryEventProperties]
     | ['vsonline/auth/acquire-token/error', Error]
     | ['vsonline/auth/acquire-auth-code', IAcquireAuthCodeTelemetryEventProperties]
+    | ['vsonline/application/before-unload', {}]
     | ['vsonline/vscode/connect', IVSCodeConnectProperties]
     | ['vsonline/request', IResponseProperties];
 

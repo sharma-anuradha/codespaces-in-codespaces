@@ -1,6 +1,7 @@
 import { trace } from '../../utils/trace';
 import { IWorkspaceAccess, IWorkspaceInfo, ILiveShareClient } from './ILiveShareClient';
 import { ICredentialsProvider } from './ICredentialsProvider';
+import { maybePii } from '../../utils/createTrace';
 
 export interface AuthToken {
     access_token: string;
@@ -28,7 +29,7 @@ export class WebClient implements ILiveShareClient {
     private async parseResponse<T>(response: Response, description: string): Promise<T | null> {
         if (response.ok) {
             const result: T = await response.json();
-            trace(`${description} => ${JSON.stringify(result)}`);
+            trace(description, { result: maybePii(result) });
             return result;
         } else if (response.status === 404) {
             trace(`${description} => null`);
