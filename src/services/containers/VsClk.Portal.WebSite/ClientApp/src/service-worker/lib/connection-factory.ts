@@ -6,6 +6,7 @@ import { createLogger, Logger } from './logger';
 import { ConfigurationManager } from './configuration-manager';
 import { ILiveShareClient } from '../../ts-agent/client/ILiveShareClient';
 import { CriticalError } from './errors/CriticalError';
+import { PromiseCompletionSource } from '@vs/vs-ssh';
 
 export class LiveShareConnection implements Disposable {
     private serverSharingService!: vsls.ServerSharingService;
@@ -53,9 +54,10 @@ export class LiveShareConnection implements Disposable {
             this.logger.verbose('Connecting to live share session.', defaultArgs);
             await this.workspaceClient.connect(this.sessionId);
             this.logger.verbose('Authenticating live share session.', defaultArgs);
-            await this.workspaceClient.authenticate();
+            const clientAuthCompletion = new PromiseCompletionSource<void>();
+            await this.workspaceClient.authenticate(clientAuthCompletion);
             this.logger.verbose('Joining live share session.', defaultArgs);
-            await this.workspaceClient.join();
+            await Promise.all([clientAuthCompletion.promise, this.workspaceClient.join()]);
 
             this.logger.info('Initialized live share session.', defaultArgs);
         } catch (error) {

@@ -10,7 +10,7 @@
     "@types/deep-equal": "^1.0.1",
     "@uifabric/fluent-theme": "^7.0.4",
     "@vs/msal": "^1.2.1",
-    "@vs/vs-ssh": "1.0.84",
+    "@vs/vs-ssh": "^2.0.10",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "9.0.0",
     "babel-jest": "23.6.0",

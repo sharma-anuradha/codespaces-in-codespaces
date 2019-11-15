@@ -23,6 +23,7 @@ import {
     updateLiveShareConnectionInfo,
     tryAuthenticateMessageType,
 } from '../common/service-worker-messages';
+import { PromiseCompletionSource } from '@vs/vs-ssh';
 
 export type RemoteVSCodeServerDescription = {
     readonly port: number;
@@ -171,8 +172,9 @@ export class EnvConnector {
                 },
             });
 
-            await workspaceClient.authenticate();
-            await workspaceClient.join();
+            const clientAuthCompletion = new PromiseCompletionSource<void>();
+            await workspaceClient.authenticate(clientAuthCompletion);
+            await Promise.all([clientAuthCompletion.promise, workspaceClient.join()]);
             await workspaceClient.invokeEnvironmentConfiguration();
             await workspaceClient.registerGitCredentialService();
 

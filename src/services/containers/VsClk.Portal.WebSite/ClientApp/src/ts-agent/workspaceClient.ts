@@ -68,7 +68,21 @@ export class WorkspaceClient implements rpc.Disposable {
         this.rpcConnection = undefined;
     }
 
-    public async authenticate(): Promise<void> {
+    /**
+     * Authenticates the server and starts the process of authenticating the client.
+     * As an optimization, the next operation may be initiated while waiting for
+     * client authentication to complete, if a completion source is supplied.
+     *
+     * @param clientAuthenticatedCompletion Optional completion source that is
+     * completed when client authentication completed. If client authentication
+     * failed, the completion is rejected with the error.
+     * @returns A Promise that resolves when server authentication completed
+     * and client authentication started (if a completion was supplied) or
+     * completed (if no completion was supplied).
+     */
+    public async authenticate(
+        clientAuthenticatedCompletion?: ssh.PromiseCompletionSource<void>,
+    ): Promise<void> {
         if (!this.workspaceInfo || !this.workspaceAccess || !this.socketStream) {
             throw new Error('Connect to a workspace first.');
         }
@@ -77,7 +91,7 @@ export class WorkspaceClient implements rpc.Disposable {
         config.keyExchangeAlgorithms.splice(0);
         config.keyExchangeAlgorithms.push(ssh.SshAlgorithms.keyExchange.dhGroup14Sha256);
         
-        this.sshSession = new ssh.SshClientSession(this.socketStream, config);
+        this.sshSession = new ssh.SshClientSession(config);
 
         // The client authenticates over SSH using the workspace session token.
         this.sshSession.setPasswordCredential('', this.workspaceAccess.sessionToken);
@@ -90,8 +104,29 @@ export class WorkspaceClient implements rpc.Disposable {
             e.authenticationPromise = this.authenticateServer(e.key!);
         });
 
-        if (!(await this.sshSession.authenticate())) {
-            throw new Error('Failed to authenticate with the remote host.');
+        await this.sshSession.connect(this.socketStream);
+
+        if (!(await this.sshSession.authenticateServer())) {
+            throw new Error('Live Share server authentication failed.');
+        }
+
+        if (clientAuthenticatedCompletion) {
+            // A completion was supplied. Send the client authentication request but don't
+            // directly wait for the response. Route the response to the completion instead.
+            await this.sshSession.authenticateClient((err, result) => {
+                if (!err && !result) {
+                    // Convert from a false result to an Error.
+                    err = new Error('Live Share client authentication failed.');
+                }
+
+                if (err) clientAuthenticatedCompletion.reject(err);
+                else clientAuthenticatedCompletion.resolve(err);
+            });
+        } else {
+            // No completion was supplied, so just wait for full client authentication now.
+            if (!(await this.sshSession.authenticateClient())) {
+                throw new Error('Live Share client authentication failed.');
+            }
         }
     }
 
@@ -122,7 +157,10 @@ export class WorkspaceClient implements rpc.Disposable {
         }
 
         if (!this.rpcConnection) {
-            const channel = await this.sshSession.openChannel();
+            const channelRequest = new ssh.ChannelRequestMessage();
+            channelRequest.requestType = 'json-rpc';
+            channelRequest.wantReply = true;
+            const channel = await this.sshSession.openChannel(null, channelRequest);
             const rpcStream = new ssh.SshRpcMessageStream(channel);
             this.rpcConnection = rpc.createMessageConnection(rpcStream.reader, rpcStream.writer);
             this.rpcConnection.listen();
