@@ -19,23 +19,20 @@ interface IAuthStrategy {
 
 class MsalAuthStrategy implements IAuthStrategy {
     canHandleService(service: string, account: string): boolean {
-        return service === 'VS Code Account' && account === 'AAD';
+        const isVSCodeAccount = (service === 'VS Code Account');
+        const isAADv2AccessToken = (service === 'AADv2.accessToken');
+
+        return (isVSCodeAccount && isAADv2AccessToken);
     }
 
     async getToken(service: string, account: string): Promise<string | null> {
-        // TODO: write one that relies on store
         const token = await authService.getCachedToken();
 
         if (!token) {
             return null;
         }
 
-        const response: VSCodeAccountIToken = {
-            accessToken: token.accessToken,
-            expiresOn: token.expiresOn.getTime(),
-        };
-
-        return JSON.stringify(response);
+        return token.accessToken;
     }
 }
 
@@ -93,13 +90,6 @@ export class CredentialsProvider implements ICredentialsProvider {
     async getPassword(service: string, account: string): Promise<string | null> {
         trace.verbose('Responding to VSCode keytar-shim request.', { service, account });
 
-        // generic keytar request
-        const genericKey = this.generateGenericLocalStorageKey(service, account);
-        const password = await localStorageKeyVault.get(genericKey);
-        if (password) {
-            return password;
-        }
-
         const strategy = this.strategies.find((strategy) =>
             strategy.canHandleService(service, account)
         );
@@ -112,11 +102,21 @@ export class CredentialsProvider implements ICredentialsProvider {
 
         const token = await strategy.getToken(service, account);
 
-        if (!token) {
-            trace.warn('No token available.');
+        if (token) {
+            return token;
         }
 
-        return token;
+        // generic keytar request
+        const genericKey = this.generateGenericLocalStorageKey(service, account);
+        const password = await localStorageKeyVault.get(genericKey);
+
+        if (password) {
+            return password;
+        }
+
+        trace.warn('No token available.');
+
+        return null;
     }
 
     async setPassword(service: string, account: string, password: string): Promise<void> {
