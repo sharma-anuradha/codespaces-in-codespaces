@@ -149,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // Trigger auto renewal
             var timer = new Timer(autoRenewLeaseTime.TotalMilliseconds);
-            timer.Elapsed += (s, e) =>
+            timer.Elapsed += async (s, e) =>
             {
                 if (isDisposed)
                 {
@@ -157,24 +157,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     return;
                 }
 
-                logger.FluentAddDuration("LeaseTimeFromStart", stopwatch)
-                    .FluentAddValue("LeasetRenewCount", timerElapsedCount += 1)
-                    .FluentAddValue("LeaseRenewIsDisposed", isDisposed);
-
-                logger.OperationScope(
+                await logger.OperationScopeAsync(
                     $"{LogBaseName}_auto_renew",
-                    (childLogger) => blob.RenewLeaseAsync(acc),
+                    (childLogger) =>
+                    {
+                        logger.FluentAddDuration("LeaseTimeFromStart", stopwatch)
+                            .FluentAddValue("LeasetRenewCount", timerElapsedCount += 1)
+                            .FluentAddValue("LeaseRenewIsDisposed", isDisposed);
+
+                        return blob.RenewLeaseAsync(acc);
+                    },
                     swallowException: true);
             };
             timer.Start();
 
             // Setup disposable
-            var closeCallback = ActionDisposable.Create(() =>
+            var closeCallback = ActionDisposable.Create(async () =>
             {
                 timer.Stop();
                 isDisposed = true;
 
-                logger.OperationScope(
+                await logger.OperationScopeAsync(
                     $"{LogBaseName}_release",
                     (childLogger) =>
                     {

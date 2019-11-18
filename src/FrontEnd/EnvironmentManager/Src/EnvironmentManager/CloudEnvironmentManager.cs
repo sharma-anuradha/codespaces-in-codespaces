@@ -488,7 +488,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     logger.AddDuration(duration)
                         .AddCloudEnvironment(cloudEnvironment)
-                        .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex.Message);
+                        .LogException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex);
 
                     result.ErrorCode = Contracts.ErrorCodes.UnableToAllocateResources;
                     result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
@@ -528,10 +528,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
             catch (Exception ex)
             {
-                logger
-                    .AddDuration(duration)
+                logger.AddDuration(duration)
                     .AddCloudEnvironment(cloudEnvironment)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex.Message);
+                    .LogException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex);
 
                 if (cloudEnvironment.Id != null)
                 {

@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     // Run through each pool item
                     foreach (var resourceUnit in resourceUnits)
                     {
-                        childLogger.OperationScope(
+                        var _ = childLogger.OperationScopeAsync(
                             $"{LogBaseName}_run_unit_check",
                             (itemLogger) =>
                             {
@@ -88,6 +88,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                                 itemLogger.FluentAddValue("SettingPostOverrideTargetCount", resourceUnit.OverrideTargetCount)
                                     .FluentAddValue("SettingPostOverrideIsEnabled", resourceUnit.OverrideIsEnabled);
+
+                                return Task.CompletedTask;
                             });
                     }
 

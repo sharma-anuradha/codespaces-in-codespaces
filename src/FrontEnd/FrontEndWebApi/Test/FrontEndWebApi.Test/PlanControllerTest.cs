@@ -72,9 +72,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(obj => obj.IsPlanCreationAllowedForUserAsync(It.IsAny<UserProfile.Profile>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(isWhiteListed));
 
+            var logger = new Mock<IDiagnosticsLogger>().Object;
             var controller = CreateTestPlansController(mockPlanManager.Object);
 
-            var result = await controller.ListPlansByOwnerAsync();
+            var result = await controller.ListByOwnerAsync(logger);
             Assert.IsType(expectedResult, result);
 
             if (result is StatusCodeResult statusResult)

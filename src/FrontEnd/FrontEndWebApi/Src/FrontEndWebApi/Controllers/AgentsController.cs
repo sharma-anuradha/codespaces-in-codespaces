@@ -1,11 +1,14 @@
-﻿using System;
-using System.Net;
+﻿// <copyright file="AgentsController.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
@@ -41,21 +44,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Retrieves the latest published agent binaries.
         /// </summary>
         /// <param name="family">The agent family, specific to a runtime platform.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         [HttpGet("{family}")]
         [ProducesResponseType(typeof(AgentResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetLatestAgent([FromRoute] string family)
+        [HttpOperationalScope("get_latest")]
+        public async Task<IActionResult> GetLatestAsync(
+            [FromRoute] string family,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
-            var (uri, name) = await agentUrlGenerator.ReadOnlyUrlByVMFamily(azureLocation, ResourceType.ComputeVM, family);
-
+            var (uri, name) = await agentUrlGenerator.ReadOnlyUrlByVMFamily(
+                azureLocation, ResourceType.ComputeVM, family);
             if (uri == null)
             {
-                logger.AddDuration(duration)
-                    .AddReason($"{HttpStatusCode.NotFound}")
-                    .LogWarning(GetType().FormatLogMessage(nameof(GetLatestAgent)));
                 return NotFound();
             }
 
@@ -66,8 +68,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 AssetUri = uri.ToString(),
             };
 
-            logger.AddDuration(duration)
-                .LogInfo(GetType().FormatLogMessage(nameof(GetLatestAgent)));
             return Ok(response);
         }
     }

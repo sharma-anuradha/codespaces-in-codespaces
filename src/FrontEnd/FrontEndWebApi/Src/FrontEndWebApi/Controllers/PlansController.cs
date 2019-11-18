@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
@@ -27,9 +29,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
-    [LoggingBaseName("plans_controller")]
+    [LoggingBaseName(LoggingBaseName)]
     public class PlansController : ControllerBase
     {
+        private const string LoggingBaseName = "plans_controller";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PlansController"/> class.
         /// </summary>
@@ -54,110 +58,79 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="subscriptionId">The ID of the subscription containing the plan.</param>
         /// <param name="resourceGroupName">The name of the resource group containing the plan.</param>
         /// <param name="resourceName">The name of the plan resource.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>An object result containing the <see cref="PlanResult"/>.</returns>
         [HttpGet("{subscriptionId}/{resourceGroupName}/{resourceName}")]
-        [ThrottlePerUserHigh(nameof(PlansController), nameof(GetPlansAsync))]
+        [ThrottlePerUserHigh(nameof(PlansController), nameof(GetAsync))]
         [ProducesResponseType(typeof(PlanResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetPlansAsync(
+        [HttpOperationalScope("get")]
+        public async Task<IActionResult> GetAsync(
             [FromRoute]string subscriptionId,
             [FromRoute]string resourceGroupName,
-            [FromRoute]string resourceName)
+            [FromRoute]string resourceName,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
-
-            try
+            var currentUserId = CurrentUserProvider.GetProfileId();
+            var planId = new VsoPlanInfo
             {
-                var currentUserId = CurrentUserProvider.GetProfileId();
-                var planId = new VsoPlanInfo
-                {
-                    Subscription = subscriptionId,
-                    ResourceGroup = resourceGroupName,
-                    Name = resourceName,
-                };
+                Subscription = subscriptionId,
+                ResourceGroup = resourceGroupName,
+                Name = resourceName,
+            };
 
-                var plan = (await PlanManager.GetAsync(planId, logger)).VsoPlan;
-
-                if (plan == null || plan.UserId != currentUserId)
-                {
-                    logger.AddDuration(duration)
-                        .AddReason($"{HttpStatusCode.NotFound}")
-                        .LogError(GetType().FormatLogErrorMessage(nameof(GetPlansAsync)));
-                    return NotFound();
-                }
-
-                var result = MapAccountToResult(plan, logger);
-                if (result == null)
-                {
-                    logger.AddDuration(duration)
-                        .AddReason($"{HttpStatusCode.NotFound}")
-                        .LogError(GetType().FormatLogErrorMessage(nameof(GetPlansAsync)));
-                    return NotFound();
-                }
-
-                logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetPlansAsync)));
-                return Ok(result);
-            }
-            catch (Exception ex)
+            var plan = (await PlanManager.GetAsync(planId, logger)).VsoPlan;
+            if (plan == null || plan.UserId != currentUserId)
             {
-                logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetPlansAsync)), ex.Message);
-                throw;
+                return NotFound();
             }
+
+            var result = MapAccountToResult(plan, logger);
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
         }
 
         /// <summary>
         /// Lists all plans belonging to the current user.
         /// </summary>
+        /// <param name="logger">Target logger.</param>
         /// <returns>An object result containing the list of <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet]
-        [ThrottlePerUserLow(nameof(PlansController), nameof(ListPlansByOwnerAsync))]
+        [ThrottlePerUserLow(nameof(PlansController), nameof(ListByOwnerAsync))]
         [ProducesResponseType(typeof(PlanResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IActionResult> ListPlansByOwnerAsync()
+        [HttpOperationalScope("list_byowner")]
+        public async Task<IActionResult> ListByOwnerAsync(
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
+            var currentUser = CurrentUserProvider.GetProfile();
 
-            try
+            // Match on provider ID instead of profile ID because clients dont have
+            // the profile ID when the create the plan resource via ARM.
+            // (The provider ID is a combination of "tid" and "oid" claims from the token.)
+            var currentUserProviderId = currentUser.ProviderId;
+            var plans = await PlanManager.ListAsync(
+                currentUserProviderId, subscriptionId: null, resourceGroup: null, logger);
+
+            var result = plans.Select((a) => MapAccountToResult(a, logger))
+                .Where((a) => a != null).ToArray();
+
+            // If the global limit of plans is exceeded, the client should block new users from creating plans
+            var isUserAllowedToCreatePlans =
+                result.Length > 0 || await PlanManager.IsPlanCreationAllowedForUserAsync(currentUser, logger);
+            if (isUserAllowedToCreatePlans)
             {
-                var currentUser = CurrentUserProvider.GetProfile();
-
-                // Match on provider ID instead of profile ID because clients dont have
-                // the profile ID when the create the plan resource via ARM.
-                // (The provider ID is a combination of "tid" and "oid" claims from the token.)
-                var currentUserProviderId = currentUser.ProviderId;
-                var plans = await PlanManager.ListAsync(
-                    currentUserProviderId, subscriptionId: null, resourceGroup: null, logger);
-
-                logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(ListPlansByOwnerAsync)));
-
-                var result = plans.Select((a) => MapAccountToResult(a, logger))
-                    .Where((a) => a != null).ToArray();
-
-                // If the global limit of plans is exceeded, the client should block new users from creating plans
-                var isUserAllowedToCreatePlans =
-                    result.Length > 0 || await PlanManager.IsPlanCreationAllowedForUserAsync(currentUser, logger);
-
-                if (isUserAllowedToCreatePlans)
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return StatusCode(StatusCodes.Status503ServiceUnavailable);
-                }
+                return Ok(result);
             }
-            catch (Exception ex)
+            else
             {
-                logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ListPlansByOwnerAsync)), ex.Message);
-                throw;
+                return StatusCode(StatusCodes.Status503ServiceUnavailable);
             }
         }
 
@@ -178,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(MapAccountToResult)), ex.Message);
+                logger.LogException($"{LoggingBaseName}_map_account_result", ex);
 
                 // ResourceId is a computed property and may throw.
                 // In that case, skip this item and still return the others.

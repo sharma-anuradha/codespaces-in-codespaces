@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
@@ -65,10 +66,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
 
+            logger.AddComputeResourceId(heartBeat.ResourceId);
+
             try
             {
                 ValidateResource(heartBeat.ResourceId);
-                logger.FluentAddBaseValue("ComputeId", heartBeat.ResourceId.ToString());
             }
             catch (Exception e)
             {
@@ -131,10 +133,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 LogHeartBeatException(e, $"Backend heartbeat processing failed with http status code {e.StatusCode}", logger, duration, heartBeat);
                 return StatusCode((int)e.StatusCode);
             }
-
-            // Currently exceptions from backend heartbeat controller will always result in HttpResponseStatusException, as it doesn't respond with errordetails in body.
             catch (RemoteInvocationException e)
             {
+                // Currently exceptions from backend heartbeat controller will always result
+                // in HttpResponseStatusException, as it doesn't respond with errordetails in body.
                 LogHeartBeatException(e, "Backend heartbeat processing failed with RemoteInvocationException.", logger, duration, heartBeat);
                 return UnprocessableEntity();
             }
@@ -145,7 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(ProcessHeartBeatAsync)));
+                .LogInfo(GetType().FormatLogMessage(nameof(ProcessHeartBeatAsync)));
 
             return NoContent();
         }
@@ -155,8 +157,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private void LogHeartBeatException(Exception e, string message, IDiagnosticsLogger logger, Duration startDuration, HeartBeatBody heartBeat)
         {
             logger.AddDuration(startDuration)
-                    .FluentAddValue("HeartbeatMessage", JsonConvert.SerializeObject(heartBeat))
-                    .LogException(message, e);
+                .FluentAddValue("HeartbeatMessage", JsonConvert.SerializeObject(heartBeat))
+                .FluentAddValue("HeartbeatDescription", message)
+                .LogException("frontend_heartbeat_processing_error", e);
         }
 
         private void ValidateResource(Guid resourceId)

@@ -5,13 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
@@ -63,114 +63,86 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// Get the current location and list of globally available locations.
         /// </summary>
+        /// <param name="logger">Target logger.</param>
         /// <returns>An object result containing the <see cref="LocationsResult"/>.</returns>
         [HttpGet]
         [AllowAnonymous]
         [ProducesResponseType(typeof(LocationsResult), StatusCodes.Status200OK)]
-        public IActionResult GetLocations()
+        [HttpOperationalScope("get_current")]
+        public IActionResult GetCurrent(
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
-
-            try
+            var allLocations = this.controlPlaneInfo.GetAllDataPlaneLocations().ToArray();
+            var result = new LocationsResult
             {
-                var allLocations = this.controlPlaneInfo.GetAllDataPlaneLocations().ToArray();
-                var result = new LocationsResult
-                {
-                    Current = locationProvider.CurrentLocation,
-                    Available = allLocations,
-                };
+                Current = locationProvider.CurrentLocation,
+                Available = allLocations,
+            };
 
-                logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetLocations)));
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetLocations)), ex.Message);
-                throw;
-            }
+            return Ok(result);
         }
 
         /// <summary>
         /// Gets info about a specific location including what SKUs are available at that location.
         /// </summary>
         /// <param name="location">The requested location.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>An object result containing the <see cref="LocationInfoResult"/>.</returns>
         [HttpGet("{location}")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(LocationInfoResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetLocationInfo([FromRoute]string location)
+        [HttpOperationalScope("get")]
+        public IActionResult Get(
+            [FromRoute]string location,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
+            if (!Enum.TryParse<AzureLocation>(location, ignoreCase: true, out var azureLocation))
+            {
+                return NotFound();
+            }
 
+            IControlPlaneStampInfo owningStamp;
             try
             {
-                if (!Enum.TryParse<AzureLocation>(location, ignoreCase: true, out var azureLocation))
-                {
-                    logger.AddDuration(duration)
-                        .AddReason($"{HttpStatusCode.NotFound}")
-                        .LogError(GetType().FormatLogErrorMessage(nameof(GetLocationInfo)));
-                    return NotFound();
-                }
-
-                IControlPlaneStampInfo owningStamp;
-                try
-                {
-                    owningStamp = this.controlPlaneInfo.GetOwningControlPlaneStamp(azureLocation);
-                }
-                catch (NotSupportedException)
-                {
-                    // The requested location is not a known/supported location.
-                    return NotFound();
-                }
-
-                if (owningStamp.Location != this.locationProvider.CurrentLocation)
-                {
-                    return RedirectToLocation(owningStamp);
-                }
-
-                var profile = currentUserProvider.GetProfile();
-
-                var skus = this.skuCatalog.EnabledInternalHardware().Values
-                    .Where((sku) => sku.SkuLocations.Contains(azureLocation))
-                    .Where((sku) => ProfileUtils.IsSkuVisibleToProfile(profile, sku));
-
-                /*
-                    Clients select default SKUs as the first item in this list.  We control the ordering of the returned SKUs so that clients
-                    will show the correct default.  Don't change this unless the clients can handle selecting the default correctly themselves.
-                */
-                var orderedSkus = OrderSkusForDisplay(skus);
-
-                var outputSkus = orderedSkus
-                    .Select((sku) => new SkuInfoResult
-                    {
-                        Name = sku.SkuName,
-                        DisplayName = sku.DisplayName,
-                        OS = sku.ComputeOS.ToString(),
-                    })
-                    .ToArray();
-
-                var result = new LocationInfoResult
-                {
-                    Skus = outputSkus,
-                };
-
-                logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetLocationInfo)));
-
-                return Ok(result);
+                owningStamp = this.controlPlaneInfo.GetOwningControlPlaneStamp(azureLocation);
             }
-            catch (Exception ex)
+            catch (NotSupportedException)
             {
-                logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetLocationInfo)), ex.Message);
-                throw;
+                // The requested location is not a known/supported location.
+                return NotFound();
             }
+
+            if (owningStamp.Location != this.locationProvider.CurrentLocation)
+            {
+                return RedirectToLocation(owningStamp);
+            }
+
+            var profile = currentUserProvider.GetProfile();
+
+            var skus = this.skuCatalog.EnabledInternalHardware().Values
+                .Where((sku) => sku.SkuLocations.Contains(azureLocation))
+                .Where((sku) => ProfileUtils.IsSkuVisibleToProfile(profile, sku));
+
+            // Clients select default SKUs as the first item in this list.  We control the ordering
+            // of the returned SKUs so that clients will show the correct default.  Don't change this
+            // unless the clients can handle selecting the default correctly themselves.
+            var orderedSkus = OrderSkusForDisplay(skus);
+            var outputSkus = orderedSkus
+                .Select((sku) => new SkuInfoResult
+                {
+                    Name = sku.SkuName,
+                    DisplayName = sku.DisplayName,
+                    OS = sku.ComputeOS.ToString(),
+                })
+                .ToArray();
+
+            var result = new LocationInfoResult
+            {
+                Skus = outputSkus,
+            };
+
+            return Ok(result);
         }
 
         private IActionResult RedirectToLocation(IControlPlaneStampInfo owningStamp)

@@ -2,12 +2,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Common;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 
 /// <summary>
 /// Construct consistent logging messages.
@@ -37,17 +37,74 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// as well as the successful completeion of the operation.
         /// </summary>
         /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="name">Base name of the operation scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
         /// <param name="swallowException">Whether any exceptions should be swallowed.</param>
         /// <returns>Returns the task.</returns>
-        public static async Task OperationScopeAsync(
+        public static Task OperationScopeAsync(
             this IDiagnosticsLogger logger,
             string name,
             Func<IDiagnosticsLogger, Task> callback,
             Action<Exception, IDiagnosticsLogger> errCallback = default,
             bool swallowException = false)
+        {
+            return logger.OperationScopeWithCustomExceptionControlFlowAsync(
+                name,
+                callback,
+                (ex, childLogger) =>
+                {
+                    errCallback?.Invoke(ex, childLogger);
+                    return swallowException;
+                });
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope which will catch and log exceptions
+        /// as well as the successful completeion of the operation.
+        /// </summary>
+        /// <typeparam name="T">Return type.</typeparam>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operation scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
+        /// <param name="swallowException">Whether any exceptions should be swallowed.</param>
+        /// <returns>Returns the task.</returns>
+        public static Task<T> OperationScopeAsync<T>(
+            this IDiagnosticsLogger logger,
+            string name,
+            Func<IDiagnosticsLogger, Task<T>> callback,
+            Func<Exception, IDiagnosticsLogger, T> errCallback = default,
+            bool swallowException = false)
+        {
+            return logger.OperationScopeWithCustomExceptionHandlingAsync(
+                name,
+                callback,
+                (ex, childLogger) =>
+                {
+                    if (errCallback != null)
+                    {
+                        return (swallowException, errCallback(ex, childLogger));
+                    }
+
+                    return (swallowException, default(T));
+                });
+        }
+
+        /// <summary>
+        /// Wraps the given operation in a logging scope which will catch and log exceptions
+        /// as well as the successful completeion of the operation.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="name">Base name of the operation scope.</param>
+        /// <param name="callback">Callback that should be executed.</param>
+        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
+        /// <returns>Returns the task.</returns>
+        public static async Task OperationScopeWithCustomExceptionControlFlowAsync(
+            this IDiagnosticsLogger logger,
+            string name,
+            Func<IDiagnosticsLogger, Task> callback,
+            Func<Exception, IDiagnosticsLogger, bool> errCallback)
         {
             var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
@@ -60,7 +117,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
             catch (Exception e)
             {
-                errCallback?.Invoke(e, childLogger);
+                var swallowException = errCallback(e, childLogger);
 
                 childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
 
@@ -77,104 +134,27 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// </summary>
         /// <typeparam name="T">Return type.</typeparam>
         /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="name">Base name of the operation scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
-        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
         /// <returns>Returns the task.</returns>
-        public static async Task<T> OperationScopeAsync<T>(
+        public static async Task<T> OperationScopeWithCustomExceptionHandlingAsync<T>(
             this IDiagnosticsLogger logger,
             string name,
             Func<IDiagnosticsLogger, Task<T>> callback,
-            Func<Exception, IDiagnosticsLogger, T> errCallback = default,
-            bool swallowException = false)
+            Func<Exception, IDiagnosticsLogger, (bool SwallowException, T Result)> errCallback)
         {
             var result = default(T);
 
-            await logger.OperationScopeAsync(
+            await logger.OperationScopeWithCustomExceptionControlFlowAsync(
                 name,
                 async (innerLogger) => { result = await callback(innerLogger); },
                 (e, innerLogger) =>
                 {
-                    if (errCallback != default)
-                    {
-                        result = errCallback(e, innerLogger);
-                    }
-                },
-                swallowException);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Wraps the given operation in a logging scope which will catch and log exceptions
-        /// as well as the successful completeion of the operation.
-        /// </summary>
-        /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
-        /// <param name="callback">Callback that should be executed.</param>
-        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
-        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
-        public static void OperationScope(
-            this IDiagnosticsLogger logger,
-            string name,
-            Action<IDiagnosticsLogger> callback,
-            Action<Exception, IDiagnosticsLogger> errCallback = default,
-            bool swallowException = false)
-        {
-            var childLogger = logger.WithValues(new LogValueSet());
-            var duration = Stopwatch.StartNew();
-
-            try
-            {
-                callback(childLogger);
-
-                childLogger.FluentAddDuration(duration).LogInfo($"{name}_complete");
-            }
-            catch (Exception e)
-            {
-                errCallback?.Invoke(e, childLogger);
-
-                childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
-
-                if (!swallowException)
-                {
-                    throw;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Wraps the given operation in a logging scope which will catch and log exceptions
-        /// as well as the successful completeion of the operation.
-        /// </summary>
-        /// <typeparam name="T">Return type.</typeparam>
-        /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
-        /// <param name="callback">Callback that should be executed.</param>
-        /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
-        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
-        /// <returns>Returns the callback result.</returns>
-        public static T OperationScope<T>(
-            this IDiagnosticsLogger logger,
-            string name,
-            Func<IDiagnosticsLogger, T> callback,
-            Func<Exception, IDiagnosticsLogger, T> errCallback = default,
-            bool swallowException = false)
-        {
-            var result = default(T);
-
-            logger.OperationScope(
-                name,
-                (innerLogger) => { result = callback(innerLogger); },
-                (e, innerLogger) =>
-                {
-                    if (errCallback != default)
-                    {
-                        result = errCallback(e, innerLogger);
-                    }
-                },
-                swallowException);
+                    var errCallbackResult = errCallback(e, innerLogger);
+                    result = errCallbackResult.Result;
+                    return errCallbackResult.SwallowException;
+                });
 
             return result;
         }
@@ -186,10 +166,10 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// </summary>
         /// <typeparam name="T">Return type.</typeparam>
         /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="name">Base name of the operation scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
-        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        /// <param name="swallowException">Whether any exceptions should be swallowed.</param>
         /// <returns>Returns the callback result.</returns>
         public static async Task<T> RetryOperationScopeAsync<T>(
             this IDiagnosticsLogger logger,
@@ -222,10 +202,10 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// </summary>
         /// <typeparam name="T">Return type.</typeparam>
         /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="name">Base name of the operation scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
         /// <param name="errCallback">Callback that should be executed if an exception occurs.</param>
-        /// <param name="swallowException">Whether any exceptions shouldbe swallowed.</param>
+        /// <param name="swallowException">Whether any exceptions should be swallowed.</param>
         /// <returns>Returns running task.</returns>
         public static async Task RetryOperationScopeAsync(
             this IDiagnosticsLogger logger,
@@ -283,7 +263,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// Wraps the given operation in a logging scope will add duration to the logger.
         /// </summary>
         /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="name">Base name of the operation scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
         /// <returns>Returns the task.</returns>
         public static async Task TrackDurationAsync(this IDiagnosticsLogger logger, string name, Func<Task> callback)
@@ -305,7 +285,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// </summary>
         /// <typeparam name="T">Return type.</typeparam>
         /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="name">Base name of the operation scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
         /// <returns>Returns the task.</returns>
         public static async Task<T> TrackDurationAsync<T>(this IDiagnosticsLogger logger, string name, Func<Task<T>> callback)
@@ -326,7 +306,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// Wraps the given operation in a logging scope will add duration to the logger.
         /// </summary>
         /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="name">Base name of the operation scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
         public static void TrackDuration(this IDiagnosticsLogger logger, string name, Action callback)
         {
@@ -347,7 +327,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         /// </summary>
         /// <typeparam name="T">Return type.</typeparam>
         /// <param name="logger">Target logger.</param>
-        /// <param name="name">Base name of the operaiton scope.</param>
+        /// <param name="name">Base name of the operation scope.</param>
         /// <param name="callback">Callback that should be executed.</param>
         /// <returns>Returns the callback result.</returns>
         public static T TrackDuration<T>(this IDiagnosticsLogger logger, string name, Func<T> callback)

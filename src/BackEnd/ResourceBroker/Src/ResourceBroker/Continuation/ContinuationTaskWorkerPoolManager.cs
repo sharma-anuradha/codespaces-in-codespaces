@@ -167,7 +167,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private void StartWorker(string reason, IDiagnosticsLogger logger)
         {
-            logger.OperationScope(
+            var _ = logger.OperationScopeAsync(
                 $"{LogBaseName}_start_worker",
                 (childLogger) =>
                 {
@@ -187,12 +187,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
                     // Add to worker store
                     WorkerPool.TryAdd(id, worker);
+
+                    return Task.CompletedTask;
                 });
         }
 
         private void EndWorker(Guid id, string reason, IDiagnosticsLogger logger)
         {
-            logger.OperationScope(
+            var _ = logger.OperationScopeAsync(
                 $"{LogBaseName}_end_worker",
                 (childLogger) =>
                 {
@@ -209,6 +211,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     }
 
                     childLogger.FluentAddBaseValue("ContinuationWorkerRemoved", didRemove);
+
+                    return Task.CompletedTask;
                 });
         }
     }

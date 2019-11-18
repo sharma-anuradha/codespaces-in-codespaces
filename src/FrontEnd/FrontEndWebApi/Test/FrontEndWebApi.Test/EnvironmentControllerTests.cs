@@ -60,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_CloudEnvironmentAsync()
         {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
             var body = new CreateCloudEnvironmentBody 
             {
                 FriendlyName = "test-environment",
@@ -70,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 Location = "WestUs2",
             };
             var environmentController = CreateTestEnvironmentsController();
-            var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
+            var actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<CreatedResult>(actionResult);
         }
 
@@ -85,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(Environments))]
         public async Task EnvironmentController_CloudEnvironmentAsync_SkuCatalog(string environment)
         {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
             var skuCatalog = LoadSkuCatalog(environment);
 
             var currentUser = MockCurrentUserProvider(new Dictionary<string, object>
@@ -101,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 var sku = item.Value;
                 var location = AzureLocation.WestUs2.ToString();
                 var body = await CreateBodyAsync(skuName, location);
-                var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
+                var actionResult = await environmentController.CreateAsync(body, logger);
                 Assert.IsType<CreatedResult>(actionResult);
             }
         }
@@ -110,6 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(Environments))]
         public async Task EnvironmentController_CloudEnvironmentAsync_SkuCatalog_BadRequest(string environment)
         {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
             var skuCatalog = LoadSkuCatalog(environment);
             var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog);
 
@@ -120,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 var sku = item.Value;
                 var location = AzureLocation.WestUs2.ToString();
                 var body = await CreateBodyAsync(skuName, location);
-                var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
+                var actionResult = await environmentController.CreateAsync(body, logger);
                 Assert.IsType<BadRequestObjectResult>(actionResult);
             }
         }
@@ -128,6 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_CloudEnvironmentAsync_BadResult()
         {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
             var skuCatalog = LoadSkuCatalog("prod-rel");
 
             var currentUser = MockCurrentUserProvider(new Dictionary<string, object>
@@ -141,17 +145,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             // Redirect location
             var body = await CreateBodyAsync(skuName, AzureLocation.EastUs.ToString());
-            var actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
+            var actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<RedirectResult>(actionResult);
 
             // Not supported location
             body = await CreateBodyAsync(skuName, AzureLocation.AustraliaCentral.ToString());
-            actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
+            actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<BadRequestObjectResult>(actionResult);
 
             // Not supported SKU
             body = await CreateBodyAsync("bad-sku", AzureLocation.WestUs2.ToString());
-            actionResult = await environmentController.CreateCloudEnvironmentAsync(body);
+            actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<BadRequestObjectResult>(actionResult);
         }
 

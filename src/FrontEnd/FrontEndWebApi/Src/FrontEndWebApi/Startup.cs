@@ -7,10 +7,12 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
@@ -56,7 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         {
             // Frameworks
             services
-                .AddMvc()
+                .AddMvc(options =>
+                {
+                    options.ModelMetadataDetailsProviders.Add(new ExcludeBindingMetadataProvider(typeof(IDiagnosticsLogger)));
+                })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddJsonOptions(x =>
                 {

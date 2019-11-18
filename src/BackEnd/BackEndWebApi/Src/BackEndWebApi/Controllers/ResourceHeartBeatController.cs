@@ -11,6 +11,8 @@ using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
@@ -53,20 +55,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         [HttpPost("{resourceId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        public async Task<IActionResult> UpdateHeartBeatAsync([FromRoute] Guid resourceId, [FromBody] HeartBeatBody heartBeat)
+        [HttpOperationalScope("update")]
+        public async Task<IActionResult> UpdateAsync(
+            [FromRoute]Guid resourceId,
+            [FromBody]HeartBeatBody heartBeat,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
-
             try
             {
                 ValidateResource(heartBeat, resourceId);
             }
             catch (Exception e)
             {
-                logger.AddDuration(duration)
-                    .AddReason(e.Message)
-                    .LogError(GetType().FormatLogErrorMessage(nameof(UpdateHeartBeatAsync)));
+                logger.AddReason(e.Message);
                 return UnprocessableEntity();
             }
 
@@ -74,16 +75,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
             {
                 await ResourceHeartBeatHttp.UpdateHeartBeatAsync(resourceId, heartBeat, logger.NewChildLogger());
             }
-            catch (ResourceNotFoundException)
+            catch (ResourceNotFoundException e)
             {
                 return UnprocessableEntity();
-            }
-            catch (Exception e)
-            {
-                logger.AddDuration(duration)
-                    .AddReason(e.Message)
-                    .LogError(GetType().FormatLogErrorMessage(nameof(UpdateHeartBeatAsync)));
-                throw;
             }
 
             return NoContent();
@@ -92,6 +86,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         /// <inheritdoc/>
         async Task IResourceHeartBeatHttpContract.UpdateHeartBeatAsync(Guid resourceId, HeartBeatBody heartBeat, IDiagnosticsLogger logger)
         {
+            logger.AddBaseResourceId(resourceId);
+
             var heartBeatInput = Mapper.Map<HeartBeatInput>(heartBeat);
             await ResourceHeartBeatManager.SaveHeartBeatAsync(heartBeatInput, logger.NewChildLogger());
         }

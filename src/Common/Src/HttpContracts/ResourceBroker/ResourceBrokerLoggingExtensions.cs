@@ -21,9 +21,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="resourceId">The resource id otken value.</param>
         /// <returns>The <paramref name="logger"/> instance.</returns>
-        public static IDiagnosticsLogger AddResourceId(this IDiagnosticsLogger logger, Guid? resourceId)
+        public static IDiagnosticsLogger AddBaseResourceId(this IDiagnosticsLogger logger, Guid? resourceId)
         {
-            return logger.FluentAddValue(nameof(ResourceBrokerResource.ResourceId), resourceId?.ToString());
+            return logger.FluentAddBaseValue(nameof(ResourceBrokerResource.ResourceId), resourceId?.ToString());
         }
 
         /// <summary>

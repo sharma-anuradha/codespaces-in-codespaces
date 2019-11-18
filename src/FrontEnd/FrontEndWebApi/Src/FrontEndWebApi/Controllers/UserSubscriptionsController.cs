@@ -8,8 +8,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -25,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
-    [LoggingBaseName("userSubscriptions_controller")]
+    [LoggingBaseName("user_subscriptions_controller")]
     public class UserSubscriptionsController : Controller
     {
         /// <summary>
@@ -49,30 +52,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Adds a user.
         /// </summary>
         /// <param name="email">The user email.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>The status code.</returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult> AddSubscription([FromQuery] string email)
+        [HttpOperationalScope("create")]
+        public async Task<IActionResult> CreateAsync(
+            [FromQuery]string email,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
+            ValidationUtil.IsRequired(email, nameof(email));
+            var currentUserId = CurrentUserProvider.GetProfileId();
+            var us = new UserSubscription()
+            {
+                Id = email,
+                UserId = currentUserId,
+                Timestamp = DateTime.UtcNow,
+            };
 
-            await logger.OperationScopeAsync(
-                $"{this.GetType().GetLogMessageBaseName()}_add_user_subscription",
-                async (childLogger) =>
-                {
-                    ValidationUtil.IsRequired(email, nameof(email));
-                    var currentUserId = CurrentUserProvider.GetProfileId();
-                    var us = new UserSubscription()
-                    {
-                        Id = email,
-                        UserId = currentUserId,
-                        Timestamp = DateTime.UtcNow,
-                    };
-
-                    await this.UserSubscriptionRepository.CreateOrUpdateAsync(us, logger);
-                });
+            await UserSubscriptionRepository.CreateOrUpdateAsync(us, logger);
 
             return Ok();
         }
@@ -81,23 +81,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Deletes a user.
         /// </summary>
         /// <param name="email">The email address.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>The status code.</returns>
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult> DeleteSubscription([FromQuery] string email)
+        [HttpOperationalScope("delete")]
+        public async Task<IActionResult> DeleteAsync(
+            [FromQuery]string email,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
+            ValidationUtil.IsRequired(email, nameof(email));
 
-            await logger.OperationScopeAsync(
-                $"{this.GetType().GetLogMessageBaseName()}_delete_user_subscription",
-                async (childLogger) =>
-                {
-                    ValidationUtil.IsRequired(email, nameof(email));
-
-                    await this.UserSubscriptionRepository.DeleteAsync(email, logger);
-                });
+            await UserSubscriptionRepository.DeleteAsync(email, logger);
 
             return Ok();
         }

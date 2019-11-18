@@ -103,6 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     var skuDict = skus.ToDictionary((s) => s.SkuName, (s) => s);
                     return new ReadOnlyDictionary<string, ICloudEnvironmentSku>(skuDict);
                 });
+            var logger = new Mock<IDiagnosticsLogger>().Object;
 
             var currentUserProvider = MockCurrentUserProvider(new Dictionary<string, object>
             {
@@ -113,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 skuCatalog: skuCatalog.Object, 
                 currentUserProvider: currentUserProvider);
 
-            var result = controller.GetLocationInfo(AzureLocation.WestUs2.ToString());
+            var result = controller.Get(AzureLocation.WestUs2.ToString(), logger);
             Assert.NotNull(result as OkObjectResult);
 
             var locationInfo = (result as OkObjectResult).Value as LocationInfoResult;

@@ -9,9 +9,10 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
@@ -24,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
     /// </summary>
     [ApiController]
     [Route(ResourceBrokerHttpContract.ResourcesRoute)]
-    [LoggingBaseName("resourcebroker_resources_controller")]
+    [LoggingBaseName("backend_resource_broker_controller")]
     public class ResourceBrokerController : ControllerBase, IResourceBrokerResourcesHttpContract
     {
         /// <summary>
@@ -50,53 +51,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// {<see cref="CreateResourceRequestBody"/>}.
         /// </para>
         /// </summary>
-        /// <param name="createResourceRequestBody">The allocate request body.</param>
+        /// <param name="createResourcesRequestBody">The allocate request body.</param>
         /// <returns>The <see cref="ResourceBrokerResource"/>.</returns>
         [HttpPost]
         [ProducesResponseType(typeof(ResourceBrokerResource), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateResourceSetAsync(
-            [FromBody]IEnumerable<CreateResourceRequestBody> createResourcesRequestBody)
+        [HttpOperationalScope("allocate")]
+        public async Task<IActionResult> AllocateAsync(
+            [FromBody]IEnumerable<CreateResourceRequestBody> createResourcesRequestBody,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
-
-            if (createResourcesRequestBody is null
-                || !createResourcesRequestBody.Any())
+            if (createResourcesRequestBody is null || !createResourcesRequestBody.Any())
             {
-                logger.AddDuration(duration)
-                    .AddReason($"{HttpStatusCode.BadRequest}: body is null")
-                    .LogError(GetType().FormatLogErrorMessage(nameof(CreateResourceSetAsync)));
-
+                logger.AddReason($"{HttpStatusCode.BadRequest}: body is null");
                 return BadRequest();
             }
 
+            var result = default(IEnumerable<ResourceBrokerResource>);
             try
             {
-                var result = await ResourceBrokerHttp.CreateResourceSetAsync(createResourcesRequestBody, logger.NewChildLogger());
-
-                logger
-                    .AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(CreateResourceSetAsync)));
-
-                // Returns 200-Ok
-                return Ok(result);
+                result = await ResourceBrokerHttp.CreateResourceSetAsync(createResourcesRequestBody, logger.NewChildLogger());
             }
-            catch (Exception e)
+            catch (OutOfCapacityException e)
             {
-                logger
-                    .AddDuration(duration)
-                    .LogException(GetType().FormatLogErrorMessage(nameof(CreateResourceSetAsync)), e);
-
-                // If we are out of capacity, return 503
-                if (e is OutOfCapacityException capacityException)
-                {
-                    Response.Headers.Add("Retry-After", TimeSpan.FromSeconds(30).TotalSeconds.ToString());
-                    return StatusCode(StatusCodes.Status503ServiceUnavailable, e);
-                }
-
-                throw;
+                Response.Headers.Add("Retry-After", TimeSpan.FromSeconds(30).TotalSeconds.ToString());
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, e);
             }
+
+            // Returns 200-Ok
+            return Ok(result);
         }
 
         /// <summary>
@@ -109,11 +92,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <returns>Nothing.</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetResourceAsync(
-            [FromQuery]string id)
+        [HttpOperationalScope("get")]
+        public IActionResult GetAsync(
+            [FromQuery]string id,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            await Task.CompletedTask;
-            _ = id;
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
@@ -128,31 +111,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [HttpGet("environmentheartbeat")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> EnvironmentHeartbeatAsync(
-            [FromQuery]string id)
+        [HttpOperationalScope("heartbeat")]
+        public async Task<IActionResult> HeartbeatAsync(
+            [FromQuery]string id,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-
             if (!Guid.TryParse(id, out var resourceId))
             {
-                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid")
-                    .LogError(GetType().FormatLogErrorMessage(nameof(DeallocateAsync)));
-
+                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid");
                 return BadRequest();
             }
 
-            return await logger.OperationScopeAsync(
-                GetType().FormatLogMessage(nameof(EnvironmentHeartbeatAsync)),
-                async (childLogger) =>
-                {
-                    childLogger.FluentAddBaseValue("ResourceId", id);
+            logger.AddBaseResourceId(resourceId);
 
-                    // Get status
-                    var result = await ResourceBrokerHttp.TriggerEnvironmentHeartbeatAsync(resourceId, childLogger.NewChildLogger());
+            // Get status
+            var result = await ResourceBrokerHttp.TriggerEnvironmentHeartbeatAsync(resourceId, logger.NewChildLogger());
 
-                    // return 200 vs 404 based on the result
-                    return result ? (IActionResult)Ok(result) : NotFound(result);
-                });
+            // return 200 vs 404 based on the result
+            return result ? (IActionResult)Ok(result) : NotFound(result);
         }
 
         /// <summary>
@@ -167,48 +143,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("heartbeat")]
         public async Task<IActionResult> DeallocateAsync(
-            [FromQuery] string id)
+            [FromQuery] string id,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
-
             if (!Guid.TryParse(id, out var resourceId))
             {
-                logger.AddDuration(duration)
-                    .AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid")
-                    .LogError(GetType().FormatLogErrorMessage(nameof(DeallocateAsync)));
-
+                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid");
                 return BadRequest();
             }
 
-            logger.FluentAddBaseValue("ResourceId", id);
+            logger.AddBaseResourceId(resourceId);
 
-            try
+            if (!await ResourceBrokerHttp.DeleteResourceAsync(resourceId, logger.NewChildLogger()))
             {
-                if (!await ResourceBrokerHttp.DeleteResourceAsync(resourceId, logger.NewChildLogger()))
-                {
-                    logger.AddDuration(duration)
-                        .AddResourceId(resourceId)
-                        .AddReason($"{HttpStatusCode.NotFound}")
-                        .LogInfo(GetType().FormatLogErrorMessage(nameof(DeallocateAsync)));
-
-                    return NotFound();
-                }
-
-                logger.AddDuration(duration)
-                    .AddResourceId(resourceId)
-                    .LogInfo(GetType().FormatLogMessage(nameof(DeallocateAsync)));
-
-                return NoContent();
+                return NotFound();
             }
-            catch (Exception)
-            {
-                logger.AddDuration(duration)
-                    .AddResourceId(resourceId)
-                    .LogError(GetType().FormatLogErrorMessage(nameof(DeallocateAsync)));
-                throw;
-            }
+
+            return NoContent();
         }
 
         /// <summary>
@@ -224,47 +177,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("cleanup")]
         public async Task<IActionResult> CleanupAsync(
             [FromQuery] string id,
-            [FromQuery] string environmentId)
+            [FromQuery] string environmentId,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
-
             if (!Guid.TryParse(id, out var resourceId))
             {
-                logger.AddDuration(duration)
-                    .AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid")
-                    .LogError(GetType().FormatLogErrorMessage(nameof(CleanupAsync)));
-
+                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid");
                 return BadRequest();
             }
 
-            try
+            logger.AddBaseResourceId(resourceId);
+
+            if (!await ResourceBrokerHttp.CleanupResourceAsync(resourceId, environmentId, logger.NewChildLogger()))
             {
-                if (!await ResourceBrokerHttp.CleanupResourceAsync(resourceId, environmentId, logger.NewChildLogger()))
-                {
-                    logger.AddDuration(duration)
-                        .AddResourceId(resourceId)
-                        .AddReason($"{HttpStatusCode.NotFound}")
-                        .LogInfo(GetType().FormatLogErrorMessage(nameof(CleanupAsync)));
-
-                    return NotFound();
-                }
-
-                logger.AddDuration(duration)
-                    .AddResourceId(resourceId)
-                    .LogInfo(GetType().FormatLogMessage(nameof(CleanupAsync)));
-
-                return NoContent();
+                return NotFound();
             }
-            catch (Exception)
-            {
-                logger.AddDuration(duration)
-                    .AddResourceId(resourceId)
-                    .LogError(GetType().FormatLogErrorMessage(nameof(CleanupAsync)));
-                throw;
-            }
+
+            return NoContent();
         }
 
         /// <summary>
@@ -280,54 +212,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [HttpPost]
         [Route(ResourceBrokerHttpContract.StartComputeOperation)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> StartComputeAsync(
+        [HttpOperationalScope("start")]
+        public async Task<IActionResult> StartAsync(
             [FromQuery]string id,
-            [FromBody]StartComputeRequestBody startComputeRequestBody)
+            [FromBody]StartComputeRequestBody startComputeRequestBody,
+            [FromServices]IDiagnosticsLogger logger)
         {
-            var logger = HttpContext.GetLogger();
-            var duration = logger.StartDuration();
-
             if (!Guid.TryParse(id, out var computeResourceId))
             {
-                logger.AddDuration(duration)
-                    .AddStartComputeRequest(startComputeRequestBody)
-                    .AddReason($"{HttpStatusCode.BadRequest}: id missing or invalid")
-                    .LogError(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)));
-
+                logger.AddReason($"{HttpStatusCode.BadRequest}: id missing or invalid");
                 return BadRequest();
             }
 
-            logger.FluentAddBaseValue("ResourceId", id);
+            logger.AddBaseResourceId(computeResourceId)
+                .AddStartComputeRequest(startComputeRequestBody);
 
             if (startComputeRequestBody is null)
             {
-                logger.AddDuration(duration)
-                    .AddResourceId(computeResourceId)
-                    .AddReason($"{HttpStatusCode.BadRequest}: body is null")
-                    .LogError(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)));
-
+                logger.AddReason($"{HttpStatusCode.BadRequest}: body is null");
                 return BadRequest();
             }
 
-            try
-            {
-                await ResourceBrokerHttp.StartComputeAsync(computeResourceId, startComputeRequestBody, logger.NewChildLogger());
+            await ResourceBrokerHttp.StartComputeAsync(computeResourceId, startComputeRequestBody, logger.NewChildLogger());
 
-                logger.AddDuration(duration)
-                    .AddResourceId(computeResourceId)
-                    .AddStartComputeRequest(startComputeRequestBody)
-                    .LogInfo(GetType().FormatLogMessage(nameof(StartComputeAsync)));
-
-                return Ok();
-            }
-            catch (Exception)
-            {
-                logger.AddDuration(duration)
-                    .AddResourceId(computeResourceId)
-                    .AddStartComputeRequest(startComputeRequestBody)
-                    .LogError(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)));
-                throw;
-            }
+            return Ok();
         }
 
         /// <inheritdoc/>
@@ -419,16 +327,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 var result = await ResourceBroker.StartComputeAsync(input, logger.WithValues(new LogValueSet()));
 
                 logger.AddDuration(duration)
-                    .AddResourceId(computeResourceId)
+                    .AddBaseResourceId(computeResourceId)
                     .AddStartComputeRequest(startComputeRequestBody)
-                    .LogInfo(GetType().FormatLogMessage(nameof(StartComputeAsync)));
+                    .LogInfo(GetType().FormatLogMessage(nameof(StartAsync)));
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
                     .AddStartComputeRequest(startComputeRequestBody)
-                    .AddResourceId(computeResourceId)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartComputeAsync)), ex.Message);
+                    .AddBaseResourceId(computeResourceId)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartAsync)), ex.Message);
                 throw;
             }
         }
