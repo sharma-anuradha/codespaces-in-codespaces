@@ -2,9 +2,7 @@ param(
     [Parameter(Mandatory)]
     [string]$ImageName,
     [Parameter(Mandatory)]
-    [string]$TargetSubscription,
-    [Parameter(Mandatory)]
-    [string]$TargetGroupName,
+    [string]$ImageVersion,
     [Parameter(Mandatory)]
     [string]$TargetLocation,
     [Parameter(Mandatory)]
@@ -12,9 +10,14 @@ param(
     [Parameter(Mandatory)]
     [string]$WorkPath
 )
+$ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $SourceSubscription = 'cd02057e-7b97-4159-b924-e8392142ee1e'
-$LocationNames = @{use='eastus';usw2='westus2';euw='westeurope';asse='southeastasia'}
+
+$RegionCode = @{eastus='use';westus2='usw2';westeurope='euw';southeastasia='asse'}.$TargetLocation
+if ($null -eq $RegionCode) {
+    throw "Cannot convert $TargetLocation to a region code"
+}
 
 az account set -s $SourceSubscription
 
@@ -34,12 +37,19 @@ Expand-Archive -Path $AzCopyZipPath -DestinationPath $WorkPath -Force
 $AzCopyExe = Get-ChildItem $WorkPath/*/azcopy.exe
 
 Write-Host "Snapshot $ImageName"
-$SnapshotName = "$($ImageName)_snapshot_$($Environment)_$($TargetLocation)"
+$SnapshotName = "$ImageName-$Environment-$RegionCode"
 az snapshot create -n $SnapshotName -g $SourceImage.resourceGroup --source $SourceImage.storageProfile.osDisk.managedDisk.id
 
-$TempStorageName = "$ImageName$Environment$($TargetLocation)".ToLower()
+$TargetSubscription = "vsclk-core-$Environment"
+$TargetGroupName = "vsclk-online-$Environment-images-$RegionCode"
+$TempStorageName = "$ImageName$Environment$RegionCode".ToLower()
 Write-Host "Create $TempStorageName Storage Account"
-$Storage = az storage account create -n $TempStorageName -g $TargetGroupName -l $LocationNames.$TargetLocation --subscription $TargetSubscription --kind StorageV2 --sku Premium_LRS --https-only true | ConvertFrom-Json
+# Setting $ErrorActionPreference to Continue for the next command because there's a bug in the Azure CLI that causes a warning to become an error:
+# https://developercommunity.visualstudio.com/content/problem/752118/az-cli-reports-warnings-that-breaks-releases.html.
+# If it really fails then the command after that will fail so the script will end as it should.
+$ErrorActionPreference = 'Continue'
+$Storage = az storage account create -n $TempStorageName -g $TargetGroupName -l $TargetLocation --subscription $TargetSubscription --kind StorageV2 --sku Premium_LRS --https-only true | ConvertFrom-Json
+$ErrorActionPreference = 'Stop'
 $Storage
 
 $TempContainerName = "snapshot"
@@ -55,11 +65,11 @@ Write-Host "Copy $SnapshotName from $SourceSubscription to $TargetSubscription"
 & $AzCopyExe copy $SourceAccess.accessSas $TargetAccess
 
 Write-Host "Snapshot $ImageName"
-$Snapshot = az snapshot create -n $SnapshotName -g $TargetGroupName -l $LocationNames.$TargetLocation --source "$($Storage.primaryEndpoints.blob)$TempContainerName/$ImageName" --subscription $TargetSubscription | ConvertFrom-Json
+$Snapshot = az snapshot create -n $SnapshotName -g $TargetGroupName -l $TargetLocation --source "$($Storage.primaryEndpoints.blob)$TempContainerName/$ImageName" --subscription $TargetSubscription | ConvertFrom-Json
 $Snapshot
 
 Write-Host "Create $ImageName Image"
-az image create -n $ImageName -g $TargetGroupName -l $LocationNames.$TargetLocation --os-type $SourceImage.storageProfile.osDisk.osType --source $Snapshot.id --subscription $TargetSubscription
+az image create -n $ImageName -g $TargetGroupName -l $TargetLocation --os-type $SourceImage.storageProfile.osDisk.osType --source $Snapshot.id --subscription $TargetSubscription
 
 Write-Host "Remove $SnapshotName"
 az snapshot revoke-access -n $SnapshotName -g $SourceImage.resourceGroup
@@ -68,3 +78,23 @@ az snapshot delete -n $SnapshotName -g $TargetGroupName --subscription $TargetSu
 
 Write-Host "Remove $TempStorageName Storage Account"
 az storage account delete -n $TempStorageName -g $TargetGroupName --subscription $TargetSubscription --yes
+
+$ImageDefinitionName = 'windows'
+$ImageGalleryName = "gallery_$RegionCode"
+Write-Host "Create Image Version $ImageVersion for $ImageName"
+az sig image-version create --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --managed-image $ImageName --location $TargetLocation --target-regions $TargetLocation --subscription $TargetSubscription
+
+# In the image pipeline (https://dev.azure.com/devdiv/OnlineServices/_releaseDefinition?definitionId=83&_a=definition-pipeline) we set variables to determine the replica count for each location.
+# These are named ReplicaCount.{location} and ADO makes these available to scripts in the pipe as env vars named REPLICACOUNT_{location}.
+# So we'll try to find that var for $TargetLocation to set the replica count for the image. If we don't find it, we'll output a warning.
+$ReplicaCount = (Get-ChildItem env: | Where-Object Name -eq "REPLICACOUNT_$TargetLocation").Value
+if ($null -eq $ReplicaCount) {
+    Write-Warning "Skip Create Replicas of Image Version $ImageVersion--Cannot Find Replica Count for $TargetLocation Location"
+}
+elseif ($ReplicaCount -lt 2) {
+    Write-Host "Skip Create Replicas of Image Version $ImageVersion--Requested Count is $ReplicaCount"
+}
+else {
+    Write-Host "Create $ReplicaCount Replicas of Image Version $ImageVersion"
+    az sig image-version update --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --target-regions "$TargetLocation=$ReplicaCount" --subscription $TargetSubscription --no-wait
+}
