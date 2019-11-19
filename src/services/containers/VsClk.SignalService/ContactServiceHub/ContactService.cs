@@ -66,11 +66,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task RegisterSelfContactAsync(ContactReference contactRef, Dictionary<string, object> initialProperties, CancellationToken cancellationToken)
         {
-            // Note: avoid telemetry for contact id's
-            using (Logger.BeginContactReferenceScope(ContactServiceScopes.MethodRegisterSelfContact, contactRef, FormatProvider))
-            {
-                Logger.LogInformation($"initialProperties:{initialProperties?.ConvertToString(FormatProvider)}");
-            }
+            var start = Stopwatch.StartNew();
 
             var registeredSelfContact = await GetOrCreateContactAsync(contactRef.Id, cancellationToken);
             await registeredSelfContact.RegisterSelfAsync(contactRef.ConnectionId, initialProperties, cancellationToken);
@@ -80,6 +76,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 await ResolveStubContacts(contactRef.ConnectionId, initialProperties, () => registeredSelfContact, cancellationToken);
             }
+
+            // Note: avoid telemetry for contact id's
+            using (Logger.BeginContactReferenceScope(
+                ContactServiceScopes.MethodRegisterSelfContact,
+                contactRef,
+                FormatProvider,
+                (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds)))
+            {
+                Logger.LogInformation($"initialProperties:{initialProperties?.ConvertToString(FormatProvider)}");
+            }
+
         }
 
         public async Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(
@@ -89,10 +96,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             bool useStubContact,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(ContactServiceScopes.MethodRequestSubcriptions, contactRef, FormatProvider))
-            {
-                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContactProperties.Select(d => d.ConvertToString(FormatProvider)))} propertyNames:{string.Join(",", propertyNames)}");
-            }
+            var start = Stopwatch.StartNew();
 
             // placeholder for all our results that by default are null
             var requestResult = new Dictionary<string, object>[targetContactProperties.Length];
@@ -183,6 +187,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                         }
                     }
                 }
+            }
+
+            using (Logger.BeginContactReferenceScope(ContactServiceScopes.MethodRequestSubcriptions, contactRef, FormatProvider, (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds)))
+            {
+                Logger.LogDebug($"targetContactIds:{string.Join(",", targetContactProperties.Select(d => d.ConvertToString(FormatProvider)))} propertyNames:{string.Join(",", propertyNames)}");
             }
 
             return requestResult;
@@ -300,10 +309,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UnregisterSelfContactAsync(ContactReference contactReference, Func<IEnumerable<string>, Task> affectedPropertiesTask, CancellationToken cancellationToken)
         {
-            using (Logger.BeginContactReferenceScope(ContactServiceScopes.MethodUnregisterSelfContact, contactReference, FormatProvider))
-            {
-                Logger.LogDebug($"Unregister self contact...");
-            }
+            var start = Stopwatch.StartNew();
 
             var registeredSelfContact = GetRegisteredContact(contactReference.Id);
             foreach (var targetContactId in registeredSelfContact.GetTargetContacts(contactReference.ConnectionId))
@@ -323,6 +329,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             await registeredSelfContact.RemoveSelfConnectionAsync(contactReference.ConnectionId, affectedPropertiesTask, cancellationToken);
+
+            using (Logger.BeginContactReferenceScope(
+                ContactServiceScopes.MethodUnregisterSelfContact,
+                contactReference,
+                FormatProvider,
+                (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds)))
+            {
+                Logger.LogDebug($"Unregister self contact...");
+            }
         }
 
         public virtual Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingPropertes, CancellationToken cancellationToken = default(CancellationToken))

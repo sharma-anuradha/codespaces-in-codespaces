@@ -11,11 +11,15 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public string AzureRedisConnection { get; set; }
 
+        public int AzureRedisConnectionPool { get; set; }
+
         public string AzureCosmosDbEndpointUrl { get; set; }
 
         public string AzureCosmosDbAuthKey { get; set; }
 
         public bool IsPrivacyEnabled { get; set; }
+
+        public bool IsAzureRedisProviderEnabled { get; set; }
 
         public bool IsAzureDocumentsProviderEnabled { get; set; }
 

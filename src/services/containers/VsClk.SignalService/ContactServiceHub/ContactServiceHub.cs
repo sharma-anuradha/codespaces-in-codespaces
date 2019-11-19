@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -121,7 +121,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var contextRegisteredContactRef = GetContextContactReference(throwIfNotFound: false);
             if (!string.IsNullOrEmpty(contextRegisteredContactRef.Id))
             {
-                this.logger.LogDebug($"OnDisconnectedAsync contextRegisteredContactRef:{contextRegisteredContactRef.ToString(this.formatProvider)}");
+                this.logger.LogMethodScope(LogLevel.Debug, exception, $"contextRegisteredContactRef:{contextRegisteredContactRef.ToString(this.formatProvider)}", nameof(OnDisconnectedAsync));
                 await this.presenceService.UnregisterSelfContactAsync(
                     contextRegisteredContactRef,
                     (properties) => Task.Delay(TimeSpan.FromSeconds(DisconnectSubscriptionDelaySecs)),

@@ -22,26 +22,31 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string ContactsId = "backplaneProvider:contacts";
         private const string MessagesId = "backplaneProvider:messages";
 
-        private IDatabaseAsync DatabaseAsync => Connection.GetDatabase();
+        private IDatabaseAsync DatabaseAsync => GetNextConnection().GetDatabase();
 
         private AzureRedisProvider(
-            ConnectionMultiplexer connection,
+            ConnectionMultiplexer[] connections,
             ILogger<AzureRedisProvider> logger,
             IFormatProvider formatProvider)
             : base(logger, formatProvider)
         {
-            Connection = connection;
+            Connections = connections;
         }
 
-        private ConnectionMultiplexer Connection { get; }
+        private ConnectionMultiplexer[] Connections { get; }
+
+        private ConnectionMultiplexer GetNextConnection()
+        {
+            return Connections.OrderBy(c => c.GetCounters().TotalOutstanding).First();
+        }
 
         public static async Task<AzureRedisProvider> CreateAsync(
             (string ServiceId, string Stamp) serviceInfo,
-            ConnectionMultiplexer connection,
+            ConnectionMultiplexer[] connections,
             ILogger<AzureRedisProvider> logger,
             IFormatProvider formatProvider)
         {
-            var redisBackplaneProvider = new AzureRedisProvider(connection, logger, formatProvider);
+            var redisBackplaneProvider = new AzureRedisProvider(connections, logger, formatProvider);
             await redisBackplaneProvider.InitializeAsync(serviceInfo);
             return redisBackplaneProvider;
         }
@@ -159,7 +164,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             // define service Id
             await InitializeServiceIdAsync(serviceInfo);
 
-            var subscriber = Connection.GetSubscriber();
+            foreach(var connection in Connections)
+            {
+                await ConectionSubscribeAsync(connection);
+            }
+        }
+
+        private async Task ConectionSubscribeAsync(ConnectionMultiplexer connection)
+        {
+            var subscriber = connection.GetSubscriber();
 
             (await subscriber.SubscribeAsync(ServicesId)).OnMessage((message) =>
             {

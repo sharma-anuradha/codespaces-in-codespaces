@@ -22,8 +22,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private const string TotalContactsProperty = "NumberOfContacts";
         private const string TotalConnectionsProperty = "NumberOfConnections";
-        private const string MemorySizeProperty = "MemorySize";
-        private const string TotalMemoryProperty = "TotalMemory";
 
         private readonly object backplaneProvidersLock = new object();
         private readonly List<IContactBackplaneProvider> backplaneProviders = new List<IContactBackplaneProvider>();
@@ -275,19 +273,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             ContactServiceMetrics metrics,
             CancellationToken cancellationToken)
         {
-            const long OneMb = 1024 * 1024;
+            var memoryInfo = LoggerScopeHelpers.GetProcessMemoryInfo();
 
-            using (var proc = System.Diagnostics.Process.GetCurrentProcess())
+            using (Logger.BeginScope(
+                (LoggerScopeHelpers.MethodScope, MethodUpdateBackplaneMetrics),
+                (TotalContactsProperty, metrics.SelfCount),
+                (TotalConnectionsProperty, metrics.TotalSelfCount),
+                (LoggerScopeHelpers.MemorySizeProperty, memoryInfo.memorySize),
+                (LoggerScopeHelpers.TotalMemoryProperty, memoryInfo.totalMemory)))
             {
-                using (Logger.BeginScope(
-                    (LoggerScopeHelpers.MethodScope, MethodUpdateBackplaneMetrics),
-                    (TotalContactsProperty, metrics.SelfCount),
-                    (TotalConnectionsProperty, metrics.TotalSelfCount),
-                    (MemorySizeProperty, proc.WorkingSet64 / OneMb),
-                    (TotalMemoryProperty, GC.GetTotalMemory(false) / OneMb)))
-                {
-                    Logger.LogInformation($"serviceInfo:{serviceInfo}");
-                }
+                Logger.LogInformation($"serviceInfo:{serviceInfo}");
             }
 
             return UpdateBackplaneMetrics(serviceInfo, metrics, cancellationToken);

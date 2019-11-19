@@ -40,6 +40,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             // Our json Rpc Server
             services.AddHostedService<JsonRpcServerService>();
 
+            // Host for ContactBackplaneService
+            services.AddHostedService<ContactBackplaneHostedService>();
+
             // Our json Rpc Session Manager
             services.AddSingleton<JsonRpcSessionManager>();
 

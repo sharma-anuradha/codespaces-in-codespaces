@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
-using Microsoft.VsCloudKernel.SignalService;
-using Microsoft.VisualStudio.Threading;
-using Microsoft.VsCloudKernel.SignalService.Common;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.Threading;
+using Microsoft.VsCloudKernel.SignalService;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
 {
@@ -25,7 +27,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         private readonly IDataFormatProvider formatProvider;
         private int numOfConnections;
         private List<IContactBackplaneServiceNotification> contactBackplaneServiceNotifications = new List<IContactBackplaneServiceNotification>();
-        
+
+        private readonly ActionBlock<(Stopwatch, ContactDataChanged<ConnectionProperties>)> updateContactActionBlock;
+        private readonly ActionBlock<(Stopwatch, string, MessageData)> sendMessageActionBlock;
+        private readonly CancellationTokenSource disposeTokenSource = new CancellationTokenSource();
+
+        private int updateContactPerfCounter;
+
         public ContactBackplaneService(
             IEnumerable<IContactBackplaneServiceNotification> contactBackplaneServiceNotifications,
             ILogger<ContactBackplaneService> logger,
@@ -46,6 +54,38 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             BackplaneManager.ContactChangedAsync += OnContactChangedAsync;
             BackplaneManager.MessageReceivedAsync += OnMessageReceivedAsync;
 
+            var blockOptions = new ExecutionDataflowBlockOptions()
+            {
+                MaxDegreeOfParallelism = 32
+            };
+
+            this.updateContactActionBlock = new ActionBlock<(Stopwatch, ContactDataChanged<ConnectionProperties>)>(async (updateContactInfo) =>
+            {
+                try
+                {
+                    await BackplaneManager.UpdateContactAsync(updateContactInfo.Item2, DisposeToken);
+                    Logger.LogMethodScope(LogLevel.Debug, $"input count:{this.updateContactActionBlock.InputCount}", nameof(this.updateContactActionBlock), updateContactInfo.Item1.ElapsedMilliseconds);
+                    Interlocked.Increment(ref updateContactPerfCounter);
+                }
+                catch(Exception error)
+                {
+                    Logger.LogWarning(error,$"Failed to update contact change id:{updateContactInfo.Item2.ChangeId} contact Id:{updateContactInfo.Item2}");
+                }
+            }, blockOptions);
+
+            this.sendMessageActionBlock = new ActionBlock<(Stopwatch, string, MessageData)>(async (sendMessageInfo) =>
+            {
+                try
+                {
+                    await BackplaneManager.SendMessageAsync(sendMessageInfo.Item2, sendMessageInfo.Item3, DisposeToken);
+                    Logger.LogMethodScope(LogLevel.Debug, $"input count:{this.sendMessageActionBlock.InputCount}", nameof(this.updateContactActionBlock), sendMessageInfo.Item1.ElapsedMilliseconds);
+                }
+                catch (Exception error)
+                {
+                    Logger.LogWarning(error, $"Failed to send message change id:{sendMessageInfo.Item3.ChangeId}");
+                }
+            }, blockOptions);
+
             int oldWorkerThreads, oldCompletionPortThreads;
             ThreadPool.GetMinThreads(out oldWorkerThreads, out oldCompletionPortThreads);
 
@@ -58,11 +98,42 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             Logger.LogInformation($"BackplaneService created succeeded:{succeeded} workerThreads:{workerThreads}:{oldWorkerThreads} completionPortThreads:{completionPortThreads}:{oldCompletionPortThreads}");
         }
 
+        private CancellationToken DisposeToken => this.disposeTokenSource.Token;
+
         private ILogger Logger { get; }
 
         private IContactBackplaneManager BackplaneManager { get; }
 
         private IBackplaneServiceDataProvider ServiceDataProvider { get; }
+
+        public async Task RunAsync(CancellationToken stoppingToken)
+        {
+            const int TimespanUpdateMin = 1;
+
+            this.updateContactPerfCounter = 0;
+            while (true)
+            {
+                // wait
+                await Task.Delay(TimeSpan.FromMinutes(TimespanUpdateMin), stoppingToken);
+
+                var memoryInfo = LoggerScopeHelpers.GetProcessMemoryInfo();
+                using (Logger.BeginScope(
+                    (LoggerScopeHelpers.MethodScope, "UpdateMetrics"),
+                    (LoggerScopeHelpers.MemorySizeProperty, memoryInfo.memorySize),
+                    (LoggerScopeHelpers.TotalMemoryProperty, memoryInfo.totalMemory)))
+                {
+                    Logger.LogInformation($"Contact perf:{this.updateContactPerfCounter/ TimespanUpdateMin}");
+                }
+
+                this.updateContactPerfCounter = 0;
+            }
+        }
+
+        public async Task DisposeAsync()
+        {
+            await CompleteActionBlock(this.updateContactActionBlock, nameof(this.updateContactActionBlock));
+            await CompleteActionBlock(this.sendMessageActionBlock, nameof(this.sendMessageActionBlock));
+        }
 
         public void AddContactBackplaneServiceNotification(IContactBackplaneServiceNotification contactBackplaneServiceNotification)
         {
@@ -121,7 +192,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         {
             using (Logger.BeginMethodScope(nameof(UpdateContactAsync)))
             {
-                Logger.LogDebug($"contactId:{Format("{0:T}",contactDataChanged.ContactId)}");
+                Logger.LogDebug($"contactId:{ToString(contactDataChanged)}");
             }
 
             BackplaneManager.TrackDataChanged(contactDataChanged);
@@ -146,7 +217,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             await FireOnUpdateContactAsync(contactDataChanged.Clone(contactDataInfo), contactDataChanged.Data.Keys.ToArray(), cancellationToken);
 
             // update the global providers
-            BackplaneManager.UpdateContactAsync(contactDataChanged, cancellationToken).Forget();
+            await this.updateContactActionBlock.SendAsync((Stopwatch.StartNew(), contactDataChanged), cancellationToken);
         }
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
@@ -191,10 +262,23 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             BackplaneManager.TrackDataChanged(messageData);
             await FireOnSendMessageAsync(sourceId, messageData, cancellationToken);
 
-            BackplaneManager.SendMessageAsync(sourceId, messageData, cancellationToken).Forget();
+            // route to global providers
+            await this.sendMessageActionBlock.SendAsync((Stopwatch.StartNew(), sourceId, messageData), cancellationToken);
         }
 
         #endregion
+
+        private string ToString(ContactDataChanged<ConnectionProperties> contactDataChanged)
+        {
+            return Format("{0:T}", contactDataChanged.ContactId);
+        }
+
+        private Task CompleteActionBlock<T>(ActionBlock<T> actionBlock, string name)
+        {
+            Logger.LogDebug($"CompleteActionBlock for:{name} input count:{actionBlock.InputCount}");
+            actionBlock.Complete();
+            return actionBlock.Completion;
+        }
 
         private bool IsLocalService(string serviceId) => this.activeServices.ContainsKey(serviceId);
 
