@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Auth", "..\Src\Auth\Auth.cs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.AspNetCore", "..\Src\Common.AspNetCore\Common.AspNetCore.csproj", "{61FF4819-4C5C-4495-9537-518489C4B709}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Catalog", "..\src\Catalog\Catalog.csproj", "{4F3302D7-30CD-49EC-AC01-A7D42289BC8D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VsoUtil", "..\src\VsoUtil\VsoUtil.csproj", "{4F3302D7-30CD-49EC-AC01-A7D42289BC8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -5,7 +5,7 @@
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Audit;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
     /// <inheritdoc/>
     public class NullLogger : IDiagnosticsLogger

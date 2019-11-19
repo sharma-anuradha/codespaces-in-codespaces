@@ -19,6 +19,7 @@
     <ProjectReference Include="..\Common.AspNetCore\Common.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\BackEnd\Capacity\Src\Capacity\Capacity.csproj" />
     <ProjectReference Include="..\..\..\BackEnd\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BackEnd\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj" />
   </ItemGroup>
 
  <ItemGroup>

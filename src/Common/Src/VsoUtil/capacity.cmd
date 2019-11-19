@@ -19,6 +19,6 @@ set env=%1
 set location=%2
 set output=capacity.%env%.%location%.json
 echo Writing capacity to %output%...
-call dotnet Catalog.dll subscriptions -c -e %env% -l %location% > %output%
+call dotnet VsoUtil.dll subscriptions -c -e %env% -l %location% > %output%
 type %output%
 exit /b

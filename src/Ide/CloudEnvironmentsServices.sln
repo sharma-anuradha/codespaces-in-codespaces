@@ -123,7 +123,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Test", "..\Common\Te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility", "Utility", "{9412D645-AE13-451F-AC99-B80489F61FA2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Catalog", "..\Common\Src\Catalog\Catalog.csproj", "{B5157DF9-86C9-4BD0-A849-AFFCE8456684}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VsoUtil", "..\Common\Src\VsoUtil\VsoUtil.csproj", "{B5157DF9-86C9-4BD0-A849-AFFCE8456684}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Monitoring", "..\FrontEnd\Monitoring\Src\Monitoring\Monitoring.csproj", "{22CDB95F-25EB-47A9-A804-613E72865A1E}"
 EndProject

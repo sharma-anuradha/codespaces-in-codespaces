@@ -11,8 +11,12 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
     /// <summary>
     /// Configures the ASP.NET Core pipeline for HTTP requests.
@@ -24,9 +28,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
         /// </summary>
         /// <param name="hostingEnvironment">The hosting environment for the server.</param>
         public Startup(IHostingEnvironment hostingEnvironment)
-            : base(hostingEnvironment, "Catalog")
+            : base(hostingEnvironment, "VsoUtil")
         {
         }
+
+        public static IServiceProvider Services { get; set; }
 
         /// <summary>
         /// This method gets called by the runtime.
@@ -36,25 +42,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
         public void ConfigureServices(IServiceCollection services)
         {
             // Configuration AppSettings
-            _ = ConfigureAppSettings(services);
+            var appSettings = ConfigureAppSettings(services);
+
+            if (string.IsNullOrEmpty(appSettings.ControlPlaneSettings.SubscriptionId))
+            {
+                appSettings.ControlPlaneSettings.SubscriptionId =
+                    HostingEnvironment.IsDevelopment() ? "86642df6-843e-4610-a956-fdd497102261" :
+                    HostingEnvironment.IsStaging() ? "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24" :
+                    HostingEnvironment.IsProduction() ? "979523fb-a19c-4bb0-a8ee-cef29597b0a4" :
+                    null;
+            }
+
+            // Adding developer personal stamp settings and resource name builder.
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp && HostingEnvironment.IsDevelopment());
+            services.AddSingleton(developerPersonalStampSettings);
+            services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
+            services.AddCapacityManager(develperPersonalStamp: developerPersonalStampSettings.DeveloperStamp, mocksSettings: null);
+            services.AddSingleton<ISecretProvider, KeyVaultSecretProvider>();
             ConfigureCommonServices(services, out var _);
 
-            services.AddCapacityManager(develperPersonalStamp: false, mocksSettings: null);
-
-            // Add required Mocks
+            // Add stamp database access
             services.AddDocumentDbClientProvider(options =>
             {
-                var (hostUrl, authKey) = ("https://mock-document-db/", "auth-key");
+                var controlPlaneAzureResourceAccessor = Services.GetRequiredService<IControlPlaneAzureResourceAccessor>();
+                var (hostUrl, authKey) = controlPlaneAzureResourceAccessor.GetStampCosmosDbAccountAsync().Result;
                 options.ConnectionMode = Microsoft.Azure.Documents.Client.ConnectionMode.Direct;
                 options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
                 options.HostUrl = hostUrl;
                 options.AuthKey = authKey;
-                options.DatabaseId = "mock-database-id";
+                options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(appSettings.AzureCosmosDbDatabaseId);
                 options.PreferredLocation = CurrentAzureLocation.ToString();
                 options.UseMultipleWriteLocations = false;
             });
+
+            services.AddDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
+                CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
+            services.AddDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
+                CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
 
             services.AddSingleton<IHealthProvider, NullHealthProvider>();
             services.AddSingleton<IDiagnosticsLoggerFactory, NullDiagnosticsLoggerFactory>();

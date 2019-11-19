@@ -4,7 +4,7 @@
 
 using Microsoft.VsSaaS.Diagnostics;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
     /// <inheritdoc/>
     public class NullDiagnosticsLoggerFactory : IDiagnosticsLoggerFactory

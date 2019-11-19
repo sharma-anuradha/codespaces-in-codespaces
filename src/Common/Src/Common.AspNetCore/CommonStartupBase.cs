@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -147,7 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         {
             var appSecrets = Configuration.GetSection(AppSecretsSectionName).Get<CommonAppSecretsProvider>();
 
-            services.AddSingleton<ISecretProvider>(appSecrets);
+            services.TryAddSingleton<ISecretProvider>(appSecrets);
 
             services.AddApplicationServicePrincipal(AppSettings.ApplicationServicePrincipal);
 

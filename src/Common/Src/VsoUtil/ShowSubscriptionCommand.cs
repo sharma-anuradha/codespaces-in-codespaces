@@ -1,4 +1,4 @@
-﻿// <copyright file="Commands.cs" company="Microsoft">
+﻿// <copyright file="ShowSubscriptionCommand.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,57 +7,43 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using CommandLine;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
+
     /// <summary>
-    /// Implement various catalog commands.
+    /// The show subscriptions verb.
     /// </summary>
-    public static partial class Commands
+    [Verb("subscriptions", HelpText = "Show the subscription catalog.")]
+    public class ShowSubscriptionCommand : CommandBase
     {
         /// <summary>
-        /// Write the SKU catalog.
+        /// Gets or sets a value indicating whether to include the subscription capacity.
         /// </summary>
-        /// <param name="skuCatalog">The SKU catalog.</param>
-        /// <param name="textWriter">The text writer, or null for Console.</param>
-        public static void WriteSkuCatalog(ISkuCatalog skuCatalog, TextWriter textWriter = null)
+        [Option('c', "show-capacity", HelpText = "Show the subscription capacity.")]
+        public bool ShowCapacity { get; set; }
+
+        /// <inheritdoc/>
+        protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)
         {
-            textWriter = textWriter ?? Console.Out;
-
-            var orderedSkus = new SortedDictionary<string, ICloudEnvironmentSku>();
-            foreach (var item in skuCatalog.CloudEnvironmentSkus)
-            {
-                orderedSkus.Add(item.Key, item.Value);
-            }
-
-            var skusJson = JsonSerializeObject(orderedSkus);
-            textWriter.WriteLine(skusJson);
+            var azureSubscriptionCatalog = services.GetRequiredService<IAzureSubscriptionCatalog>();
+            WriteAzureSubscriptionCatalog(azureSubscriptionCatalog, services, ShowCapacity, stdout).Wait();
         }
 
-        /// <summary>
-        /// Write the azure subscription catalog.
-        /// </summary>
-        /// <param name="azureSubscriptionCatalog">The subscription catalog.</param>
-        /// <param name="serviceProvider">The service provider.</param>
-        /// <param name="showCapacity">A value indicating whether to include the subscription capacity.</param>
-        /// <param name="textWriter">The text writer, or null for Console.</param>
-        /// <returns>Task</returns>
-        public static async Task WriteAzureSubscriptionCatalog(
+        private async Task WriteAzureSubscriptionCatalog(
             IAzureSubscriptionCatalog azureSubscriptionCatalog,
             IServiceProvider serviceProvider,
             bool showCapacity,
-            TextWriter textWriter = null)
+            TextWriter textWriter)
         {
-            textWriter = textWriter ?? Console.Out;
-
             var subscriptionDictionary = azureSubscriptionCatalog.AzureSubscriptions
                 .OrderBy(s => s.DisplayName)
                 .ToDictionary(item => item.DisplayName, item => item);
@@ -113,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
             }
         }
 
-        private static async Task<AzureResourceUsage[]> GetUsagesAsync(
+        private async Task<AzureResourceUsage[]> GetUsagesAsync(
             AzureLocation location,
             IAzureSubscriptionCapacityProvider subscriptionCapacityProvider,
             IAzureSubscription subscription)
@@ -142,19 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
             return orderedUsages;
         }
 
-        /// <summary>
-        /// Write the control plane info.
-        /// </summary>
-        /// <param name="controlPlaneInfo">The control plane info.</param>
-        /// <param name="textWriter">The text writer, or null for Console.</param>
-        public static void WriteControlPlaneInfo(IControlPlaneInfo controlPlaneInfo, TextWriter textWriter = null)
-        {
-            textWriter = textWriter ?? Console.Out;
-            var info = JsonSerializeObject(controlPlaneInfo);
-            textWriter.WriteLine(info);
-        }
-
-        private static async Task UpdateAppServicePrincipalClientSecret(IServiceProvider serviceProvider, string keyVaultUrl)
+        private async Task UpdateAppServicePrincipalClientSecret(IServiceProvider serviceProvider, string keyVaultUrl)
         {
             try
             {
@@ -167,13 +141,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Catalog
             }
             catch (Exception ex)
             {
-                throw new Exception($"Could not read the app service principal client secret from key vault ${keyVaultUrl}. You may need to JIT in and set the key vault Access Policies to 'Secrets {{Get, List}}': {ex.Message}", ex);
+                throw new InvalidOperationException($"Could not read the app service principal client secret from key vault ${keyVaultUrl}. You may need to JIT in and set the key vault Access Policies to 'Secrets {{Get, List}}': {ex.Message}", ex);
             }
-        }
-
-        private static string JsonSerializeObject(object obj)
-        {
-            return JsonConvert.SerializeObject(obj, Formatting.Indented, new StringEnumConverter());
         }
     }
 }
