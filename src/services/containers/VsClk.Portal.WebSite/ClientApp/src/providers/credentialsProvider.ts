@@ -20,7 +20,7 @@ interface IAuthStrategy {
 class MsalAuthStrategy implements IAuthStrategy {
     canHandleService(service: string, account: string): boolean {
         const isVSCodeAccount = (service === 'VS Code Account');
-        const isAADv2AccessToken = (service === 'AADv2.accessToken');
+        const isAADv2AccessToken = (account === 'AADv2.accessToken');
 
         return (isVSCodeAccount && isAADv2AccessToken);
     }
