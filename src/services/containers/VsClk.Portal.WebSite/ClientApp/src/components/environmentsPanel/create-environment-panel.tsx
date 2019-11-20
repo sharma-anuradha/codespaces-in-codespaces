@@ -468,6 +468,7 @@ export class CreateEnvironmentPanelView extends Component<
                     {this.renderSkuSelector()}
                     <Dropdown
                         label='Suspend idle environment after...'
+                        ariaLabel='Suspend idle environment after...'
                         options={autoShutdownOptions}
                         onChange={this.onChangeAutoShutdownDelayMinutes}
                         selectedKey={this.state.autoShutdownDelayMinutes.value}
@@ -539,6 +540,7 @@ export class CreateEnvironmentPanelView extends Component<
             <DropDownWithLoader
                 componentRef={this.skuDropdownRef}
                 label='Instance Type'
+                ariaLabel='Instance Type'
                 options={options}
                 isLoading={!this.props.isPlanLoadingFinished || false}
                 loadingMessage='Loading available instance types'

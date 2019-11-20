@@ -71,6 +71,7 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
                 selectedKey={selectedPlanId || createNewPlanKey}
                 isLoading={!!loadingMessage}
                 loadingMessage={loadingMessage}
+                ariaLabel='Plan Dropdown'
             />
         );
     }
