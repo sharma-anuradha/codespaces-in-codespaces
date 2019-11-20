@@ -4,6 +4,8 @@
 
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Reflection;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
@@ -33,6 +35,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
             {
                 BaseAddress = new Uri(options.Value.BaseAddress),
             };
+
+            ProductHeaderValue header = new ProductHeaderValue("VSOnlineFrontEnd", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue(header);
+            HttpClient.DefaultRequestHeaders.UserAgent.Add(userAgent);
         }
 
         /// <inheritdoc/>

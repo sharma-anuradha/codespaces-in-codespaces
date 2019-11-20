@@ -10,6 +10,7 @@ import {
     environmentConfigurationService,
 } from './contracts/services';
 import { GitCredentialService } from './services/gitCredentialService';
+import versionFile from '../version.json';
 
 const info = baseTrace.extend('workspace-client:info');
 
@@ -17,7 +18,6 @@ const packageJson = {
     name: 'sw-port-tunnel',
     displayName: 'Service Worker Port Tunnel',
     description: 'Port forwarding thru the Service Worker',
-    version: '0.1.0-dev',
 };
 
 type RpcProxyFor<T> = T & RpcProxy;
@@ -81,7 +81,7 @@ export class WorkspaceClient implements rpc.Disposable {
      * completed (if no completion was supplied).
      */
     public async authenticate(
-        clientAuthenticatedCompletion?: ssh.PromiseCompletionSource<void>,
+        clientAuthenticatedCompletion?: ssh.PromiseCompletionSource<void>
     ): Promise<void> {
         if (!this.workspaceInfo || !this.workspaceAccess || !this.socketStream) {
             throw new Error('Connect to a workspace first.');
@@ -90,7 +90,7 @@ export class WorkspaceClient implements rpc.Disposable {
         const config = new ssh.SshSessionConfiguration();
         config.keyExchangeAlgorithms.splice(0);
         config.keyExchangeAlgorithms.push(ssh.SshAlgorithms.keyExchange.dhGroup14Sha256);
-        
+
         this.sshSession = new ssh.SshClientSession(config);
 
         // The client authenticates over SSH using the workspace session token.
@@ -173,7 +173,7 @@ export class WorkspaceClient implements rpc.Disposable {
                 {
                     // TODO: Report VS Code applicationName / applicationVersion
                     extensionName: packageJson.name,
-                    extensionVersion: packageJson.version,
+                    extensionVersion: versionFile.version,
                 }
             );
             info('Host version: ' + JSON.stringify(hostVersionInfo));
@@ -188,7 +188,7 @@ export class WorkspaceClient implements rpc.Disposable {
             id: this.workspaceInfo.id,
             connectionMode: vsls.ConnectionMode.Local, // Note "local" connection mode is correct when talking to remote service.
             joiningUserSessionToken: this.workspaceAccess.sessionToken,
-            clientCapabilities: clientCapabilities            
+            clientCapabilities,
         });
     }
 

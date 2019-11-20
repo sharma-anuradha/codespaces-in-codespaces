@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
             }
             catch (Exception ex)
             {
-                logger?.LogErrorWithDetail(LogErrorMessage, ex.Message);
+                logger?.LogException(LogErrorMessage, ex);
                 throw;
             }
 

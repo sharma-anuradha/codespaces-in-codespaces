@@ -2,6 +2,7 @@ import { trace } from '../../utils/trace';
 import { IWorkspaceAccess, IWorkspaceInfo, ILiveShareClient } from './ILiveShareClient';
 import { ICredentialsProvider } from './ICredentialsProvider';
 import { maybePii } from '../../utils/createTrace';
+import versionFile from '../../version.json';
 
 export interface AuthToken {
     access_token: string;
@@ -22,6 +23,7 @@ export class WebClient implements ILiveShareClient {
         return {
             'Cache-Control': 'no-cache',
             'Content-Type': 'application/json',
+            'User-Agent': navigator.userAgent + ' VSOnlineWeb/' + versionFile.version,
             Authorization: `Bearer ${this.credentialsProvider.getToken(sessionId)}`,
         };
     }
