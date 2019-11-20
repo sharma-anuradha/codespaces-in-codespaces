@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 {
@@ -610,7 +611,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 await repository.CreateAsync(input, logger);
             }
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow,AzureLocation.WestUs2);
 
             // Compare total billable units
             Assert.Equal(expectedSummary.Usage.First().Value, actualSummary.Usage.First().Value, 2);
@@ -661,7 +662,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             await this.overrideRepository.CreateAsync(billOverride, logger);
 
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -682,7 +683,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             }
             await this.overrideRepository.CreateAsync(billingOverride, logger);
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -707,7 +708,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     NewValue = nameof(CloudEnvironmentState.Available),
                 },
                 Environment = testEnvironment,
-                Time = TestTimeNow.AddHours(-(billDuration+2)),
+                Time = TestTimeNow.AddHours(-(billDuration + 2)),
                 Type = BillingEventTypes.EnvironmentStateChange
             };
             var billEventShutdown = new BillingEvent
@@ -882,7 +883,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var actualSummary = await billingService.CaculateBillingForEnvironmentsWithNoEvents(testPlan,
                                                                                         null,
                                                                                         latestBillingEvent,
-                                                                                        TestTimeNow);
+                                                                                        TestTimeNow,
+                                                                                        AzureLocation.WestUs2);
 
             // Compare total billable units
             Assert.Equal(expectedSummary.Usage.First().Value, actualSummary.Usage.First().Value, 2);

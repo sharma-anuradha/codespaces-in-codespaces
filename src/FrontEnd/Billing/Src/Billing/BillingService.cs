@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                                 planShard);
             foreach (var plan in plans)
             {
-                await BeginAccountCalculations(plan, start, end, childlogger);
+                await BeginAccountCalculations(plan, start, end, childlogger, region);
             }
         }
 
@@ -97,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="desiredBillEndTime"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
-        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger)
+        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region)
         {
             logger.AddVsoPlan(plan)
                 .FluentAddBaseValue("startCalculationTime", start)
@@ -144,10 +144,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var billingEvents = await billingEventManager.GetPlanEventsAsync(plan, latestBillingSummary.PeriodEnd, desiredBillEndTime, new string[] { BillingEventTypes.EnvironmentStateChange }, logger);
 
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
-                    var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime);
+                    var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region);
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
-                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestBillingEventSummary, desiredBillEndTime);
+                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region);
                     await billingEventManager.CreateEventAsync(plan, null, billingSummaryType, totalBillingSummary, logger);
                 },
                 swallowException: true);
@@ -159,18 +159,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// This method loops through all the BillingEvents<see cref="BillingEvent"/> in this current billing period and generates a
         /// BillingSummary. The last BillingSummary is used as the starting point for billing unit calculations.
         /// </summary>
-        /// <param name="plan"></param>
-        /// <param name="events"></param>
-        /// <param name="startSummary"></param>
-        /// <param name="end"></param>
+        /// <param name="plan">The plan being calculated for</param>
+        /// <param name="events">all events that are captured within this summary</param>
+        /// <param name="lastSummary">the summary to base this calculation off from.</param>
+        /// <param name="billSummaryEndTime">the end time for the summary</param>
         /// <returns></returns>
-
         public async Task<BillingSummary> CalculateBillingUnits(
-
             VsoPlanInfo plan,
             IEnumerable<BillingEvent> events,
-            BillingSummary startSummary,
-            DateTime end)
+            BillingSummary lastSummary,
+            DateTime billSummaryEndTime,
+            AzureLocation region)
         {
             var totalBillable = 0.0d;
             var environmentUsageDetails = new Dictionary<string, EnvironmentUsageDetail>();
@@ -181,8 +180,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var billingEventsPerEnvironment = events.GroupBy(b => b.Environment.Id);
             foreach (var environmentEvents in billingEventsPerEnvironment)
             {
-                var billable = 0.0d;
-                BillingEvent current = null;
+                var billableUnits = 0.0d;
+                var usageStateTimes = new Dictionary<string, double>();
                 var seqEvents = environmentEvents.OrderBy(t => t.Time);
                 var environmentDetails = environmentEvents.First().Environment;
                 List<BillingWindowSlice> slices = new List<BillingWindowSlice>();
@@ -190,11 +189,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Create an initial BillingWindowSlice to use as a starting point for billing calculations
                 // The previous BillingSummary is used as the StartTime and EndTime. The environments
                 // previous state comes from the list of environment details in the previous BillingSummary.
-
                 string endPreviousState;
-                if (startSummary?.UsageDetail?.Environments != null && startSummary.UsageDetail.Environments.ContainsKey(environmentEvents.Key))
+                if (lastSummary?.UsageDetail?.Environments != null && lastSummary.UsageDetail.Environments.ContainsKey(environmentEvents.Key))
                 {
-                    endPreviousState = startSummary.UsageDetail?.Environments[environmentEvents.Key].EndState;
+                    endPreviousState = lastSummary.UsageDetail?.Environments[environmentEvents.Key].EndState;
                 }
                 else
                 {
@@ -204,8 +202,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 var initialSlice = new BillingWindowSlice()
                 {
                     BillingState = BillingWindowBillingState.Active,
-                    StartTime = startSummary.PeriodEnd,
-                    EndTime = startSummary.PeriodEnd,
+                    StartTime = lastSummary.PeriodEnd,
+                    EndTime = lastSummary.PeriodEnd,
                     LastState = ParseEnvironmentState(endPreviousState),
                 };
 
@@ -215,7 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Loop through each billing event for the current environment.
                 foreach (var evnt in seqEvents)
                 {
-                    allSlices = await GenerateWindowSlices(end, currSlice, evnt, plan, environmentDetails.Sku);
+                    allSlices = await GenerateWindowSlices(billSummaryEndTime, currSlice, evnt, plan, environmentDetails.Sku);
                     if (allSlices.Any())
                     {
                         slices.AddRange(allSlices);
@@ -224,7 +222,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 }
 
                 // Get the remainder or the entire window if there were no events.
-                allSlices = await GenerateWindowSlices(end, currSlice, null, plan, environmentDetails.Sku);
+                allSlices = await GenerateWindowSlices(billSummaryEndTime, currSlice, null, plan, environmentDetails.Sku);
                 if (allSlices.Any())
                 {
                     slices.AddRange(allSlices);
@@ -234,19 +232,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // We might not have any billable slices. If we don't, let's not do anything
                 if (slices.Any())
                 {
-                    var containsErrors = await CheckForErrors(plan, end, environmentDetails.Id, slices.Last().LastState);
+                    var containsErrors = await CheckForErrors(plan, billSummaryEndTime, environmentDetails.Id, slices.Last().LastState);
                     EnvironmentUsageDetail usageDetail;
                     if (!containsErrors.isError)
                     {
                         // Aggregate the billable units for each slice created above.
-                        slices.ForEach((slice) => billable += CalculateVsoUnitsByTimeAndSku(slice, environmentDetails.Sku.Name));
+                        slices.ForEach((slice) => billableUnits += CalculateVsoUnitsByTimeAndSku(slice, environmentDetails.Sku.Name, usageStateTimes));
                         usageDetail = new EnvironmentUsageDetail
                         {
                             Name = environmentDetails.Name,
                             EndState = slices.Last().LastState.ToString(),
                             Usage = new UsageDictionary
                             {
-                                { meterId, billable },
+                                { meterId, billableUnits },
                             },
                             Sku = environmentDetails.Sku,
                             UserId = environmentDetails.UserId,
@@ -260,7 +258,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             EndState = containsErrors.errorState.ToString(),
                             Usage = new UsageDictionary
                             {
-                                { meterId, billable },
+                                { meterId, billableUnits },
                             },
                             Sku = environmentDetails.Sku,
                             UserId = environmentDetails.UserId,
@@ -271,15 +269,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         Logger.LogError("billingworker_plan_correction");
                     }
                     environmentUsageDetails.Add(environmentEvents.Key, usageDetail);
-                    userUsageDetails = AggregateUserUsageDetails(userUsageDetails, billable, environmentDetails.UserId, meterId);
-                    totalBillable += billable;
+                    userUsageDetails = AggregateUserUsageDetails(userUsageDetails, billableUnits, environmentDetails.UserId, meterId);
+                    totalBillable += billableUnits;
                 }
+
+                // Telemeter the environment bill data
+                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentEvents.Key, environmentDetails.Sku.ToString(), usageStateTimes);
             }
 
             return new BillingSummary
             {
-                PeriodStart = startSummary.PeriodEnd,
-                PeriodEnd = end,
+                PeriodStart = lastSummary.PeriodEnd,
+                PeriodEnd = billSummaryEndTime,
                 UsageDetail = new UsageDetail { Environments = environmentUsageDetails, Users = userUsageDetails, },
                 SubscriptionState = string.Empty,
                 Plan = string.Empty,
@@ -289,6 +290,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     { meterId, totalBillable },
                 },
             };
+        }
+
+        private void LogEnvironmentUsageDetails(DateTime end, AzureLocation region, string environmentIdentity, string sku, UsageDictionary usageStateTimes)
+        {
+            if (usageStateTimes.ContainsKey(BillingWindowBillingState.Active.ToString()))
+            {
+                Logger.AddValue("BillableActiveSeconds", usageStateTimes[BillingWindowBillingState.Active.ToString()].ToString());
+            }
+            if (usageStateTimes.ContainsKey(BillingWindowBillingState.Inactive.ToString()))
+            {
+                Logger.AddValue("BillableInactiveSeconds", usageStateTimes[BillingWindowBillingState.Inactive.ToString()].ToString());
+            }
+
+            Logger.FluentAddValue("CloudEnvironmentId", environmentIdentity)
+                  .FluentAddValue("EnvironmentSku", sku)
+                  .FluentAddValue("Location", region.ToString())
+                  .FluentAddValue("BillEndingTime", end.ToString())
+                  .LogInfo("billing_aggregate_environment_summary");
         }
 
         private async Task<(bool isError, CloudEnvironmentState errorState)> CheckForErrors(VsoPlanInfo plan, DateTime end, string id, CloudEnvironmentState expectedState)
@@ -311,7 +330,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             if (envEventsSinceStart.Any())
             {
                 var lastState = GetLastBillableEventStateChange(envEventsSinceStart);
-                if(lastState is null)
+                if (lastState is null)
                 {
                     // If we get this far, we could not find an appropriate billing event
                     Logger.AddValue("cloudEnvironmentId", id);
@@ -561,7 +580,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             VsoPlanInfo plan,
             BillingSummary currentSummary,
             BillingEvent latestEvent,
-            DateTime end)
+            DateTime end,
+            AzureLocation region)
         {
             // Scenario: Environment has no billing Events in this billing period
             var lastSummary = (BillingSummary)latestEvent.Args;
@@ -644,35 +664,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     billingSlice = allSlices.Last();
                 }
 
-                var billable = 0d;
+                var billableUnits = 0d;
+                var usageStateTimes = new Dictionary<string, double>();
 
                 var containsDeletionErrors = await CheckForErrors(plan, end, environment.Key, billingSlice.LastState);
+                EnvironmentUsageDetail usageDetail;
                 if (!containsDeletionErrors.isError)
                 {
-                    allSlices.ForEach((slice) => billable += CalculateVsoUnitsByTimeAndSku(slice, envUsageDetail.Sku.Name));
-                    var usageDetail = new EnvironmentUsageDetail
+                    // Aggregate the billable units for each slice created above.
+                    foreach (var slice in allSlices)
+                    {
+                        billableUnits += CalculateVsoUnitsByTimeAndSku(slice, envUsageDetail.Sku.Name, usageStateTimes);
+                    }
+                    usageDetail = new EnvironmentUsageDetail
                     {
                         Name = envUsageDetail.Name,
                         EndState = billingSlice.LastState.ToString(),
                         Usage = new UsageDictionary
                         {
-                            { meterId, billable },
+                            { meterId, billableUnits },
                         },
                         Sku = environment.Value.Sku,
                         UserId = environment.Value.UserId,
                     };
-                    // Update Environment list, SkuPlan billable units, and User billable units
-                    currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
                 }
                 else
                 {
-                    var usageDetail = new EnvironmentUsageDetail
+                    usageDetail = new EnvironmentUsageDetail
                     {
                         Name = envUsageDetail.Name,
                         EndState = containsDeletionErrors.errorState.ToString(),
                         Usage = new UsageDictionary
                         {
-                            { meterId, billable },
+                            { meterId, billableUnits },
                         },
                         Sku = environment.Value.Sku,
                         UserId = environment.Value.UserId,
@@ -681,20 +705,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     Logger.AddValue("SubscriptionId", plan.Subscription);
                     Logger.AddValue("ResourceId", plan.ResourceId);
                     Logger.LogError("billingworker_plan_correction");
-
-                    // Update Environment list, SkuPlan billable units, and User billable units
-                    currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
                 }
+
+                // Update Environment list, SkuPlan billable units, and User billable units
+                currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
+
+                // Telemeter the environment bill data
+                LogEnvironmentUsageDetails(end, region, environment.Key, envUsageDetail.Sku.ToString(), usageStateTimes);
+
                 if (currentSummary.Usage.ContainsKey(meterId))
                 {
-                    currentSummary.Usage[meterId] = currentSummary.Usage[meterId] + billable;
+                    currentSummary.Usage[meterId] = currentSummary.Usage[meterId] + billableUnits;
                 }
                 else
                 {
-                    currentSummary.Usage.Add(meterId, billable);
+                    currentSummary.Usage.Add(meterId, billableUnits);
                 }
 
-                currentSummary.UsageDetail.Users = AggregateUserUsageDetails(currentSummary.UsageDetail.Users, billable, environment.Value.UserId, meterId);
+                currentSummary.UsageDetail.Users = AggregateUserUsageDetails(currentSummary.UsageDetail.Users, billableUnits, environment.Value.UserId, meterId);
             }
 
             return currentSummary;
@@ -717,7 +745,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             if (currentlist.TryGetValue(userId, out UserUsageDetail userUsageDetail))
             {
-                var oldValue = 0.0d;
+                double oldValue;
                 userUsageDetail.Usage.TryGetValue(meterId, out oldValue);
                 userUsageDetail.Usage[meterId] = billable + oldValue;
             }
@@ -739,7 +767,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="slice"></param>
         /// <param name="sku"></param>
         /// <returns></returns>
-        private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, string sku)
+        private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, string sku, IDictionary<string, double> stateTimes)
         {
             if (slice.OverrideState == BillingOverrideState.BillingEnabled)
             {
@@ -748,6 +776,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 var vsoUnitsPerSecond = vsoUnitsPerHour / secondsPerHour;
                 var totalSeconds = (decimal)slice.EndTime.Subtract(slice.StartTime).TotalSeconds;
                 var vsoUnits = totalSeconds * vsoUnitsPerSecond;
+                if (stateTimes.ContainsKey(slice.BillingState.ToString()))
+                {
+                    stateTimes[slice.BillingState.ToString()] += (double)totalSeconds;
+                }
+                else
+                {
+                    stateTimes[slice.BillingState.ToString()] = (double)totalSeconds;
+                }
                 return (double)vsoUnits;
             }
             else
@@ -760,12 +796,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Helper method to return active or inactive VSO units from CloudEnvironmentSku<see cref="CloudEnvironmentSku"/> name.
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="skuName"></param>
         /// <param name="isActive"></param>
         /// <returns></returns>
-        private decimal GetVsoUnitsBySkuName(string name, BillingWindowBillingState billingState)
+        private decimal GetVsoUnitsBySkuName(string skuName, BillingWindowBillingState billingState)
         {
-            if (SkuDictionary.TryGetValue(name, out var sku))
+            if (SkuDictionary.TryGetValue(skuName, out var sku))
             {
                 if (billingState == BillingWindowBillingState.Active)
                 {
@@ -778,14 +814,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 else
                 {
                     Logger.AddValue("BillingWindowState", billingState.ToString());
-                    Logger.LogError("BillingWindowState is in an unsupported state.");
+                    Logger.LogError("BillingWorker_GetVSOUnit_UnsupportedState");
                     return 0;
                 }
             }
             else
             {
-                Logger.FluentAddBaseValue("SkuName", name);
-                Logger.LogError("A Sku is being used on an environment that does not have a corresponding Sku catelog record.");
+                Logger.AddValue("SkuName", skuName);
+                Logger.LogError("BillingWorker_GetVSOUnit_UnsupportedSku");
                 return 0.0m;
             }
         }
@@ -803,8 +839,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
             else
             {
-                Logger.FluentAddBaseValue("Azurelocation", location.ToString());
-                Logger.LogError("An Azure location was used that does not have a corresponding meter Id.");
+                Logger.FluentAddValue("Azurelocation", location.ToString());
+                Logger.LogError("BillingWorker_GetMeterID_UnsupportedLocation");
                 return "METER_NOT_FOUND";
             }
         }
