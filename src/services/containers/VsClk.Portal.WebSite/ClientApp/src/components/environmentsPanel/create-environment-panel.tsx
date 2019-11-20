@@ -9,7 +9,12 @@ import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBa
 import { KeyCodes, IRenderFunction } from '@uifabric/utilities';
 
 import { Link } from 'office-ui-fabric-react/lib/components/Link';
-import { Dropdown, IDropdownOption, IDropdown, IDropdownProps } from 'office-ui-fabric-react/lib/Dropdown';
+import {
+    Dropdown,
+    IDropdownOption,
+    IDropdown,
+    IDropdownProps,
+} from 'office-ui-fabric-react/lib/Dropdown';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { ISelectableOption } from 'office-ui-fabric-react/lib/utilities/selectableOption/SelectableOption.types';
 
@@ -76,11 +81,9 @@ export async function validateGitRepository(
 ): Promise<string> {
     const valid = '';
     const maybeGitUrl = normalizeGitUrl(maybeRepository);
-
     if (!required && !maybeRepository) {
         return valid;
     }
-
     if (!maybeGitUrl) {
         return validationMessages.invalidGitUrl;
     }
@@ -150,9 +153,12 @@ export const validationMessages = {
     valid: '',
     testFailed: 'Failed to check repository access, please try again.',
     nameIsRequired: 'Name is required.',
-    unableToConnect: 'Unable to connect to this repo. Create an empty environment.',
+    unableToConnect: 'Unable to connect to this repository. Create an empty environment.',
     invalidGitUrl: 'We are unable to clone this repository automatically.',
-    noAccess: 'You do not have access to this repo.',
+    noAccess:
+        'The repository does not exist, or you do not have access to it. Verify that your signed-in GitHub account has access to the repository. If not, log out to switch to a different account.',
+    noAccessDotFiles:
+        'The Dotfiles repository does not exist, or you do not have access to it.  Verify that your signed-in GitHub account has access to the repository. If not, log out to switch to a different account.',
     privateRepoNoAuth:
         'Repository doesn’t appear to exist. If it’s private, then you’ll need to authenticate.',
     noPlanSelected: 'No plan selected - please select one',
@@ -169,6 +175,8 @@ enum ValidationState {
 type TextFieldState = {
     value: string;
     validation: ValidationState;
+    errorMessage?: string | undefined;
+    style?: string | undefined;
     isRequired: boolean;
 };
 
@@ -215,22 +223,38 @@ interface FormFields {
 interface CreateEnvironmentPanelState extends FormFields {
     shouldTryToAuthenticateForRepo: boolean;
     shouldTryToAuthenticateForDotfiles: boolean;
-    authenticationErrorMessage: string | undefined;
     authenticationAttempt?: GithubAuthenticationAttempt;
     isCreatingEnvironment?: boolean;
 }
 
 const initialFormState: CreateEnvironmentPanelState = {
-    friendlyName: { value: '', validation: ValidationState.Initial, isRequired: true },
-    gitRepositoryUrl: { value: '', validation: ValidationState.Valid, isRequired: false },
-    dotfilesRepository: { value: '', validation: ValidationState.Valid, isRequired: false },
+    friendlyName: {
+        value: '',
+        validation: ValidationState.Initial,
+        errorMessage: undefined,
+        style: undefined,
+        isRequired: true,
+    },
+    gitRepositoryUrl: {
+        value: '',
+        validation: ValidationState.Valid,
+        errorMessage: undefined,
+        style: undefined,
+        isRequired: false,
+    },
+    dotfilesRepository: {
+        value: '',
+        validation: ValidationState.Valid,
+        errorMessage: undefined,
+        style: undefined,
+        isRequired: false,
+    },
     dotfilesInstallCommand: { value: '', validation: ValidationState.Valid, isRequired: false },
     dotfilesTargetPath: { value: '', validation: ValidationState.Valid, isRequired: false },
     autoShutdownDelayMinutes: { value: 30, validation: ValidationState.Valid },
     skuName: { value: '', validation: ValidationState.Initial, isRequired: true },
     shouldTryToAuthenticateForRepo: false,
     shouldTryToAuthenticateForDotfiles: false,
-    authenticationErrorMessage: undefined,
     authenticationAttempt: undefined,
 };
 
@@ -260,23 +284,25 @@ const autoShutdownOptions: IDropdownOption[] = [
 
 const openExternalUrl = (url: string) => {
     window.open(url, '_blank');
-}
+};
+
+const errorTextfieldClassname = 'create-environment-panel__errorTextField';
 
 function createLabelRenderCallback(title: string, onClickUrl: string) {
-    return (props: IDropdownProps) => {    
+    return (props: IDropdownProps) => {
         return (
-            <Stack horizontal verticalAlign="center">
-            <span style={{ fontWeight: 600 }}>{props.label}</span>
-            <IconButton
-                iconProps={{ iconName: 'Info' }}
-                title={title}
-                ariaLabel={title}
-                styles={{ root: { marginBottom: -3 } }}
-                onClick={openExternalUrl.bind(null, onClickUrl)}
-            />
+            <Stack horizontal verticalAlign='center'>
+                <span style={{ fontWeight: 600 }}>{props.label}</span>
+                <IconButton
+                    iconProps={{ iconName: 'Info' }}
+                    title={title}
+                    ariaLabel={title}
+                    styles={{ root: { marginBottom: -3 } }}
+                    onClick={openExternalUrl.bind(null, onClickUrl)}
+                />
             </Stack>
         );
-    }
+    };
 }
 
 export class CreateEnvironmentPanelView extends Component<
@@ -378,14 +404,42 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     private renderCreateEnvironmentInputs() {
-        const onSuspendRenderLabel = createLabelRenderCallback('View suspend behavior details', 'https://aka.ms/vso-docs/how-to/suspend');
-        const onDotfilesRenderLabel = createLabelRenderCallback('View dotfiles details', 'https://aka.ms/vso-docs/reference/personalizing');
-        
+        const onSuspendRenderLabel = createLabelRenderCallback(
+            'View suspend behavior details',
+            'https://aka.ms/vso-docs/how-to/suspend'
+        );
+        const onDotfilesRenderLabel = createLabelRenderCallback(
+            'View dotfiles details',
+            'https://aka.ms/vso-docs/reference/personalizing'
+        );
+        const errorMessageBar = isDefined(this.state.friendlyName.errorMessage) ? (
+            <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
+                {this.state.friendlyName.errorMessage}
+            </MessageBar>
+        ) : null;
+        const repoMessageBar = isDefined(this.state.gitRepositoryUrl.errorMessage) ? (
+            <MessageBar messageBarType={MessageBarType.error} isMultiline={true} truncated={true}>
+                {this.state.gitRepositoryUrl.errorMessage}
+            </MessageBar>
+        ) : null;
+        const dotfilesRepoMessageBar = isDefined(this.state.dotfilesRepository.errorMessage) ? (
+            <MessageBar messageBarType={MessageBarType.error} isMultiline={true} truncated={true}>
+                {this.state.dotfilesRepository.errorMessage}
+            </MessageBar>
+        ) : null;
+
         return (
             <Stack tokens={{ childrenGap: 'l1' }}>
+                <Stack>
+                    {errorMessageBar}
+                    {repoMessageBar}
+                    {dotfilesRepoMessageBar}
+                </Stack>
+
                 <Stack tokens={{ childrenGap: 4 }}>
                     <TextField
                         label='Environment Name'
+                        className={this.state.friendlyName.style}
                         placeholder=''
                         onKeyDown={this.submitForm}
                         value={this.state.friendlyName.value}
@@ -393,12 +447,14 @@ export class CreateEnvironmentPanelView extends Component<
                         onChange={this.onChangeFriendlyName}
                         onGetErrorMessage={this.onGetErrorMessageFriendlyName}
                         onNotifyValidationResult={this.onNotifyValidationResultFriendlyName}
-                        validateOnLoad={!!this.props.defaultName}
+                        validateOnLoad={isDefined(this.props.defaultName)}
+                        deferredValidationTime={1000}
                         autoFocus
                         required
                     />
                     <TextField
                         label='Git Repository'
+                        className={this.state.gitRepositoryUrl.style}
                         placeholder=''
                         onKeyDown={this.submitForm}
                         value={this.state.gitRepositoryUrl.value}
@@ -406,7 +462,8 @@ export class CreateEnvironmentPanelView extends Component<
                         onChange={this.onChangeGitRepositoryUrl}
                         onGetErrorMessage={this.onGetErrorMessageGitRepo}
                         onNotifyValidationResult={this.onNotifyValidationResultGitRepositoryUrl}
-                        validateOnLoad={!!this.props.defaultRepo}
+                        validateOnLoad={isDefined(this.props.defaultRepo)}
+                        deferredValidationTime={1500}
                     />
                     {this.renderSkuSelector()}
                     <Dropdown
@@ -414,7 +471,7 @@ export class CreateEnvironmentPanelView extends Component<
                         options={autoShutdownOptions}
                         onChange={this.onChangeAutoShutdownDelayMinutes}
                         selectedKey={this.state.autoShutdownDelayMinutes.value}
-                        onRenderLabel={onSuspendRenderLabel  as IRenderFunction<IDropdownProps>}
+                        onRenderLabel={onSuspendRenderLabel as IRenderFunction<IDropdownProps>}
                     />
                 </Stack>
 
@@ -422,14 +479,16 @@ export class CreateEnvironmentPanelView extends Component<
                     <TextField
                         autoFocus
                         label='Dotfiles Repository'
+                        className={this.state.dotfilesRepository.style}
                         placeholder=''
                         onKeyDown={this.submitForm}
                         value={this.state.dotfilesRepository.value}
                         iconProps={getValidationIcon(this.state.dotfilesRepository)}
                         onChange={this.onChangeDotfilesRepository}
-                        onGetErrorMessage={this.onGetErrorMessageGitRepo}
+                        onGetErrorMessage={this.onGetErrorMessageDotfilesRepo}
                         onNotifyValidationResult={this.onNotifyValidationResultDotfilesRepository}
-                        validateOnLoad={false}
+                        validateOnLoad={isDefined(this.state.dotfilesRepository)}
+                        deferredValidationTime={1500}
                         onRenderLabel={onDotfilesRenderLabel as IRenderFunction<ITextFieldProps>}
                     />
                     <TextField
@@ -462,7 +521,7 @@ export class CreateEnvironmentPanelView extends Component<
 
         const options: IDropdownOption[] = availableSkus
             ? availableSkus.map((s) => {
-                const text = getSkuSpecLabel(s);
+                  const text = getSkuSpecLabel(s);
                   return { key: s.name, text };
               })
             : [];
@@ -472,7 +531,7 @@ export class CreateEnvironmentPanelView extends Component<
         options.push({
             key: SKU_SHOW_PRICING_KEY,
             text: SKU_PRICING_LABEL,
-            data: { icon: 'OpenInNewTab' }
+            data: { icon: 'OpenInNewTab' },
         });
 
         const onSkuLabelRender = createLabelRenderCallback(SKU_PRICING_LABEL, SKU_PRICING_URL);
@@ -497,7 +556,12 @@ export class CreateEnvironmentPanelView extends Component<
         return (
             <div>
                 {option.data && option.data.icon && (
-                    <Icon style={{ marginRight: '8px' }} iconName={option.data.icon} aria-hidden="true" title={option.data.icon} />
+                    <Icon
+                        style={{ marginRight: '.8rem' }}
+                        iconName={option.data.icon}
+                        aria-hidden='true'
+                        title={option.data.icon}
+                    />
                 )}
                 <span>{option.text}</span>
             </div>
@@ -506,13 +570,7 @@ export class CreateEnvironmentPanelView extends Component<
 
     private onRenderFooterContent = () => {
         let authStatusMessage;
-        if (this.state.authenticationErrorMessage) {
-            authStatusMessage = (
-                <div className='create-environment-panel__auth'>
-                    <p>{this.state.authenticationErrorMessage}</p>;
-                </div>
-            );
-        } else if (!this.isCurrentStateValid() && !!this.state.authenticationAttempt) {
+        if (isDefined(this.state.authenticationAttempt)) {
             authStatusMessage = (
                 <div className='create-environment-panel__auth'>
                     <p>
@@ -535,37 +593,20 @@ export class CreateEnvironmentPanelView extends Component<
             authStatusMessage = null;
         }
 
-        const creationDisabled =
-            (!this.isCurrentStateValid() &&
-                !this.state.shouldTryToAuthenticateForRepo &&
-                !this.state.shouldTryToAuthenticateForDotfiles) ||
-            (!this.isCurrentStateValid() && !!this.state.authenticationAttempt);
-
         const label =
             this.state.shouldTryToAuthenticateForRepo ||
             this.state.shouldTryToAuthenticateForDotfiles
                 ? 'Auth & Create'
                 : 'Create';
 
-        const errorMessage = isDefined(this.props.errorMessage) ? (
-            <MessageBar
-                messageBarType={MessageBarType.error}
-                isMultiline={true}
-                onDismiss={this.props.hideErrorMessage}
-            >
-                {this.props.errorMessage}
-            </MessageBar>
-        ) : null;
-
         return (
             <Stack tokens={{ childrenGap: 'l1' }}>
                 <Stack.Item>{authStatusMessage}</Stack.Item>
-                <Stack.Item>{errorMessage}</Stack.Item>
                 <Stack.Item>
                     <PrimaryButton
                         onClick={this.createEnvironment}
                         style={{ marginRight: '.8rem' }}
-                        disabled={creationDisabled}
+                        disabled={!this.isCurrentStateValid()}
                     >
                         {label}
                     </PrimaryButton>
@@ -659,22 +700,38 @@ export class CreateEnvironmentPanelView extends Component<
                     this.props.gitHubAccessToken
                 );
                 if (validationMessage !== validationMessages.valid) {
-                    throw new Error(validationMessages.noAccess);
+                    this.showRepoError();
+                    this.onNotifyValidationResultGitRepositoryUrl(
+                        validationMessages.noAccess,
+                        this.state.gitRepositoryUrl.value
+                    );
+                }
+                const dotfilesValidationMessage = await validateGitRepository(
+                    this.state.dotfilesRepository.value,
+                    this.props.gitHubAccessToken
+                );
+                if (dotfilesValidationMessage !== validationMessages.valid) {
+                    this.showDotfilesError();
+                    this.onNotifyValidationResultDotfilesRepository(
+                        validationMessages.noAccess,
+                        this.state.dotfilesRepository.value
+                    );
+                }
+                if (
+                    validationMessage !== validationMessages.valid ||
+                    dotfilesValidationMessage !== validationMessages.valid
+                ) {
+                    throw new Error('Failed to access git repositories.');
                 }
 
                 this.setState({ isCreatingEnvironment: true });
                 await this.props.onCreateEnvironment(this.getEnvCreationParams());
+                this.handleErrorMessage(true);
                 return;
             } catch (err) {
-                this.setTextValidationState(
-                    'gitRepositoryUrl',
-                    this.state.gitRepositoryUrl.value,
-                    ValidationState.Invalid
-                );
                 this.setState({
                     shouldTryToAuthenticateForRepo: false,
                     shouldTryToAuthenticateForDotfiles: false,
-                    authenticationErrorMessage: undefined,
                     authenticationAttempt: undefined,
                     isCreatingEnvironment: false,
                 });
@@ -693,12 +750,33 @@ export class CreateEnvironmentPanelView extends Component<
         }
 
         this.setState({ isCreatingEnvironment: true });
-
         await this.props.onCreateEnvironment(this.getEnvCreationParams());
-        if (this.props.errorMessage) {
-            this.setState({ isCreatingEnvironment: false });
-        }
+        this.handleErrorMessage(false);
     };
+
+    private handleErrorMessage(handleAuth: boolean) {
+        if (this.props.errorMessage) {
+            this.setState({
+                isCreatingEnvironment: false,
+                friendlyName: {
+                    ...this.state.friendlyName,
+                    errorMessage: this.props.errorMessage,
+                    style: errorTextfieldClassname,
+                },
+            });
+            this.onNotifyValidationResultFriendlyName(
+                this.props.errorMessage,
+                this.state.friendlyName.value
+            );
+            if (handleAuth) {
+                this.setState({
+                    shouldTryToAuthenticateForRepo: false,
+                    shouldTryToAuthenticateForDotfiles: false,
+                    authenticationAttempt: undefined,
+                });
+            }
+        }
+    }
 
     private getEnvCreationParams() {
         const { selectedPlan } = this.props;
@@ -752,6 +830,13 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     private onChangeFriendlyName = (_event: unknown, value = '') => {
+        this.setState({
+            friendlyName: {
+                ...this.state.friendlyName,
+                errorMessage: undefined,
+                style: undefined,
+            },
+        });
         this.setTextValidationState('friendlyName', value, ValidationState.Validating);
     };
 
@@ -765,24 +850,81 @@ export class CreateEnvironmentPanelView extends Component<
         errorMessage: string | ReactElement,
         value = ''
     ) => {
-        this.setTextValidationState(
-            'friendlyName',
-            value,
-            errorMessage ? ValidationState.Invalid : ValidationState.Valid
-        );
+        const error = errorMessage || this.state.friendlyName.errorMessage;
+        const validationState = error ? ValidationState.Invalid : ValidationState.Valid;
+        this.setTextValidationState('friendlyName', value, validationState);
     };
 
     private onChangeGitRepositoryUrl = (_event: unknown, value = '') => {
         this.setState({
             shouldTryToAuthenticateForRepo: false,
-            authenticationErrorMessage: undefined,
+            gitRepositoryUrl: {
+                ...this.state.gitRepositoryUrl,
+                errorMessage: undefined,
+                style: undefined,
+            },
         });
 
         this.setTextValidationState('gitRepositoryUrl', value, ValidationState.Validating);
     };
 
+    private showRepoError() {
+        this.setState({
+            gitRepositoryUrl: {
+                ...this.state.gitRepositoryUrl,
+                errorMessage: validationMessages.noAccess,
+                style: errorTextfieldClassname,
+            },
+        });
+    }
+
+    private showDotfilesError() {
+        this.setState({
+            dotfilesRepository: {
+                ...this.state.dotfilesRepository,
+                errorMessage: validationMessages.noAccessDotFiles,
+                style: errorTextfieldClassname,
+            },
+        });
+    }
+
     private onGetErrorMessageGitRepo = async (value: string) => {
-        return await validateGitRepository(value, this.props.gitHubAccessToken);
+        return await this.onGetErrorMessage(value, 'git');
+    };
+
+    private onGetErrorMessageDotfilesRepo = async (value: string) => {
+        return await this.onGetErrorMessage(value, 'dotfiles');
+    };
+
+    private onGetErrorMessage = async (value: string, textField: string) => {
+        let validationResult = await validateGitRepository(value, this.props.gitHubAccessToken);
+        switch (validationResult) {
+            case validationMessages.invalidGitUrl:
+            case validationMessages.unableToConnect:
+            case validationMessages.testFailed: {
+                return validationResult;
+            }
+
+            case validationMessages.noAccess: {
+                if (textField === 'git') {
+                    this.showRepoError();
+                } else if (textField === 'dotfiles') {
+                    this.showDotfilesError();
+                }
+                return validationMessages.valid;
+            }
+
+            case validationMessages.privateRepoNoAuth: {
+                this.setState({
+                    shouldTryToAuthenticateForRepo: true,
+                });
+                return validationMessages.valid;
+            }
+
+            default: {
+                return validationMessages.valid;
+            }
+        }
     };
 
     private getSkuNameValidationMessage() {
@@ -799,24 +941,19 @@ export class CreateEnvironmentPanelView extends Component<
         errorMessage: string | ReactElement,
         value = ''
     ) => {
-        this.setTextValidationState(
-            'gitRepositoryUrl',
-            value,
-            errorMessage ? ValidationState.Invalid : ValidationState.Valid
-        );
-
-        if (errorMessage) {
-            this.setState({
-                shouldTryToAuthenticateForRepo:
-                    errorMessage === validationMessages.privateRepoNoAuth,
-            });
-        }
+        const error = errorMessage || this.state.gitRepositoryUrl.errorMessage;
+        const validationState = error ? ValidationState.Invalid : ValidationState.Valid;
+        this.setTextValidationState('gitRepositoryUrl', value, validationState);
     };
 
     private onChangeDotfilesRepository = (_event: unknown, value = '') => {
         this.setState({
             shouldTryToAuthenticateForDotfiles: false,
-            authenticationErrorMessage: undefined,
+            dotfilesRepository: {
+                ...this.state.dotfilesRepository,
+                errorMessage: undefined,
+                style: undefined,
+            },
         });
 
         this.setTextValidationState('dotfilesRepository', value, ValidationState.Validating);
@@ -826,18 +963,9 @@ export class CreateEnvironmentPanelView extends Component<
         errorMessage: string | ReactElement,
         value = ''
     ) => {
-        this.setTextValidationState(
-            'dotfilesRepository',
-            value,
-            errorMessage ? ValidationState.Invalid : ValidationState.Valid
-        );
-
-        if (errorMessage) {
-            this.setState({
-                shouldTryToAuthenticateForDotfiles:
-                    errorMessage === validationMessages.privateRepoNoAuth,
-            });
-        }
+        const error = errorMessage || this.state.dotfilesRepository.errorMessage;
+        const validationState = error ? ValidationState.Invalid : ValidationState.Valid;
+        this.setTextValidationState('dotfilesRepository', value, validationState);
     };
 
     private onChangeDotfilesInstallCommand = (_event: unknown, value = '') => {
@@ -871,7 +999,9 @@ export class CreateEnvironmentPanelView extends Component<
         }
 
         if (option.key === SKU_SHOW_PRICING_KEY) {
-            setTimeout(() => { this.skuDropdownRef.current && this.skuDropdownRef.current.focus(true); });
+            setTimeout(() => {
+                this.skuDropdownRef.current && this.skuDropdownRef.current.focus(true);
+            });
             openExternalUrl(SKU_PRICING_URL);
             return;
         }

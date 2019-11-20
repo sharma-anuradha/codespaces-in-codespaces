@@ -22,3 +22,11 @@
 .create-environment-panel__errorMessage {
     color: #a4262c;
 }
+
+.create-environment-panel__errorTextField .ms-TextField-fieldGroup {
+    border-color: #a4262c;
+}
+
+.create-environment-panel__errorTextField:hover {
+    border-color: #a4262c;
+}
