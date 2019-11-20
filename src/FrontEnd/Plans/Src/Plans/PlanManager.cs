@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
@@ -21,7 +22,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     {
         private readonly IPlanRepository planRepository;
         private readonly PlanManagerSettings planManagerSettings;
-
+        private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
+        private readonly TimeSpan pagingDelay = TimeSpan.FromSeconds(1);
         private int cachedTotalPlansCount;
 
         /// <summary>
@@ -207,6 +209,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             var updatedModel = await this.planRepository.UpdateAsync(modelList, logger);
             return updatedModel.IsDeleted;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<VsoPlan>> GetPlansByShardAsync(IEnumerable<AzureLocation> locations, string planShard, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(locations, nameof(locations));
+            Requires.Argument(locations.Any(), nameof(locations), "locations collection must not me empty.");
+            Requires.NotNullOrEmpty(planShard, nameof(planShard));
+            Requires.NotNull(logger, nameof(logger));
+
+            // TODO: Change this to be streaming so that we consume less memory
+            var allPlans = (await this.planRepository.GetWhereAsync(
+                (plan) => plan.Plan.Subscription.StartsWith(planShard),
+                logger,
+                (_, childlogger) => {
+                    return Task.Delay(pagingDelay);
+                })).Where(t => locations.Contains(t.Plan.Location));
+
+            return allPlans;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<string> GetShards()
+        {
+            // Represents all the available chars in a 16 bit GUID.
+            return guidChars;
         }
     }
 }

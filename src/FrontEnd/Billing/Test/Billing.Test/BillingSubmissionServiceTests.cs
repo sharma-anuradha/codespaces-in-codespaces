@@ -28,16 +28,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             stampInfo.SetupGet(x => x.DataPlaneLocations).Returns(locations);
 
             Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
+            Mock<IPlanManager> planManager = new Mock<IPlanManager>();
             Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();
             logger.Setup(x => x.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
-            var vsoPlan = new VsoPlanInfo()
+            var plan = new VsoPlan()
             {
-                Name = "PlanName",
-                Location = AzureLocation.WestUs2,
-                ResourceGroup = "RG",
-                Subscription = Guid.NewGuid().ToString(),
+                Plan = new VsoPlanInfo()
+                {
+                    Name = "PlanName",
+                    Location = AzureLocation.WestUs2,
+                    ResourceGroup = "RG",
+                    Subscription = Guid.NewGuid().ToString(),
+                }
             };
-            IEnumerable<VsoPlanInfo> plans = new List<VsoPlanInfo>() { vsoPlan };
+            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
             var endDate = DateTime.Now;
             var usage = new Dictionary<string, double>();
             usage.Add("meter", 3d);
@@ -52,13 +56,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             };
             var billingEvent = new BillingEvent()
             {
-                Plan = vsoPlan,
+                Plan = plan.Plan,
                 Args = billingSummary,
             };
             IEnumerable<BillingEvent> billingSummaries = new List<BillingEvent>() { billingEvent };
-            billingEventManager.Setup(x => x.GetPlansByShardAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<ICollection<AzureLocation>>(), It.IsAny<string>())).Returns(Task.FromResult(plans));
+
+            planManager.Setup(x => x.GetPlansByShardAsync(It.IsAny<IEnumerable<AzureLocation>>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(plans));
             billingEventManager.Setup(x => x.GetPlanEventsAsync(It.IsAny<Expression<Func<BillingEvent, bool>>>(), logger.Object)).Returns(Task.FromResult(billingSummaries));
-            billingEventManager.Setup(x => x.GetShards()).Returns(new List<string>() { "a" });
+            planManager.Setup(x => x.GetShards()).Returns(new List<string>() { "a" });
 
             Mock<IBillingSubmissionCloudStorageFactory> factory = new Mock<IBillingSubmissionCloudStorageFactory>();
             Mock<IBillingSubmissionCloudStorageClient> client = new Mock<IBillingSubmissionCloudStorageClient>();
@@ -69,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Setup a fake lease
             Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
             lease.Setup(x => x.Obtain(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new FakeLease() as IDisposable));
-            BillingSummarySubmissionService sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper());
+            BillingSummarySubmissionService sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper(), planManager.Object);
             await sut.ProcessBillingSummariesAsync(new System.Threading.CancellationToken());
             Assert.Equal(BillingSubmissionState.Submitted, billingSummary.SubmissionState);
         }
@@ -86,14 +91,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
             Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();
             logger.Setup(x => x.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
-            var vsoPlan = new VsoPlanInfo()
+            Mock<IPlanManager> planManager = new Mock<IPlanManager>();
+            var plan = new VsoPlan()
             {
-                Name = "PlanName",
-                Location = AzureLocation.WestUs2,
-                ResourceGroup = "RG",
-                Subscription = Guid.NewGuid().ToString(),
+                Plan = new VsoPlanInfo()
+                {
+                    Name = "PlanName",
+                    Location = AzureLocation.WestUs2,
+                    ResourceGroup = "RG",
+                    Subscription = Guid.NewGuid().ToString(),
+                }
             };
-            IEnumerable<VsoPlanInfo> plans = new List<VsoPlanInfo>() { vsoPlan };
+            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
 
             var endDate = DateTime.Now;
             var usage = new Dictionary<string, double>();
@@ -111,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             };
             var billingEvent = new BillingEvent()
             {
-                Plan = vsoPlan,
+                Plan = plan.Plan,
                 Args = billingSummary,
             };
             IEnumerable<BillingEvent> billingSummaries = new List<BillingEvent>() { billingEvent };
@@ -138,7 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
             lease.Setup(x => x.Obtain(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new FakeLease() as IDisposable));
 
-            BillingSummarySubmissionService sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper());
+            BillingSummarySubmissionService sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper(), planManager.Object );
             await sut.CheckForBillingSubmissionErorrs(new System.Threading.CancellationToken());
             Assert.Equal(BillingSubmissionState.Error, billingSummary.SubmissionState);
         }

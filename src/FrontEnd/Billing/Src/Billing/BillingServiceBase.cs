@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -27,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private readonly IControlPlaneInfo controlPlaneInfo;
         private readonly IClaimedDistributedLease claimedDistributedLease;
         private readonly ITaskHelper taskHelper;
-
+        private readonly IPlanManager planManager;
         protected IDiagnosticsLogger Logger;
 
         public BillingServiceBase( 
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IDiagnosticsLogger logger,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
+            IPlanManager planManager,
             string serviceName)
         {
             this.billingEventManager = billingEventManager;
@@ -43,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             this.Logger = logger.NewChildLogger();
             this.claimedDistributedLease = claimedDistributedLease;
             this.taskHelper = taskHelper;
-
+            this.planManager = planManager;
             ServiceName = serviceName;
         }
 
@@ -65,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var start = absoluteDate.Subtract(TimeSpan.FromHours(lookBackThresholdHrs));
             var end = absoluteDate;
             var controlPlaneRegions = controlPlaneInfo.Stamp.DataPlaneLocations.Shuffle();
-            var planShards = billingEventManager.GetShards();
+            var planShards = planManager.GetShards();
             var plansToRegionsShards = planShards.SelectMany(x => controlPlaneRegions, (planShard, region) => new { planShard, region });
 
             Logger.FluentAddValue("startCalculationTime", start);

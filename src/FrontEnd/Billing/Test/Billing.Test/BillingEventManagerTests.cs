@@ -252,18 +252,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         }
 
         [Fact]
-        public async Task GetPlans()
-        {
-            var startTime = await CreateMockBillingData(includeSummaries: true);
-
-            var plans = (await this.manager.GetPlansAsync(startTime, DateTime.UtcNow, logger, new AzureLocation[] { AzureLocation.WestUs2 })).ToList();
-
-            Assert.Equal(2, plans.Count);
-            Assert.Contains(testPlan, plans);
-            Assert.Contains(testPlan2, plans);
-        }
-
-        [Fact]
         public async Task GetPlanEvents()
         {
             var startTime = await CreateMockBillingData(includeSummaries: true);

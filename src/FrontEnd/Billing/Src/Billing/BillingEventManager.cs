@@ -22,8 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingEventManager : IBillingEventManager
     {
-        private readonly TimeSpan pagingDelay = TimeSpan.FromSeconds(2);
-        private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
         private readonly IBillingEventRepository billingEventRepository;
         private readonly IBillingOverrideRepository billingOverrideRepository;
         private IEnumerable<BillingOverride> billingOverrideCache;
@@ -111,115 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
         }
 
-
         /// <inheritdoc />
-
-        public async Task<IEnumerable<VsoPlanInfo>> GetPlansAsync(
-            DateTime start,
-            DateTime? end,
-            IDiagnosticsLogger logger,
-            ICollection<AzureLocation> locations)
-        {
-            Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
-            Requires.Argument(
-                end == null || end.Value.Kind == DateTimeKind.Utc, nameof(end), "DateTime values must be UTC.");
-            Requires.NotNull(locations, nameof(locations));
-            Requires.Argument(locations.Any(), nameof(locations), "locations collection must not me empty.");
-
-            var duration = logger.StartDuration();
-            try
-            {
-                Expression<Func<BillingEvent, bool>> where;
-                if (end == null)
-                {
-                    // Optimize common queries with no end date.
-                    where = bev => start <= bev.Time;
-                }
-                else
-                {
-                    where = bev => start <= bev.Time && bev.Time < end.Value;
-                }
-
-                // TODO: pagedcallback 200ms delay
-                var plansPreFiltered = await this.billingEventRepository.QueryAsync(
-                    q => q.Where(where).Select(bev => bev.Plan).Distinct(),
-                    logger);
-                var plans = plansPreFiltered.Where(a => locations.Contains(a.Location));
-                logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetPlansAsync)));
-                return plans;
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetPlansAsync)), ex.Message);
-                throw;
-            }
-        }
-
-
-        /// <summary>
-        /// Returns all plans for which there are any billing events in a specified time range
-        /// and has a subscriptionId that begins with the shard value.
-        /// </summary>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <param name="logger"></param>
-        /// <param name="locations"></param>
-        /// <param name="shard"></param>
-        /// <returns></returns>
-        public async Task<IEnumerable<VsoPlanInfo>> GetPlansByShardAsync(
-            DateTime start,
-            DateTime? end,
-            IDiagnosticsLogger logger,
-            ICollection<AzureLocation> locations,
-            string shard)
-        {
-            Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
-            Requires.Argument(
-                end == null || end.Value.Kind == DateTimeKind.Utc, nameof(end), "DateTime values must be UTC.");
-            Requires.NotNull(locations, nameof(locations));
-            Requires.Argument(locations.Any(), nameof(locations), "locations collection must not me empty.");
-            Requires.NotNullOrEmpty(shard, nameof(shard));
-
-            var duration = logger.StartDuration();
-            try
-            {
-                Expression<Func<BillingEvent, bool>> where;
-                if (end == null)
-                {
-                    // Optimize common queries with no end date.
-                    where = bev => start <= bev.Time && bev.Plan.Subscription.StartsWith(shard);
-                }
-                else
-                {
-                    where = bev => start <= bev.Time && bev.Time < end.Value && bev.Plan.Subscription.StartsWith(shard);
-                }
-
-                // TODO: move locations.Contains() to Expression definition
-                var plans = (await this.billingEventRepository.QueryAsync(
-                            q => q.Where(where).Select(bev => bev.Plan).Distinct(),
-                            logger,
-                            (_, childlogger) => {
-                                return Task.Delay(pagingDelay);
-                            }))
-                            .Where(t => locations.Contains(t.Location));
-
-                logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetPlansByShardAsync)));
-                return plans;
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetPlansByShardAsync)), ex.Message);
-                throw;
-            }
-        }
-
-
-        /// <inheritdoc />
-
         public async Task<IEnumerable<BillingEvent>> GetPlanEventsAsync(
             VsoPlanInfo plan,
             DateTime start,
@@ -241,13 +131,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Optimize common queries with no event types or end date.
                     if (end == null)
                     {
-                        where = bev => bev.Plan == plan &&
-                            start <= bev.Time;
+                        where = x => x.Plan == plan &&
+                            start <= x.Time;
                     }
                     else
                     {
-                        where = bev => bev.Plan == plan &&
-                            start <= bev.Time && bev.Time <= end.Value;
+                        where = x => x.Plan == plan &&
+                            start <= x.Time && x.Time <= end.Value;
                     }
                 }
                 else if (eventTypes.Count == 1)
@@ -255,28 +145,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     string eventType = eventTypes.Single();
                     if (end == null)
                     {
-                        where = bev => bev.Plan == plan &&
-                            start <= bev.Time && bev.Type == eventType;
+                        where = x => x.Plan == plan &&
+                            start <= x.Time && x.Type == eventType;
                     }
                     else
                     {
-                        where = bev => bev.Plan == plan &&
-                            start <= bev.Time && bev.Time <= end.Value && bev.Type == eventType;
+                        where = x => x.Plan == plan &&
+                            start <= x.Time && x.Time <= end.Value && x.Type == eventType;
                     }
                 }
                 else
                 {
                     if (end == null)
                     {
-                        where = bev => bev.Plan == plan &&
-                            start <= bev.Time && eventTypes.Contains(bev.Type);
+                        where = x => x.Plan == plan &&
+                            start <= x.Time && eventTypes.Contains(x.Type);
                     }
                     else
                     {
-                        where = bev => bev.Plan == plan &&
-                            start <= bev.Time && bev.Time <= end.Value && eventTypes.Contains(bev.Type);
+                        where = x => x.Plan == plan &&
+                            start <= x.Time && x.Time <= end.Value && eventTypes.Contains(x.Type);
                     }
                 }
+
                 // This should be a single-partition query.
                 // The billing event collection is partitioned on subscription, and all queries
                 // filter on plan, which includes the subscription property.
@@ -296,7 +187,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 throw;
             }
         }
-
 
         public async Task<IEnumerable<BillingEvent>> GetPlanEventsAsync(
        Expression<Func<BillingEvent, bool>> filter,
@@ -447,15 +337,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
         }
 
-        /// <summary>
-        /// Returns the SkuPlan sharding mechanism. We have currently sharing by SubscriptionId so the returned list
-        /// includes all availabe chars in a 16 bit GUID.
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<string> GetShards()
-        {
-            // Represents all the available chars in a 16 bit GUID.
-            return guidChars;
-        }
     }
 }

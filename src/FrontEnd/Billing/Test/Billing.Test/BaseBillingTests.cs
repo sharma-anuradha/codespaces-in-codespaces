@@ -1,12 +1,9 @@
 ﻿using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Moq;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 {
@@ -58,7 +55,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         };
         public readonly IBillingEventRepository repository;
         public readonly IBillingOverrideRepository overrideRepository;
+        public readonly PlanManagerSettings planManagerSettings;
+        public readonly IPlanRepository planRepository; 
         public readonly BillingEventManager manager;
+        public readonly PlanManager planManager;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly JsonSerializer serializer;
@@ -70,6 +70,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             this.repository = new MockBillingEventRepository();
             this.overrideRepository = new MockBillingOverrideRepository();
             this.manager = new BillingEventManager(this.repository, this.overrideRepository);
+            
+            // Setting up the plan manager
+            this.planRepository = new MockPlanRepository();
+            this.planManagerSettings = new PlanManagerSettings();
+            this.planManager = new PlanManager(this.planRepository, this.planManagerSettings);
+            
             this.serializer = JsonSerializer.CreateDefault();
         }
 

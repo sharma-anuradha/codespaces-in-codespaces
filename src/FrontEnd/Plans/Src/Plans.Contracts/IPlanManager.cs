@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -29,5 +30,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
         Task<IEnumerable<VsoPlan>> ListAsync(
             string userId, string subscriptionId, string resourceGroup, IDiagnosticsLogger logger, bool includeDeleted = false);
+
+        Task<IEnumerable<VsoPlan>> GetPlansByShardAsync(IEnumerable<AzureLocation> list, string planShard, IDiagnosticsLogger childlogger);
+
+        /// <summary>
+        /// Returns the SkuPlan sharding mechanism. We have currently sharing by SubscriptionId so the returned list
+        /// includes all availabe chars in a 16 bit GUID.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<string> GetShards();
     }
 }

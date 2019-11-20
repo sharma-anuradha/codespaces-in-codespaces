@@ -30,7 +30,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         // 5 hrs Available, 5 hrs Shutdown => (127units * 5) + (2units *5) = 645
         private static readonly double BIllableUnitsNoNewEvents = 645;
 
-
         // 5 hrs Shutdown => 2units * 5 = 10
         private static readonly double BillableUnitForShutdownEnvironment = 10;
 
@@ -596,7 +595,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                             mockSkuCatelog.Object,
                                             logger,
                                             new Mock<IClaimedDistributedLease>().Object,
-                                            new MockTaskHelper());
+                                            new MockTaskHelper(), 
+                                            planManager);
         }
 
         [Theory]

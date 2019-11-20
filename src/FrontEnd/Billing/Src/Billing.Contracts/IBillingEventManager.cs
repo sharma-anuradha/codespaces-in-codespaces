@@ -32,26 +32,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Gets all plans for which there are any billing events in a specified time range.
-        /// </summary>
-        /// <param name="start">Required start time (UTC). Events before this time are ignored.</param>
-        /// <param name="end">Optional end time (UTC), or null to look at all events after the start time.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <returns>List of distinct plans of all billing events within the specified time.</returns>
-        Task<IEnumerable<VsoPlanInfo>> GetPlansAsync(
-            DateTime start,
-            DateTime? end,
-            IDiagnosticsLogger logger,
-            ICollection<AzureLocation> locations);
-
-        Task<IEnumerable<VsoPlanInfo>> GetPlansByShardAsync(
-            DateTime start,
-            DateTime? end,
-            IDiagnosticsLogger logger,
-            ICollection<AzureLocation> locations,
-            string shard);
-
-        /// <summary>
         /// Gets all billing events for a specified plan within a time range.
         /// </summary>
         /// <param name="plan">Required plan to filter billing events.</param>
@@ -77,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             BillingEvent billingEvent,
             IDiagnosticsLogger logger);
 
-        IEnumerable<string> GetShards();
+  
 
         /// <summary>
         /// Gets the current override state for the given time

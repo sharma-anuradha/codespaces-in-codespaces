@@ -3,6 +3,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private readonly IBillingEventManager billingEventManager;
         private readonly IBillingSubmissionCloudStorageFactory billingStorageFactory;
         private readonly IClaimedDistributedLease claimedDistributedLease;
+        private readonly IPlanManager planManager;
         private readonly IControlPlaneInfo controlPlanInfo;
 
         /// <summary>
@@ -37,13 +39,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IDiagnosticsLogger logger,
             IBillingSubmissionCloudStorageFactory billingStorageFactory,
             IClaimedDistributedLease claimedDistributedLease,
-            ITaskHelper taskHelper)
-            : base(billingEventManager, controlPlanInfo, logger, claimedDistributedLease, taskHelper, "billingsub-worker")
+            ITaskHelper taskHelper,
+            IPlanManager planManager)
+            : base(billingEventManager, controlPlanInfo, logger, claimedDistributedLease, taskHelper,planManager, "billingsub-worker")
         {
             this.controlPlanInfo = controlPlanInfo;
             this.billingEventManager = billingEventManager;
             this.billingStorageFactory = billingStorageFactory;
             this.claimedDistributedLease = claimedDistributedLease;
+            this.planManager = planManager;
         }
 
         /// <inheritdoc />
@@ -60,15 +64,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{ServiceName}_begin_submission",
                 async (childLogger) =>
                 {
-
                     var batchID = Guid.NewGuid().ToString();
                     int numberOfSubmissions = 0;
-                    var plans = await billingEventManager.GetPlansByShardAsync(
-                                                            startTime,
-                                                            endTime,
-                                                            Logger,
-                                                            new List<AzureLocation> { region },
-                                                            planShard);
+                    var plans = await planManager.GetPlansByShardAsync(
+                     new List<AzureLocation> { region },
+                     planShard,
+                     childlogger);
 
                     foreach (var plan in plans)
                     {
@@ -76,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             $"{ServiceName}_submission_plan",
                             async (_) =>
                             {
-                                Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan &&
+                                Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan.Plan &&
                                                                     startTime <= bev.Time &&
                                                                     bev.Time < endTime &&
                                                                     bev.Type == BillingEventTypes.BillingSummary

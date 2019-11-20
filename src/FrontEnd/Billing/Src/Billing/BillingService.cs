@@ -28,6 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     {
         private readonly IBillingEventManager billingEventManager;
         private readonly ISkuCatalog skuCatalog;
+        private readonly IPlanManager planManager;
         private readonly string billingSummaryType = BillingEventTypes.BillingSummary;
         private readonly string DeletedEnvState = nameof(CloudEnvironmentState.Deleted);
         private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> SkuDictionary;
@@ -50,8 +51,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             ISkuCatalog skuCatalog,
                             IDiagnosticsLogger diagnosticsLogger,
                             IClaimedDistributedLease claimedDistributedLease,
-                            ITaskHelper taskHelper)
-            : base(billingEventManager, controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, "billingworker")
+                            ITaskHelper taskHelper,
+                            IPlanManager planManager)
+            : base(billingEventManager, controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, planManager, "billingworker")
         {
             Requires.NotNull(billingEventManager, nameof(billingEventManager));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
@@ -61,6 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
             this.billingEventManager = billingEventManager;
             this.skuCatalog = skuCatalog;
+            this.planManager = planManager;
             SkuDictionary = this.skuCatalog.CloudEnvironmentSkus;
 
             // Send all logs to billingservices Geneva logger table
@@ -75,15 +78,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string planShard, AzureLocation region)
         {
-            var plans = await billingEventManager.GetPlansByShardAsync(
-                                                start,
-                                                end,
-                                                childlogger,
-                                                new List<AzureLocation> { region },
-                                                planShard);
+            var plans = await planManager.GetPlansByShardAsync(new List<AzureLocation> { region },
+                planShard,
+                childlogger);
+
             foreach (var plan in plans)
             {
-                await BeginAccountCalculations(plan, start, end, childlogger, region);
+                await BeginAccountCalculations(plan.Plan, start, end, childlogger, region);
             }
         }
 
