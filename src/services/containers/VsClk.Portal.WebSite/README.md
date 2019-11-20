@@ -27,12 +27,23 @@ Required Software:
 - .NET Core (https://dotnet.microsoft.com/download/dotnet-core/2.2)
 - (https://github.com/Microsoft/artifacts-credprovider#readmecd%20)
 - Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+- C# extension for VS Code (https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp)
 
 1. [From project root] Restore dotnet dependencies (`dotnet restore <projectRoot>/dirs.proj --interactive`)
 2. [From ClientApp] Install node dependencies (`yarn`)
 3. [From ClientApp] Get Dev certificate (`yarn get-dev-cert`). Note that you need to be authenticated to `azure cli` for this. (`az login`). Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
-4. Add `127.0.0.1 online.dev.core.vsengsaas.visualstudio.com` record in your `hosts` file. (https://support.rackspace.com/how-to/modify-your-hosts-file/)    
-5. [From ClientApp] Start the portal (`[sudo] yarn start`)
+4. Uncomment the line `127.0.0.1 localhost` in your `hosts` file and replace `localhost` with `online.dev.core.vsengsaas.visualstudio.com`. (https://support.rackspace.com/how-to/modify-your-hosts-file/)  
+5. Run `ipconfig /flushdns` from the command line
+6. [From ClientApp] Start the portal (`[sudo] yarn start`)
+7. Go to `online.dev.core.vsengsaas.visualstudio.com` in the browser
+
+#### Debugging TypeScript
+
+Open browser dev tools, search for .tsx files in sources, and set breakpoints there.
+
+#### Debugging C#
+
+Instead of `yarn start`, run `yarn start:webpack-dev-server`. Visit `online.dev.core.vsengsaas.visualstudio.com` in the browser as before. Then you can set breakpoints in the C# files in your editor.
 
 ### Debugging .Net Portal 
 
