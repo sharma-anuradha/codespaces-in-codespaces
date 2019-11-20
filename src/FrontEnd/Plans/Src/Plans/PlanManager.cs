@@ -38,24 +38,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public async Task<PlanManagerServiceResult> CreateOrUpdateAsync(VsoPlan model, IDiagnosticsLogger logger)
+        public async Task<PlanManagerServiceResult> CreateAsync(VsoPlan model, IDiagnosticsLogger logger)
         {
             var result = default(PlanManagerServiceResult);
-
-            var savedModel = (await GetAsync(model.Plan, logger)).VsoPlan;
-            if (savedModel != null)
-            {
-                var plan = model.Plan;
-                if (savedModel.Plan?.Name != plan?.Name)
-                {
-                    savedModel.Plan = plan;
-                }
-
-                result.VsoPlan = await this.planRepository.CreateOrUpdateAsync(savedModel, logger);
-                return result;
-            }
-
-            model.Id = Guid.NewGuid().ToString();
 
             // Validate Plan quota is not reached.
             if (await IsPlanCreationAllowedAsync(model.Plan.Subscription, logger))
@@ -65,8 +50,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 return result;
             }
 
-            result.VsoPlan = await this.planRepository.CreateOrUpdateAsync(model, logger);
+            var savedModel = (await GetAsync(model.Plan, logger, true)).VsoPlan;
+            if (savedModel != null)
+            {
+                // Overwritting the original model and re-saving with the old id
+                model.Id = savedModel.Id;
+            }
+            else
+            {
+                // Give the model a new ID and save it.
+                model.Id = Guid.NewGuid().ToString();
+            }
 
+            result.VsoPlan = await this.planRepository.CreateOrUpdateAsync(model, logger);
             return result;
         }
 
@@ -97,16 +93,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public async Task<PlanManagerServiceResult> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger)
+        public async Task<PlanManagerServiceResult> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger, bool includeDeleted = false)
         {
             ValidationUtil.IsRequired(plan, nameof(VsoPlanInfo));
 
             // TODO: just return the VsoPlan and not the PlanManagerServiceResult
             // If null then PlanDoesNotExist
+            VsoPlan innerPlan = (await this.planRepository.GetWhereAsync(
+                    (model) => model.Plan == plan, logger, null)).SingleOrDefault();
+            if (!includeDeleted && innerPlan?.IsDeleted == true)
+            {
+                innerPlan = null;
+            }
+
             var result = new PlanManagerServiceResult
             {
-                VsoPlan = (await this.planRepository.GetWhereAsync(
-                    (model) => model.Plan == plan, logger, null)).SingleOrDefault(),
+                VsoPlan = innerPlan,
             };
 
             if (result.VsoPlan == null)
@@ -122,8 +124,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             string userId,
             string subscriptionId,
             string resourceGroup,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            bool includeDeleted = false)
         {
+            // Consider pulling the IsDeleted in the getWhere calls to be conditional on includeDeleted == true
             if (userId != null)
             {
                 if (resourceGroup != null)
@@ -133,7 +137,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                     return await this.planRepository.GetWhereAsync(
                         (model) => model.UserId == userId &&
                             model.Plan.Subscription == subscriptionId &&
-                            model.Plan.ResourceGroup == resourceGroup,
+                            model.Plan.ResourceGroup == resourceGroup &&
+                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted),
                         logger,
                         null);
                 }
@@ -141,14 +146,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 {
                     return await this.planRepository.GetWhereAsync(
                         (model) => model.UserId == userId &&
-                            model.Plan.Subscription == subscriptionId,
+                            model.Plan.Subscription == subscriptionId &&
+                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted),
                         logger,
                         null);
                 }
                 else
                 {
                     return await this.planRepository.GetWhereAsync(
-                        (model) => model.UserId == userId, logger, null);
+                        (model) => model.UserId == userId &&
+                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted), logger,
+                        null);
                 }
             }
             else
@@ -159,14 +167,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 {
                     return await this.planRepository.GetWhereAsync(
                         (model) => model.Plan.Subscription == subscriptionId &&
-                            model.Plan.ResourceGroup == resourceGroup,
+                            model.Plan.ResourceGroup == resourceGroup &&
+                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted),
                         logger,
                         null);
                 }
                 else
                 {
                     return await this.planRepository.GetWhereAsync(
-                        (model) => model.Plan.Subscription == subscriptionId, logger, null);
+                        (model) => model.Plan.Subscription == subscriptionId &&
+                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted), logger,
+                        null);
                 }
             }
         }
@@ -180,7 +191,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             var savedModel = await this.planRepository.GetWhereAsync(
                 (model) => model.Plan.Name == plan.Name &&
                            model.Plan.Subscription == plan.Subscription &&
-                           model.Plan.ResourceGroup == plan.ResourceGroup,
+                           model.Plan.ResourceGroup == plan.ResourceGroup &&
+                           model.IsDeleted != true,
                 logger,
                 null);
             var modelList = savedModel.ToList().SingleOrDefault();
@@ -191,9 +203,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 return false;
             }
 
-            return await this.planRepository.DeleteAsync(
-                new DocumentDbKey(modelList.Id, new PartitionKey(modelList.Plan.Subscription)),
-                logger);
+            modelList.IsDeleted = true;
+
+            var updatedModel = await this.planRepository.UpdateAsync(modelList, logger);
+            return updatedModel.IsDeleted;
         }
     }
 }

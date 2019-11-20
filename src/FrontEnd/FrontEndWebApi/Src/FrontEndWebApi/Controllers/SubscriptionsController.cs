@@ -150,7 +150,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         UserId = resource.Properties.UserId,
                     };
 
-                    await this.planManager.CreateOrUpdateAsync(plan, logger);
+                    await this.planManager.CreateAsync(plan, logger);
 
                     // Clear the userId property so it will not be stored on the created ARM resource.
                     // It will only be saved internally by the plan manager.

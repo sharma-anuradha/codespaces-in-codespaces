@@ -45,5 +45,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// </remarks>
         [JsonProperty(Required = Required.Default, PropertyName = "subscriptionState")]
         public string SubscriptionState { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether a plan is deleted, we can still bill/query for its records.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "isDeleted")]
+        public bool IsDeleted { get; set; }
     }
 }

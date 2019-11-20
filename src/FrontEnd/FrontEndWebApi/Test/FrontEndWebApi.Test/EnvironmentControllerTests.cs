@@ -447,7 +447,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 UserId = "TestUser",
             };
 
-            var serviceResult = await accountManager.CreateOrUpdateAsync(model, logger);
+            var serviceResult = await accountManager.CreateAsync(model, logger);
             Assert.Equal(Plans.Contracts.ErrorCodes.Unknown, serviceResult.ErrorCode);
             Assert.NotNull(serviceResult.VsoPlan);
 

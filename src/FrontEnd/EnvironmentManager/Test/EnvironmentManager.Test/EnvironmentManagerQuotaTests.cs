@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         [Fact]
         public async Task EnvironmentCreationChecksQuota()
         {
-            await accountManager.CreateOrUpdateAsync(testVsoPlan, logger);
+            await accountManager.CreateAsync(testVsoPlan, logger);
 
             var environmentToDelete = await CreateTestEnvironmentAsync("Test-1");
 

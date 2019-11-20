@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     /// </summary>
     public interface IPlanManager
     {
-        Task<PlanManagerServiceResult> CreateOrUpdateAsync(VsoPlan model, IDiagnosticsLogger logger);
+        Task<PlanManagerServiceResult> CreateAsync(VsoPlan model, IDiagnosticsLogger logger);
 
         Task<bool> IsPlanCreationAllowedForUserAsync(Profile currentUser, IDiagnosticsLogger logger);
 
@@ -23,11 +23,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
         Task RefreshTotalPlansCountAsync(IDiagnosticsLogger logger);
 
-        Task<PlanManagerServiceResult> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger);
+        Task<PlanManagerServiceResult> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger, bool includeDeleted = false);
 
         Task<bool> DeleteAsync(VsoPlanInfo plan, IDiagnosticsLogger logger);
 
         Task<IEnumerable<VsoPlan>> ListAsync(
-            string userId, string subscriptionId, string resourceGroup, IDiagnosticsLogger logger);
+            string userId, string subscriptionId, string resourceGroup, IDiagnosticsLogger logger, bool includeDeleted = false);
     }
 }
