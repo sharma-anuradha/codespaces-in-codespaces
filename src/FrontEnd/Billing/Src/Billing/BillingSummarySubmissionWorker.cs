@@ -35,13 +35,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            logger.LogInfo("BillingSummarySubmission worker is starting up");
+            logger.LogInfo("billingsub_worker_start_worker");
 
             while (!cancellationToken.IsCancellationRequested)
             {
                 var duration = logger.StartDuration();
                 await logger.OperationScopeAsync(
-                  $"billSubWorker_begin",
+                  $"billingsub_worker_begin",
                   async (childLogger) =>
                   {
                       // Do the actual work

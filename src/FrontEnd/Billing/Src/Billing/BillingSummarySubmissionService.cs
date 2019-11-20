@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
 
                     var batchID = Guid.NewGuid().ToString();
-                    bool addedEntries = false;
+                    int numberOfSubmissions = 0;
                     var plans = await billingEventManager.GetPlansByShardAsync(
                                                             startTime,
                                                             endTime,
@@ -84,38 +84,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                 var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, Logger);
                                 foreach (var summary in billingSummaries)
                                 {
-                                    addedEntries |= await ProcessSummary(summary, batchID);
+                                    numberOfSubmissions += await ProcessSummary(summary, batchID);
                                 }
                             }, swallowException: true);
                     }
 
                     // If we've pushed anything, now we should create a queue entry to record the whole batch.
-                    if (addedEntries)
+                    if (numberOfSubmissions > 0)
                     {
-                        try
-                        {
-                            await Logger.OperationScopeAsync(
-                            $"{ServiceName}_begin_queue_submission",
-                            async (childLogger2) =>
+                        await Logger.OperationScopeAsync(
+                        $"{ServiceName}_begin_queue_submission",
+                        async (childLogger2) =>
+                                {
+                                    // Get the storage mechanism for billing submission
+                                    var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
+                                    var billingSummaryQueueSubmission = new BillingSummaryQueueSubmission()
                                     {
-                                        // Get the storage mechanism for billing submission
-                                        var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
-                                        var billingSummaryQueueSubmission = new BillingSummaryQueueSubmission()
-                                        {
-                                            BatchId = batchID,
-                                            PartitionKey = batchID,
-                                        };
+                                        BatchId = batchID,
+                                        PartitionKey = batchID,
+                                    };
 
-                                        // Send off the queue submission
-                                        await storageClient.PushBillingQueueSubmission(billingSummaryQueueSubmission);
-                                    }, swallowException: true);
-                        }
-                        catch (Exception ex)
-                        {
+                                    // Send off the queue submission
+                                    await storageClient.PushBillingQueueSubmission(billingSummaryQueueSubmission);
+                                    Logger.FluentAddValue("BillSubmissionEndTime", endTime.ToString())
+                                          .FluentAddValue("Location", region.ToString())
+                                          .FluentAddValue("Shard", planShard)
+                                          .FluentAddValue("SubmissionCount", numberOfSubmissions.ToString())
+                                          .LogInfo("billing_aggregate_shard_submission");
 
-                            Logger.LogErrorWithDetail($"{ServiceName}_submission_error", ex.Message);
-                            throw;
-                        }
+                                }, swallowException: true);
                     }
                 }, swallowException: true);
         }
@@ -203,60 +200,63 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                }, swallowException: true);
         }
 
-        private async Task<bool> ProcessSummary(BillingEvent billingEvent, string batchID)
+        private async Task<int> ProcessSummary(BillingEvent billingEvent, string batchID)
         {
             var billingSummary = billingEvent.Args as BillingSummary;
-            var addedEntries = false;
+            var numberOfSubmissions = 0;
             var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(billingEvent.Plan.Location);
             var eventID = Guid.NewGuid();
-            try
-            {
-                foreach (var meter in billingSummary.Usage.Keys)
-                {
-                    var quantity = billingSummary.Usage[meter];
-                    if (quantity > 0)
-                    {
-                        // One submission per meter.
-                        var billingSummaryTableSubmission = new BillingSummaryTableSubmission(batchID, eventID.ToString())
-                        {
-                            EventDateTime = billingSummary.PeriodEnd,
-                            // TODO: EventID needs to have some other correlation to it for the case of multiple meters.
-                            EventId = eventID,
-                            Location = MapPav2Location(billingEvent.Plan.Location),
-                            MeterID = meter,
-                            SubscriptionId = billingEvent.Plan.Subscription,
-                            ResourceUri = billingEvent.Plan.ResourceId,
-                            Quantity = billingSummary.Usage[meter],
-                        };
+            await Logger.OperationScopeAsync(
+             $"{ServiceName}_processSummary",
+             async (childLogger) =>
+             {
+                 foreach (var meter in billingSummary.Usage.Keys)
+                 {
+                     var quantity = billingSummary.Usage[meter];
+                     if (quantity > 0)
+                     {
+                         // One submission per meter.
+                         var billingSummaryTableSubmission = new BillingSummaryTableSubmission(batchID, eventID.ToString())
+                         {
+                             EventDateTime = billingSummary.PeriodEnd,
+                             // TODO: EventID needs to have some other correlation to it for the case of multiple meters.
+                             EventId = eventID,
+                             Location = MapPav2Location(billingEvent.Plan.Location),
+                             MeterID = meter,
+                             SubscriptionId = billingEvent.Plan.Subscription,
+                             ResourceUri = billingEvent.Plan.ResourceId,
+                             Quantity = billingSummary.Usage[meter],
+                         };
 
-                        // Submit all the stuff. An entry needs to be added to the table with the usage record
-                        await storageClient.InsertOrUpdateBillingTableSubmission(billingSummaryTableSubmission);
-                        addedEntries = true;
-                    }
-                }
+                         // Submit all the stuff. An entry needs to be added to the table with the usage record
+                         await storageClient.InsertOrUpdateBillingTableSubmission(billingSummaryTableSubmission);
+                         numberOfSubmissions++;
+                         Logger.FluentAddValue("Quantity", quantity.ToString())
+                               .FluentAddValue("BillSummaryEndTime", billingSummary.PeriodEnd.ToString())
+                               .FluentAddValue("ResourceId", billingEvent.Plan.ResourceId)
+                               .FluentAddValue("Subscription", billingEvent.Plan.Subscription)
+                               .FluentAddValue("Meter", meter)
+                               .LogInfo("billing_aggregate_summary_submission");
 
-                // Check if we added anything. If so, mark the billing record as appropriate
-                if (addedEntries)
-                {
-                    // Update the billing event to show it's been submitted
-                    billingSummary.SubmissionState = BillingSubmissionState.Submitted;
-                    billingSummary.EventId = eventID.ToString();
-                    await billingEventManager.UpdateEventAsync(billingEvent, Logger);
-                }
-                else
-                {
-                    // We don't want to submit this entry as it's zero quantity. Mark it and move on so that we don't look at it again
-                    billingSummary.SubmissionState = BillingSubmissionState.NeverSubmit;
-                    await billingEventManager.UpdateEventAsync(billingEvent, Logger);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"Failed to submit billing event for resourceID: {billingEvent.Plan.ResourceId}" + ex.Message);
-                throw;
-            }
+                     }
+                 }
 
-            return addedEntries;
+                 // Check if we added anything. If so, mark the billing record as appropriate
+                 if (numberOfSubmissions > 0)
+                 {
+                     // Update the billing event to show it's been submitted
+                     billingSummary.SubmissionState = BillingSubmissionState.Submitted;
+                     billingSummary.EventId = eventID.ToString();
+                     await billingEventManager.UpdateEventAsync(billingEvent, Logger);
+                 }
+                 else
+                 {
+                     // We don't want to submit this entry as it's zero quantity. Mark it and move on so that we don't look at it again
+                     billingSummary.SubmissionState = BillingSubmissionState.NeverSubmit;
+                     await billingEventManager.UpdateEventAsync(billingEvent, Logger);
+                 }
+             });
+            return numberOfSubmissions;
         }
 
         private string MapPav2Location(AzureLocation location)
