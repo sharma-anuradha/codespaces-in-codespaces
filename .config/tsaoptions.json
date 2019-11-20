@@ -1,0 +1,14 @@
+{
+    "areaPath": "DevDiv\\VS Online\\Environments",
+    "template": "TFSDEVDIV",
+    "ppe": false,
+    "codebaseName": "vsclk-core",
+    "projectName": "DevDiv",
+    "instanceUrl": "https://devdiv.visualstudio.com/",
+    "notificationAliases": ["VSAnywhereDevTeam@microsoft.com"],
+    "tools": ["binskim"],
+    "iterationPath": "DevDiv\\OneVS",
+    "codebaseAdmins": ["redmond\\azbldrun"],
+    "repositoryName": "vsclk-core"
+  }
+  
