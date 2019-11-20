@@ -136,29 +136,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 {
                     ValidationUtil.IsRequired(subscriptionId, nameof(subscriptionId));
 
-                    return await this.planRepository.GetWhereAsync(
+                    return (await this.planRepository.GetWhereAsync(
                         (model) => model.UserId == userId &&
                             model.Plan.Subscription == subscriptionId &&
-                            model.Plan.ResourceGroup == resourceGroup &&
-                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted),
+                            model.Plan.ResourceGroup == resourceGroup,
                         logger,
-                        null);
+                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
                 else if (subscriptionId != null)
                 {
-                    return await this.planRepository.GetWhereAsync(
+                    return (await this.planRepository.GetWhereAsync(
                         (model) => model.UserId == userId &&
-                            model.Plan.Subscription == subscriptionId &&
-                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted),
+                            model.Plan.Subscription == subscriptionId,
                         logger,
-                        null);
+                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
                 else
                 {
-                    return await this.planRepository.GetWhereAsync(
-                        (model) => model.UserId == userId &&
-                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted), logger,
-                        null);
+                    return (await this.planRepository.GetWhereAsync(
+                        (model) => model.UserId == userId, logger,
+                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
             }
             else
@@ -167,19 +164,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
                 if (resourceGroup != null)
                 {
-                    return await this.planRepository.GetWhereAsync(
+                    return (await this.planRepository.GetWhereAsync(
                         (model) => model.Plan.Subscription == subscriptionId &&
-                            model.Plan.ResourceGroup == resourceGroup &&
-                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted),
+                            model.Plan.ResourceGroup == resourceGroup,
                         logger,
-                        null);
+                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
                 else
                 {
-                    return await this.planRepository.GetWhereAsync(
-                        (model) => model.Plan.Subscription == subscriptionId &&
-                            (model.IsDeleted == null || model.IsDeleted == false || model.IsDeleted == includeDeleted), logger,
-                        null);
+                    return (await this.planRepository.GetWhereAsync(
+                        (model) => model.Plan.Subscription == subscriptionId, logger,
+                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
             }
         }
@@ -190,13 +185,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             // Find model in DB
             // Location is not provided on a DELETE operation from RPSaaS,
             // thus we can only compare Name, Subscription, and ResourceGroup which should be sufficient
-            var savedModel = await this.planRepository.GetWhereAsync(
+            var savedModel = (await this.planRepository.GetWhereAsync(
                 (model) => model.Plan.Name == plan.Name &&
                            model.Plan.Subscription == plan.Subscription &&
-                           model.Plan.ResourceGroup == plan.ResourceGroup &&
-                           model.IsDeleted != true,
+                           model.Plan.ResourceGroup == plan.ResourceGroup,
                 logger,
-                null);
+                null)).Where(x=>x.IsDeleted != true);
             var modelList = savedModel.ToList().SingleOrDefault();
 
             if (modelList == null)
@@ -223,7 +217,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             var allPlans = (await this.planRepository.GetWhereAsync(
                 (plan) => plan.Plan.Subscription.StartsWith(planShard),
                 logger,
-                (_, childlogger) => {
+                (_, childlogger) =>
+                {
                     return Task.Delay(pagingDelay);
                 })).Where(t => locations.Contains(t.Plan.Location));
 
