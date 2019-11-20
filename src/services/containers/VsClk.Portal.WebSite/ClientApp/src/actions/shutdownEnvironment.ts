@@ -8,11 +8,13 @@ export async function shutdownEnvironment(id: string) {
     const dispatch = useDispatch();
     // 1. Try to shutdown environment
     try {
-        dispatch(stateChangeEnvironmentAction(id, StateInfo.ShuttingDown, true));
+        dispatch(stateChangeEnvironmentAction(id, StateInfo.ShuttingDown));
         await envRegService.shutdownEnvironment(id);
     } catch (err) {
         let e = await envRegService.getEnvironment(id);
-        dispatch(stateChangeEnvironmentAction(id, e!.state, true));
+        if (e) {
+            dispatch(stateChangeEnvironmentAction(id, e!.state));
+        }
 
         throw err;
     }

@@ -28,8 +28,8 @@ import {
     StateChangeEnvironmentAction,
 } from '../actions/environmentStateChange';
 import { isActivating } from '../utils/environmentUtils';
-import { ApplicationState } from './rootReducer';
 import { selectPlanSuccessActionType, SelectPlanSuccessAction } from '../actions/plans-actions';
+import { EnvironmentChangedAction, environmentChangedActionType } from '../actions/environmentChanged';
 
 type EnvironmentsState = {
     environments: ILocalCloudEnvironment[];
@@ -50,7 +50,8 @@ type AcceptedActions =
     | PollActivatingEnvironmentsUpdateAction
     | DeleteEnvironmentAction
     | StateChangeEnvironmentAction
-    | SelectPlanSuccessAction;
+    | SelectPlanSuccessAction
+    | EnvironmentChangedAction;
 
 const defaultState: EnvironmentsState = {
     environments: [] as ILocalCloudEnvironment[],
@@ -189,9 +190,10 @@ export function environments(
                     throw new Error(`${action.type} returned an environment we are not tracking.`);
                 }
 
+                const environments = replaceAtIndex([...state.environments], index, environment);
                 return {
                     ...state,
-                    environments: replaceAtIndex(state.environments, index, environment),
+                    environments: environments,
                     activatingEnvironments: [...state.activatingEnvironments, environment.id],
                 };
             })(state, action);
@@ -216,28 +218,47 @@ export function environments(
         case stateChangeEnvironmentActionType:
             return ((state, action) => {
                 let { activatingEnvironments } = state;
-                const { id, environmentState, isUiUpdate } = action.payload;
+                const { id, environmentState } = action.payload;
                 const index = state.environments.findIndex((e) => e.id === id);
 
                 if (index < 0) {
                     throw new Error(`${action.type} returned an environment we are not tracking.`);
                 }
 
-                const environment = {
+                let updatedEnvironment = {
                     ...state.environments[index],
                     state: environmentState,
                 };
 
-                if (!isUiUpdate && isActivating({ state: environmentState })) {
-                    // Add the environment to activating environments only when it's state has
-                    // changed in the service.
-                    activatingEnvironments = activatingEnvironments.filter((eId) => eId !== id);
-                    activatingEnvironments.push(id);
-                }
-
+                const environments = replaceAtIndex([...state.environments], index, updatedEnvironment);
                 return {
                     ...state,
-                    environments: replaceAtIndex(state.environments, index, environment),
+                    environments: environments,
+                    activatingEnvironments,
+                };
+            })(state, action);
+
+        case environmentChangedActionType:
+            return ((state, action) => {
+                let { activatingEnvironments } = state;
+                const { environment } = action.payload;
+                const index = state.environments.findIndex((e) => e.id === environment.id);
+
+                if (index < 0) {
+                    throw new Error(`${action.type} returned an environment we are not tracking.`);
+                }
+
+                if (isActivating(environment)) {
+                    // Add the environment to activating environments only when it's state has
+                    // changed in the service.
+                    activatingEnvironments = activatingEnvironments.filter((eId) => eId !== environment.id);
+                    activatingEnvironments.push(environment.id);
+                }
+
+                const environments = replaceAtIndex([...state.environments], index, environment);
+                return {
+                    ...state,
+                    environments: environments,
                     activatingEnvironments,
                 };
             })(state, action);

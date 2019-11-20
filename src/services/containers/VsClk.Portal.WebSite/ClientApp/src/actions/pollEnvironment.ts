@@ -3,7 +3,7 @@ import { useDispatch } from './middleware/useDispatch';
 import { action } from './middleware/useActionCreator';
 import { useActionContext } from './middleware/useActionContext';
 
-import { stateChangeEnvironmentAction } from './environmentStateChange';
+import { environmentChangedAction } from './environmentChanged';
 
 export const pollActivatingEnvironmentsActionType = 'async.environments.activating.poll';
 export const pollActivatingEnvironmentsUpdateActionType =
@@ -44,7 +44,7 @@ export async function pollActivatingEnvironment(id: string) {
             return;
         }
 
-        dispatch(stateChangeEnvironmentAction(id, environment.state));
+        dispatch(environmentChangedAction(environment));
     } catch {
         dispatch(pollActivatingEnvironmentUpdateAction(id));
     }

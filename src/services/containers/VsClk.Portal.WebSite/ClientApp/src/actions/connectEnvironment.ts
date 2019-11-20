@@ -27,15 +27,15 @@ export async function connectEnvironment(
     const dispatch = useDispatch();
 
     dispatch(connectEnvironmentAction(id));
+    let isSuspended = environmentState === StateInfo.Shutdown;
 
     try {
-        if (environmentState === StateInfo.Shutdown) {
-            dispatch(stateChangeEnvironmentAction(id, StateInfo.Starting, true));
+        if (isSuspended) {
+            dispatch(stateChangeEnvironmentAction(id, StateInfo.Starting));
         }
 
         const environment = await envRegService.connectEnvironment(id, environmentState);
         dispatch(connectEnvironmentSuccessAction(id));
-
         return environment;
     } catch (err) {
         if (err instanceof ServiceResponseError) {
@@ -66,10 +66,12 @@ export async function connectEnvironment(
         }
 
         // Noop
-        if (environmentState === StateInfo.Shutdown) {
+        if (isSuspended) {
             // If starting environment failed, put it to right state.
             let e = await envRegService.getEnvironment(id);
-            dispatch(stateChangeEnvironmentAction(id, e!.state, true));
+            if (e) {
+                dispatch(stateChangeEnvironmentAction(id, e.state));
+            }
         }
 
         return dispatch(connectEnvironmentFailureAction(id, err));

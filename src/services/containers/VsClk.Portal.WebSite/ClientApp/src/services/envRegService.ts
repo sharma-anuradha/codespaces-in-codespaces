@@ -166,10 +166,9 @@ export async function connectEnvironment(
         throw new Error('Configuration must be fetched before calling EnvReg service.');
     }
 
-    const { environmentRegistrationEndpoint } = configuration;
-    const webClient = useWebClient();
-
     if (state === StateInfo.Shutdown) {
+        const { environmentRegistrationEndpoint } = configuration;
+        const webClient = useWebClient();
         await webClient.post(`${environmentRegistrationEndpoint}/${id}/start`, null, {
             retryCount: 2,
         });

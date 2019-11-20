@@ -45,7 +45,14 @@ export function isNotSuspendable(environment: ILocalCloudEnvironment): boolean {
 }
 
 export function isNotConnectable({ state }: ILocalCloudEnvironment): boolean {
-    return state !== StateInfo.Available && state !== StateInfo.Shutdown;
+    return state !== StateInfo.Available &&
+        state !== StateInfo.Shutdown &&
+        state !== StateInfo.Provisioning &&
+        state !== StateInfo.Starting;
+}
+
+export function isSuspended(cloudenvironment: ILocalCloudEnvironment): boolean {
+    return cloudenvironment.state === StateInfo.Shutdown;
 }
 
 export function isActivating({ state }: Pick<ILocalCloudEnvironment | ICloudEnvironment, 'state'>) {
@@ -57,6 +64,21 @@ export function isActivating({ state }: Pick<ILocalCloudEnvironment | ICloudEnvi
 
         default:
             return false;
+    }
+}
+
+export function stateToDisplayName(state: StateInfo) {
+    switch (state) {
+        case StateInfo.Provisioning:
+            return 'Creating';
+        case StateInfo.Failed:
+            return 'Failed to Create';
+        case StateInfo.Shutdown:
+            return 'Suspended';
+        case StateInfo.ShuttingDown:
+            return 'Suspending';
+        default:
+            return state;
     }
 }
 
