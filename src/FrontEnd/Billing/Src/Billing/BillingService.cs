@@ -76,16 +76,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             await Execute(cancellationToken);
         }
 
-        protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string planShard, AzureLocation region)
+        protected override async Task ExecuteInner(IDiagnosticsLogger logger, DateTime start, DateTime end, string planShard, AzureLocation region)
         {
-            var plans = await planManager.GetPlansByShardAsync(new List<AzureLocation> { region },
-                planShard,
-                childlogger);
+            await logger.OperationScopeAsync(
+               $"{ServiceName}_begin_shard_calculations",
+               async (childLogger) =>
+               {
+                   var plans = await planManager.GetPlansByShardAsync(
+                       new List<AzureLocation> { region },
+                       planShard,
+                       childLogger);
 
-            foreach (var plan in plans)
-            {
-                await BeginAccountCalculations(plan.Plan, start, end, childlogger, region);
-            }
+                   foreach (var plan in plans)
+                   {
+                       await BeginAccountCalculations(plan.Plan, start, end, childLogger, region);
+                   }
+               });
         }
 
         /// <summary>
