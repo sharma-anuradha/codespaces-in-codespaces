@@ -1,4 +1,4 @@
-import React, { Component, FormEvent, KeyboardEvent } from 'react';
+import React, { Component, FormEvent } from 'react';
 import { connect } from 'react-redux';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
@@ -106,6 +106,11 @@ export class CreatePlanPanelComponent extends Component<
     componentDidMount() {
         this.getSubscriptions();
         this.getClosestLocation();
+        document.addEventListener('keydown', this.dismissPanel);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.dismissPanel);
     }
 
     render() {
@@ -135,7 +140,6 @@ export class CreatePlanPanelComponent extends Component<
                 type={PanelType.smallFixedFar}
                 headerText='Create a Billing Plan'
                 closeButtonAriaLabel='Close'
-                onKeyDown={this.dismissPanel}
                 onDismiss={this.onDismissPanel}
                 isFooterAtBottom={true}
                 onRenderFooterContent={this.onRenderFooterContent}
@@ -258,7 +262,7 @@ export class CreatePlanPanelComponent extends Component<
         );
     };
 
-    dismissPanel: ((event: KeyboardEvent<any>) => void) | undefined = (event) => {
+    dismissPanel = (event: KeyboardEvent) => {
         if (event.keyCode === KeyCodes.escape) {
             this.clearForm();
         }

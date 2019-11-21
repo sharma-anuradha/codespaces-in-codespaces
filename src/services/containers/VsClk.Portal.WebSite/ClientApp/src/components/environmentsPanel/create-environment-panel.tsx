@@ -1,4 +1,4 @@
-import React, { Component, KeyboardEvent, SyntheticEvent, ReactElement, Fragment } from 'react';
+import React, { Component, SyntheticEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
 
 import { PrimaryButton, DefaultButton, IconButton } from 'office-ui-fabric-react/lib/Button';
@@ -361,13 +361,18 @@ export class CreateEnvironmentPanelView extends Component<
         if (!availableSkus) {
             // Forces a refresh of the plan list and selects a default one
             getPlans();
-        }
+        }   
+    }
+
+    componentDidMount() {
+        document.addEventListener('keydown', this.onKeyDownPanel);
     }
 
     componentWillUnmount() {
         if (this.state.authenticationAttempt) {
             this.state.authenticationAttempt.dispose();
         }
+        document.removeEventListener('keydown', this.onKeyDownPanel);
     }
 
     render() {
@@ -376,7 +381,6 @@ export class CreateEnvironmentPanelView extends Component<
                 isOpen={true}
                 type={PanelType.smallFixedFar}
                 isFooterAtBottom={true}
-                onKeyDown={this.onKeyDownPanel}
                 onDismiss={this.dismissPanel}
                 headerText='Create Environment'
                 closeButtonAriaLabel='Close'
@@ -620,13 +624,13 @@ export class CreateEnvironmentPanelView extends Component<
         );
     };
 
-    private onKeyDownPanel: ((event: KeyboardEvent<any>) => void) | undefined = (event) => {
+    private onKeyDownPanel = (event: KeyboardEvent) => {
         if (event.keyCode === KeyCodes.escape) {
             this.dismissPanel();
         }
     };
 
-    private submitForm = async (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    private submitForm = async (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (event.keyCode === KeyCodes.enter) {
             await this.createEnvironment(event);
         }
@@ -634,7 +638,6 @@ export class CreateEnvironmentPanelView extends Component<
 
     private dismissPanel = () => {
         this.clearForm();
-
         this.props.hidePanel();
     };
 
