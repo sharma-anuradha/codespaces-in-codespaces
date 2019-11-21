@@ -634,6 +634,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     // Remain in provisioning state until _callback is invoked.
                     case CloudEnvironmentState.Provisioning:
+
+                        // Timeout if environment has stayed in provisioning state for more than an hour
+                        var timeInProvisioningStateInMin = (DateTime.UtcNow - cloudEnvironment.LastStateUpdated).TotalMinutes;
+                        if (timeInProvisioningStateInMin > 60)
+                        {
+                            newState = CloudEnvironmentState.Failed;
+                        }
+
+                        logger.AddCloudEnvironment(cloudEnvironment)
+                              .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetEnvironmentAsync)), $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes ");
                         break;
 
                     // Swap between available and awaiting based on the workspace status
