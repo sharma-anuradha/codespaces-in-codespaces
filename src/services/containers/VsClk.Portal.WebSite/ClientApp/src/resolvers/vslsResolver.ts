@@ -119,6 +119,7 @@ export class VSLSWebSocket implements IWebSocket {
                 connectionCorrelationId: this.correlationId,
                 isFirstConnection: connectionNumber === 0,
                 connectionNumber: connectionNumber++,
+                environmentType: this.environmentInfo.type,
             });
             this.channel = channel;
         } catch (err) {

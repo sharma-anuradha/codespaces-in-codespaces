@@ -1,5 +1,6 @@
 import { PropertiesTelemetryEvent, ExceptionTelemetryEvent } from './TelemetryEvents';
 import { telemetryCore } from '../../utils/telemetry/TelemetryService';
+import { EnvironmentType } from '../../interfaces/cloudenvironment';
 
 type SendTelemetryProps =
     | ['vsonline/cipher/decrypt', IDecryptionTelemetryEventProperties]
@@ -49,4 +50,5 @@ interface IVSCodeConnectProperties {
     connectionCorrelationId: string;
     isFirstConnection: boolean;
     connectionNumber: number;
+    environmentType: EnvironmentType;
 }
