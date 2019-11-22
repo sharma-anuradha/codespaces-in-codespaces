@@ -69,10 +69,12 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
 
     private interval: ReturnType<typeof setInterval> | undefined;
 
-    constructor(props: WorkbenchProps) {
-        super(props);
-        this.handleClickToRetry = this.handleClickToRetry.bind(this);
-    }
+    // When the environment is being started from suspended state,
+    // and connecting to environment fails, the connectEnvironment action
+    // fires a stateChange event to reset UI state from Starting to Suspended.
+    // We do not want this component to try connecting to environment again
+    // in this case. So we handle that here to keep track of the async operation.
+    private isConnecting: boolean = false;
 
     componentDidUpdate() {
         const { environmentInfo } = this.props;
@@ -105,12 +107,15 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
             return;
         }
 
-        if (isSuspended(environmentInfo)) {
+        if (!this.isConnecting && isSuspended(environmentInfo)) {
+            this.isConnecting = true;
             this.props.connectEnvironment(environmentInfo.id!, environmentInfo.state)
                 .catch(error => {
                     this.setState({ connectError: error });
+                })
+                .finally(() => {
+                    this.isConnecting = false;
                 });
-
             const actionContext = useActionContext();
             this.correlationId = actionContext.__id;
         } else if (isActivating(environmentInfo)) {
@@ -162,7 +167,7 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
         let messageElement: JSX.Element | null = null;
         if (this.state !== null && this.state.connectError !== null) {
             message = `Connecting to environment ${environment.friendlyName} failed. ${this.state.connectError}`;
-            messageElement = <PrimaryButton onClick={this.handleClickToRetry}>Retry</PrimaryButton>;
+            messageElement = <PrimaryButton onClick={() => this.handleClickToRetry()}>Retry</PrimaryButton>;
         } else {
             message = `Environment ${environment.friendlyName} is ${stateToDisplayName(environment.state).toLocaleLowerCase()}. Please wait while we connect to your environment.`;
             if (isActivating(environment)) {
