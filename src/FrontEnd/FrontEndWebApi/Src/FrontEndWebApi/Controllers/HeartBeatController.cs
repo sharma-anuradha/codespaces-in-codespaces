@@ -66,7 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();
 
-            logger.AddComputeResourceId(heartBeat.ResourceId);
+            logger.AddComputeResourceId(heartBeat.ResourceId)
+                  .FluentAddBaseValue(nameof(heartBeat.AgentVersion), heartBeat.AgentVersion);
 
             try
             {

@@ -880,6 +880,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             var oldState = cloudEnvironment.State;
+            var oldStateUpdated = cloudEnvironment.LastStateUpdated;
+            logger.AddCloudEnvironment(cloudEnvironment)
+                  .FluentAddValue("OldState", oldState)
+                  .FluentAddValue("OldStateUpdated", oldStateUpdated);
 
             VsoPlanInfo plan;
             if (cloudEnvironment.PlanId == default)
@@ -924,9 +928,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             cloudEnvironment.LastStateUpdateReason = reason;
             cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
 
-            logger.AddCloudEnvironment(cloudEnvironment)
-                  .FluentAddValue("OldState", oldState)
-                  .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
+            logger.LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
         }
 
         private async Task<ConnectionInfo> CreateWorkspace(
