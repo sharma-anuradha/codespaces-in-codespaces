@@ -10,7 +10,13 @@ import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 
 import { ApplicationState } from '../../reducers/rootReducer';
-import { isEnvironmentAvailable, isNotAvailable, isActivating, isSuspended, stateToDisplayName } from '../../utils/environmentUtils';
+import {
+    isEnvironmentAvailable,
+    isNotAvailable,
+    isActivating,
+    isSuspended,
+    stateToDisplayName,
+} from '../../utils/environmentUtils';
 
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { credentialsProvider } from '../../providers/credentialsProvider';
@@ -28,6 +34,7 @@ import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-we
 import { telemetry } from '../../utils/telemetry';
 import { defaultConfig } from '../../services/configurationService';
 import { createUniqueId } from '../../dependencies';
+import { PageNotFound } from '../pageNotFound/pageNotFound';
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { Stack, Icon, PrimaryButton } from 'office-ui-fabric-react';
 import { Loader } from '../loader/loader';
@@ -43,9 +50,15 @@ export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     token: ITokenWithMsalAccount | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
     params: URLSearchParams;
+    correlationId?: string | null;
+    isValidEnvironmentFound?: boolean;
     connectError: string | null;
-    connectEnvironment: (...params: Parameters<typeof connectEnvironment>) => ReturnType<typeof connectEnvironment>;
-    pollEnvironment: (...params: Parameters<typeof pollActivatingEnvironment>) => ReturnType<typeof pollActivatingEnvironment>;
+    connectEnvironment: (
+        ...params: Parameters<typeof connectEnvironment>
+    ) => ReturnType<typeof connectEnvironment>;
+    pollEnvironment: (
+        ...params: Parameters<typeof pollActivatingEnvironment>
+    ) => ReturnType<typeof pollActivatingEnvironment>;
 }
 
 const managementFavicon = 'favicon.ico';
@@ -109,8 +122,9 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
 
         if (!this.isConnecting && isSuspended(environmentInfo)) {
             this.isConnecting = true;
-            this.props.connectEnvironment(environmentInfo.id!, environmentInfo.state)
-                .catch(error => {
+            this.props
+                .connectEnvironment(environmentInfo.id!, environmentInfo.state)
+                .catch((error) => {
                     this.setState({ connectError: error });
                 })
                 .finally(() => {
@@ -146,12 +160,10 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
         }
     }
 
-    getLandingPageIfNotReady(environment: ILocalCloudEnvironment | undefined): JSX.Element | undefined {
-        if (!environment) {
-            return undefined;
-        }
-
-        if (isNotAvailable(environment)) {
+    getLandingPageIfNotReady(
+        environment: ILocalCloudEnvironment | undefined
+    ): JSX.Element | undefined {
+        if (environment && isNotAvailable(environment)) {
             return this.getEnvironmentStatusPage(environment);
         }
 
@@ -167,9 +179,14 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
         let messageElement: JSX.Element | null = null;
         if (this.state !== null && this.state.connectError !== null) {
             message = `Connecting to environment ${environment.friendlyName} failed. ${this.state.connectError}`;
-            messageElement = <PrimaryButton onClick={() => this.handleClickToRetry()}>Retry</PrimaryButton>;
+            messageElement = (
+                // tslint:disable-next-line: react-this-binding-issue
+                <PrimaryButton onClick={() => this.handleClickToRetry()}>Retry</PrimaryButton>
+            );
         } else {
-            message = `Environment ${environment.friendlyName} is ${stateToDisplayName(environment.state).toLocaleLowerCase()}. Please wait while we connect to your environment.`;
+            message = `Environment ${environment.friendlyName} is ${stateToDisplayName(
+                environment.state
+            ).toLocaleLowerCase()}. Please wait while we connect to your environment.`;
             if (isActivating(environment)) {
                 messageElement = <Loader />;
             }
@@ -184,21 +201,15 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
                     tokens={{ childrenGap: '20' }}
                 >
                     <Stack.Item>
-                        <Text>
-                            {message}
-                        </Text>
+                        <Text>{message}</Text>
                     </Stack.Item>
-                    <Stack.Item>
-                        {messageElement}
-                    </Stack.Item>
+                    <Stack.Item>{messageElement}</Stack.Item>
                     <Stack.Item>
                         <Link href={environmentsPath}>
                             <span>
                                 <span>Back to environments</span>
                                 <span>
-                                    <Icon
-                                        iconName='ChevronRight'
-                                    />
+                                    <Icon iconName='ChevronRight' />
                                 </span>
                             </span>
                         </Link>
@@ -267,15 +278,12 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
         const resolveCommonTelemetryProperties = () => {
             const vsoContextProperties = telemetry.getContext();
             const keys = Object.keys(vsoContextProperties) as (keyof typeof vsoContextProperties)[];
-            return keys.reduce(
-                (commonProperties, property) => {
-                    return {
-                        ...commonProperties,
-                        [`vso.${property}`]: vsoContextProperties[property],
-                    };
-                },
-                {} as { [key: string]: any }
-            );
+            return keys.reduce((commonProperties, property) => {
+                return {
+                    ...commonProperties,
+                    [`vso.${property}`]: vsoContextProperties[property],
+                };
+            }, {} as { [key: string]: any });
         };
 
         const workspaceProvider = new WorkspaceProvider(this.props.params, environmentInfo);
@@ -310,7 +318,7 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
 
     private workbenchRef: HTMLDivElement | null = null;
 
-    render() {
+    private renderWorkBench() {
         const isLoading = this.getLandingPageIfNotReady(this.props.environmentInfo);
         if (isLoading) {
             return isLoading;
@@ -329,6 +337,16 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
             </div>
         );
     }
+
+    render() {
+        const content =
+            this.props.isValidEnvironmentFound === false ? (
+                <PageNotFound />
+            ) : (
+                this.renderWorkBench()
+            );
+        return <div className='connect-to-environment'>{content}</div>;
+    }
 }
 
 const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: string }>) => {
@@ -345,11 +363,14 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         environmentInfo,
         params,
         liveShareEndpoint,
+        correlationId: params.get('correlationId'),
+        isValidEnvironmentFound:
+            !environmentInfo && state.environments.isLoading === false ? false : undefined,
     };
 };
 
 const mapDispatch = {
-    connectEnvironment: connectEnvironment,
+    connectEnvironment,
     pollEnvironment: pollActivatingEnvironment,
 };
 

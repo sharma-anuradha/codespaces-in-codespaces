@@ -3,13 +3,12 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
 import { PortalLayout } from '../portalLayout/portalLayout';
 import errorUfo from './error-ufo-404.svg';
 import '../portalLayout/portalLayout.css';
 import './pageNotFound.css';
 
-export function PageNotFound(props: RouteComponentProps) {
+export function PageNotFound() {
     return (
         <PortalLayout>
             <Stack
