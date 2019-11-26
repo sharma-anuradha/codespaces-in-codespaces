@@ -691,16 +691,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(logger, nameof(logger));
+            var environmentNameInLowerCase = environmentName?.Trim()?.ToLowerInvariant();
 
             if (userId == null)
             {
                 Requires.NotNull(planId, nameof(planId));
 
-                if (!string.IsNullOrEmpty(environmentName))
+                if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
                     return await CloudEnvironmentRepository.GetWhereAsync(
                         (cloudEnvironment) => cloudEnvironment.PlanId == planId &&
-                            cloudEnvironment.FriendlyName == environmentName.Trim(),
+                                              cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
                         logger);
                 }
                 else
@@ -711,12 +712,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
             else if (planId == null)
             {
-                if (!string.IsNullOrEmpty(environmentName))
+                if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
                     Requires.NotNull(userId, nameof(userId));
                     return await CloudEnvironmentRepository.GetWhereAsync(
                         (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
-                            cloudEnvironment.FriendlyName == environmentName.Trim(),
+                                              cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
                         logger);
                 }
                 else
@@ -727,20 +728,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
             else
             {
-                if (!string.IsNullOrEmpty(environmentName))
+                if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
                     Requires.NotNull(userId, nameof(userId));
                     return await CloudEnvironmentRepository.GetWhereAsync(
                         (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
-                            cloudEnvironment.PlanId == planId &&
-                            cloudEnvironment.FriendlyName == environmentName.Trim(),
+                                              cloudEnvironment.PlanId == planId &&
+                                              cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
                         logger);
                 }
                 else
                 {
                     return await CloudEnvironmentRepository.GetWhereAsync(
                         (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
-                            cloudEnvironment.PlanId == planId,
+                                              cloudEnvironment.PlanId == planId,
                         logger);
                 }
             }

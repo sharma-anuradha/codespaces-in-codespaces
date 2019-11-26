@@ -16,6 +16,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// </summary>
     public class CloudEnvironment : TaggedEntity
     {
+
+        private string friendlyName;
+        private string friendlyNameInLowerCase;
+
         /// <summary>
         /// Gets or sets the environment type.
         /// </summary>
@@ -26,7 +30,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets the environment friendly name.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "friendlyName")]
-        public string FriendlyName { get; set; }
+        public string FriendlyName
+        {
+            get
+            {
+                return this.friendlyName;
+            }
+
+            set
+            {
+                this.friendlyName = value;
+                this.friendlyNameInLowerCase = value?.ToLowerInvariant();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the environment friendly name in lowercase
+        /// This property is used to validating the environment name irrespective of case.
+        /// This helps for a cost efficient query during lookups.
+        /// It always sets to Friendly name value just to be in sync
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "friendlyNameInLowerCase")]
+        public string FriendlyNameInLowerCase
+        {
+            get
+            {
+                return this.friendlyNameInLowerCase ?? FriendlyName?.ToLowerInvariant();
+            }
+
+            set
+            {
+                // Intentional no-op.
+                // The value must be set via FriendlyName, and not independently so that they will never be out of synch.
+                // The no-op setter allows the data entity serializer/deserializer to operate correctly.
+            }
+        }
 
         /// <summary>
         /// Gets or sets the created date and time.
