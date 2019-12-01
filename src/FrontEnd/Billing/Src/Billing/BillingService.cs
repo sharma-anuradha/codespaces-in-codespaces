@@ -311,7 +311,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
 
             Logger.FluentAddValue("CloudEnvironmentId", environmentIdentity)
-                  .FluentAddValue("EnvironmentSku", sku)
+                  .FluentAddValue("EnvironmentSku", sku.ToString())
                   .FluentAddValue("Location", region.ToString())
                   .FluentAddValue("BillEndingTime", end.ToString())
                   .LogInfo("billing_aggregate_environment_summary");
