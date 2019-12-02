@@ -27,22 +27,10 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     public static class AuthenticateProfileServiceExtension
     {
-        /// <summary>
-        /// Number of token expired counter to log
-        /// </summary>
-        private const int LogTokenExpiredCounter = 5000;
-
-        /// <summary>
-        /// Number of token expired counter to log
-        /// </summary>
-        private const int LogAuthFailedCounter = 5000;
-
         private const string MethodAuthenticateProfileScope = "AuthenticateProfile";
         private const string MethodAuthenticateFailedScope = "AuthenticateFailed";
         private const string MethodAuthenticateExpiredScope = "AuthenticateExpired";
-
-        private static int authFailedCounter = 0;
-        private static int tokenExpiredCounter = 0;
+        private const string ValidTo = "ValidTo";
 
         public static void AddProfileServiceJwtBearer(
             this IServiceCollection services,
@@ -110,7 +98,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 // purge old tokens
                 var expiredThreshold = DateTime.Now.Subtract(TimeSpan.FromSeconds(30));
                 var expiredCacheItemsKeys = tokenCache.Where(kvp => kvp.Value.Item1 < expiredThreshold).Select(kvp => kvp.Key).ToArray();
-                foreach(var key in expiredCacheItemsKeys)
+                foreach (var key in expiredCacheItemsKeys)
                 {
                     tokenCache.TryRemove(key, out var itemRemoved);
                 }
@@ -162,59 +150,49 @@ namespace Microsoft.VsCloudKernel.SignalService
             catch (Exception error)
             {
                 var jwtSecurityToken = GetSecurityToken(token);
-                if (isTokenExpired || jwtSecurityToken?.ValidTo <= DateTime.UtcNow)
+                var validTo = jwtSecurityToken?.ValidTo;
+
+                if (isTokenExpired || validTo <= DateTime.UtcNow)
                 {
-                    if ((System.Threading.Interlocked.Increment(ref tokenExpiredCounter) % LogTokenExpiredCounter) == 0)
+                    using (logger.BeginScope(
+                        (LoggerScopeHelpers.MethodScope, MethodAuthenticateExpiredScope),
+                        (ValidTo, validTo)))
                     {
-                        using (logger.BeginMethodScope(MethodAuthenticateExpiredScope))
-                        {
-                            logger.LogWarning($"Token:[{ToString(jwtSecurityToken)}] expired");
-                        }
+                        logger.LogDebug($"Token expired");
                     }
                 }
                 else
                 {
                     // auth failed with a non-expired reason
-                    if ((System.Threading.Interlocked.Increment(ref authFailedCounter) % LogAuthFailedCounter) == 0)
+                    using (logger.BeginScope(
+                        (LoggerScopeHelpers.MethodScope, MethodAuthenticateFailedScope),
+                        (ValidTo, validTo)))
                     {
-                        using (logger.BeginMethodScope(MethodAuthenticateFailedScope))
-                        {
-                            logger.LogError(error, $"Error when retrieving profile from Url:'{authenticateProfileServiceUri}' token:[{ToString(jwtSecurityToken)}]");
-                        }
+                        logger.LogError(error, $"Error retrieving profile from Url:'{authenticateProfileServiceUri}'");
                     }
                 }
 
                 context.Fail(error);
             }
-        }
-
-        private static bool IsTokenExpired(HttpResponseMessage response)
-        {
-            const string ExpiredParameter = "The token is expired";
-            return response.Headers.WwwAuthenticate.Any(h => h.Scheme == "Bearer" && h.Parameter?.Contains(ExpiredParameter) == true);
-        }
-
-        private static string ToString(JwtSecurityToken jwtToken)
-        {
-            if (jwtToken == null)
-            {
-                return "null";
             }
 
-            return $"id:{jwtToken.Id} issuer:{jwtToken.Issuer}  valid to:{jwtToken.ValidTo}";
-        }
-
-        private static JwtSecurityToken GetSecurityToken(string token)
-        {
-            try
+            private static bool IsTokenExpired(HttpResponseMessage response)
             {
-                var tokenDecoder = new JwtSecurityTokenHandler();
-                return (JwtSecurityToken)tokenDecoder.ReadToken(token);
+                const string ExpiredParameter = "The token is expired";
+                return response.Headers.WwwAuthenticate.Any(h => h.Scheme == "Bearer" && h.Parameter?.Contains(ExpiredParameter) == true);
             }
-            catch
+
+            private static JwtSecurityToken GetSecurityToken(string token)
             {
-                return null;
+                try
+                {
+                    var tokenDecoder = new JwtSecurityTokenHandler();
+                    return (JwtSecurityToken)tokenDecoder.ReadToken(token);
+                }
+                catch
+                {
+                    return null;
+                }
             }
         }
     }
-}
