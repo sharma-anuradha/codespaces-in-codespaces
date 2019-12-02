@@ -883,8 +883,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var oldState = cloudEnvironment.State;
             var oldStateUpdated = cloudEnvironment.LastStateUpdated;
             logger.AddCloudEnvironment(cloudEnvironment)
-                  .FluentAddValue("OldState", oldState)
-                  .FluentAddValue("OldStateUpdated", oldStateUpdated);
+                  .FluentAddBaseValue("OldState", oldState)
+                  .FluentAddBaseValue("OldStateUpdated", oldStateUpdated);
 
             VsoPlanInfo plan;
             if (cloudEnvironment.PlanId == default)
