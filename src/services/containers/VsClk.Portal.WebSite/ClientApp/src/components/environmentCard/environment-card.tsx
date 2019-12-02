@@ -1,12 +1,4 @@
-import React, {
-    useState,
-    useEffect,
-    useCallback,
-    useMemo,
-    Fragment,
-    MouseEvent,
-    KeyboardEvent,
-} from 'react';
+import React, { useState, useCallback } from 'react';
 import moment from 'moment';
 
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
@@ -21,7 +13,6 @@ import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/F
 
 import { ILocalCloudEnvironment, StateInfo } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
-import { useActionContext } from '../../actions/middleware/useActionContext';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 import {
     environmentIsALie,
@@ -38,13 +29,10 @@ import { createTrace } from '../../utils/createTrace';
 import { useSelector } from 'react-redux';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ActivePlanInfo } from '../../reducers/plans-reducer';
-import { CancellationTokenSource, CancellationToken } from 'vscode-jsonrpc';
-import { isDefined } from '../../utils/isDefined';
-import { isMacOs } from '../../utils/detection';
-import { createUniqueId } from '../../dependencies';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react';
 
 const trace = createTrace('environment-card');
+const friendlyNameDisplayLength = 20;
 export interface EnvironmentCardProps {
     className?: string;
     environment: ILocalCloudEnvironment;
@@ -119,11 +107,7 @@ type ActionProps = {
 };
 
 // tslint:disable-next-line: max-func-body-length
-const Actions = ({
-    environment,
-    deleteEnvironment,
-    shutdownEnvironment,
-}: ActionProps) => {
+const Actions = ({ environment, deleteEnvironment, shutdownEnvironment }: ActionProps) => {
     const [deleteDialogHidden, setDeleteDialogHidden] = useState(true);
     const [unsuccessfulUrlDialogHidden, setUnsuccessfulUrlDialogHidden] = useState(true);
     const [shutdownDialogHidden, setShutdownDialogHidden] = useState(true);
@@ -174,7 +158,7 @@ const Actions = ({
                             name: 'Connect',
                             disabled:
                                 environmentIsALie(environment) || isNotConnectable(environment),
-                                href: `environment/${environment.id!}`,
+                            href: `environment/${environment.id!}`,
                         },
                         {
                             key: 'shutdown',
@@ -386,6 +370,7 @@ type EnvironmentNameProps = {
     environment: ILocalCloudEnvironment;
 };
 function EnvironmentName({ environment }: Readonly<EnvironmentNameProps>) {
+    const shortFriendlyName = getShortFriendlyName(environment.friendlyName);
     const environmentNameText = (
         <Stack horizontal verticalAlign='center'>
             <Icon
@@ -394,7 +379,16 @@ function EnvironmentName({ environment }: Readonly<EnvironmentNameProps>) {
                 className='environment-card__environment-icon'
             />
             <div className='environment-card__environment-name'>
-                <Text variant='large'>{environment.friendlyName}</Text>
+                <Text
+                    variant='large'
+                    title={
+                        shortFriendlyName === environment.friendlyName
+                            ? undefined
+                            : environment.friendlyName
+                    }
+                >
+                    {shortFriendlyName}
+                </Text>
             </div>
             <Status environment={environment} />
         </Stack>
@@ -409,6 +403,14 @@ function EnvironmentName({ environment }: Readonly<EnvironmentNameProps>) {
             {environmentNameText}
         </Link>
     );
+}
+
+function getShortFriendlyName(friendlyName: string): string {
+    if (friendlyName.length > friendlyNameDisplayLength) {
+        return `${friendlyName.substr(0, friendlyNameDisplayLength)}...`;
+    }
+
+    return friendlyName;
 }
 
 // tslint:disable-next-line: max-func-body-length
@@ -439,8 +441,8 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
     const indicator = isActivating(props.environment) ? (
         <ProgressIndicator className={'environment-card__thin-progress'} />
     ) : (
-            <ThinSeparator />
-        );
+        <ThinSeparator />
+    );
 
     return (
         <Stack

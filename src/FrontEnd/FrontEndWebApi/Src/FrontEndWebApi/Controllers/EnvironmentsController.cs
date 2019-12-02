@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -271,6 +272,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(createEnvironmentInput, nameof(createEnvironmentInput));
             ValidationUtil.IsRequired(createEnvironmentInput.FriendlyName, nameof(createEnvironmentInput.FriendlyName));
             ValidationUtil.IsRequired(createEnvironmentInput.Type, nameof(createEnvironmentInput.Type));
+
+            // Regex pattern for Azure Resources naming
+            // https://docs.microsoft.com/en-us/rest/api/resources/resourcegroups/createorupdate
+            var regex = new Regex(@"^[-\w\._\(\)]{1,90}$", RegexOptions.IgnoreCase);
+            ValidationUtil.IsTrue(regex.IsMatch(envName));
 
             // SkuPlan ID required and valid.
             ValidationUtil.IsRequired(createEnvironmentInput.PlanId, nameof(createEnvironmentInput.PlanId));

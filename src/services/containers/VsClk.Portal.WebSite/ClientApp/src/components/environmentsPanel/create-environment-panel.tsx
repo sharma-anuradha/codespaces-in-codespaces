@@ -153,6 +153,9 @@ export const validationMessages = {
     valid: '',
     testFailed: 'Failed to check repository access, please try again.',
     nameIsRequired: 'Name is required.',
+    nameIsTooLong: 'Maximum name length is 90.',
+    nameIsInvalid:
+        'Invalid characters. The name can include alphanumeric, underscore, parentheses, hyphen and period.',
     unableToConnect: 'Unable to connect to this repository. Create an empty environment.',
     invalidGitUrl: 'We are unable to clone this repository automatically.',
     noAccess:
@@ -846,8 +849,18 @@ export class CreateEnvironmentPanelView extends Component<
     };
 
     private onGetErrorMessageFriendlyName = (value: string) => {
-        if (value.trim().length === 0) {
+        value = value.trim();
+
+        // Regex pattern for Azure Resources naming
+        // https://docs.microsoft.com/en-us/rest/api/resources/resourcegroups/createorupdate
+        const regex = /^[-\w\._\(\)]+$/g;
+
+        if (value.length === 0) {
             return validationMessages.nameIsRequired;
+        } else if (value.length > 90) {
+            return validationMessages.nameIsTooLong;
+        } else if (!regex.test(value)) {
+            return validationMessages.nameIsInvalid;
         }
     };
 
