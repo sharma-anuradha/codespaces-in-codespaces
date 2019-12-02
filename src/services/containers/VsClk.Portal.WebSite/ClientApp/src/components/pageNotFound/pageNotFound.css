@@ -24,23 +24,3 @@
 .page-not-found__subtitle {
    font-size: 1.8rem;
 }
-
-.page-not-found > .page-not-found__back-to-wrapper {
-   margin-top: 3rem;
-}
-
-.page-not-found__back-to {
-   display: inline-block;
-}
-
-.page-not-found__back-to + .page-not-found__back-to {
-   margin-left: 3rem;
-}
-
-.page-not-found__greater-than-button {
-   font-size: 1.1rem;
-   width: 1.1rem;
-   height: 1.1rem;
-   text-align: center;
-   vertical-align: middle;
-}

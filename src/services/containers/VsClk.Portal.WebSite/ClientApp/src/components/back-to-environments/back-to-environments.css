@@ -1,0 +1,19 @@
+.back-to-env__back-to-wrapper {
+    margin-top: 3rem;
+ }
+ 
+ .back-to-env__back-to {
+    display: inline-block;
+ }
+ 
+ .back-to-env__back-to + .back-to-env__back-to {
+    margin-left: 3rem;
+ }
+ 
+ .greater-than-button {
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    text-align: center;
+    vertical-align: middle !important;
+ }

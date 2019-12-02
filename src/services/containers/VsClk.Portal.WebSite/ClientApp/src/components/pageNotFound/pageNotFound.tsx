@@ -1,11 +1,10 @@
 import { Image, Stack, StackItem } from 'office-ui-fabric-react';
-import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import React from 'react';
 import { PortalLayout } from '../portalLayout/portalLayout';
-import errorUfo from './error-ufo-404.svg';
+import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environments';
 import '../portalLayout/portalLayout.css';
+import errorUfo from './error-ufo-404.svg';
 import './pageNotFound.css';
 
 export function PageNotFound() {
@@ -25,17 +24,7 @@ export function PageNotFound() {
                 </Stack.Item>
 
                 <Stack.Item className='page-not-found__back-to-wrapper'>
-                    <Link className='page-not-found__back-to-wrapper' href={'/environments'}>
-                        <span className='page-not-found__back-to'>
-                            <span>Back to environments</span>
-                            <span>
-                                <Icon
-                                    iconName='ChevronRight'
-                                    className='page-not-found__greater-than-button'
-                                />
-                            </span>
-                        </span>
-                    </Link>
+                    <BackToEnvironmentsLink />
                 </Stack.Item>
 
                 <StackItem>

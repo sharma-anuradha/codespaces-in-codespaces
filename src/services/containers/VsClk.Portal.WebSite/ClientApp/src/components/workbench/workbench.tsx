@@ -36,14 +36,13 @@ import { defaultConfig } from '../../services/configurationService';
 import { createUniqueId } from '../../dependencies';
 import { PageNotFound } from '../pageNotFound/pageNotFound';
 import { PortalLayout } from '../portalLayout/portalLayout';
-import { Stack, Icon, PrimaryButton } from 'office-ui-fabric-react';
+import { Stack, PrimaryButton } from 'office-ui-fabric-react';
 import { Loader } from '../loader/loader';
-import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { pollActivatingEnvironment } from '../../actions/pollEnvironment';
-import { environmentsPath } from '../../routerPaths';
 import { useActionContext } from '../../actions/middleware/useActionContext';
+import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environments';
 
 export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareEndpoint: string;
@@ -63,6 +62,7 @@ export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
 
 const managementFavicon = 'favicon.ico';
 const vscodeFavicon = 'static/web-standalone/favicon.ico';
+
 function updateFavicon(isMounting: boolean = true) {
     const link = document.querySelector("link[rel='shortcut icon']");
     if (link) {
@@ -160,9 +160,8 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
         }
     }
 
-    getLandingPageIfNotReady(
-        environment: ILocalCloudEnvironment | undefined
-    ): JSX.Element | undefined {
+    getLandingPageIfNotReady(environment?: ILocalCloudEnvironment): JSX.Element | undefined {
+        // environment is present but its not in available state.
         if (environment && isNotAvailable(environment)) {
             return this.getEnvironmentStatusPage(environment);
         }
@@ -205,14 +204,7 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
                     </Stack.Item>
                     <Stack.Item>{messageElement}</Stack.Item>
                     <Stack.Item>
-                        <Link href={environmentsPath}>
-                            <span>
-                                <span>Back to environments</span>
-                                <span>
-                                    <Icon iconName='ChevronRight' />
-                                </span>
-                            </span>
-                        </Link>
+                        <BackToEnvironmentsLink />
                     </Stack.Item>
                 </Stack>
             </PortalLayout>
