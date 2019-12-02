@@ -28,6 +28,8 @@ if ($null -eq $SourceImage) {
 if ($SourceImage -is [object[]]) {
     throw "Found more than one image named $ImageName in $SourceSubscription subscription"
 }
+$TagNames = $SourceImage.tags | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+Write-Host "Found $($TagNames -join ' & ') Tags in Source Image"
 
 # Download and extract the latest v10 version of azCopy to our work folder
 $AzCopyZipPath = Join-Path $WorkPath "azCopy.zip"
@@ -44,12 +46,7 @@ $TargetSubscription = "vsclk-core-$Environment"
 $TargetGroupName = "vsclk-online-$Environment-images-$RegionCode"
 $TempStorageName = "$ImageName$Environment$RegionCode".ToLower()
 Write-Host "Create $TempStorageName Storage Account"
-# Setting $ErrorActionPreference to Continue for the next command because there's a bug in the Azure CLI that causes a warning to become an error:
-# https://developercommunity.visualstudio.com/content/problem/752118/az-cli-reports-warnings-that-breaks-releases.html.
-# If it really fails then the command after that will fail so the script will end as it should.
-$ErrorActionPreference = 'Continue'
 $Storage = az storage account create -n $TempStorageName -g $TargetGroupName -l $TargetLocation --subscription $TargetSubscription --kind StorageV2 --sku Premium_LRS --https-only true | ConvertFrom-Json
-$ErrorActionPreference = 'Stop'
 $Storage
 
 $TempContainerName = "snapshot"
@@ -70,6 +67,10 @@ $Snapshot
 
 Write-Host "Create $ImageName Image"
 az image create -n $ImageName -g $TargetGroupName -l $TargetLocation --os-type $SourceImage.storageProfile.osDisk.osType --source $Snapshot.id --subscription $TargetSubscription
+$TagNames | ForEach-Object {
+    Write-Host "Create $_ Image Tag"
+    az image update -n $ImageName -g $TargetGroupName --set "tags.$_=$($SourceImage.tags.$_)" --subscription $TargetSubscription
+}
 
 Write-Host "Remove $SnapshotName"
 az snapshot revoke-access -n $SnapshotName -g $SourceImage.resourceGroup
@@ -83,6 +84,10 @@ $ImageDefinitionName = 'windows'
 $ImageGalleryName = "gallery_$RegionCode"
 Write-Host "Create Image Version $ImageVersion for $ImageName"
 az sig image-version create --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --managed-image $ImageName --location $TargetLocation --target-regions $TargetLocation --subscription $TargetSubscription
+$TagNames | ForEach-Object {
+    Write-Host "Create $_ Image Version Tag"
+    az sig image-version update --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --set "tags.$_=$($SourceImage.tags.$_)" --subscription $TargetSubscription --no-wait
+}
 
 # In the image pipeline (https://dev.azure.com/devdiv/OnlineServices/_releaseDefinition?definitionId=83&_a=definition-pipeline) we set variables to determine the replica count for each location.
 # These are named ReplicaCount.{location} and ADO makes these available to scripts in the pipe as env vars named REPLICACOUNT_{location}.
