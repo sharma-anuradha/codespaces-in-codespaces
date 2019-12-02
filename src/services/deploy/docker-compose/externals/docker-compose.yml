@@ -1,24 +1,24 @@
 version: '3'
 
 # This file defines local image names for external images
-# The base_image variable is used by the Dockerfile 
-# This pattern allows base_image to be a remote @sha reference 
+# The base_image variable is used by the Dockerfile
+# This pattern allows base_image to be a remote @sha reference
 # and results in the local image and tag listed in the image property.
 
-# The external images docker-compose file is separate from the service containers because we use slighly 
-# different options in the build pipeline task. 
+# The external images docker-compose file is separate from the service containers because we use slighly
+# different options in the build pipeline task.
 # The external images do not get tagged with the external registry name at docker-compose build time.
 # The external images do not get pushed to the host registry; they are consumed locally for building the
 # service images that do get pushed.
 
 services:
   # See https://hub.docker.com/_/microsoft-dotnet-core-aspnet/
-  microsoft_dotnet_core_aspnet_2_2_3_alpine_3_9:
+  microsoft_dotnet_core_aspnet_2_2_7_alpine_3_9:
     # This image tag will be referenced in other Dockerfile FROM clauses.
-    image: microsoft_dotnet_core/aspnet:2.2.3-alpine3.9
+    image: microsoft_dotnet_core/aspnet:2.2.7-alpine3.9
     build:
       context: .
       dockerfile: Dockerfile
       args:
       # This image is used to pull from an external Docker Registry (MCR) into our "local" repository (ACR).
-      - base_image=mcr.microsoft.com/dotnet/core/aspnet:2.2.3-alpine3.9
+      - base_image=mcr.microsoft.com/dotnet/core/aspnet:2.2.7-alpine3.9
