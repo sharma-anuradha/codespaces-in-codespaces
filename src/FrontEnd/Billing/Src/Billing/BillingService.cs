@@ -281,7 +281,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 }
 
                 // Telemeter the environment bill data
-                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentEvents.Key, environmentDetails.Sku.ToString(), usageStateTimes);
+                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentEvents.Key, environmentDetails.Sku.Name.ToString(), usageStateTimes);
             }
 
             return new BillingSummary
@@ -718,7 +718,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
 
                 // Telemeter the environment bill data
-                LogEnvironmentUsageDetails(end, region, environment.Key, envUsageDetail.Sku.ToString(), usageStateTimes);
+                LogEnvironmentUsageDetails(end, region, environment.Key, envUsageDetail.Sku.Name.ToString(), usageStateTimes);
 
                 if (currentSummary.Usage.ContainsKey(meterId))
                 {
