@@ -882,9 +882,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var oldState = cloudEnvironment.State;
             var oldStateUpdated = cloudEnvironment.LastStateUpdated;
-            logger.AddCloudEnvironment(cloudEnvironment)
-                  .FluentAddBaseValue("OldState", oldState)
-                  .FluentAddBaseValue("OldStateUpdated", oldStateUpdated);
+            logger.FluentAddBaseValue("OldState", oldState)
+                .FluentAddBaseValue("OldStateUpdated", oldStateUpdated);
 
             VsoPlanInfo plan;
             if (cloudEnvironment.PlanId == default)
@@ -923,13 +922,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             };
 
             await BillingEventManager.CreateEventAsync(
-                plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger);
+                plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
 
             cloudEnvironment.State = state;
             cloudEnvironment.LastStateUpdateReason = reason;
             cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
 
-            logger.LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
+            logger.AddCloudEnvironment(cloudEnvironment)
+                 .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
         }
 
         private async Task<ConnectionInfo> CreateWorkspace(
