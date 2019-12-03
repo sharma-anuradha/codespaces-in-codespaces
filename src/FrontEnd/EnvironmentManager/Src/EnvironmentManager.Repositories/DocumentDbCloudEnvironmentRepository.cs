@@ -3,12 +3,17 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
 {
@@ -88,6 +93,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             document.Updated = DateTime.UtcNow;
 
             return base.UpdateAsync(document, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetCloudEnvironmentCountAsync(string location, string state, string skuName, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1)
+                      FROM c
+                      WHERE c.state = @state
+                      AND c.location = @location
+                      AND c.skuName = @skuName",
+            new SqlParameterCollection
+              {
+                new SqlParameter { Name = "@state", Value = state },
+                new SqlParameter { Name = "@location", Value = location },
+                new SqlParameter { Name = "@skuName", Value = skuName },
+              });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+            var count = items.FirstOrDefault();
+            return count;
         }
     }
 }

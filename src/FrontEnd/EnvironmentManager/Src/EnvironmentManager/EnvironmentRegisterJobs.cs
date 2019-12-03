@@ -20,16 +20,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Initializes a new instance of the <see cref="EnvironmentRegisterJobs"/> class.
         /// </summary>
         /// <param name="watchOrphanedSystemEnvironmentsTask">Target watch orphaned system environments task.</param>
+        /// <param name="logCloudEnvironmentStateTask">Target Log Cloud Environment State task.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
+            ILogCloudEnvironmenstStateTask logCloudEnvironmentStateTask,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
+            LogCloudEnvironmentStateTask = logCloudEnvironmentStateTask;
             TaskHelper = taskHelper;
         }
 
         private IWatchOrphanedSystemEnvironmentsTask WatchOrphanedSystemEnvironmentsTask { get; }
+
+        private ILogCloudEnvironmenstStateTask LogCloudEnvironmentStateTask { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -41,6 +46,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
                 (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
+
+            // Job: Log Cloud Environment State
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask}_run",
+                (childLogger) => LogCloudEnvironmentStateTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                TimeSpan.FromMinutes(1));
 
             return Task.CompletedTask;
         }

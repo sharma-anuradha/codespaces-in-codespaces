@@ -13,5 +13,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Watch Orphaned System Environments Task.
         /// </summary>
         public const string WatchOrphanedSystemEnvironmentsTask = "watch_orphaned_system_environments_task";
+
+        /// <summary>
+        /// Log Cloud Environments State Task.
+        /// </summary>
+        public const string LogCloudEnvironmentsStateTask = "log_cloud_environments_state_task";
     }
 }
