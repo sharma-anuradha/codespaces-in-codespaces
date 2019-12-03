@@ -273,9 +273,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(createEnvironmentInput.FriendlyName, nameof(createEnvironmentInput.FriendlyName));
             ValidationUtil.IsRequired(createEnvironmentInput.Type, nameof(createEnvironmentInput.Type));
 
-            // Regex pattern for Azure Resources naming
-            // https://docs.microsoft.com/en-us/rest/api/resources/resourcegroups/createorupdate
-            var regex = new Regex(@"^[-\w\._\(\)]{1,90}$", RegexOptions.IgnoreCase);
+            // Regex pattern for naming, can include alphanumeric, space, underscore, parentheses, hyphen, period, and Unicode characters that match the allowed characters.
+            var regex = new Regex(@"^[-\w\._\(\) ]{1,90}$", RegexOptions.IgnoreCase);
             ValidationUtil.IsTrue(regex.IsMatch(envName));
 
             // SkuPlan ID required and valid.

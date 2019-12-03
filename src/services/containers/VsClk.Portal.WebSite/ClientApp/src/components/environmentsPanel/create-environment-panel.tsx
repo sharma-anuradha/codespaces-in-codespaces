@@ -851,9 +851,8 @@ export class CreateEnvironmentPanelView extends Component<
     private onGetErrorMessageFriendlyName = (value: string) => {
         value = value.trim();
 
-        // Regex pattern for Azure Resources naming
-        // https://docs.microsoft.com/en-us/rest/api/resources/resourcegroups/createorupdate
-        const regex = /^[-\w\._\(\)]+$/g;
+        // Regex pattern for naming, can include alphanumeric, space, underscore, parentheses, hyphen, period, and Unicode characters that match the allowed characters.
+        const regex = /^[-\w\._\(\) ]+$/g;
 
         if (value.length === 0) {
             return validationMessages.nameIsRequired;
