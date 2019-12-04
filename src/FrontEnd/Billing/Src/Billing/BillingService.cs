@@ -87,10 +87,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                        planShard,
                        childLogger);
 
+                   var shardUsageStateTimes = new Dictionary<string, double>();
                    foreach (var plan in plans)
                    {
-                       await BeginAccountCalculations(plan.Plan, start, end, childLogger, region);
+                       await BeginAccountCalculations(plan.Plan, start, end, childLogger, region, shardUsageStateTimes);
                    }
+
+                   if (shardUsageStateTimes.ContainsKey(BillingWindowBillingState.Active.ToString()))
+                   {
+                       childLogger.AddValue("BillableActiveSeconds", shardUsageStateTimes[BillingWindowBillingState.Active.ToString()].ToString());
+                   }
+                   if (shardUsageStateTimes.ContainsKey(BillingWindowBillingState.Inactive.ToString()))
+                   {
+                       childLogger.AddValue("BillableInactiveSeconds", shardUsageStateTimes[BillingWindowBillingState.Inactive.ToString()].ToString());
+                   }
+
+                   childLogger.FluentAddValue("Shard", planShard)
+                              .FluentAddValue("Location", region.ToString())
+                              .FluentAddValue("BillEndingTime", end.ToString())
+                              .LogInfo("billing_aggregate_shard_summary");
                });
         }
 
@@ -99,12 +114,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// The last BillingSummary is fetched and used as the seed event for the billing unit
         /// calculations on the current events.
         /// </summary>
-        /// <param name="plan"></param>
-        /// <param name="start"></param>
-        /// <param name="desiredBillEndTime"></param>
-        /// <param name="logger"></param>
+        /// <param name="plan">the current plan being billed</param>
+        /// <param name="start">the start time for the billing period</param>
+        /// <param name="desiredBillEndTime">the end time for the billing period</param>
+        /// <param name="logger">the logger</param>
+        /// <param name="region"></param>
+        /// <param name="shardUsageTimes"></param>
         /// <returns></returns>
-        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region)
+        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes )
         {
             logger.AddVsoPlan(plan)
                 .FluentAddBaseValue("startCalculationTime", start)
@@ -151,10 +168,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var billingEvents = await billingEventManager.GetPlanEventsAsync(plan, latestBillingSummary.PeriodEnd, desiredBillEndTime, new string[] { BillingEventTypes.EnvironmentStateChange }, logger);
 
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
-                    var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region);
+                    var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region, shardUsageTimes);
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
-                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region);
+                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes);
                     await billingEventManager.CreateEventAsync(plan, null, billingSummaryType, totalBillingSummary, logger);
                 },
                 swallowException: true);
@@ -176,7 +193,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IEnumerable<BillingEvent> events,
             BillingSummary lastSummary,
             DateTime billSummaryEndTime,
-            AzureLocation region)
+            AzureLocation region, 
+            Dictionary<string, double> shardUsageTimes)
         {
             var totalBillable = 0.0d;
             var environmentUsageDetails = new Dictionary<string, EnvironmentUsageDetail>();
@@ -282,6 +300,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                 // Telemeter the environment bill data
                 LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentEvents.Key, environmentDetails.Sku.Name.ToString(), usageStateTimes);
+                CopyEnvironmentStateTimesToShardStateTimes(usageStateTimes, shardUsageTimes);
             }
 
             return new BillingSummary
@@ -588,7 +607,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             BillingSummary currentSummary,
             BillingEvent latestEvent,
             DateTime end,
-            AzureLocation region)
+            AzureLocation region,
+            Dictionary<string, double> shardUsageTimes)
         {
             // Scenario: Environment has no billing Events in this billing period
             var lastSummary = (BillingSummary)latestEvent.Args;
@@ -719,6 +739,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                 // Telemeter the environment bill data
                 LogEnvironmentUsageDetails(end, region, environment.Key, envUsageDetail.Sku.Name.ToString(), usageStateTimes);
+                CopyEnvironmentStateTimesToShardStateTimes(usageStateTimes, shardUsageTimes);
 
                 if (currentSummary.Usage.ContainsKey(meterId))
                 {
@@ -733,6 +754,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
 
             return currentSummary;
+        }
+
+        private static void CopyEnvironmentStateTimesToShardStateTimes(UsageDictionary environmentStateTimes, UsageDictionary shardUsageTimes)
+        {
+            foreach (var stateTime in environmentStateTimes)
+            {
+                // Add times to the global sharded usage times list for querying
+                if (shardUsageTimes.ContainsKey(stateTime.Key))
+                {
+                    shardUsageTimes[stateTime.Key] += stateTime.Value;
+                }
+                else
+                {
+                    shardUsageTimes[stateTime.Key] = stateTime.Value;
+                }
+            }
         }
 
         /// <summary>
@@ -771,10 +808,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Helper method to perform the billing unit calculation. This method accepts the BillingWindowSlice and sku
         /// name, returning the billable unit for the given period of time.
         /// </summary>
-        /// <param name="slice"></param>
-        /// <param name="sku"></param>
+        /// <param name="slice">the last active billing slice</param>
+        /// <param name="sku">the skuname for the slice</param>
+        /// <param name="environmentStateTimes">the per environment telemetered usage times</param>
         /// <returns></returns>
-        private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, string sku, IDictionary<string, double> stateTimes)
+        private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, string sku, IDictionary<string, double> environmentStateTimes)
         {
             if (slice.OverrideState == BillingOverrideState.BillingEnabled)
             {
@@ -783,14 +821,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 var vsoUnitsPerSecond = vsoUnitsPerHour / secondsPerHour;
                 var totalSeconds = (decimal)slice.EndTime.Subtract(slice.StartTime).TotalSeconds;
                 var vsoUnits = totalSeconds * vsoUnitsPerSecond;
-                if (stateTimes.ContainsKey(slice.BillingState.ToString()))
+
+                // Add usage times to the per environment list
+                if (environmentStateTimes.ContainsKey(slice.BillingState.ToString()))
                 {
-                    stateTimes[slice.BillingState.ToString()] += (double)totalSeconds;
+                    environmentStateTimes[slice.BillingState.ToString()] += (double)totalSeconds;
                 }
                 else
                 {
-                    stateTimes[slice.BillingState.ToString()] = (double)totalSeconds;
+                    environmentStateTimes[slice.BillingState.ToString()] = (double)totalSeconds;
                 }
+
                 return (double)vsoUnits;
             }
             else
