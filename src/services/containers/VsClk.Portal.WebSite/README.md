@@ -105,3 +105,9 @@ There's `dev_PortForwardingOverride` function to create the routing details you 
 2. Uncomment `// dev_PortForwardingOverride(originalUrl) ||` line in `getRoutingDetails` function
 
 Look for `// <<- DEV PortForwarding here` comments.
+
+# Fixing component governance security issues
+If the project is using a package with security issue, we will get alerts in [VSTS component governance](https://devdiv.visualstudio.com/DefaultCollection/OnlineServices/_componentGovernance/vsclk-core?_a=alerts&typeId=1981470&alerts-view-option=active).
+
+To fix the issues, navigate to `ClientApp/`, then run command
+`yarn audit` and upgrade any outdated packages accordingly.
