@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
-            ILogCloudEnvironmenstStateTask logCloudEnvironmentStateTask,
+            ILogCloudEnvironmentStateTask logCloudEnvironmentStateTask,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IWatchOrphanedSystemEnvironmentsTask WatchOrphanedSystemEnvironmentsTask { get; }
 
-        private ILogCloudEnvironmenstStateTask LogCloudEnvironmentStateTask { get; }
+        private ILogCloudEnvironmentStateTask LogCloudEnvironmentStateTask { get; }
 
         private ITaskHelper TaskHelper { get; }
 

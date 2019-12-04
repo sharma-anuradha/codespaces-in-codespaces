@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // Register tasks
             services.AddSingleton<IWatchOrphanedSystemEnvironmentsTask, WatchOrphanedSystemEnvironmentsTask>();
-            services.AddSingleton<ILogCloudEnvironmenstStateTask, LogCloudEnvironmenstStateTask>();
+            services.AddSingleton<ILogCloudEnvironmentStateTask, LogCloudEnvironmentStateTask>();
 
             // Job warmup
             services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();

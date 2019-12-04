@@ -1,4 +1,4 @@
-﻿// <copyright file="ILogCloudEnvironmenstStateTask.cs" company="Microsoft">
+﻿// <copyright file="ILogCloudEnvironmentStateTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// <summary>
     /// Manages the state of the 
     /// </summary>
-    public interface ILogCloudEnvironmenstStateTask
+    public interface ILogCloudEnvironmentStateTask
     {
         /// <summary>
         /// Task which continually logs information about the state of the cloud Environments collection

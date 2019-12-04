@@ -1,4 +1,4 @@
-﻿// <copyright file="LogCloudEnvironmenstStateTask.cs" company="Microsoft">
+﻿// <copyright file="LogCloudEnvironmentStateTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -20,12 +20,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// <summary>
     /// A task that will recurringly generate telemetry that logs various state information about the CloudEnvironment repository.
     /// </summary>
-    public class LogCloudEnvironmenstStateTask : ILogCloudEnvironmenstStateTask
+    public class LogCloudEnvironmentStateTask : ILogCloudEnvironmentStateTask
     {
-        private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> skuDictionary;
+        private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> SkuDictionary;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LogCloudEnvironmenstStateTask"/> class.
+        /// Initializes a new instance of the <see cref="LogCloudEnvironmentStateTask"/> class.
         /// </summary>
         /// <param name="environmentManagerSettings">Environment settings used to generate the lease name</param>
         /// <param name="cloudEnvironmentRepository">Target Cloud Environment Repository.</param>
@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">The Task helper</param>
         /// <param name="claimedDistributedLease">Used to get a lease for the duration of the telemetry</param>
         /// <param name="resourceNameBuilder">Used to build the lease name</param>
-        public LogCloudEnvironmenstStateTask(
+        public LogCloudEnvironmentStateTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             ISkuCatalog skuCatalog,
@@ -46,13 +46,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             EnvironmentManagerSettings = environmentManagerSettings;
             CloudEnvironmentRepository = cloudEnvironmentRepository;
             ControlPlane = controlPlane;
-            skuDictionary = skuCatalog.CloudEnvironmentSkus;
+            SkuDictionary = skuCatalog.CloudEnvironmentSkus;
             TaskHelper = taskHelper;
             ClaimedDistributedLease = claimedDistributedLease;
             ResourceNameBuilder = resourceNameBuilder;
         }
 
-        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogCloudEnvironmenstStateTask)}Lease");
+        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogCloudEnvironmentStateTask)}Lease");
 
         private string LogBaseName => EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask;
 
@@ -77,24 +77,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                $"{LogBaseName}_run",
                async (childLogger) =>
                {
-                   var lease = await ObtainLease($"{LeaseBaseName}", claimSpan, childLogger);
-                   childLogger.FluentAddValue("LeaseNotFound", lease == null);
-
-                   if (lease != null)
+                   using (var lease = await ObtainLeaseAsync(LeaseBaseName, claimSpan, childLogger))
                    {
-                       await childLogger.OperationScopeAsync(
-                            $"{LogBaseName}_item_run",
-                            async (itemLogger) =>
-                            {
-                                await RunLogTaskAsync(itemLogger);
-                            });
+                       childLogger.FluentAddValue("LeaseNotFound", lease == null);
+
+                       if (lease != null)
+                       {
+                           await childLogger.OperationScopeAsync(
+                                LogBaseName,
+                                (itemLogger) => RunLogTaskAsync(itemLogger));
+                       }
                    }
 
                    return !Disposed;
                },
                (e, _) => !Disposed,
                swallowException: true);
-
         }
 
         private async Task RunLogTaskAsync(IDiagnosticsLogger childLogger)
@@ -160,7 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             {
                 foreach (AzureLocation location in ControlPlane.GetAllDataPlaneLocations())
                 {
-                    foreach (var sku in skuDictionary.Keys)
+                    foreach (var sku in SkuDictionary.Keys)
                     {
                         var count = await CloudEnvironmentRepository.GetCloudEnvironmentCountAsync(location.ToString(), state.ToString(), sku.ToString(), childLogger);
                         if (count > 0)
@@ -185,9 +183,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             Disposed = true;
         }
 
-        private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            return await ClaimedDistributedLease.Obtain(
+            return ClaimedDistributedLease.Obtain(
                 EnvironmentManagerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }
