@@ -10,7 +10,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
     public class BaseBillingTests
     {
         public static readonly string subscription = Guid.NewGuid().ToString();
-        public static readonly string smallLinuxSKuName = "smallLinuxSku";
+        public static readonly string standardLinuxSkuName = "standardLinuxSku";
+        public static readonly string premiumLinuxSkuName = "premiumLinuxSku";
         public static readonly VsoPlanInfo testPlan = new VsoPlanInfo
         {
             Subscription = subscription,
@@ -37,21 +38,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Id = Guid.NewGuid().ToString(),
             Name = "testEnvironment",
             UserId = Guid.NewGuid().ToString(),
-            Sku = new Sku { Name = smallLinuxSKuName, Tier = "test" },
+            Sku = new Sku { Name = standardLinuxSkuName, Tier = "test" },
+        };
+        public static readonly EnvironmentBillingInfo testEnvironmentWithPremiumSku = new EnvironmentBillingInfo
+        {
+            Id = testEnvironment.Id,
+            Name = testEnvironment.Name,
+            UserId = testEnvironment.UserId,
+            Sku = new Sku { Name = premiumLinuxSkuName, Tier = "test" },
         };
         public static readonly EnvironmentBillingInfo testEnvironment2 = new EnvironmentBillingInfo
         {
             Id = Guid.NewGuid().ToString(),
             Name = "testEnvironment2",
             UserId = testEnvironment.UserId,
-            Sku = new Sku { Name = smallLinuxSKuName, Tier = "test" },
+            Sku = new Sku { Name = standardLinuxSkuName, Tier = "test" },
         };
         public static readonly EnvironmentBillingInfo testEnvironment3 = new EnvironmentBillingInfo
         {
             Id = Guid.NewGuid().ToString(),
             Name = "testEnvironment3",
             UserId = testEnvironment.UserId,
-            Sku = new Sku { Name = smallLinuxSKuName, Tier = "test" },
+            Sku = new Sku { Name = standardLinuxSkuName, Tier = "test" },
         };
         public readonly IBillingEventRepository repository;
         public readonly IBillingOverrideRepository overrideRepository;

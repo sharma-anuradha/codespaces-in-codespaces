@@ -214,85 +214,88 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Create an initial BillingWindowSlice to use as a starting point for billing calculations
                 // The previous BillingSummary is used as the StartTime and EndTime. The environments
                 // previous state comes from the list of environment details in the previous BillingSummary.
-                string endPreviousState;
+
+                BillingWindowSlice.NextState initialState;
                 if (lastSummary?.UsageDetail?.Environments != null && lastSummary.UsageDetail.Environments.ContainsKey(environmentEvents.Key))
                 {
-                    endPreviousState = lastSummary.UsageDetail?.Environments[environmentEvents.Key].EndState;
+                    var endPreviousEnvironment = lastSummary.UsageDetail.Environments[environmentEvents.Key];
+
+                    initialState = new BillingWindowSlice.NextState
+                    {
+                        EnvironmentState = ParseEnvironmentState(endPreviousEnvironment.EndState),
+                        Sku = endPreviousEnvironment.Sku,
+                        TransitionTime = lastSummary.PeriodEnd,
+                    };
                 }
                 else
                 {
-                    endPreviousState = CloudEnvironmentState.None.ToString();
+                    initialState = new BillingWindowSlice.NextState
+                    {
+                        EnvironmentState = CloudEnvironmentState.None,
+                        Sku = environmentDetails.Sku,
+                        TransitionTime = lastSummary.PeriodEnd,
+                    };
                 }
 
-                var initialSlice = new BillingWindowSlice()
-                {
-                    BillingState = BillingWindowBillingState.Active,
-                    StartTime = lastSummary.PeriodEnd,
-                    EndTime = lastSummary.PeriodEnd,
-                    LastState = ParseEnvironmentState(endPreviousState),
-                };
-
-                var currSlice = initialSlice;
                 IEnumerable<BillingWindowSlice> allSlices;
+                BillingWindowSlice.NextState currState = initialState;
 
                 // Loop through each billing event for the current environment.
                 foreach (var evnt in seqEvents)
                 {
-                    allSlices = await GenerateWindowSlices(billSummaryEndTime, currSlice, evnt, plan, environmentDetails.Sku);
+                    (allSlices, currState) = await GenerateWindowSlices(billSummaryEndTime, currState, evnt, plan);
                     if (allSlices.Any())
                     {
                         slices.AddRange(allSlices);
-                        currSlice = allSlices.Last();
                     }
                 }
 
                 // Get the remainder or the entire window if there were no events.
-                allSlices = await GenerateWindowSlices(billSummaryEndTime, currSlice, null, plan, environmentDetails.Sku);
+                (allSlices, currState) = await GenerateWindowSlices(billSummaryEndTime, currState, null, plan);
                 if (allSlices.Any())
                 {
                     slices.AddRange(allSlices);
-                    currSlice = allSlices.Last();
                 }
 
                 // We might not have any billable slices. If we don't, let's not do anything
                 if (slices.Any())
                 {
-                    var containsErrors = await CheckForErrors(plan, billSummaryEndTime, environmentDetails.Id, slices.Last().LastState);
-                    EnvironmentUsageDetail usageDetail;
+                    var containsErrors = await CheckForErrors(plan, billSummaryEndTime, environmentDetails.Id, currState.EnvironmentState);
+
+                    CloudEnvironmentState finalEnvironmentStateOrError;
                     if (!containsErrors.isError)
                     {
+                        finalEnvironmentStateOrError = currState.EnvironmentState;
+
                         // Aggregate the billable units for each slice created above.
-                        slices.ForEach((slice) => billableUnits += CalculateVsoUnitsByTimeAndSku(slice, environmentDetails.Sku.Name, usageStateTimes));
-                        usageDetail = new EnvironmentUsageDetail
+                        foreach (var slice in slices)
                         {
-                            Name = environmentDetails.Name,
-                            EndState = slices.Last().LastState.ToString(),
-                            Usage = new UsageDictionary
-                            {
-                                { meterId, billableUnits },
-                            },
-                            Sku = environmentDetails.Sku,
-                            UserId = environmentDetails.UserId,
-                        };
+                            billableUnits += CalculateVsoUnitsByTimeAndSku(slice, usageStateTimes);
+                        }
                     }
                     else
                     {
-                        usageDetail = new EnvironmentUsageDetail
-                        {
-                            Name = environmentDetails.Name,
-                            EndState = containsErrors.errorState.ToString(),
-                            Usage = new UsageDictionary
-                            {
-                                { meterId, billableUnits },
-                            },
-                            Sku = environmentDetails.Sku,
-                            UserId = environmentDetails.UserId,
-                        };
+                        finalEnvironmentStateOrError = containsErrors.errorState;
 
                         Logger.AddValue("SubscriptionId", plan.Subscription);
                         Logger.AddValue("ResourceId", plan.ResourceId);
                         Logger.LogError("billingworker_plan_correction");
                     }
+
+                    var usageDetail = new EnvironmentUsageDetail
+                    {
+                        Name = environmentDetails.Name,
+                        EndState = finalEnvironmentStateOrError.ToString(),
+                        Usage = new UsageDictionary
+                        {
+                            { meterId, billableUnits },
+                        },
+                        // Sku is currently not exposed in the billing report and only used in this method for tracking the previous end state
+                        // so even if there are multiple Sku changes within this window we only need to remember the final state.
+                        Sku = currState.Sku,
+                        UserId = environmentDetails.UserId,
+                    };
+
                     environmentUsageDetails.Add(environmentEvents.Key, usageDetail);
                     userUsageDetails = AggregateUserUsageDetails(userUsageDetails, billableUnits, environmentDetails.UserId, meterId);
                     totalBillable += billableUnits;
@@ -391,26 +394,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             return lastState;
         }
 
-        private async Task<IEnumerable<BillingWindowSlice>> GenerateWindowSlices(DateTime end, BillingWindowSlice currSlice, BillingEvent evnt, VsoPlanInfo plan, Sku sku)
+        private async Task<(IEnumerable<BillingWindowSlice> Slices, BillingWindowSlice.NextState NextState)> GenerateWindowSlices(DateTime end, BillingWindowSlice.NextState currState, BillingEvent evnt, VsoPlanInfo plan)
         {
-            currSlice = CalculateNextWindow(evnt, currSlice, end);
+            var (currSlice, nextState) = CalculateNextWindow(evnt, currState, end);
 
             if (currSlice is null)
             {
                 // there are no state machine transitions here so just bail out
-                return Enumerable.Empty<BillingWindowSlice>();
+                return (Enumerable.Empty<BillingWindowSlice>(), currState);
             }
 
-            var slicesWithOverrides = await GenerateSlicesWithOverrides(currSlice, plan, sku);
-            return slicesWithOverrides;
+            var slicesWithOverrides = await GenerateSlicesWithOverrides(currSlice, plan);
+            return (slicesWithOverrides, nextState);
         }
 
-        private async Task<IEnumerable<BillingWindowSlice>> GenerateSlicesWithOverrides(BillingWindowSlice currSlice, VsoPlanInfo plan, Sku sku)
+        private async Task<IEnumerable<BillingWindowSlice>> GenerateSlicesWithOverrides(BillingWindowSlice currSlice, VsoPlanInfo plan)
         {
             var dividedSlices = GenerateHourBoundTimeSlices(currSlice);
             foreach (var slice in dividedSlices)
             {
-                var currBillingOverride = await billingEventManager.GetOverrideStateForTimeAsync(slice.StartTime, plan.Subscription, plan, sku, Logger);
+                var currBillingOverride = await billingEventManager.GetOverrideStateForTimeAsync(slice.StartTime, plan.Subscription, plan, slice.Sku, Logger);
                 if (currBillingOverride != null)
                 {
                     slice.OverrideState = currBillingOverride.BillingOverrideState;
@@ -430,7 +433,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
             else
             {
-                var startTime = currSlice.StartTime;
                 var endTime = nextHourBoundary;
                 bool dividedFully = false;
 
@@ -440,7 +442,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     StartTime = currSlice.StartTime,
                     EndTime = endTime,
                     BillingState = currSlice.BillingState,
-                    LastState = currSlice.LastState,
+                    Sku = currSlice.Sku,
                 };
                 slices.Add(lastSlice);
 
@@ -455,7 +457,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             StartTime = lastSlice.EndTime,
                             EndTime = endTime,
                             BillingState = currSlice.BillingState,
-                            LastState = currSlice.LastState,
+                            Sku = currSlice.Sku,
                         };
                         slices.Add(lastSlice);
                     }
@@ -468,7 +470,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             StartTime = lastSlice.EndTime,
                             EndTime = currSlice.EndTime,
                             BillingState = currSlice.BillingState,
-                            LastState = currSlice.LastState,
+                            Sku = currSlice.Sku,
                         };
                         slices.Add(lastSlice);
                     }
@@ -484,10 +486,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// neccessary to create a unit of billing for its period.
         /// </summary>
         /// <param name="currentEvent"></param>
-        /// <param name="lastSlice"></param>
+        /// <param name="currentState"></param>
         /// <param name="endTimeForPeriod"></param>
         /// <returns></returns>
-        private BillingWindowSlice CalculateNextWindow(BillingEvent currentEvent, BillingWindowSlice lastSlice, DateTime endTimeForPeriod)
+        private (BillingWindowSlice Slice, BillingWindowSlice.NextState NextState) CalculateNextWindow(BillingEvent currentEvent, BillingWindowSlice.NextState currentState, DateTime endTimeForPeriod)
         {
             // If we're looking at a null current Event and the last event status is not Deleted,
             // just calculate the time delta otherwise, run through the state machine again.
@@ -496,33 +498,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 // No new time slice to create if last status was Deleted.
                 // There will be no more events after a Deleted event.
-                if (lastSlice.LastState == CloudEnvironmentState.Available || lastSlice.LastState == CloudEnvironmentState.Shutdown)
+                if (currentState.EnvironmentState == CloudEnvironmentState.Available || currentState.EnvironmentState == CloudEnvironmentState.Shutdown)
                 {
                     var finalSlice = new BillingWindowSlice()
                     {
-                        BillingState = lastSlice.LastState == CloudEnvironmentState.Shutdown ?
-                        BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
+                        StartTime = currentState.TransitionTime,
                         EndTime = endTimeForPeriod,
-                        StartTime = lastSlice.EndTime,
-                        LastState = lastSlice.LastState,
+
+                        BillingState = currentState.EnvironmentState == CloudEnvironmentState.Shutdown ?
+                            BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
+                        Sku = currentState.Sku,
                     };
-                    return finalSlice;
+
+                    // currentState is also the next state here because it is still active as we have no more transition events
+                    return (finalSlice, currentState);
                 }
                 else
                 {
-                    return null;
+                    return (null, null);
                 }
-
-
             }
 
-            var currentState = lastSlice.LastState;
-            var nextState = ParseEnvironmentState(((BillingStateChange)currentEvent.Args).NewValue);
+            BillingWindowSlice.NextState nextState = BuildNextStateFromEvent(currentEvent);
+
             BillingWindowSlice nextSlice = null;
-            switch (currentState)
+            switch (currentState.EnvironmentState)
             {
                 case CloudEnvironmentState.Available:
-                    switch (nextState)
+                    switch (nextState.EnvironmentState)
                     {
                         // CloudEnvironmentState has gone from Available to Shutdown or Deleted
                         // in this BillingWindowSlice.
@@ -530,10 +533,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         case CloudEnvironmentState.Deleted:
                             nextSlice = new BillingWindowSlice()
                             {
-                                StartTime = lastSlice.EndTime,
+                                StartTime = currentState.TransitionTime,
                                 EndTime = currentEvent.Time,
-                                LastState = nextState,
                                 BillingState = BillingWindowBillingState.Active,
+                                Sku = currentState.Sku,
                             };
                             break;
                         default:
@@ -543,18 +546,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     break;
 
                 case CloudEnvironmentState.Shutdown:
-                    switch (nextState)
+                    switch (nextState.EnvironmentState)
                     {
                         // CloudEnvironmentState has gone from Shutdown to Available or Deleted
                         // in this BillingWindowSlice.
                         case CloudEnvironmentState.Available:
                         case CloudEnvironmentState.Deleted:
+                        // Environment's state hasn't changed, but some other setting was updated so we still need to create a slice
+                        case CloudEnvironmentState.Shutdown:
                             nextSlice = new BillingWindowSlice()
                             {
-                                StartTime = lastSlice.EndTime,
+                                StartTime = currentState.TransitionTime,
                                 EndTime = currentEvent.Time,
-                                LastState = nextState,
                                 BillingState = BillingWindowBillingState.Inactive,
+                                Sku = currentState.Sku,
                             };
                             break;
                         default:
@@ -565,7 +570,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                 // No previous billing summary
                 case CloudEnvironmentState.None:
-                    switch (nextState)
+                    switch (nextState.EnvironmentState)
                     {
                         case CloudEnvironmentState.Available:
                             nextSlice = new BillingWindowSlice
@@ -574,10 +579,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                 // not be billed. This represent the slice of time from
                                 // Provisioning to Available, in which we won't bill.
                                 // The next time slice will bill for Available time.
-                                StartTime = currentEvent.Time,
+                                StartTime = currentState.TransitionTime,
                                 EndTime = currentEvent.Time,
-                                LastState = nextState,
                                 BillingState = BillingWindowBillingState.Inactive,
+                                Sku = currentState.Sku,
                             };
                             break;
                     }
@@ -587,7 +592,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     break;
             }
 
-            return nextSlice;
+            return (nextSlice, nextState);
         }
 
         /// <summary>
@@ -667,72 +672,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             foreach (var environment in missingEnvironments)
             {
                 var envUsageDetail = environment.Value;
-                var endState = ParseEnvironmentState(envUsageDetail.EndState);
+                var endState = new BillingWindowSlice.NextState
+                {
+                    EnvironmentState = ParseEnvironmentState(envUsageDetail.EndState),
+                    Sku = envUsageDetail.Sku,
+                    TransitionTime = lastSummary.PeriodEnd,
+                };
+
                 if (envUsageDetail.EndState == DeletedEnvState)
                 {
                     // Environment state is Deleted so nothing new to bill.
                     continue;
                 }
 
-                // Create a BillingWindowSlice that represents the previous state of this environment.
-                var billingSlice = new BillingWindowSlice
-                {
-                    BillingState = endState == CloudEnvironmentState.Shutdown ?
-                        BillingWindowBillingState.Inactive : BillingWindowBillingState.Active,
-                    EndTime = lastSummary.PeriodEnd,
-                    LastState = endState,
-                    StartTime = lastSummary.PeriodEnd,
-                };
-
                 // Get the remainder or the entire window if there were no events.
-                var allSlices = (await GenerateWindowSlices(end, billingSlice, null, plan, envUsageDetail.Sku)).ToList();
-                if (allSlices.Any())
-                {
-                    billingSlice = allSlices.Last();
-                }
+                var (allSlices, nextState) = await GenerateWindowSlices(end, endState, null, plan);
 
                 var billableUnits = 0d;
                 var usageStateTimes = new Dictionary<string, double>();
 
-                var containsDeletionErrors = await CheckForErrors(plan, end, environment.Key, billingSlice.LastState);
-                EnvironmentUsageDetail usageDetail;
+                var containsDeletionErrors = await CheckForErrors(plan, end, environment.Key, nextState.EnvironmentState);
+
+                CloudEnvironmentState finalEnvironmentStateOrError;
                 if (!containsDeletionErrors.isError)
                 {
+                    finalEnvironmentStateOrError = nextState.EnvironmentState;
+
                     // Aggregate the billable units for each slice created above.
                     foreach (var slice in allSlices)
                     {
-                        billableUnits += CalculateVsoUnitsByTimeAndSku(slice, envUsageDetail.Sku.Name, usageStateTimes);
+                        billableUnits += CalculateVsoUnitsByTimeAndSku(slice, usageStateTimes);
                     }
-                    usageDetail = new EnvironmentUsageDetail
-                    {
-                        Name = envUsageDetail.Name,
-                        EndState = billingSlice.LastState.ToString(),
-                        Usage = new UsageDictionary
-                        {
-                            { meterId, billableUnits },
-                        },
-                        Sku = environment.Value.Sku,
-                        UserId = environment.Value.UserId,
-                    };
                 }
                 else
                 {
-                    usageDetail = new EnvironmentUsageDetail
-                    {
-                        Name = envUsageDetail.Name,
-                        EndState = containsDeletionErrors.errorState.ToString(),
-                        Usage = new UsageDictionary
-                        {
-                            { meterId, billableUnits },
-                        },
-                        Sku = environment.Value.Sku,
-                        UserId = environment.Value.UserId,
-                    };
+                    finalEnvironmentStateOrError = containsDeletionErrors.errorState;
 
                     Logger.AddValue("SubscriptionId", plan.Subscription);
                     Logger.AddValue("ResourceId", plan.ResourceId);
                     Logger.LogError("billingworker_plan_correction");
                 }
+
+                var usageDetail = new EnvironmentUsageDetail
+                {
+                    Name = envUsageDetail.Name,
+                    EndState = finalEnvironmentStateOrError.ToString(),
+                    Usage = new UsageDictionary
+                    {
+                        { meterId, billableUnits },
+                    },
+                    // Sku is currently not exposed in the billing report and only used in this method for tracking the previous end state
+                    // so even if there are multiple Sku changes within this window we only need to remember the final state.
+                    Sku = environment.Value.Sku,
+                    UserId = environment.Value.UserId,
+                };
 
                 // Update Environment list, SkuPlan billable units, and User billable units
                 currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
@@ -809,14 +802,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// name, returning the billable unit for the given period of time.
         /// </summary>
         /// <param name="slice">the last active billing slice</param>
-        /// <param name="sku">the skuname for the slice</param>
         /// <param name="environmentStateTimes">the per environment telemetered usage times</param>
         /// <returns></returns>
-        private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, string sku, IDictionary<string, double> environmentStateTimes)
+        private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, IDictionary<string, double> environmentStateTimes)
         {
             if (slice.OverrideState == BillingOverrideState.BillingEnabled)
             {
-                var vsoUnitsPerHour = GetVsoUnitsBySkuName(sku, slice.BillingState);
+                var vsoUnitsPerHour = GetVsoUnitsForSlice(slice);
                 const decimal secondsPerHour = 3600m;
                 var vsoUnitsPerSecond = vsoUnitsPerHour / secondsPerHour;
                 var totalSeconds = (decimal)slice.EndTime.Subtract(slice.StartTime).TotalSeconds;
@@ -847,8 +839,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="skuName"></param>
         /// <param name="isActive"></param>
         /// <returns></returns>
-        private decimal GetVsoUnitsBySkuName(string skuName, BillingWindowBillingState billingState)
+        private decimal GetVsoUnitsForSlice(BillingWindowSlice slice)
         {
+            var billingState = slice.BillingState;
+
+            if (slice.Sku == null)
+            {
+                Logger.LogError("billingworker_getVSOUnits_sku_error");
+                return 0.0m;
+            }
+
+            var skuName = slice.Sku.Name;
+
             if (SkuDictionary.TryGetValue(skuName, out var sku))
             {
                 if (billingState == BillingWindowBillingState.Active)
@@ -898,9 +900,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         /// <param name="state"></param>
         /// <returns></returns>
-        private CloudEnvironmentState ParseEnvironmentState(string state)
+        private static CloudEnvironmentState ParseEnvironmentState(string state)
         {
             return (CloudEnvironmentState)Enum.Parse(typeof(CloudEnvironmentState), state);
+        }
+
+        /// <summary>
+        /// Helper method to extract state transition settings from a given BillingEvent.
+        /// </summary>
+        /// <param name="billingEvent">The billing event.</param>
+        /// <returns>A NextState which contains state transition metadata from the event.</returns>
+        private static BillingWindowSlice.NextState BuildNextStateFromEvent(BillingEvent billingEvent)
+        {
+            return new BillingWindowSlice.NextState
+            {
+                EnvironmentState = ParseEnvironmentState(((BillingStateChange)billingEvent.Args).NewValue),
+                Sku = billingEvent.Environment.Sku,
+                TransitionTime = billingEvent.Time,
+            };
         }
     }
 }

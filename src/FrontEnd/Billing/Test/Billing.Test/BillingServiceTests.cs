@@ -16,8 +16,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
     {
         private static readonly DateTime TestTimeNow = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0, DateTimeKind.Utc);
         private readonly BillingService billingService;
-        private readonly decimal smallLinuxComputeUnitPerHr = 125;
-        private readonly decimal smallLinuxStorageUnitPerHr = 2;
+        private readonly decimal standardLinuxComputeUnitPerHr = 125;
+        private readonly decimal premiumLinuxComputeUnitPerHr = 242;
+        private readonly decimal standardLinuxStorageUnitPerHr = 2;
+        private readonly decimal premiumLinuxStorageUnitPerHr = 3;
         private static readonly string WestUs2MeterId = "5f3afa79-01ad-4d7e-b691-73feca4ea350";
 
 
@@ -25,6 +27,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         private static readonly double BillableUnits = 635;
         // 3 hrs Available + 3hrs Shutdown => 127units * 3hrs + 2units * 2 hrs = 385
         private static readonly double BillableUnitsWithShutdown = 385;
+        // (3 hrs Available + 1hr Shutdown on Standard) + (2 hrs Shutdown + 4 hrs Available on Premium) => (127units * 3hrs + 2units * 1hr) + (3units * 2hrs + 245units * 4hrs) = 1369
+        private static readonly double BillableUnitsWithSkuChange = 1369;
         // 5 hr Available for 2 environments => (127units * 5)*2 = 1270
         private static readonly double BillableUnitsMultiEnvironments = 1270;
         // 5 hrs Available, 5 hrs Shutdown => (127units * 5) + (2units *5) = 645
@@ -105,6 +109,77 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 Time =TestTimeNow.Subtract(TimeSpan.FromHours(1)),
                 Type = BillingEventTypes.EnvironmentStateChange
 
+            },
+        };
+        public static readonly IEnumerable<BillingEvent> BillingEventsWithSkuChange = new List<BillingEvent>
+        {
+            new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Created),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironment,
+                Time = TestTimeNow.Subtract(TimeSpan.FromHours(11)),
+                Type = BillingEventTypes.EnvironmentStateChange
+            },
+            new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Available),
+                    NewValue = nameof(CloudEnvironmentState.Shutdown),
+                },
+                Environment = testEnvironment,
+                Time = TestTimeNow.Subtract(TimeSpan.FromHours(8)),
+                Type = BillingEventTypes.EnvironmentStateChange
+
+            },
+            new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Shutdown),
+                    NewValue = nameof(CloudEnvironmentState.Shutdown),
+                },
+                Environment = testEnvironmentWithPremiumSku,
+                Time = TestTimeNow.Subtract(TimeSpan.FromHours(7)),
+                Type = BillingEventTypes.EnvironmentStateChange
+
+            },
+            new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Shutdown),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironmentWithPremiumSku,
+                Time = TestTimeNow.Subtract(TimeSpan.FromHours(5)),
+                Type = BillingEventTypes.EnvironmentStateChange
+
+            },
+            new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Available),
+                    NewValue = nameof(CloudEnvironmentState.Deleted),
+                },
+                Environment = testEnvironmentWithPremiumSku,
+                Time = TestTimeNow.Subtract(TimeSpan.FromHours(1)),
+                Type = BillingEventTypes.EnvironmentStateChange
             },
         };
         public static readonly IEnumerable<BillingEvent> BillingEventsWithMultiEnvironmentsInput = new List<BillingEvent>
@@ -211,7 +286,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EndTime = TestTimeNow.AddHours(12),
             BillingOverrideState = BillingOverrideState.BillingDisabled,
             Priority = 4,
-            Sku = new Sku { Name = smallLinuxSKuName, Tier = "test" },
+            Sku = new Sku { Name = standardLinuxSkuName, Tier = "test" },
         };
 
         public static readonly BillingSummary BillingSummaryInput = new BillingSummary
@@ -230,7 +305,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Available",
-                            Sku = new Sku { Name = smallLinuxSKuName },
+                            Sku = new Sku { Name = standardLinuxSkuName },
                             UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
@@ -258,6 +333,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             PeriodEnd = TestTimeNow.Subtract(TimeSpan.FromHours(6)),
 
         };
+        // Same as BillingSummaryInput but with a longer Period
+        public static readonly BillingSummary BillingSummaryInputForSkuChange = new BillingSummary
+        {
+            SubmissionState = BillingSubmissionState.None,
+            Usage = new Dictionary<string, double>
+            {
+                { WestUs2MeterId, 0 },
+            },
+            UsageDetail = new UsageDetail
+            {
+                Environments = new Dictionary<string, EnvironmentUsageDetail>
+                {
+                    {
+                        testEnvironment.Id,
+                        new EnvironmentUsageDetail
+                        {
+                            EndState = "Available",
+                            Sku = new Sku { Name = standardLinuxSkuName },
+                            UserId = testEnvironment.UserId,
+                            Usage = new Dictionary<string, double>
+                            {
+                                { WestUs2MeterId, 0 },
+                            },
+                        }
+                    },
+                },
+                Users = new Dictionary<string, UserUsageDetail>
+                {
+                    {
+                        testEnvironment.UserId,
+                        new UserUsageDetail
+                        {
+                            Usage = new Dictionary<string, double>
+                            {
+                                { WestUs2MeterId, 0 },
+                            },
+
+                        }
+                    }
+                }
+
+            },
+            PeriodEnd = TestTimeNow.Subtract(TimeSpan.FromHours(11)),
+
+        };
         public static readonly BillingSummary BillingSummaryInputNoCurrentEvents = new BillingSummary
         {
             SubmissionState = BillingSubmissionState.None,
@@ -275,7 +395,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Available",
-                            Sku = new Sku { Name = smallLinuxSKuName },
+                            Sku = new Sku { Name = standardLinuxSkuName },
                             UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
@@ -288,7 +408,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Shutdown",
-                            Sku = new Sku { Name = smallLinuxSKuName },
+                            Sku = new Sku { Name = standardLinuxSkuName },
                             UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
@@ -301,7 +421,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
-                            Sku = new Sku { Name = smallLinuxSKuName },
+                            Sku = new Sku { Name = standardLinuxSkuName },
                             UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
@@ -464,6 +584,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             }
         };
+        public static readonly BillingSummary BillingSummaryWithSkuChangeOutput = new BillingSummary
+        {
+            SubmissionState = BillingSubmissionState.None,
+            Usage = new Dictionary<string, double>
+            {
+                { WestUs2MeterId, BillableUnitsWithSkuChange },
+            },
+            UsageDetail = new UsageDetail
+            {
+                Environments = new Dictionary<string, EnvironmentUsageDetail>
+                {
+                    {
+                        testEnvironment.Id,
+                        new EnvironmentUsageDetail
+                        {
+                            EndState = "Deleted",
+                            UserId = testEnvironment.UserId,
+                            Usage = new Dictionary<string, double>
+                            {
+                                { WestUs2MeterId, BillableUnitsWithSkuChange },
+                            },
+                        }
+                    },
+                },
+                Users = new Dictionary<string, UserUsageDetail>
+                {
+                    {
+                        testEnvironment.UserId,
+                        new UserUsageDetail
+                        {
+                            Usage = new Dictionary<string, double>
+                            {
+                                { WestUs2MeterId, BillableUnitsWithSkuChange },
+                            },
+
+                        }
+                    }
+                }
+
+            }
+        };
         public static readonly BillingSummary BillingSummaryOutputNoCurrentEvents = new BillingSummary
         {
             SubmissionState = BillingSubmissionState.None,
@@ -533,6 +694,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Test billing calculation with Available, Shutdown, and Deleted events.
             yield return new object[] { BillingEventsWithShutdownInput, BillingSummaryInput, BillingSummaryWithShutdownOutput };
 
+            // Test billing calculation with SKU changes
+            yield return new object[] { BillingEventsWithSkuChange, BillingSummaryInputForSkuChange, BillingSummaryWithSkuChangeOutput };
+
             // Test billing calculations with Available and Shutdown events on 2 environments.
             yield return new object[] { BillingEventsWithMultiEnvironmentsInput, BillingSummaryInput, BillingSummaryMultiOutput };
 
@@ -581,12 +745,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
         public BillingServiceTests()
         {
-            var mockSku = new Mock<ICloudEnvironmentSku>();
-            mockSku.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(smallLinuxComputeUnitPerHr);
-            mockSku.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(smallLinuxStorageUnitPerHr);
+            var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
+            mockStandardLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(standardLinuxComputeUnitPerHr);
+            mockStandardLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(standardLinuxStorageUnitPerHr);
+
+            var mockPremiumLinux = new Mock<ICloudEnvironmentSku>();
+            mockPremiumLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(premiumLinuxComputeUnitPerHr);
+            mockPremiumLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(premiumLinuxStorageUnitPerHr);
+
             var skus = new Dictionary<string, ICloudEnvironmentSku>
             {
-                [smallLinuxSKuName] = mockSku.Object
+                [standardLinuxSkuName] = mockStandardLinux.Object,
+                [premiumLinuxSkuName] = mockPremiumLinux.Object,
             };
             var mockSkuCatelog = new Mock<ISkuCatalog>();
             mockSkuCatelog.Setup(cat => cat.CloudEnvironmentSkus).Returns(skus);
@@ -656,7 +826,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var billOverride = new BillingOverride()
             {
                 Id = "test",
-                StartTime = TestTimeNow.AddHours(-7),
+                StartTime = TestTimeNow.AddHours(-12),
                 EndTime = TestTimeNow.AddHours(12),
                 BillingOverrideState = BillingOverrideState.BillingDisabled,
                 Priority = 1,
@@ -771,7 +941,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 new EnvironmentUsageDetail
                                 {
                                     EndState = "Available",
-                                    Sku = new Sku { Name = smallLinuxSKuName },
+                                    Sku = new Sku { Name = standardLinuxSkuName },
                                     UserId = testEnvironment.UserId,
                                     Usage = new Dictionary<string, double>
                                     {
@@ -784,7 +954,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 new EnvironmentUsageDetail
                                 {
                                     EndState = "Shutdown",
-                                    Sku = new Sku { Name = smallLinuxSKuName },
+                                    Sku = new Sku { Name = standardLinuxSkuName },
                                     UserId = testEnvironment.UserId,
                                     Usage = new Dictionary<string, double>
                                     {
@@ -797,7 +967,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 new EnvironmentUsageDetail
                                 {
                                     EndState = "Deleted",
-                                    Sku = new Sku { Name = smallLinuxSKuName },
+                                    Sku = new Sku { Name = standardLinuxSkuName },
                                     UserId = testEnvironment.UserId,
                                     Usage = new Dictionary<string, double>
                                     {
