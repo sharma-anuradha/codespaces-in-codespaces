@@ -3,5 +3,6 @@
 const { downloadVSCodeAssets } = require('./utils');
 
 (async () => {
-    await downloadVSCodeAssets();
+    await downloadVSCodeAssets('stable');
+    await downloadVSCodeAssets('insider');
 })();
