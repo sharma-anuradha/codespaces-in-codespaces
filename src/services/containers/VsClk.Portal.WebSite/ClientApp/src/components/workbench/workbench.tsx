@@ -4,7 +4,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import './workbench.css';
 
 import { trace } from '../../utils/trace';
-import { vscodeConfig } from '../../constants';
+import { getVSCodeVersion } from '../../constants';
 
 import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
@@ -226,8 +226,16 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
 
         const { accessToken } = this.props.token!;
 
+        const quality =
+            window.localStorage.getItem('vso-featureset') === 'insider' ? 'insider' : 'stable';
+
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
-        envConnector.ensureConnection(environmentInfo, accessToken, this.props.liveShareEndpoint);
+        envConnector.ensureConnection(
+            environmentInfo,
+            accessToken,
+            this.props.liveShareEndpoint,
+            quality
+        );
 
         const listener = () => {
             window.removeEventListener('beforeunload', listener);
@@ -241,7 +249,10 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
         };
         window.addEventListener('beforeunload', listener);
 
+        const vscodeVersion = getVSCodeVersion(quality);
+
         const resourceUriProvider = resourceUriProviderFactory(
+            vscodeVersion.commit,
             environmentInfo.connection.sessionId,
             envConnector
         );
@@ -262,7 +273,8 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
                     accessToken,
                     environmentInfo,
                     liveShareEndpoint,
-                    correlationId
+                    correlationId,
+                    quality
                 );
             },
         };
@@ -275,7 +287,7 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
                     ...commonProperties,
                     [`vso.${property}`]: vsoContextProperties[property],
                 };
-            }, {} as { [key: string]: any });
+            }, {} as Record<string, any>);
         };
 
         const workspaceProvider = new WorkspaceProvider(this.props.params, environmentInfo);
@@ -295,8 +307,8 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
             workspaceProvider,
             remoteAuthority: `vsonline+${environmentInfo.id}`,
             webSocketFactory: VSLSWebSocketFactory,
-            urlCallbackProvider: new UrlCallbackProvider(),
-            connectionToken: vscodeConfig.commit,
+            urlCallbackProvider: new UrlCallbackProvider(vscodeVersion.quality),
+            connectionToken: vscodeVersion.commit,
             credentialsProvider,
             resourceUriProvider,
             userDataProvider,

@@ -1,7 +1,7 @@
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { detect } from 'detect-browser';
 
-import { TELEMETRY_KEY } from '../../constants';
+import { TELEMETRY_KEY, getVSCodeVersion } from '../../constants';
 import { createUniqueId } from '../../dependencies';
 import { createTrace } from '../createTrace';
 import { TelemetryEventSerializer } from './TelemetryEventSerializer';
@@ -37,6 +37,7 @@ class TelemetryService {
 
     initializeContext() {
         const info = detect();
+
         this.context = {
             portalVersion: versionFile.version,
             machineId: this.machineId,
@@ -46,7 +47,10 @@ class TelemetryService {
             browserName: (info && info.name) || '<unknown>',
             browserVersion: (info && info.version) || '<unknown>',
             browserOS: (info && info.os) || '<unknown>',
+            vscodeCommit: '',
+            vscodeQuality: 'stable',
         };
+        this.setVscodeConfig();
     }
 
     getContext() {
@@ -61,6 +65,14 @@ class TelemetryService {
 
     setIsInternal(isInternal: boolean) {
         this.context.isInternal = isInternal;
+    }
+
+    setVscodeConfig() {
+        const vscodeConfig = getVSCodeVersion(
+            window.localStorage.getItem('vso-featureset') === 'insider' ? 'insider' : 'stable'
+        );
+        this.context.vscodeCommit = vscodeConfig.commit;
+        this.context.vscodeQuality = vscodeConfig.quality;
     }
 
     get isInternal(): boolean {

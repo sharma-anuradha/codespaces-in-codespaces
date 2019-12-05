@@ -1,3 +1,4 @@
+import { VSCodeConfig } from './../constants';
 export type ITelemetryContext = {
     portalVersion: string;
 
@@ -13,4 +14,7 @@ export type ITelemetryContext = {
 
     environmentId?: string;
     isInternal?: boolean;
+
+    vscodeCommit: string;
+    vscodeQuality: string;
 };

@@ -52,7 +52,7 @@
 }
 
 .vsonline-titlebar-persona-button {
-    background-color: black;
+    background-color: #141414;
     border: none;
     padding: 0;
     width: 28px;
@@ -60,14 +60,27 @@
     cursor: pointer;
 }
 
-.vsonline-titlebar__persona-card {
-    width: 12rem;
-    height: 4rem;
-    display: flex;
+.vsonline-avatarmenu {
     align-items: center;
     justify-content: center;
+    width: 20rem;
+    padding: 0.5rem;
 }
 
-.vsonline-titlebar__persona-card-signout-button {
-    border: none
+.vsonline-avatarmenu__item {
+    border-bottom: 1px solid rgb(243, 242, 241);
+}
+
+.vsonline-avatarmenu__item:last-child {
+    border-bottom: none;
+}
+
+.vsonline-avatarmenu__item-button {
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.vsonline-avatarmenu__item-button .ms-Button-icon{
+    font-size: 20px;
 }

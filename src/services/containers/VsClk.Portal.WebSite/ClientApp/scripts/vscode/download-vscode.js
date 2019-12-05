@@ -86,7 +86,7 @@ async function getUpdateDetails(commitId, assetName, quality) {
     return new Promise((resolve, reject) => {
         https.get(updateUrl, (res) => {
             if (res.statusCode === 204) {
-                reject(new Error('There is no update available'));
+                resolve(null);
                 return; // no update available
             }
 

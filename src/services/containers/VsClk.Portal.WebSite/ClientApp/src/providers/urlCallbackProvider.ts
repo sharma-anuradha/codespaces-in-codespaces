@@ -1,13 +1,12 @@
 import { URI, IURLCallbackProvider } from 'vscode-web';
 
-import { vscode } from '../utils/vscode';
+import { vscode, VSCodeQuality } from '../utils/vscode';
 
 import { Emitter, Event } from 'vscode-jsonrpc';
 
 import { getQueryParams } from '../utils/getQueryParams';
 
 import { randomString } from '../utils/randomString';
-import { vscodeConfig } from '../constants';
 
 const callbackSymbol = Symbol('URICallbackSymbol');
 
@@ -23,13 +22,13 @@ interface IExpectedNonceRecord {
 export class UrlCallbackProvider implements IURLCallbackProvider {
     private [callbackSymbol] = new Emitter<URI>();
 
-    constructor() {
+    constructor(private readonly quality: VSCodeQuality) {
         // listen for changes to localStorage
         if (window.addEventListener) {
             window.addEventListener('storage', this.onStorage, false);
         } else {
             (window as any).attachEvent('onstorage', this.onStorage);
-        };
+        }
     }
 
     private expectedNonceMap = new Map<string, IExpectedNonceRecord>();
@@ -42,15 +41,14 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         }
 
         const [nonce, keyName] = key.split('::');
-        
-        if (!nonce || (keyName !== LOCAL_STORAGE_KEY)) {
+
+        if (!nonce || keyName !== LOCAL_STORAGE_KEY) {
             return;
         }
 
         const expectedRedirectRecord = this.expectedNonceMap.get(nonce);
 
-        if (!expectedRedirectRecord)
-        {
+        if (!expectedRedirectRecord) {
             return;
         }
 
@@ -67,16 +65,14 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
             query: this.cleanQueryFromVsoParams(queryParams).toString(),
             scheme: this.getVSCodeScheme(),
             path: expectedRedirectRecord.path,
-            fragment: ''
+            fragment: '',
         });
 
         this[callbackSymbol].fire(protocolHandlerUri);
-    }
+    };
 
     private getVSCodeScheme() {
-        return (vscodeConfig.quality === 'insider')
-            ? 'vscode-insiders'
-            : 'vscode';
+        return this.quality === 'insider' ? 'vscode-insiders' : 'vscode';
     }
 
     private cleanQueryFromVsoParams(queryParams: URLSearchParams) {
@@ -86,7 +82,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
 
         return queryParamsWithoutVSOParams;
     }
-    
+
     public onCallback: Event<URI> = this[callbackSymbol].event;
 
     private generateUrlCallbackParams(authority: string, path: string, query: string) {
@@ -115,7 +111,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
             path: '/extension-auth-callback',
             authority: location.host,
             query: this.generateUrlCallbackParams(authority!, path, query),
-            fragment: options.fragment || ''
+            fragment: options.fragment || '',
         });
 
         return uri;

@@ -14,8 +14,9 @@ import { onMessage as onServiceWorkerMessage } from '../serviceWorker';
 
 import { trace } from '../utils/trace';
 import { Signal } from '../utils/signal';
+import { VSCodeQuality } from '../utils/vscode';
 
-import { DEFAULT_EXTENSIONS, vscodeConfig } from '../constants';
+import { DEFAULT_EXTENSIONS, getVSCodeVersion } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { BrowserSyncService } from './services/browserSyncService';
 import { postServiceWorkerMessage } from '../common/post-message';
@@ -66,7 +67,10 @@ export class EnvConnector {
         );
     }
 
-    private async startVscodeServer(workspaceClient: WorkspaceClient): Promise<number> {
+    private async startVscodeServer(
+        workspaceClient: WorkspaceClient,
+        quality: VSCodeQuality
+    ): Promise<number> {
         if (this.vscodeServerPort && !this.vscodeServerPort.isRejected) {
             // This port will remain shared even if we lose connection.
             return this.vscodeServerPort.promise;
@@ -78,6 +82,7 @@ export class EnvConnector {
                 vsCodeServerHostService
             );
 
+            const vscodeConfig = getVSCodeVersion(quality);
             const options: VSCodeServerOptions = {
                 vsCodeCommit: vscodeConfig.commit,
                 quality: vscodeConfig.quality,
@@ -190,9 +195,10 @@ export class EnvConnector {
     }
 
     private async getSharedVscodeServer(
-        workspaceClient: WorkspaceClient
+        workspaceClient: WorkspaceClient,
+        quality: VSCodeQuality
     ): Promise<vsls.SharedServer> {
-        const port = await this.startVscodeServer(workspaceClient);
+        const port = await this.startVscodeServer(workspaceClient, quality);
         trace(`Started VSCode server started on port [${port}].`);
 
         trace(`Forwarding the VSCode port [${port}].`);
@@ -210,7 +216,8 @@ export class EnvConnector {
     public async ensureConnection(
         environmentInfo: ICloudEnvironment,
         accessToken: string,
-        liveShareEndpoint: string
+        liveShareEndpoint: string,
+        quality: VSCodeQuality
     ): Promise<{ sessionPath: string; port: number }> {
         // if already `connecting` or `connected`, return the result
         if (this.initializeConnectionSignal && !this.initializeConnectionSignal.isRejected) {
@@ -232,7 +239,7 @@ export class EnvConnector {
             const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
                 vsls.StreamManagerService
             );
-            const vscodeServer = await this.getSharedVscodeServer(workspaceClient);
+            const vscodeServer = await this.getSharedVscodeServer(workspaceClient, quality);
 
             trace(`Creating the stream.`);
             this.channelOpener = workspaceClient.createServerStream(

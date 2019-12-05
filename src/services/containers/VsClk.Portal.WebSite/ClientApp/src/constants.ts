@@ -1,3 +1,6 @@
+import { IPackageJson } from './interfaces/IPackageJson';
+import { VSCodeQuality } from './utils/vscode';
+
 export const DEFAULT_EXTENSIONS = [
     'vscode.theme-defaults',
     'ms-vsliveshare.vsliveshare',
@@ -5,21 +8,20 @@ export const DEFAULT_EXTENSIONS = [
     'ms-vsonline.vsonline',
 ];
 
-const packageJson: { name: string; vscodeCommit: string } = require('../package.json');
+const packageJson: IPackageJson = require('../package.json');
 
 export interface VSCodeConfig {
     commit: string;
-    quality: 'stable' | 'insider';
+    quality: VSCodeQuality;
 }
 
 export const packageName = packageJson.name;
-export const vscodeConfig: VSCodeConfig = {
-    commit: packageJson.vscodeCommit,
-    quality: 'stable',
-};
 
-export interface IPackageJson {
-    version: string;
+export function getVSCodeVersion(quality: VSCodeQuality): VSCodeConfig {
+    return {
+        commit: packageJson.vscodeCommit[quality],
+        quality: quality,
+    };
 }
 
 export const TELEMETRY_KEY = 'AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217';

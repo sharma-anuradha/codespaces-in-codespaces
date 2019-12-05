@@ -1,3 +1,4 @@
+import { VSCodeQuality } from './../utils/vscode';
 import { SshChannel } from '@vs/vs-ssh';
 import { Event, Emitter } from 'vscode-jsonrpc';
 
@@ -72,7 +73,8 @@ export class VSLSWebSocket implements IWebSocket {
         private readonly accessToken: string,
         private readonly environmentInfo: ICloudEnvironment,
         private readonly liveShareEndpoint: string,
-        private readonly correlationId: string
+        private readonly correlationId: string,
+        private readonly quality: VSCodeQuality
     ) {
         this.id = VSLSWebSocket.socketCnt++;
         this.initializeChannel(url);
@@ -87,7 +89,8 @@ export class VSLSWebSocket implements IWebSocket {
             await envConnector.ensureConnection(
                 this.environmentInfo,
                 this.accessToken,
-                this.liveShareEndpoint
+                this.liveShareEndpoint,
+                this.quality
             );
 
             const channel = await envConnector.sendHandshakeRequest(

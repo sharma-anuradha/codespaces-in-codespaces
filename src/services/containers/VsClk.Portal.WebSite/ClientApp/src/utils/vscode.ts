@@ -156,11 +156,13 @@ export class FileSystemProviderError extends Error {
     }
 }
 
-  /**
-     * Possible changes that can occur to a file.
-     */
-    export enum FileChangeType {
-        UPDATED = 0,
-        ADDED = 1,
-        DELETED = 2,
-    }
+/**
+ * Possible changes that can occur to a file.
+ */
+export enum FileChangeType {
+    UPDATED = 0,
+    ADDED = 1,
+    DELETED = 2,
+}
+
+export type VSCodeQuality = 'stable' | 'insider';

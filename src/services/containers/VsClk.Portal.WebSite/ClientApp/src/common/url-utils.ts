@@ -1,6 +1,5 @@
 import { URI } from 'vscode-web';
 
-import { vscodeConfig } from '../constants';
 import { EnvConnector } from '../ts-agent/envConnector';
 import { vscode } from '../utils/vscode';
 
@@ -169,7 +168,11 @@ export function isValidPort(port: number): boolean {
     return !isNaN(port) && port >= 0 && port <= 65535;
 }
 
-export function resourceUriProviderFactory(sessionId: string, connector: EnvConnector) {
+export function resourceUriProviderFactory(
+    connectionToken: string,
+    sessionId: string,
+    connector: EnvConnector
+) {
     let portNumber: number | undefined = undefined;
 
     // The connection might get restarted and with that we might be forced to spin up a new server.
@@ -184,12 +187,16 @@ export function resourceUriProviderFactory(sessionId: string, connector: EnvConn
             );
         }
 
+        const query = new URLSearchParams();
+        query.set('path', uri.path);
+        query.set('tkn', connectionToken);
+
         return vscode.URI.from({
             scheme: 'https',
             authority: window.location.host,
             // We attach vscodeRemoteResourcePathComponent at the end for easier recognizability when compared with self host.
             path: `/${assetsPathComponent}/${sessionId}/${portNumber}/${vscodeRemoteResourcePathComponent}`,
-            query: `path=${encodeURIComponent(uri.path)}&tkn=${vscodeConfig.commit}`,
+            query: query.toString(),
         });
     };
 }
