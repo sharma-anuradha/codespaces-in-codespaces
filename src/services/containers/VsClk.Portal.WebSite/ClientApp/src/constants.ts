@@ -20,7 +20,7 @@ export const packageName = packageJson.name;
 export function getVSCodeVersion(quality: VSCodeQuality): VSCodeConfig {
     return {
         commit: packageJson.vscodeCommit[quality],
-        quality: quality,
+        quality,
     };
 }
 

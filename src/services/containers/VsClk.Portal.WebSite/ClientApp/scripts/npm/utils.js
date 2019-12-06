@@ -1,23 +1,34 @@
 // @ts-check
 
 const fs = require('fs');
+const fse = require('fs-extra');
 const path = require('path');
 const rimrafCallback = require('rimraf');
 const { promisify } = require('util');
 
 const { downloadVSCode } = require('../vscode/download-vscode');
 const { getCurrentAssetsCommit } = require('../vscode/get-current-vscode-assets-version');
-
-const { vscodeAssetsTargetPathBase, assetName, packageJsonPath } = require('./constants');
+const { ensureDir } = require('../vscode/fileUtils');
+const {
+    vscodeAssetsTargetPathBase,
+    assetName,
+    packageJsonPath,
+    node_modules,
+    liveShareWebExtensionPath,
+    liveShareWebExtensionTargetPath,
+} = require('./constants');
 
 const readFile = promisify(fs.readFile);
+const exists = promisify(fs.exists);
+const copy = promisify(fse.copy);
+const link = promisify(fs.symlink);
 const rimraf = promisify(rimrafCallback);
 
 async function getVSCodeCommitFromPackage(quality) {
     try {
         const fileContents = await readFile(packageJsonPath, { encoding: 'utf-8' });
         const packageMetadata = JSON.parse(fileContents);
-        return quality == 'stable'
+        return quality === 'stable'
             ? packageMetadata.vscodeCommit.stable
             : packageMetadata.vscodeCommit.insider;
     } catch (ex) {
@@ -28,6 +39,10 @@ async function getVSCodeCommitFromPackage(quality) {
 }
 
 async function downloadVSCodeAssets(quality) {
+    downloadVSCodeAssetsInternal(quality, vscodeAssetsTargetPathBase, assetName);
+}
+
+async function downloadVSCodeAssetsInternal(quality, vscodeAssetsTargetPathBase, assetName) {
     const requiredCommitId = await getVSCodeCommitFromPackage(quality);
     if (!requiredCommitId) {
         console.log('No vscode commit in package.json. Nothing to do.');
@@ -50,7 +65,34 @@ async function downloadVSCodeAssets(quality) {
     await downloadVSCode(requiredCommitId, assetName, quality, vscodeAssetsTargetPath);
 }
 
+async function copyStaticExtensions() {
+    const targetExists = await exists(liveShareWebExtensionTargetPath);
+    if (!targetExists) {
+        await ensureDir(liveShareWebExtensionTargetPath);
+    }
+
+    await copy(liveShareWebExtensionPath, liveShareWebExtensionTargetPath);
+}
+
+async function linkBuiltinStaticExtensions() {
+    /** TEMP: VS Code plans to include the extensions that can run in the browser as part of the web-standalone package.
+     *  Until we get that we download the server package just to the extensions.
+     */
+    const vscodeServerAssetsTargetPath = path.join(vscodeAssetsTargetPathBase, 'server');
+    downloadVSCodeAssetsInternal('stable', vscodeServerAssetsTargetPath, 'server-linux-x64-web');
+
+    const builtinExtensionsPath = path.join(vscodeServerAssetsTargetPath, 'stable', 'extensions');
+    const builtinExtensionsTargetPath = path.join(node_modules, 'extensions');
+
+    const targetExists = await exists(builtinExtensionsTargetPath);
+    if (!targetExists) {
+        await link(builtinExtensionsPath, builtinExtensionsTargetPath, 'junction');
+    }
+}
+
 module.exports = {
     getVSCodeCommitFromPackage,
     downloadVSCodeAssets,
+    copyStaticExtensions,
+    linkBuiltinStaticExtensions,
 };

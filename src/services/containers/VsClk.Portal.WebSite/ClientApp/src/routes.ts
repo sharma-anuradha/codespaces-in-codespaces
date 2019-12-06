@@ -5,6 +5,7 @@ import { NewPlan } from './components/newPlan/new-plan';
 import { EnvironmentsPanel } from './components/environments/environments';
 import { Login } from './components/login/login';
 import { Workbench } from './components/workbench/workbench';
+import { LiveShareWorkbench } from './components/liveShareWorkbench/liveShareWorkbench';
 import { GitHubLogin } from './components/gitHubLogin/gitHubLogin';
 import { BlogPost } from './BlogPost';
 import { PageNotFound } from './components/pageNotFound/pageNotFound';
@@ -16,7 +17,8 @@ import {
     githubLoginPath,
     loginPath,
     rootPath,
-    pageNotFoundPath
+    pageNotFoundPath,
+    liveShareSessionPath,
 } from './routerPaths';
 
 type Route = RouteProps & {
@@ -60,6 +62,12 @@ export const routes: Route[] = [
         path: loginPath,
         exact: false,
         component: Login,
+    },
+    {
+        authenticated: false,
+        path: liveShareSessionPath,
+        exact: false,
+        component: LiveShareWorkbench,
     },
     {
         authenticated: false,

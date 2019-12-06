@@ -21,7 +21,7 @@ import {
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { credentialsProvider } from '../../providers/credentialsProvider';
 import { WorkspaceProvider } from '../../providers/workspaceProvider';
-import { ExternalUriProvider } from '../../providers/externalUriProvider';
+import { EnvironmentsExternalUriProvider } from '../../providers/externalUriProvider';
 import { resourceUriProviderFactory } from '../../common/url-utils';
 import { postServiceWorkerMessage } from '../../common/post-message';
 import { disconnectCloudEnv } from '../../common/service-worker-messages';
@@ -279,20 +279,11 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
             },
         };
 
-        const resolveCommonTelemetryProperties = () => {
-            const vsoContextProperties = telemetry.getContext();
-            const keys = Object.keys(vsoContextProperties) as (keyof typeof vsoContextProperties)[];
-            return keys.reduce((commonProperties, property) => {
-                return {
-                    ...commonProperties,
-                    [`vso.${property}`]: vsoContextProperties[property],
-                };
-            }, {} as Record<string, any>);
-        };
+        const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(telemetry);
 
         const workspaceProvider = new WorkspaceProvider(this.props.params, environmentInfo);
 
-        const externalUriProvider = new ExternalUriProvider(
+        const externalUriProvider = new EnvironmentsExternalUriProvider(
             environmentInfo,
             accessToken,
             envConnector,

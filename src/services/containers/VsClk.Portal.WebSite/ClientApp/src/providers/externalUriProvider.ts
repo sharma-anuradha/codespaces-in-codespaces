@@ -2,13 +2,10 @@ import { URI } from 'vscode-web';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { EnvConnector } from '../ts-agent/envConnector';
 
-export class ExternalUriProvider {
-    constructor(
-        private readonly environmentInfo: ICloudEnvironment,
-        private readonly accessToken: string,
-        private readonly connector: EnvConnector,
-        private readonly liveShareEndpoint: string
-    ) {}
+abstract class BaseExternalUriProvider {
+    protected abstract ensurePortIsForwarded(port: number): Promise<void>;
+
+    constructor(private readonly sessionId: string) {}
 
     public async resolveExternalUri(uri: URI): Promise<URI> {
         const port = this.getLocalHostPortToForward(uri);
@@ -16,14 +13,10 @@ export class ExternalUriProvider {
             return uri;
         }
 
-        await this.connector.ensurePortIsForwarded(
-            this.environmentInfo,
-            this.accessToken,
-            port,
-            this.liveShareEndpoint
-        );
+        await this.ensurePortIsForwarded(port);
+
         uri.scheme = 'https';
-        uri.authority = `${this.environmentInfo.connection.sessionId}-${port}.app.${window.location.hostname}`;
+        uri.authority = `${this.sessionId}-${port}.app.${window.location.hostname}`;
         return uri;
     }
 
@@ -36,5 +29,35 @@ export class ExternalUriProvider {
             return undefined;
         }
         return +localhostMatch[2];
+    }
+}
+
+export class EnvironmentsExternalUriProvider extends BaseExternalUriProvider {
+    protected async ensurePortIsForwarded(port: number): Promise<void> {
+        await this.connector.ensurePortIsForwarded(
+            this.environmentInfo,
+            this.accessToken,
+            port,
+            this.liveShareEndpoint
+        );
+    }
+
+    constructor(
+        private readonly environmentInfo: ICloudEnvironment,
+        private readonly accessToken: string,
+        private readonly connector: EnvConnector,
+        private readonly liveShareEndpoint: string
+    ) {
+        super(environmentInfo.connection.sessionId);
+    }
+}
+
+export class LiveShareExternalUriProvider extends BaseExternalUriProvider {
+    protected async ensurePortIsForwarded(port: number): Promise<void> {
+        // Nothing to do since the port is already forwarded by the LiveShare host.
+    }
+
+    constructor(sessionId: string) {
+        super(sessionId);
     }
 }

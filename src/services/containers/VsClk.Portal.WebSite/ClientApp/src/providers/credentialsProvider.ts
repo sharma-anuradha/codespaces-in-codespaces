@@ -19,10 +19,10 @@ interface IAuthStrategy {
 
 class MsalAuthStrategy implements IAuthStrategy {
     canHandleService(service: string, account: string): boolean {
-        const isVSCodeAccount = (service === 'VS Code Account');
-        const isAADv2AccessToken = (account === 'AADv2.accessToken');
+        const isVSCodeAccount = service === 'VS Code Account';
+        const isAADv2AccessToken = account === 'AADv2.accessToken';
 
-        return (isVSCodeAccount && isAADv2AccessToken);
+        return isVSCodeAccount && isAADv2AccessToken;
     }
 
     async getToken(service: string, account: string): Promise<string | null> {
@@ -59,7 +59,7 @@ class AADv2BrowserSyncStrategy implements IAuthStrategy {
  */
 class AzureAccountStrategy implements IAuthStrategy {
     canHandleService(service: string, account: string): boolean {
-        return ((service === 'VS Code Azure') && (account === 'Azure'));
+        return service === 'VS Code Azure' && account === 'Azure';
     }
 
     async getToken(): Promise<string | null> {
@@ -75,6 +75,22 @@ class AzureAccountStrategy implements IAuthStrategy {
             // ignore
             return null;
         }
+    }
+}
+
+class LiveShareWebStrategy implements IAuthStrategy {
+    canHandleService(service: string, account: string): boolean {
+        return service === 'liveshare-web' && account === 'accesstoken';
+    }
+
+    async getToken(service: string, account: string): Promise<string | null> {
+        const token = await authService.getCachedToken();
+
+        if (!token) {
+            return null;
+        }
+
+        return token.accessToken;
     }
 }
 
@@ -145,5 +161,6 @@ export class CredentialsProvider implements ICredentialsProvider {
 export const credentialsProvider = new CredentialsProvider([
     new AADv2BrowserSyncStrategy(),
     new MsalAuthStrategy(),
-    new AzureAccountStrategy()
+    new AzureAccountStrategy(),
+    new LiveShareWebStrategy(),
 ]);

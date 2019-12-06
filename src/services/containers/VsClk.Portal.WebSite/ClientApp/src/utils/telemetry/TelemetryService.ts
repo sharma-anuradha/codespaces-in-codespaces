@@ -79,6 +79,17 @@ class TelemetryService {
         return !!this.context.isInternal;
     }
 
+    resolveCommonProperties(): { [key: string]: any } {
+        const vsoContextProperties = this.getContext();
+        const keys = Object.keys(vsoContextProperties) as (keyof typeof vsoContextProperties)[];
+        return keys.reduce((commonProperties, property) => {
+            return {
+                ...commonProperties,
+                [`vso.${property}`]: vsoContextProperties[property],
+            };
+        }, {} as Record<string, any>);
+    }
+
     private get machineId(): string {
         try {
             let machineId = window.localStorage.getItem('vso_machine_id');

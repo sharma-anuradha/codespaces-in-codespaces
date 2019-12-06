@@ -1600,6 +1600,11 @@
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/vscode/-/vscode-1.38.0.tgz#1e53953406ef662354e2e62451c3c71c9ff19a6d"
   integrity sha1-HlOVNAbvZiNU4uYkUcPHHJ/xmm0=
 
+"@types/webpack-env@1.13.6":
+  version "1.13.6"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/webpack-env/-/webpack-env-1.13.6.tgz#128d1685a7c34d31ed17010fc87d6a12c1de6976"
+  integrity sha1-Eo0WhafDTTHtFwEPyH1qEsHeaXY=
+
 "@types/yargs-parser@*":
   version "13.1.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/yargs-parser/-/yargs-parser-13.1.0.tgz#c563aa192f39350a1d18da36c5a8da382bbd8228"
@@ -1715,6 +1720,11 @@
     debug "^4.1.1"
     diffie-hellman "^5.0.3"
     vscode-jsonrpc "^4.0.0"
+
+"@vsliveshare/liveshare-web@0.0.1":
+  version "0.0.1"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/registry/@vsliveshare/liveshare-web/-/liveshare-web-0.0.1.tgz#a942498d1091c1525eed73c5b7dd3c7ed48db1a6"
+  integrity sha1-qUJJjRCRwVJe7XPFt908ftSNsaY=
 
 "@webassemblyjs/ast@1.7.11":
   version "1.7.11"
