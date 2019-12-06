@@ -640,10 +640,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         if (timeInProvisioningStateInMin > 60)
                         {
                             newState = CloudEnvironmentState.Failed;
+                            logger.AddCloudEnvironment(cloudEnvironment)
+                              .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetEnvironmentAsync)), $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes ");
                         }
 
-                        logger.AddCloudEnvironment(cloudEnvironment)
-                              .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetEnvironmentAsync)), $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes ");
                         break;
 
                     // Swap between available and awaiting based on the workspace status
