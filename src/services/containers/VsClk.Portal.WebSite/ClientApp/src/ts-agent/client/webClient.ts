@@ -23,7 +23,8 @@ export class WebClient implements ILiveShareClient {
         return {
             'Cache-Control': 'no-cache',
             'Content-Type': 'application/json',
-            'User-Agent': navigator.userAgent + ' VSOnlineWeb/' + versionFile.version,
+            // Temporary change to un-break Firefox. Should be custom header like X-User-Agent.
+            // 'User-Agent': navigator.userAgent + ' VSOnlineWeb/' + versionFile.version,
             Authorization: `Bearer ${this.credentialsProvider.getToken(sessionId)}`,
         };
     }
@@ -49,6 +50,7 @@ export class WebClient implements ILiveShareClient {
             method: 'GET',
             headers: this.getRequestHeaders(invitationId),
         });
+
         return await this.parseResponse<IWorkspaceInfo>(response, `GET workspace/${invitationId}`);
     }
 
