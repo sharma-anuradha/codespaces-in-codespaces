@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 
@@ -442,6 +443,21 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
 
             return logger;
+        }
+
+
+        /// <summary>
+        /// Add details about a client HTTP response.
+        /// </summary>
+        /// <param name="logger">The <see cref="IDiagnosticsLogger"/> instance.</param>
+        /// <param name="response">The http response.</param>
+        /// <returns>The original <paramref name="logger"/> instance.</returns>
+        public static IDiagnosticsLogger AddClientHttpResponseDetails(this IDiagnosticsLogger logger, HttpResponseMessage response)
+        {
+            var request = response.RequestMessage;
+            return logger.FluentAddValue($"Client{LoggingConstants.HttpRequestUri}", request.RequestUri.AbsoluteUri)
+                .FluentAddValue($"Client{LoggingConstants.HttpRequestMethod}", request.Method.ToString())
+                .FluentAddValue($"Client{LoggingConstants.HttpResponseStatus}", response.StatusCode.ToString());
         }
 
         /// <summary>

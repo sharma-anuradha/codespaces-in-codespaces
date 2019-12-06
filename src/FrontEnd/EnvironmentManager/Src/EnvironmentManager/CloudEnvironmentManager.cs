@@ -281,7 +281,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     // Delete the previous liveshare session from database.
                     // Do not block start process on delete of old workspace from liveshare db.
-                    var _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId));
+                    var _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId, logger));
                     cloudEnvironment.Connection = null;
                 }
 
@@ -650,7 +650,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     case CloudEnvironmentState.Available:
                     case CloudEnvironmentState.Awaiting:
                         var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                        var workspace = await WorkspaceRepository.GetStatusAsync(sessionId);
+                        var workspace = await WorkspaceRepository.GetStatusAsync(sessionId, logger);
                         if (workspace == null)
                         {
                             // In this case the workspace is deleted. There is no way of getting to an environment without it.
@@ -821,7 +821,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         childLogger.FluentAddBaseValue(nameof(id), id)
                             .FluentAddBaseValue("ConnectionSessionId", cloudEnvironment.Connection?.ConnectionSessionId);
-                        await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId);
+                        await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId, logger);
                     },
                     swallowException: true);
             }
@@ -950,7 +950,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ExpiresAt = DateTime.UtcNow.AddDays(PersistentSessionExpiresInDays),
             };
 
-            var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest);
+            var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest, logger);
             if (string.IsNullOrWhiteSpace(workspaceResponse.Id))
             {
                 logger

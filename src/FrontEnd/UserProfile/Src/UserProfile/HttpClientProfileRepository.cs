@@ -17,8 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     /// </summary>
     public class HttpClientProfileRepository : IProfileRepository
     {
-        private const string LogErrorMessage = "httpclientprofilerepository_getcurrentuserprofileasync_error";
-        private const string LogMessage = "httpclientprofilerepository_getcurrentuserprofileasync_complete";
+        private const string LogBaseName = "httpclientprofilerepository";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientProfileRepository"/> class.
@@ -34,35 +33,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         private IHttpClientProvider HttpClientProvider { get; }
 
         /// <inheritdoc/>
-        public async Task<Profile> GetCurrentUserProfileAsync(IDiagnosticsLogger logger)
+        public Task<Profile> GetCurrentUserProfileAsync(IDiagnosticsLogger logger)
         {
-            var response = await HttpClientProvider.HttpClient.GetAsync("profile?scope=programs");
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_getcurrentuserprofile",
+                async (childLogger) =>
+                {
+                    var response = await HttpClientProvider.HttpClient.GetAsync("profile?scope=programs");
+                    logger.AddClientHttpResponseDetails(response);
 
-            logger?.FluentAddValue($"Client{LoggingConstants.HttpRequestUri}", response.RequestMessage.RequestUri.AbsoluteUri)
-                .FluentAddValue($"Client{LoggingConstants.HttpResponseStatus}", response.StatusCode.ToString())
-                .FluentAddValue($"Client{LoggingConstants.HttpRequestMethod}", response.RequestMessage.Method.ToString());
+                    if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        return null;
+                    }
 
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                logger?.LogError(LogErrorMessage);
-                return null;
-            }
+                    await response.ThrowIfFailedAsync();
 
-            try
-            {
-                await response.ThrowIfFailedAsync();
-            }
-            catch (Exception ex)
-            {
-                logger?.LogException(LogErrorMessage, ex);
-                throw;
-            }
-
-            var profile = await response.Content.ReadAsAsync<Profile>();
-
-            logger?.LogInfo(LogMessage);
-
-            return profile;
+                    var profile = await response.Content.ReadAsAsync<Profile>();
+                    return profile;
+                });
         }
     }
 }

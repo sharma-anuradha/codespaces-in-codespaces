@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
 {
@@ -43,20 +44,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         };
 
         /// <inheritdoc/>
-        public Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace)
+        public Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, IDiagnosticsLogger logger)
         {
             Requires.NotNull(MockCreate, nameof(MockCreate));
             return Task.FromResult(MockCreate(workspace));
         }
 
         /// <inheritdoc/>
-        public Task DeleteAsync(string workspaceId)
+        public Task DeleteAsync(string workspaceId, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }
 
         /// <inheritdoc/>
-        public Task<WorkspaceResponse> GetStatusAsync(string workspaceId)
+        public Task<WorkspaceResponse> GetStatusAsync(string workspaceId, IDiagnosticsLogger logger)
         {
             Requires.NotNull(MockGetStatus, nameof(MockGetStatus));
             return Task.FromResult(MockGetStatus(workspaceId));
