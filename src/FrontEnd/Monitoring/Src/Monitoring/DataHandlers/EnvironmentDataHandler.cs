@@ -84,21 +84,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
         private CloudEnvironmentState DetermineNewEnvironmentState(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
         {
-            switch (environmentData.EnvironmentType)
-            {
-                case VsoEnvironmentType.ContainerBased:
-                    return DetermineNewStateForContainerBasedEnvironment(cloudEnvironment, environmentData);
-
-                case VsoEnvironmentType.VirtualMachineBased:
-                    return DetermineNewStateForVmBasedEnvironment(cloudEnvironment, environmentData);
-
-                default:
-                    return default;
-            }
-        }
-
-        private CloudEnvironmentState DetermineNewStateForContainerBasedEnvironment(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
-        {
             if (IsEnvironmentRunning(environmentData))
             {
                 // If current state is NOT Available, change status to Available (when Enviroment is fully running).
@@ -117,11 +102,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             }
 
             return default;
-        }
-
-        private CloudEnvironmentState DetermineNewStateForVmBasedEnvironment(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
-        {
-            throw new NotImplementedException();
         }
 
         private bool IsEnvironmentRunning(EnvironmentData environmentData)
@@ -153,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
         private bool IsVmBasedEnvironmentRunning(EnvironmentData environmentData)
         {
-            throw new NotImplementedException();
+            return environmentData.State == VsoEnvironmentState.VslsRelayConnected;
         }
     }
 }
