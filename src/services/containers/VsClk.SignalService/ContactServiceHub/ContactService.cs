@@ -124,7 +124,13 @@ namespace Microsoft.VsCloudKernel.SignalService
                 var registeredSelfContact = GetRegisteredContact(contactRef.Id);
 
                 var allMatchingProperties = matchingProperties.Select(i => i.Item2).ToArray();
+
+                // look on currently registered contacts on this service
                 var matchContactsResults = await MatchContactsAsync(allMatchingProperties, cancellationToken);
+
+                // this list will collect all the non matching properties
+                var nonMatchingProps = new List<(int, Dictionary<string, object>)>();
+
                 for (var index = 0; index < matchContactsResults.Length; ++index)
                 {
                     var itemResult = matchContactsResults[index];
@@ -136,55 +142,67 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                     else
                     {
-                        // define the matching properties intended for this bucket
-                        var matchProperties = allMatchingProperties[index];
+                        // collect our non matching properties
+                        nonMatchingProps.Add((resultIndex, allMatchingProperties[index]));
+                    }
+                }
 
-                        // look on our backplane providers
-                        var backplaneContacts = BackplaneManager != null ? await BackplaneManager.GetContactsDataAsync(matchProperties, cancellationToken) : null;
-                        if (backplaneContacts?.Count > 0)
+                // look on our backplane providers
+                var backplaneMatchingContacts = BackplaneManager != null ?
+                    await BackplaneManager.GetContactsDataAsync(nonMatchingProps.Select(i => i.Item2).ToArray(), cancellationToken) :
+                    new Dictionary<string, ContactDataInfo>[nonMatchingProps.Count];
+
+                Assumes.Equals(backplaneMatchingContacts.Length, nonMatchingProps.Count);
+
+                for(int next = 0; next < backplaneMatchingContacts.Length; ++next)
+                {
+                    var resultIndex = nonMatchingProps[next].Item1;
+                    var matchProperties = nonMatchingProps[next].Item2;
+
+                    var backplaneContacts = backplaneMatchingContacts[next];
+                    if (backplaneContacts?.Count > 0)
+                    {
+                        var matchContactPair = backplaneContacts.First();
+                        var backplaneProperties = matchContactPair.Value.GetAggregatedProperties();
+
+                        // return matched properties of first contact
+                        requestResult[resultIndex] = backplaneProperties;
+
+                        // ensure the contact is created
+                        var targetContactId = matchContactPair.Key;
+                        var targetContact = GetOrCreateContact(targetContactId);
+                        SetOtherContactData(targetContact, matchContactPair.Value);
+
+                        // inject property 'IdReserved'
+                        backplaneProperties[ContactProperties.IdReserved] = targetContactId;
+
+                        // add target/subscription
+                        registeredSelfContact.AddTargetContacts(contactRef.ConnectionId, new string[] { targetContactId });
+                        targetContact.AddSubcriptionProperties(contactRef.ConnectionId, null, propertyNames);
+                    }
+                    else if (useStubContact)
+                    {
+                        // Note: if we arrive here we will need to find/create a stub contact that will serve as
+                        // a placeholder to later match the contact that will register
+                        var stubContact = this.stubContacts.Values.FirstOrDefault(item => item.MatchProperties.EqualsProperties(matchProperties));
+                        if (stubContact == null)
                         {
-                            var matchContactPair = backplaneContacts.First();
-                            var backplaneProperties = matchContactPair.Value.GetAggregatedProperties();
-
-                            // return matched properties of first contact
-                            requestResult[resultIndex] = backplaneProperties;
-
-                            // ensure the contact is created
-                            var targetContactId = matchContactPair.Key;
-                            var targetContact = GetOrCreateContact(targetContactId);
-                            SetOtherContactData(targetContact, matchContactPair.Value);
-
-                            // inject property 'IdReserved'
-                            backplaneProperties[ContactProperties.IdReserved] = targetContactId;
-
-                            // add target/subscription
-                            registeredSelfContact.AddTargetContacts(contactRef.ConnectionId, new string[] { targetContactId });
-                            targetContact.AddSubcriptionProperties(contactRef.ConnectionId, null, propertyNames);
+                            // no match but we want to return stub contact if later we match a new contact
+                            stubContact = new StubContact(this, Guid.NewGuid().ToString(), matchProperties);
+                            this.stubContacts.TryAdd(stubContact.ContactId, stubContact);
                         }
-                        else if (useStubContact)
-                        {
-                            // Note: if we arrive here we will need to find/create a stub contact that will serve as
-                            // a placeholder to later match the contact that will register
-                            var stubContact = this.stubContacts.Values.FirstOrDefault(item => item.MatchProperties.EqualsProperties(matchProperties));
-                            if (stubContact == null)
-                            {
-                                // no match but we want to return stub contact if later we match a new contact
-                                stubContact = new StubContact(this, Guid.NewGuid().ToString(), matchProperties);
-                                this.stubContacts.TryAdd(stubContact.ContactId, stubContact);
-                            }
 
-                            // add target contact to current registered contact
-                            registeredSelfContact.AddTargetContacts(contactRef.ConnectionId, new string[] { stubContact.ContactId });
+                        // add target contact to current registered contact
+                        registeredSelfContact.AddTargetContacts(contactRef.ConnectionId, new string[] { stubContact.ContactId });
 
-                            // add a connection subscription
-                            stubContact.AddSubcriptionProperties(contactRef.ConnectionId, null, propertyNames);
+                        // add a connection subscription
+                        stubContact.AddSubcriptionProperties(contactRef.ConnectionId, null, propertyNames);
 
-                            // return the stub by providing the temporary stub contact id
-                            requestResult[resultIndex] = new Dictionary<string, object>()
+                        // return the stub by providing the temporary stub contact id
+                        requestResult[resultIndex] = new Dictionary<string, object>()
                             {
                                 { ContactProperties.IdReserved, stubContact.ContactId },
-                            }; ;
-                        }
+                            };
                     }
                 }
             }
@@ -342,12 +360,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public virtual Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingPropertes, CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (Logger.BeginSingleScope(
-                 (LoggerScopeHelpers.MethodScope, ContactServiceScopes.MethodMatchContacts)))
-            {
-                Logger.LogDebug($"matchingPropertes:[{string.Join(",", matchingPropertes.Select(a => a.ConvertToString(FormatProvider)))}]");
-            }
-
             var results = new Dictionary<string, Dictionary<string, object>>[matchingPropertes.Length];
             foreach (var contactKvp in Contacts)
             {
@@ -365,6 +377,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                 }
             }
+
+            Logger.LogMethodScope(
+                LogLevel.Debug,
+                $"matchingPropertes:[{string.Join(",", matchingPropertes.Select(a => a.ConvertToString(FormatProvider)))}] match count:{results.Length}",
+                ContactServiceScopes.MethodMatchContacts);
 
             return Task.FromResult(results);
         }

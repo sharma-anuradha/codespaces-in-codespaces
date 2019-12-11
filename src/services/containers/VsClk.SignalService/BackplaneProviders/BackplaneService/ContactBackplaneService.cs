@@ -236,20 +236,36 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             return contactDataInfo;
         }
 
-        public async Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
             using (Logger.BeginMethodScope(nameof(GetContactsDataAsync)))
             {
-                Logger.LogDebug($"email:{Format("{0:E}",matchProperties.TryGetProperty<string>(ContactProperties.Email))}");
+                Logger.LogDebug($"emails:{string.Join(",", matchProperties.Select(i => Format("{0:E}",i.TryGetProperty<string>(ContactProperties.Email))))}");
             }
 
-            var result = await ServiceDataProvider.GetContactsDataAsync(matchProperties, cancellationToken);
-            if (result.Count == 0)
+            var results = await ServiceDataProvider.GetContactsDataAsync(matchProperties, cancellationToken);
+            var nonMatchResults = new List<int>();
+
+            for(int index = 0; index < matchProperties.Length;++index)
             {
-                result = await BackplaneManager.GetContactsDataAsync(matchProperties, cancellationToken);
+                if (results[index] == null)
+                {
+                    nonMatchResults.Add(index);
+                }
             }
 
-            return result;
+            if (nonMatchResults.Count > 0)
+            {
+                var backplaneResults = await BackplaneManager.GetContactsDataAsync(nonMatchResults.Select(i => matchProperties[i]).ToArray(), cancellationToken);
+                Assumes.Equals(backplaneResults.Length, nonMatchResults.Count);
+
+                for (int index = 0; index < backplaneResults.Length; ++index)
+                {
+                    results[nonMatchResults[index]] = backplaneResults[index];
+                }
+            }
+
+            return results;
         }
 
         public async Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)

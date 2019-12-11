@@ -110,7 +110,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="matchProperties">The match properties to look for</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Array of contact data entities that match the criteria</returns>
-        Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken);
+        Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken);
         
         /// <summary>
         /// Get the contact data info
@@ -160,11 +160,6 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         OnContactChangedAsync ContactChangedAsync { get;set;}
         OnMessageReceivedAsync MessageReceivedAsync { get; set; }
-
-        /// <summary>
-        /// Priority of this provider compared to others
-        /// </summary>
-        int Priority { get; }
 
         /// <summary>
         /// Send a message using the backplane provider

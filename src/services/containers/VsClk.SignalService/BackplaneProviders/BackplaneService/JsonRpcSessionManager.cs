@@ -94,7 +94,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         public Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken) =>
             BackplaneService.GetContactDataAsync(contactId, cancellationToken);
 
-        public Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken) =>
+        public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken) =>
             BackplaneService.GetContactsDataAsync(matchProperties, cancellationToken);
 
         public Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken) =>

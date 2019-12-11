@@ -12,7 +12,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
     using ConnectionProperties = IDictionary<string, PropertyValue>;
     using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
 
-    public class BackplaneManagerTests
+    public class BackplaneManagerTests : TestBase
     {
         private readonly ContactBackplaneManager contactBackplaneManager;
         private readonly Mock<IContactBackplaneProvider> mockContactBackplaneProvider1;
@@ -23,10 +23,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             var backplaneServiceManagerLogger = new Mock<ILogger<ContactBackplaneManager>>();
             this.contactBackplaneManager = new ContactBackplaneManager(backplaneServiceManagerLogger.Object);
             this.mockContactBackplaneProvider1 = new Mock<IContactBackplaneProvider>();
-            this.mockContactBackplaneProvider1.SetupGet(i => i.Priority).Returns(100);
 
             this.mockContactBackplaneProvider2 = new Mock<IContactBackplaneProvider>();
-            this.mockContactBackplaneProvider1.SetupGet(i => i.Priority).Returns(50);
 
             this.contactBackplaneManager.RegisterProvider(this.mockContactBackplaneProvider1.Object);
             this.contactBackplaneManager.RegisterProvider(this.mockContactBackplaneProvider2.Object);
@@ -146,19 +144,13 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             SetupGetContactsAsync(this.mockContactBackplaneProvider2, matchEmailCallback);
 
             var result = await this.contactBackplaneManager.GetContactsDataAsync(
-                new Dictionary<string, object>()
-                {
-                    { "email", "name@gmail.com" }
-                }, CancellationToken.None);
+                CreateWithEmailsProperty("name@gmail.com"), CancellationToken.None);
 
-            Assert.True(result.ContainsKey("contact1"));
+            Assert.True(result[0].ContainsKey("contact1"));
 
             result = await this.contactBackplaneManager.GetContactsDataAsync(
-                new Dictionary<string, object>()
-                {
-                    { "email", "other@gmail.com" }
-                }, CancellationToken.None);
-            Assert.Empty(result);
+                CreateWithEmailsProperty("other@gmail.com"), CancellationToken.None);
+            Assert.Null(result[0]);
 
             SetupGetContactsAsync(this.mockContactBackplaneProvider1, async (matchProperties) =>
             {
@@ -182,13 +174,9 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 return false;
             });
 
-            result = await this.contactBackplaneManager.GetContactsDataAsync(
-                new Dictionary<string, object>()
-                {
-                    { "email", "name@gmail.com" }
-                }, CancellationToken.None);
+            result = await this.contactBackplaneManager.GetContactsDataAsync(CreateWithEmailsProperty("name@gmail.com"), CancellationToken.None);
 
-            Assert.True(result.ContainsKey("contact1"));
+            Assert.True(result[0].ContainsKey("contact1"));
             Assert.Equal(nameof(IContactBackplaneProvider.GetContactsDataAsync), methodNameException);
             Assert.NotNull(errorException);
         }
@@ -215,16 +203,22 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 Func<Dictionary<string, object>, Task<Dictionary<string, ContactDataInfo>>> callback)
         {
             mockContactBackplaneProvider.Setup(i => i.GetContactsDataAsync(
-                It.IsAny<Dictionary<string,object>>(),
+                It.IsAny<Dictionary<string, object>[]>(),
                 It.IsAny<CancellationToken>()))
-            .Returns((Dictionary<string, object> matchProperties, CancellationToken cancellationToken) =>
+            .Returns(async (Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken) =>
             {
-                return callback(matchProperties);
+                var results = new Dictionary<string, ContactDataInfo>[matchProperties.Length];
+                for (int index = 0;index < matchProperties.Length; ++index)
+                {
+                    results[index] = await callback(matchProperties[index]);
+                }
+
+                return results;
             });
         }
 
         private static void SetupGetContactsAsync(Mock<IContactBackplaneProvider> mockContactBackplaneProvider,
-        Func<Dictionary<string, object>, Dictionary<string, ContactDataInfo>> callback)
+            Func<Dictionary<string, object>, Dictionary<string, ContactDataInfo>> callback)
         {
             SetupGetContactsAsync(mockContactBackplaneProvider, (matchProperties) => Task.FromResult(callback(matchProperties)));
         }

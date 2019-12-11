@@ -18,9 +18,12 @@ namespace SignalService.Client.CLI
     internal class ContactStressApp : SignalRAppBase
     {
         private const string TypeTestMessage = "typeTest";
+        private static Random random = new Random();
 
         private int batchRequests = 1000;
         private int numberOfContactsPerBatch = 400;
+        private int numberOfEmailRequests = 100;
+
         private int sendBatchDelayMillsecs = 500;
         private int receivedMessages = 0;
         private int numberOfTotalMessage = 0;
@@ -98,6 +101,20 @@ namespace SignalService.Client.CLI
             else if (key == 'e')
             {
                 this.sendCts?.Cancel();
+            }
+            else if (key == 'r')
+            {
+                ReadIntValue("Enter number of emails to request:", ref this.numberOfEmailRequests);
+                var contactId = Guid.NewGuid().ToString();
+                TraceSource.Verbose($"Creating endpoint:{contactId}...");
+                var endpoint = await PresenceEndpoint.CreateAsync(contactId, CreateHubConnection(), TraceSource, DisposeToken);
+                var start = Stopwatch.StartNew();
+                await endpoint.Proxy.RequestSubcriptionsAsync(
+                    Enumerable.Repeat(0, this.numberOfEmailRequests).Select(i => new Dictionary<string, object>() { { ContactProperties.Email, CreateEmail(10) } }).ToArray(),
+                    new string[] { "status" },
+                    true,
+                    DisposeToken);
+                TraceSource.Verbose($"Finished time->{start.ElapsedMilliseconds}");
             }
         }
 
@@ -308,6 +325,12 @@ namespace SignalService.Client.CLI
             TraceSource.Verbose($"Completed total connections:{NumberOfConnectedEndpoints} for batch:{this.currentBatchId}");
         }
 
+        private static string CreateEmail(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return $"{new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray())}@microsoft.com";
+        }
+
         private struct MessageBody
         {
             public string Text { get; set; }
@@ -326,6 +349,12 @@ namespace SignalService.Client.CLI
                 this.traceSource = traceSource;
                 Proxy = HubProxy.CreateHubProxy<ContactServiceProxy>(hubClient.Connection, traceSource, true);
                 HubClient.ConnectionStateChanged += OnConnectionStateChangedAsync;
+            }
+
+            public async Task DisposeAsync()
+            {
+                await Proxy.UnregisterSelfContactAsync(CancellationToken.None);
+                await HubClient.StopAsync(CancellationToken.None);
             }
 
             public HubClient HubClient { get; private set; }

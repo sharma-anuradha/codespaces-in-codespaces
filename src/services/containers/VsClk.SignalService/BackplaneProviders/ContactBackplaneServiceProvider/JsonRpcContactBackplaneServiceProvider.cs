@@ -71,9 +71,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             await this.jsonRpc.InvokeWithCancellationAsync("RegisterService", new object[] { HostServiceId }, cancellationToken);
         }
 
-        protected override Task<JObject> GetContactsDataInternalAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        protected override Task<JArray> GetContactsDataInternalAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
-            return this.jsonRpc.InvokeWithCancellationAsync<JObject>(nameof(GetContactsDataAsync), new object[] { matchProperties }, cancellationToken);
+            return this.jsonRpc.InvokeWithCancellationAsync<JArray>(nameof(GetContactsDataAsync), new object[] { matchProperties }, cancellationToken);
         }
 
         protected override Task<JObject> GetContactDataInternalAsync(string contactId, CancellationToken cancellationToken)

@@ -80,7 +80,14 @@ namespace Microsoft.VsCloudKernel.SignalService
                         connections.ToArray(),
                         this.logger,
                         this.formatProvider);
-                    this.backplaneManager.RegisterProvider(backplaneProvider);
+                    this.backplaneManager.RegisterProvider(
+                        backplaneProvider,
+                        // Note: the redis provider does not support an optimized 'GetContacts' capability
+                        // so when used with another provider with better support it will be discarded
+                        new ContactBackplaneProviderSupportLevel()
+                        { 
+                            GetContacts = ContactBackplaneProviderSupportLevel.MinimumSupportThreshold
+                        });
                 }
                 catch (Exception error)
                 {

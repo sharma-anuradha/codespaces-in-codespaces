@@ -1,4 +1,4 @@
-//#define _IS_REDIS_SERVER_RUNNING
+#define _IS_REDIS_SERVER_RUNNING
 
 using System;
 using System.Threading.Tasks;
@@ -13,13 +13,13 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
     public class AzureRedisProviderTests : BackplaneProviderTests
     {
-        protected override async Task<IBackplaneProvider> CreateBackplaneProviderAsync()
+        protected override async Task<IContactBackplaneProvider> CreateBackplaneProviderAsync()
         {
             var connection = await ConnectionMultiplexer.ConnectAsync("localhost");
 
             return await AzureRedisProvider.CreateAsync(
-                Guid.NewGuid().ToString(),
-                connection,
+                (Guid.NewGuid().ToString(), "usw2"),
+                new ConnectionMultiplexer[] { connection },
                 new Mock<ILogger<AzureRedisProvider>>().Object,
                 null);
         }

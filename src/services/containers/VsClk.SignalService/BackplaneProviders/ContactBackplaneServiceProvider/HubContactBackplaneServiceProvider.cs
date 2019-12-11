@@ -92,9 +92,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
 
-        protected override Task<JObject> GetContactsDataInternalAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        protected override Task<JArray> GetContactsDataInternalAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
-            return HubConnection.InvokeAsync<JObject>(nameof(GetContactsDataAsync), matchProperties, cancellationToken);
+            return HubConnection.InvokeAsync<JArray>(nameof(GetContactsDataAsync), matchProperties, cancellationToken);
         }
 
         protected override Task<JObject> GetContactDataInternalAsync(string contactId, CancellationToken cancellationToken)

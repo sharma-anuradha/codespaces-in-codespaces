@@ -49,8 +49,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public OnMessageReceivedAsync MessageReceivedAsync { get; set; }
 
-        public virtual int Priority => 0;
-
         public async Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
         {
             var serviceDocument = new ServiceDocument()
@@ -64,16 +62,33 @@ namespace Microsoft.VsCloudKernel.SignalService
             await UpsertServiceDocumentAsync(serviceDocument, cancellationToken);
         }
 
-        public async Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
-            var emailPropertyValue = matchProperties.TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant();
-            if (string.IsNullOrEmpty(emailPropertyValue))
+            var emailResults = new List<(int, string)>();
+            int next = 0;
+
+            Dictionary<string, ContactDataInfo>[] results = matchProperties.Select(item =>
             {
-                return new Dictionary<string, ContactDataInfo>();
+                var emailPropertyValue = item.TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant();
+                if (string.IsNullOrEmpty(emailPropertyValue))
+                {
+                    return new Dictionary<string, ContactDataInfo>();
+                }
+                emailResults.Add((next++, emailPropertyValue));
+                // result will come later
+                return null;
+            }).ToArray();
+
+            var matchContacts = await GetContactsDataByEmailAsync(emailResults.Select(i => i.Item2).ToArray(), cancellationToken);
+            if (matchContacts?.Length == emailResults.Count)
+            {
+                for(next = 0;next < matchContacts.Length; ++next)
+                {
+                    results[emailResults[next].Item1] = matchContacts[next].ToDictionary(d => d.Id, d => ToContactData(d));
+                }
             }
 
-            var matchContacts = await GetContactsDataByEmailAsync(emailPropertyValue, cancellationToken);
-            return matchContacts.ToDictionary(d => d.Id, d => ToContactData(d));
+            return results;
         }
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
@@ -151,7 +166,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected abstract Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken);
         protected abstract Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken);
         protected abstract Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken);
-        protected abstract Task<List<ContactDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken);
+        protected abstract Task<List<ContactDocument>[]> GetContactsDataByEmailAsync(string[] emails, CancellationToken cancellationToken);
         protected abstract Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken);
         protected abstract Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken);
         protected abstract Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken);

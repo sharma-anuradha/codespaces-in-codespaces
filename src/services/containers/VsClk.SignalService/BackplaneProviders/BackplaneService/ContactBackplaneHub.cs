@@ -42,7 +42,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         public Task<ContactDataInfo> GetContactDataAsync(string contactId) =>
             BackplaneService.GetContactDataAsync(contactId, Context.ConnectionAborted);
 
-        public Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties) =>
+        public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties) =>
             BackplaneService.GetContactsDataAsync(matchProperties, Context.ConnectionAborted);
 
         public Task SendMessageAsync(string sourceId, MessageData messageData) =>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string TotalConnectionsProperty = "NumberOfConnections";
 
         private readonly object backplaneProvidersLock = new object();
-        private readonly List<IContactBackplaneProvider> backplaneProviders = new List<IContactBackplaneProvider>();
+        private readonly Dictionary<IContactBackplaneProvider, ContactBackplaneProviderSupportLevel> backplaneProviders = new Dictionary<IContactBackplaneProvider, ContactBackplaneProviderSupportLevel>();
         private readonly Dictionary<string, (DateTime, DataChanged)> backplaneChanges = new Dictionary<string, (DateTime, DataChanged)>();
         private readonly object backplaneChangesLock = new object();
         private readonly IDataFormatProvider formatProvider;
@@ -94,21 +95,21 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 lock (this.backplaneProvidersLock)
                 {
-                    return this.backplaneProviders.ToArray();
+                    return this.backplaneProviders.Keys.ToArray();
                 }
             }
         }
 
         private ILogger Logger { get; }
 
-        public void RegisterProvider(IContactBackplaneProvider backplaneProvider)
+        public void RegisterProvider(IContactBackplaneProvider backplaneProvider, ContactBackplaneProviderSupportLevel supportCapabilities = null )
         {
             Requires.NotNull(backplaneProvider, nameof(backplaneProvider));
 
-            Logger.LogInformation($"AddBackplaneProvider type:{backplaneProvider.GetType().FullName}");
+            Logger.LogInformation($"AddBackplaneProvider type:{backplaneProvider.GetType().FullName} supportCapabilities:{Newtonsoft.Json.JsonConvert.SerializeObject(supportCapabilities)}");
             lock (this.backplaneProvidersLock)
             {
-                this.backplaneProviders.Add(backplaneProvider);
+                this.backplaneProviders.Add(backplaneProvider, supportCapabilities);
             }
 
             backplaneProvider.ContactChangedAsync = (contactDataChanged, affectedProperties, ct) => OnContactChangedAsync(backplaneProvider, contactDataChanged, affectedProperties, ct);
@@ -121,7 +122,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             CancellationToken cancellationToken)
         {
             await WaitAll(
-                BackplaneProviders.Select(p => (p.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken), p)),
+                GetSupportedProviders(s => s.UpdateMetrics).Select(p => (p.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken), p)),
                 nameof(IContactBackplaneProvider.UpdateMetricsAsync),
                 $"serviceId:{serviceInfo.ServiceId}");
         }
@@ -130,7 +131,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             await DisposeExpiredDataChangesAsync(100, CancellationToken.None);
             await WaitAll(
-                BackplaneProviders.Select(p => (p.UpdateContactAsync(contactDataChanged, cancellationToken) as Task, p)),
+                GetSupportedProviders(s => s.UpdateContact).Select(p => (p.UpdateContactAsync(contactDataChanged, cancellationToken) as Task, p)),
                 nameof(IContactBackplaneProvider.UpdateContactAsync),
                 $"contactId:{ToTraceText(contactDataChanged.ContactId)}");
         }
@@ -142,7 +143,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             await DisposeExpiredDataChangesAsync(100, cancellationToken);
             await WaitAll(
-                BackplaneProviders.Select(p => (p.SendMessageAsync(serviceId, messageData, cancellationToken), p)),
+                GetSupportedProviders(s => s.SendMessage).Select(p => (p.SendMessageAsync(serviceId, messageData, cancellationToken), p)),
                 nameof(IContactBackplaneProvider.SendMessageAsync),
                 $"from:{ToTraceText(messageData.FromContact.Id)} to:{ToTraceText(messageData.TargetContact.Id)}");
         }
@@ -150,21 +151,35 @@ namespace Microsoft.VsCloudKernel.SignalService
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
             return await WaitFirstOrDefault(
-                GetBackPlaneProvidersByPriority().Select(p => (p.GetContactDataAsync(contactId, cancellationToken), p)).ToList(),
+                GetSupportedProviders(s => s.GetContact).Select(p => (p.GetContactDataAsync(contactId, cancellationToken), p)),
                 nameof(IContactBackplaneProvider.GetContactDataAsync),
                 (contactDataInfo) => $"contactId:{ToTraceText(contactId)} result count:{contactDataInfo?.Count}",
                 r => r != null);
         }
 
-        public async Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
             var result = await WaitFirstOrDefault(
-                GetBackPlaneProvidersByPriority().Select(p => (p.GetContactsDataAsync(matchProperties, cancellationToken), p)).ToList(),
+                GetSupportedProviders(s => s.GetContacts).Select(p => (p.GetContactsDataAsync(matchProperties, cancellationToken), p)),
                 nameof(IContactBackplaneProvider.GetContactsDataAsync),
-                (matches) => $"matchProperties:{matchProperties.ConvertToString(this.formatProvider)} result count:{matches?.Count}",
-                r => r?.Count > 0);
+                (matches) =>
+                {
+                    var sb = new StringBuilder();
+                    for (var index = 0; index < matchProperties.Length; ++index)
+                    {
+                        if (sb.Length > 0)
+                        {
+                            sb.AppendLine();
+                        }
 
-            return result ?? new Dictionary<string, ContactDataInfo>();
+                        sb.Append($"matchProperties:{matchProperties[index].ConvertToString(this.formatProvider)} result count:{matches?[index]?.Count ?? 0}");
+                    }
+
+                    return sb.ToString();
+                },
+                results => results?.Count(i => i != null) == matchProperties.Length);
+
+            return result ?? new Dictionary<string, ContactDataInfo>[matchProperties.Length];
         }
 
         public async Task DisposeExpiredDataChangesAsync(int? maxCount, CancellationToken cancellationToken)
@@ -212,6 +227,32 @@ namespace Microsoft.VsCloudKernel.SignalService
                 this.backplaneChanges.Add(dataChanged.ChangeId, (DateTime.Now, dataChanged));
                 return false;
             }
+        }
+
+        private IContactBackplaneProvider[] GetSupportedProviders(Func<ContactBackplaneProviderSupportLevel, int?> capabilityCallback)
+        {
+            Func<int?, int> priorityCallback = (value) => value.HasValue ? value.Value : ContactBackplaneProviderSupportLevel.DefaultSupportThreshold;
+
+            Dictionary<IContactBackplaneProvider, int> providersByPriority;
+            lock (this.backplaneProvidersLock)
+            {
+                providersByPriority = this.backplaneProviders.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value == null ? ContactBackplaneProviderSupportLevel.DefaultSupportThreshold : priorityCallback(capabilityCallback(kvp.Value)));
+            }
+
+            var supportedProviders = providersByPriority.Where(kvp => kvp.Value > ContactBackplaneProviderSupportLevel.NoSupportThreshold);
+            // if we have more that 1 provider we can safely discard the one with minimum support
+            if (supportedProviders.Count() > 1)
+            {
+                // we restrict only on non minimal supported
+                supportedProviders = supportedProviders.Where(kvp => kvp.Value > ContactBackplaneProviderSupportLevel.MinimumSupportThreshold);
+            }
+
+            return supportedProviders
+                .OrderByDescending(kvp => kvp.Value)
+                .Select(kvp => kvp.Key)
+                .ToArray();
         }
 
         private async Task UpdateBackplaneMetrics(CancellationToken cancellationToken)
@@ -293,14 +334,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             CancellationToken cancellationToken)
         {
             await WaitAll(
-                BackplaneProviders.Select(p => (p.DisposeDataChangesAsync(dataChanges, cancellationToken), p)),
+                GetSupportedProviders(s => s.DisposeDataChanges).Select(p => (p.DisposeDataChangesAsync(dataChanges, cancellationToken), p)),
                 nameof(IContactBackplaneProvider.DisposeDataChangesAsync),
                 $"size:{dataChanges.Length}");
-        }
-
-        private IEnumerable<IContactBackplaneProvider> GetBackPlaneProvidersByPriority()
-        {
-            return BackplaneProviders.OrderByDescending(p => p.Priority);
         }
 
         private void HandleBackplaneProviderException(IContactBackplaneProvider backplaneProvider, string methodName, Exception error)

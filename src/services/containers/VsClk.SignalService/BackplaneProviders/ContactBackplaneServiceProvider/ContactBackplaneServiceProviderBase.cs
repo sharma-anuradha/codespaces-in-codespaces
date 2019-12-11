@@ -49,13 +49,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public OnMessageReceivedAsync MessageReceivedAsync { get; set; }
 
-        public int Priority => 200;
-
-        public async Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
-            var jObject = await GetContactsDataInternalAsync(matchProperties, cancellationToken);
-            return ((IDictionary<string, JToken>)jObject).ToDictionary(kvp => kvp.Key, kvp => ToContactDataInfo((JObject)kvp.Value));
+            var jArray = await GetContactsDataInternalAsync(matchProperties, cancellationToken);
+            return jArray.Select(item => 
+                ((IDictionary<string, JToken>)((JObject)item)).ToDictionary(kvp => kvp.Key, kvp => ToContactDataInfo((JObject)kvp.Value))).ToArray();
         }
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
@@ -102,7 +101,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected abstract Task AttemptConnectInternalAsync(CancellationToken cancellationToken);
 
-        protected abstract Task<JObject> GetContactsDataInternalAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken);
+        protected abstract Task<JArray> GetContactsDataInternalAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken);
         protected abstract Task<JObject> GetContactDataInternalAsync(string contactId, CancellationToken cancellationToken);
         protected abstract Task<JObject> UpdateContactInternalAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken);
         protected abstract Task SendMessageInternalAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken);

@@ -531,8 +531,6 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 }
             }
 
-            public int Priority => 0;
-
             public Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
             {
                 if (this.contactDataMap.TryGetValue(contactId, out var contactDataInfo))
@@ -570,11 +568,11 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 return contactDataInfo;
             }
 
-            public Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+            public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
             {
-                var matchContacts = this.contactDataMap
-                    .Where(kvp => matchProperties.MatchProperties(kvp.Value.GetAggregatedProperties()))
-                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                var matchContacts = matchProperties.Select(item => this.contactDataMap
+                    .Where(kvp => item.MatchProperties(kvp.Value.GetAggregatedProperties()))
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value)).ToArray();
 
                 return Task.FromResult(matchContacts);
             }

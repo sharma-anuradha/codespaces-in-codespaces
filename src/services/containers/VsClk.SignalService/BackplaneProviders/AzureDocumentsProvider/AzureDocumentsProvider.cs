@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -121,14 +122,39 @@ namespace Microsoft.VsCloudKernel.SignalService
             Client.Dispose();
         }
 
-        protected override async Task<List<ContactDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken)
+        protected override async Task<List<ContactDocument>[]> GetContactsDataByEmailAsync(string[] emails, CancellationToken cancellationToken)
         {
-            var queryable = Client.CreateDocumentQuery<ContactDocument>(
-                UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId))
-                .Where(c => c.Email == email);
+            var results = Enumerable.Repeat(0, emails.Length).Select(i => new List<ContactDocument>()).ToArray();
 
-            var matchContacts = await ToListAsync(queryable, cancellationToken);
-            return matchContacts;
+            var sqlParameters = new SqlParameterCollection();
+            int next = 0;
+            var emailIndexMap = new Dictionary<string, int>();
+            var whereCondition = new StringBuilder();
+            foreach (var email in emails)
+            {
+                if (whereCondition.Length > 0)
+                {
+                    whereCondition.Append(" Or ");
+                }
+                var paramName = $"@index{next}";
+
+                whereCondition.Append($"c.email = {paramName}");
+                emailIndexMap[email] = next;
+                sqlParameters.Add(new SqlParameter(paramName, email));
+                ++next;
+            }
+
+            var queryable = Client.CreateDocumentQuery<ContactDocument>(
+                UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId), new SqlQuerySpec($"SELECT * FROM c where {whereCondition.ToString()}", sqlParameters));
+
+            var allMatchingContacts = await ToListAsync(queryable, cancellationToken);
+            foreach(var item in allMatchingContacts)
+            {
+                var emailBucket = results[emailIndexMap[item.Email]];
+                emailBucket.Add(item);
+            }
+
+            return results;
         }
 
         protected override async Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken)

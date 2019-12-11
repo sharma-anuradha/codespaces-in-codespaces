@@ -9,6 +9,23 @@ namespace Microsoft.VsCloudKernel.SignalService
     using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
 
     /// <summary>
+    /// Class to expose supported capability level of a provider
+    /// </summary>
+    public class ContactBackplaneProviderSupportLevel
+    {
+        public const int DefaultSupportThreshold = 10;
+        public const int MinimumSupportThreshold = 1;
+        public const int NoSupportThreshold = 0;
+
+        public int? GetContact { get; set; }
+        public int? GetContacts { get; set; }
+        public int? UpdateMetrics { get; set; }
+        public int? SendMessage { get; set; }
+        public int? UpdateContact { get; set; }
+        public int? DisposeDataChanges { get; set; }
+    }
+
+    /// <summary>
     /// Const for the backplane manager implementation
     /// </summary>
     public static class BackplaneManagerConst
@@ -67,7 +84,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Register a new provider
         /// </summary>
         /// <param name="backplaneProvider"></param>
-        void RegisterProvider(IContactBackplaneProvider backplaneProvider);
+        /// <param name="supportCapabilities">Optional supported capabilities.</param>
+        void RegisterProvider(IContactBackplaneProvider backplaneProvider, ContactBackplaneProviderSupportLevel supportCapabilities = null);
 
         /// <summary>
         /// Update metrics reported by a contact service
@@ -94,7 +112,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="matchProperties"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken);
+        Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken);
 
         /// <summary>
         /// Return the contact data

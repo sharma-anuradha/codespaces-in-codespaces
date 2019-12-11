@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
@@ -18,5 +20,18 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         }
 
         protected static string CreateChangeId() => Guid.NewGuid().ToString();
+
+        protected static Dictionary<string, object> CreateWithEmailProperty(string email)
+        {
+            return new Dictionary<string, object>()
+            {
+                { "email", email },
+            };
+        }
+
+        protected static Dictionary<string, object>[] CreateWithEmailsProperty(params string[] emails)
+        {
+            return emails.Select(email => CreateWithEmailProperty(email)).ToArray();
+        }
     }
 }

@@ -185,19 +185,35 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                     properties2),
                     CancellationToken.None);
 
-            var results = await this.backplaneProvider.GetContactsDataAsync(new Dictionary<string, object>()
-            {
-                { "email", "contact2@microsoft.com" },
-            }, CancellationToken.None);
-            Assert.Single(results);
-            Assert.True(results.ContainsKey("contact2"));
+            var results = await this.backplaneProvider.GetContactsDataAsync(CreateWithEmailsProperty("contact2@microsoft.com"), CancellationToken.None);
+            Assert.Single(results[0]);
+            Assert.True(results[0].ContainsKey("contact2"));
 
-            results = await this.backplaneProvider.GetContactsDataAsync(new Dictionary<string, object>()
+            results = await this.backplaneProvider.GetContactsDataAsync(CreateWithEmailsProperty("unknown@microsoft.com"), CancellationToken.None);
+            Assert.Empty(results[0]);
+
+            var properties3 = new Dictionary<string, PropertyValue>()
             {
-                { "email", "unknown@microsoft.com" },
-            }, CancellationToken.None);
-            Assert.Empty(results);
+                { "email", new PropertyValue("contact3@microsoft.com", utcNow) },
+                { "status", new PropertyValue("available", utcNow) },
+            };
+
+            await this.backplaneProvider.UpdateContactAsync(
+                new ContactDataChanged<ConnectionProperties>(
+                    CreateChangeId(),
+                    "serviceId",
+                    "conn3",
+                    "contact3",
+                    ContactUpdateType.Registration,
+                    properties3),
+                    CancellationToken.None);
+
+            results = await this.backplaneProvider.GetContactsDataAsync(CreateWithEmailsProperty("contact2@microsoft.com", "unknown@microsoft.com", "contact3@microsoft.com"), CancellationToken.None);
+            Assert.Equal(3, results.Length);
+
+            Assert.True(results[0].ContainsKey("contact2"));
+            Assert.Empty(results[1]);
+            Assert.True(results[2].ContainsKey("contact3"));
         }
     }
 }
-

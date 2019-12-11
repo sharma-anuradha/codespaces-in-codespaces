@@ -91,19 +91,25 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             return Task.FromResult(result.Data);
         }
 
-        public Task<Dictionary<string, ContactDataInfo>> GetContactsDataAsync(Dictionary<string, object> matchProperties, CancellationToken cancellationToken)
+        public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] allMatchProperties, CancellationToken cancellationToken)
         {
-            var result = new Dictionary<string, ContactDataInfo>();
+            var results = new Dictionary<string, ContactDataInfo>[allMatchProperties.Length];
 
-            var emailPropertyValue = matchProperties.TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant();
-            if (!string.IsNullOrEmpty(emailPropertyValue) &&
-                Emails.TryGetValue(emailPropertyValue, out var contactId) &&
-                Contacts.TryGetValue(contactId, out var contactdDataInfoHolder))
+            for (var index = 0; index < allMatchProperties.Length; ++index)
             {
-                result[contactId] = contactdDataInfoHolder.Data;
+                var matchProperties = allMatchProperties[index];
+                var emailPropertyValue = matchProperties.TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant();
+                if (!string.IsNullOrEmpty(emailPropertyValue) &&
+                    Emails.TryGetValue(emailPropertyValue, out var contactId) &&
+                    Contacts.TryGetValue(contactId, out var contactdDataInfoHolder))
+                {
+                    var matchingResult = new Dictionary<string, ContactDataInfo>();
+                    matchingResult[contactId] = contactdDataInfoHolder.Data;
+                    results[index] = matchingResult;
+                }
             }
 
-            return Task.FromResult(result);
+            return Task.FromResult(results);
         }
 
         private string Format(string format, params object[] args)

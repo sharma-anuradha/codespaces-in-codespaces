@@ -51,8 +51,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             return redisBackplaneProvider;
         }
 
-        public override int Priority => 10;
-
         public override bool HandleException(string methodName, Exception error)
         {
             // Note: to avoid send to telemetry massive amounts of error we will accept
@@ -71,10 +69,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             return Task.CompletedTask;
         }
 
-        protected override async Task<List<ContactDocument>> GetContactsDataByEmailAsync(string email, CancellationToken cancellationToken)
+        protected override async Task<List<ContactDocument>[]> GetContactsDataByEmailAsync(string[] emails, CancellationToken cancellationToken)
         {
-            var allContactsIds = await DatabaseAsync.SetMembersAsync($"{ContactsEmailIndexId}:{email}");
-            return await GetDocumentsAsync<ContactDocument>(allContactsIds);
+            var results = new List<ContactDocument>[emails.Length];
+
+            Func<int, string, Task> emailDocumentTask = async (index, email) =>
+            {
+                var allContactsIds = await DatabaseAsync.SetMembersAsync($"{ContactsEmailIndexId}:{email}");
+                results[index] = await GetDocumentsAsync<ContactDocument>(allContactsIds);
+            };
+
+            int next = 0;
+            await Task.WhenAll(emails.Select(email => emailDocumentTask(next++, email)).ToArray());
+            return results;
         }
 
         protected override async Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
