@@ -131,12 +131,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Optimize common queries with no event types or end date.
                     if (end == null)
                     {
-                        where = x => x.Plan == plan &&
+                        where = x => x.Plan.Subscription == plan.Subscription && x.Plan.ResourceGroup == plan.ResourceGroup && x.Plan.Name == plan.Name && x.Plan.Location == plan.Location &&
                             start <= x.Time;
                     }
                     else
                     {
-                        where = x => x.Plan == plan &&
+                        where = x => x.Plan.Subscription == plan.Subscription && x.Plan.ResourceGroup == plan.ResourceGroup && x.Plan.Name == plan.Name && x.Plan.Location == plan.Location &&
                             start <= x.Time && x.Time <= end.Value;
                     }
                 }
@@ -145,12 +145,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     string eventType = eventTypes.Single();
                     if (end == null)
                     {
-                        where = x => x.Plan == plan &&
+                        where = x => x.Plan.Subscription == plan.Subscription && x.Plan.ResourceGroup == plan.ResourceGroup && x.Plan.Name == plan.Name && x.Plan.Location == plan.Location &&
                             start <= x.Time && x.Type == eventType;
                     }
                     else
                     {
-                        where = x => x.Plan == plan &&
+                        where = x => x.Plan.Subscription == plan.Subscription && x.Plan.ResourceGroup == plan.ResourceGroup && x.Plan.Name == plan.Name && x.Plan.Location == plan.Location &&
                             start <= x.Time && x.Time <= end.Value && x.Type == eventType;
                     }
                 }
@@ -158,12 +158,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     if (end == null)
                     {
-                        where = x => x.Plan == plan &&
+                        where = x => x.Plan.Subscription == plan.Subscription && x.Plan.ResourceGroup == plan.ResourceGroup && x.Plan.Name == plan.Name && x.Plan.Location == plan.Location &&
                             start <= x.Time && eventTypes.Contains(x.Type);
                     }
                     else
                     {
-                        where = x => x.Plan == plan &&
+                        where = x => x.Plan.Subscription == plan.Subscription && x.Plan.ResourceGroup == plan.ResourceGroup && x.Plan.Name == plan.Name && x.Plan.Location == plan.Location &&
                             start <= x.Time && x.Time <= end.Value && eventTypes.Contains(x.Type);
                     }
                 }

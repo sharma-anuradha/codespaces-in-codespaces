@@ -121,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="region"></param>
         /// <param name="shardUsageTimes"></param>
         /// <returns></returns>
-        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes )
+        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes)
         {
             logger.AddVsoPlan(plan)
                 .FluentAddBaseValue("startCalculationTime", start)
@@ -133,8 +133,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     var currentTime = DateTime.UtcNow;
 
-                    // Get the last BillingSummary based on the current time.
-                    var summaryEvents = await billingEventManager.GetPlanEventsAsync(plan, start, currentTime, new string[] { billingSummaryType }, logger);
+                    // Get all events so we have only one call to underlying collections.
+                    var allEvents = await billingEventManager.GetPlanEventsAsync(plan, start, currentTime, null, logger);
+
+                    // Get all the billing summaries
+                    var summaryEvents = allEvents.Where(x => x.Args is BillingSummary).OrderByDescending(x => ((BillingSummary)x.Args).PeriodEnd);
                     BillingEvent latestBillingEventSummary;
                     if (!summaryEvents.Any())
                     {
@@ -152,7 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     }
                     else
                     {
-                        latestBillingEventSummary = summaryEvents.Last();
+                        latestBillingEventSummary = summaryEvents.First();
 
                         // Check if the last summary's PeriodEnd matches the end time we are trying to bill for.
                         if (((BillingSummary)latestBillingEventSummary.Args).PeriodEnd >= desiredBillEndTime)
@@ -164,8 +167,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     var latestBillingSummary = (BillingSummary)latestBillingEventSummary.Args;
 
-                    // Get EnvironmentStateChnage events for the given plan during the given period.
-                    var billingEvents = await billingEventManager.GetPlanEventsAsync(plan, latestBillingSummary.PeriodEnd, desiredBillEndTime, new string[] { BillingEventTypes.EnvironmentStateChange }, logger);
+                    // Now filter on all the environment state changes. Find all that happened within the last billing summary and the desired end time.
+                    var billingEvents = allEvents.Where(x => x.Time >= latestBillingSummary.PeriodEnd && x.Time < desiredBillEndTime && x.Args is BillingEventTypes.EnvironmentStateChange);
 
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
                     var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region, shardUsageTimes);
@@ -193,7 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IEnumerable<BillingEvent> events,
             BillingSummary lastSummary,
             DateTime billSummaryEndTime,
-            AzureLocation region, 
+            AzureLocation region,
             Dictionary<string, double> shardUsageTimes)
         {
             var totalBillable = 0.0d;

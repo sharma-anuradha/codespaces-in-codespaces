@@ -77,11 +77,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             $"{ServiceName}_submission_plan",
                             async (_) =>
                             {
-                                Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan.Plan &&
-                                                                    startTime <= bev.Time &&
-                                                                    bev.Time < endTime &&
-                                                                    bev.Type == BillingEventTypes.BillingSummary
-                                                                    && ((BillingSummary)bev.Args).SubmissionState == BillingSubmissionState.None;
+                                Expression<Func<BillingEvent, bool>> filter = x => x.Plan.Subscription == plan.Plan.Subscription && x.Plan.ResourceGroup == plan.Plan.ResourceGroup && x.Plan.Name == plan.Plan.Name && x.Plan.Location == plan.Plan.Location &&
+                                                                    startTime <= x.Time &&
+                                                                    x.Time < endTime &&
+                                                                    x.Type == BillingEventTypes.BillingSummary
+                                                                    && ((BillingSummary)x.Args).SubmissionState == BillingSubmissionState.None;
                                 var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, Logger);
                                 foreach (var summary in billingSummaries)
                                 {
