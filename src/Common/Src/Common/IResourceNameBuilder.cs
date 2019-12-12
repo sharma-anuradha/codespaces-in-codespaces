@@ -33,8 +33,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <summary>
         /// Creates name for the lease.
         /// </summary>
-        /// <param name="baseName"></param>
+        /// <param name="baseName">Base name of the lease.</param>
         /// <returns>Name with stamp.</returns>
         string GetLeaseName(string baseName);
+
+        /// <summary>
+        /// Creates name of the Virtual Machine Container.
+        /// </summary>
+        /// <param name="baseName">Base name of the container.</param>
+        /// <returns>Name with the stamp.</returns>
+        string GetVirtualMachineAgentContainerName(string baseName);
     }
 }

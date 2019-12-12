@@ -41,6 +41,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
+        public string GetVirtualMachineAgentContainerName(string baseName)
+        {
+            return CreateResourceName(baseName);
+        }
+
+        /// <inheritdoc/>
         public string GetResourceGroupName(string baseName)
         {
             if (DeveloperPersonalStampSettings.DeveloperStamp)

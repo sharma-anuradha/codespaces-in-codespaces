@@ -135,9 +135,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 var secretProvider = (ISecretProvider)serviceProvider.GetService(typeof(ISecretProvider));
                 var appSecretsProvider = (CommonAppSecretsProvider)secretProvider;
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-                var appSpPassword = await keyVaultClient.GetSecretAsync($"{keyVaultUrl}/secrets/app-sp-password");
-                appSecretsProvider.AppServicePrincipalClientSecret = appSpPassword.Value;
+                using (var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback)))
+                {
+                    var appSpPassword = await keyVaultClient.GetSecretAsync($"{keyVaultUrl}/secrets/app-sp-password");
+                    appSecretsProvider.AppServicePrincipalClientSecret = appSpPassword.Value;
+                }
             }
             catch (Exception ex)
             {

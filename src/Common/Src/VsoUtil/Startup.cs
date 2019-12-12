@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -60,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
             services.AddCapacityManager(develperPersonalStamp: developerPersonalStampSettings.DeveloperStamp, mocksSettings: null);
-            services.AddSingleton<ISecretProvider, KeyVaultSecretProvider>();
+            ConfigureSecretsProvider(services);
             ConfigureCommonServices(services, out var _);
 
             // Add stamp database access
@@ -95,6 +96,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             ConfigureAppCommon(app);
+        }
+
+        private void ConfigureSecretsProvider(IServiceCollection services)
+        {
+            // KeyVaultSecretProvider uses logged in identity to get the secrets, with that one could access JIT'ed subscriptions without having to
+            // copy secrets out of the keyvalut manually. However, it doesn't work for all - by setting "UseSecretFromAppConfig = 1" the default secret
+            // from the appconfig will be used - enough for devstamp.
+            var appConfigSecret = Environment.GetEnvironmentVariable("UseSecretFromAppConfig");
+            if (appConfigSecret != "1")
+            {
+                services.AddSingleton<ISecretProvider, KeyVaultSecretProvider>();
+            }
         }
 
         /// <inheritdoc/>

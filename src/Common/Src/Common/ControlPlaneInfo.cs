@@ -23,12 +23,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         /// <param name="options">The azure resource provider options.</param>
         /// <param name="currentLocationProvider">The current stamp location provider.</param>
+        /// <param name="resourceNameBuilder">The resource name builder.</param>
         public ControlPlaneInfo(
             IOptions<ControlPlaneInfoOptions> options,
-            ICurrentLocationProvider currentLocationProvider)
+            ICurrentLocationProvider currentLocationProvider,
+            IResourceNameBuilder resourceNameBuilder)
         {
             ControlPlaneSettings = Requires.NotNull(options?.Value?.ControlPlaneSettings, nameof(ControlPlaneSettings));
             Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
+            ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
 
             // Select the stamp settings for the current control plane.
             var controlPlaneLocation = currentLocationProvider.CurrentLocation;
@@ -69,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string DnsHostName => NotNullOrWhiteSpace(ControlPlaneSettings.DnsHostName, nameof(ControlPlaneSettings.DnsHostName));
 
         /// <inheritdoc/>
-        public string VirtualMachineAgentContainerName => NotNullOrWhiteSpace(ControlPlaneSettings.VirtualMachineAgentContainerName, nameof(ControlPlaneSettings.VirtualMachineAgentContainerName));
+        public string VirtualMachineAgentContainerName => NotNullOrWhiteSpace(ResourceNameBuilder.GetVirtualMachineAgentContainerName(ControlPlaneSettings.VirtualMachineAgentContainerName), nameof(ControlPlaneSettings.VirtualMachineAgentContainerName));
 
         /// <inheritdoc/>
         public string FileShareTemplateContainerName => NotNullOrWhiteSpace(ControlPlaneSettings.FileShareTemplateContainerName, nameof(ControlPlaneSettings.FileShareTemplateContainerName));
@@ -81,6 +84,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public IReadOnlyDictionary<AzureLocation, IControlPlaneStampInfo> AllStamps { get; }
 
         private ControlPlaneSettings ControlPlaneSettings { get; }
+
+        /// <summary>
+        /// Gets or sets the resource name builder.
+        /// </summary>
+        private IResourceNameBuilder ResourceNameBuilder { get; }
 
         /// <summary>
         /// Gets a name like "vsodevci", "vsopperel", etc.

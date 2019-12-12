@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using CommandLine;
+using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
@@ -31,7 +32,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     ListPoolSettingsCommand,
                     ShowPoolSettingsCommand,
                     SetPoolSettingsCommand,
-                    DeletePoolSettingsCommand>(args)
+                    DeletePoolSettingsCommand,
+                    PrepareDevCLICommand>(args)
                     .MapResult(
                         (ShowSkusCommand command) => command.Execute(Console.Out, Console.Error),
                         (ShowSubscriptionCommand command) => command.Execute(Console.Out, Console.Error),
@@ -41,6 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                         (ShowPoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
                         (SetPoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
                         (DeletePoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
+                        (PrepareDevCLICommand command) => command.Execute(Console.Out, Console.Error),
                         errs => 1);
             }
             catch (Exception ex)
