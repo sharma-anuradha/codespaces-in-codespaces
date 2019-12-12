@@ -3,6 +3,9 @@
   "namespace": "Microsoft.VSOnline",
   "providerVersion": "2.0",
   "providerType": "Internal",
+  "requestHeaderOptions": {
+    "optInHeaders": "SignedUserToken"
+  },
   "notificationOptions": "NotSpecified",
   "resourceTypes": [
     {
