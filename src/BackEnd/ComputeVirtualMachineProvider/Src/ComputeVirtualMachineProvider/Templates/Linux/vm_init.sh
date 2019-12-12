@@ -55,6 +55,10 @@ echo "Install vso agent ..."
 chmod +x install_vsoagent.sh uninstall_vsoagent.sh
 ./install_vsoagent.sh
 
+echo "Make copy of vso agent..."
+mkdir -p /.vsonline/vsoagent/mount
+cp -a /.vsonline/vsoagent/bin/. /.vsonline/vsoagent/mount
+
 echo "Create configuration file ..."
 echo "[ENVAGENTSETTINGS]">> /.vsonline/vsoagent/bin/config.ini
 echo "INPUTQUEUENAME=$SCRIPT_PARAM_VM_QUEUE_NAME" >> /.vsonline/vsoagent/bin/config.ini
