@@ -23,6 +23,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         public string LiveShareEndpoint { get; set; }
 
+        public string LiveShareWebExtensionEndpoint { get; set; }
+
         public string PortalEndpoint { get; set; } 
         
         public string EnvironmentRegistrationEndpoint { get; set; }

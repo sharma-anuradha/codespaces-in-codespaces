@@ -93,7 +93,6 @@
     "@types/uuid": "^3.4.5",
     "@types/vscode": "^1.36.0",
     "@types/webpack-env": "1.13.6",
-    "@vsliveshare/liveshare-web": "0.0.1",
     "atob": "^2.1.2",
     "colors": "^1.4.0",
     "fork-ts-checker-notifier-webpack-plugin": "^1.0.2",

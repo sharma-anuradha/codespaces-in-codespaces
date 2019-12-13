@@ -7,8 +7,10 @@ import { LiveShareExternalUriProvider } from '../../providers/externalUriProvide
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
+import { defaultConfig } from '../../services/configurationService';
 
 export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }> {
+    liveShareWebExtensionEndpoint: string;
     sessionId: string;
 }
 
@@ -25,16 +27,7 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
     }
 
     render() {
-        // Get the metadata for the LiveShare static extension
-        const packageJSON: any = require('@vsliveshare/liveshare-web/liveshare/package.json');
-        packageJSON.extensionKind = ['web']; // enable for Web
-        const extensionLocation = `https://${window.location.hostname}/static/web-standalone/staticExtensions/liveshare/`;
-        const staticExtensions = [
-            {
-                packageJSON,
-                extensionLocation,
-            },
-        ];
+        const extensionUrls = [this.props.liveShareWebExtensionEndpoint];
 
         // This is the folder URI format recognized by the LiveShare file system provider.
         const folderUri = `vsls:///?${this.props.sessionId}`;
@@ -42,7 +35,7 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
         return (
             <ServerlessWorkbench
                 folderUri={folderUri}
-                staticExtensions={staticExtensions}
+                extensionUrls={extensionUrls}
                 resolveExternalUri={this.resolveExternalUri}
             />
         );
@@ -52,8 +45,10 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
 const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: string }>) => {
     const sessionId = props.match.params.id;
 
+    const { liveShareWebExtensionEndpoint } = state.configuration || defaultConfig;
     return {
         sessionId,
+        liveShareWebExtensionEndpoint,
     };
 };
 

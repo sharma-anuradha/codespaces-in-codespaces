@@ -33,6 +33,7 @@ config:
   environmentRegistrationEndpoint: https://online.visualstudio.com/api/v1/environments
   apiEndpoint: https://online.visualstudio.com/api/v1
   liveShareEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com
+  liveShareWebExtensionEndpoint: https://vslswebextension.blob.core.windows.net/vslsweb
   githubClientId: 15a84bcaef36dd681c52
 
 azure-secrets:

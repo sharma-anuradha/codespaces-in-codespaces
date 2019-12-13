@@ -11,7 +11,8 @@ type SendTelemetryProps =
     | ['vsonline/auth/acquire-auth-code', IAcquireAuthCodeTelemetryEventProperties]
     | ['vsonline/application/before-unload', {}]
     | ['vsonline/vscode/connect', IVSCodeConnectProperties]
-    | ['vsonline/request', IResponseProperties];
+    | ['vsonline/request', IResponseProperties]
+    | ['vsonline/extensionload/error', Error];
 
 export function sendTelemetry(...args: SendTelemetryProps): void;
 export function sendTelemetry(telemetryEventName: any, properties: any) {

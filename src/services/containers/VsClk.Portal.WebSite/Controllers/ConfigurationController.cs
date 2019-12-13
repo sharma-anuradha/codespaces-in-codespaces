@@ -19,7 +19,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             { "apiEndpoint", appSettings.ApiEndpoint },
             { "environmentRegistrationEndpoint", appSettings.EnvironmentRegistrationEndpoint },
             { "liveShareEndpoint", appSettings.LiveShareEndpoint },
-            { "portalEndpoint", appSettings.PortalEndpoint }
+            { "portalEndpoint", appSettings.PortalEndpoint },
+            { "liveShareWebExtensionEndpoint", appSettings.LiveShareWebExtensionEndpoint},
         });
     }
 }

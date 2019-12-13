@@ -47,5 +47,6 @@ appSettings:
   - PORTAL_AppSettings__EnvironmentRegistrationEndpoint
   - PORTAL_AppSettings__ApiEndpoint
   - PORTAL_AppSettings__LiveShareEndpoint
+  - PORTAL_AppSettings__LiveShareWebExtensionEndpoint
   - PORTAL_AppSettings__GitHubAppClientId
   - PORTAL_AppSettings__GitHubAppClientSecret

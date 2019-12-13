@@ -1,26 +1,21 @@
 // @ts-check
 
 const fs = require('fs');
-const fse = require('fs-extra');
 const path = require('path');
 const rimrafCallback = require('rimraf');
 const { promisify } = require('util');
 
 const { downloadVSCode } = require('../vscode/download-vscode');
 const { getCurrentAssetsCommit } = require('../vscode/get-current-vscode-assets-version');
-const { ensureDir } = require('../vscode/fileUtils');
 const {
     vscodeAssetsTargetPathBase,
     assetName,
     packageJsonPath,
     node_modules,
-    liveShareWebExtensionPath,
-    liveShareWebExtensionTargetPath,
 } = require('./constants');
 
 const readFile = promisify(fs.readFile);
 const exists = promisify(fs.exists);
-const copy = promisify(fse.copy);
 const link = promisify(fs.symlink);
 const rimraf = promisify(rimrafCallback);
 
@@ -65,15 +60,6 @@ async function downloadVSCodeAssetsInternal(quality, vscodeAssetsTargetPathBase,
     await downloadVSCode(requiredCommitId, assetName, quality, vscodeAssetsTargetPath);
 }
 
-async function copyStaticExtensions() {
-    const targetExists = await exists(liveShareWebExtensionTargetPath);
-    if (!targetExists) {
-        await ensureDir(liveShareWebExtensionTargetPath);
-    }
-
-    await copy(liveShareWebExtensionPath, liveShareWebExtensionTargetPath);
-}
-
 async function linkBuiltinStaticExtensions() {
     /** TEMP: VS Code plans to include the extensions that can run in the browser as part of the web-standalone package.
      *  Until we get that we download the server package just to the extensions.
@@ -93,6 +79,5 @@ async function linkBuiltinStaticExtensions() {
 module.exports = {
     getVSCodeCommitFromPackage,
     downloadVSCodeAssets,
-    copyStaticExtensions,
     linkBuiltinStaticExtensions,
 };

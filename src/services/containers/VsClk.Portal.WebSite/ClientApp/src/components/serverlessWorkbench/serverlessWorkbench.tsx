@@ -9,13 +9,14 @@ import { credentialsProvider } from '../../providers/credentialsProvider';
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { UserDataProvider } from '../../utils/userDataProvider';
 
-import { telemetry } from '../../utils/telemetry';
+import { telemetry, sendTelemetry } from '../../utils/telemetry';
 import * as path from 'path';
 import { trace } from '../../utils/trace';
 
 export interface ServerlessWorkbenchProps {
     folderUri: string;
-    staticExtensions: { packageJSON: any; extensionLocation: string }[];
+    staticExtensions?: { packageJSON: any; extensionLocation: string }[];
+    extensionUrls?: string[];
     resolveExternalUri?: (uri: URI) => Promise<URI>;
 }
 
@@ -27,6 +28,11 @@ function updateFavicon(isMounting: boolean = true) {
         const iconPath = isMounting ? vscodeFavicon : managementFavicon;
         link.setAttribute('href', iconPath);
     }
+}
+
+type StaticExtension = { packageJSON: any; extensionLocation: URI };
+function isNotNullStaticExtension(se: StaticExtension | undefined): se is StaticExtension {
+    return !!se;
 }
 
 export class ServerlessWorkbench extends Component<
@@ -76,8 +82,26 @@ export class ServerlessWorkbench extends Component<
             };
         });
 
-        type StaticExtension = { packageJSON: any; extensionLocation: URI };
-        return packages.filter((p: StaticExtension | undefined): p is StaticExtension => !!p);
+        return packages.filter(isNotNullStaticExtension);
+    }
+
+    private async getExtensionFromUrl(extensionLocation: string) {
+        try {
+            const packageJsonPath = `${extensionLocation}/package.json`;
+            const response = await fetch(packageJsonPath, { method: 'GET' });
+            if (!response.ok) {
+                sendTelemetry('vsonline/extensionload/error', new Error(response.statusText));
+                return undefined;
+            }
+
+            const packageJSON = await response.json();
+            return {
+                packageJSON,
+                extensionLocation: vscode.URI.parse(extensionLocation),
+            };
+        } catch (error) {
+            sendTelemetry('vsonline/extensionload/error', error);
+        }
     }
 
     async mountWorkbench() {
@@ -107,14 +131,31 @@ export class ServerlessWorkbench extends Component<
         };
 
         const resolveExternalUri = this.props.resolveExternalUri;
-        const staticExtensions = this.props.staticExtensions
-            .map((se) => {
-                return {
-                    packageJSON: se.packageJSON,
-                    extensionLocation: vscode.URI.parse(se.extensionLocation),
-                };
-            })
-            .concat(this.getBuiltinStaticExtensions());
+
+        let staticExtensions: StaticExtension[] = [];
+
+        if (this.props.extensionUrls) {
+            const extensionsFromUrls = (
+                await Promise.all(
+                    this.props.extensionUrls.map(async (url) => await this.getExtensionFromUrl(url))
+                )
+            ).filter(isNotNullStaticExtension);
+
+            staticExtensions = staticExtensions.concat(extensionsFromUrls);
+        }
+
+        if (this.props.staticExtensions) {
+            staticExtensions = staticExtensions.concat(
+                this.props.staticExtensions.map((se) => {
+                    return {
+                        packageJSON: se.packageJSON,
+                        extensionLocation: vscode.URI.parse(se.extensionLocation),
+                    };
+                })
+            );
+        }
+
+        staticExtensions = staticExtensions.concat(this.getBuiltinStaticExtensions());
 
         const quality =
             window.localStorage.getItem('vso-featureset') === 'insider' ? 'insider' : 'stable';
