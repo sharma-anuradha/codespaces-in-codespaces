@@ -19,11 +19,13 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
@@ -490,6 +492,128 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             logger.AddCloudEnvironment(result);
 
             return Ok(Mapper.Map<CloudEnvironmentResult>(result));
+        }
+
+        /// <summary>
+        /// Update settings of an existing cloud environment.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="updateEnvironmentInput">The new environment settings.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>An object result that contains the <see cref="CloudEnvironmentResult"/>.</returns>
+        [HttpPatch("{environmentId}")]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(UpdateSettingsAsync))]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("update_settings")]
+        public async Task<IActionResult> UpdateSettingsAsync(
+            [FromRoute]string environmentId,
+            [FromBody]UpdateCloudEnvironmentBody updateEnvironmentInput,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            logger.AddEnvironmentId(environmentId);
+
+            ValidationUtil.IsRequired(environmentId, nameof(environmentId));
+            ValidationUtil.IsRequired(updateEnvironmentInput, nameof(updateEnvironmentInput));
+            ValidationUtil.IsRequired(logger, nameof(logger));
+
+            var currentUserId = CurrentUserProvider.GetProfileId();
+
+            var environment = await EnvironmentManager.GetEnvironmentAsync(
+                environmentId, currentUserId, logger.NewChildLogger());
+            if (environment == null)
+            {
+                return NotFound();
+            }
+
+            // Reroute to correct location if needed
+            var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
+            if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
+            {
+                return RedirectToLocation(owningStamp);
+            }
+
+            var updateRequest = Mapper.Map<CloudEnvironmentUpdate>(updateEnvironmentInput);
+
+            var result = await EnvironmentManager.UpdateEnvironmentSettingsAsync(environment.Id, updateRequest, CurrentUserProvider, logger);
+
+            if (result.IsSuccess)
+            {
+                return Ok(Mapper.Map<CloudEnvironmentResult>(result.CloudEnvironment));
+            }
+            else
+            {
+                return BadRequest(result.ValidationErrors);
+            }
+        }
+
+        /// <summary>
+        /// Get the list of settings which are allowed to be updated on the given environment.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>An object result that contains the <see cref="CloudEnvironmentAvailableUpdatesResult"/>.</returns>
+        [HttpGet("{environmentId}/updates")]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(UpdateSettingsAsync))]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("available_updates")]
+        public async Task<IActionResult> GetAvailableUpdatesAsync(
+            [FromRoute]string environmentId,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            logger.AddEnvironmentId(environmentId);
+
+            ValidationUtil.IsRequired(environmentId, nameof(environmentId));
+
+            var currentUser = CurrentUserProvider.GetProfile();
+
+            var environment = await EnvironmentManager.GetEnvironmentAsync(
+                environmentId, currentUser.Id, logger.NewChildLogger());
+            if (environment == null)
+            {
+                return NotFound();
+            }
+
+            // Reroute to correct location if needed
+            var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
+            if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
+            {
+                return RedirectToLocation(owningStamp);
+            }
+
+            var availableUpdates = EnvironmentManager.GetEnvironmentAvailableSettingsUpdates(environment, currentUser, logger.NewChildLogger());
+
+            var result = new CloudEnvironmentAvailableUpdatesResult();
+
+            if (availableUpdates.AllowedAutoShutdownDelayMinutes != null && availableUpdates.AllowedAutoShutdownDelayMinutes.Any())
+            {
+                result.AllowedAutoShutdownDelayMinutes = availableUpdates.AllowedAutoShutdownDelayMinutes;
+            }
+            else
+            {
+                result.AllowedAutoShutdownDelayMinutes = Array.Empty<int>();
+            }
+
+            if (availableUpdates.AllowedSkus != null && availableUpdates.AllowedSkus.Any())
+            {
+                result.AllowedSkus = availableUpdates.AllowedSkus.Select((sku) => new SkuInfoResult
+                {
+                    Name = sku.SkuName,
+                    DisplayName = sku.DisplayName,
+                    OS = sku.ComputeOS.ToString(),
+                }).ToArray();
+            }
+            else
+            {
+                result.AllowedSkus = Array.Empty<SkuInfoResult>();
+            }
+
+            return Ok(result);
         }
 
         private IActionResult RedirectToLocation(IControlPlaneStampInfo owningStamp)

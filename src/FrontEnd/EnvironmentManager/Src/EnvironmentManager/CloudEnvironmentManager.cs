@@ -19,6 +19,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -36,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="planManager">The plan manager.</param>
         /// <param name="authRepository">The Live Share authentication repository.</param>
         /// <param name="billingEventManager">The billing event manager.</param>
+        /// <param name="skuCatalog">The SKU catalog.</param>
         /// <param name="environmentManagerSettings">The environment manager settings.</param>
         public CloudEnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -44,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IPlanManager planManager,
             IAuthRepository authRepository,
             IBillingEventManager billingEventManager,
+            ISkuCatalog skuCatalog,
             EnvironmentManagerSettings environmentManagerSettings)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
@@ -52,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
             AuthRepository = Requires.NotNull(authRepository, nameof(authRepository));
             BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
+            SkuCatalog = skuCatalog;
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
         }
 
@@ -66,6 +71,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IPlanManager PlanManager { get; }
 
         private IBillingEventManager BillingEventManager { get; }
+
+        private ISkuCatalog SkuCatalog { get; }
 
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
@@ -872,6 +879,154 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
                     }
                 }, swallowException: true);
+        }
+
+        /// <inheritdoc/>
+        public async Task<CloudEnvironmentSettingsUpdateResult> UpdateEnvironmentSettingsAsync(
+            string id,
+            CloudEnvironmentUpdate update,
+            ICurrentUserProvider currentUserProvider,
+            IDiagnosticsLogger logger)
+        {
+            var duration = logger.StartDuration();
+
+            try
+            {
+                Requires.NotNullOrWhiteSpace(id, nameof(id));
+                UnauthorizedUtil.IsRequired(currentUserProvider);
+                Requires.NotNull(logger, nameof(logger));
+
+                var currentUser = currentUserProvider.GetProfile();
+                UnauthorizedUtil.IsRequired(currentUser);
+
+                var currentUserId = currentUserProvider.GetProfileId();
+                UnauthorizedUtil.IsRequired(currentUserId);
+
+                var cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
+                if (cloudEnvironment is null)
+                {
+                    return CloudEnvironmentSettingsUpdateResult.Error(
+                        new List<Contracts.ErrorCodes> { Contracts.ErrorCodes.EnvironmentDoesNotExist });
+                }
+
+                UnauthorizedUtil.IsTrue(currentUserId == cloudEnvironment.OwnerId);
+
+                var allowedUpdates = GetEnvironmentAvailableSettingsUpdates(cloudEnvironment, currentUser, logger);
+                var validationErrors = new List<Contracts.ErrorCodes>();
+
+                if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
+                {
+                    validationErrors.Add(Contracts.ErrorCodes.EnvironmentNotShutdown);
+                }
+
+                if (update.AutoShutdownDelayMinutes.HasValue)
+                {
+                    if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null || 
+                        !allowedUpdates.AllowedAutoShutdownDelayMinutes.Contains(update.AutoShutdownDelayMinutes.Value))
+                    {
+                        validationErrors.Add(Contracts.ErrorCodes.RequestedAutoShutdownDelayMinutesIsInvalid);
+                    }
+                    else
+                    {
+                        cloudEnvironment.AutoShutdownDelayMinutes = update.AutoShutdownDelayMinutes.Value;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(update.SkuName))
+                {
+                    if (allowedUpdates.AllowedSkus == null || !allowedUpdates.AllowedSkus.Any())
+                    {
+                        validationErrors.Add(Contracts.ErrorCodes.UnableToUpdateSku);
+                    }
+                    else if (!allowedUpdates.AllowedSkus.Any((sku) => sku.SkuName == update.SkuName))
+                    {
+                        validationErrors.Add(Contracts.ErrorCodes.RequestedSkuIsInvalid);
+                    }
+                    else
+                    {
+                        // TODO - this assumes that the SKU change can be applied automatically on environment start.
+                        // If the SKU change requires some other work then it should be applied here.
+                        cloudEnvironment.SkuName = update.SkuName;
+                    }
+                }
+
+                if (validationErrors.Any())
+                {
+                    return CloudEnvironmentSettingsUpdateResult.Error(validationErrors);
+                }
+
+                cloudEnvironment.Updated = DateTime.UtcNow;
+                await SetEnvironmentStateAsync(cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateReasons.EnvironmentSettingsChanged, logger);
+                cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(cloudEnvironment)
+                    .LogInfo(GetType().FormatLogMessage(nameof(UpdateEnvironmentSettingsAsync)));
+
+                return CloudEnvironmentSettingsUpdateResult.Success(cloudEnvironment);
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(UpdateEnvironmentSettingsAsync)), ex.Message);
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public CloudEnvironmentAvailableSettingsUpdates GetEnvironmentAvailableSettingsUpdates(
+            CloudEnvironment cloudEnvironment,
+            Profile currentUser,
+            IDiagnosticsLogger logger)
+        {
+            var duration = logger.StartDuration();
+
+            try
+            {
+                Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+                Requires.NotNull(logger, nameof(logger));
+
+                var result = new CloudEnvironmentAvailableSettingsUpdates();
+
+                result.AllowedAutoShutdownDelayMinutes =
+                    EnvironmentManagerSettings.DefaultAutoShutdownDelayMinutesOptions?.ToArray() ??
+                    Array.Empty<int>();
+
+                if (
+                    SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var currentSku) &&
+                    currentSku.SupportedSkuTransitions != null &&
+                    currentSku.SupportedSkuTransitions.Any())
+                {
+                    result.AllowedSkus = currentSku.SupportedSkuTransitions
+                        .Select((skuName) =>
+                        {
+                            SkuCatalog.CloudEnvironmentSkus.TryGetValue(skuName, out var sku);
+                            return sku;
+                        })
+                        .Where((sku) =>
+                            sku != null &&
+                            sku.SkuLocations.Contains(cloudEnvironment.Location) &&
+                            ProfileUtils.IsSkuVisibleToProfile(currentUser, sku))
+                        .ToArray();
+                }
+                else
+                {
+                    result.AllowedSkus = Array.Empty<ICloudEnvironmentSku>();
+                }
+
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(cloudEnvironment)
+                    .LogInfo(GetType().FormatLogMessage(nameof(GetEnvironmentAvailableSettingsUpdates)));
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                logger.AddDuration(duration)
+                    .AddCloudEnvironment(cloudEnvironment)
+                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetEnvironmentAvailableSettingsUpdates)), ex.Message);
+                throw;
+            }
         }
 
         private async Task SetEnvironmentStateAsync(

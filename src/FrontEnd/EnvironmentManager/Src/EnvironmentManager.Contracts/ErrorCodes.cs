@@ -58,5 +58,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Unable to allocate Compute resource while starting a suspended environment.
         /// </summary>
         UnableToAllocateResourcesWhileStarting = 9,
+
+        /// <summary>
+        /// Unable to update an environment's AutoShutdownDelay setting because the requested value was invalid
+        /// </summary>
+        RequestedAutoShutdownDelayMinutesIsInvalid = 10,
+
+        /// <summary>
+        /// Unable to update an environment's SKU setting because the current SKU does not support transitions
+        /// </summary>
+        UnableToUpdateSku = 11,
+
+        /// <summary>
+        /// Unable to update an environment's SKU setting because the current SKU does not support the requested SKU
+        /// </summary>
+        RequestedSkuIsInvalid = 12,
     }
 }

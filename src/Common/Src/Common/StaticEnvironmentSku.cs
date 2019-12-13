@@ -3,6 +3,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
@@ -77,5 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public SkuTier Tier => SkuTier.PremiumDSv3;
+
+        /// <inheritdoc/>
+        public IEnumerable<string> SupportedSkuTransitions { get; } = Enumerable.Empty<string>();
     }
 }

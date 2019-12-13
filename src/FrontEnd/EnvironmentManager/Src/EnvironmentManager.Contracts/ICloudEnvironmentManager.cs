@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -130,5 +131,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The logger.</param>
         /// <returns>A task.</returns>
         Task ForceEnvironmentShutdownAsync(string id, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Updates the given environment's settings according to the given update request.
+        /// </summary>
+        /// <param name="id">The environment id.</param>
+        /// <param name="update">The update request.</param>
+        /// <param name="currentUserProvider">The current user provider.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>A <see cref="CloudEnvironmentAvailableSettingsUpdates"/> providing the allowed settings updates.</returns>
+        Task<CloudEnvironmentSettingsUpdateResult> UpdateEnvironmentSettingsAsync(
+            string id,
+            CloudEnvironmentUpdate update,
+            ICurrentUserProvider currentUserProvider,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Get the environment settings which are allowed on the given environment.
+        /// </summary>
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        /// <param name="currentUser">The current user.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>A <see cref="CloudEnvironmentAvailableSettingsUpdates"/> providing the allowed settings updates.</returns>
+        CloudEnvironmentAvailableSettingsUpdates GetEnvironmentAvailableSettingsUpdates(
+            CloudEnvironment cloudEnvironment,
+            Profile currentUser,
+            IDiagnosticsLogger logger);
     }
 }

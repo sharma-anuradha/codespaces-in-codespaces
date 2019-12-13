@@ -126,6 +126,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     .ToList()
                     .AsReadOnly());
 
+                var supportedSkuTransitions = cloudEnvironmentSettings.SupportedSkuTransitions == null
+                    ? Array.Empty<string>()
+                    : cloudEnvironmentSettings.SupportedSkuTransitions.Distinct().ToArray();
+
                 // Get the VM and storage image familes.
                 var computeImageFamily = NewVmImageFamily(
                     controlPlaneInfo.Stamp,
@@ -162,7 +166,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     cloudEnvironmentSettings.StorageVsoUnitsPerHour,
                     cloudEnvironmentSettings.ComputeVsoUnitsPerHour,
                     enabled ? skuConfiguration.ComputePoolSize.GetValueOrDefault() : 0,
-                    enabled ? skuConfiguration.StoragePoolSize.GetValueOrDefault() : 0);
+                    enabled ? skuConfiguration.StoragePoolSize.GetValueOrDefault() : 0,
+                    supportedSkuTransitions);
 
                 Skus.Add(skuName, cloudEnvironment);
             }

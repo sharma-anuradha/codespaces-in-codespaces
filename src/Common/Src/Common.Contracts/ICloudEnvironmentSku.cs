@@ -111,5 +111,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the pool size that storage should be maintained.
         /// </summary>
         int StoragePoolLevel { get; }
+
+        /// <summary>
+        /// Gets the set of SKUs which environments using this SKU are allowed to migrate to.
+        /// </summary>
+        IEnumerable<string> SupportedSkuTransitions { get; }
     }
 }

@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -26,6 +27,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string LeaseContainerName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default auto-shutdown delay options (values in minutes).
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public IReadOnlyCollection<int> DefaultAutoShutdownDelayMinutesOptions { get; set; }
 
         private ISystemConfiguration SystemConfiguration { get; set; }
 

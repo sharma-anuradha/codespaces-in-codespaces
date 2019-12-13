@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly CloudEnvironmentManager environmentManager;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
+        public readonly ISkuCatalog skuCatalog;
         public const string testUserId = "test-user";
         public const string testAccessToken = "test-token";
         public readonly Uri testServiceUri = new Uri("http://localhost/");
@@ -75,6 +76,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.authRepository = new MockClientAuthRepository();
             this.resourceBroker = new MockResourceBrokerClient();
 
+            this.skuCatalog = new Mock<ISkuCatalog>(MockBehavior.Strict).Object;
+
             this.environmentManager = new CloudEnvironmentManager(
                 this.environmentRepository,
                 this.resourceBroker,
@@ -82,6 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.accountManager,
                 this.authRepository,
                 this.billingEventManager,
+                this.skuCatalog,
                 environmentSettings);
         }
 

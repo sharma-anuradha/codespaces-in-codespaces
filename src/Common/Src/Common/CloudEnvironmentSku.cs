@@ -36,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="computeVsoUnitsPerHour">The cloud environment units for this sku when inactive.</param>
         /// <param name="computePoolLevel">The size of the compute pool that should be maintained.</param>
         /// <param name="storagePoolLevel">The size of the storage pool that should be maintained.</param>
+        /// <param name="supportedSkuTransitions">The set of SKUs which environments using this SKU are allowed to migrate to.</param>
         public CloudEnvironmentSku(
             string skuName,
             SkuTier tier,
@@ -55,7 +56,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             decimal storageVsoUnitsPerHour,
             decimal computeVsoUnitsPerHour,
             int computePoolLevel,
-            int storagePoolLevel)
+            int storagePoolLevel,
+            IReadOnlyCollection<string> supportedSkuTransitions)
         {
             Requires.NotNullOrEmpty(skuName, nameof(skuName));
             Requires.NotNullOrEmpty(displayName, nameof(displayName));
@@ -74,6 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.Argument(computeVsoUnitsPerHour >= 0m, nameof(computeVsoUnitsPerHour), "The environment units must be greater than or equal to 0.");
             Requires.Argument(!enabled || computePoolLevel > 0, nameof(computePoolLevel), "The compute pool level must be greater than zero.");
             Requires.Argument(!enabled || storagePoolLevel > 0, nameof(storagePoolLevel), "The storage pool level must be greater than zero.");
+            Requires.NotNull(supportedSkuTransitions, nameof(supportedSkuTransitions));
 
             SkuName = skuName;
             Tier = tier;
@@ -94,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ComputeVsoUnitsPerHour = computeVsoUnitsPerHour;
             ComputePoolLevel = computePoolLevel;
             StoragePoolLevel = storagePoolLevel;
+            SupportedSkuTransitions = supportedSkuTransitions;
         }
 
         /// <inheritdoc/>
@@ -156,5 +160,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public int StoragePoolLevel { get; }
+
+        /// <inheritdoc/>
+        public IEnumerable<string> SupportedSkuTransitions { get; }
     }
 }

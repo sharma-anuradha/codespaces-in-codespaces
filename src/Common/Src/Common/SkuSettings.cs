@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -55,5 +56,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public SkuConfigurationSettings SkuConfiguration { get; set; }
+
+        /// <summary>
+        /// Gets or sets the SKUs environments in this SKU may be migrated to.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public IEnumerable<string> SupportedSkuTransitions { get; set; }
     }
 }

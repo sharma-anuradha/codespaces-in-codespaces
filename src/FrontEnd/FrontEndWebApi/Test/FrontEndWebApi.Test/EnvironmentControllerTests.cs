@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -14,14 +15,15 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
-using System.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
@@ -30,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private readonly IPlanRepository accountRepository;
         private readonly PlanManager accountManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
-        private readonly IDiagnosticsLogger logger; 
+        private readonly IDiagnosticsLogger logger;
 
         public EnvironmentControllerTests()
         {
@@ -159,6 +161,222 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.IsType<BadRequestObjectResult>(actionResult);
         }
 
+        public static TheoryData<CloudEnvironmentAvailableSettingsUpdates, CloudEnvironmentAvailableUpdatesResult> SettingsUpdates = 
+            new TheoryData<CloudEnvironmentAvailableSettingsUpdates, CloudEnvironmentAvailableUpdatesResult>
+            {
+                { 
+                    new CloudEnvironmentAvailableSettingsUpdates
+                    {
+                        AllowedAutoShutdownDelayMinutes = new int[0],
+                        AllowedSkus = new ICloudEnvironmentSku[0],
+                    },
+                    new CloudEnvironmentAvailableUpdatesResult
+                    {
+                        AllowedAutoShutdownDelayMinutes = new int[0],
+                        AllowedSkus = new SkuInfoResult[0],
+                    }
+                },
+                {
+                    new CloudEnvironmentAvailableSettingsUpdates
+                    {
+                        AllowedAutoShutdownDelayMinutes = new[] { 0, 5, 30, 120 },
+                        AllowedSkus = new ICloudEnvironmentSku[0],
+                    },
+                    new CloudEnvironmentAvailableUpdatesResult
+                    {
+                        AllowedAutoShutdownDelayMinutes = new[] { 0, 5, 30, 120 },
+                        AllowedSkus = new SkuInfoResult[0],
+                    }
+                },
+                {
+                    new CloudEnvironmentAvailableSettingsUpdates
+                    {
+                        AllowedAutoShutdownDelayMinutes = new int[0],
+                        AllowedSkus = new ICloudEnvironmentSku[]
+                        {
+                            MockSku("MockSkuName", "MockSku", ComputeOS.Linux, 0, 0, new string[0]),
+                        },
+                    },
+                    new CloudEnvironmentAvailableUpdatesResult
+                    {
+                        AllowedAutoShutdownDelayMinutes = new int[0],
+                        AllowedSkus = new SkuInfoResult[]
+                        {
+                            new SkuInfoResult { Name = "MockSkuName" },
+                        },
+                    }
+                },
+            };
+
+        [Theory]
+        [MemberData(nameof(SettingsUpdates))]
+        public async Task EnvironmentController_GetAvailableUpdatesAsync(
+            CloudEnvironmentAvailableSettingsUpdates allowedUpdates,
+            CloudEnvironmentAvailableUpdatesResult expectedResponse)
+        {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
+
+            var mockEnvironment = new CloudEnvironment
+            {
+                Id = Guid.NewGuid().ToString(),
+                Location = AzureLocation.WestUs2,
+            };
+
+            var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
+            
+            mockEnvironmentManager
+                .Setup(x => x.GetEnvironmentAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(mockEnvironment))
+                .Callback((string id, string user, IDiagnosticsLogger log) =>
+                    Assert.Equal(mockEnvironment.Id, id));
+
+            mockEnvironmentManager
+                .Setup(x => x.GetEnvironmentAvailableSettingsUpdates(
+                    It.IsAny<CloudEnvironment>(),
+                    It.IsAny<UserProfile.Profile>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(allowedUpdates);
+
+            var environmentController = CreateTestEnvironmentsController(cloudEnvironmentManager: mockEnvironmentManager.Object);
+
+            var actionResult = await environmentController.GetAvailableUpdatesAsync(mockEnvironment.Id, logger);
+            Assert.IsType<OkObjectResult>(actionResult);
+
+            var result = (actionResult as OkObjectResult).Value as CloudEnvironmentAvailableUpdatesResult;
+
+            Assert.NotNull(result);
+            Assert.Equal(expectedResponse.AllowedAutoShutdownDelayMinutes, result.AllowedAutoShutdownDelayMinutes);
+            Assert.Equal(expectedResponse.AllowedSkus.Length, result.AllowedSkus.Length);
+
+            for (var i = 0; i < expectedResponse.AllowedSkus.Length; ++i)
+            {
+                var expectedSku = expectedResponse.AllowedSkus[i];
+                var actual = result.AllowedSkus[i];
+
+                Assert.Equal(expectedSku.Name, actual.Name);
+            }
+        }
+
+        [Fact]
+        public async Task EnvironmentController_UpdateSettingsAsync()
+        {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
+
+            var mockEnvironment = new CloudEnvironment
+            {
+                Id = Guid.NewGuid().ToString(),
+                Location = AzureLocation.WestUs2,
+            };
+
+            var updateRequest = new UpdateCloudEnvironmentBody
+            {
+                SkuName = "MockSku",
+                AutoShutdownDelayMinutes = 123,
+            };
+
+            var updateSettingsReponse = CloudEnvironmentSettingsUpdateResult.Success(mockEnvironment);
+
+            var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
+
+            mockEnvironmentManager
+                .Setup(x => x.GetEnvironmentAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(mockEnvironment))
+                .Callback((string id, string user, IDiagnosticsLogger log) =>
+                    Assert.Equal(mockEnvironment.Id, id));
+
+            mockEnvironmentManager
+                .Setup(x => x.UpdateEnvironmentSettingsAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<CloudEnvironmentUpdate>(),
+                    It.IsAny<ICurrentUserProvider>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(updateSettingsReponse))
+                .Callback((string id, CloudEnvironmentUpdate update, ICurrentUserProvider prov, IDiagnosticsLogger log) =>
+                {
+                    Assert.Equal(updateRequest.SkuName, update.SkuName);
+                    Assert.Equal(updateRequest.AutoShutdownDelayMinutes, update.AutoShutdownDelayMinutes);
+                });
+
+            var environmentController = CreateTestEnvironmentsController(cloudEnvironmentManager: mockEnvironmentManager.Object);
+
+            var actionResult = await environmentController.UpdateSettingsAsync(mockEnvironment.Id, updateRequest, logger);
+            Assert.IsType<OkObjectResult>(actionResult);
+
+            var result = (actionResult as OkObjectResult).Value as CloudEnvironmentResult;
+
+            Assert.NotNull(result);
+            Assert.Equal(mockEnvironment.Id, result.Id);
+        }
+
+        [Fact]
+        public async Task EnvironmentController_UpdateSettingsAsync_BadRequest()
+        {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
+
+            var mockEnvironment = new CloudEnvironment
+            {
+                Id = Guid.NewGuid().ToString(),
+                Location = AzureLocation.WestUs2,
+            };
+
+            var updateRequest = new UpdateCloudEnvironmentBody
+            {
+                SkuName = "MockSku",
+                AutoShutdownDelayMinutes = 123,
+            };
+
+            var errorCodes = new List<EnvironmentManager.Contracts.ErrorCodes> { EnvironmentManager.Contracts.ErrorCodes.EnvironmentNotShutdown, EnvironmentManager.Contracts.ErrorCodes.RequestedSkuIsInvalid, };
+            var updateSettingsReponse = CloudEnvironmentSettingsUpdateResult.Error(errorCodes);
+
+            var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
+
+            mockEnvironmentManager
+                .Setup(x => x.GetEnvironmentAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(mockEnvironment))
+                .Callback((string id, string user, IDiagnosticsLogger log) =>
+                    Assert.Equal(mockEnvironment.Id, id));
+
+            mockEnvironmentManager
+                .Setup(x => x.UpdateEnvironmentSettingsAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<CloudEnvironmentUpdate>(),
+                    It.IsAny<ICurrentUserProvider>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(updateSettingsReponse))
+                .Callback((string id, CloudEnvironmentUpdate update, ICurrentUserProvider prov, IDiagnosticsLogger log) =>
+                {
+                    Assert.Equal(updateRequest.SkuName, update.SkuName);
+                    Assert.Equal(updateRequest.AutoShutdownDelayMinutes, update.AutoShutdownDelayMinutes);
+                });
+
+            var environmentController = CreateTestEnvironmentsController(cloudEnvironmentManager: mockEnvironmentManager.Object);
+
+            var actionResult = await environmentController.UpdateSettingsAsync(mockEnvironment.Id, updateRequest, logger);
+            Assert.IsType<BadRequestObjectResult>(actionResult);
+
+            var result = (actionResult as BadRequestObjectResult).Value as List<EnvironmentManager.Contracts.ErrorCodes>;
+
+            Assert.NotNull(result);
+            Assert.Equal(errorCodes.Count, result.Count);
+
+            for (var i = 0; i < errorCodes.Count; ++i)
+            {
+                var expectedCode = errorCodes[i];
+                var actualCode = result[i];
+
+                Assert.Equal(expectedCode, actualCode);
+            }
+        }
+
         private async Task<CreateCloudEnvironmentBody> CreateBodyAsync(string skuName, string location)
         {
             return new CreateCloudEnvironmentBody
@@ -172,9 +390,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
         }
 
-        private EnvironmentsController CreateTestEnvironmentsController(ISkuCatalog skuCatalog = null, ICurrentUserProvider currentUserProvider = null)
+        private EnvironmentsController CreateTestEnvironmentsController(
+            ISkuCatalog skuCatalog = null, 
+            ICurrentUserProvider currentUserProvider = null,
+            ICloudEnvironmentManager cloudEnvironmentManager = null)
         {
-            var cloudEnvironmentManager = MockCloudEnvironmentManager();
+            cloudEnvironmentManager = cloudEnvironmentManager ?? MockCloudEnvironmentManager();
             currentUserProvider = currentUserProvider ?? MockCurrentUserProvider();
             var controlPlaneInfo = MockControlPlaneInfo();
             var currentLocationProvider = MockCurrentLocationProvider();
@@ -274,48 +495,90 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return skuCatalog;
         }
 
+        private static ICloudEnvironmentSku MockSku(
+            string skuName, 
+            string displayName, 
+            ComputeOS computeOs,
+            decimal storageUnits, 
+            decimal computeUnits, 
+            IEnumerable<string> skuTransitions)
+        {
+            return new CloudEnvironmentSku(
+                skuName,
+                SkuTier.Standard,
+                displayName,
+                true,
+                new[] { AzureLocation.WestUs2 },
+                "computeSkuFamily",
+                "computeSkuName",
+                "computeSkuSize",
+                4,
+                computeOs,
+                new BuildArtifactImageFamily(
+                    "agentImageFamily",
+                    "agentImageName"),
+                new VmImageFamily(
+                    MockControlPlaneInfo().Stamp,
+                    "vmImageFamilyName",
+                    VmImageKind.Canonical,
+                    "vmImageName",
+                    "vmImageVersion",
+                    "vmImageSubscriptionId"),
+                "storageSkuName",
+                new BuildArtifactImageFamily(
+                    "storageImageFamily",
+                    "storageImageName"),
+                64,
+                storageUnits,
+                computeUnits,
+                5,
+                5,
+                new ReadOnlyCollection<string>(skuTransitions.ToList()));
+        }
+
         private ISkuCatalog MockSkuCatalog()
         {
+            return MockSkuCatalog(new CloudEnvironmentSku(
+                "testSkuName",
+                SkuTier.Standard,
+                "Test SKU Name",
+                true,
+                new[] { AzureLocation.WestUs2 },
+                "computeSkuFamily",
+                "computeSkuName",
+                "computeSkuSize",
+                4,
+                ComputeOS.Linux,
+                new BuildArtifactImageFamily(
+                    "agentImageFamily",
+                    "agentImageName"),
+                new VmImageFamily(
+                    MockControlPlaneInfo().Stamp,
+                    "vmImageFamilyName",
+                    VmImageKind.Canonical,
+                    "vmImageName",
+                    "vmImageVersion",
+                    "vmImageSubscriptionId"),
+                "storageSkuName",
+                new BuildArtifactImageFamily(
+                    "storageImageFamily",
+                    "storageImageName"),
+                64,
+                2.0m,
+                125.0m,
+                5,
+                5,
+                new ReadOnlyCollection<string>(new string[0])));
+        }
+
+        private ISkuCatalog MockSkuCatalog(params ICloudEnvironmentSku[] skus)
+        {
+            var skuDict = new ReadOnlyDictionary<string, ICloudEnvironmentSku>(skus.ToDictionary((s) => s.SkuName));
+
             var moq = new Mock<ISkuCatalog>();
             moq
                 .Setup(obj => obj.CloudEnvironmentSkus)
-                .Returns(() =>
-                {
-                    var sku = new CloudEnvironmentSku(
-                        "testSkuName",
-                        SkuTier.Standard,
-                        "Test SKU Name",
-                        true,
-                        new[] { AzureLocation.WestUs2 },
-                        "computeSkuFamily",
-                        "computeSkuName",
-                        "computeSkuSize",
-                        4,
-                        ComputeOS.Linux,
-                        new BuildArtifactImageFamily(
-                            "agentImageFamily",
-                            "agentImageName"),
-                        new VmImageFamily(
-                            MockControlPlaneInfo().Stamp,
-                            "vmImageFamilyName",
-                            VmImageKind.Canonical,
-                            "vmImageName",
-                            "vmImageVersion",
-                            "vmImageSubscriptionId"),
-                        "storageSkuName",
-                        new BuildArtifactImageFamily(
-                            "storageImageFamily",
-                            "storageImageName"),
-                        64,
-                        2.0m,
-                        125.0m,
-                        5,
-                        5);
-
-                    var skus = new Dictionary<string, ICloudEnvironmentSku>();
-                    skus.Add(sku.SkuName, sku);
-                    return new ReadOnlyDictionary<string, ICloudEnvironmentSku>(skus);
-                });
+                .Returns(skuDict);
 
             return moq.Object;
         }
@@ -330,7 +593,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return moq.Object;
         }
 
-        private IControlPlaneInfo MockControlPlaneInfo()
+        private static IControlPlaneInfo MockControlPlaneInfo()
         {
             var moq = new Mock<IControlPlaneInfo>();
             var moq2 = new Mock<IControlPlaneStampInfo>();

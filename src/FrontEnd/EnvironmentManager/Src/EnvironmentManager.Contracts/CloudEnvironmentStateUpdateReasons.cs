@@ -53,5 +53,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Callback triggered state change.
         /// </summary>
         public const string EnvironmentCallback = "EnvironmentCallback";
+
+        /// <summary>
+        /// Environment settings were updated.
+        /// </summary>
+        public const string EnvironmentSettingsChanged = "EnvironmentSettingsChanged";
     }
 }
