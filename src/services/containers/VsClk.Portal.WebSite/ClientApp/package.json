@@ -151,8 +151,8 @@
     "not op_mini all"
   ],
   "vscodeCommit": {
-    "stable": "f359dd69833dd8800b54d458f6d37ab7c78df520",
-    "insider": "9579eda04fdb3a9bba2750f15193e5fafe16b959"
+    "stable": "9579eda04fdb3a9bba2750f15193e5fafe16b959",
+    "insider": "cbeff45f80213db0ddda2183170281ed97ed3b12"
   },
   "jest": {
     "collectCoverageFrom": [
