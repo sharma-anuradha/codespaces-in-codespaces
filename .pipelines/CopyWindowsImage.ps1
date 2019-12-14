@@ -62,11 +62,18 @@ Write-Host "Copy $SnapshotName from $SourceSubscription to $TargetSubscription"
 & $AzCopyExe copy $SourceAccess.accessSas $TargetAccess
 
 Write-Host "Snapshot $ImageName"
-$Snapshot = az snapshot create -n $SnapshotName -g $TargetGroupName -l $TargetLocation --source "$($Storage.primaryEndpoints.blob)$TempContainerName/$ImageName" --subscription $TargetSubscription | ConvertFrom-Json
+$Snapshot = az snapshot create -n $SnapshotName -g $TargetGroupName -l $TargetLocation --source "$($Storage.primaryEndpoints.blob)$TempContainerName/$ImageName" --source-storage-account-id $Storage.id --subscription $TargetSubscription | ConvertFrom-Json
+if (-not $Snapshot) {
+    Write-Error "Snapshot $ImageName Failed"
+}
 $Snapshot
 
 Write-Host "Create $ImageName Image"
-az image create -n $ImageName -g $TargetGroupName -l $TargetLocation --os-type $SourceImage.storageProfile.osDisk.osType --source $Snapshot.id --subscription $TargetSubscription
+$TargetImage = az image create -n $ImageName -g $TargetGroupName -l $TargetLocation --os-type $SourceImage.storageProfile.osDisk.osType --source $Snapshot.id --subscription $TargetSubscription
+if (-not $TargetImage) {
+    Write-Error "Create $ImageName Image Failed"
+}
+$TargetImage
 $TagNames | ForEach-Object {
     Write-Host "Create $_ Image Tag"
     az image update -n $ImageName -g $TargetGroupName --set "tags.$_=$($SourceImage.tags.$_)" --subscription $TargetSubscription
@@ -83,7 +90,11 @@ az storage account delete -n $TempStorageName -g $TargetGroupName --subscription
 $ImageDefinitionName = 'windows'
 $ImageGalleryName = "gallery_$RegionCode"
 Write-Host "Create Image Version $ImageVersion for $ImageName"
-az sig image-version create --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --managed-image $ImageName --location $TargetLocation --target-regions $TargetLocation --subscription $TargetSubscription
+$ImageDefinitionVersion = az sig image-version create --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --managed-image $ImageName --location $TargetLocation --target-regions $TargetLocation --subscription $TargetSubscription
+if (-not $ImageDefinitionVersion) {
+    Write-Error "Create Image Version $ImageVersion for $ImageName Failed"
+}
+$ImageDefinitionVersion
 $TagNames | ForEach-Object {
     Write-Host "Create $_ Image Version Tag"
     az sig image-version update --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --set "tags.$_=$($SourceImage.tags.$_)" --subscription $TargetSubscription --no-wait
