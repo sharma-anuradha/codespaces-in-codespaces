@@ -121,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="region"></param>
         /// <param name="shardUsageTimes"></param>
         /// <returns></returns>
-        private async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes)
+        public async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes)
         {
             logger.AddVsoPlan(plan)
                 .FluentAddBaseValue("startCalculationTime", start)
@@ -168,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var latestBillingSummary = (BillingSummary)latestBillingEventSummary.Args;
 
                     // Now filter on all the environment state changes. Find all that happened within the last billing summary and the desired end time.
-                    var billingEvents = allEvents.Where(x => x.Time >= latestBillingSummary.PeriodEnd && x.Time < desiredBillEndTime && x.Args is BillingEventTypes.EnvironmentStateChange);
+                    var billingEvents = allEvents.Where(x => x.Time >= latestBillingSummary.PeriodEnd && x.Time < desiredBillEndTime && x.Args is BillingStateChange);
 
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
                     var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region, shardUsageTimes);
@@ -582,7 +582,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                 // not be billed. This represent the slice of time from
                                 // Provisioning to Available, in which we won't bill.
                                 // The next time slice will bill for Available time.
-                                StartTime = currentState.TransitionTime,
+                                StartTime = currentEvent.Time,
                                 EndTime = currentEvent.Time,
                                 BillingState = BillingWindowBillingState.Inactive,
                                 Sku = currentState.Sku,

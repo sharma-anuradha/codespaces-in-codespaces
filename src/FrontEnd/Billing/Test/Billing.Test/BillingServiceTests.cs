@@ -1,14 +1,15 @@
-﻿using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+﻿using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Xunit;
-using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 {
@@ -745,27 +746,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
         public BillingServiceTests()
         {
-            var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
-            mockStandardLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(standardLinuxComputeUnitPerHr);
-            mockStandardLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(standardLinuxStorageUnitPerHr);
-
-            var mockPremiumLinux = new Mock<ICloudEnvironmentSku>();
-            mockPremiumLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(premiumLinuxComputeUnitPerHr);
-            mockPremiumLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(premiumLinuxStorageUnitPerHr);
-
-            var skus = new Dictionary<string, ICloudEnvironmentSku>
-            {
-                [standardLinuxSkuName] = mockStandardLinux.Object,
-                [premiumLinuxSkuName] = mockPremiumLinux.Object,
-            };
-            var mockSkuCatelog = new Mock<ISkuCatalog>();
-            mockSkuCatelog.Setup(cat => cat.CloudEnvironmentSkus).Returns(skus);
+            Mock<ISkuCatalog> mockSkuCatelog = GetMockSKuCatalog();
             billingService = new BillingService(manager,
                                             new Mock<IControlPlaneInfo>().Object,
                                             mockSkuCatelog.Object,
                                             logger,
                                             new Mock<IClaimedDistributedLease>().Object,
-                                            new MockTaskHelper(), 
+                                            new MockTaskHelper(),
                                             planManager);
         }
 
@@ -783,7 +770,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             //TODO: We should restructure these tests so that time can be an actual measurement that we calculate.
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow,AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
 
             // Compare total billable units
             Assert.Equal(expectedSummary.Usage.First().Value, actualSummary.Usage.First().Value, 2);
@@ -1098,6 +1085,314 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Assert.Equal(expectedAvailableEnvironmentUsageDetail.UserId, actualAvailableEnvironmentUsageDetail.UserId);
             Assert.Equal(expectedShutdownEnvironment2UsageDetail.UserId, actualShutdownEnvironmentUsageDetail.UserId);
 
+        }
+
+        [Fact]
+        public async Task GenerateBill_NoStateChange()
+        {
+            var startTime = DateTime.UtcNow.AddHours(-4);
+            var lastSummaryEndTime = startTime.AddHours(2);
+            var endTime = startTime.AddHours(3);
+            var expectedUsage = 127; // one hour of available time
+
+            var billEventAvailable = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Created),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironment,
+                Time = startTime.AddHours(-20),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var plan = new VsoPlan()
+            {
+                Plan = new VsoPlanInfo()
+                {
+                    Name = "PlanName",
+                    Location = AzureLocation.WestUs2,
+                    ResourceGroup = "RG",
+                    Subscription = Guid.NewGuid().ToString(),
+                }
+            };
+            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
+            var lastBillingSummary = new BillingSummary()
+            {
+                PeriodEnd = lastSummaryEndTime,
+                PeriodStart = DateTime.Now,
+                SubmissionState = BillingSubmissionState.None,
+                UsageDetail = new UsageDetail
+                {
+                    Environments = new Dictionary<string, EnvironmentUsageDetail>
+                        {
+                            {
+                                testEnvironment.Id,
+                                new EnvironmentUsageDetail
+                                {
+                                    EndState = "Available",
+                                    Sku = new Sku { Name = standardLinuxSkuName },
+                                    UserId = testEnvironment.UserId,
+                                    Usage = new Dictionary<string, double>
+                                    {
+                                        { WestUs2MeterId, 0 },
+                                    },
+                                }
+                            },
+                        },
+                }
+            };
+            var lastSummaryEvent = new BillingEvent()
+            {
+                Plan = plan.Plan,
+                Args = lastBillingSummary,
+            };
+            IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>() { lastSummaryEvent };
+            IEnumerable<BillingEvent> oldBillingEvents = new List<BillingEvent>() { billEventAvailable };
+
+            await RunGenerateBillingSummaryTests(plan, allBillingEvents, oldBillingEvents, expectedUsage, startTime, lastSummaryEndTime, endTime);
+        }
+
+        [Fact]
+        public async Task GenerateBill_StateChangeInMiddle()
+        {
+            var startTime = DateTime.UtcNow.AddHours(-4);
+            var lastSummaryEndTime = startTime.AddHours(2);
+            var endTime = startTime.AddHours(3);
+            double expectedUsage = 127d / 2; // half hour of available time
+
+            var billEventAvailable = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Created),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(30),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var plan = new VsoPlan()
+            {
+                Plan = new VsoPlanInfo()
+                {
+                    Name = "PlanName",
+                    Location = AzureLocation.WestUs2,
+                    ResourceGroup = "RG",
+                    Subscription = Guid.NewGuid().ToString(),
+                }
+            };
+            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
+
+            var lastBillingSummary = new BillingSummary()
+            {
+                PeriodEnd = lastSummaryEndTime,
+                PeriodStart = lastSummaryEndTime.AddHours(-1),
+            };
+            var lastSummaryEvent = new BillingEvent()
+            {
+                Plan = plan.Plan,
+                Args = lastBillingSummary,
+            };
+            IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>() { lastSummaryEvent, billEventAvailable };
+            IEnumerable<BillingEvent> oldBillingEvents = new List<BillingEvent>() { billEventAvailable };
+
+            await RunGenerateBillingSummaryTests(plan, allBillingEvents, oldBillingEvents, expectedUsage, startTime, lastSummaryEndTime, endTime);
+        }
+
+        [Fact]
+        public async Task GenerateBill_StateChangeInMiddleTheDeleted()
+        {
+
+            var startTime = DateTime.UtcNow.AddHours(-4);
+            var lastSummaryEndTime = startTime.AddHours(2);
+            var endTime = startTime.AddHours(3);
+            double expectedUsage = 127d / 4; // 15 mins of available time
+
+            var billEventAvailable = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Created),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(30),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var billEventDeleted = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Available),
+                    NewValue = nameof(CloudEnvironmentState.Deleted),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(45),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var plan = new VsoPlan()
+            {
+                Plan = new VsoPlanInfo()
+                {
+                    Name = "PlanName",
+                    Location = AzureLocation.WestUs2,
+                    ResourceGroup = "RG",
+                    Subscription = Guid.NewGuid().ToString(),
+                }
+            };
+            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
+
+            var lastBillingSummary = new BillingSummary()
+            {
+                PeriodEnd = lastSummaryEndTime,
+                PeriodStart = lastSummaryEndTime.AddHours(-1),
+            };
+            var lastSummaryEvent = new BillingEvent()
+            {
+                Plan = plan.Plan,
+                Args = lastBillingSummary,
+            };
+            IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>() { lastSummaryEvent, billEventAvailable, billEventDeleted };
+            IEnumerable<BillingEvent> oldBillingEvents = new List<BillingEvent>() { billEventAvailable, billEventDeleted };
+
+            await RunGenerateBillingSummaryTests(plan, allBillingEvents, oldBillingEvents, expectedUsage, startTime, lastSummaryEndTime, endTime);
+        }
+
+        [Fact]
+        public async Task GenerateBill_DeletedBeforeTimeRange()
+        {
+            var startTime = DateTime.UtcNow.AddHours(-4);
+            var lastSummaryEndTime = startTime.AddHours(2);
+            var endTime = startTime.AddHours(3);
+            double expectedUsage = 0; // Should have no usage. We were deleted prior to this billing period
+
+            var billEventAvailable = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Created),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(-50),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var billEventDeleted = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Available),
+                    NewValue = nameof(CloudEnvironmentState.Deleted),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(-45),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var plan = new VsoPlan()
+            {
+                Plan = new VsoPlanInfo()
+                {
+                    Name = "PlanName",
+                    Location = AzureLocation.WestUs2,
+                    ResourceGroup = "RG",
+                    Subscription = Guid.NewGuid().ToString(),
+                }
+            };
+            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
+
+            var lastBillingSummary = new BillingSummary()
+            {
+                PeriodEnd = lastSummaryEndTime,
+                PeriodStart = lastSummaryEndTime.AddHours(-1),
+            };
+            var lastSummaryEvent = new BillingEvent()
+            {
+                Plan = plan.Plan,
+                Args = lastBillingSummary,
+            };
+            IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>() { lastSummaryEvent, billEventAvailable, billEventDeleted };
+            IEnumerable<BillingEvent> oldBillingEvents = new List<BillingEvent>() { billEventAvailable, billEventDeleted };
+
+            await RunGenerateBillingSummaryTests(plan, allBillingEvents, oldBillingEvents, expectedUsage, startTime, lastSummaryEndTime, endTime);
+        }
+
+        private async Task RunGenerateBillingSummaryTests(VsoPlan plan, IEnumerable<BillingEvent> allBillingEvents, IEnumerable<BillingEvent> oldEvents, double expectedUsage, DateTime start, DateTime lastSummaryTime, DateTime endBillingTime)
+        {
+            Mock<IControlPlaneInfo> controlPlane = new Mock<IControlPlaneInfo>();
+            IEnumerable<AzureLocation> locations = new List<AzureLocation>() { AzureLocation.WestUs2 };
+            Mock<IControlPlaneStampInfo> stampInfo = new Mock<IControlPlaneStampInfo>();
+            Mock<ISkuCatalog> skuCatalog = new Mock<ISkuCatalog>();
+            controlPlane.SetupGet(x => x.Stamp).Returns(stampInfo.Object);
+            stampInfo.SetupGet(x => x.DataPlaneLocations).Returns(locations);
+            Mock<ISkuCatalog> mockSkuCatelog = GetMockSKuCatalog();
+
+            Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
+            Mock<IPlanManager> planManager = new Mock<IPlanManager>();
+            Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();
+            logger.Setup(x => x.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
+
+            billingEventManager.Setup(x => x.GetPlanEventsAsync(It.IsAny<Expression<Func<BillingEvent, bool>>>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(oldEvents));
+            billingEventManager.Setup(x => x.GetPlanEventsAsync(It.IsAny<VsoPlanInfo>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), null, logger.Object)).Returns(Task.FromResult(allBillingEvents));
+
+            var shardTimes = new Dictionary<string, double>();
+
+            // Setup a fake lease
+            Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
+            BillingService sut = new BillingService(billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
+
+            object argsInput = null;
+            billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
+            await sut.BeginAccountCalculations(plan.Plan, start, endBillingTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+
+            BillingSummary resultSummary = argsInput as BillingSummary;
+
+            Assert.NotNull(resultSummary);
+            Assert.Equal(endBillingTime, resultSummary.PeriodEnd);
+            Assert.Equal(lastSummaryTime, resultSummary.PeriodStart);
+
+            Assert.Equal(1, resultSummary.Usage.Count);
+            var usageTotal = resultSummary.Usage.Values.First();
+            Assert.Equal(expectedUsage, usageTotal, 4);
+        }
+
+
+        private Mock<ISkuCatalog> GetMockSKuCatalog()
+        {
+            var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
+            mockStandardLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(standardLinuxComputeUnitPerHr);
+            mockStandardLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(standardLinuxStorageUnitPerHr);
+
+            var mockPremiumLinux = new Mock<ICloudEnvironmentSku>();
+            mockPremiumLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(premiumLinuxComputeUnitPerHr);
+            mockPremiumLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(premiumLinuxStorageUnitPerHr);
+
+            var skus = new Dictionary<string, ICloudEnvironmentSku>
+            {
+                [standardLinuxSkuName] = mockStandardLinux.Object,
+                [premiumLinuxSkuName] = mockPremiumLinux.Object,
+            };
+            var mockSkuCatelog = new Mock<ISkuCatalog>();
+            mockSkuCatelog.Setup(cat => cat.CloudEnvironmentSkus).Returns(skus);
+            return mockSkuCatelog;
         }
     }
 }

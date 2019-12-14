@@ -152,14 +152,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Assert.Equal(BillingSubmissionState.Error, billingSummary.SubmissionState);
         }
 
-
-        class FakeLease : IDisposable
-        {
-            public void Dispose()
-            {
-            }
-        }
-
         class MockTaskHelper : ITaskHelper
         {
             public Task<bool> RetryUntilSuccessOrTimeout(string name, Func<Task<bool>> callback, TimeSpan timeoutTimeSpan, TimeSpan? waitTimeSpan = null, IDiagnosticsLogger logger = null, Action onTimeout = null)
