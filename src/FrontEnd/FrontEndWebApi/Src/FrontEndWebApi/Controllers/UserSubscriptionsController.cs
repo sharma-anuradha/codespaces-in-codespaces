@@ -24,7 +24,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// Api for adding new users to vsonline.
     /// </summary>
     [ApiController]
-    [Route("usersubscriptions")]
     [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
@@ -55,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="logger">Target logger.</param>
         /// <returns>The status code.</returns>
         [HttpPost]
+        [ThrottlePerUserLow(nameof(UserSubscriptionsController), nameof(CreateAsync))]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -80,10 +80,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// Deletes a user.
         /// </summary>
+        /// <remarks>
+        /// Note: This endpoint allows the deletion of the email address someone else added in the database.
+        /// </remarks>
         /// <param name="email">The email address.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>The status code.</returns>
         [HttpDelete]
+        [ThrottlePerUserLow(nameof(UserSubscriptionsController), nameof(DeleteAsync))]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]

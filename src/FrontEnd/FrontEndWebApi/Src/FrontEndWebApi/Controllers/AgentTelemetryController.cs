@@ -37,11 +37,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <param name="telemetryDataCollection">Collection of <see cref="TelemetryData"/>.</param>
         /// <returns>No data.</returns>
-        /// <remarks>TODO: Add throttling per VM identity.</remarks>
         [HttpPost]
+        [ThrottlePerUserHigh(nameof(AgentTelemetryController), nameof(ProcessTelemetryAsync))]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public IActionResult ProcesTelemetryAsync([FromBody] IEnumerable<TelemetryData> telemetryDataCollection)
+        public IActionResult ProcessTelemetryAsync([FromBody] IEnumerable<TelemetryData> telemetryDataCollection)
         {
             var logger = HttpContext.GetLogger();
             var duration = logger.StartDuration();

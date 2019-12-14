@@ -30,6 +30,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// Initializes a new instance of the <see cref="AgentsController"/> class.
         /// </summary>
+        /// <remarks>
+        /// Note this controller intentionally does NOT require requests to be authenticated,
+        /// because it does not return any sensitive information, only general read-only information about
+        /// the download Uris to the VSO Agent.
+        /// </remarks>
         /// <param name="locationProvider">Location provider.</param>
         /// <param name="imageUrlGenerator">Generates the URL to the VM agent.</param>
         public AgentsController(

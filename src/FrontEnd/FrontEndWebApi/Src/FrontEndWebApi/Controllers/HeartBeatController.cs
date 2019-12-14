@@ -56,9 +56,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Controller to recieve heartbeat messages from VSO Agents.
         /// </summary>
         /// <param name="heartBeat">HeartBeat message.</param>
-        /// <returns>TODO: Add documentation.</returns>
-        /// <remarks>TODO: Add throttling per VM identity.</remarks>
+        /// <returns>No data.</returns>
         [HttpPost]
+        [ThrottlePerUserHigh(nameof(HeartBeatController), nameof(ProcessHeartBeatAsync))]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
         public async Task<IActionResult> ProcessHeartBeatAsync([FromBody] HeartBeatBody heartBeat)

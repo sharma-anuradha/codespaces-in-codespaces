@@ -7,9 +7,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -93,6 +95,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             // JWT "sub" claim gets stored in User claims as type "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
             var sub = context.Principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").Value;
             context.HttpContext.Items[VMResourceIdName] = sub;
+
+            // Subject of the JWT identifies the vm.
+            // Needed for per-vm throttling to work correctly through VS SaaS SDK.
+            context.HttpContext.SetCurrentUserId(sub);
         }
     }
 }
