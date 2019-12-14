@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmetnRegistrationCallbackPayloadBody.cs" company="Microsoft">
+﻿// <copyright file="EnvironmentRegistrationCallbackPayloadBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
     /// <summary>
     /// The environment registration callback payload.
     /// </summary>
-    public class EnvironmetnRegistrationCallbackPayloadBody
+    public class EnvironmentRegistrationCallbackPayloadBody
     {
         /// <summary>
         /// Gets or sets the environment connection session id.

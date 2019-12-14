@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         public async Task EnvironmentController_CloudEnvironmentAsync()
         {
             var logger = new Mock<IDiagnosticsLogger>().Object;
-            var body = new CreateCloudEnvironmentBody 
+            var body = new CreateCloudEnvironmentBody
             {
                 FriendlyName = "test-environment",
                 PlanId = (await GeneratePlan()).Plan.ResourceId,
@@ -97,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             });
 
             var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog, currentUserProvider: currentUser);
-            
+
             // Create each enabled sku in west us 2
             foreach (var item in skuCatalog.EnabledInternalHardware())
             {
@@ -459,7 +459,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 cfg.CreateMap<SeedInfoBody, SeedInfo>();
                 cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
                 cfg.CreateMap<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>();
-                cfg.CreateMap<EnvironmetnRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
+                cfg.CreateMap<EnvironmentRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
             });
 
             var mapper = new Mapper(config);
@@ -476,7 +476,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Returns("test-environment-rg");
             controlPlaneInfo
                 .Setup(obj => obj.Stamp.DataPlaneLocations)
-                .Returns(new List<AzureLocation> 
+                .Returns(new List<AzureLocation>
                 {
                     AzureLocation.WestUs2,
                 });
@@ -599,7 +599,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var moq2 = new Mock<IControlPlaneStampInfo>();
             moq
                 .Setup(obj => obj.GetOwningControlPlaneStamp(It.IsAny<AzureLocation>()))
-                .Returns((AzureLocation location) => 
+                .Returns((AzureLocation location) =>
                 {
                     if (location == AzureLocation.WestUs2 || location == AzureLocation.EastUs)
                     {
@@ -630,7 +630,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Returns("mock-bearer-token");
             moq
                 .Setup(obj => obj.GetProfile())
-                .Returns(() => 
+                .Returns(() =>
                 {
                     return new UserProfile.Profile
                     {

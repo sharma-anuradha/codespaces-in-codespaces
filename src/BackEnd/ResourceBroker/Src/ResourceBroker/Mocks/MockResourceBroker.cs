@@ -105,7 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
 
                 var callback = new EnvironmentRegistrationCallbackBody
                 {
-                    Payload = new EnvironmetnRegistrationCallbackPayloadBody
+                    Payload = new EnvironmentRegistrationCallbackPayloadBody
                     {
                         SessionId = sessionId,
                         SessionPath = sessionPath,

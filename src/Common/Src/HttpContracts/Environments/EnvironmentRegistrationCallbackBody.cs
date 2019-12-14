@@ -20,6 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// <summary>
         /// Gets or sets the environment registration payload.
         /// </summary>
-        public EnvironmetnRegistrationCallbackPayloadBody Payload { get; set; }
+        public EnvironmentRegistrationCallbackPayloadBody Payload { get; set; }
     }
 }
