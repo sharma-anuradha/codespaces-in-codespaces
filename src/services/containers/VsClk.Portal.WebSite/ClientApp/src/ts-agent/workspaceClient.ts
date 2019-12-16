@@ -276,7 +276,7 @@ export class WorkspaceClient implements rpc.Disposable {
                 resolve(new ssh.WebSocketStream(socket));
             };
             socket.onerror = (e) => {
-                reject(new Error('Failed to connect to relay: ' + relayUri));
+                reject(new Error('Failed to connect to relay.'));
             };
         });
     }
