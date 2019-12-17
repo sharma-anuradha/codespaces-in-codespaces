@@ -98,6 +98,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public DateTime LastStateUpdated { get; set; }
 
         /// <summary>
+        /// Gets or sets the trigger for the last state change.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "lastUpdateTrigger")]
+        public string LastStateUpdateTrigger { get; set; }
+
+        /// <summary>
         /// Gets or sets the reason for state change.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "lastStateUpdateReason")]

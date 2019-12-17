@@ -107,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.ErrorCodes.EnvironmentDoesNotExist, result.ValidationErrors.First());
+            Assert.Equal(Contracts.MessageCodes.EnvironmentDoesNotExist, result.ValidationErrors.First());
         }
 
         [Fact]
@@ -133,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.ErrorCodes.EnvironmentNotShutdown, result.ValidationErrors.First());
+            Assert.Equal(Contracts.MessageCodes.EnvironmentNotShutdown, result.ValidationErrors.First());
         }
 
         [Fact]
@@ -165,7 +165,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.ErrorCodes.RequestedAutoShutdownDelayMinutesIsInvalid, result.ValidationErrors.First());
+            Assert.Equal(Contracts.MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid, result.ValidationErrors.First());
         }
 
         [Fact]
@@ -197,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.ErrorCodes.UnableToUpdateSku, result.ValidationErrors.First());
+            Assert.Equal(Contracts.MessageCodes.UnableToUpdateSku, result.ValidationErrors.First());
         }
 
         [Fact]
@@ -230,7 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.ErrorCodes.RequestedSkuIsInvalid, result.ValidationErrors.First());
+            Assert.Equal(Contracts.MessageCodes.RequestedSkuIsInvalid, result.ValidationErrors.First());
         }
 
         private CloudEnvironmentManager CreateManager(

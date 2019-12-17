@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        ErrorCode = Contracts.ErrorCodes.EnvironmentDoesNotExist,
+                        MessageCode = Contracts.MessageCodes.EnvironmentDoesNotExist,
                         HttpStatusCode = StatusCodes.Status404NotFound,
                     };
                 }
@@ -114,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = cloudEnvironment,
-                        ErrorCode = Contracts.ErrorCodes.ShutdownStaticEnvironment,
+                        MessageCode = Contracts.MessageCodes.ShutdownStaticEnvironment,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -136,7 +136,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
                 else
                 {
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, CloudEnvironmentStateUpdateReasons.ShutdownEnvironment, logger);
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, logger);
 
                     // Update the database state.
                     await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
@@ -243,7 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        ErrorCode = Contracts.ErrorCodes.EnvironmentDoesNotExist,
+                        MessageCode = Contracts.MessageCodes.EnvironmentDoesNotExist,
                         HttpStatusCode = StatusCodes.Status404NotFound,
                     };
                 }
@@ -258,7 +258,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = cloudEnvironment,
-                        ErrorCode = Contracts.ErrorCodes.StartStaticEnvironment,
+                        MessageCode = Contracts.MessageCodes.StartStaticEnvironment,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -278,7 +278,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        ErrorCode = Contracts.ErrorCodes.EnvironmentNotShutdown,
+                        MessageCode = Contracts.MessageCodes.EnvironmentNotShutdown,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -305,7 +305,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     return new CloudEnvironmentServiceResult
                     {
-                        ErrorCode = Contracts.ErrorCodes.UnableToAllocateResourcesWhileStarting,
+                        MessageCode = Contracts.MessageCodes.UnableToAllocateResourcesWhileStarting,
                         HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
                     };
                 }
@@ -319,12 +319,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), "Could not create the cloud environment workspace session.");
                     return new CloudEnvironmentServiceResult
                     {
-                        ErrorCode = Contracts.ErrorCodes.UnableToAllocateResourcesWhileStarting,
+                        MessageCode = Contracts.MessageCodes.UnableToAllocateResourcesWhileStarting,
                         HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
                     };
                 }
 
-                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateReasons.StartEnvironment, logger);
+                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateTriggers.StartEnvironment, string.Empty, logger);
                 await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
 
                 // Kick off start-compute before returning.
@@ -375,7 +375,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var result = new CloudEnvironmentServiceResult()
             {
-                ErrorCode = Contracts.ErrorCodes.Unknown,
+                MessageCode = Contracts.MessageCodes.Unknown,
                 HttpStatusCode = StatusCodes.Status409Conflict,
             };
 
@@ -418,7 +418,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 if (environments.Any((env) => string.Equals(
                     env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    result.ErrorCode = Contracts.ErrorCodes.EnvironmentNameAlreadyExists;
+                    result.MessageCode = Contracts.MessageCodes.EnvironmentNameAlreadyExists;
                     result.HttpStatusCode = StatusCodes.Status409Conflict;
                     return result;
                 }
@@ -439,7 +439,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogInfo(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)));
 
-                    result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
+                    result.MessageCode = Contracts.MessageCodes.ExceededQuota;
                     result.HttpStatusCode = StatusCodes.Status403Forbidden;
                     return result;
                 }
@@ -470,8 +470,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     cloudEnvironment.SkuName = StaticEnvironmentSku.Name;
 
                     // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, CloudEnvironmentStateUpdateReasons.CreateEnvironment, logger);
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateReasons.CreateEnvironment, logger);
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, logger);
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, logger);
 
                     cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, logger);
 
@@ -497,7 +497,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex);
 
-                    result.ErrorCode = Contracts.ErrorCodes.UnableToAllocateResources;
+                    result.MessageCode = Contracts.MessageCodes.UnableToAllocateResources;
                     result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
                     return result;
                 }
@@ -509,7 +509,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     logger.AddDuration(duration)
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), "Could not create the cloud environment workspace session.");
-                    result.ErrorCode = Contracts.ErrorCodes.UnableToAllocateResources;
+                    result.MessageCode = Contracts.MessageCodes.UnableToAllocateResources;
                     result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
                     return result;
                 }
@@ -517,7 +517,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 // Create the cloud environment record in the provisioning state -- before starting.
                 // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                 // Highly unlikely, but still...
-                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateReasons.CreateEnvironment, logger);
+                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, logger);
 
                 cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, logger);
 
@@ -590,7 +590,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ValidationUtil.IsTrue(cloudEnvironment.Connection.ConnectionSessionId == options.Payload.SessionId);
 
                 cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
-                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, CloudEnvironmentStateUpdateReasons.EnvironmentCallback, logger);
+                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, CloudEnvironmentStateUpdateTriggers.EnvironmentCallback, string.Empty, logger);
                 cloudEnvironment.Updated = DateTime.UtcNow;
                 var result = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
 
@@ -674,7 +674,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 // Update the new state before returning.
                 if (originalState != newState)
                 {
-                    await SetEnvironmentStateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateReasons.GetEnvironment, logger);
+                    await SetEnvironmentStateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.GetEnvironment, null, logger);
                     cloudEnvironment.Updated = DateTime.UtcNow;
                     cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
                 }
@@ -787,7 +787,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             UnauthorizedUtil.IsTrue(cloudEnvironment.OwnerId == currentUserId);
 
-            await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateReasons.DeleteEnvironment, logger);
+            await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, logger);
 
             if (cloudEnvironment.Type == CloudEnvironmentType.CloudEnvironment)
             {
@@ -839,12 +839,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string reason, IDiagnosticsLogger logger)
+        public async Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger)
         {
             cloudEnvironment.Updated = DateTime.UtcNow;
             if (newState != default && newState != cloudEnvironment.State)
             {
-                await SetEnvironmentStateAsync(cloudEnvironment, newState, reason, logger);
+                await SetEnvironmentStateAsync(cloudEnvironment, newState, trigger, reason, logger);
             }
 
             return await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
@@ -866,7 +866,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return;
                     }
 
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateReasons.ForceEnvironmentShutdown, logger);
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown, null, logger);
                     var computeIdToken = cloudEnvironment.Compute?.ResourceId;
                     cloudEnvironment.Compute = null;
 
@@ -906,17 +906,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 if (cloudEnvironment is null)
                 {
                     return CloudEnvironmentSettingsUpdateResult.Error(
-                        new List<Contracts.ErrorCodes> { Contracts.ErrorCodes.EnvironmentDoesNotExist });
+                        new List<Contracts.MessageCodes> { Contracts.MessageCodes.EnvironmentDoesNotExist });
                 }
 
                 UnauthorizedUtil.IsTrue(currentUserId == cloudEnvironment.OwnerId);
 
                 var allowedUpdates = GetEnvironmentAvailableSettingsUpdates(cloudEnvironment, currentUser, logger);
-                var validationErrors = new List<Contracts.ErrorCodes>();
+                var validationErrors = new List<Contracts.MessageCodes>();
 
                 if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
                 {
-                    validationErrors.Add(Contracts.ErrorCodes.EnvironmentNotShutdown);
+                    validationErrors.Add(Contracts.MessageCodes.EnvironmentNotShutdown);
                 }
 
                 if (update.AutoShutdownDelayMinutes.HasValue)
@@ -924,7 +924,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null || 
                         !allowedUpdates.AllowedAutoShutdownDelayMinutes.Contains(update.AutoShutdownDelayMinutes.Value))
                     {
-                        validationErrors.Add(Contracts.ErrorCodes.RequestedAutoShutdownDelayMinutesIsInvalid);
+                        validationErrors.Add(Contracts.MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid);
                     }
                     else
                     {
@@ -936,11 +936,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     if (allowedUpdates.AllowedSkus == null || !allowedUpdates.AllowedSkus.Any())
                     {
-                        validationErrors.Add(Contracts.ErrorCodes.UnableToUpdateSku);
+                        validationErrors.Add(Contracts.MessageCodes.UnableToUpdateSku);
                     }
                     else if (!allowedUpdates.AllowedSkus.Any((sku) => sku.SkuName == update.SkuName))
                     {
-                        validationErrors.Add(Contracts.ErrorCodes.RequestedSkuIsInvalid);
+                        validationErrors.Add(Contracts.MessageCodes.RequestedSkuIsInvalid);
                     }
                     else
                     {
@@ -956,7 +956,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
 
                 cloudEnvironment.Updated = DateTime.UtcNow;
-                await SetEnvironmentStateAsync(cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateReasons.EnvironmentSettingsChanged, logger);
+                await SetEnvironmentStateAsync(cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged, null, logger);
                 cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
 
                 logger.AddDuration(duration)
@@ -1032,6 +1032,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private async Task SetEnvironmentStateAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentState state,
+            string trigger,
             string reason,
             IDiagnosticsLogger logger)
         {
@@ -1080,8 +1081,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
 
             cloudEnvironment.State = state;
-            cloudEnvironment.LastStateUpdateReason = reason;
+            cloudEnvironment.LastStateUpdateTrigger = trigger;
             cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
+
+            if (reason != null)
+            {
+                cloudEnvironment.LastStateUpdateReason = reason;
+            }
 
             logger.AddCloudEnvironment(cloudEnvironment)
                  .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));

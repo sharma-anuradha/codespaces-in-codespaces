@@ -95,5 +95,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the display name of the Sku.
         /// </summary>
         public string SkuDisplayName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Last State Update reason.
+        /// </summary>
+        public string LastStateUpdateReason { get; set; }
     }
 }

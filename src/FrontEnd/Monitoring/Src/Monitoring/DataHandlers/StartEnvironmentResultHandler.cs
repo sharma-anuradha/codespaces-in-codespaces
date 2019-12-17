@@ -2,8 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
-using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -11,6 +9,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Newtonsoft.Json;
+using System;
+using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 {
@@ -71,7 +71,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        {
                            cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
                            var newState = CloudEnvironmentState.Failed;
-                           await cloudEnvironmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateReasons.StartEnvironmentJobFailed, childLogger);
+                           var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.StartEnvironmentGenericError.ToString();
+                           await cloudEnvironmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed, errorMessage, childLogger);
                            return;
                        }
                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)

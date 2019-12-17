@@ -190,7 +190,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 logger.AddReason($"{result.HttpStatusCode}");
 
-                return StatusCode(result.HttpStatusCode, result.ErrorCode);
+                return StatusCode(result.HttpStatusCode, result.MessageCode);
             }
 
             logger.AddCloudEnvironment(result.CloudEnvironment);
@@ -244,7 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 environmentId, serviceUri, callbackUriFormat, currentUserId, accessToken, logger.NewChildLogger());
             if (result.CloudEnvironment == null)
             {
-                return StatusCode(result.HttpStatusCode, result.ErrorCode);
+                return StatusCode(result.HttpStatusCode, result.MessageCode);
             }
 
             logger.AddCloudEnvironment(result.CloudEnvironment);
@@ -371,7 +371,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 // TODO: 409 conflict might mean that the requested session id already exists
                 // Could mean that the friendly-name is in conflict, could mean anything!
                 // Couldn't be registered. Assume it already exists?
-                return StatusCode(createCloudEnvironmentResult.HttpStatusCode, createCloudEnvironmentResult.ErrorCode);
+                return StatusCode(createCloudEnvironmentResult.HttpStatusCode, createCloudEnvironmentResult.MessageCode);
             }
 
             var location = new UriBuilder(Request.GetDisplayUrl());

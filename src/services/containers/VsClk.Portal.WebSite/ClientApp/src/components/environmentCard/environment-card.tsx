@@ -22,6 +22,7 @@ import {
     isActivating,
     getSkuSpecLabel,
     stateToDisplayName,
+    environmentErrorCodeToString,
 } from '../../utils/environmentUtils';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
@@ -88,6 +89,7 @@ function Status({ environment }: { environment: ILocalCloudEnvironment }) {
 
     return (
         <Text
+            title={environmentErrorCodeToString(Number(environment.lastStateUpdateReason))}
             block
             className='environment-card__status'
             style={{

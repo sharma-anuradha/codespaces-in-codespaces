@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Reasons for cloud environment state changes.
     /// </summary>
-    public static class CloudEnvironmentStateUpdateReasons
+    public static class CloudEnvironmentStateUpdateTriggers
     {
         /// <summary>
         /// Start environment failed.

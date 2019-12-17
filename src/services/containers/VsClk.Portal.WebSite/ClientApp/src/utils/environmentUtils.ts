@@ -98,6 +98,48 @@ export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
             return 'Please try again in a few minutes or select a plan in another location.';
         case EnvironmentErrorCodes.unableToAllocateResourcesWhileStarting:
             return 'Unable to start the environment. Please try again in a few minutes.';
+        case  EnvironmentErrorCodes.heartbeatUnhealthy:
+            return 'The environment was reported as unhealthy, suspend and restart the environment.';
+        case  EnvironmentErrorCodes.customContainersCreationFailed: 
+            return 'The environment creation based on devcontainer.json failed, please review the console for more details.';
+        case  EnvironmentErrorCodes.shutdownFailed: 
+            return 'Error Code: 1001';
+        case  EnvironmentErrorCodes.cMBMutexFailure: 
+            return 'Error Code: 1002';
+        case  EnvironmentErrorCodes.cMBGeneralError: 
+            return 'Error Code: 1003';
+        case  EnvironmentErrorCodes.startEnvironmentHandlerFailedToStartContainer: 
+            return 'Failed to start container.';
+        case  EnvironmentErrorCodes.startEnvironmentHandlerRequiredParameterMissing: 
+            return 'Error Code: 1005';
+        case  EnvironmentErrorCodes.startEnvironmentHandlerKitchensinkMissing: 
+            return 'Error Code: 1006';
+        case  EnvironmentErrorCodes.startEnvironmentHandlerLiveshareLoginFailed: 
+            return 'Error Code: 1007';
+        case  EnvironmentErrorCodes.customContainersGeneralError: 
+            return 'Unknown error in environment creation.';
+        case  EnvironmentErrorCodes.customContainersKitchensinkCreationFailed: 
+            return 'Failed to create container with standard image.';
+        case  EnvironmentErrorCodes.customContainersKitchensinkStartFailed: 
+            return 'Failed to start standard container.';
+        case  EnvironmentErrorCodes.customContainersCloneFailed: 
+            return 'The repository could not be cloned.';
+        case  EnvironmentErrorCodes.customContainersPrivateClonetimeout : 
+            return 'Timeout waiting while attempting to clone a private repository.';
+        case  EnvironmentErrorCodes.customContainersCouldNotPullImage: 
+            return 'Could not pull the image referenced in the DockerFile.';
+        case  EnvironmentErrorCodes.customContainersCouldNotBuildUserImage : 
+            return 'The custom container could not be built.';
+        case  EnvironmentErrorCodes.customContainersCouldNotCreateUserContainer: 
+            return 'The custom container failed to create.';
+        case  EnvironmentErrorCodes.customContainersCouldNotRunUserContainer: 
+            return 'The custom container failed to run.';
+        case  EnvironmentErrorCodes.customContainersCLICopyFailed :
+            return  'Failed to copy the VSOnline Agent to the custom container.';
+        case  EnvironmentErrorCodes.customContainersDependenciesFailed: 
+            return 'The VSOnline Agent dependencies failed to install in the custom container.';
+        case  EnvironmentErrorCodes.customContainersCLIStartFailed : 
+            return 'The VSOnline Agent failed to start in the custom container.';
 
         case EnvironmentErrorCodes.shutdownStaticEnvironment:
         case EnvironmentErrorCodes.startStaticEnvironment:

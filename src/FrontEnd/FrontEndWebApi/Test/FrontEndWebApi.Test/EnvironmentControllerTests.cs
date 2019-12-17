@@ -331,7 +331,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 AutoShutdownDelayMinutes = 123,
             };
 
-            var errorCodes = new List<EnvironmentManager.Contracts.ErrorCodes> { EnvironmentManager.Contracts.ErrorCodes.EnvironmentNotShutdown, EnvironmentManager.Contracts.ErrorCodes.RequestedSkuIsInvalid, };
+            var errorCodes = new List<EnvironmentManager.Contracts.MessageCodes> { EnvironmentManager.Contracts.MessageCodes.EnvironmentNotShutdown, EnvironmentManager.Contracts.MessageCodes.RequestedSkuIsInvalid, };
             var updateSettingsReponse = CloudEnvironmentSettingsUpdateResult.Error(errorCodes);
 
             var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
@@ -363,7 +363,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var actionResult = await environmentController.UpdateSettingsAsync(mockEnvironment.Id, updateRequest, logger);
             Assert.IsType<BadRequestObjectResult>(actionResult);
 
-            var result = (actionResult as BadRequestObjectResult).Value as List<EnvironmentManager.Contracts.ErrorCodes>;
+            var result = (actionResult as BadRequestObjectResult).Value as List<EnvironmentManager.Contracts.MessageCodes>;
 
             Assert.NotNull(result);
             Assert.Equal(errorCodes.Count, result.Count);
@@ -669,7 +669,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = env,
-                        ErrorCode = 0,
+                        MessageCode = 0,
                         HttpStatusCode = StatusCodes.Status200OK,
                     };
                 });

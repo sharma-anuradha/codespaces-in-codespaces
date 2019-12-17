@@ -20,8 +20,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         public int HttpStatusCode { get; set; }
 
         /// <summary>
-        /// Gets or sets the error code for the user/client.
+        /// Gets or sets the message code for the user/client.
         /// </summary>
-        public ErrorCodes ErrorCode { get; set; }
+        public MessageCodes MessageCode { get; set; }
     }
 }

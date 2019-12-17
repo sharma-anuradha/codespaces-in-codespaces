@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             // 21st envrionment should not be created
             var result = await CreateTestEnvironmentAsync("Test21");
-            Assert.Equal(ErrorCodes.ExceededQuota, result.ErrorCode);
+            Assert.Equal(MessageCodes.ExceededQuota, result.MessageCode);
             Assert.Equal(StatusCodes.Status403Forbidden, result.HttpStatusCode);
 
             // Delete 1 environment.

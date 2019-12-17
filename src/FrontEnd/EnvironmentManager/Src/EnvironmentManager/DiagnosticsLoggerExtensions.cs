@@ -22,6 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueCloudEnvironmentState = "CloudEnvironmentState";
         private const string LogValueAutoShutdownDelay = "AutoShutdownDelay";
         private const string LogValueLastStateUpdateReason = "LastStateUpdateReason";
+        private const string LogValueLastStateUpdateTrigger = "LastStateUpdateTrigger";
 
         /// <summary>
         /// Add logging fields for an <see cref="CloudEnvironment"/> instance.
@@ -44,7 +45,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddStorageResourceId(cloudEnvironment.Storage?.ResourceId)
                     .AddAutoShutdownDelay(cloudEnvironment.AutoShutdownDelayMinutes)
                     .AddCloudEnvironmentState(cloudEnvironment.State)
-                    .AddLastStateUpdateReason(cloudEnvironment.LastStateUpdateReason);
+                    .AddLastStateUpdateReason(cloudEnvironment.LastStateUpdateReason)
+                    .AddLastStateUpdateTrigger(cloudEnvironment.LastStateUpdateTrigger);
             }
 
             return logger;
@@ -130,5 +132,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddLastStateUpdateReason(this IDiagnosticsLogger logger, string reason)
             => logger.FluentAddValue(LogValueLastStateUpdateReason, reason);
+
+        /// <summary>
+        /// Add the environment state trigger to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="trigger">The trigger that changed the state.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddLastStateUpdateTrigger(this IDiagnosticsLogger logger, string trigger)
+            => logger.FluentAddValue(LogValueLastStateUpdateTrigger, trigger);
     }
 }

@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <summary>
         /// Gets the list of errors found while validating the update request or null if the request was valid.
         /// </summary>
-        public IEnumerable<ErrorCodes> ValidationErrors { get; private set; }
+        public IEnumerable<MessageCodes> ValidationErrors { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether or not the result is a successful result.
@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// </summary>
         /// <param name="validationErrors">The reason(s) the request failed.</param>
         /// <returns>The failed <see cref="CloudEnvironmentSettingsUpdateResult"/>.</returns>
-        public static CloudEnvironmentSettingsUpdateResult Error(List<ErrorCodes> validationErrors)
+        public static CloudEnvironmentSettingsUpdateResult Error(List<MessageCodes> validationErrors)
         {
             return new CloudEnvironmentSettingsUpdateResult
             {

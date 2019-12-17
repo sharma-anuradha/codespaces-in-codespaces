@@ -66,7 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
                    cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
                    var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
-                   await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateReasons.Heartbeat, childLogger);
+
+                   await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState.state, CloudEnvironmentStateUpdateTriggers.Heartbeat, newState.reason.ToString(), childLogger);
 
                    // Shutdown if the environment is idle
                    if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
@@ -82,14 +83,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             ValidationUtil.IsTrue(cloudEnvironment.State != CloudEnvironmentState.Deleted, $"Heartbeat received for a deleted environment {inputEnvironmentId}");
         }
 
-        private CloudEnvironmentState DetermineNewEnvironmentState(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
+        private (CloudEnvironmentState state, int? reason) DetermineNewEnvironmentState(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
         {
             if (IsEnvironmentRunning(environmentData))
             {
                 // If current state is NOT Available, change status to Available (when Enviroment is fully running).
                 if (cloudEnvironment.State != CloudEnvironmentState.Available)
                 {
-                    return CloudEnvironmentState.Available;
+                    return (CloudEnvironmentState.Available, null);
                 }
             }
             else
@@ -97,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                 // If current state is Available, change status to Unavailable (when Enviroment is NOT fully running).
                 if (cloudEnvironment.State == CloudEnvironmentState.Available)
                 {
-                    return CloudEnvironmentState.Unavailable;
+                    return (CloudEnvironmentState.Unavailable, (int)MessageCodes.HeartbeatUnhealthy);
                 }
             }
 

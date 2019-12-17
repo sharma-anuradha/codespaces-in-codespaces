@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// List error codes returned by <see cref="ICloudEnvironmentManager"/>.
     /// </summary>
-    public enum ErrorCodes
+    public enum MessageCodes : int
     {
         /// <summary>
         /// Unknown.
@@ -73,5 +73,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Unable to update an environment's SKU setting because the current SKU does not support the requested SKU
         /// </summary>
         RequestedSkuIsInvalid = 12,
+
+        /// <summary>
+        /// Environment heartbeat reported the environment as unhealthy.
+        /// Generic message when we don't know the exact reason.
+        /// </summary>
+        HeartbeatUnhealthy = 13,
+
+        /// <summary>
+        /// Environment creation failed due to user provided information.
+        /// Generic message when we don't know the exact reason.
+        /// </summary>
+        StartEnvironmentGenericError = 14,
     }
 }
