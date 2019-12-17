@@ -155,7 +155,7 @@ export const validationMessages = {
     nameIsRequired: 'Name is required.',
     nameIsTooLong: 'Maximum name length is 90.',
     nameIsInvalid:
-        'Invalid characters. The name can include alphanumeric, underscore, parentheses, hyphen and period.',
+        'Invalid characters. The name can include alphanumeric, underscore, parentheses, hyphen, period and space.',
     unableToConnect: 'Unable to connect to this repository. Create an empty environment.',
     invalidGitUrl: 'We are unable to clone this repository automatically.',
     noAccess:
@@ -364,7 +364,7 @@ export class CreateEnvironmentPanelView extends Component<
         if (!availableSkus) {
             // Forces a refresh of the plan list and selects a default one
             getPlans();
-        }   
+        }
     }
 
     componentDidMount() {
@@ -633,7 +633,9 @@ export class CreateEnvironmentPanelView extends Component<
         }
     };
 
-    private submitForm = async (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    private submitForm = async (
+        event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
         if (event.keyCode === KeyCodes.enter) {
             await this.createEnvironment(event);
         }
