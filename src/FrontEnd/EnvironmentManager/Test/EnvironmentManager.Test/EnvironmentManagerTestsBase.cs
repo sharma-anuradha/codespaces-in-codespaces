@@ -32,7 +32,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
         public const string testUserId = "test-user";
-        public static readonly UserIdSet testUserIdSet = new UserIdSet(testUserId, testUserId, testUserId);
         public const string testAccessToken = "test-token";
         public readonly Uri testServiceUri = new Uri("http://localhost/");
         public const string testCallbackUriFormat = "http://localhost/{0}";
@@ -104,7 +103,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 new CloudEnvironmentOptions(),
                 testServiceUri,
                 testCallbackUriFormat,
-                testUserIdSet,
+                testUserId,
+                testUserId,
                 testAccessToken,
                 this.logger);
             
@@ -123,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                         SessionPath = "/",
                     },
                 },
-                testUserIdSet,
+                testUserId,
                 this.logger);
         }
     }

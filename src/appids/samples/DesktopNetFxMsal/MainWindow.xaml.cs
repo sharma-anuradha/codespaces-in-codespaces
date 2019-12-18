@@ -1,156 +1,101 @@
-﻿// <copyright file="MainWindow.xaml.cs" company="Microsoft">
-// Copyright (c) Microsoft. All rights reserved.
-// </copyright>
-
-using System;
+﻿using Microsoft.Identity.Client;
+using Microsoft.VsCloudKernel.ApplicationRegistrations;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using Microsoft.Identity.Client;
-using Microsoft.VsSaaS.Common.Identity;
-using Newtonsoft.Json;
 
 namespace DesktopNetFxMsal
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml.
+    /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// Set this to true to use First Party application registrations
+        /// </summary>
+        private static bool UseFirstPartyApp = false;
+
+        /// <summary>
+        ///  Configuration using DEV-test AppIds
+        /// </summary>
+        private static readonly PublicClientApplicationOptions AppOptions = new PublicClientApplicationOptions
+        {
+            AadAuthorityAudience = AadAuthorityAudience.AzureAdAndPersonalMicrosoftAccount,
+            AzureCloudInstance = AzureCloudInstance.AzurePublic,
+            ClientId = DevelopmentAppIds.VisualStudioServicesNativeClient,
+            ClientName = typeof(MainWindow).Assembly.GetName().Name,
+            ClientVersion = typeof(MainWindow).Assembly.GetName().Version.ToString(),
+            LogLevel = LogLevel.Verbose,
+            RedirectUri = "urn:ietf:wg:oauth:2.0:oob",
+        };
+
+        /// <summary>
+        ///  Configuration using First-Party AppIds
+        /// </summary>
+        private static readonly PublicClientApplicationOptions FirstPartyAppOptions = new PublicClientApplicationOptions
+        {
+            Instance = "https://login.windows-ppe.net/common/v2.0",
+            ClientId = FirstPartyAppIds.VisualStudioServicesNativeClient,
+            ClientName = typeof(MainWindow).Assembly.GetName().Name,
+            ClientVersion = typeof(MainWindow).Assembly.GetName().Version.ToString(),
+            LogLevel = LogLevel.Verbose,
+            RedirectUri = "http://localhost/callback",
+        };
+
+        private static readonly List<string> GraphScopes = new List<string>
+        {
+                // offline, opendid, profile automatically added by MSAL
+                "User.Read",
+                "email"
+        };
+
+        private static readonly List<string> WebApiScopes = new List<string>
+        {
+            FirstPartyAppIds.VisualStudioServicesWebClient
+        };
+
+        private readonly HttpClient _httpClient = new HttpClient();
+        private readonly IPublicClientApplication _app;
+
         // Button strings
-        private const string SignInString = "Sign In";
+        const string SignInString = "Sign In";
+        const string SignOutString = "Sign Out";
 
-        private const string SignOutString = "Sign Out";
-
-        private enum LegacySignIn
-        {
-            None,
-            VisualStudio,
-            VisualStudioServicesThirdParty,
-            JohnsVsoClientNonMicrosoft,
-        }
-
-        /// <summary>
-        /// Initializes static members of the <see cref="MainWindow"/> class.
-        /// </summary>
-        static MainWindow()
-        {
-            var legacySignIn = LegacySignIn.None;
-            bool useVsoLocalHost = false;
-            bool useLiveShareLocalHost = false;
-            bool forceFirstPartyApiScope = false;
-
-            CurrentAppConfig = new AppConfig();
-            CurrentApiConfig = new ApiConfig();
-
-            // Adjust various aspects to emulate sign-in from a legacy VS IDE client.
-            if (legacySignIn == LegacySignIn.VisualStudio)
-            {
-                CurrentAppConfig.ClientId = AuthenticationConstants.VisualStudioClientAppId;
-                CurrentAppConfig.AuthDomain = "organizations";
-                CurrentAppConfig.RedirectUri = AppConfig.ClientRedirectUri;
-                CurrentAppConfig.SignInScope = AuthenticationConstants.VisualStudioClientAppId + "/.default";
-                CurrentApiConfig.ApiScope = AuthenticationConstants.VisualStudioClientAppId + "/.default";
-            }
-            else if (legacySignIn == LegacySignIn.VisualStudioServicesThirdParty)
-            {
-                const string VsServicesClient3rdPartyAppId = "4a1af908-0f4e-41cd-9542-75fa90175891";
-
-                CurrentAppConfig.ClientId = VsServicesClient3rdPartyAppId;
-                CurrentAppConfig.RedirectUri = AppConfig.ClientRedirectUri;
-#pragma warning disable CS0618 // Type or member is obsolete
-                CurrentAppConfig.SignInScope = $"api://{AuthenticationConstants.VisualStudioServicesDevApiAppId}/All";
-                CurrentApiConfig.ApiScope = $"api://{AuthenticationConstants.VisualStudioServicesDevApiAppId}/All";
-#pragma warning restore CS0618 // Type or member is obsolete
-            }
-            else if (legacySignIn == LegacySignIn.JohnsVsoClientNonMicrosoft)
-            {
-                const string JohnsVsoClientAppId = "4a1af908-0f4e-41cd-9542-75fa90175891";
-                CurrentAppConfig.ClientId = JohnsVsoClientAppId;
-                CurrentAppConfig.SignInScope = $"api://{JohnsVsoClientAppId}/All";
-            }
-
-            if (useVsoLocalHost)
-            {
-                CurrentApiConfig.VsoBaseUri = "http://localhost:53760";
-            }
-
-            if (useLiveShareLocalHost)
-            {
-                CurrentApiConfig.LiveShareBaseUri = "https://local.dev.liveshare.vsengsaas.visualstudio.com";
-            }
-
-            if (forceFirstPartyApiScope)
-            {
-                CurrentApiConfig.ApiScope = new ApiConfig().ApiScope;
-            }
-
-            ApplicationOptions = new PublicClientApplicationOptions
-            {
-                Instance = CurrentAppConfig.AuthInstance,
-                ClientId = CurrentAppConfig.ClientId,
-                RedirectUri = CurrentAppConfig.RedirectUri,
-                ClientName = typeof(MainWindow).Assembly.GetName().Name,
-                ClientVersion = typeof(MainWindow).Assembly.GetName().Version.ToString(),
-                LogLevel = LogLevel.Warning,
-                EnablePiiLogging = true,
-            };
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MainWindow"/> class.
-        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
+            var appOptions = UseFirstPartyApp ? FirstPartyAppOptions : AppOptions;
+            var logLevel = UseFirstPartyApp ? LogLevel.Verbose : LogLevel.Warning;
+            _app = PublicClientApplicationBuilder.CreateWithApplicationOptions(appOptions)
+                .WithLogging(LogCallback)
+                .Build();
 
-            var json = JsonConvert.SerializeObject(ApplicationOptions, Formatting.Indented);
-            AppendOutput(ApplicationOptions.GetType().Name);
-            AppendOutput(json);
-
-            _ = CallWebApi(interactive: false, requestUri: null); // do not await
+            TokenCacheHelper.EnableSerialization(_app.UserTokenCache);
+            var task = CallWebApi(); // do not await
         }
 
-        private IPublicClientApplication publicClientApplication;
 
-        private static AppConfig CurrentAppConfig { get; }
-
-        private static ApiConfig CurrentApiConfig { get; }
-
-        private static PublicClientApplicationOptions ApplicationOptions { get; }
-
-        private HttpClient HttpClient { get; } = new HttpClient();
-
-        private IPublicClientApplication PublicClientApplication
+        /// <summary>
+        /// "Invoke" button handler
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private async void InvokeWebApi(object sender = null, RoutedEventArgs args = null)
         {
-            get
-            {
-                if (publicClientApplication == null)
-                {
-                    publicClientApplication = PublicClientApplicationBuilder.CreateWithApplicationOptions(ApplicationOptions)
-                        .WithLogging(LogCallback)
-                        .Build();
-
-                    // TokenCacheHelper.EnableSerialization(PublicClientApplication.UserTokenCache);
-                }
-
-                return publicClientApplication;
-            }
+            await CallWebApi(interactive: false);
         }
 
-        private async void InvokeWebApi1(object sender = null, RoutedEventArgs args = null)
-        {
-            await CallWebApi(interactive: false, CurrentApiConfig.LiveShareRequestUri);
-        }
-
-        private async void InvokeWebApi2(object sender = null, RoutedEventArgs args = null)
-        {
-            await CallWebApi(interactive: false, CurrentApiConfig.VsoRequestUri);
-        }
-
+        /// <summary>
+        /// Sign-in button handler
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
         private async void CallWebApiInteractive(object sender = null, RoutedEventArgs args = null)
         {
             ClearOutput();
@@ -158,192 +103,107 @@ namespace DesktopNetFxMsal
             // Manage sign-out
             if (SignInButton.Content.ToString() == SignOutString)
             {
-                await SignOutAsync();
+                var accounts = (await _app.GetAccountsAsync()).ToList();
+
+                // clear the cache
+                while (accounts.Any())
+                {
+                    await _app.RemoveAsync(accounts.First());
+                    accounts = (await _app.GetAccountsAsync()).ToList();
+                }
+
+                // Also clear cookies from the browser control.
+                // How ???
+
+                UserNotSignedIn();
                 return;
             }
 
-            await CallWebApi(interactive: true, null);
-        }
-
-        private async Task SignOutAsync()
-        {
-            var accounts = (await PublicClientApplication.GetAccountsAsync()).ToList();
-
-            // clear the cache
-            while (accounts.Any())
-            {
-                await PublicClientApplication.RemoveAsync(accounts.First());
-                accounts = (await PublicClientApplication.GetAccountsAsync()).ToList();
-            }
-
-            // Clear the application object
-            publicClientApplication = null;
-
-            /* Also clear cookies from the browser control. */
-
-            UserNotSignedIn();
-            return;
+            await CallWebApi(interactive: true);
         }
 
         /// <summary>
-        /// CallWebApi uses AcquireTokenSilent, using cached token from prior call to SignIn.
+        /// CallWebApi uses AcquireTokenSilent, using cached token from prior call to SignIn
         /// </summary>
-        /// <returns>Task.</returns>
-        private async Task CallWebApi(bool interactive, string requestUri)
+        /// <returns></returns>
+        private async Task CallWebApi(bool interactive = false)
         {
             var mode = interactive ? "interactively" : "non-interactively";
             AppendOutput(new string('*', 80));
-            AppendOutput($"Calling web api {mode} using client id {PublicClientApplication.AppConfig.ClientId}");
+            AppendOutput($"Calling web api {mode} using client id {_app.AppConfig.ClientId}");
 
-            var (accessToken, idToken) = await GetApiTokenAsync(interactive);
+            var accessToken = await GetApiTokenAsync(interactive);
 
-            if (idToken != null)
+            if (accessToken != null)
             {
-                string idJson = PrettyJson(Base64Decode(idToken.Split('.')[1]));
-                AppendOutput($"idToken: {idJson}");
-            }
-
-            if (accessToken != null && !string.IsNullOrEmpty(requestUri))
-            {
-                try
-                {
-                    // Once the token has been returned by AAD, add it to the http authorization header, before making the call to access the To Do list service.
-                    HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-                    AppendOutput($"Invoke {requestUri} with {HttpClient.DefaultRequestHeaders.Authorization}");
-                    var parts = accessToken.Split('.');
-                    var header = Base64Decode(parts[0]);
-                    AppendOutput($"header: {header}, parts: {parts.Length}");
-
-                    var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                    var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var body = await response.Content.ReadAsStringAsync();
-                        body = PrettyJson(body);
-                        AppendOutput(body);
-                    }
-                    else
-                    {
-                        AppendOutput(response.StatusCode.ToString());
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AppendOutput(ex);
-                }
+                // Once the token has been returned by AAD, add it to the http authorization header, before making the call to access the To Do list service.
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                AppendOutput($"Invoke web api with {_httpClient.DefaultRequestHeaders.Authorization}");
             }
         }
 
-        private static string PrettyJson(string json)
+        private async Task<string> GetApiTokenAsync(bool interactive = false)
         {
-            var obj = JsonConvert.DeserializeObject(json);
-            return JsonConvert.SerializeObject(obj, Formatting.Indented);
-        }
+            var accounts = (await _app.GetAccountsAsync()).ToList();
 
-        private string Base64Decode(string base64)
-        {
+            // Not already signed in, not interactive
+            if (!accounts.Any() && !interactive)
+            {
+                UserNotSignedIn();
+                AppendOutput("Please sign in");
+                return null;
+            }
+
             try
             {
-                if (base64.Length % 4 > 0)
+                //
+                // Get an access token interactively
+                //
+                if (interactive)
                 {
-                    base64 = base64.PadRight(base64.Length + 4 - (base64.Length % 4), '=');
-                }
-
-                var base64EncodedBytes = Convert.FromBase64String(base64);
-                return Encoding.UTF8.GetString(base64EncodedBytes);
-            }
-            catch
-            {
-                return base64;
-            }
-        }
-
-        private async Task<IAccount> GetAppSsoAccount(bool interactive)
-        {
-            var accounts = (await PublicClientApplication.GetAccountsAsync()).ToList();
-            if (!accounts.Any() && interactive)
-            {
-                // Prompt for client app sign in.
-                var scopes = new string[] { CurrentAppConfig.SignInScope };
-                AppendOutput($"Signing in with scopes {string.Join(",", scopes)}");
-                var result = await PublicClientApplication.AcquireTokenInteractive(scopes)
-                    .WithPrompt(Prompt.ForceLogin)
-                    .ExecuteAsync()
-                    .ConfigureAwait(false);
-
-                // Get the account
-                accounts = (await PublicClientApplication.GetAccountsAsync()).ToList();
-
-                if (result.IdToken != null)
-                {
-                    string idJson = PrettyJson(Base64Decode(result.IdToken.Split('.')[1]));
-                    AppendOutput($"idToken: {idJson}");
-                }
-            }
-
-            return accounts.FirstOrDefault();
-        }
-
-        private async Task<(string, string)> GetApiTokenAsync(bool interactive = false)
-        {
-            IAccount ssoAccount;
-            try
-            {
-                ssoAccount = await GetAppSsoAccount(interactive);
-            }
-            catch (Exception ex)
-            {
-                AppendOutput(ex);
-                ssoAccount = null;
-            }
-
-            if (ssoAccount != null)
-            {
-                // Get access token for the required API scope.
-                var scopes = new string[] { CurrentApiConfig.ApiScope };
-
-                try
-                {
-                    AppendOutput($"Acquiring token for scopes {string.Join(",", scopes)}");
-                    var result = await PublicClientApplication.AcquireTokenSilent(scopes, ssoAccount)
+                    // Force a sign-in (PromptBehavior.Always), as the MSAL web browser might contain cookies for the current user, and using .Auto
+                    // would re-sign-in the same user
+                    var result = await _app.AcquireTokenInteractive(GraphScopes)
+                        .WithAccount(accounts.FirstOrDefault())
+                        .WithPrompt(Prompt.SelectAccount)
                         .ExecuteAsync()
                         .ConfigureAwait(false);
-                    UserSignedIn(result.Account);
-                    return (result.AccessToken, result.IdToken);
+
+                    UserSigned(result.Account);
+                    return result.AccessToken;
                 }
-                catch (MsalUiRequiredException)
+                else
                 {
-                    try
-                    {
-                        // Get an access token interactively
-                        AppendOutput($"Acquiring token for scopes {string.Join(",", scopes)}");
-                        var result = await PublicClientApplication.AcquireTokenInteractive(scopes)
-                            .WithPrompt(Prompt.Consent)
-                            .ExecuteAsync()
-                            .ConfigureAwait(false);
-                        UserSignedIn(result.Account);
-                        return (result.AccessToken, result.IdToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        AppendOutput(ex);
-                    }
+                    var result = await _app.AcquireTokenSilent(GraphScopes, accounts.FirstOrDefault())
+                        .ExecuteAsync()
+                        .ConfigureAwait(false);
+
+                    UserSigned(result.Account);
+                    return result.AccessToken;
                 }
-                catch (Exception ex)
+            }
+            catch (MsalUiRequiredException)
+            {
+                AppendOutput("Please sign in");
+            }
+            catch (MsalException ex)
+            {
+                string message = $"Error: {ex.Message}: {ex.ErrorCode}";
+                if (ex.InnerException != null)
                 {
-                    AppendOutput(ex);
+                    message += "\nInner Exception: " + ex.InnerException.Message;
                 }
+                AppendOutput(message);
             }
 
             UserNotSignedIn();
-            return (null, null);
+            return null;
         }
+
 
         // Attempt to serialize output strings via chained async tasks
         private string outputBuffer;
-        private Task currentSetOutputTask;
+        Task currentSetOutputTask;
 
         private void SetOutput(string text)
         {
@@ -360,7 +220,7 @@ namespace DesktopNetFxMsal
 
         private void ClearOutput()
         {
-            // SetOutput(string.Empty);
+            SetOutput(string.Empty);
         }
 
         private void AppendOutput(string message)
@@ -370,26 +230,14 @@ namespace DesktopNetFxMsal
             {
                 output += "\n";
             }
-
             output += message;
 
             SetOutput(output);
         }
 
-        private void AppendOutput(Exception ex)
+        private void UserSigned(IAccount userInfo)
         {
-            string message = $"Error: {ex.GetType().Name} : {ex.Message}";
-            if (ex.InnerException != null)
-            {
-                message += "\nInner Exception: " + ex.InnerException.Message;
-            }
-
-            AppendOutput(message);
-        }
-
-        private void UserSignedIn(IAccount userInfo)
-        {
-            Dispatcher.Invoke(() =>
+            Dispatcher.Invoke(() => 
             {
                 SignInButton.Content = SignOutString;
                 var userName = userInfo?.Username ?? Properties.Resources.UserNotIdentified;
@@ -406,43 +254,10 @@ namespace DesktopNetFxMsal
             });
         }
 
-        private void LogCallback(LogLevel level, string message, bool containsPii)
+        public void LogCallback(LogLevel level, string message, bool containsPii)
         {
-            // AppendOutput($"{level}: {message}");
+            AppendOutput($"{level}: {message}");
         }
 
-        private class AppConfig
-        {
-            public const string FirstPartyRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
-            public const string ClientRedirectUri = "urn:ietf:wg:oauth:2.0:oob";
-
-            public string AuthDomain { get; set; } = "common";
-
-            public string ClientId { get; set; } = AuthenticationConstants.VisualStudioServicesClientAppId;
-
-            public string RedirectUri { get; set; } = FirstPartyRedirectUri;
-
-            public string AuthInstance => $"https://login.microsoftonline.com/{AuthDomain}/v2.0";
-
-            public string SignInScope { get; set; } = AuthenticationConstants.VisualStudioServicesApiAppId + "/all";
-        }
-
-        private class ApiConfig
-        {
-            public string VsoBaseUri { get; set; } = "https://online.dev.core.vsengsaas.visualstudio.com";
-
-            // public string VsoApiRoute { get; set; } = "api/v1/Environments";
-            public string VsoApiRoute { get; set; } = "api/v1/Me";
-
-            public string LiveShareBaseUri { get; set; } = "https://prod.liveshare.vsengsaas.visualstudio.com";
-
-            public string LiveShareApiRoute { get; set; } = "api/v0.1/profile";
-
-            public string VsoRequestUri => $"{VsoBaseUri}/{VsoApiRoute}";
-
-            public string LiveShareRequestUri => $"{LiveShareBaseUri}/{LiveShareApiRoute}";
-
-            public string ApiScope { get; set; } = AuthenticationConstants.VisualStudioServicesApiAppId + "/all";
-        }
     }
 }

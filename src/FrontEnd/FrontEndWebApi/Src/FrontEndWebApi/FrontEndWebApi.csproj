@@ -10,8 +10,6 @@
     <PackageReference Include="AutoMapper" Version="$(AutoMapperVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="$(AspNetCoreDllVersions)" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="$(AzureDocumentDBCorePackageVersion)" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="$(MicrosoftIdentityModelTokensPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
@@ -21,7 +19,6 @@
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="$(SystemIdentityModelTokensJwtPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

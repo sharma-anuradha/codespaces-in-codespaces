@@ -53,7 +53,7 @@ baseUri: https://signlr.dev.core.vsengsaas.visualstudio.com/api/signalr
 
 authentication:
 # this is the default auth Profile service Uri the container will use for auth 
-  authenticateProfileServiceUri: https://prod.liveshare.vsengsaas.visualstudio.com/api/v1.2/profile
+  authenticateProfileServiceUri: https://insiders.liveshare.vsengsaas.visualstudio.com/api/v1.2/profile
 
 #define the stamp (this will be overridden by the release definition for each stamp/location)
 stamp: usw2

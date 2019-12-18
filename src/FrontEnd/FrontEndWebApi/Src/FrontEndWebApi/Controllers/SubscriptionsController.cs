@@ -13,7 +13,6 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
@@ -94,9 +93,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("ValidateResourceFailed");
                     }
 
-                    if (resource.Properties?.UserId != null)
+                    if (resource.Properties != null && resource.Properties.UserId != null)
                     {
-                        // TODO: Validate that the user id is valid (may require checking Live Share profile.)
                         // TODO: Validate that the user profile exists.
                     }
 
@@ -222,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     };
 
                     var environments = await cloudEnvironmentManager.ListEnvironmentsAsync(
-                        ownerIdSet: null, name: null, plan.ResourceId, logger);
+                        ownerId: null, name: null, plan.ResourceId, logger);
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
                     {
@@ -235,8 +233,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                                 {
                                       try
                                       {
-                                          var ownerIdSet = new UserIdSet(environment.OwnerId);
-                                          var result = await cloudEnvironmentManager.DeleteEnvironmentAsync(environment.Id, ownerIdSet, childLogger);
+                                          var result = await cloudEnvironmentManager.DeleteEnvironmentAsync(environment.Id, environment.OwnerId, childLogger);
                                           if (!result)
                                           {
                                               childLogger.AddCloudEnvironment(environment)
@@ -296,7 +293,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
                     var plans = await this.planManager.ListAsync(
-                        userIdSet: null, subscriptionId, resourceGroup, logger);
+                        userId: null, subscriptionId, resourceGroup, logger);
 
                     logger.LogInfo("plan_list_by_resourcegroup_success");
 
@@ -328,7 +325,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
                     var plans = await this.planManager.ListAsync(
-                        userIdSet: null, subscriptionId, resourceGroup: null, logger);
+                        userId: null, subscriptionId, resourceGroup: null, logger);
 
                     logger.LogInfo("plan_list_by_subscription_success");
 

@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [ApiController]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName("locations_controller")]
-    [Authorize(AuthenticationSchemes = JwtBearerUtility.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
     public class LocationsController : ControllerBase
     {
         private static readonly IComparer<ICloudEnvironmentSku> DisplaySkuComparer = new SkuComparer();
