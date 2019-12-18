@@ -41,7 +41,7 @@ export async function createResourceGroup(
         const { accessToken } = myAuthToken;
 
         const url = new URL(
-            `/subscriptions/${subscriptionId}/resourcegroups/${resourceGroupName}`,
+            `/subscriptions/${subscriptionId}/resourcegroups/${resourceGroupName}`, 
             'https://management.azure.com'
         );
         url.searchParams.set('api-version', armAPIVersion);
@@ -55,7 +55,16 @@ export async function createResourceGroup(
         });
 
         if (resourceGroupExistsResponse.status !== 404) {
-            throw new PlanCreationError(PlanCreationFailureReason.NewResourceGroupAlreadyExists);
+            if(resourceGroupExistsResponse.status === 403) {
+                throw new PlanCreationError(PlanCreationFailureReason.FailedToAccessResourceGroup,
+                     "Insufficient permissions to access selected Resource Group");
+            }
+            if(resourceGroupExistsResponse.status === 200){
+                throw new PlanCreationError(PlanCreationFailureReason.NewResourceGroupAlreadyExists, 
+                    "Resource Group already exists");
+            }
+            throw new PlanCreationError(PlanCreationFailureReason.FailedToAccessResourceGroup,
+                 resourceGroupExistsResponse.status + " - Access Failed");
         }
 
         const createResourceGroupResponse = await fetch(url.toString(), {

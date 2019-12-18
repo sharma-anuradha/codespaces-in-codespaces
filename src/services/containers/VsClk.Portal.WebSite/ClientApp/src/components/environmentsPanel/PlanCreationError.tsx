@@ -20,6 +20,7 @@ export enum PlanCreationFailureReason {
     FailedToRegisterResourceProvider,
     NotAuthenticated,
     FailedToCreatePlan,
+    FailedToAccessResourceGroup,
 }
 
 function failureReasonToErrorMessage(reason: PlanCreationFailureReason) {
