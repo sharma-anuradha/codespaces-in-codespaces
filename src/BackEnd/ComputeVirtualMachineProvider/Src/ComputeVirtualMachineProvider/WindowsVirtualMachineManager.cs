@@ -358,7 +358,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(AzureLocation location, string virtualMachineName, int retryAttempCount, IDiagnosticsLogger logger)
+        public async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(AzureLocation location, string virtualMachineName, int retryAttemptCount, IDiagnosticsLogger logger)
         {
             try
             {
@@ -374,9 +374,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             catch (Exception ex)
             {
                 logger.LogException("windows_virtual_machine_manager_get_input_queue_url_error", ex);
-                if (retryAttempCount < 5)
+                if (retryAttemptCount < 5)
                 {
-                    return (OperationState.InProgress, default, retryAttempCount + 1);
+                    return (OperationState.InProgress, default, retryAttemptCount + 1);
                 }
 
                 throw;
@@ -384,9 +384,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public Task<(OperationState, int)> ShutdownComputeAsync(VirtualMachineProviderShutdownInput input, int retryAttempt, IDiagnosticsLogger logger)
+        public async Task<(OperationState, int)> ShutdownComputeAsync(VirtualMachineProviderShutdownInput input, int retryAttempt, IDiagnosticsLogger logger)
         {
-            return default;
+            try
+            {
+                var vmAgentQueueMessage = new QueueMessage
+                {
+                    Command = "ShutdownEnvironment",
+                    Id = input.EnvironmentId,
+                };
+
+                var message = new CloudQueueMessage(JsonConvert.SerializeObject(vmAgentQueueMessage));
+                var queue = await GetQueueClientAsync(input.AzureVmLocation, GetQueueName(input.AzureResourceInfo.Name), logger);
+
+                // Push the message to queue.
+                queue.AddMessage(message);
+
+                return (OperationState.Succeeded, 0);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException("windows_virtual_machine_manager_shutdown_compute_error", ex);
+
+                if (retryAttempt < 5)
+                {
+                    return (OperationState.InProgress, retryAttempt + 1);
+                }
+
+                throw;
+            }
         }
 
         private static OperationState GetFinalState(Dictionary<string, VmResourceState> resourcesToBeDeleted)
