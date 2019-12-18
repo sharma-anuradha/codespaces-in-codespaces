@@ -1,12 +1,18 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
+  <PropertyGroup>
+    <BuildFrontendBackend Condition="'$(BuildFrontendBackend)' == ''">true</BuildFrontendBackend>
+    <BuildPortal Condition="'$(BuildPortal)' == ''">true</BuildPortal>
+    <BuildOtherServices Condition="'$(BuildOtherServices)' == ''">true</BuildOtherServices>
+  </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="BackEnd/dirs.proj" />
+    <ProjectReference Include="BackEnd/dirs.proj" Condition="'$(BuildFrontendBackend)' == 'true'" />
     <ProjectReference Include="Common/dirs.proj" />
-    <ProjectReference Include="Deploy/Deploy.csproj" />
-    <ProjectReference Include="FrontEnd/dirs.proj" />
-    <ProjectReference Include="Portal/dirs.proj" />
-    <ProjectReference Include="services/dirs.proj" Condition="'$(NOSERVICES)'==''" />
+    <ProjectReference Include="Deploy/Deploy.csproj" Condition="'$(BuildFrontendBackend)' == 'true'" />
+    <ProjectReference Include="FrontEnd/dirs.proj" Condition="'$(BuildFrontendBackend)' == 'true'" />
+    <ProjectReference Include="Portal/dirs.proj" Condition="'$(BuildPortal)' == 'true'" />
+    <ProjectReference Include="services/dirs.proj" Condition="'$(BuildOtherServices)' == 'true' AND '$(NOSERVICES)' == ''" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,19 @@
+# Reference: https://onebranch.visualstudio.com/Pipeline/_wiki/wikis/Pipeline.wiki/308/Pipeline-Spec-YAML-Stage-Commands
+
+environment:
+  host:
+    os: "linux"
+  runtime:
+    provider: "appcontainer"
+    image: "mcr.microsoft.com/dotnet/core/sdk:2.2.401"
+    source_mode: "link"
+
+package_sources:
+  nuget:
+    config_files:
+      - include:
+          - "NuGet.config"
+
+artifact_publish_options:
+  publish_to_legacy_artifacts: false
+  publish_to_pipeline_artifacts: true
