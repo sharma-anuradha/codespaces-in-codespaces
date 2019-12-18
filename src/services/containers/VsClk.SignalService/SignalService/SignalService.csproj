@@ -16,13 +16,14 @@
     
     <PackageReference Include="@(MicrosoftVisualStudioValidationPackageReference)" />
     <PackageReference Include="@(NewtonsoftJsonPackageReference)" />
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.2" />
-    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.TelemetryProvider" Version="$(VsSaaSVersion)" />
-    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(SignalRVersion)" />
+    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="$(AzureDocumentDBChangeFeedProcessorPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.SignalR" Version="$(SignalRVersion)" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.2" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.TelemetryProvider" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="StreamJsonRpc" Version="$(StreamJsonRpcVersion)" />
-
+    
     <!-- For .NET Core 3.0+ -->
     <!--<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.0.0" />-->
   </ItemGroup>

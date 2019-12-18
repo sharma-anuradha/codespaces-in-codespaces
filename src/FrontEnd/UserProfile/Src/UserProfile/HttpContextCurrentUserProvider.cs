@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.AspNetCore.Http;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 {
@@ -12,8 +13,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     /// </summary>
     public class HttpContextCurrentUserProvider : ICurrentUserProvider
     {
-        private static readonly string HttpContextCurrentUserIdKey = $"{nameof(HttpContextCurrentUserProvider)}-UserId";
         private static readonly string HttpContextCurrentUserTokenKey = $"{nameof(HttpContextCurrentUserProvider)}-UserToken";
+        private static readonly string HttpContextCurrentUserIdMapKey = $"{nameof(HttpContextCurrentUserProvider)}-IdMapKey";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpContextCurrentUserProvider"/> class.
@@ -56,18 +57,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         {
             Requires.NotNull(profile, nameof(profile));
             ProfileCache.SetProfile(profile);
-            ContextAccessor.HttpContext.Items[HttpContextCurrentUserIdKey] = profile.Id;
-
-            // TEMPORARY HACK. This needs to be reworked to use the VS SaaS SDK auth middleware
-            // which is supposed to set this for us.
-            // Needed for per-user throttling to work correctly.
-            ContextAccessor.HttpContext.SetCurrentUserId(profile.ProviderId);
+            ContextAccessor.HttpContext.SetCurrentUserProfileId(profile.Id);
+            ContextAccessor.HttpContext.SetCurrentUserProfileProviderId(profile.ProviderId);
         }
 
         /// <inheritdoc/>
         public string GetProfileId()
         {
-            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdKey] as string;
+            return ContextAccessor?.HttpContext.GetCurrentUserProfileId();
+        }
+
+        /// <inheritdoc/>
+        public string GetProfileProviderId()
+        {
+            return ContextAccessor?.HttpContext?.GetCurrentUserProfileProviderId();
+        }
+
+        /// <inheritdoc/>
+        public string GetCanonicalUserId()
+        {
+            return ContextAccessor?.HttpContext?.GetCurrentUserCanonicalUserId();
+        }
+
+        /// <inheritdoc/>
+        public UserIdSet GetCurrentUserIdSet()
+        {
+            return new UserIdSet(GetCanonicalUserId(), GetProfileId(), GetProfileProviderId());
+        }
+
+        /// <inheritdoc/>
+        public string GetIdMapKey()
+        {
+            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdMapKey] as string;
+        }
+
+        /// <inheritdoc/>
+        public void SetUserIds(string idMapKey, string canonicalUserId, string profileId, string profileProviderId)
+        {
+            var httpContext = ContextAccessor?.HttpContext;
+            if (httpContext != null)
+            {
+                httpContext.Items[HttpContextCurrentUserIdMapKey] = idMapKey;
+                httpContext.SetCurrentUserCanonicalUserId(canonicalUserId);
+                httpContext.SetCurrentUserProfileId(profileId);
+                httpContext.SetCurrentUserProfileProviderId(profileProviderId);
+            }
         }
     }
 }

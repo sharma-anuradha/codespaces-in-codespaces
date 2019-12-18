@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Mvc.Filters.Throttling" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.TelemetryProvider" Version="$(VsSaaSPackageVersion)" />
-    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
 
 </Project>

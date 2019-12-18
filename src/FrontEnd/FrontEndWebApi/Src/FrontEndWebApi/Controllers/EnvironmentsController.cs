@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// The cloud environment API controller.
     /// </summary>
     [ApiController]
-    [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerUtility.AuthenticationScheme)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName("environments_controller")]
@@ -106,10 +106,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             ValidationUtil.IsRequired(environmentId, nameof(environmentId));
 
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             var result = await EnvironmentManager.GetEnvironmentAsync(
-                environmentId, currentUserId, logger.NewChildLogger());
+                environmentId, currentUserIdSet, logger.NewChildLogger());
             if (result is null)
             {
                 return NotFound();
@@ -137,10 +137,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromQuery]string planId,
             [FromServices]IDiagnosticsLogger logger)
         {
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             var modelsRaw = await EnvironmentManager.ListEnvironmentsAsync(
-                currentUserId, name, planId, logger.NewChildLogger());
+                currentUserIdSet, name, planId, logger.NewChildLogger());
 
             logger.FluentAddValue("Count", modelsRaw.Count().ToString());
 
@@ -167,10 +167,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             ValidationUtil.IsRequired(environmentId, nameof(environmentId));
 
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             var environment = await EnvironmentManager.GetEnvironmentAsync(
-                environmentId, currentUserId, logger.NewChildLogger());
+                environmentId, currentUserIdSet, logger.NewChildLogger());
             if (environment == null)
             {
                 return NotFound();
@@ -185,7 +185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             // We are in the right location, go ahead and shutdown
             var result = await EnvironmentManager.ShutdownEnvironmentAsync(
-                environmentId, currentUserId, logger.NewChildLogger());
+                environmentId, currentUserIdSet, logger.NewChildLogger());
             if (result.CloudEnvironment == null)
             {
                 logger.AddReason($"{result.HttpStatusCode}");
@@ -216,10 +216,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             logger.AddEnvironmentId(environmentId);
 
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             var cloudEnvironment = await EnvironmentManager.GetEnvironmentAsync(
-                environmentId, currentUserId, logger.NewChildLogger());
+                environmentId, currentUserIdSet, logger.NewChildLogger());
             if (cloudEnvironment == null)
             {
                 return NotFound();
@@ -241,7 +241,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(requestUri, owningStamp).ToString();
 
             var result = await EnvironmentManager.StartEnvironmentAsync(
-                environmentId, serviceUri, callbackUriFormat, currentUserId, accessToken, logger.NewChildLogger());
+                environmentId, serviceUri, callbackUriFormat, currentUserIdSet, accessToken, logger.NewChildLogger());
             if (result.CloudEnvironment == null)
             {
                 return StatusCode(result.HttpStatusCode, result.MessageCode);
@@ -303,11 +303,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return BadRequest(message);
             }
 
-            var currentUser = CurrentUserProvider.GetProfile();
+            var currentUserProfile = CurrentUserProvider.GetProfile();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             // Validate the requested Sku
             if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku)
-                || !ProfileUtils.IsSkuVisibleToProfile(currentUser, sku))
+                || !ProfileUtils.IsSkuVisibleToProfile(currentUserProfile, sku))
             {
                 var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not defined: {cloudEnvironment.SkuName}";
                 logger.AddReason(message);
@@ -330,8 +331,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return BadRequest(message);
             }
 
-            var currentUserId = currentUser.Id;
-            var currentUserProviderId = currentUser.ProviderId;
             var accessToken = CurrentUserProvider.GetBearerToken();
 
             // Build the service URI.
@@ -350,7 +349,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             try
             {
                 createCloudEnvironmentResult = await EnvironmentManager.CreateEnvironmentAsync(
-                    cloudEnvironment, cloudEnvironmentOptions, serviceUri, callbackUriFormat, currentUserId, currentUserProviderId, accessToken, logger.NewChildLogger());
+                    cloudEnvironment, cloudEnvironmentOptions, serviceUri, callbackUriFormat, currentUserIdSet, accessToken, logger.NewChildLogger());
             }
             catch (HttpResponseStatusException e)
             {
@@ -404,11 +403,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             ValidationUtil.IsRequired(environmentId, nameof(environmentId));
 
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             // Lookup environment - TODO: prevent duplicate DB lookups when updating the record
             var environment = await EnvironmentManager.GetEnvironmentAsync
-                (environmentId, currentUserId, logger.NewChildLogger());
+                (environmentId, currentUserIdSet, logger.NewChildLogger());
             if (environment == null)
             {
                 return NotFound();
@@ -423,7 +422,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             // We are in the right location, go ahead and delete
             var result = await EnvironmentManager.DeleteEnvironmentAsync(
-                environmentId, currentUserId, logger.NewChildLogger());
+                environmentId, currentUserIdSet, logger.NewChildLogger());
             if (!result)
             {
                 return NotFound();
@@ -459,11 +458,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(callbackBody?.Payload?.SessionId, nameof(callbackBody.Payload.SessionId));
             ValidationUtil.IsRequired(callbackBody?.Payload?.SessionPath, nameof(callbackBody.Payload.SessionPath));
 
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             // Lookup environment - TODO: prevent duplicate DB lookups when updating the record
             var environment = await EnvironmentManager.GetEnvironmentAsync(
-                environmentId, currentUserId, logger.NewChildLogger());
+                environmentId, currentUserIdSet, logger.NewChildLogger());
             if (environment == null)
             {
                 return NotFound();
@@ -480,7 +479,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             // We are in the right location, go ahead and update the callback
             var options = Mapper.Map<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>(callbackBody);
             var result = await EnvironmentManager.UpdateEnvironmentCallbackAsync(
-                environmentId, options, currentUserId, logger.NewChildLogger());
+                environmentId, options, currentUserIdSet, logger.NewChildLogger());
             if (result is null)
             {
                 logger.AddSessionId(callbackBody.Payload.SessionId)
@@ -520,10 +519,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(updateEnvironmentInput, nameof(updateEnvironmentInput));
             ValidationUtil.IsRequired(logger, nameof(logger));
 
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             var environment = await EnvironmentManager.GetEnvironmentAsync(
-                environmentId, currentUserId, logger.NewChildLogger());
+                environmentId, currentUserIdSet, logger.NewChildLogger());
             if (environment == null)
             {
                 return NotFound();
@@ -570,10 +569,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             ValidationUtil.IsRequired(environmentId, nameof(environmentId));
 
-            var currentUser = CurrentUserProvider.GetProfile();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
             var environment = await EnvironmentManager.GetEnvironmentAsync(
-                environmentId, currentUser.Id, logger.NewChildLogger());
+                environmentId, currentUserIdSet, logger.NewChildLogger());
             if (environment == null)
             {
                 return NotFound();
@@ -586,7 +585,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return RedirectToLocation(owningStamp);
             }
 
-            var availableUpdates = EnvironmentManager.GetEnvironmentAvailableSettingsUpdates(environment, currentUser, logger.NewChildLogger());
+            var currentUserProfile = CurrentUserProvider.GetProfile();
+            var availableUpdates = EnvironmentManager.GetEnvironmentAvailableSettingsUpdates(environment, currentUserProfile, logger.NewChildLogger());
 
             var result = new CloudEnvironmentAvailableUpdatesResult();
 

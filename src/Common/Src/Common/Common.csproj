@@ -12,10 +12,9 @@
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Storage.Queue" Version="11.0.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.0" />
-    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="0.1.43" />
-    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsclkSdkVersion)" />
-    <PackageReference Include="Microsoft.VsSaaS.Diagnostics.Health" Version="$(VsclkSdkVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics.Health" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
 
 </Project>

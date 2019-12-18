@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             
             var environment = MockEnvironment(
                 skuName: activeSku.SkuName, 
-                ownerId: currentUserProvider.GetProfileId(), 
+                ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId, 
                 state: CloudEnvironmentState.Shutdown,
                 autoShutdownDelayMinutes: 0);
 
@@ -120,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var environmentRepository = new MockCloudEnvironmentRepository();
 
-            var environment = MockEnvironment(skuName: sku.SkuName, ownerId: currentUserProvider.GetProfileId(), state: CloudEnvironmentState.Available);
+            var environment = MockEnvironment(skuName: sku.SkuName, ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId, state: CloudEnvironmentState.Available);
             environment = await environmentRepository.CreateAsync(environment, Logger);
 
             var update = new CloudEnvironmentUpdate
@@ -149,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var environment = MockEnvironment(
                 skuName: sku.SkuName,
-                ownerId: currentUserProvider.GetProfileId(),
+                ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId,
                 state: CloudEnvironmentState.Shutdown);
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
@@ -181,7 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var environment = MockEnvironment(
                 skuName: sku.SkuName,
-                ownerId: currentUserProvider.GetProfileId(),
+                ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId,
                 state: CloudEnvironmentState.Shutdown);
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
@@ -214,7 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var environment = MockEnvironment(
                 skuName: activeSku.SkuName,
-                ownerId: currentUserProvider.GetProfileId(),
+                ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId,
                 state: CloudEnvironmentState.Shutdown);
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
@@ -346,8 +346,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var moq = new Mock<ICurrentUserProvider>();
             moq
-                .Setup(obj => obj.GetProfileId())
-                .Returns(profileId);
+                .Setup(obj => obj.GetCurrentUserIdSet())
+                .Returns(new UserIdSet(profileId));
             moq
                 .Setup(obj => obj.GetBearerToken())
                 .Returns(bearerToken);

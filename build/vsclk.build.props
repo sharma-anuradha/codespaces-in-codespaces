@@ -16,6 +16,9 @@
     <RootNamespace Condition="'$(RootNamespace)'==''">$(RootName).$(MSBuildProjectName)</RootNamespace>
     <IsPublishable Condition="'$(IsPublishable)'==''" >false</IsPublishable>
     <IsPackable Condition="'$(IsPackable)'==''" >false</IsPackable>
+    <!-- NU1608: Microsoft.Azure.Cosmos.Table 1.0.5 requires Microsoft.Azure.DocumentDB.Core (>= 2.1.3 && <= 2.4.2)
+         but version Microsoft.Azure.DocumentDB.Core 2.8.1 was resolved -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
   
   <!-- Compiler options -->
@@ -36,30 +39,30 @@
     <AspNetCoreAppVersion>2.2.3</AspNetCoreAppVersion>
     <AspNetCoreDllVersions>2.2.0</AspNetCoreDllVersions>
     <AutoMapperVersion>8.0.0</AutoMapperVersion>
+    <AzureBatchPackageVersion>12.0.0</AzureBatchPackageVersion>
     <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
+    <AzureDocumentDBChangeFeedProcessorPackageVersion>2.2.8</AzureDocumentDBChangeFeedProcessorPackageVersion>
+    <AzureDocumentDBCorePackageVersion>2.8.1</AzureDocumentDBCorePackageVersion>
+    <AzureMgmtFluentPackageVersion>1.26.0</AzureMgmtFluentPackageVersion> <!-- preferred for new projects-->
+    <AzureResourceMgmtFluentPackageVersion>1.26.0</AzureResourceMgmtFluentPackageVersion>
+    <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
     <FluentAssertionsVersion>5.4.1</FluentAssertionsVersion>
-    <IdentityClient>3.0.0-preview</IdentityClient>
-    <IdentityModelS2SVersion>3.0.0-preview-60213030153</IdentityModelS2SVersion>
-    <IdentiyModelVersion>6.0.0-preview-60212030309</IdentiyModelVersion>
     <MicroBuildCoreVersion>0.3.0</MicroBuildCoreVersion>
+    <MicrosoftIdentityModelTokensPackageVersion>5.6.0</MicrosoftIdentityModelTokensPackageVersion>
     <MicrosoftNETTestSdkVersion>15.8.0</MicrosoftNETTestSdkVersion>
     <MoqVersion>4.9.0</MoqVersion>
-    <NerdBankGitVersioningVersion>2.3.38</NerdBankGitVersioningVersion>
+    <NerdBankGitVersioningVersion>3.0.28</NerdBankGitVersioningVersion>
     <NewtonsoftJsonVersion>12.0.1</NewtonsoftJsonVersion>
     <OctokitVersion>0.32.0</OctokitVersion>
     <ReportGeneratorVersion>4.0.15</ReportGeneratorVersion>
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
     <SwashbuckleAspNetCorePackageVersion>4.0.1</SwashbuckleAspNetCorePackageVersion>
+    <SystemIdentityModelTokensJwtPackageVersion>5.6.0</SystemIdentityModelTokensJwtPackageVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
-    <VsclkSdkVersion>0.1.47</VsclkSdkVersion> <!-- used under src/services-->
-    <VsSaaSPackageVersion>$(VsclkSdkVersion)</VsSaaSPackageVersion> <!-- preferred for new projects-->
+    <VsSaaSPackageVersion>0.1.52</VsSaaSPackageVersion>
     <XunitRunnerVisualStudioVersion>2.4.0</XunitRunnerVisualStudioVersion>
     <XunitStaFactVersion>0.2.17</XunitStaFactVersion>
     <XunitVersion>2.4.0</XunitVersion>
-    <AzureMgmtFluentPackageVersion>1.26.0</AzureMgmtFluentPackageVersion> <!-- preferred for new projects-->
-    <AzureResourceMgmtFluentPackageVersion>1.26.0</AzureResourceMgmtFluentPackageVersion>
-    <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
-    <AzureBatchPackageVersion>12.0.0</AzureBatchPackageVersion>
   </PropertyGroup>
 
   <!-- Common project settings (except dirs.proj) -->
