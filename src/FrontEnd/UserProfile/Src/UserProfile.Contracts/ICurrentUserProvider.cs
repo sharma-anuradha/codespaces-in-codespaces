@@ -2,9 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 {
     /// <summary>
@@ -46,41 +43,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// Gets the current user's profile id.
         /// </summary>
         /// <returns>The profile id.</returns>
-        [Obsolete("Use GetCurrentUserIdSet instead.", true)]
         string GetProfileId();
-
-        /// <summary>
-        /// Gets the current user profile provider id.
-        /// </summary>
-        /// <returns>The profile provider id.</returns>
-        [Obsolete("Use GetCurrentUserIdSet instead.", true)]
-        string GetProfileProviderId();
-
-        /// <summary>
-        /// Gets the current user canonical user id.
-        /// </summary>
-        /// <returns>The profile provider id.</returns>
-        string GetCanonicalUserId();
-
-        /// <summary>
-        /// Gets the current user's user id set.
-        /// </summary>
-        /// <returns>A new <see cref="UserIdSet"/> instance.</returns>
-        UserIdSet GetCurrentUserIdSet();
-
-        /// <summary>
-        /// Gets the current user's id map key.
-        /// </summary>
-        /// <returns>The id map key, of the form "{email}:{tenantId}".</returns>
-        string GetIdMapKey();
-
-        /// <summary>
-        /// Set the user  id values.
-        /// </summary>
-        /// <param name="idMapKey">The identity map key.</param>
-        /// <param name="canonicalUserId">The v2 user id.</param>
-        /// <param name="profileId">The profile id.</param>
-        /// <param name="profileProviderId">The profile provider id.</param>
-        void SetUserIds(string idMapKey, string canonicalUserId, string profileId, string profileProviderId);
     }
 }

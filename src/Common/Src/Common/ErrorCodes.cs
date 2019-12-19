@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     public static class ErrorCodes
     {
         /// <summary>
-        /// Could not connect to server.
+        /// Cloud not connect to server.
         /// </summary>
         public const int CouldNotConnectToServer = -32000;
 

@@ -79,9 +79,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public async Task<CloudEnvironmentServiceResult> ShutdownEnvironmentAsync(
             string id,
-            UserIdSet currentUserIdSet,
-            IDiagnosticsLogger logger,
-            bool internalTrigger = false)
+            string currentUserId,
+            IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
 
@@ -91,14 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 Requires.NotNull(logger, nameof(logger));
 
                 // Validate input
-                if (!internalTrigger)
-                {
-                    UnauthorizedUtil.IsRequired(currentUserIdSet);
-                }
-                else
-                {
-                    UnauthorizedUtil.IsTrue(currentUserIdSet == null);
-                }
+                UnauthorizedUtil.IsRequired(currentUserId);
 
                 // Check if the environment exists.
                 var cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
@@ -226,7 +218,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string id,
             Uri serviceUri,
             string callbackUriFormat,
-            UserIdSet currentUserIdSet,
+            string currentUserId,
             string accessToken,
             IDiagnosticsLogger logger)
         {
@@ -238,7 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 Requires.NotNull(logger, nameof(logger));
 
                 // Validate input
-                UnauthorizedUtil.IsRequired(currentUserIdSet);
+                UnauthorizedUtil.IsRequired(currentUserId);
                 UnauthorizedUtil.IsRequired(accessToken);
 
                 var cascadeToken = await AuthRepository.ExchangeToken(accessToken);
@@ -357,7 +349,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 try
                 {
-                    await ShutdownEnvironmentAsync(id, currentUserIdSet, logger);
+                    await ShutdownEnvironmentAsync(id, currentUserId, logger);
                 }
                 catch (Exception ex2)
                 {
@@ -374,7 +366,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentOptions cloudEnvironmentOptions,
             Uri serviceUri,
             string callbackUriFormat,
-            UserIdSet currentUserIdSet,
+            string currentUserId,
+            string currentUserProviderId,
             string accessToken,
             IDiagnosticsLogger logger)
         {
@@ -393,7 +386,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 Requires.NotNull(logger, nameof(logger));
 
                 // Validate input
-                UnauthorizedUtil.IsRequired(currentUserIdSet);
+                UnauthorizedUtil.IsRequired(currentUserId);
+                UnauthorizedUtil.IsRequired(currentUserProviderId);
                 UnauthorizedUtil.IsRequired(accessToken);
 
                 var cascadeToken = await AuthRepository.ExchangeToken(accessToken);
@@ -433,12 +427,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 // Match on provider ID instead of profile ID because clients dont have
                 // the profile ID when the create the plan resource via ARM.
                 UnauthorizedUtil.IsTrue(
-                    planDetails.UserId == null || currentUserIdSet.EqualsAny(planDetails.UserId));
+                    planDetails.UserId == null || currentUserProviderId == planDetails.UserId);
 
                 // TODO: Validate the plan & subscription are in a good state?
 
                 // Check for quota on # of environments per plan
-                var totalEnvironments = await ListEnvironmentsAsync(userIdSet: null, string.Empty, plan.ResourceId, logger);
+                var totalEnvironments = await ListEnvironmentsAsync(userId: null, string.Empty, plan.ResourceId, logger);
                 if (totalEnvironments.Count() >= await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(plan.Subscription, logger))
                 {
                     logger.AddDuration(duration)
@@ -452,7 +446,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 // Setup
                 cloudEnvironment.Id = Guid.NewGuid().ToString();
-                cloudEnvironment.OwnerId = currentUserIdSet.PreferredUserId;
+                cloudEnvironment.OwnerId = currentUserId;
                 cloudEnvironment.Created = cloudEnvironment.Updated = DateTime.UtcNow;
 
                 // Static Environment
@@ -554,7 +548,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                          * compute, and storage to have been written to the database!
                          */
                         // Compensating cleanup
-                        await DeleteEnvironmentAsync(cloudEnvironment.Id, currentUserIdSet, logger);
+                        await DeleteEnvironmentAsync(cloudEnvironment.Id, currentUserId, logger);
                     }
                     catch (Exception ex2)
                     {
@@ -570,7 +564,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public async Task<CloudEnvironment> UpdateEnvironmentCallbackAsync(
             string id,
             EnvironmentRegistrationCallbackOptions options,
-            UserIdSet currentUserIdSet,
+            string currentUserId,
             IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
@@ -581,7 +575,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 Requires.NotNullOrEmpty(id, nameof(id));
                 Requires.NotNull(options, nameof(options));
-                UnauthorizedUtil.IsRequired(currentUserIdSet);
+                UnauthorizedUtil.IsRequired(currentUserId);
                 Requires.NotNull(logger, nameof(logger));
 
                 cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
@@ -592,7 +586,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return null;
                 }
 
-                UnauthorizedUtil.IsTrue(currentUserIdSet.EqualsAny(cloudEnvironment.OwnerId));
+                UnauthorizedUtil.IsTrue(cloudEnvironment.OwnerId == currentUserId);
                 ValidationUtil.IsTrue(cloudEnvironment.Connection.ConnectionSessionId == options.Payload.SessionId);
 
                 cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
@@ -618,7 +612,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public async Task<CloudEnvironment> GetEnvironmentAsync(
             string id,
-            UserIdSet currentUserIdSet,
+            string currentUserId,
             IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
@@ -628,7 +622,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 Requires.NotNullOrEmpty(id, nameof(id));
                 Requires.NotNull(logger, nameof(logger));
-                UnauthorizedUtil.IsRequired(currentUserIdSet);
+                UnauthorizedUtil.IsRequired(currentUserId);
 
                 cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
                 if (cloudEnvironment is null)
@@ -636,7 +630,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return null;
                 }
 
-                UnauthorizedUtil.IsTrue(currentUserIdSet.EqualsAny(cloudEnvironment.OwnerId));
+                UnauthorizedUtil.IsTrue(currentUserId == cloudEnvironment.OwnerId);
 
                 // Update the new state before returning.
                 var originalState = cloudEnvironment.State;
@@ -698,7 +692,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> ListEnvironmentsAsync(
-            UserIdSet userIdSet,
+            string userId,
             string environmentName,
             string planId,
             IDiagnosticsLogger logger)
@@ -706,7 +700,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
             var environmentNameInLowerCase = environmentName?.Trim()?.ToLowerInvariant();
 
-            if (userIdSet == null)
+            if (userId == null)
             {
                 Requires.NotNull(planId, nameof(planId));
 
@@ -727,27 +721,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
-                    Requires.NotNull(userIdSet, nameof(userIdSet));
+                    Requires.NotNull(userId, nameof(userId));
                     return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
-                                               cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
                                               cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
                         logger);
                 }
                 else
                 {
                     return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => cloudEnvironment.OwnerId == userIdSet.CanonicalUserId || cloudEnvironment.OwnerId == userIdSet.ProfileId, logger);
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId, logger);
                 }
             }
             else
             {
                 if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
-                    Requires.NotNull(userIdSet, nameof(userIdSet));
+                    Requires.NotNull(userId, nameof(userId));
                     return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
-                                               cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
                                               cloudEnvironment.PlanId == planId &&
                                               cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
                         logger);
@@ -755,8 +747,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 else
                 {
                     return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
-                                               cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
+                        (cloudEnvironment) => cloudEnvironment.OwnerId == userId &&
                                               cloudEnvironment.PlanId == planId,
                         logger);
                 }
@@ -776,11 +767,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public async Task<bool> DeleteEnvironmentAsync(
             string id,
-            UserIdSet currentUserIdSet,
+            string currentUserId,
             IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(id, nameof(id));
-            Requires.NotNull(currentUserIdSet, nameof(currentUserIdSet));
+            Requires.NotNullOrEmpty(currentUserId, nameof(currentUserId));
             Requires.NotNull(logger, nameof(logger));
 
             /*
@@ -794,7 +785,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 return false;
             }
 
-            UnauthorizedUtil.IsTrue(currentUserIdSet.EqualsAny(cloudEnvironment.OwnerId));
+            UnauthorizedUtil.IsTrue(cloudEnvironment.OwnerId == currentUserId);
 
             await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, logger);
 
@@ -905,11 +896,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 UnauthorizedUtil.IsRequired(currentUserProvider);
                 Requires.NotNull(logger, nameof(logger));
 
-                var currentUserProfile = currentUserProvider.GetProfile();
-                UnauthorizedUtil.IsRequired(currentUserProfile);
+                var currentUser = currentUserProvider.GetProfile();
+                UnauthorizedUtil.IsRequired(currentUser);
 
-                var currentUserIdSet = currentUserProvider.GetCurrentUserIdSet();
-                UnauthorizedUtil.IsRequired(currentUserIdSet);
+                var currentUserId = currentUserProvider.GetProfileId();
+                UnauthorizedUtil.IsRequired(currentUserId);
 
                 var cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
                 if (cloudEnvironment is null)
@@ -918,9 +909,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         new List<Contracts.MessageCodes> { Contracts.MessageCodes.EnvironmentDoesNotExist });
                 }
 
-                UnauthorizedUtil.IsTrue(currentUserIdSet.EqualsAny(cloudEnvironment.OwnerId));
+                UnauthorizedUtil.IsTrue(currentUserId == cloudEnvironment.OwnerId);
 
-                var allowedUpdates = GetEnvironmentAvailableSettingsUpdates(cloudEnvironment, currentUserProfile, logger);
+                var allowedUpdates = GetEnvironmentAvailableSettingsUpdates(cloudEnvironment, currentUser, logger);
                 var validationErrors = new List<Contracts.MessageCodes>();
 
                 if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)

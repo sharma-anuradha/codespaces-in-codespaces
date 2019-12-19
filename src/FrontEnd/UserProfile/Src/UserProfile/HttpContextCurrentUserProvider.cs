@@ -4,7 +4,6 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.AspNetCore.Http;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 {
@@ -13,9 +12,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     /// </summary>
     public class HttpContextCurrentUserProvider : ICurrentUserProvider
     {
+        private static readonly string HttpContextCurrentUserIdKey = $"{nameof(HttpContextCurrentUserProvider)}-UserId";
         private static readonly string HttpContextCurrentUserTokenKey = $"{nameof(HttpContextCurrentUserProvider)}-UserToken";
-        private static readonly string HttpContextCurrentUserIdMapKey = $"{nameof(HttpContextCurrentUserProvider)}-IdMapKey";
-        private static readonly string HttpContextCurrentUserIdSetKey = $"{nameof(HttpContextCurrentUserProvider)}-UserIdSet";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpContextCurrentUserProvider"/> class.
@@ -58,56 +56,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         {
             Requires.NotNull(profile, nameof(profile));
             ProfileCache.SetProfile(profile);
-            ContextAccessor.HttpContext.SetCurrentUserProfileId(profile.Id);
-            ContextAccessor.HttpContext.SetCurrentUserProfileProviderId(profile.ProviderId);
+            ContextAccessor.HttpContext.Items[HttpContextCurrentUserIdKey] = profile.Id;
+
+            // TEMPORARY HACK. This needs to be reworked to use the VS SaaS SDK auth middleware
+            // which is supposed to set this for us.
+            // Needed for per-user throttling to work correctly.
+            ContextAccessor.HttpContext.SetCurrentUserId(profile.ProviderId);
         }
 
         /// <inheritdoc/>
         public string GetProfileId()
         {
-            return ContextAccessor?.HttpContext.GetCurrentUserProfileId();
-        }
-
-        /// <inheritdoc/>
-        public string GetProfileProviderId()
-        {
-            return ContextAccessor?.HttpContext?.GetCurrentUserProfileProviderId();
-        }
-
-        /// <inheritdoc/>
-        public string GetCanonicalUserId()
-        {
-            return ContextAccessor?.HttpContext?.GetCurrentUserCanonicalUserId();
-        }
-
-        /// <inheritdoc/>
-        public UserIdSet GetCurrentUserIdSet()
-        {
-            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdSetKey] as UserIdSet;
-        }
-
-        /// <inheritdoc/>
-        public string GetIdMapKey()
-        {
-            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdMapKey] as string;
-        }
-
-        /// <inheritdoc/>
-        public void SetUserIds(string idMapKey, string canonicalUserId, string profileId, string profileProviderId)
-        {
-            var httpContext = ContextAccessor?.HttpContext;
-            if (httpContext != null)
-            {
-                // Save the id map key and the canonicaluserid.
-                httpContext.Items[HttpContextCurrentUserIdMapKey] = idMapKey;
-                httpContext.SetCurrentUserCanonicalUserId(canonicalUserId);
-
-                // Don't set profileId or profileProviderId because these come from the identity map
-                // and do not necessarily match the current Profile.
-                // Instead, just set the userIdSet.
-                var userIdSet = new UserIdSet(canonicalUserId, profileId, profileProviderId);
-                httpContext.Items[HttpContextCurrentUserIdSetKey] = userIdSet;
-            }
+            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdKey] as string;
         }
     }
 }

@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    // Shutdown if the environment is idle
                    if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
                    {
-                       await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, null, childLogger, internalTrigger: true);
+                       await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, vmResourceId.ToString(), childLogger);
                    }
                });
         }

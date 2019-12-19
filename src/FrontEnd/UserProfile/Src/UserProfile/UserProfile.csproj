@@ -7,8 +7,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
-    <PackageReference Include="Microsoft.VsSaaS.Azure.KeyVault" Version="$(VsSaaSPackageVersion)" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
