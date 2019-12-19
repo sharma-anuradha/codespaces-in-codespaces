@@ -5,6 +5,7 @@
 using System;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -21,8 +22,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueCloudEnvironmentType = "CloudEnvironmentType";
         private const string LogValueCloudEnvironmentState = "CloudEnvironmentState";
         private const string LogValueAutoShutdownDelay = "AutoShutdownDelay";
+        private const string LogValueSkuName = "SkuName";
         private const string LogValueLastStateUpdateReason = "LastStateUpdateReason";
         private const string LogValueLastStateUpdateTrigger = "LastStateUpdateTrigger";
+        private const string LogValueTargetSkuName = "TargetSkuName";
+        private const string LogValueTargetAutoShutdownDelay = "TargetAutoShutdownDelay";
 
         /// <summary>
         /// Add logging fields for an <see cref="CloudEnvironment"/> instance.
@@ -44,6 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddComputeResourceId(cloudEnvironment.Compute?.ResourceId)
                     .AddStorageResourceId(cloudEnvironment.Storage?.ResourceId)
                     .AddAutoShutdownDelay(cloudEnvironment.AutoShutdownDelayMinutes)
+                    .AddSkuName(cloudEnvironment.SkuName)
                     .AddCloudEnvironmentState(cloudEnvironment.State)
                     .AddLastStateUpdateReason(cloudEnvironment.LastStateUpdateReason)
                     .AddLastStateUpdateTrigger(cloudEnvironment.LastStateUpdateTrigger);
@@ -125,6 +130,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             => logger.FluentAddValue(LogValueAutoShutdownDelay, autoShutdownDelay?.ToString());
 
         /// <summary>
+        /// Add the environment SKU name to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="skuName">The cloud environment SKU name.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddSkuName(this IDiagnosticsLogger logger, string skuName)
+            => logger.FluentAddValue(LogValueSkuName, skuName);
+
+        /// <summary>
         /// Add the environment state to the logger.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
@@ -141,5 +155,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddLastStateUpdateTrigger(this IDiagnosticsLogger logger, string trigger)
             => logger.FluentAddValue(LogValueLastStateUpdateTrigger, trigger);
+
+        /// <summary>
+        /// Add logging fields for an <see cref="CloudEnvironmentUpdate"/> instance.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="cloudEnvironmentUpdate">The cloud environment update, or null.</param>
+        /// <returns>The <paramref name="logger"/> instance.</returns>
+        public static IDiagnosticsLogger AddCloudEnvironmentUpdate(this IDiagnosticsLogger logger, CloudEnvironmentUpdate cloudEnvironmentUpdate)
+        {
+            Requires.NotNull(logger, nameof(logger));
+
+            if (cloudEnvironmentUpdate != null)
+            {
+                if (!string.IsNullOrWhiteSpace(cloudEnvironmentUpdate.SkuName))
+                {
+                    logger.FluentAddValue(LogValueTargetSkuName, cloudEnvironmentUpdate.SkuName);
+                }
+
+                if (cloudEnvironmentUpdate.AutoShutdownDelayMinutes.HasValue)
+                {
+                    logger.FluentAddValue(LogValueTargetAutoShutdownDelay, cloudEnvironmentUpdate.AutoShutdownDelayMinutes.Value);
+                }
+            }
+
+            return logger;
+        }
     }
 }

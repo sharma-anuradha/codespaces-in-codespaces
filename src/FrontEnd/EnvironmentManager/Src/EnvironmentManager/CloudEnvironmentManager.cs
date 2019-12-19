@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        MessageCode = Contracts.MessageCodes.EnvironmentDoesNotExist,
+                        MessageCode = MessageCodes.EnvironmentDoesNotExist,
                         HttpStatusCode = StatusCodes.Status404NotFound,
                     };
                 }
@@ -114,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = cloudEnvironment,
-                        MessageCode = Contracts.MessageCodes.ShutdownStaticEnvironment,
+                        MessageCode = MessageCodes.ShutdownStaticEnvironment,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -243,7 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        MessageCode = Contracts.MessageCodes.EnvironmentDoesNotExist,
+                        MessageCode = MessageCodes.EnvironmentDoesNotExist,
                         HttpStatusCode = StatusCodes.Status404NotFound,
                     };
                 }
@@ -258,7 +258,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = cloudEnvironment,
-                        MessageCode = Contracts.MessageCodes.StartStaticEnvironment,
+                        MessageCode = MessageCodes.StartStaticEnvironment,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -278,7 +278,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = null,
-                        MessageCode = Contracts.MessageCodes.EnvironmentNotShutdown,
+                        MessageCode = MessageCodes.EnvironmentNotShutdown,
                         HttpStatusCode = StatusCodes.Status400BadRequest,
                     };
                 }
@@ -305,7 +305,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     return new CloudEnvironmentServiceResult
                     {
-                        MessageCode = Contracts.MessageCodes.UnableToAllocateResourcesWhileStarting,
+                        MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
                         HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
                     };
                 }
@@ -319,7 +319,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), "Could not create the cloud environment workspace session.");
                     return new CloudEnvironmentServiceResult
                     {
-                        MessageCode = Contracts.MessageCodes.UnableToAllocateResourcesWhileStarting,
+                        MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
                         HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
                     };
                 }
@@ -375,7 +375,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var result = new CloudEnvironmentServiceResult()
             {
-                MessageCode = Contracts.MessageCodes.Unknown,
+                MessageCode = MessageCodes.Unknown,
                 HttpStatusCode = StatusCodes.Status409Conflict,
             };
 
@@ -418,7 +418,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 if (environments.Any((env) => string.Equals(
                     env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    result.MessageCode = Contracts.MessageCodes.EnvironmentNameAlreadyExists;
+                    result.MessageCode = MessageCodes.EnvironmentNameAlreadyExists;
                     result.HttpStatusCode = StatusCodes.Status409Conflict;
                     return result;
                 }
@@ -439,7 +439,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogInfo(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)));
 
-                    result.MessageCode = Contracts.MessageCodes.ExceededQuota;
+                    result.MessageCode = MessageCodes.ExceededQuota;
                     result.HttpStatusCode = StatusCodes.Status403Forbidden;
                     return result;
                 }
@@ -497,7 +497,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex);
 
-                    result.MessageCode = Contracts.MessageCodes.UnableToAllocateResources;
+                    result.MessageCode = MessageCodes.UnableToAllocateResources;
                     result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
                     return result;
                 }
@@ -509,7 +509,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     logger.AddDuration(duration)
                         .AddCloudEnvironment(cloudEnvironment)
                         .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), "Could not create the cloud environment workspace session.");
-                    result.MessageCode = Contracts.MessageCodes.UnableToAllocateResources;
+                    result.MessageCode = MessageCodes.UnableToAllocateResources;
                     result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
                     return result;
                 }
@@ -903,20 +903,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 UnauthorizedUtil.IsRequired(currentUserId);
 
                 var cloudEnvironment = await CloudEnvironmentRepository.GetAsync(id, logger);
+
+                logger.AddCloudEnvironment(cloudEnvironment)
+                    .AddCloudEnvironmentUpdate(update);
+
                 if (cloudEnvironment is null)
                 {
+                    logger.AddDuration(duration)
+                        .LogErrorWithDetail(GetType().FormatLogMessage(nameof(UpdateEnvironmentSettingsAsync)), $"Error MessageCodes: [ {MessageCodes.EnvironmentDoesNotExist} ]");
+
                     return CloudEnvironmentSettingsUpdateResult.Error(
-                        new List<Contracts.MessageCodes> { Contracts.MessageCodes.EnvironmentDoesNotExist });
+                        new List<MessageCodes> { MessageCodes.EnvironmentDoesNotExist });
                 }
 
                 UnauthorizedUtil.IsTrue(currentUserId == cloudEnvironment.OwnerId);
 
                 var allowedUpdates = GetEnvironmentAvailableSettingsUpdates(cloudEnvironment, currentUser, logger);
-                var validationErrors = new List<Contracts.MessageCodes>();
+                var validationErrors = new List<MessageCodes>();
 
                 if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
                 {
-                    validationErrors.Add(Contracts.MessageCodes.EnvironmentNotShutdown);
+                    validationErrors.Add(MessageCodes.EnvironmentNotShutdown);
                 }
 
                 if (update.AutoShutdownDelayMinutes.HasValue)
@@ -924,7 +931,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null || 
                         !allowedUpdates.AllowedAutoShutdownDelayMinutes.Contains(update.AutoShutdownDelayMinutes.Value))
                     {
-                        validationErrors.Add(Contracts.MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid);
+                        validationErrors.Add(MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid);
                     }
                     else
                     {
@@ -936,11 +943,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     if (allowedUpdates.AllowedSkus == null || !allowedUpdates.AllowedSkus.Any())
                     {
-                        validationErrors.Add(Contracts.MessageCodes.UnableToUpdateSku);
+                        validationErrors.Add(MessageCodes.UnableToUpdateSku);
                     }
                     else if (!allowedUpdates.AllowedSkus.Any((sku) => sku.SkuName == update.SkuName))
                     {
-                        validationErrors.Add(Contracts.MessageCodes.RequestedSkuIsInvalid);
+                        validationErrors.Add(MessageCodes.RequestedSkuIsInvalid);
                     }
                     else
                     {
@@ -952,6 +959,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 if (validationErrors.Any())
                 {
+                    logger.AddDuration(duration)
+                        .LogErrorWithDetail(GetType().FormatLogMessage(nameof(UpdateEnvironmentSettingsAsync)), $"Error MessageCodes: [ {string.Join(", ", validationErrors)} ]");
+
                     return CloudEnvironmentSettingsUpdateResult.Error(validationErrors);
                 }
 
@@ -960,7 +970,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
 
                 logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
                     .LogInfo(GetType().FormatLogMessage(nameof(UpdateEnvironmentSettingsAsync)));
 
                 return CloudEnvironmentSettingsUpdateResult.Success(cloudEnvironment);
