@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
 
             // The GetEnvironment call should update the environment state when it discovers the missing connection.
             var testEnvironment2 = await this.environmentManager.GetEnvironmentAsync(
-                testEnvironment.Id, testUserId, this.logger);
+                testEnvironment.Id, testUserIdSet, this.logger);
 
             Assert.Collection(
                 this.billingEventRepository.Values,
@@ -82,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             this.billingEventRepository.Clear();
 
-            await this.environmentManager.DeleteEnvironmentAsync(testEnvironment.Id, testUserId, this.logger);
+            await this.environmentManager.DeleteEnvironmentAsync(testEnvironment.Id, testUserIdSet, this.logger);
 
             Assert.Collection(
                 this.billingEventRepository.Values,

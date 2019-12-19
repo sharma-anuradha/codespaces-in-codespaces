@@ -12,10 +12,10 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
 {
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             builder
                 .AddJwtBearer(AuthenticationScheme, async options =>
                 {
-                    var tokenValidator = ApplicationServicesProvider.ServiceProvider.GetRequiredService<IVirtualMachineTokenValidator>();
+                    var tokenValidator = ApplicationServicesProvider.GetRequiredService<IVirtualMachineTokenValidator>();
                     options.TokenValidationParameters = await tokenValidator.GetTokenValidationParameters();
                     options.Events = new JwtBearerEvents
                     {

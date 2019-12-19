@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -20,8 +21,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(environmentToDelete.CloudEnvironment.FriendlyName.ToLowerInvariant(), environmentToDelete.CloudEnvironment.FriendlyNameInLowerCase);
 
             // Deleting environment after environment name validation.
+            var ownerIdSet = new UserIdSet(environmentToDelete.CloudEnvironment.OwnerId);
             var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
-                                                                        environmentToDelete.CloudEnvironment.OwnerId,
+                                                                        ownerIdSet,
                                                                         logger);
             Assert.True(deleteResult);
 

@@ -9,11 +9,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
@@ -23,6 +23,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
@@ -168,27 +169,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add ClaimedDistributedLease
             services.AddSingleton<IClaimedDistributedLease, ClaimedDistributedLease>();
 
-            // VM Token validator
-            services.AddVMTokenValidator();
+            // VS SaaS services with first party app JWT authentication.
+            services.AddVsSaaSHostingWithJwtBearerAuthentication2(
+                HostingEnvironment,
+                loggingBaseValues,
+                JwtBearerUtility.ConfigureOptions,
+                keyVaultSecretOptions =>
+                {
+                    var servicePrincipal = ApplicationServicesProvider.GetRequiredService<IServicePrincipal>();
+                    keyVaultSecretOptions.ServicePrincipalClientId = servicePrincipal.ClientId;
+                    keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetServicePrincipalClientSecretAsync;
+                },
+                null,
+                true,
+                JwtBearerUtility.AuthenticationScheme,
+                JwtBearerUtility.AuthenticationScheme)
+                .AddValidatedPrincipalIdentityHandler() // handle validated user principal
+                .AddIdentityMap();                      // map user IDs for the validated user principal
 
-            // Custom Authentication
-            // TODO why isn't this standard VS SaaS SDK Auth?
-            services.AddVsSaaSAuthentication(
+            // Add custom authentication (rpsaas, VM tokens) and VM token validator.
+            services.AddCustomFrontEndAuthentication(
                 HostingEnvironment,
                 new RedisCacheOptions
                 {
                     // TODO: make this required -- but it isn't configured yet.
                     RedisConnectionString = frontEndAppSettings.RedisConnectionString,
                 },
-                new JwtBearerOptions
-                {
-                    Audiences = ValidationUtil.IsRequired(frontEndAppSettings.AuthJwtAudiences, nameof(frontEndAppSettings.AuthJwtAudiences)),
-                    Authority = ValidationUtil.IsRequired(frontEndAppSettings.AuthJwtAuthority, nameof(frontEndAppSettings.AuthJwtAuthority)),
-                },
-                ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSAuthorityString, nameof(frontEndAppSettings.RPSaaSAuthorityString)));
+                ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSAuthorityString, nameof(frontEndAppSettings.RPSaaSAuthorityString)))
+                .AddVMTokenValidator();
 
-            // VS SaaS services || BUT NOT VS SaaS authentication
-            services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
             services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
             {
                 var (accountName, accountKey) = ControlPlaneAzureResourceAccessor.GetStampStorageAccountAsync().Result;

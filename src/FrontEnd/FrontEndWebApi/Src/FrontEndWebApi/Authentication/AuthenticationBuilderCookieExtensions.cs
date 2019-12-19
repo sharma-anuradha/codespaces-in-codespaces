@@ -3,16 +3,14 @@
 // </copyright>
 
 using System;
-using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.AspNetCore.Authentication;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
 {
@@ -52,29 +50,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         private static async Task CookieValidatedPrincipalAsync(CookieValidatePrincipalContext context)
         {
-            // Make sure the cookie has the claim we want
-            var userId = context.Principal.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
+            var httpContext = context.HttpContext;
+            var principal = context.Principal;
+
+            // Use the same algorithm with Cookies as with JWT Bearer.
+            var isEmailClaimRequired = AuthenticationConstants.IsEmailClaimRequired;
+            if (!httpContext.SetUserContextFromClaimsPrincipal(principal, isEmailClaimRequired, out _))
             {
                 context.RejectPrincipal();
                 return;
             }
 
-            // Locate needed services
-            var logger = context.HttpContext.GetLogger();
-            var profileRepository = context.HttpContext.RequestServices.GetService<IProfileRepository>();
-            var currentUserProvider = context.HttpContext.RequestServices.GetService<ICurrentUserProvider>();
-
-            // Make the user's id, display name, email easier to access over the lifetime of the request
-            var profile = await profileRepository.GetCurrentUserProfileAsync(logger.NewChildLogger());
-            if (profile == null)
+            try
             {
-                context.RejectPrincipal();
-                return;
+                var validatedPrincipalIdentityHandler = httpContext.RequestServices.GetRequiredService<IValidatedPrincipalIdentityHandler>();
+                await validatedPrincipalIdentityHandler.ValidatedPrincipalAsync(principal, null);
             }
-            else
+            catch (Exception ex)
             {
-                currentUserProvider.SetProfile(profile);
+                var logger = httpContext.GetLogger();
+                logger.LogException("cookie_authentication_error", ex);
+                context.RejectPrincipal();
             }
         }
     }
