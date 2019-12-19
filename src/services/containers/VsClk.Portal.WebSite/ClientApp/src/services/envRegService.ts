@@ -10,6 +10,7 @@ import { useActionContext } from '../actions/middleware/useActionContext';
 import { pollActivatingEnvironment } from '../actions/pollEnvironment';
 import { isActivating, isNotAvailable } from '../utils/environmentUtils';
 import { wait } from '../dependencies';
+import { evaluateFeatureFlag, customContainers } from '../utils/featureSet';
 
 // Webpack configuration enforces isolatedModules use on typescript
 // and prevents direct re-exporting of types.
@@ -46,6 +47,7 @@ export async function createEnvironment(
     environment: CreateEnvironmentParameters
 ): Promise<ICloudEnvironment> {
     const configuration = useActionContext().state.configuration;
+    const containers = evaluateFeatureFlag(customContainers);
 
     if (!configuration) {
         throw new Error('Configuration must be fetched before calling EnvReg service.');
@@ -79,6 +81,9 @@ export async function createEnvironment(
         planId,
         location,
         friendlyName,
+        experimentalFeatures: {
+            customContainers: containers,
+        },
         seed: {
             type: gitRepositoryUrl ? 'git' : '',
             moniker: gitRepositoryUrl ? gitRepositoryUrl : '',
