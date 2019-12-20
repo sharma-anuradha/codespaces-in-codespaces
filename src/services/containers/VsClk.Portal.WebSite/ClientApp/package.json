@@ -151,7 +151,7 @@
     "not op_mini all"
   ],
   "vscodeCommit": {
-    "stable": "9579eda04fdb3a9bba2750f15193e5fafe16b959",
+    "stable": "26076a4de974ead31f97692a0d32f90d735645c0",
     "insider": "e74405d11443c5361c31e2bc341866d146eee206"
   },
   "jest": {
