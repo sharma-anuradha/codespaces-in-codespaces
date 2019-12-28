@@ -5,23 +5,28 @@ import { Disposable } from 'vscode-jsonrpc';
 
 export const trace = createTrace('GitHubCredentialService');
 
-const localStorageKey = 'githubAccessToken';
+export const gitHubLocalStorageKey = 'githubAccessToken';
 
 type GitHubAccessTokenResponse = {
     readonly accessToken: string;
     readonly state: string;
+    readonly scope?: string;
 };
 
-export function storeGitHubAccessTokenResponse({ accessToken, state }: GitHubAccessTokenResponse) {
-    localStorage.setItem(localStorageKey, JSON.stringify({ accessToken, state }));
+export function storeGitHubAccessTokenResponse({
+    accessToken,
+    state,
+    scope,
+}: GitHubAccessTokenResponse) {
+    localStorage.setItem(gitHubLocalStorageKey, JSON.stringify({ accessToken, state, scope }));
 }
 
 function clearGitHubAccessTokenResponse() {
-    localStorage.removeItem(localStorageKey);
+    localStorage.removeItem(gitHubLocalStorageKey);
 }
 
 function getStoredGitHubAccessTokenResponse(): GitHubAccessTokenResponse | null {
-    const storedTokenString = localStorage.getItem(localStorageKey);
+    const storedTokenString = localStorage.getItem(gitHubLocalStorageKey);
 
     if (!storedTokenString) {
         return null;
@@ -30,11 +35,11 @@ function getStoredGitHubAccessTokenResponse(): GitHubAccessTokenResponse | null 
     try {
         const parsedToken = JSON.parse(storedTokenString);
         if (typeof parsedToken.accessToken !== 'string') {
-            localStorage.removeItem(localStorageKey);
+            localStorage.removeItem(gitHubLocalStorageKey);
             return null;
         }
         if (typeof parsedToken.state !== 'string') {
-            localStorage.removeItem(localStorageKey);
+            localStorage.removeItem(gitHubLocalStorageKey);
             return null;
         }
 
@@ -44,8 +49,14 @@ function getStoredGitHubAccessTokenResponse(): GitHubAccessTokenResponse | null 
     }
 }
 
-export function getStoredGitHubToken(): string | null {
+export function getStoredGitHubToken(scope: string | null = null): string | null {
     const storedToken = getStoredGitHubAccessTokenResponse();
+
+    if (scope) {
+        return storedToken && storedToken.scope && storedToken.scope.includes(scope)
+            ? storedToken.accessToken
+            : null;
+    }
 
     return storedToken && storedToken.accessToken;
 }
@@ -106,7 +117,7 @@ export class GithubAuthenticationAttempt implements Disposable {
         });
 
         const resolveWithToken = (event: StorageEvent) => {
-            if (event.key === localStorageKey) {
+            if (event.key === gitHubLocalStorageKey) {
                 window.removeEventListener('storage', resolveWithToken);
 
                 clearTimeout(timeout);

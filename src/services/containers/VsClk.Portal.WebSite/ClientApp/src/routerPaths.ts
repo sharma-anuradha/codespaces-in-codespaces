@@ -7,3 +7,4 @@ export const githubLoginPath = '/github/login';
 export const newPlanPath = '/environments/plan';
 export const pageNotFoundPath = '/pageNotFound';
 export const liveShareSessionPath = '/liveshare/:id';
+export const gistPath = '/gist/:id';

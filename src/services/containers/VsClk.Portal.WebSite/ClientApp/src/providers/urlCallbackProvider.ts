@@ -1,14 +1,15 @@
 import { URI, IURLCallbackProvider } from 'vscode-web';
 
-import { vscode, VSCodeQuality } from '../utils/vscode';
+import { vscode } from '../utils/vscode';
 
 import { Emitter, Event } from 'vscode-jsonrpc';
 
 import { getQueryParams } from '../utils/getQueryParams';
 
 import { randomString } from '../utils/randomString';
+import { getVscodeQuality } from '../utils/configurationUtil';
 
-const callbackSymbol = Symbol('URICallbackSymbol');
+export const callbackSymbol = Symbol('URICallbackSymbol');
 
 const VSO_NONCE_PARAM_NAME = 'vso-nonce';
 
@@ -20,9 +21,10 @@ interface IExpectedNonceRecord {
 }
 
 export class UrlCallbackProvider implements IURLCallbackProvider {
-    private [callbackSymbol] = new Emitter<URI>();
+    protected [callbackSymbol] = new Emitter<URI>();
+    protected extensionCallbackPath = '/extension-auth-callback';
 
-    constructor(private readonly quality: VSCodeQuality) {
+    constructor() {
         // listen for changes to localStorage
         if (window.addEventListener) {
             window.addEventListener('storage', this.onStorage, false);
@@ -33,7 +35,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
 
     private expectedNonceMap = new Map<string, IExpectedNonceRecord>();
 
-    private onStorage = (e: StorageEvent) => {
+    protected onStorage = (e: StorageEvent) => {
         const { key, newValue } = e;
 
         if (!key || !newValue) {
@@ -71,8 +73,9 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         this[callbackSymbol].fire(protocolHandlerUri);
     };
 
-    private getVSCodeScheme() {
-        return this.quality === 'insider' ? 'vscode-insiders' : 'vscode';
+    protected getVSCodeScheme() {
+        const quality = getVscodeQuality();
+        return quality === 'insider' ? 'vscode-insiders' : 'vscode';
     }
 
     private cleanQueryFromVsoParams(queryParams: URLSearchParams) {
@@ -85,7 +88,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
 
     public onCallback: Event<URI> = this[callbackSymbol].event;
 
-    private generateUrlCallbackParams(authority: string, path: string, query: string) {
+    protected generateUrlCallbackParams(authority: string, path: string, query: string) {
         const nonce = randomString();
         this.expectedNonceMap.set(nonce, { authority, path });
 
@@ -108,7 +111,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
 
         const uri = vscode.URI.from({
             scheme: location.protocol.replace(/\:/g, ''),
-            path: '/extension-auth-callback',
+            path: this.extensionCallbackPath,
             authority: location.host,
             query: this.generateUrlCallbackParams(authority!, path, query),
             fragment: options.fragment || '',

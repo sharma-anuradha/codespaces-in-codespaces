@@ -21,10 +21,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
         [HttpGet("~/github-auth/")]
         public IActionResult Authenticate(
-            [FromQuery(Name = "state")] string state
+            [FromQuery(Name = "state")] string state,
+            [FromQuery(Name = "scope")] string scope
         )
         {
-            if (string.IsNullOrWhiteSpace(state)) {
+            if (string.IsNullOrWhiteSpace(state))
+            {
                 return BadRequest();
             }
 
@@ -33,7 +35,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             return Redirect(
                 GitHubClient.GetLoginUrl(
-                    state, 
+                    state,
+                    scope,
                     redirectUriBuilder.Uri.ToString()));
         }
 
@@ -43,10 +46,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             [FromQuery(Name = "state")] string state
         )
         {
-            if (string.IsNullOrWhiteSpace(code)) {
+            if (string.IsNullOrWhiteSpace(code))
+            {
                 return BadRequest();
             }
-            if (string.IsNullOrWhiteSpace(state)) {
+            if (string.IsNullOrWhiteSpace(state))
+            {
                 return BadRequest();
             }
 
@@ -56,6 +61,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 var tokenResponse = await GitHubClient.GetAccessTokenResponseAsync(state, code);
                 responseQuery.Set("state", state);
                 responseQuery.Set("accessToken", tokenResponse.AccessToken);
+                responseQuery.Set("scope", tokenResponse.Scope);
             }
             catch (Exception)
             {
@@ -86,7 +92,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
     {
         private const string LoginEndpoint = "login/oauth/authorize";
         private const string AccessTokenEndpoint = "login/oauth/access_token";
-        private const string Scope = "repo";
+        private const string DefaultScope = "repo";
 
         public string ClientId { get; }
         public string ClientSecret { get; }
@@ -107,7 +113,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             ClientSecret = clientSecret;
         }
 
-        public string GetLoginUrl(string state, string redirectUrl)
+        public string GetLoginUrl(string state, string scope, string redirectUrl)
         {
             if (string.IsNullOrEmpty(state))
             {
@@ -123,7 +129,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             var query = HttpUtility.ParseQueryString(string.Empty);
             query.Set("client_id", ClientId);
-            query.Set("scope", Scope);
+            query.Set("scope", string.IsNullOrEmpty(scope) ? DefaultScope : $"{DefaultScope} {scope}");
             query.Set("redirect_uri", redirectUrl);
             query.Set("state", state);
             uriBuilder.Query = query.ToString();

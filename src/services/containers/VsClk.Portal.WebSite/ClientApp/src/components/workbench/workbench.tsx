@@ -298,7 +298,7 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
             workspaceProvider,
             remoteAuthority: `vsonline+${environmentInfo.id}`,
             webSocketFactory: VSLSWebSocketFactory,
-            urlCallbackProvider: new UrlCallbackProvider(vscodeVersion.quality),
+            urlCallbackProvider: new UrlCallbackProvider(),
             connectionToken: vscodeVersion.commit,
             credentialsProvider,
             resourceUriProvider,

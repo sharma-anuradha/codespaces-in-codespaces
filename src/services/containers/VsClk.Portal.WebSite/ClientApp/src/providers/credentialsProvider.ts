@@ -2,6 +2,7 @@ import { ICredentialsProvider } from 'vscode-web';
 
 import { createTrace } from '../utils/createTrace';
 import { authService } from '../services/authService';
+import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
 import { localStorageKeyVault } from '../cache/localStorageKeyVaultInstance';
 
 const trace = createTrace('credentials-provider:info');
@@ -94,6 +95,16 @@ class LiveShareWebStrategy implements IAuthStrategy {
     }
 }
 
+class GistPadStrategy implements IAuthStrategy {
+    canHandleService(service: string, account: string): boolean {
+        return service === 'vscode-gistpad' && account === 'gist-token';
+    }
+
+    async getToken(service: string, account: string): Promise<string | null> {
+        return getStoredGitHubToken('gist');
+    }
+}
+
 const GENERIC_PREFIX = 'vsonline.keytar';
 
 export class CredentialsProvider implements ICredentialsProvider {
@@ -163,4 +174,5 @@ export const credentialsProvider = new CredentialsProvider([
     new MsalAuthStrategy(),
     new AzureAccountStrategy(),
     new LiveShareWebStrategy(),
+    new GistPadStrategy(),
 ]);

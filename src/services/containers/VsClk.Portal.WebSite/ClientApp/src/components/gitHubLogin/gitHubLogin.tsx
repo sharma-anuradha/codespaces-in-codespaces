@@ -11,10 +11,12 @@ export function GitHubLogin() {
     useEffect(() => {
         const accessToken = url.searchParams.get('accessToken');
         const state = url.searchParams.get('state');
-        if (accessToken && state) {
+        const scope = url.searchParams.get('scope');
+        if (accessToken && state && scope) {
             storeGitHubAccessTokenResponse({
                 accessToken,
                 state,
+                scope,
             });
         }
     });

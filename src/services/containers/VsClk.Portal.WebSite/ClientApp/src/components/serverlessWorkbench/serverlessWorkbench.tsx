@@ -2,9 +2,13 @@ import React, { Component } from 'react';
 import './serverlessWorkbench.css';
 
 import { vscode } from '../../utils/vscode';
-import { IWorkbenchConstructionOptions, IWorkspaceProvider, URI } from 'vscode-web';
+import {
+    IWorkbenchConstructionOptions,
+    IWorkspaceProvider,
+    URI,
+    IURLCallbackProvider,
+} from 'vscode-web';
 
-import { createUniqueId } from '../../dependencies';
 import { credentialsProvider } from '../../providers/credentialsProvider';
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { UserDataProvider } from '../../utils/userDataProvider';
@@ -12,12 +16,15 @@ import { UserDataProvider } from '../../utils/userDataProvider';
 import { telemetry, sendTelemetry } from '../../utils/telemetry';
 import * as path from 'path';
 import { trace } from '../../utils/trace';
+import { FolderWorkspaceProvider } from '../../providers/folderWorkspaceProvider';
 
 export interface ServerlessWorkbenchProps {
     folderUri: string;
     staticExtensions?: { packageJSON: any; extensionLocation: string }[];
     extensionUrls?: string[];
     resolveExternalUri?: (uri: URI) => Promise<URI>;
+    urlCallbackProvider?: IURLCallbackProvider;
+    targetURLFactory?: (folderUri: URI) => URL | undefined;
 }
 
 const managementFavicon = 'favicon.ico';
@@ -122,13 +129,10 @@ export class ServerlessWorkbench extends Component<
 
         const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(telemetry);
 
-        const workspaceProvider: IWorkspaceProvider = {
-            workspace: {
-                folderUri: vscode.URI.parse(this.props.folderUri),
-            },
-            // Opening workspaces from this view is not supported.
-            open: async () => {},
-        };
+        const workspaceProvider = new FolderWorkspaceProvider(
+            this.props.folderUri,
+            this.props.targetURLFactory
+        );
 
         const resolveExternalUri = this.props.resolveExternalUri;
 
@@ -157,12 +161,11 @@ export class ServerlessWorkbench extends Component<
 
         staticExtensions = staticExtensions.concat(this.getBuiltinStaticExtensions());
 
-        const quality =
-            window.localStorage.getItem('vso-featureset') === 'insider' ? 'insider' : 'stable';
+        const { urlCallbackProvider = new UrlCallbackProvider() } = this.props;
 
         const config: IWorkbenchConstructionOptions = {
             workspaceProvider,
-            urlCallbackProvider: new UrlCallbackProvider(quality),
+            urlCallbackProvider,
             credentialsProvider,
             userDataProvider,
             resolveExternalUri,
