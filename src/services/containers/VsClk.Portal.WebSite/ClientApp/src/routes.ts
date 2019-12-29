@@ -6,6 +6,7 @@ import { EnvironmentsPanel } from './components/environments/environments';
 import { Login } from './components/login/login';
 import { Workbench } from './components/workbench/workbench';
 import { LiveShareWorkbench } from './components/liveShareWorkbench/liveShareWorkbench';
+import { GitHubWorkbench } from './components/gitHubWorkbench/gitHubWorkbench';
 import { GistWorkbench } from './components/gistWorkbench/gistWorkbench';
 import { GitHubLogin } from './components/gitHubLogin/gitHubLogin';
 import { BlogPost } from './BlogPost';
@@ -20,6 +21,7 @@ import {
     rootPath,
     pageNotFoundPath,
     liveShareSessionPath,
+    githubPath,
     gistPath,
 } from './routerPaths';
 
@@ -70,6 +72,12 @@ export const routes: Route[] = [
         path: liveShareSessionPath,
         exact: false,
         component: LiveShareWorkbench,
+    },
+    {
+        authenticated: false,
+        path: githubPath,
+        exact: false,
+        component: GitHubWorkbench,
     },
     {
         authenticated: false,
