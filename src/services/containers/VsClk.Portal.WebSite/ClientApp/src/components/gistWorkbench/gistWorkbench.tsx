@@ -27,7 +27,7 @@ class GistWorkbenchView extends Component<GistWorkbenchProps, GistWorkbenchProps
 
     render() {
         // Enable this only for dev currently while we explore the idea.
-        if (process.env.NODE_ENV !== 'development') {
+        if (!window.location.hostname.includes('online.dev')) {
             return <PageNotFound />;
         }
 
