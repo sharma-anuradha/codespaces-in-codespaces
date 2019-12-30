@@ -69,14 +69,15 @@ export class ServerlessWorkbench extends Component<
         // to be all the relative paths for the package.json. So, keys will be like './csharp/package.json'
         const context = require.context('extensions', true, /^\.\/[^\/]*\/package.json$/);
         const keys = context.keys();
+
+        const packagesWithMainThatWork = ['vscode.python', 'ms-vscode.references-view'];
+
         const packages = keys.map((modulePath: string) => {
             const packageJSON = context(modulePath);
-            if (packageJSON.main) {
-                return undefined; // unsupported
-            }
+            const extensionName = `${packageJSON.publisher}.${packageJSON.name}`;
 
-            if (packageJSON.name === 'scss') {
-                return undefined; // seems to fail to JSON.parse()?!
+            if (packageJSON.main && !packagesWithMainThatWork.includes(extensionName)) {
+                return undefined; // unsupported
             }
 
             packageJSON.extensionKind = ['web'];
