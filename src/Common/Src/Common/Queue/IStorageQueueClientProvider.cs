@@ -2,8 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.Azure.Storage.Queue;
 using System.Threading.Tasks;
+using Microsoft.Azure.Storage.Queue;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {

@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -64,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 model.Id = Guid.NewGuid().ToString();
             }
 
-            result.VsoPlan = await this.planRepository.CreateOrUpdateAsync(model, logger);
+            result.VsoPlan = await planRepository.CreateOrUpdateAsync(model, logger);
             return result;
         }
 
@@ -91,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <inheritdoc/>
         public async Task RefreshTotalPlansCountAsync(IDiagnosticsLogger logger)
         {
-            this.cachedTotalPlansCount = await this.planRepository.GetCountAsync(logger);
+            cachedTotalPlansCount = await planRepository.GetCountAsync(logger);
         }
 
         /// <inheritdoc/>
@@ -101,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             // TODO: just return the VsoPlan and not the PlanManagerServiceResult
             // If null then PlanDoesNotExist
-            VsoPlan innerPlan = (await this.planRepository.GetWhereAsync(
+            var innerPlan = (await planRepository.GetWhereAsync(
                     (model) => model.Plan == plan, logger, null)).SingleOrDefault();
             if (!includeDeleted && innerPlan?.IsDeleted == true)
             {
@@ -136,26 +134,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 {
                     ValidationUtil.IsRequired(subscriptionId, nameof(subscriptionId));
 
-                    return (await this.planRepository.GetWhereAsync(
+                    return (await planRepository.GetWhereAsync(
                         (model) => model.UserId == userId &&
                             model.Plan.Subscription == subscriptionId &&
                             model.Plan.ResourceGroup == resourceGroup,
                         logger,
-                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
+                        null))
+                        .Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
                 else if (subscriptionId != null)
                 {
-                    return (await this.planRepository.GetWhereAsync(
+                    return (await planRepository.GetWhereAsync(
                         (model) => model.UserId == userId &&
                             model.Plan.Subscription == subscriptionId,
                         logger,
-                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
+                        null))
+                        .Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
                 else
                 {
-                    return (await this.planRepository.GetWhereAsync(
-                        (model) => model.UserId == userId, logger,
-                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
+                    return (await planRepository
+                        .GetWhereAsync(
+                        (x) => x.UserId == userId,
+                        logger,
+                        null))
+                        .Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
             }
             else
@@ -164,17 +167,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
                 if (resourceGroup != null)
                 {
-                    return (await this.planRepository.GetWhereAsync(
+                    return (await planRepository.GetWhereAsync(
                         (model) => model.Plan.Subscription == subscriptionId &&
                             model.Plan.ResourceGroup == resourceGroup,
                         logger,
-                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
+                        null))
+                        .Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
                 else
                 {
-                    return (await this.planRepository.GetWhereAsync(
-                        (model) => model.Plan.Subscription == subscriptionId, logger,
-                        null)).Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
+                    return (await planRepository.GetWhereAsync(
+                        (model) => model.Plan.Subscription == subscriptionId,
+                        logger,
+                        null))
+                        .Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
             }
         }
@@ -185,12 +191,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             // Find model in DB
             // Location is not provided on a DELETE operation from RPSaaS,
             // thus we can only compare Name, Subscription, and ResourceGroup which should be sufficient
-            var savedModel = (await this.planRepository.GetWhereAsync(
+            var savedModel = (await planRepository.GetWhereAsync(
                 (model) => model.Plan.Name == plan.Name &&
                            model.Plan.Subscription == plan.Subscription &&
                            model.Plan.ResourceGroup == plan.ResourceGroup,
                 logger,
-                null)).Where(x=>x.IsDeleted != true);
+                null)).Where(x => x.IsDeleted != true);
             var modelList = savedModel.ToList().SingleOrDefault();
 
             if (modelList == null)
@@ -201,7 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             modelList.IsDeleted = true;
 
-            var updatedModel = await this.planRepository.UpdateAsync(modelList, logger);
+            var updatedModel = await planRepository.UpdateAsync(modelList, logger);
             return updatedModel.IsDeleted;
         }
 
@@ -214,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             Requires.NotNull(logger, nameof(logger));
 
             // TODO: Change this to be streaming so that we consume less memory
-            var allPlans = (await this.planRepository.GetWhereAsync(
+            var allPlans = (await planRepository.GetWhereAsync(
                 (plan) => plan.Plan.Subscription.StartsWith(planShard),
                 logger,
                 (_, childlogger) =>

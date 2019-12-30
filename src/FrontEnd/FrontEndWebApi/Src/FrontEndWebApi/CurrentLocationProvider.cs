@@ -7,7 +7,7 @@ using Microsoft.VsSaaS.Common;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 {
     /// <summary>
-    /// Provides the current Azure location of the running service
+    /// Provides the current Azure location of the running service.
     /// </summary>
     public class CurrentLocationProvider
     {

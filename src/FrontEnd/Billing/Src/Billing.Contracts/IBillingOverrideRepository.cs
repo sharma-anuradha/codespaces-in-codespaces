@@ -7,7 +7,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
-    /// Interface for our billing override datastore
+    /// Interface for our billing override datastore.
     /// </summary>
     public interface IBillingOverrideRepository : IDocumentDbCollection<BillingOverride>
     {

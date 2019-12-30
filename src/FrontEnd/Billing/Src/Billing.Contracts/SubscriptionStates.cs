@@ -5,7 +5,7 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
-    /// See https://github.com/Azure/azure-resource-manager-rpc/blob/master/v1.0/subscription-lifecycle-api-reference.md#subscription-states
+    /// See https://github.com/Azure/azure-resource-manager-rpc/blob/master/v1.0/subscription-lifecycle-api-reference.md#subscription-states.
     /// </summary>
     public static class SubscriptionStates
     {

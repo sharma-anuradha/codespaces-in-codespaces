@@ -16,7 +16,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
     public class MockResourceBrokerClient : IResourceBrokerResourcesHttpContract
     {
         private static readonly Guid MockSubscriptionId = Guid.NewGuid();
-        private static readonly string MockResourceGroup = "mock-resource-group";
 
         /// <inheritdoc/>
         public async Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(

@@ -1,8 +1,6 @@
-﻿
-// <copyright file="StorageCopyItem.cs" company="Microsoft">
+﻿// <copyright file="StorageCopyItem.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
-
 using System;
 using System.Linq;
 

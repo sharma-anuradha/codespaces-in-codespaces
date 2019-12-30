@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Reactive.Concurrency;
 using System.Threading.Tasks;
-using FluentAssertions.Equivalency;
-using Microsoft.Azure.Management.CosmosDB.Fluent.Models;
-using Microsoft.Azure.Management.Fluent;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;

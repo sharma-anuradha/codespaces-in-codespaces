@@ -76,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 async (childLogger) =>
                 {
                     // Basic shard by starting resource id character
-                    // NOTE: If over time we needed an additional dimention, we could add region 
+                    // NOTE: If over time we needed an additional dimention, we could add region
                     //       and do a cross product with it.
                     var idShards = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
 
@@ -84,13 +84,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     await TaskHelper.RunConcurrentEnumerableAsync(
                         $"{LogBaseName}_run_unit_check",
                         idShards,
-                        (idShard, itemLogger) => CoreRunUnitAsync(idShard, claimSpan, itemLogger),
+                        (idShard, itemLogger) => CoreRunUnitAsync(idShard, itemLogger),
                         childLogger,
                         (idShard, itemLogger) => ObtainLease($"{LeaseBaseName}-{idShard}", claimSpan, itemLogger));
 
                     return !Disposed;
                 },
-                (e, IDiagnosticsLogger) => !Disposed,
+                (e, childLogger) => !Disposed,
                 swallowException: true);
         }
 
@@ -100,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             Disposed = true;
         }
 
-        private Task CoreRunUnitAsync(string idShard, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private Task CoreRunUnitAsync(string idShard, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("TaskResourceIdShard", idShard);
 

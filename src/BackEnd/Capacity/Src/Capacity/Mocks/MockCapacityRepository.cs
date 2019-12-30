@@ -1,4 +1,4 @@
-﻿// <copyright file="MockRepository.cs" company="Microsoft">
+﻿// <copyright file="MockCapacityRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

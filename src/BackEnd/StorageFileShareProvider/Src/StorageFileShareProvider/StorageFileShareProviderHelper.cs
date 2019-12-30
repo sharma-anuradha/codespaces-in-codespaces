@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
                 // Premium_LRS for Files requires a different kind of FileStorage
                 // See https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview#types-of-storage-accounts
-                StorageAccountCreateParameters storageCreateParams = new StorageAccountCreateParameters()
+                var storageCreateParams = new StorageAccountCreateParameters()
                 {
                     Location = azureRegion,
                     EnableHttpsTrafficOnly = true,
@@ -198,7 +198,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
                 var desiredBatchLocation = storageAccount.RegionName;
 
-                using (BatchClient batchClient = await batchClientFactory.GetBatchClient(desiredBatchLocation, logger))
+                using (var batchClient = await batchClientFactory.GetBatchClient(desiredBatchLocation, logger))
                 {
                     var job = await GetOrCreateJob(batchClient, sourceCopyItems, storageSizeInGb);
 
@@ -235,7 +235,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             try
             {
-                using (BatchClient batchClient = await batchClientFactory.GetBatchClient(taskInfo.TaskLocation, logger))
+                using (var batchClient = await batchClientFactory.GetBatchClient(taskInfo.TaskLocation, logger))
                 {
                     var task = await batchClient.JobOperations.GetTaskAsync(taskInfo.JobId, taskInfo.TaskId);
 

@@ -445,7 +445,6 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             return logger;
         }
 
-
         /// <summary>
         /// Add details about a client HTTP response.
         /// </summary>

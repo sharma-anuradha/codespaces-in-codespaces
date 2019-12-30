@@ -22,18 +22,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// </summary>
     public class LogCloudEnvironmentStateTask : ILogCloudEnvironmentStateTask
     {
-        private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> SkuDictionary;
+        private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> skuDictionary;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LogCloudEnvironmentStateTask"/> class.
         /// </summary>
-        /// <param name="environmentManagerSettings">Environment settings used to generate the lease name</param>
+        /// <param name="environmentManagerSettings">Environment settings used to generate the lease name.</param>
         /// <param name="cloudEnvironmentRepository">Target Cloud Environment Repository.</param>
         /// <param name="skuCatalog">The sku catalog (used to find which SKUs to query over.</param>
         /// <param name="controlPlane">The control plan info. Used to know which AzureLocations to query over.</param>
-        /// <param name="taskHelper">The Task helper</param>
-        /// <param name="claimedDistributedLease">Used to get a lease for the duration of the telemetry</param>
-        /// <param name="resourceNameBuilder">Used to build the lease name</param>
+        /// <param name="taskHelper">The Task helper.</param>
+        /// <param name="claimedDistributedLease">Used to get a lease for the duration of the telemetry.</param>
+        /// <param name="resourceNameBuilder">Used to build the lease name.</param>
         public LogCloudEnvironmentStateTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             EnvironmentManagerSettings = environmentManagerSettings;
             CloudEnvironmentRepository = cloudEnvironmentRepository;
             ControlPlane = controlPlane;
-            SkuDictionary = skuCatalog.CloudEnvironmentSkus;
+            skuDictionary = skuCatalog.CloudEnvironmentSkus;
             TaskHelper = taskHelper;
             ClaimedDistributedLease = claimedDistributedLease;
             ResourceNameBuilder = resourceNameBuilder;
@@ -95,6 +95,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                swallowException: true);
         }
 
+        public void Dispose()
+        {
+            Disposed = true;
+        }
+
         private async Task RunLogTaskAsync(IDiagnosticsLogger childLogger)
         {
             // A batch ID incase we want to join or look at individual values
@@ -102,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             childLogger.AddBaseValue("BatchId", batchID.ToString());
 
             var total = 0;
-            IEnumerable<CloudEnvironmentLogRecord> allStates = await GetStates(childLogger);
+            var allStates = await GetStates(childLogger);
 
             // Send individual values
             foreach (var record in allStates)
@@ -152,13 +157,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             // TODO: If we update our SDK to 3.3 or higher, we could likely use a condensed query that'll group by all these fields.
             // This may or may not be more expensive than scalar queries though.
             // Example: SELECT c.state, c.location, c.skuName, VALUE COUNT(1) as Total FROM c GROUP BY c.state, c.location, c.skuName
-
-            List<CloudEnvironmentLogRecord> records = new List<CloudEnvironmentLogRecord>();
+            var records = new List<CloudEnvironmentLogRecord>();
             foreach (CloudEnvironmentState state in Enum.GetValues(typeof(CloudEnvironmentState)))
             {
-                foreach (AzureLocation location in ControlPlane.GetAllDataPlaneLocations())
+                foreach (var location in ControlPlane.GetAllDataPlaneLocations())
                 {
-                    foreach (var sku in SkuDictionary.Keys)
+                    foreach (var sku in skuDictionary.Keys)
                     {
                         var count = await CloudEnvironmentRepository.GetCloudEnvironmentCountAsync(location.ToString(), state.ToString(), sku.ToString(), childLogger);
                         if (count > 0)
@@ -176,11 +180,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             }
 
             return records;
-        }
-
-        public void Dispose()
-        {
-            Disposed = true;
         }
 
         private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)

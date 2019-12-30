@@ -16,7 +16,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// </summary>
     public class CloudEnvironment : TaggedEntity
     {
-
         private string friendlyName;
         private string friendlyNameInLowerCase;
 
@@ -34,13 +33,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             get
             {
-                return this.friendlyName;
+                return friendlyName;
             }
 
             set
             {
-                this.friendlyName = value;
-                this.friendlyNameInLowerCase = value?.ToLowerInvariant();
+                friendlyName = value;
+                friendlyNameInLowerCase = value?.ToLowerInvariant();
             }
         }
 
@@ -48,14 +47,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets the environment friendly name in lowercase
         /// This property is used to validating the environment name irrespective of case.
         /// This helps for a cost efficient query during lookups.
-        /// It always sets to Friendly name value just to be in sync
+        /// It always sets to Friendly name value just to be in sync.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "friendlyNameInLowerCase")]
         public string FriendlyNameInLowerCase
         {
             get
             {
-                return this.friendlyNameInLowerCase ?? FriendlyName?.ToLowerInvariant();
+                return friendlyNameInLowerCase ?? FriendlyName?.ToLowerInvariant();
             }
 
             set

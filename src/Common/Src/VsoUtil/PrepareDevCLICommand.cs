@@ -56,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             var defaultContainerName = GetDefaultContainerName(services);
             stdout.WriteLine($"Default container name: {defaultContainerName}");
 
-            var controlPlane = this.GetControlPlaneInfo();
+            var controlPlane = GetControlPlaneInfo();
             var controlPlaneResourceAccessor = services.GetRequiredService<IControlPlaneAzureResourceAccessor>();
             var location = controlPlane.GetAllDataPlaneLocations().Single();
             var (accountName, accountKey) = await controlPlaneResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(location);
@@ -103,13 +103,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 VmAgentImageFamilies = families,
             };
 
-            if (!string.IsNullOrWhiteSpace(this.ForwardingHostForLocalDevelopment))
+            if (!string.IsNullOrWhiteSpace(ForwardingHostForLocalDevelopment))
             {
-                devConfig.AppSettings.FrontEnd.ForwardingHostForLocalDevelopment = this.ForwardingHostForLocalDevelopment;
-                devConfig.AppSettings.ControlPlaneSettings.DnsHostName = this.ForwardingHostForLocalDevelopment;
+                devConfig.AppSettings.FrontEnd.ForwardingHostForLocalDevelopment = ForwardingHostForLocalDevelopment;
+                devConfig.AppSettings.ControlPlaneSettings.DnsHostName = ForwardingHostForLocalDevelopment;
                 foreach (var stamp in devConfig.AppSettings.ControlPlaneSettings.Stamps)
                 {
-                    stamp.Value.DnsHostName = this.ForwardingHostForLocalDevelopment;
+                    stamp.Value.DnsHostName = ForwardingHostForLocalDevelopment;
                 }
             }
 
@@ -200,7 +200,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         // TODO: janraj, hack.. need to figure out how to not use dev stamp.?!
         private string GetDefaultContainerName(IServiceProvider services)
         {
-            var controlPlane = this.GetControlPlaneInfo();
+            var controlPlane = GetControlPlaneInfo();
 
             var developerStamp = services.GetRequiredService<DeveloperPersonalStampSettings>();
             if (developerStamp.DeveloperStamp)
@@ -215,7 +215,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 
         private string GetDeveloperContainerName(IServiceProvider services)
         {
-            var controlPlane = this.GetControlPlaneInfo();
+            var controlPlane = GetControlPlaneInfo();
 
             var developerStamp = services.GetRequiredService<DeveloperPersonalStampSettings>();
             if (developerStamp.DeveloperStamp)
@@ -226,19 +226,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             {
                 return $"{controlPlane.VirtualMachineAgentContainerName}-{System.Environment.UserName}";
             }
-        }
-
-        private string GetTemplateStorageAccount(IServiceProvider services)
-        {
-            var controlPlane = this.GetControlPlaneInfo();
-            return controlPlane.FileShareTemplateContainerName;
-        }
-
-        private Guid GetSubscriptionId(IServiceProvider services)
-        {
-            var controlPlane = this.GetControlPlaneInfo();
-            controlPlane.TryGetSubscriptionId(out string subId);
-            return Guid.Parse(subId);
         }
     }
 }

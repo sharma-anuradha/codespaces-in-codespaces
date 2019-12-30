@@ -3,8 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using CommandLine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil;
 

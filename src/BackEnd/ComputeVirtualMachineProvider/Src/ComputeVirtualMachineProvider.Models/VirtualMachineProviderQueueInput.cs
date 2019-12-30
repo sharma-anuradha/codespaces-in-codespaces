@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     public class VirtualMachineProviderQueueInput : ContinuationInput
     {
         /// <summary>
-        /// Gets or sets the AzureResourceInfo
+        /// Gets or sets the AzureResourceInfo.
         /// </summary>
         public AzureResourceInfo AzureResourceInfo { get; set; }
 

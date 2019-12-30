@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// the right way - in the background, separate from the current
         /// thread, with no risk of it trying to rejoin the current thread.
         /// The exception to this is the first run of the callback which is
-        /// expected to be awaited 
+        /// expected to be awaited.
         /// </summary>
         /// <param name="name">Target name.</param>
         /// <param name="callback">Target callback.</param>

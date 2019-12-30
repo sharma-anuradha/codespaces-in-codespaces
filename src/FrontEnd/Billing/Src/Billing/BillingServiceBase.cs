@@ -17,22 +17,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     public abstract class BillingServiceBase
     {
-
         /// <summary>
         /// According to the FAQs - usage meters should arrive within 48 hours of when it was incurred.
-        /// https://microsoft.sharepoint.com/teams/CustomerAcquisitionBilling/_layouts/15/WopiFrame.aspx?sourcedoc={c7a559f4-316d-46b1-b5d4-f52cdfbc4389}&action=edit&wd=target%28Onboarding.one%7C55f62e8d-ea91-4a90-982c-04899e106633%2FFAQ%7C25cc6e79-1e39-424d-9403-cd05d2f675e9%2F%29&wdorigin=703
+        /// https://microsoft.sharepoint.com/teams/CustomerAcquisitionBilling/_layouts/15/WopiFrame.aspx?sourcedoc={c7a559f4-316d-46b1-b5d4-f52cdfbc4389}&action=edit&wd=target%28Onboarding.one%7C55f62e8d-ea91-4a90-982c-04899e106633%2FFAQ%7C25cc6e79-1e39-424d-9403-cd05d2f675e9%2F%29&wdorigin=703.
         /// </summary>
         private readonly int lookBackThresholdHrs = 48;
-
-        private readonly IBillingEventManager billingEventManager;
         private readonly IControlPlaneInfo controlPlaneInfo;
         private readonly IClaimedDistributedLease claimedDistributedLease;
         private readonly ITaskHelper taskHelper;
         private readonly IPlanManager planManager;
-        protected IDiagnosticsLogger Logger;
 
-        public BillingServiceBase( 
-            IBillingEventManager billingEventManager,
+        public BillingServiceBase(
             IControlPlaneInfo controlPlaneInfo,
             IDiagnosticsLogger logger,
             IClaimedDistributedLease claimedDistributedLease,
@@ -40,25 +35,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IPlanManager planManager,
             string serviceName)
         {
-            this.billingEventManager = billingEventManager;
             this.controlPlaneInfo = controlPlaneInfo;
-            this.Logger = logger.NewChildLogger();
+            Logger = logger.NewChildLogger();
             this.claimedDistributedLease = claimedDistributedLease;
             this.taskHelper = taskHelper;
             this.planManager = planManager;
             ServiceName = serviceName;
         }
 
+        protected IDiagnosticsLogger Logger { get; private set; }
+
         /// <summary>
-        /// Gets the service named used for logging
+        /// Gets the service named used for logging.
         /// </summary>
         protected string ServiceName { get; }
 
         /// <summary>
         /// The outer execute method for any service.
         /// </summary>
-        /// <param name="token">the cancellation token</param>
-        /// <returns>a task indicating completion of the method</returns>
+        /// <param name="token">the cancellation token.</param>
+        /// <returns>a task indicating completion of the method.</returns>
         public async Task Execute(CancellationToken token)
         {
             // TODO: consider on the hour billing summary creation. For example summarys would have a time range of
@@ -98,6 +94,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         protected abstract Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string planShard, AzureLocation region);
-
     }
 }

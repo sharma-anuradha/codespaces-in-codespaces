@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     {
         private const int VmCreationRetryAfterSeconds = 60;
         private const int VmDeletionRetryAfterSeconds = 60;
-        private IEnumerable<IDeploymentManager> managers = null;
+        private readonly IEnumerable<IDeploymentManager> managers = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VirtualMachineProvider"/> class.
@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name)
                         .FluentAddBaseValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString());
 
-                   var getRetryAttempt = int.TryParse(input.ContinuationToken, out int count);
+                   var getRetryAttempt = int.TryParse(input.ContinuationToken, out var count);
                    var retryAttemptCount = getRetryAttempt ? count : 0;
                    var shutdownOperationResult = await deploymentManager.ShutdownComputeAsync(input, retryAttemptCount, logger);
                    var result = new VirtualMachineProviderShutdownResult
@@ -180,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     // TODO:: move common pieces in abstract base class.
                     var deploymentManager = SelectDeploymentManager(ComputeOS.Linux);
 
-                    var getRetryAttempt = int.TryParse(input.ContinuationToken, out int count);
+                    var getRetryAttempt = int.TryParse(input.ContinuationToken, out var count);
                     var retryAttemptCount = getRetryAttempt ? count : 0;
                     var startComputeResult = await deploymentManager.StartComputeAsync(input, retryAttemptCount, childLogger.NewChildLogger());
                     var result = new VirtualMachineProviderStartComputeResult()
@@ -209,7 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             OperationState resultState;
             NextStageInput nextStageInput;
             string resultContinuationToken = default;
-            string continuationToken = input.ContinuationToken;
+            var continuationToken = input.ContinuationToken;
 
             if (string.IsNullOrEmpty(continuationToken))
             {

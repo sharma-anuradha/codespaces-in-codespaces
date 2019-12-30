@@ -27,8 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// </summary>
         public const string AuthenticationScheme = "aadrpsaas";
 
-        private const string BadTokenMessage = "jwt_bearer_bad_token";
-        private static string TenantClaimType = "http://schemas.microsoft.com/identity/claims/tenantid";
+        private static readonly string TenantClaimType = "http://schemas.microsoft.com/identity/claims/tenantid";
 
         private static string Issuer { get; } = "https://sts.windows.net/";
 

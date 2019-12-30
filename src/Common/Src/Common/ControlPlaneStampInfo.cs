@@ -159,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             if (!DataPlaneLocations.Contains(azureLocation))
             {
-                throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{this.StampResourceGroupName}'");
+                throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{StampResourceGroupName}'");
             }
 
             var regionCode = RegionCodes[azureLocation];
@@ -176,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             if (!DataPlaneLocations.Contains(azureLocation))
             {
-                throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{this.StampResourceGroupName}'");
+                throw new NotSupportedException($"The data-plane location '{azureLocation}' is not supported in stamp '{StampResourceGroupName}'");
             }
         }
     }

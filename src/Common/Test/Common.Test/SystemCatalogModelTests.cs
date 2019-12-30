@@ -142,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         }
 
         [Fact]
-        public async Task EnabledInternalHardwareSelectsApplicableSkus()
+        public void EnabledInternalHardwareSelectsApplicableSkus()
         {
             var provider = CreateTestSystemCatalogProvider();
             Assert.Collection(provider.SkuCatalog.EnabledInternalHardware().Values.OrderBy(s => s.SkuName),

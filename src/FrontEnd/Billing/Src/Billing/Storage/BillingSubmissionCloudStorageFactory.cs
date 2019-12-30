@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.Storage.Queue;
@@ -34,14 +33,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingSubmissionCloudStorageFactory"/> class.
         /// </summary>
-        /// <param name="azureResourceAccesor">Access to control plane resources</param>
-        /// <param name="logger">the logger</param>
-        public BillingSubmissionCloudStorageFactory(IControlPlaneAzureResourceAccessor azureResourceAccesor,
-                                                    IDiagnosticsLogger logger,
-                                                    IHealthProvider healthProvider,
-                                                    IDiagnosticsLoggerFactory loggerFactory,
-                                                    IResourceNameBuilder resourceNameBuilder,
-                                                    LogValueSet logValues)
+        /// <param name="azureResourceAccesor">Access to control plane resources.</param>
+        /// <param name="logger">the logger.</param>
+        public BillingSubmissionCloudStorageFactory(
+            IControlPlaneAzureResourceAccessor azureResourceAccesor,
+            IDiagnosticsLogger logger,
+            IHealthProvider healthProvider,
+            IDiagnosticsLoggerFactory loggerFactory,
+            IResourceNameBuilder resourceNameBuilder,
+            LogValueSet logValues)
         {
             storedCollections = new ConcurrentDictionary<AzureLocation, BillingSubmissionCloudStorageClient>();
             this.azureResourceAccesor = azureResourceAccesor;
@@ -75,13 +75,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Create the various clients
                 var queueClient = new CloudQueueClient(storageAccountQueue.QueueStorageUri, storageCredentialsForQueue);
                 var tableClient = new CloudTableClient(storageAccountTable.TableStorageUri, storageCredentialsForTable);
-                
+
                 var provider = new StorageQueueClientProvider(queueClient);
 
                 var usageCollection = new BillingSubmissionQueueCollection(provider, healthProvider, loggerFactory, resourceNameBuilder, logValues);
                 var errorCollection = new BillingSubmissionErrorQueueCollection(provider, healthProvider, loggerFactory, resourceNameBuilder, logValues);
+
                 // cache the collection
-                BillingSubmissionCloudStorageClient storageclient = new BillingSubmissionCloudStorageClient(tableClient, usageCollection,errorCollection, logger);
+                var storageclient = new BillingSubmissionCloudStorageClient(tableClient, usageCollection, errorCollection, logger);
                 storedCollections.GetOrAdd(location, storageclient);
                 return storageclient;
             }

@@ -59,7 +59,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 LogBaseName,
                 async (childLogger) =>
                 {
-
                     var rootTimer = Stopwatch.StartNew();
                     childLogger.FluentAddBaseValue("ContinuationWorkerRunId", Guid.NewGuid())
                         .FluentAddValue("ContinuationActivityLevel", ActivityLevel);

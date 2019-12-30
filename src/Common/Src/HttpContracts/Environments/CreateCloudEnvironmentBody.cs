@@ -2,9 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {

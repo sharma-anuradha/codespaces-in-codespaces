@@ -10,7 +10,6 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -98,6 +97,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             ConfigureAppCommon(app);
         }
 
+        /// <inheritdoc/>
+        protected override string GetSettingsRelativePath()
+        {
+            // Use current directory.
+            return string.Empty;
+        }
+
         private void ConfigureSecretsProvider(IServiceCollection services)
         {
             // KeyVaultSecretProvider uses logged in identity to get the secrets, with that one could access JIT'ed subscriptions without having to
@@ -108,13 +114,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             {
                 services.AddSingleton<ISecretProvider, KeyVaultSecretProvider>();
             }
-        }
-
-        /// <inheritdoc/>
-        protected override string GetSettingsRelativePath()
-        {
-            // Use current directory.
-            return string.Empty;
         }
 
         private class NullHealthProvider : IHealthProvider

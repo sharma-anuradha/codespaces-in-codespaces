@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
@@ -48,7 +47,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             ICollection<string> eventTypes,
             IDiagnosticsLogger logger);
 
-
         Task<IEnumerable<BillingEvent>> GetPlanEventsAsync(
             Expression<Func<BillingEvent, bool>> filter,
             IDiagnosticsLogger logger);
@@ -57,16 +55,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             BillingEvent billingEvent,
             IDiagnosticsLogger logger);
 
-  
-
         /// <summary>
-        /// Gets the current override state for the given time
+        /// Gets the current override state for the given time.
         /// </summary>
         /// <param name="start">The time representing when the current state starts.</param>
         /// <param name="subscriptionId">The subscription id being sought.</param>
-        /// <param name="plan"> the current SkuPlan</param>
-        /// <param name="sku">the current SKU</param>
-        /// <param name="logger">Logging service</param>
+        /// <param name="plan"> the current SkuPlan.</param>
+        /// <param name="sku">the current SKU.</param>
+        /// <param name="logger">Logging service.</param>
         /// <returns>A <see cref="Task{BillingOverride}"/> representing the result of the asynchronous operation.</returns>
         Task<BillingOverride> GetOverrideStateForTimeAsync(
             DateTime start,

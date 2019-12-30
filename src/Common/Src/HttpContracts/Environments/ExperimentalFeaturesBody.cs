@@ -1,7 +1,9 @@
-﻿using Bond;
+﻿// <copyright file="ExperimentalFeaturesBody.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using Bond;
 using Newtonsoft.Json;
-using System;
-using System.ComponentModel.DataAnnotations;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments
 {
@@ -10,7 +12,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments
     /// </summary>
     public class ExperimentalFeaturesBody
     {
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ExperimentalFeaturesBody"/> class.
         /// </summary>

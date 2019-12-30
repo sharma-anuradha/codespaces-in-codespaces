@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
@@ -91,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
             var callbackUri = input.EnvironmentVariables[SessionCallbackVaraible];
             var sessionToken = input.EnvironmentVariables[SessionTokenVariable];
             var sessionId = input.EnvironmentVariables[SessionIdVariable];
-            string sessionPath = "Mock-Path";
+            var sessionPath = "Mock-Path";
 
             var task = Task.Run(() =>
             {

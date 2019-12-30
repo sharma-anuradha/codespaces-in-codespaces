@@ -1,7 +1,9 @@
-﻿using System;
+﻿// <copyright file="MessageCodeUtils.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {

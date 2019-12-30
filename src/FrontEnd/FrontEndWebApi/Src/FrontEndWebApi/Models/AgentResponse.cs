@@ -1,4 +1,8 @@
-﻿namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
+﻿// <copyright file="AgentResponse.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
     /// The response object to describe downloadable agent binaries.

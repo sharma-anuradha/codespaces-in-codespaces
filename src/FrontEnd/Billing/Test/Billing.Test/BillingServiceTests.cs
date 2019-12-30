@@ -746,7 +746,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
         public BillingServiceTests()
         {
-            Mock<ISkuCatalog> mockSkuCatelog = GetMockSKuCatalog();
+            var mockSkuCatelog = GetMockSKuCatalog();
             billingService = new BillingService(manager,
                                             new Mock<IControlPlaneInfo>().Object,
                                             mockSkuCatelog.Object,
@@ -768,7 +768,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 await repository.CreateAsync(input, logger);
             }
             //TODO: We should restructure these tests so that time can be an actual measurement that we calculate.
-            Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
+            var shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
             var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
 
@@ -803,7 +803,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         public async Task BillingSummaryIsCreatedFromEvents_GlobalOverride(
            IEnumerable<BillingEvent> inputEvents,
            BillingSummary inputSummary,
+#pragma warning disable xUnit1026 // Theory methods should use all of their parameters
            BillingSummary expectedSummary)
+#pragma warning restore xUnit1026 // Theory methods should use all of their parameters
         {
             foreach (var input in inputEvents)
             {
@@ -818,9 +820,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 BillingOverrideState = BillingOverrideState.BillingDisabled,
                 Priority = 1,
             };
-            await this.overrideRepository.CreateAsync(billOverride, logger);
+            await overrideRepository.CreateAsync(billOverride, logger);
 
-            Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
+            var shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
             var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
 
@@ -841,8 +843,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             {
                 await repository.CreateAsync(input, logger);
             }
-            await this.overrideRepository.CreateAsync(billingOverride, logger);
-            Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
+            await overrideRepository.CreateAsync(billingOverride, logger);
+            var shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
             var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
 
@@ -1039,7 +1041,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
                 }
             };
-            Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
+            var shardUsageTimes = new Dictionary<string, double>();
             // BIlling Service
             var actualSummary = await billingService.CaculateBillingForEnvironmentsWithNoEvents(testPlan,
                                                                                         null,
@@ -1119,7 +1121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     Subscription = Guid.NewGuid().ToString(),
                 }
             };
-            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
+
             var lastBillingSummary = new BillingSummary()
             {
                 PeriodEnd = lastSummaryEndTime,
@@ -1162,7 +1164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var startTime = DateTime.UtcNow.AddHours(-4);
             var lastSummaryEndTime = startTime.AddHours(2);
             var endTime = startTime.AddHours(3);
-            double expectedUsage = 127d / 2; // half hour of available time
+            var expectedUsage = 127d / 2; // half hour of available time
 
             var billEventAvailable = new BillingEvent
             {
@@ -1188,7 +1190,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     Subscription = Guid.NewGuid().ToString(),
                 }
             };
-            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
 
             var lastBillingSummary = new BillingSummary()
             {
@@ -1213,7 +1214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var startTime = DateTime.UtcNow.AddHours(-4);
             var lastSummaryEndTime = startTime.AddHours(2);
             var endTime = startTime.AddHours(3);
-            double expectedUsage = 127d / 4; // 15 mins of available time
+            var expectedUsage = 127d / 4; // 15 mins of available time
 
             var billEventAvailable = new BillingEvent
             {
@@ -1253,7 +1254,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     Subscription = Guid.NewGuid().ToString(),
                 }
             };
-            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
 
             var lastBillingSummary = new BillingSummary()
             {
@@ -1317,7 +1317,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     Subscription = Guid.NewGuid().ToString(),
                 }
             };
-            IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
 
             var lastBillingSummary = new BillingSummary()
             {
@@ -1337,17 +1336,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
         private async Task RunGenerateBillingSummaryTests(VsoPlan plan, IEnumerable<BillingEvent> allBillingEvents, IEnumerable<BillingEvent> oldEvents, double expectedUsage, DateTime start, DateTime lastSummaryTime, DateTime endBillingTime)
         {
-            Mock<IControlPlaneInfo> controlPlane = new Mock<IControlPlaneInfo>();
+            var controlPlane = new Mock<IControlPlaneInfo>();
             IEnumerable<AzureLocation> locations = new List<AzureLocation>() { AzureLocation.WestUs2 };
-            Mock<IControlPlaneStampInfo> stampInfo = new Mock<IControlPlaneStampInfo>();
-            Mock<ISkuCatalog> skuCatalog = new Mock<ISkuCatalog>();
+            var stampInfo = new Mock<IControlPlaneStampInfo>();
+            var skuCatalog = new Mock<ISkuCatalog>();
             controlPlane.SetupGet(x => x.Stamp).Returns(stampInfo.Object);
             stampInfo.SetupGet(x => x.DataPlaneLocations).Returns(locations);
-            Mock<ISkuCatalog> mockSkuCatelog = GetMockSKuCatalog();
+            var mockSkuCatelog = GetMockSKuCatalog();
 
-            Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
-            Mock<IPlanManager> planManager = new Mock<IPlanManager>();
-            Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();
+            var billingEventManager = new Mock<IBillingEventManager>();
+            var planManager = new Mock<IPlanManager>();
+            var logger = new Mock<IDiagnosticsLogger>();
             logger.Setup(x => x.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
 
             billingEventManager.Setup(x => x.GetPlanEventsAsync(It.IsAny<Expression<Func<BillingEvent, bool>>>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(oldEvents));
@@ -1356,14 +1355,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var shardTimes = new Dictionary<string, double>();
 
             // Setup a fake lease
-            Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
-            BillingService sut = new BillingService(billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
+            var lease = new Mock<IClaimedDistributedLease>();
+            var sut = new BillingService(billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
             await sut.BeginAccountCalculations(plan.Plan, start, endBillingTime, logger.Object, AzureLocation.WestUs2, shardTimes);
 
-            BillingSummary resultSummary = argsInput as BillingSummary;
+            var resultSummary = argsInput as BillingSummary;
 
             Assert.NotNull(resultSummary);
             Assert.Equal(endBillingTime, resultSummary.PeriodEnd);

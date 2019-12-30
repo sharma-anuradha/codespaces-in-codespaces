@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Xunit;
 using UsageDictionary = System.Collections.Generic.Dictionary<string, double>;
@@ -57,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 OldValue = "one",
                 NewValue = "two",
             };
-            var bev = await this.manager.CreateEventAsync(
+            var bev = await manager.CreateEventAsync(
                 testPlan,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
@@ -73,14 +72,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var startTime = DateTime.UtcNow;
 
             const int count = 5;
-            for (int i = 1; i <= count; i++)
+            for (var i = 1; i <= count; i++)
             {
                 var stateChange = new BillingStateChange
                 {
                     OldValue = (i - 1).ToString(),
                     NewValue = i.ToString(),
                 };
-                await this.manager.CreateEventAsync(
+                await manager.CreateEventAsync(
                     testPlan,
                     testEnvironment,
                     BillingEventTypes.EnvironmentStateChange,
@@ -91,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 await Task.Delay(1);
             }
 
-            var allEvents = (await this.manager.GetPlanEventsAsync(
+            var allEvents = (await manager.GetPlanEventsAsync(
                 testPlan,
                 startTime,
                 DateTime.UtcNow,
@@ -256,13 +255,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             var startTime = await CreateMockBillingData(includeSummaries: true);
 
-            var accountEvents = (await this.manager.GetPlanEventsAsync(
+            var accountEvents = (await manager.GetPlanEventsAsync(
                 testPlan, startTime, DateTime.UtcNow, eventTypes: null, logger)).ToList();
 
             Assert.Equal(3, accountEvents.Count);
             Assert.True(accountEvents.All(bev => bev.Plan == testPlan));
 
-            var accountEvents2 = (await this.manager.GetPlanEventsAsync(
+            var accountEvents2 = (await manager.GetPlanEventsAsync(
                 testPlan2, startTime, DateTime.UtcNow, eventTypes: null, logger)).ToList();
 
             Assert.Equal(5, accountEvents2.Count);
@@ -271,14 +270,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
         private async Task<DateTime> CreateMockBillingData(bool includeSummaries)
         {
-            await this.manager.CreateEventAsync(
+            await manager.CreateEventAsync(
                 testPlan3,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "zero", NewValue = "one" },
                 logger);
 
-            await this.manager.CreateEventAsync(
+            await manager.CreateEventAsync(
                 testPlan,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
@@ -286,28 +285,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 logger);
 
             await Task.Delay(1);
-            DateTime startTime = DateTime.UtcNow;
+            var startTime = DateTime.UtcNow;
             
-            await this.manager.CreateEventAsync(
+            await manager.CreateEventAsync(
                 testPlan,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "one", NewValue = "two" },
                 logger);
-            await this.manager.CreateEventAsync(
+            await manager.CreateEventAsync(
                 testPlan,
                 testEnvironment2,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "two", NewValue = "three" },
                 logger);
 
-            await this.manager.CreateEventAsync(
+            await manager.CreateEventAsync(
                 testPlan2,
                 testEnvironment,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "one", NewValue = "two" },
                 logger);
-            await this.manager.CreateEventAsync(
+            await manager.CreateEventAsync(
                 testPlan2,
                 testEnvironment2,
                 BillingEventTypes.EnvironmentStateChange,
@@ -319,7 +318,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 await Task.Delay(1);
                 var summaryTime = DateTime.UtcNow;
 
-                await this.manager.CreateEventAsync(
+                await manager.CreateEventAsync(
                     testPlan,
                     null,
                     BillingEventTypes.BillingSummary,
@@ -362,7 +361,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         SubmissionState = BillingSubmissionState.None,
                     },
                     logger); ;
-                await this.manager.CreateEventAsync(
+                await manager.CreateEventAsync(
                     testPlan2,
                     null,
                     BillingEventTypes.BillingSummary,
@@ -409,13 +408,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             await Task.Delay(1);
 
-            await this.manager.CreateEventAsync(
+            await manager.CreateEventAsync(
                 testPlan2,
                 testEnvironment2,
                 BillingEventTypes.EnvironmentStateChange,
                 new BillingStateChange { OldValue = "two", NewValue = "four" },
                 logger);
-            await this.manager.CreateEventAsync(
+            await manager.CreateEventAsync(
                 testPlan2,
                 testEnvironment2,
                 BillingEventTypes.EnvironmentStateChange,

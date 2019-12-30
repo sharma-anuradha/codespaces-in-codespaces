@@ -1,4 +1,4 @@
-﻿// <copyright file="ISystemConfiguration.cs" company="Microsoft">
+﻿// <copyright file="SystemConfigurationExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

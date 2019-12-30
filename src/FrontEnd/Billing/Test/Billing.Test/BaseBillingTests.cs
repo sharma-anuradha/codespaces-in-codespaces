@@ -73,18 +73,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
         public BaseBillingTests()
         {
-            this.loggerFactory = new DefaultLoggerFactory();
-            this.logger = loggerFactory.New();
-            this.repository = new MockBillingEventRepository();
-            this.overrideRepository = new MockBillingOverrideRepository();
-            this.manager = new BillingEventManager(this.repository, this.overrideRepository);
+            loggerFactory = new DefaultLoggerFactory();
+            logger = loggerFactory.New();
+            repository = new MockBillingEventRepository();
+            overrideRepository = new MockBillingOverrideRepository();
+            manager = new BillingEventManager(repository, overrideRepository);
             
             // Setting up the plan manager
-            this.planRepository = new MockPlanRepository();
-            this.planManagerSettings = new PlanManagerSettings();
-            this.planManager = new PlanManager(this.planRepository, this.planManagerSettings);
+            planRepository = new MockPlanRepository();
+            planManagerSettings = new PlanManagerSettings();
+            planManager = new PlanManager(planRepository, planManagerSettings);
             
-            this.serializer = JsonSerializer.CreateDefault();
+            serializer = JsonSerializer.CreateDefault();
         }
 
     }

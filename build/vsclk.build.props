@@ -16,6 +16,7 @@
     <RootNamespace Condition="'$(RootNamespace)'==''">$(RootName).$(MSBuildProjectName)</RootNamespace>
     <IsPublishable Condition="'$(IsPublishable)'==''" >false</IsPublishable>
     <IsPackable Condition="'$(IsPackable)'==''" >false</IsPackable>
+    <TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
   </PropertyGroup>
   
   <!-- Compiler options -->
@@ -174,5 +175,11 @@
       </ItemGroup>
     </When>
   </Choose>
+
+  <!-- Packaging config -->
+  <PropertyGroup>
+    <!-- Disable warning about generating semver 2.0 package versions. We don't need to support legacy NuGet clients. -->
+    <NoWarn>$(NoWarn);NU5105</NoWarn>
+  </PropertyGroup>
 
 </Project>

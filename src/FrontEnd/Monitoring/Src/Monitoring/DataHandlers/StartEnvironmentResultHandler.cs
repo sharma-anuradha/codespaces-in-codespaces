@@ -1,7 +1,9 @@
-﻿// <copyright file="StartEnviornmentResultHandler.cs" company="Microsoft">
+﻿// <copyright file="StartEnvironmentResultHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -9,8 +11,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Newtonsoft.Json;
-using System;
-using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 {
@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         /// <param name="environmentManager">Environment Manager.</param>
         public StartEnvironmentResultHandler(ICloudEnvironmentManager environmentManager)
         {
-            this.cloudEnvironmentManager = environmentManager;
+            cloudEnvironmentManager = environmentManager;
         }
 
         /// <inheritdoc/>
@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
                        {
                            // Shutdown the environment if the environment has failed to start.
-                           await this.cloudEnvironmentManager.ForceEnvironmentShutdownAsync(cloudEnvironment.Id, childLogger);
+                           await cloudEnvironmentManager.ForceEnvironmentShutdownAsync(cloudEnvironment.Id, childLogger);
                            return;
                        }
                    }

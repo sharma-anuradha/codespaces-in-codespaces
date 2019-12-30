@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
                 Name = "testA",
             };
 
-            string resId = $"/subscriptions/{Guid.Empty}/resourceGroups/testRG/providers/{VsoPlanInfo.ProviderName}/{VsoPlanInfo.PlanResourceType}/testA";
+            var resId = $"/subscriptions/{Guid.Empty}/resourceGroups/testRG/providers/{VsoPlanInfo.ProviderName}/{VsoPlanInfo.PlanResourceType}/testA";
             Assert.Equal(resId, plan.ResourceId);
         }
 
@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public void ParsePlanId()
         {
-            string resId = $"/subscriptions/{Guid.Empty}/resourceGroups/testRG/providers/{VsoPlanInfo.ProviderName}/{VsoPlanInfo.PlanResourceType}/testA";
+            var resId = $"/subscriptions/{Guid.Empty}/resourceGroups/testRG/providers/{VsoPlanInfo.ProviderName}/{VsoPlanInfo.PlanResourceType}/testA";
             Assert.True(VsoPlanInfo.TryParse(resId, out var plan));
             Assert.Equal(Guid.Empty.ToString(), plan.Subscription);
             Assert.Equal("testRG", plan.ResourceGroup);
@@ -45,21 +45,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public void ParsePlanInvalid()
         {
-            string invalidResId = $"/subscriptions/{Guid.Empty}/resourceGroups/testRG/providers/{VsoPlanInfo.ProviderName}/testA";
+            var invalidResId = $"/subscriptions/{Guid.Empty}/resourceGroups/testRG/providers/{VsoPlanInfo.ProviderName}/testA";
             Assert.False(VsoPlanInfo.TryParse(invalidResId, out _));
         }
 
         [Fact]
         public void ParsePlanInvalidSubscription()
         {
-            string invalidResId = $"/subscriptions/1234/resourceGroups/testRG/{VsoPlanInfo.ProviderName}/{VsoPlanInfo.PlanResourceType}/testA";
+            var invalidResId = $"/subscriptions/1234/resourceGroups/testRG/{VsoPlanInfo.ProviderName}/{VsoPlanInfo.PlanResourceType}/testA";
             Assert.False(VsoPlanInfo.TryParse(invalidResId, out _));
         }
 
         [Fact]
         public void ParsePlanInvalidName()
         {
-            string invalidResId = $"/subscriptions/{Guid.Empty}/resourceGroups/testRG/{VsoPlanInfo.ProviderName}/{VsoPlanInfo.PlanResourceType}/testA?api-version=1";
+            var invalidResId = $"/subscriptions/{Guid.Empty}/resourceGroups/testRG/{VsoPlanInfo.ProviderName}/{VsoPlanInfo.PlanResourceType}/testA?api-version=1";
             Assert.False(VsoPlanInfo.TryParse(invalidResId, out _));
         }
     }

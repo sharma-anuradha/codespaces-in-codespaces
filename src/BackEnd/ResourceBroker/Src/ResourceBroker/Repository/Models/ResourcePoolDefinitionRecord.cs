@@ -2,8 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Newtonsoft.Json;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public string VersionCode { get; set; }
 
         /// <summary>
-        /// Gets or sets the resource pool dimensions
+        /// Gets or sets the resource pool dimensions.
         /// </summary>
         [JsonProperty(PropertyName = "dimensions")]
         public IDictionary<string, string> Dimensions { get; set; }

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// <copyright file="CloudEnvironmentLogRecord.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
 {

@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="environmentManagerSettings">Target environment manager settings.</param>
-        /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository</param>
+        /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddEnvironmentManager(
             this IServiceCollection services,

@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                       throw new ResourceNotFoundException(heartBeatInput.ResourceId);
                   }
 
-                  ResourceHeartBeatRecord resourceHeartBeatRecord = Mapper.Map<ResourceHeartBeatRecord>(heartBeatInput);
+                  var resourceHeartBeatRecord = Mapper.Map<ResourceHeartBeatRecord>(heartBeatInput);
                   var mergedCollectedDataList = MergeCollectedData(resourceRecord.HeartBeatSummary?.MergedHeartBeat?.CollectedDataList, resourceHeartBeatRecord.CollectedDataList);
                   resourceHeartBeatRecord.CollectedDataList = mergedCollectedDataList;
 

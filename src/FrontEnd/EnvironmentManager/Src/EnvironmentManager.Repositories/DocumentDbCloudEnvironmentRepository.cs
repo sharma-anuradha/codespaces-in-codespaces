@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -13,7 +12,6 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
 {
@@ -104,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                       WHERE c.state = @state
                       AND c.location = @location
                       AND c.skuName = @skuName",
-            new SqlParameterCollection
+                new SqlParameterCollection
               {
                 new SqlParameter { Name = "@state", Value = state },
                 new SqlParameter { Name = "@location", Value = location },

@@ -110,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         .FluentAddValue(nameof(r.Status), r.Status.ToString());
                     return r;
                 },
-                (ex, childLogger) => new FileShareProviderAssignResult() { Status = OperationState.Failed , ErrorReason = ex.Message},
+                (ex, childLogger) => new FileShareProviderAssignResult() { Status = OperationState.Failed, ErrorReason = ex.Message },
                 swallowException: true);
         }
 
@@ -131,7 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             FileShareProviderCreateState nextState;
             AzureResourceInfo resultResourceInfo;
             PrepareFileShareTaskInfo prepareTaskInfo = default;
-            string continuationToken = input.ContinuationToken;
+            var continuationToken = input.ContinuationToken;
 
             if (continuationToken == null)
             {

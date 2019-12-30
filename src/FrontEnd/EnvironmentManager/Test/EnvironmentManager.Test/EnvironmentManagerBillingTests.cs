@@ -28,12 +28,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         [Fact]
         public async Task CreateEnvironmentInitializesBillingState()
         {
-            await this.planRepository.CreateAsync(testVsoPlan, this.logger);
+            await planRepository.CreateAsync(testVsoPlan, logger);
 
             var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
 
             Assert.Collection(
-                this.billingEventRepository.Values,
+                billingEventRepository.Values,
                 (billingEvent) => VerifyEnvironmentStateChange(
                     testEnvironment, billingEvent, CloudEnvironmentState.Created, CloudEnvironmentState.Provisioning));
         }
@@ -41,14 +41,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         [Fact]
         public async Task UpdateEnvironmentUpdatesBillingState()
         {
-            await this.planRepository.CreateAsync(testVsoPlan, this.logger);
+            await planRepository.CreateAsync(testVsoPlan, logger);
             var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
-            this.billingEventRepository.Clear();
+            billingEventRepository.Clear();
 
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
 
             Assert.Collection(
-                this.billingEventRepository.Values,
+                billingEventRepository.Values,
                 (billingEvent) => VerifyEnvironmentStateChange(
                     testEnvironment, billingEvent, CloudEnvironmentState.Provisioning, CloudEnvironmentState.Available));
         }
@@ -56,20 +56,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         [Fact]
         public async Task UnavailableEnvironmentUpdatesBillingState()
         {
-            await this.planRepository.CreateAsync(testVsoPlan, this.logger);
+            await planRepository.CreateAsync(testVsoPlan, logger);
             var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
-            this.billingEventRepository.Clear();
+            billingEventRepository.Clear();
 
             // Simulate missing workspace, indicating unavailable connection to cloud environment.
-            this.workspaceRepository.MockGetStatus = (workspaceId) => null;
+            workspaceRepository.MockGetStatus = (workspaceId) => null;
 
             // The GetEnvironment call should update the environment state when it discovers the missing connection.
-            var testEnvironment2 = await this.environmentManager.GetEnvironmentAsync(
-                testEnvironment.Id, testUserId, this.logger);
+            var testEnvironment2 = await environmentManager.GetEnvironmentAsync(
+                testEnvironment.Id, testUserId, logger);
 
             Assert.Collection(
-                this.billingEventRepository.Values,
+                billingEventRepository.Values,
                 (billingEvent) => VerifyEnvironmentStateChange(
                     testEnvironment, billingEvent, CloudEnvironmentState.Available, CloudEnvironmentState.Unavailable));
         }
@@ -77,15 +77,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
         [Fact]
         public async Task DeleteEnvironmentUpdatesBillingState()
         {
-            await this.planRepository.CreateAsync(testVsoPlan, this.logger);
+            await planRepository.CreateAsync(testVsoPlan, logger);
             var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
-            this.billingEventRepository.Clear();
+            billingEventRepository.Clear();
 
-            await this.environmentManager.DeleteEnvironmentAsync(testEnvironment.Id, testUserId, this.logger);
+            await environmentManager.DeleteEnvironmentAsync(testEnvironment.Id, testUserId, logger);
 
             Assert.Collection(
-                this.billingEventRepository.Values,
+                billingEventRepository.Values,
                 (billingEvent) => VerifyEnvironmentStateChange(
                     testEnvironment, billingEvent, CloudEnvironmentState.Available, CloudEnvironmentState.Deleted));
         }

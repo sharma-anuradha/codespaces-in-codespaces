@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="PlanWorker.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -25,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         public PlanWorker(IPlanManager planManager, IDiagnosticsLogger diagnosticsLogger)
         {
             this.planManager = planManager;
-            this.logger = diagnosticsLogger.NewChildLogger();
+            logger = diagnosticsLogger.NewChildLogger();
         }
 
         /// <summary>

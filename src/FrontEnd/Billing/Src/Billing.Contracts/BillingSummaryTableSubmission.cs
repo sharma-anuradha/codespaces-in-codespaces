@@ -2,8 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.Azure.Cosmos.Table;
 using System;
+using Microsoft.Azure.Cosmos.Table;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -12,7 +12,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingSummaryTableSubmission : TableEntity
     {
-
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingSummaryTableSubmission"/> class.
         /// </summary>
@@ -23,8 +22,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingSummaryTableSubmission"/> class.
         /// </summary>
-        /// <param name="partionKey">used as the partitionKey</param>
-        /// <param name="rowKey">used as the rowKey</param>
+        /// <param name="partionKey">used as the partitionKey.</param>
+        /// <param name="rowKey">used as the rowKey.</param>
         public BillingSummaryTableSubmission(string partionKey, string rowKey)
         {
             PartitionKey = partionKey;

@@ -34,10 +34,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 {
                     try
                     {
-                        string content = await response.Content.ReadAsStringAsync();
+                        var content = await response.Content.ReadAsStringAsync();
                         var details = (JObject)JsonConvert.DeserializeObject(content);
                         ThrowVersionDetails(response.StatusCode, details);
-                        ThrowServerJsonException(response.StatusCode, details);
+                        ThrowServerJsonException(details);
                     }
                     catch (RemoteException)
                     {
@@ -75,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
         }
 
-        private static void ThrowServerJsonException(HttpStatusCode status, JObject details)
+        private static void ThrowServerJsonException(JObject details)
         {
             var errorDetails = details.ToObject<ErrorDetails>();
 

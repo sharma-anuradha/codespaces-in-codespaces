@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         public IActionResult GetCurrent(
             [FromServices]IDiagnosticsLogger logger)
         {
-            var allLocations = this.controlPlaneInfo.GetAllDataPlaneLocations().ToArray();
+            var allLocations = controlPlaneInfo.GetAllDataPlaneLocations().ToArray();
             var result = new LocationsResult
             {
                 Current = locationProvider.CurrentLocation,
@@ -105,7 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IControlPlaneStampInfo owningStamp;
             try
             {
-                owningStamp = this.controlPlaneInfo.GetOwningControlPlaneStamp(azureLocation);
+                owningStamp = controlPlaneInfo.GetOwningControlPlaneStamp(azureLocation);
             }
             catch (NotSupportedException)
             {
@@ -113,14 +113,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (owningStamp.Location != this.locationProvider.CurrentLocation)
+            if (owningStamp.Location != locationProvider.CurrentLocation)
             {
                 return RedirectToLocation(owningStamp);
             }
 
             var profile = currentUserProvider.GetProfile();
 
-            var skus = this.skuCatalog.EnabledInternalHardware().Values
+            var skus = skuCatalog.EnabledInternalHardware().Values
                 .Where((sku) => sku.SkuLocations.Contains(azureLocation))
                 .Where((sku) => ProfileUtils.IsSkuVisibleToProfile(profile, sku));
 

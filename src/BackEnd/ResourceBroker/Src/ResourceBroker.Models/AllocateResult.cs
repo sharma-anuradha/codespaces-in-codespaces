@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         public AzureResourceInfo AzureResourceInfo { get; set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the time the resource was created.
         /// </summary>
         public DateTime Created { get; set; }
     }

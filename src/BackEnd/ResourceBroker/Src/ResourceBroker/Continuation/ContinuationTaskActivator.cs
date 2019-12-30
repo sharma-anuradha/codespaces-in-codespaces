@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// Initializes a new instance of the <see cref="ContinuationTaskActivator"/> class.
         /// </summary>
         /// <param name="handlers">Registered handlers in the system.</param>
-        /// <param name="messagePump">Message pump that can be used to put next 
+        /// <param name="messagePump">Message pump that can be used to put next
         /// messages onto the queue.</param>
         public ContinuationTaskActivator(
             IEnumerable<IContinuationTaskMessageHandler> handlers,

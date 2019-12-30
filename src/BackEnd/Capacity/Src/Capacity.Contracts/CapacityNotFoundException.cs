@@ -49,6 +49,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
         /// Gets the azure quota name.
         /// </summary>
         public string Quota { get; }
-
     }
 }

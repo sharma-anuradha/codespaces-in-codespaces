@@ -38,9 +38,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
             Requires.NotNullOrWhiteSpace(certificateSettings.Audience, nameof(certificateSettings.Audience));
             Requires.NotNull(logger, nameof(logger));
 
-            this.issuer = certificateSettings.Issuer;
-            this.audience = certificateSettings.Audience;
-            this.jwtTokenGenerator = new AsyncLazy<JwtTokenGenerator>(async () => new JwtTokenGenerator(await certificateProvider.GetValidCertificatesAsync(logger), logger));
+            issuer = certificateSettings.Issuer;
+            audience = certificateSettings.Audience;
+            jwtTokenGenerator = new AsyncLazy<JwtTokenGenerator>(async () => new JwtTokenGenerator(await certificateProvider.GetValidCertificatesAsync(logger), logger));
         }
 
         /// <inheritdoc/>
@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
             Requires.NotNullOrWhiteSpace(identifier, nameof(identifier));
             Requires.NotNull(logger, nameof(logger));
 
-            var tokenGenerator = await this.jwtTokenGenerator.Value;
+            var tokenGenerator = await jwtTokenGenerator.Value;
             var expiresAt = DateTime.UtcNow.Add(expiresAfter);
             var payload = tokenGenerator.NewJwtPayload(issuer, audience, identifier, null, expiresAt, logger);
             return tokenGenerator.WriteToken(payload);

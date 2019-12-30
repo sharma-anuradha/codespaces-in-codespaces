@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
-    /// Contract for submission 
+    /// Contract for submission.
     /// </summary>
     public class BillingSummaryQueueSubmission
     {

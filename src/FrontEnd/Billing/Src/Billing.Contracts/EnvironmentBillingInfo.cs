@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentInfo.cs" company="Microsoft">
+﻿// <copyright file="EnvironmentBillingInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

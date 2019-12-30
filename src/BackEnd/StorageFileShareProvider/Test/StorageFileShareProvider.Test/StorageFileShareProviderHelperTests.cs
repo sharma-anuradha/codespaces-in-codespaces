@@ -194,9 +194,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
                 var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => providerHelper.StartPrepareFileShareAsync(sa, new[] { linuxCopyItem, windowsCopyItem }, STORAGE_SIZE_IN_GB, logger)));
 
-                PrepareFileShareStatus[] fileShareStatus  = new PrepareFileShareStatus[NUM_STORAGE_TO_CREATE];
+                var fileShareStatus  = new PrepareFileShareStatus[NUM_STORAGE_TO_CREATE];
 
-                Stopwatch stopWatch = new Stopwatch();
+                var stopWatch = new Stopwatch();
                 stopWatch.Start();
 
                 while (fileShareStatus.Any(x => x != PrepareFileShareStatus.Succeeded) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))

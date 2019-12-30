@@ -119,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
 
         private async Task<byte[]> GetRawCertificateBytesAsync(string certificateId)
         {
-            var secret = await this.controlPlaneAccessor.GetKeyVaultSecretAsync(certificateSettings.CertificateName, certificateId);
+            var secret = await controlPlaneAccessor.GetKeyVaultSecretAsync(certificateSettings.CertificateName, certificateId);
             return Convert.FromBase64String(secret);
         }
     }

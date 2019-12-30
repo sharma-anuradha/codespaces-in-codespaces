@@ -88,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             var b32 = Base32.ToBase32String(sha);
 
             var kid = new StringBuilder();
-            for (int i = 0; i < 12; i++)
+            for (var i = 0; i < 12; i++)
             {
                 kid.Append(b32.Substring(i * 4, 4));
                 if (i != 11)

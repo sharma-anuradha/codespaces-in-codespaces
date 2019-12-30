@@ -1,27 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
-using System.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
@@ -46,8 +37,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             planSettings.Init(mockSystemConfiguration.Object);
 
-            this.accountRepository = new MockPlanRepository();
-            this.accountManager = new PlanManager(this.accountRepository, planSettings);
+            accountRepository = new MockPlanRepository();
+            accountManager = new PlanManager(accountRepository, planSettings);
         }
 
         public static TheoryData<IEnumerable<VsoPlan>, bool, Type> CapacityWarningTests = new TheoryData<IEnumerable<VsoPlan>, bool, Type>

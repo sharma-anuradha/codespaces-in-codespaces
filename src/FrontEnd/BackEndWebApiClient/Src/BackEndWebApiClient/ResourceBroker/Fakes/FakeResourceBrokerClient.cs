@@ -98,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             await Task.CompletedTask;
 
-            _ = CreateDockerContainerWithCopiedCLI(this.dockerImageName, this.publishedCLIPath, startComputeRequestBody, computeResourceId);
+            _ = CreateDockerContainerWithCopiedCLI(dockerImageName, publishedCLIPath, startComputeRequestBody, computeResourceId);
         }
 
         private string CreateDockerContainerWithCopiedCLI(string image, string cliPublishedpath, StartComputeRequestBody startComputeRequestBody, Guid computeResourceId)
@@ -123,13 +123,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
                     throw new DirectoryNotFoundException($"{cliPublishedpath} not found. Make sure you publish the cli and point appsettings.Development.json at it.");
                 }
 
-                string vsoCliExecutable = Path.Combine(cliPublishedpath, "vso");
+                var vsoCliExecutable = Path.Combine(cliPublishedpath, "vso");
                 if (!File.Exists(vsoCliExecutable))
                 {
                     throw new FileNotFoundException($"{vsoCliExecutable} not found. Publish VSO CLI and check the output.");
                 }
-                // End sanity test
 
+                // End sanity test
                 var dockerCopyCommandLine = new StringBuilder();
                 dockerCopyCommandLine.Append("cp ");
                 dockerCopyCommandLine.Append($"{cliPublishedpath}/. "); // Added /. to copy the contents of the directory

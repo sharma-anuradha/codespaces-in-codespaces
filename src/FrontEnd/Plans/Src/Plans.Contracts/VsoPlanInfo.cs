@@ -80,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         public static bool operator ==(VsoPlanInfo a, VsoPlanInfo b) =>
-           (object)a == null ? (object)b == null : a.Equals(b);
+           a is null ? b is null : a.Equals(b);
 
         public static bool operator !=(VsoPlanInfo a, VsoPlanInfo b) => !(a == b);
 
@@ -111,9 +111,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 return false;
             }
 
-            string subscription = parts[2];
-            string resourceGroup = parts[4];
-            string name = parts[8];
+            var subscription = parts[2];
+            var resourceGroup = parts[4];
+            var name = parts[8];
 
             if (!IsValidSubscriptionId(subscription) ||
                 !IsValidResourceGroupName(resourceGroup) ||
@@ -137,11 +137,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <returns>True if all plan properties are equal (including location).</returns>
         public bool Equals(VsoPlanInfo other)
         {
-            return (object)other != null &&
-                this.Subscription == other.Subscription &&
-                this.ResourceGroup == other.ResourceGroup &&
-                this.Name == other.Name &&
-                this.Location == other.Location;
+            return other != null &&
+                Subscription == other.Subscription &&
+                ResourceGroup == other.ResourceGroup &&
+                Name == other.Name &&
+                Location == other.Location;
         }
 
         /// <summary> Tests if this plan equals another object.</summary>

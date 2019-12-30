@@ -43,6 +43,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <summary>
+        /// Gets the loop delay between each resource being processed.
+        /// </summary>
+        protected static TimeSpan LoopDelay { get; } = TimeSpan.FromMilliseconds(500);
+
+        /// <summary>
         /// Gets the name of the task. Usually the name of the implementing class.
         /// </summary>
         protected abstract string TaskName { get; }
@@ -51,11 +56,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// Gets the base message name to use for log messages in this task.
         /// </summary>
         protected abstract string LogBaseName { get; }
-
-        /// <summary>
-        /// Loop delay.
-        /// </summary>
-        protected static TimeSpan LoopDelay = TimeSpan.FromMilliseconds(500);
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{TaskName}Lease");
 
@@ -70,7 +70,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IResourceNameBuilder ResourceNameBuilder { get; }
 
         private bool Disposed { get; set; }
-
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)

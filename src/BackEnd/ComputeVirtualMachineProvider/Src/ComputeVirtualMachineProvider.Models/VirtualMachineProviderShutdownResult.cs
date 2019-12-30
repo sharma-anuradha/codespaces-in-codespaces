@@ -1,4 +1,4 @@
-﻿// <copyright file="VirtualMachineProviderCleanupResult.cs" company="Microsoft">
+﻿// <copyright file="VirtualMachineProviderShutdownResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

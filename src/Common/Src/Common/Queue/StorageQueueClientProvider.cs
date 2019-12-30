@@ -26,7 +26,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             cloudQueueClientTask = InitQueueClient(controlPlaneAzureResourceAccessor);
         }
 
-
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageQueueClientProvider"/> class.
         /// </summary>

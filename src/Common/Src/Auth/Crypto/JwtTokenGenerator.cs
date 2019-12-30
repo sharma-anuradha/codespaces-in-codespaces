@@ -109,9 +109,9 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         /// <returns>Token created by signing the payload.</returns>
         public string WriteToken(JwtPayload payload)
         {
-            var header = new JwtHeader(this.primary.SigningCredentials)
+            var header = new JwtHeader(primary.SigningCredentials)
             {
-                { "kid", this.primary.SigningKeyId },
+                { "kid", primary.SigningKeyId },
             };
 
             var token = new JwtSecurityToken(header, payload);
@@ -137,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 
             try
             {
-                handler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+                handler.ValidateToken(token, validationParameters, out var validatedToken);
                 var jwtToken = validatedToken as JwtSecurityToken;
                 return jwtToken?.Payload as JwtPayload;
             }
@@ -180,19 +180,19 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         /// </summary>
         private SecurityKey[] CustomSigningKeyResolver(string tkn, SecurityToken stkn, string kid, TokenValidationParameters validationParameters)
         {
-            if (kid == this.primary.SigningKeyId)
+            if (kid == primary.SigningKeyId)
             {
-                return this.primary.SigningKey;
+                return primary.SigningKey;
             }
 
-            return this.secondaries
+            return secondaries
                 .SingleOrDefault(s => (kid == s.SigningKeyId))
                 ?.SigningKey;
         }
 
         private Credentials GetCredentials(byte[] rawBytes, bool createSigningCredentials, IDiagnosticsLogger logger)
         {
-            Credentials credentials = new Credentials();
+            var credentials = new Credentials();
             try
             {
                 credentials.SigningKeyId = Certificates.GenerateKidForPublicKey(rawBytes);

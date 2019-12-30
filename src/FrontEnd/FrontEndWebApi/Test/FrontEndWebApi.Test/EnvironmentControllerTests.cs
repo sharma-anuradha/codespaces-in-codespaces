@@ -48,8 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             planSettings.Init(mockSystemConfiguration.Object);
 
-            this.accountRepository = new MockPlanRepository();
-            this.accountManager = new PlanManager(this.accountRepository, planSettings);
+            accountRepository = new MockPlanRepository();
+            accountManager = new PlanManager(accountRepository, planSettings);
         }
 
         [Fact]

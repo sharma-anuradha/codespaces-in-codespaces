@@ -1,10 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -25,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             }
 
             // 20 environments exist
-            var listEnvironments = await this.environmentManager.ListEnvironmentsAsync(
+            var listEnvironments = await environmentManager.ListEnvironmentsAsync(
                                                                     null,
                                                                     null,
                                                                     testPlan.ResourceId,
@@ -39,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(StatusCodes.Status403Forbidden, result.HttpStatusCode);
 
             // Delete 1 environment.
-            var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
+            var deleteResult = await environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
                                                                         environmentToDelete.CloudEnvironment.OwnerId,
                                                                         logger);
             Assert.True(deleteResult);

@@ -100,7 +100,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
                 // Spawn out the tasks and run in parallel
                 TaskHelper.RunBackground(
                     $"{LogBaseName}_delayed_warmup",
-                    (childLogger) => {
+                    (childLogger) =>
+                    {
                         childLogger.FluentAddValue("ServiceName", service.GetType().Name);
 
                         return service.BackgroundWarmupCompletedAsync(childLogger);

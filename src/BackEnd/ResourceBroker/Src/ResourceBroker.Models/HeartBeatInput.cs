@@ -37,6 +37,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// </summary>
         [JsonProperty("collectedDataList")]
         public IEnumerable<CollectedData> CollectedDataList { get; set; }
-
     }
 }

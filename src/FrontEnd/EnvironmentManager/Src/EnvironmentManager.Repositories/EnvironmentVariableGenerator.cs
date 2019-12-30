@@ -116,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// </summary>
     public abstract class EnvironmentVariableStrategy
     {
-        private static readonly List<string> schemas = new List<string> { "http", "https" };
+        private static readonly List<string> Schemas = new List<string> { "http", "https" };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentVariableStrategy"/> class.
@@ -147,7 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         {
             if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
             {
-                if (schemas.Contains(uri.Scheme))
+                if (Schemas.Contains(uri.Scheme))
                 {
                     return true;
                 }
@@ -243,8 +243,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// </summary>
     public class EnvVarServiceEndpoint : EnvironmentVariableStrategy
     {
-        private Uri ServiceUri { get; }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvVarServiceEndpoint"/> class.
         /// </summary>
@@ -256,6 +254,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
 
             ServiceUri = serviceUri;
         }
+
+        private Uri ServiceUri { get; }
 
         /// <inheritdoc/>
         public override Tuple<string, string> GetEnvironmentVariable()
@@ -399,7 +399,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <inheritdoc/>
         public override Tuple<string, string> GetEnvironmentVariable()
         {
-            return new Tuple<string, string>(EnvironmentVariableConstants.SessionToken, this.accessToken);
+            return new Tuple<string, string>(EnvironmentVariableConstants.SessionToken, accessToken);
         }
     }
 
@@ -420,7 +420,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <inheritdoc/>
         public override Tuple<string, string> GetEnvironmentVariable()
         {
-            return new Tuple<string, string>(EnvironmentVariableConstants.SessionCascadeToken, this.cascadeToken);
+            return new Tuple<string, string>(EnvironmentVariableConstants.SessionCascadeToken, cascadeToken);
         }
     }
 
@@ -569,7 +569,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// </summary>
         /// <param name="cloudEnvironmentOptions">THe cloud environment options.</param>
         public FeatureCustomContainers(CloudEnvironmentOptions cloudEnvironmentOptions)
-            : base (cloudEnvironmentOptions)
+            : base(cloudEnvironmentOptions)
         {
         }
 

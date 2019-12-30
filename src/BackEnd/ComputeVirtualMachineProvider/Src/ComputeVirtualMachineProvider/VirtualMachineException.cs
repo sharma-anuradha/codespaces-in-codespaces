@@ -1,4 +1,4 @@
-﻿// <copyright file="LinuxVirtualMachineManager.cs" company="Microsoft">
+﻿// <copyright file="VirtualMachineException.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -14,15 +14,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
         }
 
-        public VirtualMachineException(string message) : base(message)
+        public VirtualMachineException(string message)
+            : base(message)
         {
         }
 
-        public VirtualMachineException(string message, Exception innerException) : base(message, innerException)
+        public VirtualMachineException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
 
-        protected VirtualMachineException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected VirtualMachineException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
         {
         }
     }

@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Microsoft.Net.Http.Headers;
@@ -101,12 +100,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     return "Visual Studio Online is having trouble making an outbound HTTP connection. Please check your proxy settings or see https://aka.ms/vsls-http-connection-error for more details.";
 
                 case (HttpStatusCode)429:
-                    string retryAfterMessage = "Please try again later.";
-                    IEnumerable<string> retryAfterValues = response.Headers.GetValues(HeaderNames.RetryAfter);
-                    IEnumerator<string> enumerator = retryAfterValues.GetEnumerator();
+                    var retryAfterMessage = "Please try again later.";
+                    var retryAfterValues = response.Headers.GetValues(HeaderNames.RetryAfter);
+                    var enumerator = retryAfterValues.GetEnumerator();
                     if (enumerator.MoveNext())
                     {
-                        string retryAfterValue = enumerator.Current;
+                        var retryAfterValue = enumerator.Current;
                         if (!string.IsNullOrEmpty(retryAfterValue))
                         {
                             retryAfterMessage = string.Format("Please try again in {0} seconds.", retryAfterValue);

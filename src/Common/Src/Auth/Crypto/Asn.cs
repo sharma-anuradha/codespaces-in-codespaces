@@ -36,28 +36,28 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         {
             // The number of bytes needed to represent the length of the element.
             byte lengthLength = 0;
-            int lengthTemp = contentLength;
+            var lengthTemp = contentLength;
             while (lengthTemp > 0)
             {
-                lengthTemp = lengthTemp >> 8;
+                lengthTemp >>= 8;
                 lengthLength++;
             }
 
-            int headerLength = 2; // Tag is one byte, first size byte is one byte.
+            var headerLength = 2; // Tag is one byte, first size byte is one byte.
             if (contentLength > 0x7F) // If the length is more than 127, the first size byte represents the length of the length.
             {
                 headerLength += lengthLength;
             }
 
-            byte[] ret = new byte[headerLength];
-            int index = 0;
+            var ret = new byte[headerLength];
+            var index = 0;
             ret[index++] = (byte)tag;
 
             if (contentLength > 0x7F)
             {
                 ret[index++] = (byte)(0x80 + lengthLength);
                 lengthTemp = contentLength;
-                for (int i = lengthLength - 1; i >= 0; i--)
+                for (var i = lengthLength - 1; i >= 0; i--)
                 {
                     // Most significant byte comes first.
                     ret[index++] = (byte)((lengthTemp >> (i * 8)) & 0xFF);
@@ -73,9 +73,9 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 
         public static byte[] GenerateElementOid(byte[] bytes)
         {
-            byte[] header = GenerateHeader(Tag.Oid, bytes.Length);
+            var header = GenerateHeader(Tag.Oid, bytes.Length);
 
-            byte[] ret = new byte[header.Length + bytes.Length];
+            var ret = new byte[header.Length + bytes.Length];
             Array.Copy(header, 0, ret, 0, header.Length);
             Array.Copy(bytes, 0, ret, header.Length, bytes.Length);
 
@@ -90,9 +90,9 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
         public static byte[] GenerateElementBitstring(byte[] bits)
         {
             // Need one zero byte for bitstring.
-            byte[] header = GenerateHeader(Tag.BitString, bits.Length + 1);
+            var header = GenerateHeader(Tag.BitString, bits.Length + 1);
 
-            byte[] ret = new byte[header.Length + bits.Length + 1];
+            var ret = new byte[header.Length + bits.Length + 1];
             Array.Copy(header, 0, ret, 0, header.Length);
             ret[header.Length] = 0x00;
             Array.Copy(bits, 0, ret, header.Length + 1, bits.Length);
@@ -102,13 +102,13 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
 
         public static byte[] GenerateElementSequence(byte[][] values)
         {
-            int totalContentLength = values.Sum(x => x.Length);
-            byte[] header = GenerateHeader(Tag.Sequence, totalContentLength);
+            var totalContentLength = values.Sum(x => x.Length);
+            var header = GenerateHeader(Tag.Sequence, totalContentLength);
 
-            byte[] ret = new byte[header.Length + totalContentLength];
+            var ret = new byte[header.Length + totalContentLength];
             Array.Copy(header, 0, ret, 0, header.Length);
 
-            int currentIndex = header.Length;
+            var currentIndex = header.Length;
             foreach (var element in values)
             {
                 Array.Copy(element, 0, ret, currentIndex, element.Length);
@@ -123,12 +123,12 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             // In ASN.1, the modulus is stored in twos-complement. This means that if
             // the first bit of the number is set, we need to pad it with a zero byte
             // in order to make sure it is not interpreted as a negative number.
-            bool needsZeroPadding = (number[0] & 0x80) == 0x80;
-            int contentLength = number.Length + (needsZeroPadding ? 1 : 0);
+            var needsZeroPadding = (number[0] & 0x80) == 0x80;
+            var contentLength = number.Length + (needsZeroPadding ? 1 : 0);
 
-            byte[] header = GenerateHeader(Tag.Integer, contentLength);
+            var header = GenerateHeader(Tag.Integer, contentLength);
 
-            byte[] ret = new byte[header.Length + contentLength];
+            var ret = new byte[header.Length + contentLength];
             Array.Copy(header, 0, ret, 0, header.Length);
             if (needsZeroPadding)
             {

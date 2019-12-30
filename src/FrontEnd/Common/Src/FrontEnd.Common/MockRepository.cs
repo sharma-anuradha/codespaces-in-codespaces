@@ -26,13 +26,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private readonly ConcurrentDictionary<string, T> store = new ConcurrentDictionary<string, T>();
         private readonly JsonSerializer jsonSerializer = new JsonSerializer();
 
-        public IEnumerable<string> Keys => this.store.Keys;
+        public IEnumerable<string> Keys => store.Keys;
 
-        public IEnumerable<T> Values => this.store.Values;
+        public IEnumerable<T> Values => store.Values;
 
-        public int Count => this.store.Count;
+        public int Count => store.Count;
 
-        public T this[string key] => this.store[key];
+        public T this[string key] => store[key];
 
         public Task<T> CreateAsync(T document, IDiagnosticsLogger logger)
         {
@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(document.Id, nameof(document.Id));
             TestSerialization(document);
 
-            if (!this.store.TryAdd(document.Id, document))
+            if (!store.TryAdd(document.Id, document))
             {
                 throw new InvalidOperationException("Mock: Cannot add entity: " + document.Id);
             }
@@ -54,27 +54,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(document.Id, nameof(document.Id));
             TestSerialization(document);
 
-            return Task.FromResult<T>(this.store.AddOrUpdate(document.Id, document, (id, oldDocument) => document));
+            return Task.FromResult<T>(store.AddOrUpdate(document.Id, document, (id, oldDocument) => document));
         }
 
         public Task<bool> DeleteAsync(DocumentDbKey key, IDiagnosticsLogger logger)
         {
-            return Task.FromResult(this.store.TryRemove(key.Id, out _));
+            return Task.FromResult(store.TryRemove(key.Id, out _));
         }
 
         public Task<T> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)
         {
-            return Task.FromResult<T>(this.store[key.Id]);
+            return Task.FromResult<T>(store[key.Id]);
         }
 
         public Task<IEnumerable<T>> GetWhereAsync(Expression<Func<T, bool>> where, IDiagnosticsLogger logger, Func<IEnumerable<T>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
-            return Task.FromResult<IEnumerable<T>>(this.store.Values.Where(where.Compile()));
+            return Task.FromResult<IEnumerable<T>>(store.Values.Where(where.Compile()));
         }
 
         public Task<IEnumerable<TR>> QueryAsync<TR>(Func<IOrderedQueryable<T>, IQueryable<TR>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
-            return Task.FromResult<IEnumerable<TR>>(queryBuilder(this.store.Values.AsQueryable().OrderBy(s => 1)).AsEnumerable());
+            return Task.FromResult<IEnumerable<TR>>(queryBuilder(store.Values.AsQueryable().OrderBy(s => 1)).AsEnumerable());
         }
 
         public Task<IEnumerable<TR>> QueryAsync<TR>(Func<IDocumentClient, Uri, FeedOptions, IDocumentQuery<TR>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
@@ -88,12 +88,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(document.Id, nameof(document.Id));
             TestSerialization(document);
 
-            if (!this.store.TryGetValue(document.Id, out var existingDoc))
+            if (!store.TryGetValue(document.Id, out var existingDoc))
             {
                 throw new InvalidOperationException("Mock: Entity to update not found: " + document.Id);
             }
 
-            if (this.store.TryUpdate(document.Id, document, existingDoc))
+            if (store.TryUpdate(document.Id, document, existingDoc))
             {
                 return Task.FromResult(document);
             }
@@ -115,16 +115,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         public void Clear()
         {
-            this.store.Clear();
+            store.Clear();
         }
 
-        public bool ContainsKey(string key) => this.store.ContainsKey(key);
+        public bool ContainsKey(string key) => store.ContainsKey(key);
 
-        public bool TryGetValue(string key, out T value) => this.store.TryGetValue(key, out value);
+        public bool TryGetValue(string key, out T value) => store.TryGetValue(key, out value);
 
-        public IEnumerator<KeyValuePair<string, T>> GetEnumerator() => this.store.GetEnumerator();
+        public IEnumerator<KeyValuePair<string, T>> GetEnumerator() => store.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)this.store).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)store).GetEnumerator();
 
         /// <summary>
         /// Serialize the document just to verify that it is serializable (all required properties are filled, etc.)

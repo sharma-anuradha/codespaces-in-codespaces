@@ -50,11 +50,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         Task DeleteAsync(CloudQueueMessage message, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Gets the aproximate message count sitting on the queue
+        /// Gets the aproximate message count sitting on the queue.
         /// </summary>
-        /// <param name="logger">the logger</param>
-        /// <returns>the approximate number of items avaialble on the queue</returns>
+        /// <param name="logger">the logger.</param>
+        /// <returns>the approximate number of items avaialble on the queue.</returns>
         Task<int?> GetApproximateMessageCount(IDiagnosticsLogger logger);
-
     }
 }

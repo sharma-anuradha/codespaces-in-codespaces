@@ -10,9 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 {
@@ -24,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpOperationalScopeAttribute"/> class.
         /// </summary>
-        /// <param name="name">Base name of the log message</param>
+        /// <param name="name">Base name of the log message.</param>
         public HttpOperationalScopeAttribute(string name)
         {
             Name = name;

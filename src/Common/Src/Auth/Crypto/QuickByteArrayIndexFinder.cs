@@ -1,4 +1,4 @@
-﻿// <copyright file="QuickBytesArrayIndexFinder.cs" company="Microsoft">
+﻿// <copyright file="QuickByteArrayIndexFinder.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,11 +19,14 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
     public class QuickByteArrayIndexFinder
     {
         private readonly int[] _skipTable = new int[256];
-        private readonly string _boundary;
 
         public QuickByteArrayIndexFinder(string boundary)
         {
-            this._boundary = boundary ?? throw new ArgumentNullException(nameof(boundary));
+            if (boundary == null)
+            {
+                throw new ArgumentNullException(nameof(boundary));
+            }
+
             Initialize(boundary);
         }
 
@@ -32,20 +35,20 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             BoundaryBytes = Encoding.ASCII.GetBytes(boundary);
 
             var length = BoundaryBytes.Length;
-            for (var i = 0; i < this._skipTable.Length; ++i)
+            for (var i = 0; i < _skipTable.Length; ++i)
             {
-                this._skipTable[i] = length;
+                _skipTable[i] = length;
             }
 
             for (var i = 0; i < length; ++i)
             {
-                this._skipTable[BoundaryBytes[i]] = Math.Max(1, length - 1 - i);
+                _skipTable[BoundaryBytes[i]] = Math.Max(1, length - 1 - i);
             }
         }
 
         public int GetSkipValue(byte input)
         {
-            return this._skipTable[input];
+            return _skipTable[input];
         }
 
         public bool SubMatch(byte[] segment, out int index)

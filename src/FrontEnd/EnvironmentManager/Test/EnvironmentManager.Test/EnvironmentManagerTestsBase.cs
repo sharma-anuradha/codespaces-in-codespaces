@@ -51,8 +51,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
         public EnvironmentManagerTestsBase()
         {
-            this.loggerFactory = new DefaultLoggerFactory();
-            this.logger = loggerFactory.New();
+            loggerFactory = new DefaultLoggerFactory();
+            logger = loggerFactory.New();
 
             var defaultCount = 20;
             var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = defaultCount };
@@ -66,32 +66,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             planSettings.Init(mockSystemConfiguration.Object);
             environmentSettings.Init(mockSystemConfiguration.Object);
 
-            this.environmentRepository = new MockCloudEnvironmentRepository();
-            this.planRepository = new MockPlanRepository();
-            this.billingEventRepository = new MockBillingEventRepository();
-            this.accountManager = new PlanManager(this.planRepository, planSettings);
-            this.billingEventManager = new BillingEventManager(this.billingEventRepository,
+            environmentRepository = new MockCloudEnvironmentRepository();
+            planRepository = new MockPlanRepository();
+            billingEventRepository = new MockBillingEventRepository();
+            accountManager = new PlanManager(planRepository, planSettings);
+            billingEventManager = new BillingEventManager(billingEventRepository,
                                                                 new MockBillingOverrideRepository());
-            this.workspaceRepository = new MockClientWorkspaceRepository();
-            this.authRepository = new MockClientAuthRepository();
-            this.resourceBroker = new MockResourceBrokerClient();
+            workspaceRepository = new MockClientWorkspaceRepository();
+            authRepository = new MockClientAuthRepository();
+            resourceBroker = new MockResourceBrokerClient();
 
-            this.skuCatalog = new Mock<ISkuCatalog>(MockBehavior.Strict).Object;
+            skuCatalog = new Mock<ISkuCatalog>(MockBehavior.Strict).Object;
 
-            this.environmentManager = new CloudEnvironmentManager(
-                this.environmentRepository,
-                this.resourceBroker,
-                this.workspaceRepository,
-                this.accountManager,
-                this.authRepository,
-                this.billingEventManager,
-                this.skuCatalog,
+            environmentManager = new CloudEnvironmentManager(
+                environmentRepository,
+                resourceBroker,
+                workspaceRepository,
+                accountManager,
+                authRepository,
+                billingEventManager,
+                skuCatalog,
                 environmentSettings);
         }
 
         public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")
         {
-            var serviceResult = await this.environmentManager.CreateEnvironmentAsync(
+            var serviceResult = await environmentManager.CreateEnvironmentAsync(
                 new CloudEnvironment
                 {
                     FriendlyName = name,
@@ -106,14 +106,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 testUserId,
                 testUserId,
                 testAccessToken,
-                this.logger);
+                logger);
             
             return serviceResult;
         }
 
         public async Task MakeTestEnvironmentAvailableAsync(CloudEnvironment testEnvironment)
         {
-            await this.environmentManager.UpdateEnvironmentCallbackAsync(
+            await environmentManager.UpdateEnvironmentCallbackAsync(
                 testEnvironment.Id,
                 new EnvironmentRegistrationCallbackOptions
                 {
@@ -124,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     },
                 },
                 testUserId,
-                this.logger);
+                logger);
         }
     }
 }

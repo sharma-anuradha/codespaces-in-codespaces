@@ -167,7 +167,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private void StartWorker(string reason, IDiagnosticsLogger logger)
         {
-            var _ = logger.OperationScopeAsync(
+            _ = logger.OperationScopeAsync(
                 $"{LogBaseName}_start_worker",
                 (childLogger) =>
                 {
@@ -194,7 +194,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private void EndWorker(Guid id, string reason, IDiagnosticsLogger logger)
         {
-            var _ = logger.OperationScopeAsync(
+            _ = logger.OperationScopeAsync(
                 $"{LogBaseName}_end_worker",
                 (childLogger) =>
                 {

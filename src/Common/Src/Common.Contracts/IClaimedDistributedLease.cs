@@ -2,9 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Diagnostics;
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
@@ -22,8 +22,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// return null. Specifically,  it only allows one lease to be obtained within a given
         /// "claim period". This supports the notion of having operations that can only happen
         /// once per day. Here, if a lease hasn't been obtained since the `claimPeriod`, then
-        /// the claim lease will be given (i.e. if (lastLeaseTime < claimPeriod) { /* give
-        /// lease */ }. So `claimPeriod` should represent the start of period (i.e. the start 
+        /// the claim lease will be given (i.e. if (lastLeaseTime. < claimPeriod) { /* give
+        /// lease */ }. So `claimPeriod` should represent the start of period (i.e. the start
         /// of the day if you only want one operation per day).
         /// </summary>
         /// <param name="containerName">Blob container name that should be targeted.</param>

@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.Azure.Documents;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
@@ -12,22 +11,21 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
-    /// the Billing Override repository which contains methods to get at specific billing override information
+    /// the Billing Override repository which contains methods to get at specific billing override information.
     /// </summary>
     [DocumentDbCollectionId(EventCollectionId)]
     public class BillingOverrideRepository : DocumentDbCollection<BillingOverride>, IBillingOverrideRepository
     {
-
         public const string EventCollectionId = "environment_billing_overrides";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingOverrideRepository"/> class.
         /// </summary>
-        /// <param name="options">The collection options</param>
-        /// <param name="clientProvider">The client provider</param>
-        /// <param name="healthProvider">the health provider</param>
-        /// <param name="loggerFactory">the logger factory</param>
-        /// <param name="defaultLogValues">the log values</param>
+        /// <param name="options">The collection options.</param>
+        /// <param name="clientProvider">The client provider.</param>
+        /// <param name="healthProvider">the health provider.</param>
+        /// <param name="loggerFactory">the logger factory.</param>
+        /// <param name="defaultLogValues">the log values.</param>
         public BillingOverrideRepository(
             IOptions<DocumentDbCollectionOptions> options,
             IDocumentDbClientProvider clientProvider,

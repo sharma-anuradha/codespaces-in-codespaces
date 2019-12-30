@@ -92,9 +92,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             // 2. Create File Share
             // 3. Start Prepare File Share
             // Wait for preparation to complete...
-            int expectedIterations = 3 + mockCheckPrepareResults.Length;
+            var expectedIterations = 3 + mockCheckPrepareResults.Length;
 
-            for (int iteration = 1; iteration <= expectedIterations; iteration++)
+            for (var iteration = 1; iteration <= expectedIterations; iteration++)
             {
                 if (iteration == 1)
                 {
@@ -195,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .Setup(x => x.DeleteStorageAccountAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Throws(new Exception());
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
-            FileShareProviderDeleteInput input = new FileShareProviderDeleteInput()
+            var input = new FileShareProviderDeleteInput()
             {
                 AzureResourceInfo = MockAzureResourceInfo,
             };
@@ -262,7 +262,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageType>(), It.IsAny<IDiagnosticsLogger>()))
                 .Throws(new Exception());
             var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
-            FileShareProviderAssignInput input = new FileShareProviderAssignInput()
+            var input = new FileShareProviderAssignInput()
             {
                 AzureResourceInfo = MockAzureResourceInfo,
             };

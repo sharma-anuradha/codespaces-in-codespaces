@@ -4,7 +4,6 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.HealthMonitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Fakes;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
@@ -64,6 +63,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
         {
             return services.AddSingleton<IResourceHeartBeatHttpContract, HttpResourceHeartBeatClient>();
         }
-
     }
 }

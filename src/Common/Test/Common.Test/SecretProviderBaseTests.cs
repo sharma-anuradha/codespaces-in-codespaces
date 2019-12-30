@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using Moq;
-using System.Collections;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 {

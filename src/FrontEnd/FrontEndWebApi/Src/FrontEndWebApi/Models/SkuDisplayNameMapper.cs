@@ -9,7 +9,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
-
     /// <summary>
     /// Maps SKU Display name from a CloudEnvironment.
     /// </summary>

@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(environmentToDelete.CloudEnvironment.FriendlyName.ToLowerInvariant(), environmentToDelete.CloudEnvironment.FriendlyNameInLowerCase);
 
             // Deleting environment after environment name validation.
-            var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
+            var deleteResult = await environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
                                                                         environmentToDelete.CloudEnvironment.OwnerId,
                                                                         logger);
             Assert.True(deleteResult);

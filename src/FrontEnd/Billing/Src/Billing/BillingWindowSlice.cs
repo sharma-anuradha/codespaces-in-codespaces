@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public Sku Sku { get; set; }
 
         /// <summary>
-        /// Gets or sets the override state for billing
+        /// Gets or sets the override state for billing.
         /// </summary>
         public BillingOverrideState OverrideState { get; set; }
 

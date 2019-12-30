@@ -36,7 +36,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
         /// <returns>Task.</returns>
         Task UpdateAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger);
 
-
         /// <summary>
         /// Gets the the live resource usage for the given subscription, location, and resource type, from ARM.
         /// </summary>

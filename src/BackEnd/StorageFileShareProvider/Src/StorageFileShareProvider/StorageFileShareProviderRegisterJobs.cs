@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         private ITaskHelper TaskHelper { get; }
 
         /// <inheritdoc/>
-        public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
+        public Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
         {
             // Job: Clean up old Azure Batch Jobs
             TaskHelper.RunBackgroundLoop(
@@ -43,6 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 (childLogger) =>
                     WatchStorageAzureBatchCleanupTask.RunAsync(TimeSpan.FromMinutes(30), childLogger),
                 TimeSpan.FromMinutes(30));
+
+            return Task.CompletedTask;
         }
     }
 }

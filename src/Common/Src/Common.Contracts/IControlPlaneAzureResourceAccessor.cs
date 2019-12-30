@@ -39,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets the DNS origins from the control panel info.
         /// </summary>
-        /// <returns>DNS origins</returns>
+        /// <returns>DNS origins.</returns>
         List<string> GetStampOrigins();
 
         /// <summary>

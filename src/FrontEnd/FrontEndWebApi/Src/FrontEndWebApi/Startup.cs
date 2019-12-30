@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
@@ -83,7 +83,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             services.AddCors(options =>
                 {
-                    var vssaasHeaders = new string[] {
+                    var vssaasHeaders = new string[]
+                    {
                         HttpConstants.CorrelationIdHeader,
                         HttpConstants.RequestIdHeader,
                     };
@@ -98,6 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                             .AllowAnyMethod());
 
                     var currentOriginsDev = currentOrigins.GetRange(0, currentOrigins.Count);
+
                     // Port forwarding proxy server.
                     currentOriginsDev.Add("https://localhost:4000");
 
@@ -264,6 +266,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             ConfigureAppCommon(app);
 
             var isProduction = env.IsProduction();
+
             // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
             // and the current stamp CORS for all environments
             if (isProduction)

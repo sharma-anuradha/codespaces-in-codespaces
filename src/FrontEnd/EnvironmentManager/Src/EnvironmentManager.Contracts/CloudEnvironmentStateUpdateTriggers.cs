@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentStateUpdateReasons.cs" company="Microsoft">
+﻿// <copyright file="CloudEnvironmentStateUpdateTriggers.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

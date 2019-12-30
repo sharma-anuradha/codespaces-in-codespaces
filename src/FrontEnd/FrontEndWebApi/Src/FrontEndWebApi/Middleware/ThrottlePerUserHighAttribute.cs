@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="ThrottlePerUserHighAttribute.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using Microsoft.VsSaaS.AspNetCore.Mvc.Filters.Throttling;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware

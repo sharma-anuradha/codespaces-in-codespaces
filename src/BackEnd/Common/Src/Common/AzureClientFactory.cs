@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     .AzureSubscriptions
                     .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
 
-                IServicePrincipal sp = azureSub.ServicePrincipal;
+                var sp = azureSub.ServicePrincipal;
                 var azureAppId = sp.ClientId;
                 var azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
                 var azureTenant = sp.TenantId;
@@ -57,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
         }
 
-        public async Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId)
+        public Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId)
         {
             var creds = new AzureCredentialsFactory()
                     .FromServicePrincipal(
@@ -66,8 +66,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         azureTenantId,
                         AzureEnvironment.AzureGlobalCloud);
 
-            return Microsoft.Azure.Management.Fluent.Azure.Authenticate(creds)
+            var azure = Microsoft.Azure.Management.Fluent.Azure.Authenticate(creds)
                 .WithSubscription(subscriptionId);
+            return Task.FromResult(azure);
         }
 
         /// <inheritdoc/>
@@ -128,10 +129,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     .AzureSubscriptions
                     .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
 
-            IServicePrincipal sp = azureSub.ServicePrincipal;
-            string azureAppId = sp.ClientId;
-            string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
-            string azureTenant = sp.TenantId;
+            var sp = azureSub.ServicePrincipal;
+            var azureAppId = sp.ClientId;
+            var azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
+            var azureTenant = sp.TenantId;
             var creds = new AzureCredentialsFactory()
                 .FromServicePrincipal(
                     azureAppId,

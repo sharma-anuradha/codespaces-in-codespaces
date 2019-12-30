@@ -1,6 +1,4 @@
-﻿using Microsoft.Azure.Management.Compute.Fluent.Models;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
-using Microsoft.VsSaaS.Common;
+﻿using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -21,15 +19,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         [Fact]
         public async Task SubmitOneBill()
         {
-            Mock<IControlPlaneInfo> controlPlane = new Mock<IControlPlaneInfo>();
+            var controlPlane = new Mock<IControlPlaneInfo>();
             IEnumerable<AzureLocation> locations = new List<AzureLocation>() { AzureLocation.WestUs2 };
-            Mock<IControlPlaneStampInfo> stampInfo = new Mock<IControlPlaneStampInfo>();
+            var stampInfo = new Mock<IControlPlaneStampInfo>();
             controlPlane.SetupGet(x => x.Stamp).Returns(stampInfo.Object);
             stampInfo.SetupGet(x => x.DataPlaneLocations).Returns(locations);
 
-            Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
-            Mock<IPlanManager> planManager = new Mock<IPlanManager>();
-            Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();
+            var billingEventManager = new Mock<IBillingEventManager>();
+            var planManager = new Mock<IPlanManager>();
+            var logger = new Mock<IDiagnosticsLogger>();
             logger.Setup(x => x.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
             var plan = new VsoPlan()
             {
@@ -43,8 +41,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             };
             IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
             var endDate = DateTime.Now;
-            var usage = new Dictionary<string, double>();
-            usage.Add("meter", 3d);
+            var usage = new Dictionary<string, double>
+            {
+                { "meter", 3d }
+            };
 
             var billingSummary = new BillingSummary()
             {
@@ -65,16 +65,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             billingEventManager.Setup(x => x.GetPlanEventsAsync(It.IsAny<Expression<Func<BillingEvent, bool>>>(), logger.Object)).Returns(Task.FromResult(billingSummaries));
             planManager.Setup(x => x.GetShards()).Returns(new List<string>() { "a" });
 
-            Mock<IBillingSubmissionCloudStorageFactory> factory = new Mock<IBillingSubmissionCloudStorageFactory>();
-            Mock<IBillingSubmissionCloudStorageClient> client = new Mock<IBillingSubmissionCloudStorageClient>();
+            var factory = new Mock<IBillingSubmissionCloudStorageFactory>();
+            var client = new Mock<IBillingSubmissionCloudStorageClient>();
             factory.Setup(x => x.CreateBillingSubmissionCloudStorage(It.IsAny<AzureLocation>())).Returns(Task.FromResult(client.Object));
             client.Setup(x => x.InsertOrUpdateBillingTableSubmission(It.IsAny<BillingSummaryTableSubmission>())).Returns(Task.FromResult(new BillingSummaryTableSubmission()));
             client.Setup(x => x.PushBillingQueueSubmission(It.IsAny<BillingSummaryQueueSubmission>())).Returns(Task.CompletedTask);
 
             // Setup a fake lease
-            Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
+            var lease = new Mock<IClaimedDistributedLease>();
             lease.Setup(x => x.Obtain(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new FakeLease() as IDisposable));
-            BillingSummarySubmissionService sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper(), planManager.Object);
+            var sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper(), planManager.Object);
             await sut.ProcessBillingSummariesAsync(new System.Threading.CancellationToken());
             Assert.Equal(BillingSubmissionState.Submitted, billingSummary.SubmissionState);
         }
@@ -82,16 +82,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         [Fact]
         public async Task CheckForBillErrors()
         {
-            Mock<IControlPlaneInfo> controlPlane = new Mock<IControlPlaneInfo>();
+            var controlPlane = new Mock<IControlPlaneInfo>();
             IEnumerable<AzureLocation> locations = new List<AzureLocation>() { AzureLocation.WestUs2 };
-            Mock<IControlPlaneStampInfo> stampInfo = new Mock<IControlPlaneStampInfo>();
+            var stampInfo = new Mock<IControlPlaneStampInfo>();
             controlPlane.SetupGet(x => x.Stamp).Returns(stampInfo.Object);
             stampInfo.SetupGet(x => x.DataPlaneLocations).Returns(locations);
 
-            Mock<IBillingEventManager> billingEventManager = new Mock<IBillingEventManager>();
-            Mock<IDiagnosticsLogger> logger = new Mock<IDiagnosticsLogger>();
+            var billingEventManager = new Mock<IBillingEventManager>();
+            var logger = new Mock<IDiagnosticsLogger>();
             logger.Setup(x => x.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
-            Mock<IPlanManager> planManager = new Mock<IPlanManager>();
+            var planManager = new Mock<IPlanManager>();
             var plan = new VsoPlan()
             {
                 Plan = new VsoPlanInfo()
@@ -105,8 +105,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
 
             var endDate = DateTime.Now;
-            var usage = new Dictionary<string, double>();
-            usage.Add("meter", 3d);
+            var usage = new Dictionary<string, double>
+            {
+                { "meter", 3d }
+            };
 
             var billingSummary = new BillingSummary()
             {
@@ -126,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             IEnumerable<BillingEvent> billingSummaries = new List<BillingEvent>() { billingEvent };
             billingEventManager.Setup(x => x.GetPlanEventsAsync(It.IsAny<Expression<Func<BillingEvent, bool>>>(), logger.Object)).Returns(Task.FromResult(billingSummaries));
 
-            BillSubmissionErrorResult errorResults = new BillSubmissionErrorResult()
+            var errorResults = new BillSubmissionErrorResult()
             {
                 PartitionKey = "testPartitionKey",
                 RowKey = "testRowKey",
@@ -137,17 +139,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
 
             // Set up storage
-            Mock<IBillingSubmissionCloudStorageFactory> factory = new Mock<IBillingSubmissionCloudStorageFactory>();
-            Mock<IBillingSubmissionCloudStorageClient> client = new Mock<IBillingSubmissionCloudStorageClient>();
+            var factory = new Mock<IBillingSubmissionCloudStorageFactory>();
+            var client = new Mock<IBillingSubmissionCloudStorageClient>();
             factory.Setup(x => x.CreateBillingSubmissionCloudStorage(It.IsAny<AzureLocation>())).Returns(Task.FromResult(client.Object));
             client.Setup(x => x.CheckForErrorsOnQueue()).Returns(Task.FromResult(true));
             client.Setup(x => x.GetSubmissionErrors()).Returns(Task.FromResult(listOfErrors));
 
             // Setup a fake lease
-            Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
+            var lease = new Mock<IClaimedDistributedLease>();
             lease.Setup(x => x.Obtain(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new FakeLease() as IDisposable));
 
-            BillingSummarySubmissionService sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper(), planManager.Object );
+            var sut = new BillingSummarySubmissionService(controlPlane.Object, billingEventManager.Object, logger.Object, factory.Object, lease.Object, new MockTaskHelper(), planManager.Object );
             await sut.CheckForBillingSubmissionErorrs(new System.Threading.CancellationToken());
             Assert.Equal(BillingSubmissionState.Error, billingSummary.SubmissionState);
         }

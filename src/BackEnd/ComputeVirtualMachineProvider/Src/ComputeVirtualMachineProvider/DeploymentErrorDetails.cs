@@ -1,4 +1,4 @@
-﻿// <copyright file="DeploymentUtils.cs" company="Microsoft">
+﻿// <copyright file="DeploymentErrorDetails.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

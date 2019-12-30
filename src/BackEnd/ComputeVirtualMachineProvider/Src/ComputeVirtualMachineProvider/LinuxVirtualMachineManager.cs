@@ -3,17 +3,14 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
-using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Storage;
@@ -41,7 +38,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     public class LinuxVirtualMachineManager : IDeploymentManager
     {
         private const string Key = "value";
-        private const string ExtensionName = "update-vm";
         private const string NicNameKey = "nicName";
         private const string NsgNameKey = "nsgName";
         private const string VnetNameKey = "vnetName";
@@ -70,12 +66,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             this.clientFactory = clientFactory;
             this.controlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             SetUseOutputQueueFlag();
-        }
-
-        [Conditional("DEBUG")]
-        private void SetUseOutputQueueFlag()
-        {
-            this.useOutputQueue = true;
         }
 
         /// <inheritdoc/>
@@ -110,10 +100,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
 
                 // Create input queue
-                string inputQueueName = GetInputQueueName(virtualMachineName);
-                QueueConnectionInfo inputQueueConnectionInfo = await CreateQueue(input, logger, virtualMachineName, inputQueueName);
+                var inputQueueName = GetInputQueueName(virtualMachineName);
+                var inputQueueConnectionInfo = await CreateQueue(input, logger, virtualMachineName, inputQueueName);
 
-                string vmInItScript = await GetVmInitScriptAsync(
+                var vmInItScript = await GetVmInitScriptAsync(
                         virtualMachineName,
                         input,
                         inputQueueConnectionInfo,
@@ -158,7 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
                 var deployment = await azure.Deployments.GetByResourceGroupAsync(input.AzureResourceInfo.ResourceGroup, input.TrackingId);
 
-                OperationState operationState = ParseResult(deployment.ProvisioningState);
+                var operationState = ParseResult(deployment.ProvisioningState);
                 if (operationState == OperationState.Failed)
                 {
                     var errorDetails = await DeploymentUtils.ExtractDeploymentErrors(deployment);
@@ -283,13 +273,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 }
 
                 // Save resource state for continuation token.
-                var resourcesToBeDeleted = new Dictionary<string, VmResourceState>();
-                resourcesToBeDeleted.Add(VmNameKey, (vmName, vmDeletionState));
-                resourcesToBeDeleted.Add(NicNameKey, (GetNetworkInterfaceName(vmName), OperationState.NotStarted));
-                resourcesToBeDeleted.Add(NsgNameKey, (GetNetworkSecurityGroupName(vmName), OperationState.NotStarted));
-                resourcesToBeDeleted.Add(VnetNameKey, (GetVnetName(vmName), OperationState.NotStarted));
-                resourcesToBeDeleted.Add(DiskNameKey, (GetOsDiskName(vmName), OperationState.NotStarted));
-                resourcesToBeDeleted.Add(InputQueueNameKey, (GetInputQueueName(vmName), OperationState.NotStarted));
+                var resourcesToBeDeleted = new Dictionary<string, VmResourceState>
+                {
+                    { VmNameKey, (vmName, vmDeletionState) },
+                    { NicNameKey, (GetNetworkInterfaceName(vmName), OperationState.NotStarted) },
+                    { NsgNameKey, (GetNetworkSecurityGroupName(vmName), OperationState.NotStarted) },
+                    { VnetNameKey, (GetVnetName(vmName), OperationState.NotStarted) },
+                    { DiskNameKey, (GetOsDiskName(vmName), OperationState.NotStarted) },
+                    { InputQueueNameKey, (GetInputQueueName(vmName), OperationState.NotStarted) },
+                };
                 AddOutputQueue(vmName, resourcesToBeDeleted);
 
                 return (OperationState.InProgress, new NextStageInput(
@@ -310,7 +302,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 var (computeVmLocation, resourcesToBeDeleted) = JsonConvert
                 .DeserializeObject<(AzureLocation, Dictionary<string, VmResourceState>)>(input.TrackingId);
-                string resourceGroup = input.AzureResourceInfo.ResourceGroup;
+                var resourceGroup = input.AzureResourceInfo.ResourceGroup;
                 var azure = await clientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
                 var networkClient = await clientFactory.GetNetworkManagementClient(input.AzureResourceInfo.SubscriptionId);
                 var computeClient = await clientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
@@ -331,14 +323,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 }
 
                 // Virtual machine is deleted, delete the remaining resources
-                var taskList = new List<Task>();
-
-                taskList.Add(
-                CheckResourceStatus(
-                    (resourceName) => DeleteQueueAsync(computeVmLocation, resourceName, logger),
-                    (resourceName) => QueueExistsAync(computeVmLocation, resourceName, logger),
-                    resourcesToBeDeleted,
-                    InputQueueNameKey));
+                var taskList = new List<Task>
+                {
+                    CheckResourceStatus(
+                        (resourceName) => DeleteQueueAsync(computeVmLocation, resourceName, logger),
+                        (resourceName) => QueueExistsAync(computeVmLocation, resourceName, logger),
+                        resourcesToBeDeleted,
+                        InputQueueNameKey),
+                };
 
                 DeleteOutputQueue(logger, computeVmLocation, resourcesToBeDeleted, taskList);
 
@@ -391,7 +383,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 }
 
                 logger.LogErrorWithDetail("linux_virtual_machine_manager_check_delete_compute_error", s.ToString());
-                NextStageInput nextStageInput = new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1);
+                var nextStageInput = new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1);
                 if (input.RetryAttempt < 5)
                 {
                     return (OperationState.InProgress, nextStageInput);
@@ -399,6 +391,127 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                 throw;
             }
+        }
+
+        private static OperationState GetFinalState(Dictionary<string, VmResourceState> resourcesToBeDeleted)
+        {
+            if (resourcesToBeDeleted.Any(r => r.Value.State == OperationState.InProgress || r.Value.State == OperationState.NotStarted))
+            {
+                return OperationState.InProgress;
+            }
+
+            return OperationState.Succeeded;
+        }
+
+        private static Task CheckResourceStatus<TResult>(
+           Func<string, Task> deleteResourceFunc,
+           Func<string, Task<TResult>> checkResourceFunc,
+           Dictionary<string, VmResourceState> resourcesToBeDeleted,
+           string resourceNameKey)
+        {
+            var resourceName = resourcesToBeDeleted[resourceNameKey].Name;
+            var resourceState = resourcesToBeDeleted[resourceNameKey].State;
+            if (resourceState == OperationState.NotStarted)
+            {
+                var beginDeleteTask = deleteResourceFunc(resourceName);
+                return beginDeleteTask.ContinueWith(
+                        (task) =>
+                        {
+                            if (task.IsCompleted)
+                            {
+                                resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.InProgress);
+                            }
+                            else if (task.IsFaulted || task.IsCanceled)
+                            {
+                                resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.NotStarted);
+                            }
+                        });
+            }
+            else if (resourceState == OperationState.InProgress)
+            {
+                var checkStatusTask = checkResourceFunc(resourceName);
+                return checkStatusTask.ContinueWith(
+                        (task) =>
+                        {
+                            if (task.IsCompleted && task.Result == null)
+                            {
+                                resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.Succeeded);
+                            }
+                        });
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static OperationState ParseResult(string provisioningState)
+        {
+            if (provisioningState.Equals(OperationState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
+           || provisioningState.Equals(OperationState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
+           || provisioningState.Equals(OperationState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                return provisioningState.ToEnum<OperationState>();
+            }
+
+            return OperationState.InProgress;
+        }
+
+        private static string GetVmTemplate()
+        {
+            return GetEmbeddedResource("template_vm.json");
+        }
+
+        private static string GetEmbeddedResource(string resourceName)
+        {
+            var namespaceString = typeof(LinuxVirtualMachineManager).Namespace;
+            var fullResourceName = $"{namespaceString}.Templates.Linux.{resourceName}";
+            var assembly = Assembly.GetExecutingAssembly();
+            using (var stream = assembly.GetManifestResourceStream(fullResourceName))
+            using (var reader = new StreamReader(stream))
+            {
+                var result = reader.ReadToEnd();
+                return result;
+            }
+        }
+
+        private static string CreateVmDeletionTrackingId(AzureLocation computeVmLocation, Dictionary<string, VmResourceState> resourcesToBeDeleted)
+        {
+            return JsonConvert.SerializeObject((computeVmLocation, resourcesToBeDeleted));
+        }
+
+        private static string GetOutputQueueName(string virtualMachineName)
+        {
+            return $"{virtualMachineName}-output-queue";
+        }
+
+        private static string GetInputQueueName(string virtualMachineName)
+        {
+            return $"{virtualMachineName.ToLowerInvariant()}-input-queue";
+        }
+
+        private static string GetOsDiskName(string vmName)
+        {
+            return $"{vmName}-disk";
+        }
+
+        private static string GetVnetName(string vmName)
+        {
+            return $"{vmName}-vnet";
+        }
+
+        private static string GetNetworkSecurityGroupName(string vmName)
+        {
+            return $"{vmName}-nsg";
+        }
+
+        private static string GetNetworkInterfaceName(string vmName)
+        {
+            return $"{vmName}-nic";
+        }
+
+        [Conditional("DEBUG")]
+        private void SetUseOutputQueueFlag()
+        {
+            useOutputQueue = true;
         }
 
         [Conditional("DEBUG")]
@@ -498,108 +611,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return queueConnectionInfo;
         }
 
-        private static OperationState GetFinalState(Dictionary<string, VmResourceState> resourcesToBeDeleted)
-        {
-            if (resourcesToBeDeleted.Any(r => r.Value.State == OperationState.InProgress || r.Value.State == OperationState.NotStarted))
-            {
-                return OperationState.InProgress;
-            }
-
-            return OperationState.Succeeded;
-        }
-
-        private static Task CheckResourceStatus<TResult>(
-           Func<string, Task> deleteResourceFunc,
-           Func<string, Task<TResult>> checkResourceFunc,
-           Dictionary<string, VmResourceState> resourcesToBeDeleted,
-           string resourceNameKey)
-        {
-            var resourceName = resourcesToBeDeleted[resourceNameKey].Name;
-            var resourceState = resourcesToBeDeleted[resourceNameKey].State;
-            if (resourceState == OperationState.NotStarted)
-            {
-                var beginDeleteTask = deleteResourceFunc(resourceName);
-                return beginDeleteTask.ContinueWith(
-                        (task) =>
-                    {
-                        if (task.IsCompleted)
-                        {
-                            resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.InProgress);
-                        }
-                        else if (task.IsFaulted || task.IsCanceled)
-                        {
-                            resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.NotStarted);
-                        }
-                    });
-            }
-            else if (resourceState == OperationState.InProgress)
-            {
-                var checkStatusTask = checkResourceFunc(resourceName);
-                return checkStatusTask.ContinueWith(
-                        (task) =>
-                     {
-                         if (task.IsCompleted && task.Result == null)
-                         {
-                             resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.Succeeded);
-                         }
-                     });
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private static OperationState ParseResult(string provisioningState)
-        {
-            if (provisioningState.Equals(OperationState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
-           || provisioningState.Equals(OperationState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
-           || provisioningState.Equals(OperationState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
-            {
-                return provisioningState.ToEnum<OperationState>();
-            }
-
-            return OperationState.InProgress;
-        }
-
-        private static string GetVmTemplate()
-        {
-            return GetEmbeddedResource("template_vm.json");
-        }
-
-        private static string GetCustomScriptForVmAssign(string scriptName, VirtualMachineProviderStartComputeInput input)
-        {
-            var scriptString = GetEmbeddedResource(scriptName);
-            scriptString = AddParamsToScript(input, scriptString);
-            return scriptString.ToBase64Encoded();
-        }
-
-        private static string AddParamsToScript(VirtualMachineProviderStartComputeInput input, string scriptString)
-        {
-            var camelCaseSerializer = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
-            var storageParams = JsonConvert.SerializeObject(input.FileShareConnection, Formatting.None, camelCaseSerializer);
-            scriptString = scriptString.Replace("SCRIPT_PARAM_STORAGE=''", $"SCRIPT_PARAM_STORAGE='{storageParams}'");
-            var envParams = JsonConvert.SerializeObject(input.VmInputParams);
-            scriptString = scriptString.Replace("SCRIPT_PARAM_CONTAINER_ENV_VARS=''", $"SCRIPT_PARAM_CONTAINER_ENV_VARS='{envParams}'");
-            return scriptString;
-        }
-
-        private static string GetEmbeddedResource(string resourceName)
-        {
-            var namespaceString = typeof(LinuxVirtualMachineManager).Namespace;
-            var fullResourceName = $"{namespaceString}.Templates.Linux.{resourceName}";
-            var assembly = Assembly.GetExecutingAssembly();
-            using (Stream stream = assembly.GetManifestResourceStream(fullResourceName))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                string result = reader.ReadToEnd();
-                return result;
-            }
-        }
-
-        private static string CreateVmDeletionTrackingId(AzureLocation computeVmLocation, Dictionary<string, VmResourceState> resourcesToBeDeleted)
-        {
-            return JsonConvert.SerializeObject((computeVmLocation, resourcesToBeDeleted));
-        }
-
         private string ReplaceParams(
             string vmToken,
             string vmAgentBlobUrl,
@@ -658,8 +669,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             if (useOutputQueue)
             {
-                string outputQueueName = GetOutputQueueName(virtualMachineName);
-                QueueConnectionInfo outputQueueConnectionInfo = await CreateQueue(input, logger, virtualMachineName, outputQueueName);
+                var outputQueueName = GetOutputQueueName(virtualMachineName);
+                var outputQueueConnectionInfo = await CreateQueue(input, logger, virtualMachineName, outputQueueName);
                 initScript = initScript
                                 .Replace("SCRIPT_PARAM_VM_USE_OUTPUT_QUEUE=0", "SCRIPT_PARAM_VM_USE_OUTPUT_QUEUE=1")
                                 .Replace("__REPLACE_OUTPUT_QUEUE_NAME__", outputQueueConnectionInfo.Name)
@@ -668,36 +679,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             }
 
             return initScript.ToBase64Encoded();
-        }
-
-        private string GetOutputQueueName(string virtualMachineName)
-        {
-            return $"{virtualMachineName}-output-queue";
-        }
-
-        private static string GetInputQueueName(string virtualMachineName)
-        {
-            return $"{virtualMachineName.ToLowerInvariant()}-input-queue";
-        }
-
-        private static string GetOsDiskName(string vmName)
-        {
-            return $"{vmName}-disk";
-        }
-
-        private static string GetVnetName(string vmName)
-        {
-            return $"{vmName}-vnet";
-        }
-
-        private static string GetNetworkSecurityGroupName(string vmName)
-        {
-            return $"{vmName}-nsg";
-        }
-
-        private static string GetNetworkInterfaceName(string vmName)
-        {
-            return $"{vmName}-nic";
         }
     }
 }

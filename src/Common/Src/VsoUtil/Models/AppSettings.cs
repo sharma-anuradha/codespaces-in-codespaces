@@ -69,7 +69,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models
         public string DnsHostName { get; set; }
 
         public Dictionary<AzureLocation, ControlPlaneStampSettings> Stamps { get; set; } = new Dictionary<AzureLocation, ControlPlaneStampSettings>();
-
     }
 }
 #pragma warning restore SA1649 // File name should match first type name

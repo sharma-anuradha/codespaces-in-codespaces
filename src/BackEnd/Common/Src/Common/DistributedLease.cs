@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<IDisposable> TryObtain(
+        public Task<IDisposable> TryObtain(
             string containerName,
             string name,
             IDiagnosticsLogger logger)
@@ -111,6 +111,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                     return result;
                 });
+        }
+
+        private static string EnsureBlobSafeName(string name)
+        {
+            return name.Replace("_", string.Empty).ToLowerInvariant();
         }
 
         private async Task<IDisposable> InnerCreate(
@@ -190,11 +195,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             });
 
             return closeCallback;
-        }
-
-        private static string EnsureBlobSafeName(string name)
-        {
-            return name.Replace("_", string.Empty).ToLowerInvariant();
         }
     }
 }

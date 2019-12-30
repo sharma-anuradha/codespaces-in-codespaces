@@ -75,19 +75,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             { SubscriptionId = subscriptionId.ToString() };
             return await Task.FromResult<IResourceManagementClient>(azureClient);
         }
-
-        //public async Task<TClient> GetManagementClient<TClient>(Guid subscriptionId)
-        //{
-        //    var credentials = SdkContext.AzureCredentialsFactory
-        //       .FromFile(authFile);
-        //    RestClient restClient = RestClient.Configure()
-        //       .WithEnvironment(credentials.Environment)
-        //       .WithCredentials(credentials)
-        //       .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(credentials))
-        //       .Build();
-        //    var constructor = typeof(TClient).GetConstructor(new[] { restClient.GetType() });
-        //    TClient client = (TClient)constructor.Invoke(new[] { restClient });
-        //    return await Task.FromResult<TClient>(client);
-        //}
     }
 }

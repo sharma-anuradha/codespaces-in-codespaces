@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Storage.Blob;
-using Microsoft.Extensions.Configuration;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -14,20 +10,18 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
-using Moq;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Test
 {
     public class LinuxVirtualMachineManagerTests : IClassFixture<AzureComputeProviderTestsBase>
     {
-        private const int TargetVmCount = 1;
-        private AzureComputeProviderTestsBase testContext;
+        private readonly AzureComputeProviderTestsBase testContext;
         private const string ComputeVsoAgentImageBlobName = "VSOAgent_linux_3236380.zip";
 
         public LinuxVirtualMachineManagerTests(AzureComputeProviderTestsBase data)
         {
-            this.testContext = data;
+            testContext = data;
         }
 
         [Trait("Category", "IntegrationTest")]
@@ -48,11 +42,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task<AzureResourceInfo> Create_Compute_Ok(IComputeProvider computeProvider, ComputeOS computeOS, string azureSku, string vmImage, string vsoBlobName)
         {
             var logger = new DefaultLoggerFactory().New();
-            Guid subscriptionId = this.testContext.SubscriptionId;
-            AzureLocation location = testContext.Location;
-            string rgName = testContext.ResourceGroupName;
-            string blobUrl = await testContext.GetSrcBlobUrlAsync(vsoBlobName);
-            VirtualMachineProviderCreateInput input = new VirtualMachineProviderCreateInput()
+            var subscriptionId = testContext.SubscriptionId;
+            var location = testContext.Location;
+            var rgName = testContext.ResourceGroupName;
+            var blobUrl = await testContext.GetSrcBlobUrlAsync(vsoBlobName);
+            var input = new VirtualMachineProviderCreateInput()
             {
                 VMToken = Guid.NewGuid().ToString(),
                 AzureVmLocation = location,
@@ -70,18 +64,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             };
 
             var timerCreate = Stopwatch.StartNew();
-            VirtualMachineProviderCreateResult createResult = await computeProvider.CreateAsync(input, logger);
+            var createResult = await computeProvider.CreateAsync(input, logger);
             timerCreate.Stop();
             Console.WriteLine($"Time taken to begin create VM {timerCreate.Elapsed.TotalSeconds}");
             var timerWait = Stopwatch.StartNew();
             Assert.NotNull(createResult);
             Assert.Equal(OperationState.InProgress, createResult.Status);
-            NextStageInput createDeploymentStatusInput = createResult.NextInput.ContinuationToken.ToNextStageInput();
+            var createDeploymentStatusInput = createResult.NextInput.ContinuationToken.ToNextStageInput();
             Assert.NotNull(createDeploymentStatusInput);
             Assert.NotNull(createDeploymentStatusInput.TrackingId);
             Assert.Equal(rgName, createDeploymentStatusInput.AzureResourceInfo.ResourceGroup);
             Assert.Equal(subscriptionId, createDeploymentStatusInput.AzureResourceInfo.SubscriptionId);
-            VirtualMachineProviderCreateResult statusCheckResult = default;
+            VirtualMachineProviderCreateResult statusCheckResult;
             do
             {
                 await Task.Delay(500);
@@ -91,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
                 if (statusCheckResult.Status.Equals(OperationState.InProgress))
                 {
-                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.NextInput.ContinuationToken.ToNextStageInput();
+                    var statusCheckdeploymentStatusToken = statusCheckResult.NextInput.ContinuationToken.ToNextStageInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
             } while (statusCheckResult.Status.Equals(OperationState.InProgress));
@@ -125,12 +119,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                         { "GIT_CONFIG_USER_EMAIL",  GetConfigOrDefault("USER_EMAIL","GIT_CONFIG_USER_EMAIL")},
                    },
                 ComputeOS.Linux,
-                this.testContext.Location,
+                testContext.Location,
                 "Standard_D4s_v3",
                 null);
 
             var timerStartCompute = Stopwatch.StartNew();
-            VirtualMachineProviderStartComputeResult startComputeResult = await computeProvider.StartComputeAsync(startComputeInput, logger);
+            var startComputeResult = await computeProvider.StartComputeAsync(startComputeInput, logger);
             timerStartCompute.Stop();
             Console.WriteLine($"Time taken to allocate VM {timerStartCompute.Elapsed.TotalSeconds}");
             Assert.Equal(OperationState.Succeeded, startComputeResult.Status);
@@ -162,7 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     || deleteStatusCheckResult.Status.Equals(OperationState.Succeeded));
                 if (deleteStatusCheckResult.Status.Equals(OperationState.InProgress))
                 {
-                    NextStageInput statusCheckdeploymentStatusToken = deleteStatusCheckResult.NextInput.ContinuationToken.ToNextStageInput();
+                    var statusCheckdeploymentStatusToken = deleteStatusCheckResult.NextInput.ContinuationToken.ToNextStageInput();
                     Assert.NotNull(statusCheckdeploymentStatusToken);
                 }
             } while (deleteStatusCheckResult.Status.Equals(OperationState.InProgress));
@@ -170,27 +164,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Console.WriteLine($"Time taken to start environment on VM {timerWait.Elapsed.TotalSeconds}");
         }
 
-        private static async Task<VirtualMachineProviderCreateResult> WaitForVMCreation(VirtualMachineProvider computeProvider, VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
-        {
-            VirtualMachineProviderCreateResult statusCheckResult = default;
-            do
-            {
-                await Task.Delay(500);
-                statusCheckResult = await computeProvider.CreateAsync(input, logger);
-                Assert.NotNull(statusCheckResult);
-                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
-                if (statusCheckResult.Status.Equals(OperationState.InProgress))
-                {
-                    NextStageInput statusCheckdeploymentStatusToken = statusCheckResult.NextInput.ContinuationToken.ToNextStageInput();
-                    Assert.NotNull(statusCheckdeploymentStatusToken);
-                }
-            } while (statusCheckResult.Status.Equals(OperationState.InProgress));
-            return statusCheckResult;
-        }
-
         private string GetConfigOrDefault(string configKey, string defaultValue)
         {
-            var result = this.testContext.Config["FILE_STORE_ACCOUNT"];
+            var result = testContext.Config["FILE_STORE_ACCOUNT"];
             result = string.IsNullOrEmpty(result) ? defaultValue : defaultValue;
             return result;
         }

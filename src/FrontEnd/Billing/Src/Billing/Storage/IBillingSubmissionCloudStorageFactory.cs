@@ -10,11 +10,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     public interface IBillingSubmissionCloudStorageFactory
     {
         /// <summary>
-        /// Generates a billing submission cloud storage client wired up to the correct table for the given location
+        /// Generates a billing submission cloud storage client wired up to the correct table for the given location.
         /// </summary>
-        /// <param name="location">The desired data plane location</param>
-        /// <returns>A billing submission cloud storage client</returns>
+        /// <param name="location">The desired data plane location.</param>
+        /// <returns>A billing submission cloud storage client.</returns>
         Task<IBillingSubmissionCloudStorageClient> CreateBillingSubmissionCloudStorage(AzureLocation location);
-
     }
 }

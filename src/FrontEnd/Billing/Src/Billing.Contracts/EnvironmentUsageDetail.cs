@@ -51,6 +51,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "sku")]
         public Sku Sku { get; set; }
-
     }
 }

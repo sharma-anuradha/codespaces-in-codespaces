@@ -113,6 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     }
 
 #pragma warning disable SA1402 // File may only contain a single type
+
     /// <summary>
     /// Dictionary extension methods.
     /// </summary>

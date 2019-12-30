@@ -1,11 +1,10 @@
-﻿// <copyright file="VirtualMachineProviderCleanupInput.cs" company="Microsoft">
+﻿// <copyright file="VirtualMachineProviderShutdownInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {

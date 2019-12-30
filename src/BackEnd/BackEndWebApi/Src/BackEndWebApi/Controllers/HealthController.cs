@@ -15,13 +15,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
     [ApiController]
     public class HealthController : Controller
     {
-        private IHealthProvider HealthProvider { get; set; }
-
         public HealthController(
              IHealthProvider healthProvider)
         {
             HealthProvider = healthProvider;
         }
+
+        private IHealthProvider HealthProvider { get; set; }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]

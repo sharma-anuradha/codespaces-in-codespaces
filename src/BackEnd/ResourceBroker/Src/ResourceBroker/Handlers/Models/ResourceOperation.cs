@@ -1,4 +1,4 @@
-﻿// <copyright file="ContinuationTaskActivatorExtensions.cs" company="Microsoft">
+﻿// <copyright file="ResourceOperation.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication
         {
             Requires.NotNullOrWhiteSpace(externalToken, nameof(externalToken));
 
-            var response = await this.HttpClientProvider.HttpClient.PostAsync(
+            var response = await HttpClientProvider.HttpClient.PostAsync(
                 Path,
                 new
                 {

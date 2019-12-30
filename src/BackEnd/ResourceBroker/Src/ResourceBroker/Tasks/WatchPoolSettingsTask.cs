@@ -2,14 +2,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
@@ -63,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     // Run through each pool item
                     foreach (var resourceUnit in resourceUnits)
                     {
-                        var _ = childLogger.OperationScopeAsync(
+                        _ = childLogger.OperationScopeAsync(
                             $"{LogBaseName}_run_unit_check",
                             (itemLogger) =>
                             {

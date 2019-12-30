@@ -2,8 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     /// <summary>
@@ -29,9 +27,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             Requires.NotNullOrEmpty(url, nameof(url));
             Requires.NotNullOrEmpty(sasToken, nameof(sasToken));
             Requires.NotNullOrEmpty(name, nameof(name));
-            this.Url = url;
-            this.SasToken = sasToken;
-            this.Name = name;
+            Url = url;
+            SasToken = sasToken;
+            Name = name;
         }
 
         /// <summary>

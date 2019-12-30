@@ -13,6 +13,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "partitionId")]
         public string PartitionId { get; set; }
-
     }
 }

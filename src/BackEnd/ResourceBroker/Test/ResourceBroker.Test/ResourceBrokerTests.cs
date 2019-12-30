@@ -27,7 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         private const string DefaultLogicalSkuName = "Large";
         private const string StorageResourceSkuName = "LargeVm";
         private const ResourceType DefaultType = ResourceType.ComputeVM;
-        private const ResourceType StorageType = ResourceType.StorageFileShare;
 
         /*
         private const string DefaultLocation = "USW2";

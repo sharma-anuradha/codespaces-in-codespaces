@@ -5,7 +5,6 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {

@@ -297,18 +297,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             return new ResourceRecordRef(record);
         }
 
-        private async Task<IBlobStorageClientProvider> GetStorageImageBlobStorageClientProvider(AzureLocation azureLocation)
-        {
-            var (blobStorageAccountName, blobStorageAccountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForStorageImagesAsync(azureLocation);
-            var blobStorageClientOptions = new BlobStorageClientOptions
-            {
-                AccountName = blobStorageAccountName,
-                AccountKey = blobStorageAccountKey,
-            };
-            var blobStorageClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
-            return blobStorageClientProvider;
-        }
-
         private async Task<IAzureResourceLocation> SelectAzureResourceLocation(
             IEnumerable<AzureResourceCriterion> criteria, AzureLocation location, IDiagnosticsLogger logger)
         {

@@ -288,7 +288,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     // Delete the previous liveshare session from database.
                     // Do not block start process on delete of old workspace from liveshare db.
-                    var _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId, logger));
+                    _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId, logger));
                     cloudEnvironment.Connection = null;
                 }
 
@@ -795,7 +795,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 if (storageIdToken != null)
                 {
                     await logger.OperationScopeAsync(
-                        $"{this.GetType().GetLogMessageBaseName()}_delete_storage_async",
+                        $"{GetType().GetLogMessageBaseName()}_delete_storage_async",
                         async (childLogger) =>
                         {
                             childLogger.FluentAddBaseValue(nameof(id), id)
@@ -809,7 +809,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 if (computeIdToken != null)
                 {
                     await logger.OperationScopeAsync(
-                       $"{this.GetType().GetLogMessageBaseName()}_delete_compute_async",
+                       $"{GetType().GetLogMessageBaseName()}_delete_compute_async",
                        async (childLogger) =>
                        {
                            childLogger.FluentAddBaseValue(nameof(id), id)
@@ -823,7 +823,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (cloudEnvironment.Connection?.ConnectionSessionId != null)
             {
                 await logger.OperationScopeAsync(
-                    $"{this.GetType().GetLogMessageBaseName()}_delete_workspace_async",
+                    $"{GetType().GetLogMessageBaseName()}_delete_workspace_async",
                     async (childLogger) =>
                     {
                         childLogger.FluentAddBaseValue(nameof(id), id)
@@ -857,7 +857,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
 
             await logger.OperationScopeAsync(
-                $"{this.GetType().GetLogMessageBaseName()}_force_shutdown_async",
+                $"{GetType().GetLogMessageBaseName()}_force_shutdown_async",
                 async (childLogger) =>
                 {
                     var cloudEnvironment = await GetEnvironmentByIdAsync(id, logger);
@@ -928,7 +928,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 if (update.AutoShutdownDelayMinutes.HasValue)
                 {
-                    if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null || 
+                    if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null ||
                         !allowedUpdates.AllowedAutoShutdownDelayMinutes.Contains(update.AutoShutdownDelayMinutes.Value))
                     {
                         validationErrors.Add(MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid);

@@ -9,11 +9,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Storage
 {
     /// <summary>
-    /// This represents the error queue collection
+    /// This represents the error queue collection.
     /// </summary>
     public class BillingSubmissionErrorQueueCollection : StorageQueueCollection
     {
-
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingSubmissionErrorQueueCollection"/> class.
         /// </summary>

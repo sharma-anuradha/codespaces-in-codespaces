@@ -33,20 +33,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     public class SubscriptionsController : ControllerBase
     {
         private const string LoggingBaseName = "subscriptions_controller";
+        private const string PlanResourceType = "plans";
+        private const string ResourceType = "Microsoft.VSOnline";
         private readonly IPlanManager planManager;
         private readonly ICurrentUserProvider currentUserProvider;
         private readonly ICloudEnvironmentManager cloudEnvironmentManager;
-        private const string PlanResourceType = "plans";
-        private const string ResourceType = "Microsoft.VSOnline";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
         public SubscriptionsController(
-            IPlanManager planManager, 
+            IPlanManager planManager,
             ICurrentUserProvider currentUserProvider,
             ICloudEnvironmentManager cloudEnvironmentManager)
-
         {
             this.planManager = planManager;
             this.currentUserProvider = currentUserProvider;
@@ -87,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("NullParameters");
                     }
 
-                    if (!await this.planManager.IsPlanCreationAllowedAsync(subscriptionId, logger))
+                    if (!await planManager.IsPlanCreationAllowedAsync(subscriptionId, logger))
                     {
                         logger.LogErrorWithDetail("plan_create_validate_error", "Plan creation is not allowed.");
                         return CreateErrorResponse("ValidateResourceFailed");
@@ -122,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 $"{LoggingBaseName}_plan_create",
                 async (logger) =>
                 {
-                    var accessToken = this.currentUserProvider.GetBearerToken();
+                    var accessToken = currentUserProvider.GetBearerToken();
 
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
@@ -150,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         UserId = resource.Properties.UserId,
                     };
 
-                    await this.planManager.CreateAsync(plan, logger);
+                    await planManager.CreateAsync(plan, logger);
 
                     // Clear the userId property so it will not be stored on the created ARM resource.
                     // It will only be saved internally by the plan manager.
@@ -252,7 +251,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                             .LogInfo("plan_delete_environment_delete_success");
                     }
 
-                    var response = await this.planManager.DeleteAsync(plan, logger);
+                    var response = await planManager.DeleteAsync(plan, logger);
                     if (!response)
                     {
                         logger.AddVsoPlan(plan).LogError("plan_delete_doesnotexist_error");
@@ -283,7 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 $"{LoggingBaseName}_plan_list",
                 async (logger) =>
                 {
-                    var accessToken = this.currentUserProvider.GetBearerToken();
+                    var accessToken = currentUserProvider.GetBearerToken();
 
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
@@ -292,7 +291,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                    var plans = await this.planManager.ListAsync(
+                    var plans = await planManager.ListAsync(
                         userId: null, subscriptionId, resourceGroup, logger);
 
                     logger.LogInfo("plan_list_by_resourcegroup_success");
@@ -324,7 +323,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                    var plans = await this.planManager.ListAsync(
+                    var plans = await planManager.ListAsync(
                         userId: null, subscriptionId, resourceGroup: null, logger);
 
                     logger.LogInfo("plan_list_by_subscription_success");

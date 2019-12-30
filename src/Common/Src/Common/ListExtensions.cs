@@ -13,7 +13,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     /// </summary>
     public static class ListExtensions
     {
-        private static Random rng = new Random();
+        private static readonly Random Random = new Random();
 
         /// <summary>
         /// Shuffles the items in the IEnumerable.
@@ -28,8 +28,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             while (n > 1)
             {
                 n--;
-                var k = rng.Next(n + 1);
-                T value = l[k];
+                var k = Random.Next(n + 1);
+                var value = l[k];
                 l[k] = l[n];
                 l[n] = value;
             }
@@ -47,10 +47,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             if (!input.Any())
             {
-                return default(T);
+                return default;
             }
 
-            return input.ElementAt(rng.Next(input.Count()));
+            return input.ElementAt(Random.Next(input.Count()));
         }
     }
 }

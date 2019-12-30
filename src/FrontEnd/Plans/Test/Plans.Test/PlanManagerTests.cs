@@ -36,8 +36,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
 
             settings.Init(mockSystemConfiguration.Object);
 
-            this.planRepository = new MockPlanRepository();
-            this.planManager = new PlanManager(this.planRepository, settings);
+            planRepository = new MockPlanRepository();
+            planManager = new PlanManager(planRepository, settings);
         }
 
         private VsoPlan GeneratePlan(string name, string subscriptionOption = null, string userId = null)
@@ -86,8 +86,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             Assert.Equal("NewSku", overwrittenPlan.VsoPlan.SkuPlan.Name);
             Assert.False(overwrittenPlan.VsoPlan.IsDeleted);
             Assert.NotEqual(savedModel.SkuPlan.Name, overwrittenPlan.VsoPlan.SkuPlan.Name);
-            Assert.Equal(1, (await planManager.ListAsync(plan.UserId, plan.Plan.Subscription, plan.Plan.ResourceGroup, logger, false)).Count());
-            Assert.Equal(1, (await planManager.ListAsync(plan.UserId, plan.Plan.Subscription, plan.Plan.ResourceGroup, logger, true)).Count());
+            Assert.Single((await planManager.ListAsync(plan.UserId, plan.Plan.Subscription, plan.Plan.ResourceGroup, logger, false)));
+            Assert.Single((await planManager.ListAsync(plan.UserId, plan.Plan.Subscription, plan.Plan.ResourceGroup, logger, true)));
         }
 
         [Fact]
@@ -245,7 +245,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
                 .Returns(Task.FromResult(settings.DefaultMaxPlansPerSubscription));
             settings.Init(mockSystemConfiguration.Object);
 
-            var planManager = new PlanManager(this.planRepository, settings);
+            var planManager = new PlanManager(planRepository, settings);
 
             var whiteListedUser = new Profile() { Programs = new Dictionary<string, object> { { "vs.cloudenvironements.previewuser", true }, } };
             var normalUser = new Profile() { Programs = new Dictionary<string, object> { } };

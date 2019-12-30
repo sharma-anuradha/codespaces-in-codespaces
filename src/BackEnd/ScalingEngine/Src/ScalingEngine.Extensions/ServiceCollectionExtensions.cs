@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions
             this IServiceCollection services)
         {
             Requires.NotNull(services, nameof(services));
- 
+
             services.AddSingleton<IAsyncWarmup, InitializeScaleLevelCache>();
 
             return services;

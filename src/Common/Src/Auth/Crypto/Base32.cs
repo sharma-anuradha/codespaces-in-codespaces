@@ -49,26 +49,26 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             }
 
             // Prepare container for the final value
-            StringBuilder builder = new StringBuilder(bytes.Length * InByteSize / OutByteSize);
+            var builder = new StringBuilder(bytes.Length * InByteSize / OutByteSize);
 
             // Position in the input buffer
-            int bytesPosition = 0;
+            var bytesPosition = 0;
 
             // Offset inside a single byte that <bytesPosition> points to (from left to right)
             // 0 - highest bit, 7 - lowest bit
-            int bytesSubPosition = 0;
+            var bytesSubPosition = 0;
 
             // Byte to look up in the dictionary
             byte outputBase32Byte = 0;
 
             // The number of bits filled in the current output byte
-            int outputBase32BytePosition = 0;
+            var outputBase32BytePosition = 0;
 
             // Iterate through input buffer until we reach past the end of it
             while (bytesPosition < bytes.Length)
             {
                 // Calculate the number of bits we can extract out of current input byte to fill missing bits in the output byte
-                int bitsAvailableInByte = Math.Min(InByteSize - bytesSubPosition, OutByteSize - outputBase32BytePosition);
+                var bitsAvailableInByte = Math.Min(InByteSize - bytesSubPosition, OutByteSize - outputBase32BytePosition);
 
                 // Make space in the output byte
                 outputBase32Byte <<= bitsAvailableInByte;
@@ -140,10 +140,10 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             }
 
             // Convert to upper-case
-            string base32StringUpperCase = base32String.ToUpperInvariant();
+            var base32StringUpperCase = base32String.ToUpperInvariant();
 
             // Prepare output byte array
-            byte[] outputBytes = new byte[base32StringUpperCase.Length * OutByteSize / InByteSize];
+            var outputBytes = new byte[base32StringUpperCase.Length * OutByteSize / InByteSize];
 
             // Check the size
             if (outputBytes.Length == 0)
@@ -152,23 +152,23 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
             }
 
             // Position in the string
-            int base32Position = 0;
+            var base32Position = 0;
 
             // Offset inside the character in the string
-            int base32SubPosition = 0;
+            var base32SubPosition = 0;
 
             // Position within outputBytes array
-            int outputBytePosition = 0;
+            var outputBytePosition = 0;
 
             // The number of bits filled in the current output byte
-            int outputByteSubPosition = 0;
+            var outputByteSubPosition = 0;
 
             // Normally we would iterate on the input array but in this case we actually iterate on the output array
             // We do it because output array doesn't have overflow bits, while input does and it will cause output array overflow if we don't stop in time
             while (outputBytePosition < outputBytes.Length)
             {
                 // Look up current character in the dictionary to convert it to byte
-                int currentBase32Byte = Base32Alphabet.IndexOf(base32StringUpperCase[base32Position]);
+                var currentBase32Byte = Base32Alphabet.IndexOf(base32StringUpperCase[base32Position]);
 
                 // Check if found
                 if (currentBase32Byte < 0)
@@ -177,7 +177,7 @@ namespace Microsoft.VsSaaS.Services.Common.Crypto.Utilities
                 }
 
                 // Calculate the number of bits we can extract out of current input character to fill missing bits in the output byte
-                int bitsAvailableInByte = Math.Min(OutByteSize - base32SubPosition, InByteSize - outputByteSubPosition);
+                var bitsAvailableInByte = Math.Min(OutByteSize - base32SubPosition, InByteSize - outputByteSubPosition);
 
                 // Make space in the output byte
                 outputBytes[outputBytePosition] <<= bitsAvailableInByte;

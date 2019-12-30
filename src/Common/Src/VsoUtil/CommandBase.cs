@@ -8,7 +8,6 @@ using CommandLine;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -82,12 +81,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         /// <summary>
         /// Gets the service provider.
         /// </summary>
-        /// <returns>obj</returns>
+        /// <returns>obj.</returns>
         protected IServiceProvider GetServiceProvider()
         {
             if (serviceProvider is null)
             {
-                IWebHost webHost = BuildWebHost();
+                var webHost = BuildWebHost();
                 serviceProvider = webHost.Services;
             }
 
@@ -98,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         /// Serialize an object.
         /// </summary>
         /// <param name="obj">obj.</param>
-        /// <returns>json</returns>
+        /// <returns>json.</returns>
         protected string JsonSerializeObject(object obj)
         {
             return JsonConvert.SerializeObject(obj, Formatting.Indented, new StringEnumConverter());
@@ -106,16 +105,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 
         private IWebHost BuildWebHost()
         {
-            System.Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", this.Environment, EnvironmentVariableTarget.Process);
+            System.Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", Environment, EnvironmentVariableTarget.Process);
 
-            if (!string.IsNullOrEmpty(this.Override))
+            if (!string.IsNullOrEmpty(Override))
             {
-                System.Environment.SetEnvironmentVariable("OVERRIDE_APPSETTINGS_JSON", this.Override, EnvironmentVariableTarget.Process);
+                System.Environment.SetEnvironmentVariable("OVERRIDE_APPSETTINGS_JSON", Override, EnvironmentVariableTarget.Process);
             }
 
-            if (!string.IsNullOrEmpty(this.Location))
+            if (!string.IsNullOrEmpty(Location))
             {
-                System.Environment.SetEnvironmentVariable("AZURE_LOCATION", this.Location, EnvironmentVariableTarget.Process);
+                System.Environment.SetEnvironmentVariable("AZURE_LOCATION", Location, EnvironmentVariableTarget.Process);
             }
 
             var webHostArgs = new string[0];

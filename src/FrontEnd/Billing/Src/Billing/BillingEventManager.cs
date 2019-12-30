@@ -3,16 +3,12 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -31,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Initializes a new instance of the <see cref="BillingEventManager"/> class.
         /// </summary>
         /// <param name="billingEventRepository">Event repository.</param>
-        /// <param name="billingOverrideRepository">the billing override repository</param>
+        /// <param name="billingOverrideRepository">the billing override repository.</param>
         public BillingEventManager(
             IBillingEventRepository billingEventRepository,
             IBillingOverrideRepository billingOverrideRepository)
@@ -66,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     Type = eventType,
                     Args = args,
                 };
-                billingEvent = await this.billingEventRepository.CreateAsync(billingEvent, logger);
+                billingEvent = await billingEventRepository.CreateAsync(billingEvent, logger);
 
                 logger.AddDuration(duration)
                     .AddVsoPlan(plan)
@@ -83,9 +79,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <summary>
-        /// Updates a new billing event entity in the repository
+        /// Updates a new billing event entity in the repository.
         /// </summary>
-        /// <param name="billingEvent"> the event being updated</param>
+        /// <param name="billingEvent"> the event being updated.</param>
         /// <param name="logger">Optional logger.</param>
         /// <returns>The created event entity, including unique ID and timestamp.</returns>
         public async Task<BillingEvent> UpdateEventAsync(
@@ -95,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var duration = logger.StartDuration();
             try
             {
-                billingEvent = await this.billingEventRepository.UpdateAsync(billingEvent, logger);
+                billingEvent = await billingEventRepository.UpdateAsync(billingEvent, logger);
 
                 logger.AddDuration(duration)
                     .LogInfo(GetType().FormatLogMessage(nameof(UpdateEventAsync)));
@@ -142,7 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 }
                 else if (eventTypes.Count == 1)
                 {
-                    string eventType = eventTypes.Single();
+                    var eventType = eventTypes.Single();
                     if (end == null)
                     {
                         where = x => x.Plan.Subscription == plan.Subscription && x.Plan.ResourceGroup == plan.ResourceGroup && x.Plan.Name == plan.Name && x.Plan.Location == plan.Location &&
@@ -172,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // The billing event collection is partitioned on subscription, and all queries
                 // filter on plan, which includes the subscription property.
                 // Ordering within the query itself creates much much more expensive query.
-                var billingEvents = (await this.billingEventRepository.QueryAsync(
+                var billingEvents = (await billingEventRepository.QueryAsync(
                     q => q.Where(where), logger)).OrderBy(x => x.Time);
 
                 logger.AddDuration(duration)
@@ -193,7 +189,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
        Expression<Func<BillingEvent, bool>> filter,
        IDiagnosticsLogger logger)
         {
-
             var duration = logger.StartDuration();
             try
             {
@@ -201,7 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // The billing event collection is partitioned on subscription, and all queries
                 // filter on plan, which includes the subscription property.
                 // Bug: We ordered our queries in the DocDb query itself which is a much more expensive call to docDB
-                var billingEvents = (await this.billingEventRepository.QueryAsync(
+                var billingEvents = (await billingEventRepository.QueryAsync(
                     q => q.Where(filter), logger)).OrderBy(x => x.Time);
 
                 logger.AddDuration(duration)
@@ -223,16 +218,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
 
             await CacheBillingOverrides(start, logger);
-            Func<BillingOverride, bool> timeRangeCondition = x => start >= x.StartTime && start < x.EndTime;
+            bool TimeRangeCondition(BillingOverride x) => start >= x.StartTime && start < x.EndTime;
 
-            var candidates = GetApplicableBillingOverrides(subscriptionID, plan, sku, timeRangeCondition);
+            var candidates = GetApplicableBillingOverrides(subscriptionID, plan, sku, TimeRangeCondition);
 
             return candidates.OrderBy(x => x.Priority).FirstOrDefault();
         }
 
         private IEnumerable<BillingOverride> GetApplicableBillingOverrides(string subscriptionID, VsoPlanInfo plan, Sku sku, Func<BillingOverride, bool> timeRangeCondition)
         {
-            List<BillingOverride> candidates = new List<BillingOverride>();
+            var candidates = new List<BillingOverride>();
             Func<BillingOverride, bool> where;
 
             // The algorithm is to get overrides for:
@@ -241,10 +236,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             // - All the Accounts that match
             // - All global overrides
             // Union all of these together.
-
             if (!string.IsNullOrEmpty(subscriptionID))
             {
-                // When there's a subscription ID 
+                // When there's a subscription ID
                 where = x => timeRangeCondition(x)
                             && subscriptionID.Equals(x.Subscription, StringComparison.OrdinalIgnoreCase)
                             && x.Plan == null
@@ -269,6 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     }
                 }
             }
+
             if (plan != null)
             {
                 where = x => timeRangeCondition(x)
@@ -320,11 +315,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             try
             {
                 // Note: We're getting this whole collection right now but this hinges on the fact that it is small and likely only used in emergency casese. If not, we would potentially want
-                // to apply filters at a different point in time. 
+                // to apply filters at a different point in time.
                 if (billingOverrideCache is null || startTime > billingOverrideCacheTime)
                 {
                     var duration = logger.StartDuration();
-                    var billingOverride = await this.billingOverrideRepository.QueryAsync(
+                    var billingOverride = await billingOverrideRepository.QueryAsync(
                     q => q, logger);
                     billingOverrideCache = billingOverride.ToList();
                     billingOverrideCacheTime = DateTime.Now;
@@ -338,6 +333,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 throw;
             }
         }
-
     }
 }

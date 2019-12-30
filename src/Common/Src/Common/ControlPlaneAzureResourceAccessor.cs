@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -124,11 +123,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public List<string> GetStampOrigins()
         {
-            var allDNSNames = this.ControlPlaneInfo.AllStamps.Values.Select(s => $"https://{s.DnsHostName}")
+            var allDNSNames = ControlPlaneInfo.AllStamps.Values.Select(s => $"https://{s.DnsHostName}")
                 .Distinct()
                 .ToList();
 
-            allDNSNames.Add($"https://{this.ControlPlaneInfo.DnsHostName}");
+            allDNSNames.Add($"https://{ControlPlaneInfo.DnsHostName}");
 
             return allDNSNames;
         }
@@ -390,10 +389,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             if (AzureCredentials == null)
             {
-                IServicePrincipal sp = ServicePrincipal;
-                string azureAppId = sp.ClientId;
-                string azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
-                string azureTenant = sp.TenantId;
+                var sp = ServicePrincipal;
+                var azureAppId = sp.ClientId;
+                var azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
+                var azureTenant = sp.TenantId;
                 var creds = new AzureCredentialsFactory()
                     .FromServicePrincipal(
                         azureAppId,

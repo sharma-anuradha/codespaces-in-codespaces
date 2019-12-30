@@ -10,7 +10,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
-
     /// <summary>
     /// The show control-plan info verb.
     /// </summary>

@@ -85,6 +85,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 });
         }
 
+        private static string EnsureBlobSafeName(string name)
+        {
+            return name.Replace("_", string.Empty).ToLowerInvariant();
+        }
+
         private async Task<IDisposable> InnerCreateAsync(
             string containerName,
             string name,
@@ -191,7 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         // Push updated metadata
                         await blob.SetMetadataAsync(
                             new AccessCondition() { LeaseId = id }, new BlobRequestOptions(), new OperationContext());
-                        
+
                         // Force release lease
                         await blob.ReleaseLeaseAsync(acc);
                     },
@@ -209,7 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             await blob.FetchAttributesAsync();
 
             // Get last claimed
-            if (blob.Metadata.TryGetValue(CurrentClaimPeriodName, out string currentClaimPeriodValue))
+            if (blob.Metadata.TryGetValue(CurrentClaimPeriodName, out var currentClaimPeriodValue))
             {
                 var currentClaimPeriodDate = DateTime.Parse(currentClaimPeriodValue);
 
@@ -219,11 +224,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // If no metdata, then we are good to go
             return false;
-        }
-
-        private static string EnsureBlobSafeName(string name)
-        {
-            return name.Replace("_", string.Empty).ToLowerInvariant();
         }
     }
 }

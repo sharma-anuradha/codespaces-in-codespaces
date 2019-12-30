@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -127,7 +126,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                     return (item, tryAgain);
                 });
-
         }
     }
 }

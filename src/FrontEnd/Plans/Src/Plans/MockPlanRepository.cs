@@ -13,7 +13,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     {
         public async Task<int> GetCountAsync(IDiagnosticsLogger logger)
         {
-            return (await this.GetWhereAsync((model) => true, logger)).Count();
+            return (await GetWhereAsync((model) => true, logger)).Count();
         }
     }
 }

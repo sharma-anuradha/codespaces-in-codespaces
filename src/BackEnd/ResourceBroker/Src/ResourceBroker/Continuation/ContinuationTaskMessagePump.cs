@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
     public class ContinuationTaskMessagePump : IContinuationTaskMessagePump
     {
         private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskMessagePump;
-        private static TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2.5);
+        private static TimeSpan defaultTimeout = TimeSpan.FromMinutes(2.5);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContinuationTaskMessagePump"/> class.
@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         var items = await ResourceJobQueueRepository.GetAsync(
                             targetMessageCacheLength - MessageCache.Count,
                             childLogger.WithValues(new LogValueSet()),
-                            DefaultTimeout);
+                            defaultTimeout);
 
                         childLogger.FluentAddValue("PumpFoundItems", items.Count().ToString());
 
@@ -103,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     {
                         message = await ResourceJobQueueRepository.GetAsync(
                             childLogger.WithValues(new LogValueSet()),
-                            DefaultTimeout);
+                            defaultTimeout);
                     }
 
                     childLogger.FluentAddValue("PumpFoundMessage", message != null);

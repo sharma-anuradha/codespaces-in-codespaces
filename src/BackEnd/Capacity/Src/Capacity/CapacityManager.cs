@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Management.Sql.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -22,7 +21,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
     /// </summary>
     public class CapacityManager : ICapacityManager
     {
-        private const double LowUsageThresholdPercent = 0.25;
         private const int MaxResourceGroupsPerSubscription = 980;
 
         /// <summary>

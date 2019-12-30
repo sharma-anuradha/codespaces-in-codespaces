@@ -1,22 +1,24 @@
-﻿using Microsoft.VsSaaS.Common;
+﻿// <copyright file="BillingSummarySubmissionService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     public class BillingSummarySubmissionService : BillingServiceBase, IBillingSummarySubmissionService
     {
-
         // services
         private readonly IBillingEventManager billingEventManager;
         private readonly IBillingSubmissionCloudStorageFactory billingStorageFactory;
@@ -27,12 +29,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingSummarySubmissionService"/> class.
         /// </summary>
-        /// <param name="controlPlanInfo">Needed to find all available control plans</param>
-        /// <param name="billingEventManager">used to get billing summaries and plan</param>
-        /// <param name="logger">the logger</param>
-        /// <param name="billingStorageFactory">used to get billing storage collections</param>
-        /// <param name="claimedDistributedLease"> the lease holder</param>
-        /// <param name="taskHelper">the task helper</param>
+        /// <param name="controlPlanInfo">Needed to find all available control plans.</param>
+        /// <param name="billingEventManager">used to get billing summaries and plan.</param>
+        /// <param name="logger">the logger.</param>
+        /// <param name="billingStorageFactory">used to get billing storage collections.</param>
+        /// <param name="claimedDistributedLease"> the lease holder.</param>
+        /// <param name="taskHelper">the task helper.</param>
         public BillingSummarySubmissionService(
             IControlPlaneInfo controlPlanInfo,
             IBillingEventManager billingEventManager,
@@ -41,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IPlanManager planManager)
-            : base(billingEventManager, controlPlanInfo, logger, claimedDistributedLease, taskHelper,planManager, "billingsub-worker")
+            : base(controlPlanInfo, logger, claimedDistributedLease, taskHelper, planManager, "billingsub-worker")
         {
             this.controlPlanInfo = controlPlanInfo;
             this.billingEventManager = billingEventManager;
@@ -56,6 +58,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             await Execute(cancellationToken);
         }
 
+        /// <inheritdoc />
+        public async Task CheckForBillingSubmissionErorrs(CancellationToken cancellationToken)
+        {
+            var regions = controlPlanInfo.Stamp.DataPlaneLocations;
+            foreach (var region in regions)
+            {
+                var leaseName = $"billsub-errorCheck-{region.ToString()}";
+                using (var lease = await claimedDistributedLease.Obtain(
+                                                $"{ServiceName}-leases",
+                                                leaseName,
+                                                TimeSpan.FromHours(1),
+                                                Logger))
+                {
+                    if (lease != null)
+                    {
+                        await CheckForErrors(region);
+                    }
+                }
+            }
+        }
+
         protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime startTime, DateTime endTime, string planShard, AzureLocation region)
         {
             Logger.AddValue("region", region.ToString());
@@ -65,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 async (childLogger) =>
                 {
                     var batchID = Guid.NewGuid().ToString();
-                    int numberOfSubmissions = 0;
+                    var numberOfSubmissions = 0;
                     var plans = await planManager.GetPlansByShardAsync(
                      new List<AzureLocation> { region },
                      planShard,
@@ -96,47 +119,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         await Logger.OperationScopeAsync(
                         $"{ServiceName}_begin_queue_submission",
                         async (childLogger2) =>
-                                {
-                                    // Get the storage mechanism for billing submission
-                                    var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
-                                    var billingSummaryQueueSubmission = new BillingSummaryQueueSubmission()
-                                    {
-                                        BatchId = batchID,
-                                        PartitionKey = batchID,
-                                    };
+                        {
+                            // Get the storage mechanism for billing submission
+                            var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
+                            var billingSummaryQueueSubmission = new BillingSummaryQueueSubmission()
+                            {
+                                BatchId = batchID,
+                                PartitionKey = batchID,
+                            };
 
-                                    // Send off the queue submission
-                                    await storageClient.PushBillingQueueSubmission(billingSummaryQueueSubmission);
-                                    Logger.FluentAddValue("BillSubmissionEndTime", endTime.ToString())
-                                          .FluentAddValue("Location", region.ToString())
-                                          .FluentAddValue("Shard", planShard)
-                                          .FluentAddValue("SubmissionCount", numberOfSubmissions.ToString())
-                                          .LogInfo("billing_aggregate_shard_submission");
-
-                                }, swallowException: true);
+                            // Send off the queue submission
+                            await storageClient.PushBillingQueueSubmission(billingSummaryQueueSubmission);
+                            Logger.FluentAddValue("BillSubmissionEndTime", endTime.ToString())
+                                  .FluentAddValue("Location", region.ToString())
+                                  .FluentAddValue("Shard", planShard)
+                                  .FluentAddValue("SubmissionCount", numberOfSubmissions.ToString())
+                                  .LogInfo("billing_aggregate_shard_submission");
+                        }, swallowException: true);
                     }
                 }, swallowException: true);
-        }
-
-        /// <inheritdoc />
-        public async Task CheckForBillingSubmissionErorrs(CancellationToken cancellationToken)
-        {
-            var regions = controlPlanInfo.Stamp.DataPlaneLocations;
-            foreach (var region in regions)
-            {
-                var leaseName = $"billsub-errorCheck-{region.ToString()}";
-                using (var lease = await claimedDistributedLease.Obtain(
-                                                $"{ServiceName}-leases",
-                                                leaseName,
-                                                TimeSpan.FromHours(1),
-                                                Logger))
-                {
-                    if (lease != null)
-                    {
-                        await CheckForErrors(region);
-                    }
-                }
-            }
         }
 
         private async Task CheckForErrors(AzureLocation region)
@@ -163,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                            try
                            {
-                               // To make only single partition queries we need to make two queries. 
+                               // To make only single partition queries we need to make two queries.
                                // One to the PA usage table to get our subscriptionID and one to the event manager to find the bill summary to mark in error.
                                var billUsageSubmission = await errorStorage.GetBillingTableSubmission(error.UsageRecordPartitionKey, error.UsageRecordRowKey);
                                Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan.Subscription == billUsageSubmission.SubscriptionId &&
@@ -185,16 +186,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                    Logger.LogError("bill_submission_error");
                                }
                            }
-                           catch (Exception e)
+                           catch (Exception)
                            {
-
                                Logger.AddValue("error", "We found the error record but did not mark the bill summary sucessfully");
                                Logger.AddValue("errorRowKey", error.UsageRecordRowKey);
                                Logger.AddValue("errorPartionKey", error.UsageRecordPartitionKey);
                                Logger.LogError("bill_submission_error");
                            }
-
                        }
+
                        errorsOnQueue = await errorStorage.CheckForErrorsOnQueue();
                        ++maxErrorsProcessed;
                    }
@@ -220,6 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                          var billingSummaryTableSubmission = new BillingSummaryTableSubmission(batchID, eventID.ToString())
                          {
                              EventDateTime = billingSummary.PeriodEnd,
+
                              // TODO: EventID needs to have some other correlation to it for the case of multiple meters.
                              EventId = eventID,
                              Location = MapPav2Location(billingEvent.Plan.Location),
@@ -238,7 +239,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                .FluentAddValue("Subscription", billingEvent.Plan.Subscription)
                                .FluentAddValue("Meter", meter)
                                .LogInfo("billing_aggregate_summary_submission");
-
                      }
                  }
 
@@ -279,6 +279,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     return null;
             }
         }
-
     }
 }

@@ -4,9 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;

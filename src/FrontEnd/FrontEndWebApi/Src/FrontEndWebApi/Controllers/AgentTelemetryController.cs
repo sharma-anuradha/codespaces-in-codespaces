@@ -110,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private Guid ValidateVmTokenAndGetResourceId()
         {
             ValidationUtil.IsTrue(HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName), "VsoAgent telemetry VMToken has invalid vmResourceId");
-            ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out Guid vmResourceId), "VsoAgent telemetry VMToken has invalid vmResourceId");
+            ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out var vmResourceId), "VsoAgent telemetry VMToken has invalid vmResourceId");
             ValidationUtil.IsTrue(vmResourceId != default, "VsoAgent telemetry VMToken has invalid vmResourceId");
 
             return vmResourceId;

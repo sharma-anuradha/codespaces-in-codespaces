@@ -2,11 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -18,11 +16,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Counts the number of environments in a given state.
         /// </summary>
-        /// <param name="state">The state that's desired to be counted</param>
-        /// <param name="location">the location being looked at</param>
-        /// <param name="skuName">The sku count being sought after</param>
-        /// <param name="logger">the logger</param>
-        /// <returns>the number of cloud environments in the input state</returns>
+        /// <param name="state">The state that's desired to be counted.</param>
+        /// <param name="location">the location being looked at.</param>
+        /// <param name="skuName">The sku count being sought after.</param>
+        /// <param name="logger">the logger.</param>
+        /// <returns>the number of cloud environments in the input state.</returns>
         Task<int> GetCloudEnvironmentCountAsync(string location, string state, string skuName, IDiagnosticsLogger logger);
     }
 }

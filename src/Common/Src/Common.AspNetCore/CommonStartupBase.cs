@@ -253,31 +253,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             warmup.Start();
         }
 
-        /// <summary>
-        /// Emit appsettings, etc., to the diagnostics logger.
-        /// This has the side-effect of serializaing AppSettings, which could fail if required properties are not set.
-        /// </summary>
-        /// <param name="logger">The diagnostics logger.</param>
-        private void LogSettings(IDiagnosticsLogger logger)
-        {
-            try
-            {
-                logger
-                    .FluentAddValue("appSettingJsonFiles", string.Join(",", AppSettingsJsonFiles))
-                    .FluentAddValue("appSettings", JsonConvert.SerializeObject(
-                        AppSettings,
-                        new JsonSerializerSettings{ MaxDepth = 10, }).Replace("\"", "'"))
-                    .FluentAddValue("currentAzureLocation", CurrentAzureLocation)
-                    .FluentAddValue("environmentName", HostingEnvironment.EnvironmentName)
-                    .LogInfo(LogMessageBase);
-            }
-            catch (Exception ex)
-            {
-                logger.LogException($"{LogMessageBase}_bad_settings", ex);
-                throw;
-            }
-        }
-
         private static bool TryGetOverrideAppSettingsJsonFile(out string overrideAppSettingsJsonFile)
         {
             overrideAppSettingsJsonFile = Environment.GetEnvironmentVariable(OverrideAppSettingsJsonEnvironmentVariable);
@@ -292,6 +267,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             overrideAppSettingsJsonFile = overrideAppSettingsJsonFile.Trim('"');
 
             return true;
+        }
+
+        /// <summary>
+        /// Emit appsettings, etc., to the diagnostics logger.
+        /// This has the side-effect of serializaing AppSettings, which could fail if required properties are not set.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        private void LogSettings(IDiagnosticsLogger logger)
+        {
+            try
+            {
+                logger
+                    .FluentAddValue("appSettingJsonFiles", string.Join(",", AppSettingsJsonFiles))
+                    .FluentAddValue("appSettings", JsonConvert.SerializeObject(
+                        AppSettings,
+                        new JsonSerializerSettings { MaxDepth = 10, }).Replace("\"", "'"))
+                    .FluentAddValue("currentAzureLocation", CurrentAzureLocation)
+                    .FluentAddValue("environmentName", HostingEnvironment.EnvironmentName)
+                    .LogInfo(LogMessageBase);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException($"{LogMessageBase}_bad_settings", ex);
+                throw;
+            }
         }
 
         private string GetAppSettingsInfixName()

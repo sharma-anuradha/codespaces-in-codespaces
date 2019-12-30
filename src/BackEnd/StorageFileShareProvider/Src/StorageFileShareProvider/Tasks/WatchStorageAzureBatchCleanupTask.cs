@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Batch;
@@ -70,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
-                async (childLogger) =>
+                (childLogger) =>
                 {
                     var dataPlaneLocations = ControlPlaneInfo.Stamp.DataPlaneLocations;
 
@@ -82,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                         childLogger,
                         (location, itemLogger) => ObtainLease($"{LeaseBaseName}-{location.ToString()}", claimSpan, itemLogger));
 
-                    return !Disposed;
+                    return Task.FromResult(!Disposed);
                 },
                 (e, childLogger) => !Disposed,
                 swallowException: true);
@@ -104,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// <returns>Task.</returns>
         private async Task RunOnDataPlaneLocationAsync(AzureLocation location, IDiagnosticsLogger logger)
         {
-            using (BatchClient batchClient = await BatchClientFactory.GetBatchClient(location, logger))
+            using (var batchClient = await BatchClientFactory.GetBatchClient(location, logger))
             {
                 var createdAfter = DateTime.UtcNow.AddHours(-1);
                 var jobsOdataQuery = new ODATADetailLevel(

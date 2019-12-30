@@ -7,12 +7,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     public enum BillingOverrideState
     {
         /// <summary>
-        /// The OverrideState for when billing is re-enabled 
+        /// The OverrideState for when billing is re-enabled
         /// </summary>
         BillingEnabled,
 
         /// <summary>
-        /// The overrideState for when billing is disabled 
+        /// The overrideState for when billing is disabled
         /// </summary>
         BillingDisabled,
     }

@@ -29,8 +29,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="certificateSettings">certificate settings.</param>
         public MockControlPlaneAzureResourceAccessor(CertificateSettings certificateSettings)
         {
-            this.versionToSecretMap[Version2] = certificateSettings.MockPrimaryCertificate;
-            this.versionToSecretMap[Version1] = certificateSettings.MockSecondaryCertificate;
+            versionToSecretMap[Version2] = certificateSettings.MockPrimaryCertificate;
+            versionToSecretMap[Version1] = certificateSettings.MockSecondaryCertificate;
         }
 
         /// <inheritdoc/>

@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Text;
 using Xunit;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;

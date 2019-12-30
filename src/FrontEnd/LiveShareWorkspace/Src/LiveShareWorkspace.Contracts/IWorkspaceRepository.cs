@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// Create a workspace.
         /// </summary>
         /// <param name="workspace">The workspace request.</param>
-        /// <param name="logger">Diagnostic logger</param>
+        /// <param name="logger">Diagnostic logger.</param>
         /// <returns>A workspace response.</returns>
         Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, IDiagnosticsLogger logger);
 
@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// Delete a workspace.
         /// </summary>
         /// <param name="workspaceId">The workspace id.</param>
-        /// <param name="logger">Diagnostic logger</param>
+        /// <param name="logger">Diagnostic logger.</param>
         /// <returns>A task.</returns>
         Task DeleteAsync(string workspaceId, IDiagnosticsLogger logger);
 
@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// Get a workspace.
         /// </summary>
         /// <param name="workspaceId">The workspace id.</param>
-        /// <param name="logger">Diagnostic logger</param>
+        /// <param name="logger">Diagnostic logger.</param>
         /// <returns>The workspace.</returns>
         Task<WorkspaceResponse> GetStatusAsync(string workspaceId, IDiagnosticsLogger logger);
     }

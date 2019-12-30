@@ -12,7 +12,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
-    ///  Background worker that's used to transfer billing summaries to the PaV2 commerce queue/storage system
+    ///  Background worker that's used to transfer billing summaries to the PaV2 commerce queue/storage system.
     /// </summary>
     public class BillingSummarySubmissionWorker : BackgroundService
     {
@@ -24,12 +24,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingSummarySubmissionWorker"/> class.
         /// </summary>
-        /// <param name="billingSummarySubmissionService">the billing service that runs the actual operation</param>
-        /// <param name="diagnosticsLogger">the logger</param>
+        /// <param name="billingSummarySubmissionService">the billing service that runs the actual operation.</param>
+        /// <param name="diagnosticsLogger">the logger.</param>
         public BillingSummarySubmissionWorker(IBillingSummarySubmissionService billingSummarySubmissionService, IDiagnosticsLogger diagnosticsLogger)
         {
             this.billingSummarySubmissionService = billingSummarySubmissionService;
-            this.logger = diagnosticsLogger.NewChildLogger();
+            logger = diagnosticsLogger.NewChildLogger();
         }
 
         /// <inheritdoc/>
@@ -47,7 +47,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                       // Do the actual work
                       await billingSummarySubmissionService.ProcessBillingSummariesAsync(cancellationToken);
                       await billingSummarySubmissionService.CheckForBillingSubmissionErorrs(cancellationToken);
-
                   }, swallowException: true);
 
                 // Delay for 1 hour

@@ -6,10 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos.Table;
-using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Storage;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Newtonsoft.Json;
@@ -17,7 +15,7 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
-    /// An interface for billing submission to underlying storage infrastructure
+    /// An interface for billing submission to underlying storage infrastructure.
     /// </summary>
     public class BillingSubmissionCloudStorageClient : IBillingSubmissionCloudStorageClient
     {
@@ -27,19 +25,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private readonly IStorageQueueCollection cloudUsageQueue;
         private readonly BillingSubmissionErrorQueueCollection cloudErrorQueue;
         private readonly IDiagnosticsLogger logger;
-        private readonly JsonSerializer jsonSerializer = new JsonSerializer();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingSubmissionCloudStorageClient"/> class.
         /// </summary>
-        /// <param name="cloudTableClient">the cloud table this collection operates on</param>
-        /// <param name="cloudeUsageQueue">the usage queue</param>
-        /// <param name="cloudErrorQueue"> the error queue</param>
-        /// <param name="logger">the logger</param>
+        /// <param name="cloudTableClient">the cloud table this collection operates on.</param>
+        /// <param name="cloudeUsageQueue">the usage queue.</param>
+        /// <param name="cloudErrorQueue"> the error queue.</param>
+        /// <param name="logger">the logger.</param>
         public BillingSubmissionCloudStorageClient(CloudTableClient cloudTableClient, BillingSubmissionQueueCollection cloudeUsageQueue, BillingSubmissionErrorQueueCollection cloudErrorQueue, IDiagnosticsLogger logger)
         {
             this.cloudTableClient = cloudTableClient;
-            this.cloudUsageQueue = cloudeUsageQueue;
+            cloudUsageQueue = cloudeUsageQueue;
             this.cloudErrorQueue = cloudErrorQueue;
             this.logger = logger;
         }
@@ -51,9 +48,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 var cloudTable = cloudTableClient.GetTableReference(UsageReportingTableName);
 
-                TableOperation retrieve = TableOperation.Retrieve<BillingSummaryTableSubmission>(partitionKey, rowKey);
+                var retrieve = TableOperation.Retrieve<BillingSummaryTableSubmission>(partitionKey, rowKey);
 
-                TableResult result = await cloudTable.ExecuteAsync(retrieve);
+                var result = await cloudTable.ExecuteAsync(retrieve);
                 return result.Result as BillingSummaryTableSubmission;
             }
             catch (Exception e)
@@ -91,17 +88,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             return errorMessages;
         }
 
-        private IEnumerable<BillSubmissionErrorResult> GetBillingErrors(string partitionKey)
-        {
-            // Get query resady
-            var filter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partitionKey);
-            TableQuery<BillSubmissionErrorResult> query = new TableQuery<BillSubmissionErrorResult>().Where(filter);
-
-            // Query against the whole error table.
-            var cloudTable = cloudTableClient.GetTableReference(ErrorReportingTableName);
-            return cloudTable.ExecuteQuery<BillSubmissionErrorResult>(query);
-        }
-
         /// <inheritdoc />
         public async Task<BillingSummaryTableSubmission> InsertOrUpdateBillingTableSubmission(BillingSummaryTableSubmission billingTableSubmission)
         {
@@ -110,12 +96,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             try
             {
                 // Create the InsertOrReplace table operation
-                TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(billingTableSubmission);
+                var insertOrMergeOperation = TableOperation.InsertOrMerge(billingTableSubmission);
                 var cloudTable = cloudTableClient.GetTableReference(UsageReportingTableName);
 
                 // Execute the operation.
-                TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
-                BillingSummaryTableSubmission insertedCustomer = result.Result as BillingSummaryTableSubmission;
+                var result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
+                var insertedCustomer = result.Result as BillingSummaryTableSubmission;
 
                 return insertedCustomer;
             }
@@ -124,6 +110,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 logger.LogErrorWithDetail("BillSubmission-Table-Insert-Error", e.Message);
                 throw;
             }
+        }
+
+        private IEnumerable<BillSubmissionErrorResult> GetBillingErrors(string partitionKey)
+        {
+            // Get query resady
+            var filter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partitionKey);
+            var query = new TableQuery<BillSubmissionErrorResult>().Where(filter);
+
+            // Query against the whole error table.
+            var cloudTable = cloudTableClient.GetTableReference(ErrorReportingTableName);
+            return cloudTable.ExecuteQuery<BillSubmissionErrorResult>(query);
         }
     }
 }

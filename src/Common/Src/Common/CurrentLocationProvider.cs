@@ -8,7 +8,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    /// Provides the current Azure location of the running service
+    /// Provides the current Azure location of the running service.
     /// </summary>
     public class CurrentLocationProvider : ICurrentLocationProvider
     {

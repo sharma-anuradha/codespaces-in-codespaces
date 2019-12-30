@@ -74,8 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public BillingSubmissionState SubmissionState { get; set; }
 
         /// <summary>
-        /// Gets or sets the eventID used to match the submission IDs
-        /// 
+        /// Gets or sets the eventID used to match the submission IDs.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "eventId")]
         public string EventId { get; set; }

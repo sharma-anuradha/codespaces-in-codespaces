@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             TKey key,
             TValue defaultValue = default)
         {
-            return dictionary.TryGetValue(key, out TValue value) ? value : defaultValue;
+            return dictionary.TryGetValue(key, out var value) ? value : defaultValue;
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             Requires.NotNull(defaultValueCallback, nameof(defaultValueCallback));
 
-            return dictionary.TryGetValue(key, out TValue value) ? value : defaultValueCallback();
+            return dictionary.TryGetValue(key, out var value) ? value : defaultValueCallback();
         }
     }
 }

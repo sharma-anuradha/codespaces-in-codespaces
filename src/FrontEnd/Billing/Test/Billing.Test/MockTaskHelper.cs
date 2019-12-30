@@ -1,21 +1,13 @@
-﻿using Microsoft.Azure.Management.Compute.Fluent.Models;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
-using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+﻿using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 {
-   public class MockTaskHelper : ITaskHelper
+    public class MockTaskHelper : ITaskHelper
     {
         public Task<bool> RetryUntilSuccessOrTimeout(string name, Func<Task<bool>> callback, TimeSpan timeoutTimeSpan, TimeSpan? waitTimeSpan = null, IDiagnosticsLogger logger = null, Action onTimeout = null)
         {
