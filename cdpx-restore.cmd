@@ -7,8 +7,13 @@ echo Running %~nx0
 :: switch to the folder this script resides in. Don't assume absolute paths because on the build host and on the dev host the locations may be different.
 pushd "%~dp0"
 
+:: Install 2.2.402 SDK which includes 2.0.9 runtime to work around Razor codegen issue with portal app targeting 2.2
+:: as well as 2.2 runtime for executing unit tests
+:: TODO: Remove once portal upgrades to target 3.1+
+call ".pipelines\install-dotnet.cmd" 2.2.402
+
 :: Install dotnet
-set DOTNET_VERSION=2.2.401
+set DOTNET_VERSION=3.1.100
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
 :: Install node
@@ -18,7 +23,7 @@ call ".pipelines\install-node.cmd" %NODE_VERSION%
 :: Install yarn
 call ".pipelines\install-yarn.cmd"
 
-set DOTNET_ARGS=/m /v:m
+set DOTNET_ARGS=/m /v:m /p:BuildFrontendBackend=false
 
 :: Dotnet Restore
 echo.

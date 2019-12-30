@@ -9,7 +9,7 @@ echo Building %~nx0
 pushd "%~dp0"
 
 :: Install dotnet
-set DOTNET_VERSION=2.2.401
+set DOTNET_VERSION=3.1.100
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
 :: Install node
@@ -18,23 +18,12 @@ call ".pipelines\install-node.cmd" %NODE_VERSION%
 
 call node --version
 
-set DOTNET_ARGS=/m /v:m /p:RestorePackages=false
-
-:: Dotnet Build
-echo.
-echo dotnet build dirs.proj
-call dotnet build --no-restore --configuration Release dirs.proj %DOTNET_ARGS%
-set EX=%ERRORLEVEL%
-if "%EX%" neq "0" (
-    popd
-    echo "Failed to build correctly."
-	exit /b %EX%
-)
+set DOTNET_ARGS=/m /v:m /p:RestorePackages=false /p:BuildFrontendBackend=false
 
 :: Dotnet Publish
 echo.
 echo dotnet publish dirs.proj
-call dotnet publish --no-restore --configuration Release --no-build dirs.proj %DOTNET_ARGS%
+call dotnet publish --no-restore --configuration Release dirs.proj %DOTNET_ARGS%
 set EX=%ERRORLEVEL%
 if "%EX%" neq "0" (
     popd

@@ -9,6 +9,6 @@ execute() {
     exitCode=$?
     if [ $exitCode -ne 0 ]; then
         echo "Error running command '$1': Failed with exit code $exitCode"
+        exit $exitCode
     fi
-    exit $exitCode
 }

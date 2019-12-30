@@ -8,10 +8,10 @@ echo Running %~nx0
 pushd "%~dp0"
 
 :: Add dotnet to PATH. (It should have been already installed by the build task.)
-set DOTNET_VERSION=2.2.401
+set DOTNET_VERSION=3.1.100
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
-set DOTNET_ARGS=/v:m /p:RestorePackages=false
+set DOTNET_ARGS=/v:m /p:RestorePackages=false /p:BuildFrontendBackend=false
 
 :: Dotnet Test
 echo.

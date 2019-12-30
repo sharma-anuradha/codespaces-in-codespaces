@@ -5,7 +5,7 @@ environment:
     os: "linux"
   runtime:
     provider: "appcontainer"
-    image: "mcr.microsoft.com/dotnet/core/sdk:2.2.401"
+    image: "mcr.microsoft.com/dotnet/core/sdk:3.1.100"
     source_mode: "link"
 
 package_sources:
