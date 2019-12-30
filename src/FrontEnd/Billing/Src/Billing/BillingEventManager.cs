@@ -171,8 +171,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // This should be a single-partition query.
                 // The billing event collection is partitioned on subscription, and all queries
                 // filter on plan, which includes the subscription property.
-                var billingEvents = await this.billingEventRepository.QueryAsync(
-                    q => q.Where(where).OrderBy(bev => bev.Time), logger);
+                // Ordering within the query itself creates much much more expensive query.
+                var billingEvents = (await this.billingEventRepository.QueryAsync(
+                    q => q.Where(where), logger)).OrderBy(x => x.Time);
 
                 logger.AddDuration(duration)
                     .AddVsoPlan(plan)
@@ -199,8 +200,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // This should be a single-partition query.
                 // The billing event collection is partitioned on subscription, and all queries
                 // filter on plan, which includes the subscription property.
-                var billingEvents = await this.billingEventRepository.QueryAsync(
-                    q => q.Where(filter).OrderBy(bev => bev.Time), logger);
+                // Bug: We ordered our queries in the DocDb query itself which is a much more expensive call to docDB
+                var billingEvents = (await this.billingEventRepository.QueryAsync(
+                    q => q.Where(filter), logger)).OrderBy(x => x.Time);
 
                 logger.AddDuration(duration)
                     .LogInfo(GetType().FormatLogMessage(nameof(GetPlanEventsAsync)));
