@@ -13,7 +13,7 @@ export const defaultConfig: IConfiguration = {
     environmentRegistrationEndpoint: 'https://online.visualstudio.com/api/v1/environments',
     apiEndpoint: 'https://online.visualstudio.com/api/v1',
     liveShareEndpoint: 'https://prod.liveshare.vsengsaas.visualstudio.com',
-    liveShareWebExtensionEndpoint: 'https://vslswebextension.blob.core.windows.net/vslsweb',
+    liveShareWebExtensionEndpoint: 'https://vslsprod.blob.core.windows.net/webextension',
 };
 
 export const configurationEndpoint = '/configuration';
