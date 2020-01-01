@@ -1,17 +1,23 @@
 import moment from 'moment';
 import { isNumber } from 'util';
 import { ITelemetryEvent, TelemetryPropertyValue } from './types';
+import { prefixPropertyNames } from './prefixPropertyNames';
+
 export class TelemetryEventSerializer {
     serialize(
         event: ITelemetryEvent,
-        defaultProperties: Record<string, TelemetryPropertyValue>
+        defaultProperties: Record<string, TelemetryPropertyValue>,
+        prefix = 'vsonline.portal.event'
     ): {
         properties: Record<string, string>;
         measurements: Record<string, number>;
     } {
         const properties: Record<string, string> = {};
         const measurements: Record<string, number> = {};
-        const allData = { ...defaultProperties, ...event.properties };
+        const allData = {
+            ...defaultProperties,
+            ...(prefix ? prefixPropertyNames(event.properties, prefix) : event.properties),
+        };
         for (const [name, value] of Object.entries(allData)) {
             if (value === undefined) {
                 properties[name] = 'undefined';
@@ -24,7 +30,7 @@ export class TelemetryEventSerializer {
                     .utc()
                     .format('YYYY-MM-DD HH:mm:ss.SSS');
             } else if (value instanceof Error) {
-                properties[name] = this.stripPii(value);
+                properties[name] = this.toSafeErrorMessage(value);
             } else if (typeof value === 'boolean') {
                 properties[name] = value.toString();
             } else {
@@ -33,7 +39,8 @@ export class TelemetryEventSerializer {
         }
         return { properties, measurements };
     }
-    private stripPii(error: Error) {
-        return `Redacted <error: ${error.message.substr(0, 3)}>`;
+    private toSafeErrorMessage(error: Error) {
+        // We handle error message PII on Nova.
+        return error.message;
     }
 }

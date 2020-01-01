@@ -6,10 +6,13 @@ import { createUniqueId } from '../../dependencies';
 import { createTrace } from '../createTrace';
 import { TelemetryEventSerializer } from './TelemetryEventSerializer';
 import { ITelemetryEvent, TelemetryPropertyValue } from './types';
+import { prefixPropertyNames } from './prefixPropertyNames';
 import { matchPath } from '../../routes';
 import versionFile from '../../version.json';
 
 import { ITelemetryContext } from '../../interfaces/ITelemetryContext';
+
+let sequenceNumber = 0;
 
 class TelemetryService {
     private appInsights: ApplicationInsights;
@@ -81,13 +84,7 @@ class TelemetryService {
 
     resolveCommonProperties(): { [key: string]: any } {
         const vsoContextProperties = this.getContext();
-        const keys = Object.keys(vsoContextProperties) as (keyof typeof vsoContextProperties)[];
-        return keys.reduce((commonProperties, property) => {
-            return {
-                ...commonProperties,
-                [`vso.${property}`]: vsoContextProperties[property],
-            };
-        }, {} as Record<string, any>);
+        return prefixPropertyNames(vsoContextProperties, 'vso');
     }
 
     private get machineId(): string {
@@ -127,9 +124,10 @@ class TelemetryService {
     }
 
     track(userEvent: ITelemetryEvent) {
-        const defaultProperties: Record<string, TelemetryPropertyValue> = {
+        let defaultProperties: Record<string, TelemetryPropertyValue> = {
             ...this.context,
             date: new Date(),
+            sequenceNumber: ++sequenceNumber,
             telemetryEventId: createUniqueId(),
         };
 
@@ -138,6 +136,7 @@ class TelemetryService {
             defaultProperties['path'] = knownPath.path;
         }
 
+        defaultProperties = prefixPropertyNames(defaultProperties, 'vsonline.portal.common');
         const { properties, measurements } = this.telemetryEventSerializer.serialize(
             userEvent,
             defaultProperties
