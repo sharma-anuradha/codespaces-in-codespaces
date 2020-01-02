@@ -13,15 +13,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments
     public class ExperimentalFeaturesBody
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExperimentalFeaturesBody"/> class.
-        /// </summary>
-        public ExperimentalFeaturesBody()
-        {
-            CustomContainers = false;
-            NewTerminal = false;
-        }
-
-        /// <summary>
         /// Gets or sets a value indicating whether to use custom containers for this environment.
         /// </summary>
         [JsonProperty(Required = Required.Default)]
@@ -34,5 +25,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments
         [JsonProperty(Required = Required.Default)]
         [Default(false)]
         public bool NewTerminal { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to use the multiple workspace feature for this environment.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        [Default(false)]
+        public bool EnableMultipleWorkspaces { get; set; }
     }
 }

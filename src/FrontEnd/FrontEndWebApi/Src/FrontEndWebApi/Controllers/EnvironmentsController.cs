@@ -340,6 +340,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 cloudEnvironmentOptions.CustomContainers = createEnvironmentInput.ExperimentalFeatures.CustomContainers;
                 cloudEnvironmentOptions.NewTerminal = createEnvironmentInput.ExperimentalFeatures.NewTerminal;
+                cloudEnvironmentOptions.EnableMultipleWorkspaces = createEnvironmentInput.ExperimentalFeatures.EnableMultipleWorkspaces;
             }
 
             // Create the environement
@@ -553,7 +554,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="logger">Target logger.</param>
         /// <returns>An object result that contains the <see cref="CloudEnvironmentAvailableUpdatesResult"/>.</returns>
         [HttpGet("{environmentId}/updates")]
-        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(UpdateSettingsAsync))]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(GetAvailableUpdatesAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
