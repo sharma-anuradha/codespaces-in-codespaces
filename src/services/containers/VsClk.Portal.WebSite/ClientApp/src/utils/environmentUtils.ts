@@ -67,6 +67,11 @@ export function isActivating({ state }: Pick<ILocalCloudEnvironment | ICloudEnvi
     }
 }
 
+export function isInStableState({ state }: ILocalCloudEnvironment): boolean {
+    return state === StateInfo.Available ||
+        state === StateInfo.Shutdown;
+}
+
 export function stateToDisplayName(state: StateInfo) {
     switch (state) {
         case StateInfo.Provisioning:
@@ -98,6 +103,12 @@ export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
             return 'Please try again in a few minutes or select a plan in another location.';
         case EnvironmentErrorCodes.unableToAllocateResourcesWhileStarting:
             return 'Unable to start the environment. Please try again in a few minutes.';
+        case EnvironmentErrorCodes.unableToUpdateSku:
+            return 'Environment\'s current instance type does not support any changes.';
+        case EnvironmentErrorCodes.requestedSkuIsInvalid:
+            return 'Environment\'s current instance type does not support the requested instance type.';
+        case EnvironmentErrorCodes.requestedAutoShutdownDelayMinutesIsInvalid:
+            return 'Requested auto-suspend delay is invalid.';
         case  EnvironmentErrorCodes.heartbeatUnhealthy:
             return 'The environment was reported as unhealthy, suspend and restart the environment.';
         case  EnvironmentErrorCodes.customContainersCreationFailed: 

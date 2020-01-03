@@ -27,9 +27,16 @@ import {
     stateChangeEnvironmentActionType,
     StateChangeEnvironmentAction,
 } from '../actions/environmentStateChange';
+import {
+    updateEnvironmentSettingsSuccessActionType,
+    UpdateEnvironmentSettingsSuccessAction,
+} from '../actions/environmentSettingsChanges';
 import { isActivating } from '../utils/environmentUtils';
 import { selectPlanSuccessActionType, SelectPlanSuccessAction } from '../actions/plans-actions';
-import { EnvironmentChangedAction, environmentChangedActionType } from '../actions/environmentChanged';
+import {
+    EnvironmentChangedAction,
+    environmentChangedActionType,
+} from '../actions/environmentChanged';
 
 type EnvironmentsState = {
     environments: ILocalCloudEnvironment[];
@@ -51,7 +58,8 @@ type AcceptedActions =
     | DeleteEnvironmentAction
     | StateChangeEnvironmentAction
     | SelectPlanSuccessAction
-    | EnvironmentChangedAction;
+    | EnvironmentChangedAction
+    | UpdateEnvironmentSettingsSuccessAction;
 
 const defaultState: EnvironmentsState = {
     environments: [] as ILocalCloudEnvironment[],
@@ -78,18 +86,15 @@ export function environments(
                     };
                 }
 
-                const activatingEnvironments = state.environments.reduce(
-                    (envs, env) => {
-                        if (env.planId && plan.id !== env.planId) {
-                            return envs;
-                        }
-                        if (env.id && isActivating(env)) {
-                            envs.push(env.id);
-                        }
+                const activatingEnvironments = state.environments.reduce((envs, env) => {
+                    if (env.planId && plan.id !== env.planId) {
                         return envs;
-                    },
-                    [] as string[]
-                );
+                    }
+                    if (env.id && isActivating(env)) {
+                        envs.push(env.id);
+                    }
+                    return envs;
+                }, [] as string[]);
 
                 return {
                     ...state,
@@ -99,19 +104,16 @@ export function environments(
             })(state, action);
 
         case fetchEnvironmentsSuccessActionType:
-            const activatingEnvironments = action.payload.environments.reduce(
-                (envs, env) => {
-                    if (state.selectedPlanId && state.selectedPlanId !== env.planId) {
-                        return envs;
-                    }
-
-                    if (isActivating(env)) {
-                        envs.push(env.id);
-                    }
+            const activatingEnvironments = action.payload.environments.reduce((envs, env) => {
+                if (state.selectedPlanId && state.selectedPlanId !== env.planId) {
                     return envs;
-                },
-                [] as string[]
-            );
+                }
+
+                if (isActivating(env)) {
+                    envs.push(env.id);
+                }
+                return envs;
+            }, [] as string[]);
 
             return {
                 ...state,
@@ -230,7 +232,11 @@ export function environments(
                     state: environmentState,
                 };
 
-                const environments = replaceAtIndex([...state.environments], index, updatedEnvironment);
+                const environments = replaceAtIndex(
+                    [...state.environments],
+                    index,
+                    updatedEnvironment
+                );
                 return {
                     ...state,
                     environments: environments,
@@ -251,7 +257,9 @@ export function environments(
                 if (isActivating(environment)) {
                     // Add the environment to activating environments only when it's state has
                     // changed in the service.
-                    activatingEnvironments = activatingEnvironments.filter((eId) => eId !== environment.id);
+                    activatingEnvironments = activatingEnvironments.filter(
+                        (eId) => eId !== environment.id
+                    );
                     activatingEnvironments.push(environment.id);
                 }
 
@@ -289,6 +297,20 @@ export function environments(
                     activatingEnvironments,
                 };
             })(state, action);
+
+        case updateEnvironmentSettingsSuccessActionType:
+            const { envId, env } = action.payload;
+
+            const index = state.environments.findIndex((env) => env.id === envId);
+            if (index < 0) {
+                throw new Error(`${action.type} returned an environment we are not tracking.`);
+            }
+
+            const environments = replaceAtIndex([...state.environments], index, env);
+            return {
+                ...state,
+                environments,
+            };
 
         default:
             return state;

@@ -1,3 +1,5 @@
+import { ISku } from './ISku';
+
 export interface CreateEnvironmentParameters {
     type?: EnvironmentType;
     friendlyName: string;
@@ -90,6 +92,9 @@ export enum EnvironmentErrorCodes {
     environmentNotShutdown = 7,
     unableToAllocateResources = 8,
     unableToAllocateResourcesWhileStarting = 9,
+    requestedAutoShutdownDelayMinutesIsInvalid = 10,
+    unableToUpdateSku = 11,
+    requestedSkuIsInvalid = 12,
     heartbeatUnhealthy = 13,
     customContainersCreationFailed = 14,
     // CLI MESSAGES
@@ -113,4 +118,14 @@ export enum EnvironmentErrorCodes {
     customContainersCLICopyFailed = 1157,
     customContainersDependenciesFailed = 1158,
     customContainersCLIStartFailed = 1158,
+}
+
+export interface EnvironmentSettingsAllowedUpdates {
+    allowedAutoShutdownDelayMinutes: number[];
+    allowedSkus: ISku[];
+}
+
+export interface EnvironmentSettingsUpdate {
+    autoShutdownDelayMinutes?: number;
+    skuName?: string;
 }

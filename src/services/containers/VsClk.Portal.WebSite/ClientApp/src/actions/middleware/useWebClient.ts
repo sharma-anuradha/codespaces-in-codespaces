@@ -288,6 +288,45 @@ async function deleteRequest<TResult = void>(
     );
 }
 
+
+async function patchRequest<TResult = object>(
+    url: string,
+    requestBody: RequestInit['body'] | {}
+): Promise<TResult>;
+async function patchRequest<TResult = object>(
+    url: string,
+    requestBody: RequestInit['body'] | {},
+    requestOptions?: Partial<RequestOptions>
+): Promise<TResult>;
+async function patchRequest<TResult = object>(
+    url: string,
+    requestBody: RequestInit['body'] | {},
+    requestOptions?: Partial<RequestOptions>
+) {
+    let body: RequestInit['body'];
+    if (!isValidRequestBody(requestBody)) {
+        body = JSON.stringify(requestBody);
+    } else {
+        body = requestBody;
+    }
+
+    if (!requestOptions) {
+        return request(url, {
+            method: 'PATCH',
+            body,
+        });
+    }
+
+    return await request<TResult>(
+        url,
+        {
+            method: 'PATCH',
+            body,
+        },
+        requestOptions
+    );
+}
+
 // tslint:disable-next-line: max-func-body-length
 export function useWebClient() {
     return {
@@ -296,6 +335,7 @@ export function useWebClient() {
         post: postRequest,
         put: putRequest,
         delete: deleteRequest,
+        patch: patchRequest,
     };
 }
 

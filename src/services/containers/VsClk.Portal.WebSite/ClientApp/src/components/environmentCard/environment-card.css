@@ -1,7 +1,7 @@
 .environment-card {
     min-width: 37rem;
     max-width: 40.4rem;
-    height: 26rem;
+    height: 30rem;
     margin-left: 2rem;
     margin-right: 2rem;
     margin-bottom: 4rem;
@@ -51,12 +51,17 @@
 .environment-card__details-table-cell {
     display: table-cell;
     padding-right: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 1rem;
+    height: 3rem;
 }
 
 .environment-card__details-label {
     white-space: nowrap;
     width: 7rem;
+}
+
+.environment-card__details-label-text {
+    position: absolute;
 }
 
 .environment-card__details-value {
@@ -86,7 +91,27 @@
     padding: 0
 }
 
-.environment-card__connection-dialog-content {
+.environment-card__error-dialog-content {
     padding: 2rem;
     padding-top: 1rem;
+}
+
+.environment-card__error-dialog-content-message {
+    margin-bottom: 1rem;
+}
+
+.environment-card__change-settings-button {
+    width: 14rem;
+    margin-right: 1rem;
+}
+
+.environment-card__change-settings-apply-button-loader {
+    width: 100%;
+    justify-content: left;
+    margin-left: 1rem;
+    padding-right: 1rem;
+}
+
+.environment-card__details-edit-dropdown {
+    margin-top: -1rem;
 }
