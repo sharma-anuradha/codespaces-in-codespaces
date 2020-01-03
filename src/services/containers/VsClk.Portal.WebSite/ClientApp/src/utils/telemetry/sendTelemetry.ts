@@ -10,7 +10,10 @@ type SendTelemetryProps =
     | ['vsonline/auth/acquire-token/error', Error]
     | ['vsonline/auth/acquire-auth-code', IAcquireAuthCodeTelemetryEventProperties]
     | ['vsonline/application/before-unload', {}]
-    | ['vsonline/vscode/connect', IVSCodeConnectProperties]
+    | ['vsonline/portal/ls-connection-initializing', IVSCodeConnectProperties]
+    | ['vsonline/portal/ls-connection-opened', IVSCodeConnectWithDurationProperties]
+    | ['vsonline/portal/ls-connection-failed', IVSCodeConnectionFailedProperties]
+    | ['vsonline/portal/ls-connection-close', IVSCodeConnectProperties]
     | ['vsonline/request', IResponseProperties]
     | ['vsonline/extensionload/error', Error];
 
@@ -52,4 +55,13 @@ interface IVSCodeConnectProperties {
     isFirstConnection: boolean;
     connectionNumber: number;
     environmentType: EnvironmentType;
+}
+
+interface IVSCodeConnectWithDurationProperties extends IVSCodeConnectProperties {
+    duration: number;
+}
+
+interface IVSCodeConnectionFailedProperties extends IVSCodeConnectWithDurationProperties {
+    retry: number;
+    error: Error;
 }

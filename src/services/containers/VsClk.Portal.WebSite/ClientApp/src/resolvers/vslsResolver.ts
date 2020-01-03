@@ -22,8 +22,6 @@ logContent.log =
 
 export const envConnector = new EnvConnector();
 
-let connectionNumber = 0;
-
 export class VSLSWebSocket implements IWebSocket {
     private id: number;
 
@@ -60,6 +58,14 @@ export class VSLSWebSocket implements IWebSocket {
 
     public close() {
         info(`[${this.getWebSocketIdentifier()}] Ssh channel closed by VSCode.`);
+
+        sendTelemetry('vsonline/portal/ls-connection-close', {
+            connectionCorrelationId: this.correlationId,
+            isFirstConnection: this.id === 0,
+            connectionNumber: this.id,
+            environmentType: this.environmentInfo.type,
+        });
+
         // Since we have real navigation, the sockets will be disposed.
         // TODO: Add disposing of sessions.
         this.channel.close(
@@ -77,10 +83,21 @@ export class VSLSWebSocket implements IWebSocket {
         private readonly quality: VSCodeQuality
     ) {
         this.id = VSLSWebSocket.socketCnt++;
+
         this.initializeChannel(url);
     }
 
     private async initializeChannel(url: string, retry = 3) {
+        window.performance.mark(
+            `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
+        );
+        sendTelemetry('vsonline/portal/ls-connection-initializing', {
+            connectionCorrelationId: this.correlationId,
+            isFirstConnection: this.id === 0,
+            connectionNumber: this.id,
+            environmentType: this.environmentInfo.type,
+        });
+
         url = url.replace(/skipWebSocketFrames=false/gim, 'skipWebSocketFrames=true');
 
         let disposables = [];
@@ -118,15 +135,43 @@ export class VSLSWebSocket implements IWebSocket {
 
             verbose(`[${this.getWebSocketIdentifier()}] Ssh channel open.`);
             this._onOpen.fire();
-            sendTelemetry('vsonline/vscode/connect', {
+
+            window.performance.measure(
+                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-opened`,
+                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
+            );
+            const [measure] = window.performance.getEntriesByName(
+                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-opened`
+            );
+            sendTelemetry('vsonline/portal/ls-connection-opened', {
                 connectionCorrelationId: this.correlationId,
-                isFirstConnection: connectionNumber === 0,
-                connectionNumber: connectionNumber++,
+                isFirstConnection: this.id === 0,
+                connectionNumber: this.id,
                 environmentType: this.environmentInfo.type,
+                duration: measure.duration,
             });
+
             this.channel = channel;
         } catch (err) {
             error(`[${this.getWebSocketIdentifier()}] Ssh channel failed to open.`);
+
+            window.performance.measure(
+                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-failed`,
+                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
+            );
+            const [measure] = window.performance.getEntriesByName(
+                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-failed`
+            );
+            sendTelemetry('vsonline/portal/ls-connection-failed', {
+                connectionCorrelationId: this.correlationId,
+                isFirstConnection: this.id === 0,
+                connectionNumber: this.id,
+                environmentType: this.environmentInfo.type,
+                duration: measure.duration,
+                retry,
+                error: err,
+            });
+
             if (retry <= 0) {
                 this._onError.fire(err);
 

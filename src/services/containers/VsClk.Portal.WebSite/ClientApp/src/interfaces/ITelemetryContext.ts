@@ -1,8 +1,7 @@
-import { VSCodeConfig } from './../constants';
 export type ITelemetryContext = {
     portalVersion: string;
 
-    machineId: string;
+    browserId: string;
     sessionId: string;
     pageLoadId: string;
 

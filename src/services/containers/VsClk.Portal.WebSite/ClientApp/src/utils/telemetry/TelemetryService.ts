@@ -43,7 +43,7 @@ class TelemetryService {
 
         this.context = {
             portalVersion: versionFile.version,
-            machineId: this.machineId,
+            browserId: this.browserId,
             sessionId: this.getSessionId(),
             pageLoadId: this.getPageLoadId(),
             host: location.host,
@@ -87,7 +87,7 @@ class TelemetryService {
         return prefixPropertyNames(vsoContextProperties, 'vso');
     }
 
-    private get machineId(): string {
+    private get browserId(): string {
         try {
             let machineId = window.localStorage.getItem('vso_machine_id');
             if (!machineId) {
