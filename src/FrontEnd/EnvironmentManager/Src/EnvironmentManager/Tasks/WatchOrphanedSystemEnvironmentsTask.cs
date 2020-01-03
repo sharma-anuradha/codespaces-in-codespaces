@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// <summary>
     /// Watch Orphaned System Environments Task.
     /// </summary>
-    public class WatchOrphanedSystemEnvironmentsTask : IWatchOrphanedSystemEnvironmentsTask
+    public class WatchOrphanedSystemEnvironmentsTask : EnvironmentTaskBase, IWatchOrphanedSystemEnvironmentsTask
     {
         private const string WatchOrphanedSystemEnvironmentsLeaseContainerName = "watch-orphaned-system-environments-leases";
 
@@ -41,32 +41,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
-            EnvironmentManagerSettings = environmentManagerSettings;
-            CloudEnvironmentRepository = cloudEnvironmentRepository;
             ResourceBrokerHttpClient = resourceBrokerHttpClient;
-            TaskHelper = taskHelper;
-            ClaimedDistributedLease = claimedDistributedLease;
-            ResourceNameBuilder = resourceNameBuilder;
         }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchOrphanedSystemEnvironmentsTask)}Lease");
 
         private string LogBaseName => EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask;
 
-        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
-
-        private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
-
         private IResourceBrokerResourcesHttpContract ResourceBrokerHttpClient { get; }
-
-        private ITaskHelper TaskHelper { get; }
-
-        private IClaimedDistributedLease ClaimedDistributedLease { get; }
-
-        private IResourceNameBuilder ResourceNameBuilder { get; }
-
-        private bool Disposed { get; set; }
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -86,18 +70,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         idShards,
                         (idShard, itemLogger) => CoreRunUnitAsync(idShard, itemLogger),
                         childLogger,
-                        (idShard, itemLogger) => ObtainLease($"{LeaseBaseName}-{idShard}", claimSpan, itemLogger));
+                        (idShard, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{idShard}", claimSpan, itemLogger));
 
                     return !Disposed;
                 },
                 (e, childLogger) => !Disposed,
                 swallowException: true);
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            Disposed = true;
         }
 
         private Task CoreRunUnitAsync(string idShard, IDiagnosticsLogger logger)
@@ -175,12 +153,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         });
                 },
                 (_, __) => Task.Delay(QueryDelay));
-        }
-
-        private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
-        {
-            return await ClaimedDistributedLease.Obtain(
-                EnvironmentManagerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }
 }

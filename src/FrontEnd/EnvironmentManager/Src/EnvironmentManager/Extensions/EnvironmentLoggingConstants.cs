@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Log Cloud Environments State Task.
         /// </summary>
         public const string LogCloudEnvironmentsStateTask = "log_cloud_environments_state_task";
+
+        /// <summary>
+        /// Log Subscription Statistics Task.
+        /// </summary>
+        public const string LogSubscriptionStatisticsTask = "log_subscription_statistics_task";
     }
 }

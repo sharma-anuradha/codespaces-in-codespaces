@@ -103,11 +103,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                       AND c.location = @location
                       AND c.skuName = @skuName",
                 new SqlParameterCollection
-              {
-                new SqlParameter { Name = "@state", Value = state },
-                new SqlParameter { Name = "@location", Value = location },
-                new SqlParameter { Name = "@skuName", Value = skuName },
-              });
+                  {
+                    new SqlParameter { Name = "@state", Value = state },
+                    new SqlParameter { Name = "@location", Value = location },
+                    new SqlParameter { Name = "@skuName", Value = skuName },
+                  });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+            var count = items.FirstOrDefault();
+            return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetCloudEnvironmentSubscriptionCountAsync(IDiagnosticsLogger logger)
+        {
+            // c.planID is a fully qualified Azure resource path. The values substringed below extract the subscription field. A future suggestion could be to always log the subscriptionID on the Cloud Environment to make it easier to query for this.
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE SUM(1) 
+                  FROM (
+                    SELECT DISTINCT VALUE SUBSTRING(c.planId,15,36) FROM c) d");
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+            var count = items.FirstOrDefault();
+            return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetCloudEnvironmentPlanCountAsync(IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+              @"SELECT VALUE SUM(1) 
+                  FROM (
+                    SELECT DISTINCT VALUE c.planId FROM c) d");
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
             var count = items.FirstOrDefault();

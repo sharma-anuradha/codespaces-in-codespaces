@@ -15,5 +15,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         {
             return (await GetWhereAsync((model) => true, logger)).Count();
         }
+
+        public Task<int> GetPlanSubscriptionCountAsync(IDiagnosticsLogger logger)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

@@ -63,5 +63,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             return count;
         }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPlanSubscriptionCountAsync(IDiagnosticsLogger logger)
+        {
+            // TODO: This query is a bit more expensive than we would like. We should fix all the older isDeleted to is False so that we do not have to run with an Is_defined which is a bit more expensive than we would like.
+            var query = new SqlQuerySpec(@"SELECT VALUE SUM(1) FROM (
+                                            SELECT DISTINCT VALUE c.plan.subscription from c where c.isDeleted != true or not IS_DEFINED(c.isDeleted)) d");
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+            var count = items.FirstOrDefault();
+
+            return count;
+        }
     }
 }

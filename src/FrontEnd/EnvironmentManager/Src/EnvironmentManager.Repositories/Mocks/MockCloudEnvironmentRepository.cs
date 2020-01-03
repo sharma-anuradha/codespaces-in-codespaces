@@ -17,5 +17,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         {
             throw new System.NotImplementedException();
         }
+
+        public Task<int> GetCloudEnvironmentPlanCountAsync(IDiagnosticsLogger logger)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<int> GetCloudEnvironmentSubscriptionCountAsync(IDiagnosticsLogger logger)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

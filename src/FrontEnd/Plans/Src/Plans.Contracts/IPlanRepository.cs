@@ -9,6 +9,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
     public interface IPlanRepository : IDocumentDbCollection<VsoPlan>
     {
+        /// <summary>
+        /// Gets the count of all plans in the plans repository.
+        /// </summary>
+        /// <param name="logger">The logger</param>
+        /// <returns>the total count of plans</returns>
         Task<int> GetCountAsync(IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the count of unique subscriptions represented in the plans table.
+        /// </summary>
+        /// <param name="logger">the logger</param>
+        /// <returns>The number of unique subscriptions that have plans</returns>
+        Task<int> GetPlanSubscriptionCountAsync(IDiagnosticsLogger logger);
     }
 }

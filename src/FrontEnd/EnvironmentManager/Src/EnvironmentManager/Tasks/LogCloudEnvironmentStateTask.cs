@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -20,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// <summary>
     /// A task that will recurringly generate telemetry that logs various state information about the CloudEnvironment repository.
     /// </summary>
-    public class LogCloudEnvironmentStateTask : ILogCloudEnvironmentStateTask
+    public class LogCloudEnvironmentStateTask : EnvironmentTaskBase, ILogCloudEnvironmentStateTask
     {
         private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> skuDictionary;
 
@@ -42,33 +41,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
-            EnvironmentManagerSettings = environmentManagerSettings;
-            CloudEnvironmentRepository = cloudEnvironmentRepository;
             ControlPlane = controlPlane;
             skuDictionary = skuCatalog.CloudEnvironmentSkus;
-            TaskHelper = taskHelper;
-            ClaimedDistributedLease = claimedDistributedLease;
-            ResourceNameBuilder = resourceNameBuilder;
         }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogCloudEnvironmentStateTask)}Lease");
 
         private string LogBaseName => EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask;
 
-        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
-
-        private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
-
         private IControlPlaneInfo ControlPlane { get; }
-
-        private ITaskHelper TaskHelper { get; }
-
-        private IClaimedDistributedLease ClaimedDistributedLease { get; }
-
-        private IResourceNameBuilder ResourceNameBuilder { get; }
-
-        private bool Disposed { get; set; }
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -93,11 +76,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                },
                (e, _) => !Disposed,
                swallowException: true);
-        }
-
-        public void Dispose()
-        {
-            Disposed = true;
         }
 
         private async Task RunLogTaskAsync(IDiagnosticsLogger childLogger)
@@ -180,12 +158,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             }
 
             return records;
-        }
-
-        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
-        {
-            return ClaimedDistributedLease.Obtain(
-                EnvironmentManagerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }
 }
