@@ -17,6 +17,7 @@ export class ApplicationLoadEvent implements ITelemetryEvent {
 
         return {
             pageRequestDuration,
+            referrer: document.referrer,
             applicationLoadedDuration: applicationLoadMark.duration,
         };
     }
