@@ -144,6 +144,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
                     var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes);
+
+                    // Write out the summary as the last action. This should always be the last action.
                     await billingEventManager.CreateEventAsync(plan, null, billingSummaryType, totalBillingSummary, logger);
                 },
                 swallowException: true);
