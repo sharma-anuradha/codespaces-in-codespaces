@@ -9,7 +9,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     /// </summary>
     public static class ProfileExtensions
     {
+        /// <summary>
+        /// The Cloud Environments Preview program name.
+        /// </summary>
         public const string CloudEnvironmentsPreviewUserProgram = "vs.cloudenvironements.previewuser";
+
+        /// <summary>
+        /// The Windows Preview program name.
+        /// </summary>
         public const string VisualStudioOnlineWidowsSkuPreviewUserProgram = "vsonline.windowsskupreview";
 
         /// <summary>
@@ -21,6 +28,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         {
             return profile.GetProgramsItem<bool>(VisualStudioOnlineWidowsSkuPreviewUserProgram)
                 || (profile.Email?.EndsWith("@microsoft.com") ?? false);
+        }
+
+        /// <summary>
+        /// Test whether the given user profile is an internal AAD member.
+        /// </summary>
+        /// <param name="profile">The user profile.</param>
+        /// <returns>True if the test succeeded.</returns>
+        public static bool IsWindowsSkuInternalUser(this Profile profile)
+        {
+            return profile.Email?.EndsWith("@microsoft.com") ?? false;
         }
 
         /// <summary>

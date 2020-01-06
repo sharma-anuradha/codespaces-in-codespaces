@@ -85,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private ControlPlaneSettings ControlPlaneSettings { get; }
 
         /// <summary>
-        /// Gets or sets the resource name builder.
+        /// Gets the resource name builder.
         /// </summary>
         private IResourceNameBuilder ResourceNameBuilder { get; }
 

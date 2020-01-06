@@ -21,6 +21,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts
         {
             if (sku.ComputeOS == ComputeOS.Windows)
             {
+                if (sku.SkuName.Equals("internalWindows"))
+                {
+                    return profile != null && profile.IsWindowsSkuInternalUser();
+                }
+
                 return profile != null && profile.IsWindowsSkuPreviewUser();
             }
 

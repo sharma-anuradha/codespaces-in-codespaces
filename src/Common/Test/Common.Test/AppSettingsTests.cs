@@ -60,7 +60,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 var sku = item.Value;
                 {
                     // for launch we're disabling windows billing
-                    if (!sku.SkuName.Equals("premiumWindows"))
+                    if (!sku.SkuName.Equals("premiumWindows") &&
+                        !sku.SkuName.Equals("internalWindows"))
                     {
                         Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
                         Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);

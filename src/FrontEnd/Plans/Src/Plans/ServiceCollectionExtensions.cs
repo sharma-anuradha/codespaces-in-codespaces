@@ -16,10 +16,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <summary>
         /// Add the <see cref="PlanRepository"/> and <see cref="IPlanManager"/> to the service collection.
         /// </summary>
-        /// <param name="services"></param>
-        /// <param name="planManagerSettings"></param>
-        /// <param name="useMockPlanRepository"></param>
-        /// <returns></returns>
+        /// <param name="services">The IServiceCollection object.</param>
+        /// <param name="planManagerSettings">The PlanManagerSettings object.</param>
+        /// <param name="useMockPlanRepository">Boolean to indicate if mocks should be used.</param>
+        /// <returns>An IServiceCollection.</returns>
         public static IServiceCollection AddPlanManager(
             this IServiceCollection services,
             PlanManagerSettings planManagerSettings,

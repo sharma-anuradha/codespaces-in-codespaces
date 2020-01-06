@@ -92,9 +92,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var skuCatalog = LoadSkuCatalog(environment);
 
             var currentUser = MockCurrentUserProvider(new Dictionary<string, object>
-            {
-                { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
-            });
+                                {
+                                    { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
+                                },
+                                "test@microsoft.com");
 
             var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog, currentUserProvider: currentUser);
 
@@ -619,7 +620,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         }
 
-        private ICurrentUserProvider MockCurrentUserProvider(Dictionary<string, object> programs = null)
+        private ICurrentUserProvider MockCurrentUserProvider(Dictionary<string, object> programs = null, string email = default )
         {
             var moq = new Mock<ICurrentUserProvider>();
             moq
@@ -635,7 +636,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     return new UserProfile.Profile
                     {
                         ProviderId = "mock-provider-id",
-                        Programs = programs
+                        Programs = programs,
+                        Email = email
                     };
                 });
 

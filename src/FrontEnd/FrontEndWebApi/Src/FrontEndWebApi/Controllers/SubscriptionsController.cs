@@ -42,6 +42,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
+        /// <param name="planManager">The IPlanManager interface.</param>
+        /// <param name="currentUserProvider">The ICurrentUserProvider interface.</param>
+        /// <param name="cloudEnvironmentManager">The ICloudEnvironmentManager interface.</param>
         public SubscriptionsController(
             IPlanManager planManager,
             ICurrentUserProvider currentUserProvider,
@@ -55,6 +58,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// This method will be called by RPSaaS before they create the resource in their DB to validate inputs.
         /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="resource">The PlanResource payload.</param>
         /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate")]
         public Task<IActionResult> PlanCreateValidateAsync(
@@ -107,6 +116,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// This method will be called by RPSaaS Service before they create the resource in their DB.
         /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="resource">The PlanResource payload.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [HttpPut("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}")]
         public Task<IActionResult> PlaneCreateAsync(
@@ -168,6 +183,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// This method will be called by RPSaaS Service after they create the resource in their DB.
         /// This method could be used to start billing.
         /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and message.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted")]
         public Task<IActionResult> PlanCreateComplete(
@@ -190,6 +210,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// This method will be called by RPSaaS Service before they delete the resource in their DB.
         /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and message.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate")]
         public Task<IActionResult> PlanDeleteValidate(
@@ -270,6 +295,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// Gets a list of VSO Plan objects filtered by the input subscriptionID and resourceGroup.
         /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}")]
         public Task<IActionResult> PlanListAsync(
@@ -306,6 +335,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// Gets a list of VSO Plan objects filtered by the input subscriptionID.
         /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
         /// <returns>Returns an Http status code and a list of VSO SkuPlan objects filtering by subscriptionID.</returns>
         [HttpGet("{subscriptionId}/providers/{providerNamespace}/{resourceType}")]
         public Task<IActionResult> PlanListBySubscriptionAsync(
@@ -338,6 +370,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <summary>
         /// Gets a VSO Plan object.
         /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and a VSO SkuPlan object.</returns>
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate")]
         public Task<IActionResult> GetValidate(
@@ -357,16 +394,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 });
         }
 
+        /// <summary>
+        /// Helper method to determine if the input is a valid resource type.
+        /// </summary>
+        /// <param name="resourceType">The resource type's name.</param>
+        /// <returns>Bool.</returns>
         private static bool ResourceTypeIsValid(string resourceType)
         {
             return PlanResourceType.Equals(resourceType, StringComparison.InvariantCultureIgnoreCase);
         }
 
+        /// <summary>
+        /// Helper method to determine if the input is a valid resource provider.
+        /// </summary>
+        /// <param name="resourceProvider">The resource provider's name.</param>
+        /// <returns>Bool.</returns>
         private static bool ResourceProviderIsValid(string resourceProvider)
         {
             return resourceProvider.Equals(ResourceType, StringComparison.InvariantCultureIgnoreCase);
         }
 
+        /// <summary>
+        /// Helper method create a json result from the input values.
+        /// </summary>
+        /// <param name="statusCode">HttpStatusCode object.</param>
+        /// <param name="value">The return value.</param>
+        /// <returns>JsonResult.</returns>
         private static JsonResult CreateResponse(HttpStatusCode statusCode, object value)
         {
             ValidationUtil.IsRequired(value);
@@ -378,6 +431,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             return response;
         }
 
+        /// <summary>
+        /// Helper method to create a json error response from the input values.
+        /// </summary>
+        /// <param name="errorCode">The string represented error code.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>JsonResult.</returns>
         private static JsonResult CreateErrorResponse(string errorCode, string errorMessage = default)
         {
             var errorResponse = new ResourceProviderErrorResponse

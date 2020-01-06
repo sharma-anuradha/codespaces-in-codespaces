@@ -24,6 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
         /// <param name="configureOptions">The back end http client provider options.</param>
         /// <param name="useMocks">Indicates whether to load mock providers.</param>
         /// <param name="useFakes">Indicates whether to load fake implementation of providers.</param>
+        /// <param name="dockerImageName">The name of the Docker image.</param>
+        /// <param name="publishedCLIPath">The path to the published CLI.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddBackEndHttpClient(
             this IServiceCollection services,
