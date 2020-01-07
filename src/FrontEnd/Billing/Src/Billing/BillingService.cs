@@ -45,8 +45,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingService"/> class.
         /// </summary>
-        /// <param name="billingEventManager"></param>
-        /// <param name="controlPlaneInfo"></param>
+        /// <param name="billingEventManager">The billing manager used for queries.</param>
+        /// <param name="controlPlaneInfo">Control plan info used to get azure regions this worker applies to.</param>
+        /// <param name="skuCatalog">The catalog of skus used for costing.</param>
+        /// <param name="diagnosticsLogger">The logger.</param>
+        /// <param name="planManager">Used to get a list of plans to apply bills to.</param>
+        /// <param name="claimedDistributedLease">used to get a lease.</param>
+        /// <param name="taskHelper">Used to run multiple workers in parallel.</param>
         public BillingService(
             IBillingEventManager billingEventManager,
             IControlPlaneInfo controlPlaneInfo,
@@ -87,9 +92,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="start">the start time for the billing period.</param>
         /// <param name="desiredBillEndTime">the end time for the billing period.</param>
         /// <param name="logger">the logger.</param>
-        /// <param name="region"></param>
-        /// <param name="shardUsageTimes"></param>
-        /// <returns></returns>
+        /// <param name="region">The region this bill applies to.</param>
+        /// <param name="shardUsageTimes">used to store calculation on the usage for a particular shard.</param>
+        /// <returns>Task indicating when the bill has been generated.</returns>
         public async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes)
         {
             logger.AddVsoPlan(plan)
@@ -161,7 +166,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="events">all events that are captured within this summary.</param>
         /// <param name="lastSummary">the summary to base this calculation off from.</param>
         /// <param name="billSummaryEndTime">the end time for the summary.</param>
-        /// <returns></returns>
+        /// <param name="region">The region the bill is being calculated for.</param>
+        /// <param name="shardUsageTimes">Aggregate dictionary for the total time being added to by this bill.</param>
+        /// <returns>A new billing summary for this plan based on new state changes.</returns>
         public async Task<BillingSummary> CalculateBillingUnits(
             VsoPlanInfo plan,
             IEnumerable<BillingEvent> events,
@@ -301,11 +308,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// if any environments exist in the previous but not in the current. For those environments a billing unit is
         /// calculated and appended to the current BillingSummary.
         /// </summary>
-        /// <param name="plan"></param>
-        /// <param name="currentSummary"></param>
-        /// <param name="latestEvent"></param>
-        /// <param name="end"></param>
-        /// <returns></returns>
+        /// <param name="plan">The plan the bill is being generated for.</param>
+        /// <param name="currentSummary">The existing summary that we're appending to.</param>
+        /// <param name="latestEvent">The last summary event. Note that this should have an args of type <see cref="BillingSummary"/>.</param>
+        /// <param name="end">the end time for the bill.</param>
+        /// <param name="region">The region the bill applies to.</param>
+        /// <param name="shardUsageTimes">The aggregate usage time dictionary. Used to track how much time is being billed by this bill generation.</param>
+        /// <returns>An updated billing Summary.</returns>
         public async Task<BillingSummary> CaculateBillingForEnvironmentsWithNoEvents(
             VsoPlanInfo plan,
             BillingSummary currentSummary,
@@ -449,6 +458,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             return currentSummary;
         }
 
+        /// <inheritdoc/>
         protected override async Task ExecuteInner(IDiagnosticsLogger logger, DateTime start, DateTime end, string planShard, AzureLocation region)
         {
             await logger.OperationScopeAsync(
@@ -502,8 +512,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Helper method to parse a cloud environment state from its string representation.
         /// </summary>
-        /// <param name="state"></param>
-        /// <returns></returns>
+        /// <param name="state">The string representing the state being parsed.</param>
+        /// <returns>The parsed state enum value.</returns>
         private static CloudEnvironmentState ParseEnvironmentState(string state)
         {
             return (CloudEnvironmentState)Enum.Parse(typeof(CloudEnvironmentState), state);
@@ -692,10 +702,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// CloudEnvironmentState<see cref="CloudEnvironmentState"/> to the next. It contains all information
         /// neccessary to create a unit of billing for its period.
         /// </summary>
-        /// <param name="currentEvent"></param>
-        /// <param name="currentState"></param>
-        /// <param name="endTimeForPeriod"></param>
-        /// <returns></returns>
+        /// <param name="currentEvent">The current event being processed.</param>
+        /// <param name="currentState">the current state (sku, time) for the state machine.</param>
+        /// <param name="endTimeForPeriod">the overall end time for the period.</param>
+        /// <returns>A tuple representing the next slice/state.</returns>
         private (BillingWindowSlice Slice, BillingWindowSlice.NextState NextState) CalculateNextWindow(BillingEvent currentEvent, BillingWindowSlice.NextState currentState, DateTime endTimeForPeriod)
         {
             // If we're looking at a null current Event and the last event status is not Deleted,
@@ -805,11 +815,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Helper method to update or add a userId and billing unit to the current UserUsageDetails dictionary.
         /// The dictionary is a property of the BillingSummary<see cref="BillingSummary"/>.
         /// </summary>
-        /// <param name="currentlist"></param>
-        /// <param name="billable"></param>
-        /// <param name="userId"></param>
-        /// <param name="meterId"></param>
-        /// <returns></returns>
+        /// <param name="currentlist">A container for aggregating times for a particular user.</param>
+        /// <param name="billable">the amount of billable time.</param>
+        /// <param name="userId">the userID.</param>
+        /// <param name="meterId">the meter being billed.</param>
+        /// <returns>A dictionary of usage details.</returns>
         private Dictionary<string, UserUsageDetail> AggregateUserUsageDetails(
             IDictionary<string, UserUsageDetail> currentlist,
             double billable,
@@ -838,7 +848,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         /// <param name="slice">the last active billing slice.</param>
         /// <param name="environmentStateTimes">the per environment telemetered usage times.</param>
-        /// <returns></returns>
+        /// <returns>the total billable time.</returns>
         private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, IDictionary<string, double> environmentStateTimes)
         {
             if (slice.OverrideState == BillingOverrideState.BillingEnabled)
@@ -871,9 +881,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Helper method to return active or inactive VSO units from CloudEnvironmentSku<see cref="CloudEnvironmentSku"/> name.
         /// </summary>
-        /// <param name="skuName"></param>
-        /// <param name="isActive"></param>
-        /// <returns></returns>
+        /// <param name="slice">The billing slice being evaluated.</param>
+        /// <returns>The units for a given slice.</returns>
         private decimal GetVsoUnitsForSlice(BillingWindowSlice slice)
         {
             var billingState = slice.BillingState;
@@ -914,8 +923,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Helper method to find billing meter Id by AzureLocation.
         /// </summary>
-        /// <param name="location"></param>
-        /// <returns></returns>
+        /// <param name="location">The location to get the meterID for.</param>
+        /// <returns>The string representing the meterID.</returns>
         private string GetMeterIdByAzureLocation(AzureLocation location)
         {
             if (meterDictionary.TryGetValue(location, out var id))

@@ -15,6 +15,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// Contains base implentations for all billing services.
+    /// </summary>
     public abstract class BillingServiceBase
     {
         /// <summary>
@@ -27,6 +30,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private readonly ITaskHelper taskHelper;
         private readonly IPlanManager planManager;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BillingServiceBase"/> class.
+        /// </summary>
+        /// <param name="controlPlaneInfo">Control plane info used to figure out which azure regions we're operating on.</param>
+        /// <param name="logger">The logger.</param>
+        /// <param name="claimedDistributedLease">Used to create leases for the workers.</param>
+        /// <param name="taskHelper">Used to paralellize the work.</param>
+        /// <param name="planManager">Plan manager used to get a list of plans to bill/submit.</param>
+        /// <param name="serviceName">the service name used to set up the logger.</param>
         public BillingServiceBase(
             IControlPlaneInfo controlPlaneInfo,
             IDiagnosticsLogger logger,
@@ -43,6 +55,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             ServiceName = serviceName;
         }
 
+        /// <summary>
+        /// Gets the logger.
+        /// </summary>
         protected IDiagnosticsLogger Logger { get; private set; }
 
         /// <summary>
@@ -93,6 +108,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 Logger);
         }
 
+        /// <summary>
+        /// Executes the inner method for the given service.
+        /// </summary>
+        /// <param name="childlogger">The logger that should be used.</param>
+        /// <param name="start">the start time for the billing service's current cycle.</param>
+        /// <param name="end">the end time for the bill to be generated/processed.</param>
+        /// <param name="planShard">the specific plan shard.</param>
+        /// <param name="region">the region being operated in.</param>
+        /// <returns></returns>
         protected abstract Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string planShard, AzureLocation region);
     }
 }

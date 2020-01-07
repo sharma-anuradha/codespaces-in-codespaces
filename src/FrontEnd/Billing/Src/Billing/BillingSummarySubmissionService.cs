@@ -17,6 +17,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// The service that takes bills out of our DocDB collection and submits them to PushAgent.
+    /// </summary>
     public class BillingSummarySubmissionService : BillingServiceBase, IBillingSummarySubmissionService
     {
         // services
@@ -35,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="billingStorageFactory">used to get billing storage collections.</param>
         /// <param name="claimedDistributedLease"> the lease holder.</param>
         /// <param name="taskHelper">the task helper.</param>
+        /// <param name="planManager">Used to get the list of plans to bill.</param>
         public BillingSummarySubmissionService(
             IControlPlaneInfo controlPlanInfo,
             IBillingEventManager billingEventManager,
@@ -79,6 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
         }
 
+        /// <inheritdoc/>
         protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime startTime, DateTime endTime, string planShard, AzureLocation region)
         {
             Logger.AddValue("region", region.ToString());

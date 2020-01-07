@@ -7,6 +7,9 @@ using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// Interface for the bill submission cloud storage factories.
+    /// </summary>
     public interface IBillingSubmissionCloudStorageFactory
     {
         /// <summary>

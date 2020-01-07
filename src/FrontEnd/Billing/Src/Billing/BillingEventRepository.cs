@@ -11,11 +11,25 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// A collection for all billing events.
+    /// </summary>
     [DocumentDbCollectionId(EventCollectionId)]
     public class BillingEventRepository : DocumentDbCollection<BillingEvent>, IBillingEventRepository
     {
+        /// <summary>
+        /// The name of the collection.
+        /// </summary>
         public const string EventCollectionId = "environment_billing_events";
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BillingEventRepository"/> class.
+        /// </summary>
+        /// <param name="options">DB options.</param>
+        /// <param name="clientProvider">The docDB Client provider.</param>
+        /// <param name="healthProvider">The health provider.</param>
+        /// <param name="loggerFactory">Used to generate a logger for queries.</param>
+        /// <param name="defaultLogValues">A set of log values.</param>
         public BillingEventRepository(
             IOptions<DocumentDbCollectionOptions> options,
             IDocumentDbClientProvider clientProvider,

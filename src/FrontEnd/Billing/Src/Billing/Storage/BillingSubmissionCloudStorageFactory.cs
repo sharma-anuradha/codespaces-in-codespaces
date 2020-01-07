@@ -34,7 +34,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Initializes a new instance of the <see cref="BillingSubmissionCloudStorageFactory"/> class.
         /// </summary>
         /// <param name="azureResourceAccesor">Access to control plane resources.</param>
-        /// <param name="logger">the logger.</param>
+        /// <param name="logger">The logger.</param>
+        /// <param name="healthProvider">The health provider.</param>
+        /// <param name="loggerFactory">Ised to generate a logger.</param>
+        /// <param name="resourceNameBuilder">Used to generate a lease name.</param>
+        /// <param name="logValues">Initial log values.</param>
         public BillingSubmissionCloudStorageFactory(
             IControlPlaneAzureResourceAccessor azureResourceAccesor,
             IDiagnosticsLogger logger,

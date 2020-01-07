@@ -16,6 +16,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     [DocumentDbCollectionId(EventCollectionId)]
     public class BillingOverrideRepository : DocumentDbCollection<BillingOverride>, IBillingOverrideRepository
     {
+        /// <summary>
+        /// The name of the collection.
+        /// </summary>
         public const string EventCollectionId = "environment_billing_overrides";
 
         /// <summary>

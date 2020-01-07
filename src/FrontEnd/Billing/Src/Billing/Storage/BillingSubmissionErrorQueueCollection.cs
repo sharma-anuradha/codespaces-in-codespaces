@@ -31,8 +31,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Storage
         {
         }
 
+        /// <summary>
+        /// Gets a logging name for the error queue.
+        /// </summary>
         protected override string LoggingDocumentName => "billing-submission-error-queue";
 
+        /// <summary>
+        /// Gets the error reporting queue ID.
+        /// </summary>
         protected override string QueueId => "error-reporting-queue";
     }
 }

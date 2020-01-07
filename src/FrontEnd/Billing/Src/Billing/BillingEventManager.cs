@@ -185,6 +185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<BillingEvent>> GetPlanEventsAsync(
        Expression<Func<BillingEvent, bool>> filter,
        IDiagnosticsLogger logger)
