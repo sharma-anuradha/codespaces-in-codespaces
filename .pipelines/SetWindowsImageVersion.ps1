@@ -2,11 +2,13 @@ param(
     [Parameter(Mandatory)]
     [string]$AppSettingsFile,
     [Parameter(Mandatory)]
-    [string]$ImageVersion
+    [string]$ImageVersion,
+    [switch]$InternalImage
 )
 $Content = Get-Content $AppSettingsFile
+$Pattern = if ($InternalImage) { 'NexusInternalWindowsImage' } else { 'NexusWindowsImage' }
 for ($Index = 0; $Index -lt $Content.Count;) {
-    if ($Content[$Index++] -match '"imageName": "NexusWindowsImage",') {
+    if ($Content[$Index++] -match """imageName"": ""$Pattern"",") {
         $Content[$Index] = $Content[$Index] -replace '(\d{4}\.){2}\d{3}', $ImageVersion
         break
     }
