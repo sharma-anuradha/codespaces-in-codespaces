@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -81,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <inheritdoc/>
         public async Task<bool> IsPlanCreationAllowedAsync(string subscriptionId, IDiagnosticsLogger logger)
         {
-            var plans = await ListAsync(userId: null, subscriptionId, resourceGroup: null, logger);
+            var plans = await ListAsync(userIdSet: null, subscriptionId, resourceGroup: null, logger);
 
             return plans.Count() >= await planManagerSettings.MaxPlansPerSubscriptionAsync(subscriptionId, logger);
         }
@@ -121,21 +122,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
         /// <inheritdoc/>
         public async Task<IEnumerable<VsoPlan>> ListAsync(
-            string userId,
+            UserIdSet userIdSet,
             string subscriptionId,
             string resourceGroup,
             IDiagnosticsLogger logger,
             bool includeDeleted = false)
         {
             // Consider pulling the IsDeleted in the getWhere calls to be conditional on includeDeleted == true
-            if (userId != null)
+            if (userIdSet != null)
             {
                 if (resourceGroup != null)
                 {
                     ValidationUtil.IsRequired(subscriptionId, nameof(subscriptionId));
 
-                    return (await planRepository.GetWhereAsync(
-                        (model) => model.UserId == userId &&
+                    return (await this.planRepository.GetWhereAsync(
+                        (model) => (model.UserId == userIdSet.CanonicalUserId || model.UserId == userIdSet.ProfileProviderId) &&
                             model.Plan.Subscription == subscriptionId &&
                             model.Plan.ResourceGroup == resourceGroup,
                         logger,
@@ -144,8 +145,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 }
                 else if (subscriptionId != null)
                 {
-                    return (await planRepository.GetWhereAsync(
-                        (model) => model.UserId == userId &&
+                    return (await this.planRepository.GetWhereAsync(
+                        (model) => (model.UserId == userIdSet.CanonicalUserId || model.UserId == userIdSet.ProfileProviderId) &&
                             model.Plan.Subscription == subscriptionId,
                         logger,
                         null))
@@ -155,7 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 {
                     return (await planRepository
                         .GetWhereAsync(
-                        (x) => x.UserId == userId,
+                        (model) => model.UserId == userIdSet.CanonicalUserId || model.UserId == userIdSet.ProfileProviderId,
                         logger,
                         null))
                         .Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);

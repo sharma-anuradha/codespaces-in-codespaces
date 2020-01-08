@@ -16,6 +16,9 @@
     <RootNamespace Condition="'$(RootNamespace)'==''">$(RootName).$(MSBuildProjectName)</RootNamespace>
     <IsPublishable Condition="'$(IsPublishable)'==''" >false</IsPublishable>
     <IsPackable Condition="'$(IsPackable)'==''" >false</IsPackable>
+    <!-- NU1608: Microsoft.Azure.Cosmos.Table 1.0.5 requires Microsoft.Azure.DocumentDB.Core (>= 2.1.3 && <= 2.4.2)
+         but version Microsoft.Azure.DocumentDB.Core 2.8.1 was resolved -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
     <TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
   </PropertyGroup>
   
@@ -35,25 +38,28 @@
     <AltcoverVersion>3.5.587</AltcoverVersion>
     <AspNetCoreDllVersions>3.1.0</AspNetCoreDllVersions>
     <AutoMapperVersion>8.0.0</AutoMapperVersion>
+    <AzureBatchPackageVersion>12.0.0</AzureBatchPackageVersion>
     <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
+    <AzureDocumentDBChangeFeedProcessorPackageVersion>2.2.8</AzureDocumentDBChangeFeedProcessorPackageVersion>
+    <AzureDocumentDBCorePackageVersion>2.8.1</AzureDocumentDBCorePackageVersion>
+    <AzureMgmtFluentPackageVersion>1.26.1</AzureMgmtFluentPackageVersion>
+    <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
     <FluentAssertionsVersion>5.4.1</FluentAssertionsVersion>
     <MicroBuildCoreVersion>0.3.0</MicroBuildCoreVersion>
+    <MicrosoftIdentityModelTokensPackageVersion>5.6.0</MicrosoftIdentityModelTokensPackageVersion>
     <MicrosoftNETTestSdkVersion>15.8.0</MicrosoftNETTestSdkVersion>
     <MoqVersion>4.9.0</MoqVersion>
-    <NerdBankGitVersioningVersion>2.3.38</NerdBankGitVersioningVersion>
+    <NerdBankGitVersioningVersion>3.0.28</NerdBankGitVersioningVersion>
     <NewtonsoftJsonVersion>12.0.3</NewtonsoftJsonVersion>
     <ReportGeneratorVersion>4.0.15</ReportGeneratorVersion>
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
     <SwashbuckleAspNetCorePackageVersion>5.0.0-rc5</SwashbuckleAspNetCorePackageVersion>
+    <SystemIdentityModelTokensJwtPackageVersion>5.6.0</SystemIdentityModelTokensJwtPackageVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
     <VsSaaSPackageVersion>1.0.1</VsSaaSPackageVersion>
     <XunitRunnerVisualStudioVersion>2.4.0</XunitRunnerVisualStudioVersion>
     <XunitStaFactVersion>0.2.17</XunitStaFactVersion>
     <XunitVersion>2.4.0</XunitVersion>
-    <AzureMgmtFluentPackageVersion>1.26.0</AzureMgmtFluentPackageVersion> <!-- preferred for new projects-->
-    <AzureResourceMgmtFluentPackageVersion>1.26.0</AzureResourceMgmtFluentPackageVersion>
-    <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
-    <AzureBatchPackageVersion>12.0.0</AzureBatchPackageVersion>
   </PropertyGroup>
 
   <!-- Common project settings (except dirs.proj) -->

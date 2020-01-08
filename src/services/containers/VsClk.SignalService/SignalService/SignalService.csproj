@@ -9,14 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>    
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(AspNetCoreDllVersions)" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(AspNetCoreDllVersions)" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="2.3.2" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="$(SignalRVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.2" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.TelemetryProvider" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(AspNetCoreDllVersions)" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="$(SignalRVersion)" />
     <PackageReference Include="StreamJsonRpc" Version="$(StreamJsonRpcVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(AspNetCoreDllVersions)" />
   </ItemGroup>
 
   <ItemGroup>

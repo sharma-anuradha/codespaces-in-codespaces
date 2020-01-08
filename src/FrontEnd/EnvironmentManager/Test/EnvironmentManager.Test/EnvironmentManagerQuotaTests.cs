@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
@@ -35,8 +36,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(StatusCodes.Status403Forbidden, result.HttpStatusCode);
 
             // Delete 1 environment.
-            var deleteResult = await environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
-                                                                        environmentToDelete.CloudEnvironment.OwnerId,
+            var ownerIdSet = new UserIdSet(environmentToDelete.CloudEnvironment.OwnerId);
+            var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
+                                                                        ownerIdSet,
                                                                         logger);
             Assert.True(deleteResult);
 

@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
@@ -19,30 +20,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         private const string DataProtectionRedisKey = "DataProtection-Keys";
 
         /// <summary>
+        /// Add handler for a validated principal.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
+        public static IServiceCollection AddValidatedPrincipalIdentityHandler(
+            this IServiceCollection services)
+        {
+            services.TryAddSingleton<IValidatedPrincipalIdentityHandler, ValidatedPrincipalIdentityHandler>();
+            return services;
+        }
+
+        /// <summary>
         /// Add Authentication.
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="hostEnvironment">The aspnet host environment.</param>
         /// <param name="redisCacheOptions">The redis cache options.</param>
-        /// <param name="jwtBearerOptions">The JWT bearer options.</param>
         /// <param name="rpSaasAuthority">The RPSaaS Signature Authority URL.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
-        public static IServiceCollection AddVsSaaSAuthentication(
+        public static IServiceCollection AddCustomFrontEndAuthentication(
             this IServiceCollection services,
             IWebHostEnvironment hostEnvironment,
             RedisCacheOptions redisCacheOptions,
-            JwtBearerOptions jwtBearerOptions,
             string rpSaasAuthority)
         {
             Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
             Requires.NotNull(redisCacheOptions, nameof(redisCacheOptions));
-            Requires.NotNull(jwtBearerOptions, nameof(jwtBearerOptions));
             Requires.NotNull(rpSaasAuthority, nameof(rpSaasAuthority));
 
             services.AddVsSaaSCoreDataProtection(hostEnvironment, redisCacheOptions.RedisConnectionString);
 
             services.AddAuthentication()
-                .AddVsSaaSJwtBearer(jwtBearerOptions)
                 .AddRPSaaSJwtBearer(rpSaasAuthority)
                 .AddVMTokenJwtBearer()
                 .AddVsSaaSCookieBearer();

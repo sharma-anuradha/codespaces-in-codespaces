@@ -6,12 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.5.1" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="2.2.7" />
+    <ProjectReference Include="..\DocumentDatabaseProvider\DocumentDatabaseProvider.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DocumentDatabaseProvider\DocumentDatabaseProvider.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="$(AzureDocumentDBChangeFeedProcessorPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="$(AzureDocumentDBCorePackageVersion)" />
   </ItemGroup>
+
 </Project>

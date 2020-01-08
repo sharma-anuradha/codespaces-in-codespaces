@@ -25,7 +25,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi

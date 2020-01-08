@@ -65,8 +65,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             workspaceRepository.MockGetStatus = (workspaceId) => null;
 
             // The GetEnvironment call should update the environment state when it discovers the missing connection.
-            var testEnvironment2 = await environmentManager.GetEnvironmentAsync(
-                testEnvironment.Id, testUserId, logger);
+            var testEnvironment2 = await this.environmentManager.GetEnvironmentAsync(
+                testEnvironment.Id, testUserIdSet, this.logger);
 
             Assert.Collection(
                 billingEventRepository.Values,
@@ -82,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             billingEventRepository.Clear();
 
-            await environmentManager.DeleteEnvironmentAsync(testEnvironment.Id, testUserId, logger);
+            await this.environmentManager.DeleteEnvironmentAsync(testEnvironment.Id, testUserIdSet, this.logger);
 
             Assert.Collection(
                 billingEventRepository.Values,

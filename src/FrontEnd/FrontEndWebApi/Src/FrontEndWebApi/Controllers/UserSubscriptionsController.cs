@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// Api for adding new users to vsonline.
     /// </summary>
     [ApiController]
-    [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerUtility.AuthenticationScheme)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName("user_subscriptions_controller")]
@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices]IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(email, nameof(email));
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
             var us = new UserSubscription()
             {
                 Id = email,

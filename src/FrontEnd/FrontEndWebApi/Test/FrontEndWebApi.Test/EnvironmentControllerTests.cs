@@ -228,10 +228,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mockEnvironmentManager
                 .Setup(x => x.GetEnvironmentAsync(
                     It.IsAny<string>(),
-                    It.IsAny<string>(),
+                    It.IsAny<UserIdSet>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
-                .Callback((string id, string user, IDiagnosticsLogger log) =>
+                .Callback((string id, UserIdSet userIdSet, IDiagnosticsLogger log) =>
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
@@ -285,10 +285,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mockEnvironmentManager
                 .Setup(x => x.GetEnvironmentAsync(
                     It.IsAny<string>(),
-                    It.IsAny<string>(),
+                    It.IsAny<UserIdSet>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
-                .Callback((string id, string user, IDiagnosticsLogger log) =>
+                .Callback((string id, UserIdSet userIdSet, IDiagnosticsLogger log) =>
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
@@ -340,10 +340,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mockEnvironmentManager
                 .Setup(x => x.GetEnvironmentAsync(
                     It.IsAny<string>(),
-                    It.IsAny<string>(),
+                    It.IsAny<UserIdSet>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
-                .Callback((string id, string user, IDiagnosticsLogger log) =>
+                .Callback((string id, UserIdSet userIdSet, IDiagnosticsLogger log) =>
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
@@ -611,8 +611,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             var moq = new Mock<ICurrentUserProvider>();
             moq
-                .Setup(obj => obj.GetProfileId())
-                .Returns("mock-profile-id");
+                .Setup(obj => obj.GetCurrentUserIdSet())
+                .Returns(new UserIdSet("mock-profile-id"));
             moq
                 .Setup(obj => obj.GetBearerToken())
                 .Returns("mock-bearer-token");
@@ -641,8 +641,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     It.IsAny<CloudEnvironmentOptions>(),
                     It.IsAny<Uri>(),
                     It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
+                    It.IsAny<UserIdSet>(),
                     It.IsAny<string>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
@@ -650,8 +649,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     CloudEnvironmentOptions options,
                     Uri uri,
                     string s1,
-                    string s2,
-                    string s3,
+                    UserIdSet ids,
                     string s4,
                     IDiagnosticsLogger logger) =>
                 {

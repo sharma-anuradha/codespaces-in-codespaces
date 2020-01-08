@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
@@ -29,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         Task<bool> DeleteAsync(VsoPlanInfo plan, IDiagnosticsLogger logger);
 
         Task<IEnumerable<VsoPlan>> ListAsync(
-            string userId, string subscriptionId, string resourceGroup, IDiagnosticsLogger logger, bool includeDeleted = false);
+            UserIdSet userIdSet, string subscriptionId, string resourceGroup, IDiagnosticsLogger logger, bool includeDeleted = false);
 
         Task<IEnumerable<VsoPlan>> GetPlansByShardAsync(IEnumerable<AzureLocation> list, string planShard, IDiagnosticsLogger childlogger);
 

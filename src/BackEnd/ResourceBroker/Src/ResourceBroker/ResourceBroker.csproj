@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="$(AutoMapperVersion)" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="$(AzureResourceMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Storage.Queue" Version="$(AzureStoragePackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>

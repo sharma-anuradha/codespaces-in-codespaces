@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// The cloud environment API controller.
     /// </summary>
     [ApiController]
-    [Authorize(AuthenticationSchemes = AuthenticationBuilderJwtExtensions.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerUtility.AuthenticationScheme)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName(LoggingBaseName)]
@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromRoute]string resourceName,
             [FromServices]IDiagnosticsLogger logger)
         {
-            var currentUserId = CurrentUserProvider.GetProfileId();
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
             var planId = new VsoPlanInfo
             {
                 Subscription = subscriptionId,
@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             };
 
             var plan = (await PlanManager.GetAsync(planId, logger)).VsoPlan;
-            if (plan == null || plan.UserId != currentUserId)
+            if (plan == null || !currentUserIdSet.EqualsAny(plan.UserId))
             {
                 return NotFound();
             }
@@ -106,21 +106,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         public async Task<IActionResult> ListByOwnerAsync(
             [FromServices]IDiagnosticsLogger logger)
         {
-            var currentUser = CurrentUserProvider.GetProfile();
-
-            // Match on provider ID instead of profile ID because clients dont have
-            // the profile ID when the create the plan resource via ARM.
-            // (The provider ID is a combination of "tid" and "oid" claims from the token.)
-            var currentUserProviderId = currentUser.ProviderId;
+            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
             var plans = await PlanManager.ListAsync(
-                currentUserProviderId, subscriptionId: null, resourceGroup: null, logger);
+                currentUserIdSet, subscriptionId: null, resourceGroup: null, logger);
 
             var result = plans.Select((a) => MapAccountToResult(a, logger))
                 .Where((a) => a != null).ToArray();
 
             // If the global limit of plans is exceeded, the client should block new users from creating plans
+            var profile = CurrentUserProvider.GetProfile();
             var isUserAllowedToCreatePlans =
-                result.Length > 0 || await PlanManager.IsPlanCreationAllowedForUserAsync(currentUser, logger);
+                result.Length > 0 || await PlanManager.IsPlanCreationAllowedForUserAsync(profile, logger);
             if (isUserAllowedToCreatePlans)
             {
                 return Ok(result);
