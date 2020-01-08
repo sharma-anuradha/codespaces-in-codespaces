@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
     <AssemblyName>Microsoft.VsCloudKernel.SignalService.Client</AssemblyName>
     <RootNamespace>Microsoft.VsCloudKernel.SignalService.Client</RootNamespace>
 
@@ -20,11 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="1.1.0" />
-    <!--
-    Note: add this package if moving to version 3>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="3.0.0-preview5-19227-01" />
-    -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(AspNetCoreDllVersions)" />
   </ItemGroup>
 
   <ItemGroup>

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -42,7 +43,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         /// <param name="hostingEnvironment">The aspnetcore hosting environment.</param>
         /// <param name="serviceName">The service name.</param>
-        public CommonStartupBase(IHostingEnvironment hostingEnvironment, string serviceName)
+        public CommonStartupBase(
+            IWebHostEnvironment hostingEnvironment,
+            string serviceName)
         {
             Requires.NotNull(hostingEnvironment, nameof(hostingEnvironment));
             Requires.NotNullOrEmpty(serviceName, nameof(serviceName));
@@ -103,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// <summary>
         /// Gets the hosting environment.
         /// </summary>
-        protected IHostingEnvironment HostingEnvironment { get; }
+        protected IWebHostEnvironment HostingEnvironment { get; }
 
         /// <summary>
         /// Gets or sets the appsettings instance.
@@ -234,7 +237,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Load and validate the system catelog
             try
             {
-                app.UseSystemCatalog(HostingEnvironment);
+                app.UseSystemCatalog();
             }
             catch (Exception ex)
             {

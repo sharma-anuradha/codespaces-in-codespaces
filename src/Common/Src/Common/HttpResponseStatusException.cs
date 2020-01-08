@@ -2,10 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using Microsoft.Net.Http.Headers;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
@@ -101,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 case (HttpStatusCode)429:
                     var retryAfterMessage = "Please try again later.";
-                    var retryAfterValues = response.Headers.GetValues(HeaderNames.RetryAfter);
+                    var retryAfterValues = response.Headers.GetValues("Retry-After");
                     var enumerator = retryAfterValues.GetEnumerator();
                     if (enumerator.MoveNext())
                     {

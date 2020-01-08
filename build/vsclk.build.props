@@ -8,7 +8,7 @@
     <BaseOutputPath>$(GitRoot)bin\$(Configuration.ToLowerInvariant())\</BaseOutputPath>
     <OutputPath>$(BaseOutputPath)$(MSBuildProjectName)\</OutputPath>
     <PackageOutputPath>$(BaseOutputPath)nupkgs\</PackageOutputPath>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath Condition="'$(AppendTargetFrameworkToOutputPath)' == ''">false</AppendTargetFrameworkToOutputPath>
     <BaseIntermediateOutputPath>$(GitRoot)bin\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
     <IsTraversal Condition="'$(MSBuildProjectFile)'=='dirs.proj'">true</IsTraversal>
     <RootName Condition="'$(RootName)'==''">Microsoft.VsCloudKernel.Services</RootName>
@@ -26,34 +26,27 @@
 
   <!-- .Net Targets -->
   <PropertyGroup>
-    <NetCoreAppTargetFramework>netcoreapp2.2</NetCoreAppTargetFramework>
+    <NetCoreAppTargetFramework>netcoreapp3.1</NetCoreAppTargetFramework>
     <NetStandardTargetFramework>netstandard2.0</NetStandardTargetFramework>
   </PropertyGroup>
 
   <!-- NuGet Package Versions -->
   <PropertyGroup>
-    <AdalVersion>4.5.1</AdalVersion>
     <AltcoverVersion>3.5.587</AltcoverVersion>
-    <AspNetCoreAppVersion>2.2.3</AspNetCoreAppVersion>
-    <AspNetCoreDllVersions>2.2.0</AspNetCoreDllVersions>
+    <AspNetCoreDllVersions>3.1.0</AspNetCoreDllVersions>
     <AutoMapperVersion>8.0.0</AutoMapperVersion>
     <AzureContainersToolsVersion>1.4.10</AzureContainersToolsVersion>
     <FluentAssertionsVersion>5.4.1</FluentAssertionsVersion>
-    <IdentityClient>3.0.0-preview</IdentityClient>
-    <IdentityModelS2SVersion>3.0.0-preview-60213030153</IdentityModelS2SVersion>
-    <IdentiyModelVersion>6.0.0-preview-60212030309</IdentiyModelVersion>
     <MicroBuildCoreVersion>0.3.0</MicroBuildCoreVersion>
     <MicrosoftNETTestSdkVersion>15.8.0</MicrosoftNETTestSdkVersion>
     <MoqVersion>4.9.0</MoqVersion>
     <NerdBankGitVersioningVersion>2.3.38</NerdBankGitVersioningVersion>
-    <NewtonsoftJsonVersion>12.0.1</NewtonsoftJsonVersion>
-    <OctokitVersion>0.32.0</OctokitVersion>
+    <NewtonsoftJsonVersion>12.0.3</NewtonsoftJsonVersion>
     <ReportGeneratorVersion>4.0.15</ReportGeneratorVersion>
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
-    <SwashbuckleAspNetCorePackageVersion>4.0.1</SwashbuckleAspNetCorePackageVersion>
+    <SwashbuckleAspNetCorePackageVersion>5.0.0-rc5</SwashbuckleAspNetCorePackageVersion>
     <VisualStudioValidationVersion>15.3.58</VisualStudioValidationVersion>
-    <VsclkSdkVersion>0.1.47</VsclkSdkVersion> <!-- used under src/services-->
-    <VsSaaSPackageVersion>$(VsclkSdkVersion)</VsSaaSPackageVersion> <!-- preferred for new projects-->
+    <VsSaaSPackageVersion>1.0.1</VsSaaSPackageVersion>
     <XunitRunnerVisualStudioVersion>2.4.0</XunitRunnerVisualStudioVersion>
     <XunitStaFactVersion>0.2.17</XunitStaFactVersion>
     <XunitVersion>2.4.0</XunitVersion>

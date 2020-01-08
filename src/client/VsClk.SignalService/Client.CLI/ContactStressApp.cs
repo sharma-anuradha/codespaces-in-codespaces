@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="ContactStressApp.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -19,6 +23,7 @@ namespace SignalService.Client.CLI
     {
         private const string TypeTestMessage = "typeTest";
         private static Random random = new Random();
+        private readonly CommandOption contactsFilePathOption;
 
         private int batchRequests = 1000;
         private int numberOfContactsPerBatch = 400;
@@ -30,7 +35,6 @@ namespace SignalService.Client.CLI
         private TimeSpan totalCloudTime;
         private object totalCloudTimeLock = new object();
 
-        private readonly CommandOption contactsFilePathOption;
         private int currentBatchId;
         private Dictionary<int, Dictionary<string, PresenceEndpoint>> allEndpoints = new Dictionary<int, Dictionary<string, PresenceEndpoint>>();
         private CancellationTokenSource sendCts;
@@ -43,7 +47,7 @@ namespace SignalService.Client.CLI
         private string ContactsFilePath => this.contactsFilePathOption.HasValue() ? contactsFilePathOption.Value() : null;
 
         private IEnumerable<PresenceEndpoint> AllEndpoints => this.allEndpoints.SelectMany(i => i.Value.Values);
- 
+
         private int NumberOfConnectedEndpoints => AllEndpoints.Where(i => i.HubClient.State == HubConnectionState.Connected).Count();
 
         protected override Task DiposeAsync()
@@ -115,29 +119,6 @@ namespace SignalService.Client.CLI
                     true,
                     DisposeToken);
                 TraceSource.Verbose($"Finished time->{start.ElapsedMilliseconds}");
-            }
-        }
-
-        private void OnMessageReceived(object sender, ReceiveMessageEventArgs e)
-        {
-            if (e.Type == TypeTestMessage && this.sendCts?.IsCancellationRequested == false)
-            {
-                var messageObject = ((JObject)e.Body).ToObject<MessageBody>();
-                var messageDeliveryTime = DateTime.Now - messageObject.SentTimestamp;
-                lock (this.totalCloudTimeLock)
-                {
-                    this.totalCloudTime = totalCloudTime.Add(messageDeliveryTime);
-                }
-            }
-
-            if (Interlocked.Increment(ref this.receivedMessages) == this.numberOfTotalMessage)
-            {
-                this.sendCts?.Cancel();
-                Task.Run(async () =>
-                {
-                    await Task.Delay(5000);
-                    TraceSource.Info($"Finish send stress received messages:{this.receivedMessages} totalTime:{this.totalCloudTime.TotalSeconds}");
-                });
             }
         }
 
@@ -219,7 +200,7 @@ namespace SignalService.Client.CLI
                 // Next block will attempt to find a target contact id that could be
                 // enforced to be on another service
                 (string, string) targetContact = default;
-                for (int index = 0;index < items.Count; ++index)
+                for (int index = 0; index < items.Count; ++index)
                 {
                     var target = items[rand.Next(items.Count)];
                     if (!enforceCrossService || target.Value.ServiceId != item.Value.ServiceId)
@@ -270,6 +251,35 @@ namespace SignalService.Client.CLI
         private static void SaveContactIdsToFile(string jsonFilePath, string[] contactIds)
         {
             File.WriteAllText(jsonFilePath, JsonConvert.SerializeObject(contactIds));
+        }
+
+        private static string CreateEmail(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return $"{new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray())}@microsoft.com";
+        }
+
+        private void OnMessageReceived(object sender, ReceiveMessageEventArgs e)
+        {
+            if (e.Type == TypeTestMessage && this.sendCts?.IsCancellationRequested == false)
+            {
+                var messageObject = ((JObject)e.Body).ToObject<MessageBody>();
+                var messageDeliveryTime = DateTime.Now - messageObject.SentTimestamp;
+                lock (this.totalCloudTimeLock)
+                {
+                    this.totalCloudTime = totalCloudTime.Add(messageDeliveryTime);
+                }
+            }
+
+            if (Interlocked.Increment(ref this.receivedMessages) == this.numberOfTotalMessage)
+            {
+                this.sendCts?.Cancel();
+                Task.Run(async () =>
+                {
+                    await Task.Delay(5000);
+                    TraceSource.Info($"Finish send stress received messages:{this.receivedMessages} totalTime:{this.totalCloudTime.TotalSeconds}");
+                });
+            }
         }
 
         private async Task SendAllAsync(bool enforceCrossService)
@@ -325,12 +335,6 @@ namespace SignalService.Client.CLI
             TraceSource.Verbose($"Completed total connections:{NumberOfConnectedEndpoints} for batch:{this.currentBatchId}");
         }
 
-        private static string CreateEmail(int length)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return $"{new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray())}@microsoft.com";
-        }
-
         private struct MessageBody
         {
             public string Text { get; set; }
@@ -349,12 +353,6 @@ namespace SignalService.Client.CLI
                 this.traceSource = traceSource;
                 Proxy = HubProxy.CreateHubProxy<ContactServiceProxy>(hubClient.Connection, traceSource, true);
                 HubClient.ConnectionStateChanged += OnConnectionStateChangedAsync;
-            }
-
-            public async Task DisposeAsync()
-            {
-                await Proxy.UnregisterSelfContactAsync(CancellationToken.None);
-                await HubClient.StopAsync(CancellationToken.None);
             }
 
             public HubClient HubClient { get; private set; }
@@ -382,6 +380,12 @@ namespace SignalService.Client.CLI
                 var endpoint = new PresenceEndpoint(contactId, hubClient, traceSource);
                 await endpoint.RegisterAsync(cancellationToken);
                 return endpoint;
+            }
+
+            public async Task DisposeAsync()
+            {
+                await Proxy.UnregisterSelfContactAsync(CancellationToken.None);
+                await HubClient.StopAsync(CancellationToken.None);
             }
 
             private async Task OnConnectionStateChangedAsync(object sender, EventArgs args)

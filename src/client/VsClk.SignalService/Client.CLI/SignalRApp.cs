@@ -1,7 +1,10 @@
-﻿using System;
+﻿// <copyright file="SignalRApp.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Client;
 
@@ -14,12 +17,13 @@ namespace SignalService.Client.CLI
     {
         protected HubClient HubClient { get; private set; }
 
-        protected override async Task OnStartedAsync()
+        protected override Task OnStartedAsync()
         {
             HubClient = new HubClient(CreateHubConnection(), TraceSource);
             HubClient.StartAsync(DisposeToken).Forget();
 
             OnHubCreated();
+            return Task.CompletedTask;
         }
 
         protected abstract void OnHubCreated();

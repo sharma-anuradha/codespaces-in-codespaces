@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <AssemblyName>Microsoft.VsCloudKernel.SignalService.RelayServiceHub.Test</AssemblyName>
     <RootNamespace>Microsoft.VsCloudKernel.SignalService.RelayServiceHub</RootNamespace>
     <LangVersion>Latest</LangVersion>
@@ -14,10 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\RelayServiceHub\RelayServiceHub.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>

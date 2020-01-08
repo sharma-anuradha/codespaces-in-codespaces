@@ -6,6 +6,7 @@ using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
@@ -27,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         /// Initializes a new instance of the <see cref="Startup"/> class.
         /// </summary>
         /// <param name="hostingEnvironment">The hosting environment for the server.</param>
-        public Startup(IHostingEnvironment hostingEnvironment)
+        public Startup(IWebHostEnvironment hostingEnvironment)
             : base(hostingEnvironment, "VsoUtil")
         {
         }
@@ -92,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         /// </summary>
         /// <param name="app">The application builder used to set up the pipeline.</param>
         /// <param name="env">The hosting environment for the server.</param>
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             ConfigureAppCommon(app);
         }

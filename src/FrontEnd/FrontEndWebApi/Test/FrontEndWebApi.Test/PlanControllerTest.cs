@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 planManager,
                 currentUserProvider);
 
-            var httpContext = new MockHttpContext();
+            var httpContext = MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             httpContext.SetLogger(logger);
 
@@ -93,19 +93,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
 
             return controller;
-        }
-
-        private class MockHttpContext : DefaultHttpContext
-        {
-            public MockHttpContext()
-            {
-                Request.Method = "GET";
-                Request.Scheme = "https";
-                Request.Host = new HostString("testhost");
-                Request.PathBase = new PathString(string.Empty);
-                Request.Path = new PathString("/test/path");
-                Request.QueryString = new QueryString(string.Empty);
-            }
         }
 
         private ICurrentUserProvider MockCurrentUserProvider(Dictionary<string, object> programs = null)

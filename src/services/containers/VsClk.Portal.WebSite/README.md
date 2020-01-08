@@ -24,7 +24,7 @@ Prerequisite:
 Required Software:
 - Node.js (v10.15.3) (https://nodejs.org/en/)
 - Yarn (https://yarnpkg.com/lang/en/)
-- .NET Core (https://dotnet.microsoft.com/download/dotnet-core/2.2)
+- .NET Core (https://dotnet.microsoft.com/download/dotnet-core/3.1)
 - (https://github.com/Microsoft/artifacts-credprovider#readmecd%20)
 - Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 - C# extension for VS Code (https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp)

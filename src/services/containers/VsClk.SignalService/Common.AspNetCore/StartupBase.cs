@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,9 +30,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private Func<Type, ILogger> loggerFactory;
 
-        private readonly IHostingEnvironment _hostEnvironment;
+        private readonly IWebHostEnvironment _hostEnvironment;
 
-        public StartupBase(ILoggerFactory loggerFactory, IHostingEnvironment env)
+        public StartupBase(ILoggerFactory loggerFactory, IWebHostEnvironment env)
         {
             this.loggerFactory = (t) => loggerFactory.CreateLogger(t.FullName);
 

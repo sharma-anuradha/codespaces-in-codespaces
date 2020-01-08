@@ -1,5 +1,6 @@
 using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -7,7 +8,7 @@ using Microsoft.VsCloudKernel.SignalService;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
 {
-    public class Startup : StartupBase<AppSettings>
+    public class Startup : SignalService.StartupBase<AppSettings>
     {
         private const string BackplaneHubMap = "/backplanehub";
 
@@ -15,7 +16,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         protected override Type AppType => typeof(Startup);
 
-        public Startup(ILoggerFactory loggerFactory, IHostingEnvironment env)
+        public Startup(ILoggerFactory loggerFactory, IWebHostEnvironment env)
             : base(loggerFactory, env)
         {
         }
@@ -50,18 +51,19 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             services.AddSingleton<IContactBackplaneManager, ContactBackplaneManager>();
             services.AddHostedService<ContactBackplaneManagerHostedService<ContactBackplaneService>>();
 
+            // Mvc support
+            services.AddControllers();
+
             // signalR support
             services.AddSignalR(hubOptions =>
             {
                 hubOptions.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
                 hubOptions.KeepAliveInterval = TimeSpan.FromMinutes(1);
             });
-            // Mvc support
-            services.AddMvc().AddApplicationPart(typeof(StartupBase<>).Assembly).AddControllersAsServices();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -69,12 +71,12 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             }
 
             // configure SignalR service
-            app.UseSignalR(routes =>
+            app.UseRouting();
+            app.UseEndpoints(routes =>
             {
                 routes.MapHub<ContactBackplaneHub>(BackplaneHubMap);
+                routes.MapControllers();
             });
-
-            app.UseMvc();
         }
     }
 }

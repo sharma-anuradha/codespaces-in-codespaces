@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>SignalService.Client.CLI</AssemblyName>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <LangVersion>Latest</LangVersion>
     <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
     <IsPublishable>true</IsPublishable>

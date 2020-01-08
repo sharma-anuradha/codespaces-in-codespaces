@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -28,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddVsSaaSAuthentication(
             this IServiceCollection services,
-            IHostingEnvironment hostEnvironment,
+            IWebHostEnvironment hostEnvironment,
             RedisCacheOptions redisCacheOptions,
             JwtBearerOptions jwtBearerOptions,
             string rpSaasAuthority)
@@ -51,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         private static void AddVsSaaSCoreDataProtection(
             this IServiceCollection services,
-            IHostingEnvironment hostEnvironment,
+            IWebHostEnvironment hostEnvironment,
             string redisConnectionString)
         {
             var dataProtection = services

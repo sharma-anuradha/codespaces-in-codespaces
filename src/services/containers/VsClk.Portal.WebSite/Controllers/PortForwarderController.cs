@@ -1,14 +1,14 @@
-using Microsoft.AspNetCore.Mvc;
 using System;
-using System.IO;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
-using System.Net.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using System.Web;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -129,7 +129,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             redirectUriQuery.Set("redirectUrl", UriHelper.BuildAbsolute(Request.Scheme, Request.Host));
             if (Uri.TryCreate(Request.GetEncodedUrl(), UriKind.Absolute, out Uri uri))
             {
-                var query = uri.ParseQueryString();
+                var query = HttpUtility.ParseQueryString(uri.Query);
                 var path = query.Get("path");
                 if (!string.IsNullOrEmpty(path))
                 {

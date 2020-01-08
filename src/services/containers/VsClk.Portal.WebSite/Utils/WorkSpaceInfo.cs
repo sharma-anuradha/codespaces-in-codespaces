@@ -12,17 +12,17 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         public static async Task<string> GetWorkSpaceOwner(string token, string sessionId, string liveShareEndpoint)
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.GetAsync(liveShareEndpoint + Constants.LiveShareWorkspaceRoute + sessionId);
+            var response = await client.GetAsync(liveShareEndpoint + Constants.LiveShareWorkspaceRoute + sessionId);
 
             if (!response.IsSuccessStatusCode) 
             { 
                 return null; 
             }
 
-            HttpContent content = response.Content;
-            var data = await content.ReadAsAsync<JObject>();
-
-            return data.Value<string>("ownerId");
+            var content = await response.Content.ReadAsStringAsync();
+            var json = JObject.Parse(content);
+            var owner = json.Value<string>("ownerId");
+            return owner;
         }
     }
 }

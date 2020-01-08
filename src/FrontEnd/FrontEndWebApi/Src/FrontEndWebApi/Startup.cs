@@ -3,17 +3,17 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
+using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
@@ -31,7 +31,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserSubscriptions;
 using Newtonsoft.Json;
-using Swashbuckle.AspNetCore.Swagger;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 {
@@ -44,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         /// Initializes a new instance of the <see cref="Startup"/> class.
         /// </summary>
         /// <param name="hostingEnvironment">The hosting environment for the server.</param>
-        public Startup(IHostingEnvironment hostingEnvironment)
+        public Startup(IWebHostEnvironment hostingEnvironment)
             : base(hostingEnvironment, ServiceConstants.ServiceName)
         {
         }
@@ -58,12 +57,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         {
             // Frameworks
             services
-                .AddMvc(options =>
+                .AddControllers(options =>
                 {
                     options.ModelMetadataDetailsProviders.Add(new ExcludeBindingMetadataProvider(typeof(IDiagnosticsLogger)));
                 })
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                .AddJsonOptions(x =>
+                .AddNewtonsoftJson(x =>
                 {
                     x.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Ignore;
                     x.AllowInputFormatterExceptionMessages = HostingEnvironment.IsDevelopment();
@@ -232,26 +230,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>
             {
-                x.SwaggerDoc(ServiceConstants.CurrentApiVersion, new Info()
+                x.SwaggerDoc(ServiceConstants.CurrentApiVersion, new OpenApiInfo()
                 {
                     Title = ServiceConstants.ServiceName,
                     Description = ServiceConstants.ServiceDescription,
                     Version = ServiceConstants.CurrentApiVersion,
                 });
 
-                x.DescribeAllEnumsAsStrings();
-
-                x.AddSecurityDefinition("Bearer", new ApiKeyScheme()
+                x.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
                 {
-                    Type = "apiKey",
-                    Description = "Paste JWT token with Bearer in front. Example: Bearer eyJ2...",
-                    Name = "Authorization",
-                    In = "header",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Description = "JWT auth token for the user. Example: Bearer eyJ2...",
                 });
-
-                x.AddSecurityRequirement(new Dictionary<string, IEnumerable<string>>()
+                x.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
-                    { "Bearer", new string[0] },
+                    {
+                        new OpenApiSecurityScheme()
+                        {
+                            Reference = new OpenApiReference()
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer",
+                            },
+                        },
+                        new string[0]
+                    },
                 });
             });
         }
@@ -261,7 +266,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         /// </summary>
         /// <param name="app">The application builder used to set up the pipeline.</param>
         /// <param name="env">The hosting environment for the server.</param>
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             ConfigureAppCommon(app);
 
@@ -278,6 +283,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 app.UseCors("NonProdCORSPolicy");
             }
 
+            // Frameworks
+            app.UseStaticFiles();
+            app.UseRouting();
+
             // Use VS SaaS middleware.
             app.UseVsSaaS(!isProduction);
 
@@ -287,8 +296,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             frontEndAppSettings.EnvironmentManagerSettings.Init(systemConfig);
             frontEndAppSettings.PlanManagerSettings.Init(systemConfig);
 
-            // Frameworks
-            app.UseMvc();
+            app.UseEndpoints(x =>
+            {
+                x.MapControllers();
+            });
 
             // Swagger/OpenAPI
             app.UseSwagger(x =>
@@ -296,8 +307,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 x.RouteTemplate = "api/{documentName}/swagger";
                 x.PreSerializeFilters.Add((swaggerDoc, request) =>
                 {
-                    swaggerDoc.Host = request.Host.Value;
-                    swaggerDoc.Schemes = new[] { request.Host.Host == "localhost" ? "http" : "https" };
+                    var scheme = request.Host.Host == "localhost" ? "http" : "https";
+                    var host = request.Host.Value;
+
+                    swaggerDoc.Servers.Add(new OpenApiServer()
+                    {
+                        Url = $"{scheme}://{host}",
+                    });
                 });
             });
 

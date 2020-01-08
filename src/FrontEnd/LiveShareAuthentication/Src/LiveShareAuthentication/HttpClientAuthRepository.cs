@@ -4,13 +4,13 @@
 
 using System;
 using System.Net.Http;
-using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
-using System.Threading;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication
@@ -37,34 +37,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication
         {
             Requires.NotNullOrWhiteSpace(externalToken, nameof(externalToken));
 
-            var response = await HttpClientProvider.HttpClient.PostAsync(
-                Path,
-                new
-                {
-                    provider = AuthProvider,
-                    token = externalToken,
-                },
-                new NoCharSetJsonMediaTypeFormatter(),
-                CancellationToken.None);
-
-            await response.ThrowIfFailedAsync();
-            var authTokenJson = await response.Content.ReadAsAsync<JObject>();
-            var authToken = authTokenJson.Value<string>("access_token");
-            return authToken;
-        }
-
-        /// <summary>
-        /// The auth service is implemented in NODE.JS and doesn't like the charset content type to be set.
-        /// (From the liveshare agent code and documentation.)
-        /// </summary>
-        private class NoCharSetJsonMediaTypeFormatter : JsonMediaTypeFormatter
-        {
-            public override void SetDefaultContentHeaders(
-                Type type, HttpContentHeaders headers, MediaTypeHeaderValue mediaType)
+            var payload = JsonConvert.SerializeObject(new
             {
-                base.SetDefaultContentHeaders(type, headers, mediaType);
-                headers.ContentType.CharSet = string.Empty;
-            }
+                provider = AuthProvider,
+                token = externalToken,
+            });
+
+            var content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+            // The auth service is implemented in NODE.JS and doesn't like the charset content type to be set.
+            // (From the liveshare agent code and documentation.)
+            content.Headers.ContentType.CharSet = string.Empty;
+
+            var response = await HttpClientProvider.HttpClient.PostAsync(Path, content);
+            await response.ThrowIfFailedAsync();
+
+            var authTokenJson = await response.Content.ReadAsStringAsync();
+            var json = JObject.Parse(authTokenJson);
+            var authToken = json.Value<string>("access_token");
+            return authToken;
         }
     }
 }

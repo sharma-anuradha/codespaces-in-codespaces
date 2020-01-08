@@ -6,13 +6,13 @@ using System;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
+using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
@@ -25,8 +25,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-using Swashbuckle.AspNetCore.Swagger;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 {
@@ -39,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         /// Initializes a new instance of the <see cref="Startup"/> class.
         /// </summary>
         /// <param name="hostingEnvironment">The hosting environment for the server.</param>
-        public Startup(IHostingEnvironment hostingEnvironment)
+        public Startup(IWebHostEnvironment hostingEnvironment)
             : base(hostingEnvironment, "BackEndWebApi")
         {
         }
@@ -53,9 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         {
             // Frameworks
             services
-                .AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                .AddJsonOptions(x =>
+                .AddControllers()
+                .AddNewtonsoftJson(x =>
                 {
                     x.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Ignore;
                     x.AllowInputFormatterExceptionMessages = HostingEnvironment.IsDevelopment();
@@ -150,17 +149,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Auth/Token Providers
             services.AddVMTokenProvider();
 
-            // OpenAPI/swagger services
+            // OpenAPI/swagger
             services.AddSwaggerGen(x =>
             {
-                x.SwaggerDoc("v1", new Info()
+                x.SwaggerDoc("v1", new OpenApiInfo()
                 {
                     Title = ServiceName,
                     Description = "Backend API for managing resources needed for Cloud Environments. This API is only exposed internally in the cluster.",
                     Version = "v1",
                 });
-
-                x.DescribeAllEnumsAsStrings();
             });
         }
 
@@ -169,7 +166,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         /// </summary>
         /// <param name="app">The application builder used to set up the pipeline.</param>
         /// <param name="env">The hosting environment for the server.</param>
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             ConfigureAppCommon(app);
 
@@ -178,34 +175,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Emit the startup settings to logs for diagnostics.
             var logger = app.ApplicationServices.GetRequiredService<IDiagnosticsLogger>();
 
-            // System Components
-            try
-            {
-                app.UseScalingEngine(env);
-                app.UseResourceBroker(env);
-                app.UseComputeVirtualMachineProvider(env);
-                app.UseStorageFileShareProvider(env);
-            }
-            catch (Exception ex)
-            {
-                logger.LogException($"{LogMessageBase}_failed", ex);
-                throw;
-            }
-
-            // Use VS SaaS middleware.
-            app.UseVsSaaS(isDevelopment);
-
             // Frameworks
-            app.UseMvc();
+            app.UseStaticFiles();
+            app.UseRouting();
+
+            // Use VS SaaS middleware. Backend requests are not authenticated since all auth/permissions checks happen in the frontend.
+            app.UseVsSaaS(isDevelopment, useAuthentication: false);
+
+            app.UseEndpoints(x =>
+            {
+                x.MapControllers();
+            });
 
             // Swagger/OpenAPI
             app.UseSwagger(x =>
             {
-                x.RouteTemplate = "/{documentName}/swagger";
+                x.RouteTemplate = "{documentName}/swagger";
                 x.PreSerializeFilters.Add((swaggerDoc, request) =>
                 {
-                    swaggerDoc.Host = request.Host.Value;
-                    swaggerDoc.Schemes = new[] { request.Host.Host == "localhost" ? "http" : "https" };
+                    var scheme = request.Host.Host == "localhost" ? "http" : "https";
+                    var host = request.Host.Value;
+
+                    swaggerDoc.Servers.Add(new OpenApiServer()
+                    {
+                        Url = $"{scheme}://{host}",
+                    });
                 });
             });
 

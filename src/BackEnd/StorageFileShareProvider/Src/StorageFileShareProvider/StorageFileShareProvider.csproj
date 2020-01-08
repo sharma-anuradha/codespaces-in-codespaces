@@ -8,7 +8,6 @@
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Storage.File" Version="$(AzureStoragePackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Batch" Version="$(AzureBatchPackageVersion)" />
-    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
   </ItemGroup>
 
   <ItemGroup>

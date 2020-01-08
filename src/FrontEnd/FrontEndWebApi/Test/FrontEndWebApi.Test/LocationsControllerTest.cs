@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
@@ -20,7 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
-    public class LocationsControllerTest
+    public partial class LocationsControllerTest
     {
         private readonly IPlanRepository accountRepository;
         private readonly PlanManager accountManager;
@@ -130,7 +129,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 skuCatalog,
                 currentUserProvider ?? MockCurrentUserProvider());
 
-            var httpContext = new MockHttpContext();
+            var httpContext = MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             httpContext.SetLogger(logger);
 
@@ -140,19 +139,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
 
             return controller;
-        }
-
-        private class MockHttpContext : DefaultHttpContext
-        {
-            public MockHttpContext()
-            {
-                Request.Method = "GET";
-                Request.Scheme = "https";
-                Request.Host = new HostString("testhost");
-                Request.PathBase = new PathString(string.Empty);
-                Request.Path = new PathString("/test/path");
-                Request.QueryString = new QueryString(string.Empty);
-            }
         }
 
         private ICurrentLocationProvider MockCurrentLocationProvider()

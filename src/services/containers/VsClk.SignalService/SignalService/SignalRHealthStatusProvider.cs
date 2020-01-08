@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -33,14 +34,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const int InitialDelayMinutes = 2;
 
         private readonly WarmupService warmupService;
-        private readonly IHostingEnvironment hostingEnvironment;
+        private readonly IWebHostEnvironment hostingEnvironment;
         private readonly AppSettings appSettings;
         private readonly ILogger logger;
         private int errorCount;
 
         public SignalRHealthStatusProvider(
             WarmupService warmupService,
-            IHostingEnvironment hostingEnvironment,
+            IWebHostEnvironment hostingEnvironment,
             IList<IHealthStatusProvider> healthStatusProviders,
             IOptions<AppSettings> appSettingsProvider,
             ILogger<SignalRHealthStatusProvider> logger)

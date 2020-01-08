@@ -1,30 +1,30 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.ResponseCompression;
-using System.Linq;
+using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
-using System.Threading.Tasks;
-using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment hostEnvironment)
+        public Startup(IConfiguration configuration, IWebHostEnvironment hostEnvironment)
         {
             Configuration = configuration;
             HostEnvironment = hostEnvironment;
         }
 
-        private IHostingEnvironment HostEnvironment { get; }
+        private IWebHostEnvironment HostEnvironment { get; }
 
         public AppSettings AppSettings { get; set; }
 
@@ -38,7 +38,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 options.Providers.Add<BrotliCompressionProvider>();
                 options.Providers.Add<GzipCompressionProvider>();
             });
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddControllersWithViews();
+            services.AddRazorPages();
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
@@ -52,7 +53,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.Configure<AppSettings>(appSettingsConfiguration);
             services.AddSingleton(appSettings);
             AppSettings = appSettings;
-            
+
             //ConfigureAuthentication(services, appSettings);
 
             // Forwarded headers
@@ -151,14 +152,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseResponseCompression();
 
             app.UseForwardedHeaders();
             // TODO: the following is temporary until we get forwarded headers properly configured in nginx
             // For the short term this is safe as we know all public traffic is https
-            // https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-2.2
+            // https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-3.1
             if (!HostEnvironment.IsDevelopment() || !AppSettings.IsLocal)
             {
                 app.Use((context, next) =>
@@ -182,7 +183,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
-
             app.UseSpaStaticFiles(new StaticFileOptions
             {
                 OnPrepareResponse = (ctx) =>
@@ -191,16 +191,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                     ctx.Context.Response.Headers.Add("Service-Worker-Allowed", "/");
                 }
             });
-
+            app.UseRouting();
             app.UseAuthentication();
-
-            app.UseMvc(routes =>
+            app.UseAuthorization();
+            app.UseEndpoints(routes =>
             {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller}/{action=Index}/{id?}");
+                routes.MapControllerRoute("default", "{controller}/{action=Index}/{id?}");
             });
-
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";

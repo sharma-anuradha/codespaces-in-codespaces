@@ -1,3 +1,7 @@
+// <copyright file="Program.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using Microsoft.Extensions.CommandLineUtils;
 

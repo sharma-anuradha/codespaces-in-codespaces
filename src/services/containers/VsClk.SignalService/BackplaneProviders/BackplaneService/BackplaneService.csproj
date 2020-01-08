@@ -20,10 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Note: remove next package when we move to 3.0 -->
-    <PackageReference Include="Microsoft.AspNetCore.App" />
-
-    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="StreamJsonRpc" Version="$(StreamJsonRpcVersion)" />
   </ItemGroup>
 

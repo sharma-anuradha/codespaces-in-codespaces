@@ -283,7 +283,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             using (var computeClient = await CreateComputeManagementAsync(subscription))
             {
                 var usage = await computeClient.Usage.ListAsync(location.ToString());
-                var usageArray = await usage.ToAsyncEnumerable().ToArray();
+                var usageArray = usage.ToArray();
 
                 var azureResourceUsage = usageArray
                     .Where(computeUsage => quotas.Contains(computeUsage.Name.Value))
@@ -310,7 +310,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 try
                 {
                     var usage = await networkClient.Usages.ListAsync(location.ToString());
-                    var usageArray = await usage.ToAsyncEnumerable().ToArray();
+                    var usageArray = usage.ToArray();
 
                     var azureResourceUsage = usageArray
                         .Where(networkUsage => quotas.Contains(networkUsage.Name.Value))
@@ -351,7 +351,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 try
                 {
                     var usage = await storageClient.Usages.ListByLocationAsync(location.ToString());
-                    var usageArray = await usage.ToAsyncEnumerable().ToArray();
+                    var usageArray = usage.ToArray();
 
                     var azureResourceUsage = usageArray
                         .Where(storageUsage => quotas.Contains(storageUsage.Name.Value))

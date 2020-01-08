@@ -6,13 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Note: remove next package when we move to 3.0 -->
-    <PackageReference Include="Microsoft.AspNetCore.App" />
-
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.5.1" />
     <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="2.2.7" />
-
     <PackageReference Include="Microsoft.Azure.Management.CosmosDB.Fluent" Version="1.27.0" />
   </ItemGroup>
 

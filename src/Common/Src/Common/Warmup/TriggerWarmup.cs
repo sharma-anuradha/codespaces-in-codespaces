@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -19,6 +18,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
     public class TriggerWarmup : ITriggerWarmup
     {
         private const string LogBaseName = "site-warmup";
+        private const int StatusCodeOk = 200;
+        private const int StatusCodeServiceUnavailable = 503;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TriggerWarmup"/> class.
@@ -37,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
             TaskHelper = taskHelper;
             AsyncWarmupServices = asyncWarmupServices;
             AsyncBackgroundWarmupServices = asyncBackgroundWarmupServices;
-            TriggerWarmupState = StatusCodes.Status503ServiceUnavailable;
+            TriggerWarmupState = StatusCodeServiceUnavailable;
             WarmupTask = new Lazy<int>(
                 () =>
                 {
@@ -80,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
                 // Trigger delay service warmup
                 DelayedWarmupServices(AsyncBackgroundWarmupServices, logger);
 
-                TriggerWarmupState = StatusCodes.Status200OK;
+                TriggerWarmupState = StatusCodeOk;
 
                 return;
             }

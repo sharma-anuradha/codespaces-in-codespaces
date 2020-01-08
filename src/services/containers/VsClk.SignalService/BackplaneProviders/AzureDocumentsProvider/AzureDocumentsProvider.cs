@@ -148,7 +148,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId), new SqlQuerySpec($"SELECT * FROM c where {whereCondition.ToString()}", sqlParameters));
 
             var allMatchingContacts = await ToListAsync(queryable, cancellationToken);
-            foreach(var item in allMatchingContacts)
+            foreach (var item in allMatchingContacts)
             {
                 var emailBucket = results[emailIndexMap[item.Email]];
                 emailBucket.Add(item);
@@ -300,7 +300,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 CreateDocumentCollectionDefinition(MessageCollectionId),
                 new RequestOptions
                 {
-                    OfferThroughput = isProduction ? MessageRUThroughput: MessageRUThroughput_Dev
+                    OfferThroughput = isProduction ? MessageRUThroughput : MessageRUThroughput_Dev
                 });
 
             // cleanup all 'stale' leases collections
@@ -309,14 +309,14 @@ namespace Microsoft.VsCloudKernel.SignalService
                 .ToList()
                 .Where(d => d.Id.StartsWith(LeaseCollectionBaseId) && !servicesIds.Contains(d.Id.Substring(LeaseCollectionBaseId.Length)));
 
-            foreach(var docCollection in staleLeaseCollections)
+            foreach (var docCollection in staleLeaseCollections)
             {
                 try
                 {
                     Logger.LogInformation($"Delete stale lease collection:{docCollection.Id}");
                     await Client.DeleteDocumentCollectionAsync(docCollection.SelfLink);
                 }
-                catch(Exception error)
+                catch (Exception error)
                 {
                     Logger.LogError(error, $"Failed to delete stale lease collection:{docCollection.Id}");
                 }

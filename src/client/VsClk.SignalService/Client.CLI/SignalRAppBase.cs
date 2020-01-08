@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="SignalRAppBase.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,8 +30,6 @@ namespace SignalService.Client.CLI
         protected virtual string HubName => "signalrhub";
 
         protected TraceSource TraceSource { get; private set; }
-
-        protected HubConnection CreateHubConnection() => this.hubConnectionFactory();
 
         public async Task<int> RunAsync(Program cli)
         {
@@ -94,6 +96,8 @@ namespace SignalService.Client.CLI
 
             return 0;
         }
+
+        protected HubConnection CreateHubConnection() => this.hubConnectionFactory();
 
         protected virtual Task OnStartedAsync()
         {

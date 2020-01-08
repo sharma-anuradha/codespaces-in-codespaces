@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <AssemblyName>Microsoft.VsCloudKernel.SignalService.ContactServiceHub.Test</AssemblyName>
     <RootNamespace>Microsoft.VsCloudKernel.SignalService.ContactServiceHub</RootNamespace>
     <LangVersion>Latest</LangVersion>
@@ -17,10 +17,6 @@
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\AzureRedisProvider\AzureRedisProvider.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\ContactBackplane.Common\ContactBackplane.Common.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\ContactServiceHub\ContactServiceHub.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>

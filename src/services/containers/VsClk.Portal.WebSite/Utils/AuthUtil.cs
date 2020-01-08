@@ -1,12 +1,9 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using System.Net.Http.Formatting;
-using System.Threading;
-using System.Net.Http.Headers;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
+﻿using System;
+using System.Net.Http;
 using System.Text;
-using System;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 {
@@ -20,28 +17,26 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         {
             try
             {
-                var response = await client.PostAsync(path, new
+                var payload = JsonConvert.SerializeObject(new
                 {
                     provider = authProvider,
                     token = externalToken,
-                }, new NoCharSetJsonMediaTypeFormatter(), CancellationToken.None);
+                });
+                var content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-                var authTokenJson = await response.Content.ReadAsAsync<JObject>();
-                var authToken = authTokenJson.Value<string>("access_token");
+                // The auth service is implemented in NODE.JS and doesn't like the charset content type to be set.
+                // (From the liveshare agent code and documentation.)
+                content.Headers.ContentType.CharSet = string.Empty;
+
+                var response = await client.PostAsync(path, content);
+                var authTokenJson = await response.Content.ReadAsStringAsync();
+                var json = JObject.Parse(authTokenJson);
+                var authToken = json.Value<string>("access_token");
                 return authToken;
             }
             catch (Exception)
             {
                 return null;
-            }
-        }
-        private class NoCharSetJsonMediaTypeFormatter : JsonMediaTypeFormatter
-        {
-            public override void SetDefaultContentHeaders(
-                Type type, HttpContentHeaders headers, MediaTypeHeaderValue mediaType)
-            {
-                base.SetDefaultContentHeaders(type, headers, mediaType);
-                headers.ContentType.CharSet = "";
             }
         }
     }

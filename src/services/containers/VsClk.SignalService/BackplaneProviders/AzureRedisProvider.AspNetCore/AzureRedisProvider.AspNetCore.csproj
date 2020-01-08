@@ -6,9 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Note: remove next package when we move to 3.0 -->
-    <PackageReference Include="Microsoft.AspNetCore.App" />
-
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Azure.Management.Redis.Fluent" Version="1.27.0" />
   </ItemGroup>
 

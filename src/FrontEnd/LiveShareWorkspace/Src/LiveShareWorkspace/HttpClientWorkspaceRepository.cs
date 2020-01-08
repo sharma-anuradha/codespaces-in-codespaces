@@ -3,12 +3,13 @@
 // </copyright>
 
 using System.Net.Http;
-using System.Net.Http.Formatting;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
 {
@@ -37,12 +38,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
                 $"{LogBaseName}_create",
                 async (childLogger) =>
                 {
-                    var response = await HttpClientProvider.HttpClient.PostAsync(Path, workspace, new JsonMediaTypeFormatter());
+                    var payload = JsonConvert.SerializeObject(workspace);
+                    var content = new StringContent(payload, Encoding.UTF8, "application/json");
+                    var response = await HttpClientProvider.HttpClient.PostAsync(Path, content);
                     logger.AddClientHttpResponseDetails(response);
 
                     await response.ThrowIfFailedAsync();
 
-                    var workspaceResponse = await response.Content.ReadAsAsync<WorkspaceResponse>();
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var workspaceResponse = JsonConvert.DeserializeObject<WorkspaceResponse>(responseContent);
                     return workspaceResponse;
                 });
         }
@@ -83,7 +87,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
 
                     await response.ThrowIfFailedAsync();
 
-                    var workspaceResponse = await response.Content.ReadAsAsync<WorkspaceResponse>();
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var workspaceResponse = JsonConvert.DeserializeObject<WorkspaceResponse>(responseContent);
                     return workspaceResponse;
                 });
         }

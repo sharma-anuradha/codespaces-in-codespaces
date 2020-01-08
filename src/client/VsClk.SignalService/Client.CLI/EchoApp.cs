@@ -1,5 +1,8 @@
-﻿using System;
-using System.Diagnostics;
+﻿// <copyright file="EchoApp.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.VisualStudio.Threading;

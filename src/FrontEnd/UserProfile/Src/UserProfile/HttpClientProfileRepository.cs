@@ -3,11 +3,11 @@
 // </copyright>
 
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 {
@@ -48,7 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 
                     await response.ThrowIfFailedAsync();
 
-                    var profile = await response.Content.ReadAsAsync<Profile>();
+                    var content = await response.Content.ReadAsStringAsync();
+                    var profile = JsonConvert.DeserializeObject<Profile>(content);
                     return profile;
                 });
         }

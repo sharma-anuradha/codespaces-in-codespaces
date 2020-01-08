@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Azure.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +38,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// </summary>
         internal const string HealthHubMap = "/healthhub";
 
-        public Startup(ILoggerFactory loggerFactory,IHostingEnvironment env)
+        public Startup(ILoggerFactory loggerFactory, IWebHostEnvironment env)
             : base(loggerFactory, env)
         {
         }
@@ -56,20 +57,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             ConfigureCommonServices(services);
 
             // Frameworks
-            services.AddMvc().AddApplicationPart(typeof(StartupBase<>).Assembly).AddControllersAsServices()
-#if _NETCORE3_
-                .AddMvcOptions(options => options.EnableEndpointRouting = false)
-#endif
-            ;
+            services.AddControllers();
 
             // provide IHttpClientFactory
             services.AddHttpClient();
 
-
             // Next block will enable authentication based on a Profile service Uri
             var authenticateProfileServiceUri = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.AuthenticateProfileServiceUri));
             if (!string.IsNullOrEmpty(authenticateProfileServiceUri))
-            {            
+            {
                 Logger.LogInformation("Authentication enabled...");
 
                 EnableAuthentication = true;
@@ -106,14 +102,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             services.AddSingleton<RelayService>();
 
-            var signalRService = services.AddSignalR().AddJsonProtocol(options => {
-#if _NETCORE3_
+            var signalRService = services.AddSignalR().AddJsonProtocol(options =>
+            {
                 options.PayloadSerializerOptions.PropertyNamingPolicy = null;
-#else
-                // ensure we disable the camel case contract
-                options.PayloadSerializerSettings.ContractResolver =
-                new Newtonsoft.Json.Serialization.DefaultContractResolver();
-#endif
             });
 
             var keyVaultName = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.KeyVaultName));
@@ -137,7 +128,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         serviceEndpoints.AddRange(ServicePrincipal.GetAzureSignalRServiceEndpointsAsync(keyVaultName, Stamp).Result);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         Logger.LogError(e, $"Failed to retrieve endpoints from Azure key vault:{keyVaultName}");
                     }
@@ -189,7 +180,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -197,7 +188,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // Authentication
+            app.UseRouting();
             app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseFileServer();
 
@@ -228,10 +221,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                     routes.MapHub<HealthServiceHub>(HealthHubMap);
                 });
             }
-            else
+
+            app.UseEndpoints(routes =>
             {
-                // configure standalone SignalR service
-                app.UseSignalR(routes =>
+                if (!UseAzureSignalR)
                 {
                     if (EnableAuthentication)
                     {
@@ -250,15 +243,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
 
                     routes.MapHub<HealthServiceHub>(HealthHubMap);
-                });
-            }
+                }
 
-            // Frameworks
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
-                name: "default",
-                template: "{controller=Status}/{action=Get}");
+                routes.MapControllerRoute("default", "{controller=Status}/{action=Get}");
             });
         }
     }
