@@ -33,6 +33,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         {
         }
 
+        /// <summary>
+        /// Gets or Sets the Service Provider object.
+        /// </summary>
         public static IServiceProvider Services { get; set; }
 
         /// <summary>

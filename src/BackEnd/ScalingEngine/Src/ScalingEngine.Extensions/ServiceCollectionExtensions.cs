@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions
         /// <summary>
         /// <see cref="IServiceCollection"/> extensions for the scaling engine.
         /// </summary>
-        /// <param name="services"></param>
+        /// <param name="services">The service collection.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddScalingEngine(
             this IServiceCollection services)

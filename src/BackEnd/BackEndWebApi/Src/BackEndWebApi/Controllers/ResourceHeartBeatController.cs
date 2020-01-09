@@ -49,7 +49,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         /// </summary>
         /// <param name="resourceId">VM Resource Id.</param>
         /// <param name="heartBeat">HeartBeat message.</param>
-        /// <returns>TODO: Add documentation.</returns>
+        /// <param name="logger">ILogger object.</param>
+        /// <returns>The IActionResult.</returns>
         [HttpPost("{resourceId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]

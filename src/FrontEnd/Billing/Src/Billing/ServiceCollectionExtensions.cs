@@ -51,6 +51,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             return services;
         }
 
+        /// <summary>
+        /// Adds the BillingSubmissionService as a HostedService to the service collection.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="useMockCloudEnvironmentRepository">Boolean indicating the use of mocks.</param>
+        /// <returns>The service instance.</returns>
         public static IServiceCollection AddBillingSubmissionWorker(
             this IServiceCollection services,
             bool useMockCloudEnvironmentRepository)
