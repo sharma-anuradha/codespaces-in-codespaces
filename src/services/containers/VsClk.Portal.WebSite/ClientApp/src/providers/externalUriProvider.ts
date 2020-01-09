@@ -1,6 +1,7 @@
 import { URI } from 'vscode-web';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { EnvConnector } from '../ts-agent/envConnector';
+import { sendTelemetry } from '../utils/telemetry';
 
 abstract class BaseExternalUriProvider {
     protected abstract ensurePortIsForwarded(port: number): Promise<void>;
@@ -13,6 +14,7 @@ abstract class BaseExternalUriProvider {
             return uri;
         }
 
+        sendTelemetry('vsonline/portal/resolve-external-uri', { port });
         await this.ensurePortIsForwarded(port);
 
         uri.scheme = 'https';

@@ -10,6 +10,7 @@ type SendTelemetryProps =
     | ['vsonline/auth/acquire-token/error', Error]
     | ['vsonline/auth/acquire-auth-code', IAcquireAuthCodeTelemetryEventProperties]
     | ['vsonline/application/before-unload', {}]
+    | ['vsonline/portal/resolve-external-uri', { port: number }]
     | ['vsonline/portal/ls-connection-initializing', IVSCodeConnectProperties]
     | ['vsonline/portal/ls-connection-opened', IVSCodeConnectWithDurationProperties]
     | ['vsonline/portal/ls-connection-failed', IVSCodeConnectionFailedProperties]
