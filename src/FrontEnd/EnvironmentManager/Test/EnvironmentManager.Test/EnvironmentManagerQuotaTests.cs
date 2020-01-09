@@ -12,8 +12,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         [Fact]
         public async Task EnvironmentCreationChecksQuota()
         {
-            await accountManager.CreateAsync(testVsoPlan, logger);
-
             var environmentToDelete = await CreateTestEnvironmentAsync("Test-1");
 
             for (var i = 2; i<=20; i++)
@@ -22,11 +20,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             }
 
             // 20 environments exist
-            var listEnvironments = await environmentManager.ListEnvironmentsAsync(
-                                                                    null,
-                                                                    null,
-                                                                    testPlan.ResourceId,
-                                                                    logger);
+            var listEnvironments = await this.environmentManager.ListEnvironmentsAsync(
+                                                                    logger,
+                                                                    planId: testPlan.ResourceId
+                                                                    );
 
             Assert.Equal(20, listEnvironments.Count());
 
@@ -36,10 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(StatusCodes.Status403Forbidden, result.HttpStatusCode);
 
             // Delete 1 environment.
-            var ownerIdSet = new UserIdSet(environmentToDelete.CloudEnvironment.OwnerId);
-            var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
-                                                                        ownerIdSet,
-                                                                        logger);
+            var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment, logger);
             Assert.True(deleteResult);
 
             // User should be allowed to create environment.

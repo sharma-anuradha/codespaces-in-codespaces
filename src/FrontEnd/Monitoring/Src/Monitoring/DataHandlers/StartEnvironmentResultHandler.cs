@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        // Mark environment provision to failed status
                        ValidationUtil.IsRequired(jobResultData.EnvironmentId, "Environment Id");
 
-                       var cloudEnvironment = await cloudEnvironmentManager.GetEnvironmentByIdAsync(jobResultData.EnvironmentId, childLogger);
+                       var cloudEnvironment = await cloudEnvironmentManager.GetEnvironmentAsync(jobResultData.EnvironmentId, childLogger);
                        if (cloudEnvironment == default)
                        {
                            childLogger.LogInfo($"No environment found for virtual machine id : {vmResourceId} and environment {jobResultData.EnvironmentId}");
@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
                        {
                            // Shutdown the environment if the environment has failed to start.
-                           await cloudEnvironmentManager.ForceEnvironmentShutdownAsync(cloudEnvironment.Id, childLogger);
+                           await this.cloudEnvironmentManager.ForceEnvironmentShutdownAsync(cloudEnvironment, childLogger);
                            return;
                        }
                    }

@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                    childLogger.FluentAddBaseValue("CloudEnvironmentId", environmentData.EnvironmentId);
 
-                   var cloudEnvironment = await environmentManager.GetEnvironmentByIdAsync(environmentData.EnvironmentId, childLogger);
+                   var cloudEnvironment = await environmentManager.GetEnvironmentAsync(environmentData.EnvironmentId, childLogger);
                    ValidateCloudEnvironment(cloudEnvironment, environmentData.EnvironmentId);
 
                    cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    // Shutdown if the environment is idle
                    if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
                    {
-                       await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment.Id, null, childLogger, internalTrigger: true);
+                       await environmentManager.ShutdownEnvironmentAsync(cloudEnvironment, childLogger);
                    }
                });
         }

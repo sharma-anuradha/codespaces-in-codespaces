@@ -246,7 +246,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     };
 
                     var environments = await cloudEnvironmentManager.ListEnvironmentsAsync(
-                        ownerIdSet: null, name: null, plan.ResourceId, logger);
+                        logger, planId: plan.ResourceId);
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
                     {
@@ -259,8 +259,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                                 {
                                       try
                                       {
-                                          var ownerIdSet = new UserIdSet(environment.OwnerId);
-                                          var result = await cloudEnvironmentManager.DeleteEnvironmentAsync(environment.Id, ownerIdSet, childLogger);
+                                          var result = await cloudEnvironmentManager.DeleteEnvironmentAsync(environment, childLogger);
                                           if (!result)
                                           {
                                               childLogger.AddCloudEnvironment(environment)

@@ -1,6 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
 using System.Collections.Generic;
-using Xunit;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
@@ -8,18 +10,15 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Moq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using System.Collections.ObjectModel;
-using System.Linq;
 using Microsoft.VsSaaS.Common;
-using System;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Moq;
+using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
@@ -45,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var expectedAutoShutdownOptions = new[] { 123, 456, };
             var manager = CreateManager(skuCatalog: skuCatalog, autoShutdownDelayOptions: expectedAutoShutdownOptions);
 
-            var result = manager.GetEnvironmentAvailableSettingsUpdates(environment, MockProfile(), Logger);
+            var result = manager.GetEnvironmentAvailableSettingsUpdates(environment, Logger);
 
             Assert.Equal(expectedAutoShutdownOptions, result.AllowedAutoShutdownDelayMinutes);
             Assert.Single(result.AllowedSkus);
@@ -60,13 +59,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             
             var skuCatalog = MockSkuCatalog(targetSku, activeSku);
 
-            var currentUserProvider = MockCurrentUserProvider();
-
             var environmentRepository = new MockCloudEnvironmentRepository();
             
             var environment = MockEnvironment(
                 skuName: activeSku.SkuName, 
-                ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId, 
                 state: CloudEnvironmentState.Shutdown,
                 autoShutdownDelayMinutes: 0);
 
@@ -80,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment.Id, update, currentUserProvider, Logger);
+            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
 
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.CloudEnvironment);
@@ -102,11 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository.Object);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync("id", update, MockCurrentUserProvider(), Logger);
-
-            Assert.False(result.IsSuccess);
-            Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.MessageCodes.EnvironmentDoesNotExist, result.ValidationErrors.First());
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await manager.UpdateEnvironmentSettingsAsync(null, update, Logger));
         }
 
         [Fact]
@@ -115,11 +107,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
 
-            var currentUserProvider = MockCurrentUserProvider();
-
             var environmentRepository = new MockCloudEnvironmentRepository();
 
-            var environment = MockEnvironment(skuName: sku.SkuName, ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId, state: CloudEnvironmentState.Available);
+            var environment = MockEnvironment(skuName: sku.SkuName, state: CloudEnvironmentState.Available);
             environment = await environmentRepository.CreateAsync(environment, Logger);
 
             var update = new CloudEnvironmentUpdate
@@ -128,11 +118,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment.Id, update, currentUserProvider, Logger);
+            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.MessageCodes.EnvironmentNotShutdown, result.ValidationErrors.First());
+            Assert.Equal(MessageCodes.EnvironmentNotShutdown, result.ValidationErrors.First());
         }
 
         [Fact]
@@ -142,13 +132,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var skuCatalog = MockSkuCatalog(sku);
 
-            var currentUserProvider = MockCurrentUserProvider();
-
             var environmentRepository = new MockCloudEnvironmentRepository();
 
             var environment = MockEnvironment(
                 skuName: sku.SkuName,
-                ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId,
                 state: CloudEnvironmentState.Shutdown);
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
@@ -160,11 +147,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment.Id, update, currentUserProvider, Logger);
+            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid, result.ValidationErrors.First());
+            Assert.Equal(MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid, result.ValidationErrors.First());
         }
 
         [Fact]
@@ -174,13 +161,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var skuCatalog = MockSkuCatalog(sku);
 
-            var currentUserProvider = MockCurrentUserProvider();
-
             var environmentRepository = new MockCloudEnvironmentRepository();
 
             var environment = MockEnvironment(
                 skuName: sku.SkuName,
-                ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId,
                 state: CloudEnvironmentState.Shutdown);
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
@@ -192,11 +176,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment.Id, update, currentUserProvider, Logger);
+            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.MessageCodes.UnableToUpdateSku, result.ValidationErrors.First());
+            Assert.Equal(MessageCodes.UnableToUpdateSku, result.ValidationErrors.First());
         }
 
         [Fact]
@@ -207,13 +191,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var skuCatalog = MockSkuCatalog(targetSku, activeSku);
 
-            var currentUserProvider = MockCurrentUserProvider();
-
             var environmentRepository = new MockCloudEnvironmentRepository();
 
             var environment = MockEnvironment(
                 skuName: activeSku.SkuName,
-                ownerId: currentUserProvider.GetCurrentUserIdSet().PreferredUserId,
                 state: CloudEnvironmentState.Shutdown);
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
@@ -225,11 +206,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment.Id, update, currentUserProvider, Logger);
+            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
-            Assert.Equal(Contracts.MessageCodes.RequestedSkuIsInvalid, result.ValidationErrors.First());
+            Assert.Equal(MessageCodes.RequestedSkuIsInvalid, result.ValidationErrors.First());
         }
 
         private CloudEnvironmentManager CreateManager(
@@ -257,7 +238,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             environmentRepository = environmentRepository ?? new MockCloudEnvironmentRepository();
             var planRepository = new MockPlanRepository();
             var billingEventRepository = new MockBillingEventRepository();
-            var accountManager = new PlanManager(planRepository, planSettings);
             var billingEventManager = new BillingEventManager(billingEventRepository, new MockBillingOverrideRepository());
             var workspaceRepository = new MockClientWorkspaceRepository();
             var authRepository = new MockClientAuthRepository();
@@ -269,7 +249,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentRepository,
                 resourceBroker,
                 workspaceRepository,
-                accountManager,
                 authRepository,
                 billingEventManager,
                 skuCatalog,
@@ -334,36 +313,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         private static IControlPlaneStampInfo MockControlPlaneStampInfo()
         {            
             return new Mock<IControlPlaneStampInfo>().Object;
-        }
-
-        private ICurrentUserProvider MockCurrentUserProvider(
-            string profileId = "mock-profile-id",
-            string bearerToken = "mock-bearer-token",
-            Profile currentUser = null)
-        {
-            currentUser = currentUser ?? MockProfile();
-
-            var moq = new Mock<ICurrentUserProvider>();
-            moq
-                .Setup(obj => obj.GetCurrentUserIdSet())
-                .Returns(new UserIdSet(profileId));
-            moq
-                .Setup(obj => obj.GetBearerToken())
-                .Returns(bearerToken);
-            moq
-                .Setup(obj => obj.GetProfile())
-                .Returns(currentUser);
-
-            return moq.Object;
-        }
-
-        private Profile MockProfile(Dictionary<string, object> programs = null)
-        {
-            return new Profile
-            {
-                ProviderId = "mock-provider-id",
-                Programs = programs
-            };
         }
 
         public CloudEnvironment MockEnvironment(

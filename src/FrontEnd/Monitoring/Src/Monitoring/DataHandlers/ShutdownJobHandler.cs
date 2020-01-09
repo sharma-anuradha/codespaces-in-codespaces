@@ -53,7 +53,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(jobResult))
                         .FluentAddBaseValue("CloudEnvironmentId", jobResult.EnvironmentId);
 
-                   await cloudEnvironmentManager.ShutdownEnvironmentCallbackAsync(jobResult.Id, logger);
+                   var environment = await this.cloudEnvironmentManager.GetEnvironmentAsync(jobResult.Id, logger);
+                   if (environment == null)
+                   {
+                       return;
+                   }
+
+                   await this.cloudEnvironmentManager.ShutdownEnvironmentCallbackAsync(environment, logger);
                });
         }
     }

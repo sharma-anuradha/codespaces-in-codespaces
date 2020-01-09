@@ -8,10 +8,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
     public class EnvironmentTests : EnvironmentManagerTestsBase
     {
         [Fact]
-        public async Task EnvironmentFriendLyNameCheck()
+        public async Task EnvironmentFriendlyNameCheck()
         {
-            await accountManager.CreateAsync(testVsoPlan, logger);
-
             // User should be allowed to create environment.
             var environmentToDelete = await CreateTestEnvironmentAsync("ABC");
 
@@ -21,10 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(environmentToDelete.CloudEnvironment.FriendlyName.ToLowerInvariant(), environmentToDelete.CloudEnvironment.FriendlyNameInLowerCase);
 
             // Deleting environment after environment name validation.
-            var ownerIdSet = new UserIdSet(environmentToDelete.CloudEnvironment.OwnerId);
-            var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment.Id,
-                                                                        ownerIdSet,
-                                                                        logger);
+            var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment, logger);
             Assert.True(deleteResult);
 
         }

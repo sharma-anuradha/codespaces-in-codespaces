@@ -23,7 +23,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly MockPlanRepository planRepository;
         public readonly MockBillingEventRepository billingEventRepository;
         public readonly MockClientWorkspaceRepository workspaceRepository;
-        public readonly IPlanManager accountManager;
         public readonly IBillingEventManager billingEventManager;
         public readonly MockClientAuthRepository authRepository;
         public readonly IResourceBrokerResourcesHttpContract resourceBroker;
@@ -67,11 +66,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             planSettings.Init(mockSystemConfiguration.Object);
             environmentSettings.Init(mockSystemConfiguration.Object);
 
-            environmentRepository = new MockCloudEnvironmentRepository();
-            planRepository = new MockPlanRepository();
-            billingEventRepository = new MockBillingEventRepository();
-            accountManager = new PlanManager(planRepository, planSettings);
-            billingEventManager = new BillingEventManager(billingEventRepository,
+            this.environmentRepository = new MockCloudEnvironmentRepository();
+            this.planRepository = new MockPlanRepository();
+            this.billingEventRepository = new MockBillingEventRepository();
+            this.billingEventManager = new BillingEventManager(this.billingEventRepository,
                                                                 new MockBillingOverrideRepository());
             workspaceRepository = new MockClientWorkspaceRepository();
             authRepository = new MockClientAuthRepository();
@@ -79,14 +77,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             skuCatalog = new Mock<ISkuCatalog>(MockBehavior.Strict).Object;
 
-            environmentManager = new CloudEnvironmentManager(
-                environmentRepository,
-                resourceBroker,
-                workspaceRepository,
-                accountManager,
-                authRepository,
-                billingEventManager,
-                skuCatalog,
+            this.environmentManager = new CloudEnvironmentManager(
+                this.environmentRepository,
+                this.resourceBroker,
+                this.workspaceRepository,
+                this.authRepository,
+                this.billingEventManager,
+                this.skuCatalog,
                 environmentSettings);
         }
 
@@ -102,19 +99,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     OwnerId = testUserId
                 },
                 new CloudEnvironmentOptions(),
-                testServiceUri,
-                testCallbackUriFormat,
-                testUserIdSet,
-                testAccessToken,
-                logger);
+                new StartCloudEnvironmentParameters
+                {
+                    AccessToken = testAccessToken,
+                    ServiceUri = testServiceUri,
+                    CallbackUriFormat = testCallbackUriFormat,
+                },
+                testPlan,
+                this.logger);
             
             return serviceResult;
         }
 
         public async Task MakeTestEnvironmentAvailableAsync(CloudEnvironment testEnvironment)
         {
-            await environmentManager.UpdateEnvironmentCallbackAsync(
-                testEnvironment.Id,
+            await this.environmentManager.UpdateEnvironmentCallbackAsync(
+                testEnvironment,
                 new EnvironmentRegistrationCallbackOptions
                 {
                     Payload = new EnvironmentRegistrationCallbackPayloadOptions
@@ -123,8 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                         SessionPath = "/",
                     },
                 },
-                testUserIdSet,
-                logger);
+                this.logger);
         }
     }
 }

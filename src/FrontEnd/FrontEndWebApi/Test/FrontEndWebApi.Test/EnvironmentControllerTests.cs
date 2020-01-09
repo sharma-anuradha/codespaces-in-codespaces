@@ -22,6 +22,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Moq;
 using Xunit;
 
@@ -29,6 +30,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
     public class EnvironmentControllerTests
     {
+        private const string MockUserProviderId = "mock-provider-id";
+
         private readonly IPlanRepository accountRepository;
         private readonly PlanManager accountManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
@@ -211,33 +214,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         [Theory]
         [MemberData(nameof(SettingsUpdates))]
-        public async Task EnvironmentController_GetAvailableUpdatesAsync(
+        public async Task EnvironmentController_GetAvailableUpdates(
             CloudEnvironmentAvailableSettingsUpdates allowedUpdates,
             CloudEnvironmentAvailableUpdatesResult expectedResponse)
         {
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
-            var mockEnvironment = new CloudEnvironment
-            {
-                Id = Guid.NewGuid().ToString(),
-                Location = AzureLocation.WestUs2,
-            };
+            var mockEnvironment = MockCloudEnvironment();
 
             var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
             
             mockEnvironmentManager
-                .Setup(x => x.GetEnvironmentAsync(
+                .Setup(x => x.GetEnvironmentWithStateRefreshAsync(
                     It.IsAny<string>(),
-                    It.IsAny<UserIdSet>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
-                .Callback((string id, UserIdSet userIdSet, IDiagnosticsLogger log) =>
+                .Callback((string id, IDiagnosticsLogger log) =>
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
                 .Setup(x => x.GetEnvironmentAvailableSettingsUpdates(
                     It.IsAny<CloudEnvironment>(),
-                    It.IsAny<UserProfile.Profile>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(allowedUpdates);
 
@@ -266,11 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
-            var mockEnvironment = new CloudEnvironment
-            {
-                Id = Guid.NewGuid().ToString(),
-                Location = AzureLocation.WestUs2,
-            };
+            var mockEnvironment = MockCloudEnvironment();
 
             var updateRequest = new UpdateCloudEnvironmentBody
             {
@@ -283,22 +276,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
 
             mockEnvironmentManager
-                .Setup(x => x.GetEnvironmentAsync(
+                .Setup(x => x.GetEnvironmentWithStateRefreshAsync(
                     It.IsAny<string>(),
-                    It.IsAny<UserIdSet>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
-                .Callback((string id, UserIdSet userIdSet, IDiagnosticsLogger log) =>
+                .Callback((string id, IDiagnosticsLogger log) =>
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
                 .Setup(x => x.UpdateEnvironmentSettingsAsync(
-                    It.IsAny<string>(),
+                    It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
-                    It.IsAny<ICurrentUserProvider>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(updateSettingsReponse))
-                .Callback((string id, CloudEnvironmentUpdate update, ICurrentUserProvider prov, IDiagnosticsLogger log) =>
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, IDiagnosticsLogger log) =>
                 {
                     Assert.Equal(updateRequest.SkuName, update.SkuName);
                     Assert.Equal(updateRequest.AutoShutdownDelayMinutes, update.AutoShutdownDelayMinutes);
@@ -320,11 +311,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
-            var mockEnvironment = new CloudEnvironment
-            {
-                Id = Guid.NewGuid().ToString(),
-                Location = AzureLocation.WestUs2,
-            };
+            var mockEnvironment = MockCloudEnvironment();
 
             var updateRequest = new UpdateCloudEnvironmentBody
             {
@@ -332,28 +319,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 AutoShutdownDelayMinutes = 123,
             };
 
-            var errorCodes = new List<EnvironmentManager.Contracts.MessageCodes> { EnvironmentManager.Contracts.MessageCodes.EnvironmentNotShutdown, EnvironmentManager.Contracts.MessageCodes.RequestedSkuIsInvalid, };
+            var errorCodes = new List<MessageCodes> { MessageCodes.EnvironmentNotShutdown, MessageCodes.RequestedSkuIsInvalid, };
             var updateSettingsReponse = CloudEnvironmentSettingsUpdateResult.Error(errorCodes);
 
             var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
 
             mockEnvironmentManager
-                .Setup(x => x.GetEnvironmentAsync(
+                .Setup(x => x.GetEnvironmentWithStateRefreshAsync(
                     It.IsAny<string>(),
-                    It.IsAny<UserIdSet>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
-                .Callback((string id, UserIdSet userIdSet, IDiagnosticsLogger log) =>
+                .Callback((string id, IDiagnosticsLogger log) =>
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
                 .Setup(x => x.UpdateEnvironmentSettingsAsync(
-                    It.IsAny<string>(),
+                    It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
-                    It.IsAny<ICurrentUserProvider>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(updateSettingsReponse))
-                .Callback((string id, CloudEnvironmentUpdate update, ICurrentUserProvider prov, IDiagnosticsLogger log) =>
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, IDiagnosticsLogger log) =>
                 {
                     Assert.Equal(updateRequest.SkuName, update.SkuName);
                     Assert.Equal(updateRequest.AutoShutdownDelayMinutes, update.AutoShutdownDelayMinutes);
@@ -364,7 +349,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var actionResult = await environmentController.UpdateSettingsAsync(mockEnvironment.Id, updateRequest, logger);
             Assert.IsType<BadRequestObjectResult>(actionResult);
 
-            var result = (actionResult as BadRequestObjectResult).Value as List<EnvironmentManager.Contracts.MessageCodes>;
+            var result = (actionResult as BadRequestObjectResult).Value as List<MessageCodes>;
 
             Assert.NotNull(result);
             Assert.Equal(errorCodes.Count, result.Count);
@@ -397,6 +382,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             ICloudEnvironmentManager cloudEnvironmentManager = null)
         {
             cloudEnvironmentManager = cloudEnvironmentManager ?? MockCloudEnvironmentManager();
+            var planManager = MockPlanManager();
             currentUserProvider = currentUserProvider ?? MockCurrentUserProvider();
             var controlPlaneInfo = MockControlPlaneInfo();
             var currentLocationProvider = MockCurrentLocationProvider();
@@ -406,6 +392,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var environmentController = new EnvironmentsController(
                 cloudEnvironmentManager,
+                planManager,
                 currentUserProvider,
                 controlPlaneInfo,
                 currentLocationProvider,
@@ -423,6 +410,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
 
             return environmentController;
+        }
+
+        private CloudEnvironment MockCloudEnvironment(
+            string ownerId = null)
+        {
+            return new CloudEnvironment
+            {
+                Id = Guid.NewGuid().ToString(),
+                Location = AzureLocation.WestUs2,
+                OwnerId = ownerId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,
+            };
         }
 
         private IServiceUriBuilder MockServiceUriBuilder()
@@ -622,7 +620,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 {
                     return new UserProfile.Profile
                     {
-                        ProviderId = "mock-provider-id",
+                        ProviderId = MockUserProviderId,
                         Programs = programs,
                         Email = email
                     };
@@ -639,18 +637,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(obj => obj.CreateEnvironmentAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentOptions>(),
-                    It.IsAny<Uri>(),
-                    It.IsAny<string>(),
-                    It.IsAny<UserIdSet>(),
-                    It.IsAny<string>(),
+                    It.IsAny<StartCloudEnvironmentParameters>(),
+                    It.IsAny<VsoPlanInfo>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     CloudEnvironment env,
                     CloudEnvironmentOptions options,
-                    Uri uri,
-                    string s1,
-                    UserIdSet ids,
-                    string s4,
+                    StartCloudEnvironmentParameters startParams,
+                    VsoPlanInfo plan,
                     IDiagnosticsLogger logger) =>
                 {
                     return new CloudEnvironmentServiceResult
@@ -659,6 +653,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         MessageCode = 0,
                         HttpStatusCode = StatusCodes.Status200OK,
                     };
+                });
+
+            return moq.Object;
+        }
+
+        private IPlanManager MockPlanManager(VsoPlan plan = null)
+        {
+            var moq = new Mock<IPlanManager>();
+
+            moq
+                .Setup(obj => obj.GetAsync(It.IsAny<VsoPlanInfo>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
+                .Returns(async () => new PlanManagerServiceResult
+                {
+                    VsoPlan = plan ?? await GeneratePlan(),
                 });
 
             return moq.Object;
@@ -683,7 +691,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return appSettings;
         }
 
-        private async Task<VsoPlan> GeneratePlan(string planName = "Test")
+        private async Task<VsoPlan> GeneratePlan(
+            string planName = "Test",
+            string userId = null)
         {
             var model = new VsoPlan
             {
@@ -694,7 +704,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Subscription = Guid.NewGuid().ToString(),
                     Location = AzureLocation.WestUs2
                 },
-                UserId = "TestUser",
+                UserId = userId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,              
             };
 
             var serviceResult = await accountManager.CreateAsync(model, logger);
