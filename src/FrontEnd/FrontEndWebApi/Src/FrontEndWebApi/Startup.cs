@@ -251,7 +251,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     Type = SecuritySchemeType.Http,
                     Scheme = "bearer",
                     BearerFormat = "JWT",
-                    Description = "JWT auth token for the user. Example: Bearer eyJ2...",
+                    Description = "JWT auth token for the user. Example: eyJ2...",
                 });
                 x.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
