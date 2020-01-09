@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
 using Newtonsoft.Json;
@@ -186,5 +187,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "autoShutdownDelayMinutes")]
         public int AutoShutdownDelayMinutes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the feature flags.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "features")]
+        public Dictionary<string, string> Features { get; set; }
     }
 }

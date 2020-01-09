@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
@@ -100,5 +101,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the Last State Update reason.
         /// </summary>
         public string LastStateUpdateReason { get; set; }
+
+        /// <summary>
+        /// Gets or sets the features.
+        /// </summary>
+        public Dictionary<string, string> Features { get; set; }
     }
 }

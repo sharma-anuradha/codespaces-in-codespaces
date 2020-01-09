@@ -25,9 +25,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <param name="cascadeToken">The cascade token for the environment.</param>
         /// <param name="cloudEnvironmentOptions">The cloud environment options.</param>
         /// <returns>A dictionary of environment variables.</returns>
-        public static Dictionary<string, string> Generate(CloudEnvironment cloudEnvironment, Uri serviceUri, Uri callbackUri, string accessToken, string cascadeToken, CloudEnvironmentOptions cloudEnvironmentOptions)
+        public static Dictionary<string, string> Generate(
+            CloudEnvironment cloudEnvironment,
+            Uri serviceUri,
+            Uri callbackUri,
+            string accessToken,
+            string cascadeToken,
+            CloudEnvironmentOptions cloudEnvironmentOptions)
         {
             var result = new Dictionary<string, string>();
+
+            if (cloudEnvironment.Features != null)
+            {
+                foreach (var keyValuePair in cloudEnvironment.Features)
+                {
+                    var featureKey = $"FF_{keyValuePair.Key.ToUpperInvariant()}";
+                    result.Add(featureKey, keyValuePair.Value);
+                }
+            }
 
             var list = new EnvironmentVariableStrategy[]
             {

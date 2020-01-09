@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 
@@ -29,6 +30,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the experimental features requested by the client.
         /// </summary>
         public ExperimentalFeaturesBody ExperimentalFeatures { get; set; }
+
+        /// <summary>
+        /// Gets or sets features requested by the client.
+        /// </summary>
+        public Dictionary<string, string> Features { get; set; }
 
         /// <summary>
         /// Gets or sets the environment seed info.
