@@ -638,7 +638,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             // Extract the root API uri which is everything up and and including "/environments/"
             // TODO: Ideally this shouldn't need to include the "/environments/"
-            var requestUri = displayUri.Substring(0, displayUri.IndexOf("/environments/", StringComparison.OrdinalIgnoreCase) + "/environments/".Length);
+            var indexOfController = displayUri.IndexOf("/environments/", StringComparison.OrdinalIgnoreCase);
+            var requestUri = indexOfController == -1
+                ? displayUri
+                : displayUri.Substring(0, indexOfController + "/environments/".Length);
 
             var serviceUri = ServiceUriBuilder.GetServiceUri(requestUri, currentStamp);
             var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(requestUri, currentStamp).ToString();

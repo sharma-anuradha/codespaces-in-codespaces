@@ -31,6 +31,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
     public class EnvironmentControllerTests
     {
         private const string MockUserProviderId = "mock-provider-id";
+        private const string MockServiceUri = "https://testhost/test-service-uri/";
+        private const string MockCallbackUriFormat = "https://testhost/test-callback-uri/";
 
         private readonly IPlanRepository accountRepository;
         private readonly PlanManager accountManager;
@@ -75,9 +77,69 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 SkuName = "testSkuName",
                 Location = "WestUs2",
             };
+
             var environmentController = CreateTestEnvironmentsController();
+
             var actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<CreatedResult>(actionResult);
+        }
+
+        public static TheoryData<Uri> CreateEnvironmentUrls = new TheoryData<Uri>
+        {
+            new Uri("https://testhost/api/v1/environments"),
+            new Uri("https://testhost/api/v1/environments/"),
+        };
+
+        [Theory]
+        [MemberData(nameof(CreateEnvironmentUrls))]
+        public async Task EnvironmentController_CloudEnvironmentAsync_StartEnvironmentUrls(Uri uri)
+        {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var body = new CreateCloudEnvironmentBody
+            {
+                FriendlyName = "test-environment",
+                PlanId = (await GeneratePlan()).Plan.ResourceId,
+                AutoShutdownDelayMinutes = 5,
+                Type = CloudEnvironmentType.CloudEnvironment.ToString(),
+                SkuName = "testSkuName",
+                Location = "WestUs2",
+            };
+
+            var mockHttpContext = MockHttpContextFromUri(uri);
+
+            var mockServiceUriBuilder = MockServiceUriBuilder(uri.ToString());
+
+            var environmentController = CreateTestEnvironmentsController(
+                httpContext: mockHttpContext,
+                serviceUriBuilder: mockServiceUriBuilder);
+
+            var actionResult = await environmentController.CreateAsync(body, logger);
+            Assert.IsType<CreatedResult>(actionResult);
+        }
+
+        [Fact]
+        public async Task EnvironmentController_StartAsync()
+        {
+            var logger = new Mock<IDiagnosticsLogger>().Object;
+
+            var mockEnv = MockCloudEnvironment();
+
+            var expectedRequestUri = "https://testhost/api/v1/environments/";
+            var expectedEnvId = mockEnv.Id;
+
+            var mockHttpContext = MockHttpContextFromUri(new Uri($"{expectedRequestUri}{expectedEnvId}"));
+
+            var mockServiceUriBuilder = MockServiceUriBuilder(expectedRequestUri);
+
+            var mockEnvManager = MockCloudEnvironmentManager(mockEnv);
+
+            var environmentController = CreateTestEnvironmentsController(
+                cloudEnvironmentManager: mockEnvManager,
+                httpContext: mockHttpContext,
+                serviceUriBuilder: mockServiceUriBuilder);
+
+            var actionResult = await environmentController.StartAsync(expectedEnvId, logger);
+            Assert.IsType<OkObjectResult>(actionResult);
         }
 
         public static TheoryData<string> Environments = new TheoryData<string>
@@ -379,16 +441,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private EnvironmentsController CreateTestEnvironmentsController(
             ISkuCatalog skuCatalog = null, 
             ICurrentUserProvider currentUserProvider = null,
-            ICloudEnvironmentManager cloudEnvironmentManager = null)
+            ICloudEnvironmentManager cloudEnvironmentManager = null,
+            HttpContext httpContext = null,
+            IServiceUriBuilder serviceUriBuilder = null)
         {
-            cloudEnvironmentManager = cloudEnvironmentManager ?? MockCloudEnvironmentManager();
+            cloudEnvironmentManager ??= MockCloudEnvironmentManager();
             var planManager = MockPlanManager();
-            currentUserProvider = currentUserProvider ?? MockCurrentUserProvider();
+            currentUserProvider ??= MockCurrentUserProvider();
             var controlPlaneInfo = MockControlPlaneInfo();
             var currentLocationProvider = MockCurrentLocationProvider();
-            skuCatalog = skuCatalog ?? MockSkuCatalog();
+            skuCatalog ??= MockSkuCatalog();
             var mapper = MockMapper();
-            var serviceUriBuilder = MockServiceUriBuilder();
+            serviceUriBuilder ??= MockServiceUriBuilder();
 
             var environmentController = new EnvironmentsController(
                 cloudEnvironmentManager,
@@ -400,7 +464,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 mapper,
                 serviceUriBuilder);
 
-            var httpContext = MockHttpContext.Create();
+            httpContext ??= MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             httpContext.SetLogger(logger);
 
@@ -423,15 +487,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
         }
 
-        private IServiceUriBuilder MockServiceUriBuilder()
+        private IServiceUriBuilder MockServiceUriBuilder(string expectedRequestUri = null)
         {
             var moq = new Mock<IServiceUriBuilder>();
             moq
                 .Setup(obj => obj.GetServiceUri(It.IsAny<string>(), It.IsAny<IControlPlaneStampInfo>()))
-                .Returns(new Uri("https://testhost/test-service-uri/"));
+                .Returns(new Uri(MockServiceUri))
+                .Callback((string requestUri, IControlPlaneStampInfo ctrlPlane) =>
+                {
+                    if (expectedRequestUri != null)
+                    {
+                        Assert.Equal(expectedRequestUri, requestUri);
+                    }
+                });
             moq
                 .Setup(obj => obj.GetCallbackUriFormat(It.IsAny<string>(), It.IsAny<IControlPlaneStampInfo>()))
-                .Returns(new Uri("https://testhost/test-callback-uri/"));
+                .Returns(new Uri(MockCallbackUriFormat))
+                .Callback((string requestUri, IControlPlaneStampInfo ctrlPlane) =>
+                {
+                    if (expectedRequestUri != null)
+                    {
+                        Assert.Equal(expectedRequestUri, requestUri);
+                    }
+                });
 
             return moq.Object;
         }
@@ -629,7 +707,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return moq.Object;
         }
 
-        private ICloudEnvironmentManager MockCloudEnvironmentManager()
+        private ICloudEnvironmentManager MockCloudEnvironmentManager(CloudEnvironment environment = null)
         {
             var moq = new Mock<ICloudEnvironmentManager>();
 
@@ -647,6 +725,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     VsoPlanInfo plan,
                     IDiagnosticsLogger logger) =>
                 {
+                    Assert.Equal(MockServiceUri, startParams.ServiceUri.ToString());
+                    Assert.Equal(MockCallbackUriFormat, startParams.CallbackUriFormat);
+
                     return new CloudEnvironmentServiceResult
                     {
                         CloudEnvironment = env,
@@ -654,6 +735,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         HttpStatusCode = StatusCodes.Status200OK,
                     };
                 });
+
+            moq
+                .Setup(obj => obj.StartEnvironmentAsync(
+                    It.IsAny<CloudEnvironment>(),
+                    It.IsAny<StartCloudEnvironmentParameters>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync((
+                    CloudEnvironment env,
+                    StartCloudEnvironmentParameters startParams,
+                    IDiagnosticsLogger logger) =>
+                {
+                    Assert.Equal(MockServiceUri, startParams.ServiceUri.ToString());
+                    Assert.Equal(MockCallbackUriFormat, startParams.CallbackUriFormat);
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = env,
+                        MessageCode = 0,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
+                });
+
+            if (environment != null)
+            {
+                moq
+                    .Setup(obj => obj.GetEnvironmentWithStateRefreshAsync(
+                        It.Is<string>((id) => id == environment.Id),
+                        It.IsAny<IDiagnosticsLogger>()))
+                    .Returns(Task.FromResult(environment));
+            }
 
             return moq.Object;
         }
@@ -670,6 +781,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 });
 
             return moq.Object;
+        }
+
+        private HttpContext MockHttpContextFromUri(Uri uri)
+        {
+            var mockHttpContext = new DefaultHttpContext();
+            mockHttpContext.Request.Path = uri.PathAndQuery;
+            mockHttpContext.Request.Host = new HostString(uri.Host);
+            mockHttpContext.Request.Method = "POST";
+            mockHttpContext.Request.Scheme = uri.Scheme;
+            mockHttpContext.Request.PathBase = new PathString(string.Empty);
+            mockHttpContext.Request.QueryString = new QueryString(string.Empty);
+
+            return mockHttpContext;
         }
 
         public static AppSettingsBase LoadAppSettings(string environmentName, string overrideName = null)
