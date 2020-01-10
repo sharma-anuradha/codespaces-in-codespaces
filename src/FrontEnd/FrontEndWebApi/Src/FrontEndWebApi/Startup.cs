@@ -89,6 +89,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     };
 
                     var currentOrigins = ControlPlaneAzureResourceAccessor.GetStampOrigins();
+
+                    // prod GitHub endpoints
+                    currentOrigins.Add("https://code.github.com");
+
                     options.AddPolicy(
                         "ProdCORSPolicy",
                         builder => builder
@@ -101,6 +105,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
                     // Port forwarding proxy server.
                     currentOriginsDev.Add("https://localhost:4000");
+
+                    // non-prod GitHub endpoints
+                    currentOriginsDev.Add("https://local.code.github.com");
+                    currentOriginsDev.Add("https://dev.code.github.com");
+                    currentOriginsDev.Add("https://ppe.code.github.com");
 
                     options.AddPolicy(
                         "NonProdCORSPolicy",
