@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
                    var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
 
-                   await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState.state, CloudEnvironmentStateUpdateTriggers.Heartbeat, newState.reason.ToString(), childLogger);
+                   cloudEnvironment = await environmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState.state, CloudEnvironmentStateUpdateTriggers.Heartbeat, newState.reason.ToString(), childLogger);
 
                    // Shutdown if the environment is idle
                    if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
