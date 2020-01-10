@@ -1,7 +1,7 @@
 import React, { Component, SyntheticEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
 
-import { PrimaryButton, DefaultButton, IconButton } from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, DefaultButton, IconButton, ActionButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField, ITextFieldProps } from 'office-ui-fabric-react/lib/TextField';
@@ -49,6 +49,10 @@ type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 const SKU_SHOW_PRICING_KEY = 'show-pricing';
 const SKU_PRICING_LABEL = 'Show pricing information...';
 const SKU_PRICING_URL = 'https://aka.ms/vso-pricing';
+
+const USE_TRUSTWORTHY_REPO_LABEL_TEXT = 'You should only use ';
+const USE_TRUSTWORTHY_REPO_LABEL_LINK = 'repositories you trust';
+const USE_TRUSTWORTHY_REPO_URL = 'https://aka.ms/vso-trusted-repos';
 
 async function queryGitService(url: string, bearerToken?: string): Promise<boolean> {
     const webClient = useWebClient();
@@ -602,6 +606,20 @@ export class CreateEnvironmentPanelView extends Component<
             authStatusMessage = null;
         }
 
+        let useOnlyTrustworthyReposMessage = null;
+        if (this.state.dotfilesRepository.value || this.state.gitRepositoryUrl.value) {
+            useOnlyTrustworthyReposMessage = (
+                <div className='create-environment-panel__trustworthyReposMessage'>
+                    <Icon iconName='ReportHacked' style={{ marginRight: '.8rem' }} />
+                    <div>
+                        {USE_TRUSTWORTHY_REPO_LABEL_TEXT}
+                        <Link target='_blank' href={USE_TRUSTWORTHY_REPO_URL}>{USE_TRUSTWORTHY_REPO_LABEL_LINK}</Link>
+                        .
+                    </div>
+                </div>
+            );
+        }
+
         const label =
             this.state.shouldTryToAuthenticateForRepo ||
             this.state.shouldTryToAuthenticateForDotfiles
@@ -611,6 +629,7 @@ export class CreateEnvironmentPanelView extends Component<
         return (
             <Stack tokens={{ childrenGap: 'l1' }}>
                 <Stack.Item>{authStatusMessage}</Stack.Item>
+                <Stack.Item>{useOnlyTrustworthyReposMessage}</Stack.Item>
                 <Stack.Item>
                     <PrimaryButton
                         onClick={this.createEnvironment}

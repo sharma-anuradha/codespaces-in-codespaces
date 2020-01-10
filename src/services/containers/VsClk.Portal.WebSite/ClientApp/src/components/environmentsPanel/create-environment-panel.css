@@ -30,3 +30,8 @@
 .create-environment-panel__errorTextField:hover {
     border-color: #a4262c;
 }
+
+.create-environment-panel__trustworthyReposMessage {
+    display: flex;
+    align-items: center;
+}

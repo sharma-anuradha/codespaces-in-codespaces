@@ -5,5 +5,5 @@
 }
 
 .collapsible__content-collapsed {
-    visibility: hidden;
+    display: none;
 }
