@@ -18,10 +18,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets a value indicating whether to use the new terminal output for this environment.
         /// </summary>
         public bool NewTerminal { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to use multiple workspaces for this environment.
-        /// </summary>
-        public bool EnableMultipleWorkspaces { get; set; }
     }
 }

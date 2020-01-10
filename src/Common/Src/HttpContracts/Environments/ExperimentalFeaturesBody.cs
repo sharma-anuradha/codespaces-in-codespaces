@@ -25,12 +25,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments
         [JsonProperty(Required = Required.Default)]
         [Default(false)]
         public bool NewTerminal { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to use the multiple workspace feature for this environment.
-        /// </summary>
-        [JsonProperty(Required = Required.Default)]
-        [Default(false)]
-        public bool EnableMultipleWorkspaces { get; set; }
     }
 }

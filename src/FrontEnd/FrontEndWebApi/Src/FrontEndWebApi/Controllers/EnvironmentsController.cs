@@ -334,7 +334,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 cloudEnvironmentOptions.CustomContainers = createEnvironmentInput.ExperimentalFeatures.CustomContainers;
                 cloudEnvironmentOptions.NewTerminal = createEnvironmentInput.ExperimentalFeatures.NewTerminal;
-                cloudEnvironmentOptions.EnableMultipleWorkspaces = createEnvironmentInput.ExperimentalFeatures.EnableMultipleWorkspaces;
             }
 
             // Create the environement

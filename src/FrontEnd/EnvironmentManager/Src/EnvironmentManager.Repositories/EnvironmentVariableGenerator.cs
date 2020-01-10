@@ -84,7 +84,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 {
                     new FeatureCustomContainers(cloudEnvironmentOptions),
                     new FeatureNewTerminal(cloudEnvironmentOptions),
-                    new FeatureMultipleWorkspaces(cloudEnvironmentOptions),
                 };
 
                 foreach (var flag in optionsList)
@@ -618,29 +617,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             return new Tuple<string, string>(
                     EnvironmentVariableConstants.FeatureFlagNewTerminal,
                     CloudEnvironmentOptions.NewTerminal.ToString());
-        }
-    }
-
-    /// <summary>
-    /// Feature flag for using the multiple workspaces functionality.
-    /// </summary>
-    public class FeatureMultipleWorkspaces : EnvironmentFeatureFlagsStrategy
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FeatureMultipleWorkspaces"/> class.
-        /// </summary>
-        /// <param name="cloudEnvironmentOptions">The cloud environment options.</param>
-        public FeatureMultipleWorkspaces(CloudEnvironmentOptions cloudEnvironmentOptions)
-            : base(cloudEnvironmentOptions)
-        {
-        }
-
-        /// <inheritdoc/>
-        public override Tuple<string, string> GetEnvironmentVariable()
-        {
-            return new Tuple<string, string>(
-                    EnvironmentVariableConstants.FeatureMultipleWorkspaces,
-                    CloudEnvironmentOptions.EnableMultipleWorkspaces.ToString());
         }
     }
 }
