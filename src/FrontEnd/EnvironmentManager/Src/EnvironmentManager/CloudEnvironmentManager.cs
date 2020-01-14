@@ -788,78 +788,69 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentUpdate update,
             IDiagnosticsLogger logger)
         {
-            var duration = logger.StartDuration();
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(update, nameof(update));
+            Requires.NotNull(logger, nameof(logger));
 
-            try
-            {
-                Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
-                Requires.NotNull(update, nameof(update));
-                Requires.NotNull(logger, nameof(logger));
-
-                logger.AddCloudEnvironmentUpdate(update);
-
-                var allowedUpdates = GetEnvironmentAvailableSettingsUpdates(cloudEnvironment, logger);
-                var validationErrors = new List<MessageCodes>();
-
-                if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
+            return await logger.OperationScopeAsync(
+                $"{GetType().GetLogMessageBaseName()}_update_environment_settings_async",
+                async (childLogger) =>
                 {
-                    validationErrors.Add(MessageCodes.EnvironmentNotShutdown);
-                }
+                    childLogger
+                        .AddCloudEnvironmentUpdate(update);
 
-                if (update.AutoShutdownDelayMinutes.HasValue)
-                {
-                    if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null ||
-                        !allowedUpdates.AllowedAutoShutdownDelayMinutes.Contains(update.AutoShutdownDelayMinutes.Value))
+                    var allowedUpdates = GetEnvironmentAvailableSettingsUpdates(cloudEnvironment, logger);
+                    var validationErrors = new List<MessageCodes>();
+
+                    if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
                     {
-                        validationErrors.Add(MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid);
+                        validationErrors.Add(MessageCodes.EnvironmentNotShutdown);
                     }
-                    else
+
+                    if (update.AutoShutdownDelayMinutes.HasValue)
                     {
-                        cloudEnvironment.AutoShutdownDelayMinutes = update.AutoShutdownDelayMinutes.Value;
+                        if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null ||
+                            !allowedUpdates.AllowedAutoShutdownDelayMinutes.Contains(update.AutoShutdownDelayMinutes.Value))
+                        {
+                            validationErrors.Add(MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid);
+                        }
+                        else
+                        {
+                            cloudEnvironment.AutoShutdownDelayMinutes = update.AutoShutdownDelayMinutes.Value;
+                        }
                     }
-                }
 
-                if (!string.IsNullOrWhiteSpace(update.SkuName))
-                {
-                    if (allowedUpdates.AllowedSkus == null || !allowedUpdates.AllowedSkus.Any())
+                    if (!string.IsNullOrWhiteSpace(update.SkuName))
                     {
-                        validationErrors.Add(MessageCodes.UnableToUpdateSku);
+                        if (allowedUpdates.AllowedSkus == null || !allowedUpdates.AllowedSkus.Any())
+                        {
+                            validationErrors.Add(MessageCodes.UnableToUpdateSku);
+                        }
+                        else if (!allowedUpdates.AllowedSkus.Any((sku) => sku.SkuName == update.SkuName))
+                        {
+                            validationErrors.Add(MessageCodes.RequestedSkuIsInvalid);
+                        }
+                        else
+                        {
+                            // TODO - this assumes that the SKU change can be applied automatically on environment start.
+                            // If the SKU change requires some other work then it should be applied here.
+                            cloudEnvironment.SkuName = update.SkuName;
+                        }
                     }
-                    else if (!allowedUpdates.AllowedSkus.Any((sku) => sku.SkuName == update.SkuName))
+
+                    if (validationErrors.Any())
                     {
-                        validationErrors.Add(MessageCodes.RequestedSkuIsInvalid);
+                        childLogger.AddErrorDetail($"Error MessageCodes: [ {string.Join(", ", validationErrors)} ]");
+
+                        return CloudEnvironmentSettingsUpdateResult.Error(validationErrors);
                     }
-                    else
-                    {
-                        // TODO - this assumes that the SKU change can be applied automatically on environment start.
-                        // If the SKU change requires some other work then it should be applied here.
-                        cloudEnvironment.SkuName = update.SkuName;
-                    }
-                }
 
-                if (validationErrors.Any())
-                {
-                    logger.AddDuration(duration)
-                        .LogErrorWithDetail(GetType().FormatLogMessage(nameof(UpdateEnvironmentSettingsAsync)), $"Error MessageCodes: [ {string.Join(", ", validationErrors)} ]");
+                    cloudEnvironment.Updated = DateTime.UtcNow;
+                    await SetEnvironmentStateAsync(cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged, null, logger);
+                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
 
-                    return CloudEnvironmentSettingsUpdateResult.Error(validationErrors);
-                }
-
-                cloudEnvironment.Updated = DateTime.UtcNow;
-                await SetEnvironmentStateAsync(cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged, null, logger);
-                cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-
-                logger.AddDuration(duration)
-                    .LogInfo(GetType().FormatLogMessage(nameof(UpdateEnvironmentSettingsAsync)));
-
-                return CloudEnvironmentSettingsUpdateResult.Success(cloudEnvironment);
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(UpdateEnvironmentSettingsAsync)), ex.Message);
-                throw;
-            }
+                    return CloudEnvironmentSettingsUpdateResult.Success(cloudEnvironment);
+                }, swallowException: false);
         }
 
         /// <inheritdoc/>
