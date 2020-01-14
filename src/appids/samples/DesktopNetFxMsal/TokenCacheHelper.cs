@@ -13,13 +13,22 @@ namespace DesktopNetFxMsal
     /// </summary>
     public static class TokenCacheHelper
     {
- 
         /// <summary>
-        /// Path to the token cache
+        /// Path to the token cache.
         /// </summary>
         private static readonly string CacheFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location + ".msalcache.bin";
 
         private static readonly object FileLock = new object();
+
+        /// <summary>
+        /// Enable serialization for the given token cache.
+        /// </summary>
+        /// <param name="tokenCache">The token cache.</param>
+        internal static void EnableSerialization(ITokenCache tokenCache)
+        {
+            tokenCache.SetBeforeAccess(BeforeAccessNotification);
+            tokenCache.SetAfterAccess(AfterAccessNotification);
+        }
 
         private static void BeforeAccessNotification(TokenCacheNotificationArgs args)
         {
@@ -48,16 +57,9 @@ namespace DesktopNetFxMsal
                         ProtectedData.Protect(
                             args.TokenCache.SerializeMsalV3(),
                             null,
-                            DataProtectionScope.CurrentUser)
-                                      );
+                            DataProtectionScope.CurrentUser));
                 }
             }
-        }
-
-        internal static void EnableSerialization(ITokenCache tokenCache)
-        {
-            tokenCache.SetBeforeAccess(BeforeAccessNotification);
-            tokenCache.SetAfterAccess(AfterAccessNotification);
         }
     }
 }

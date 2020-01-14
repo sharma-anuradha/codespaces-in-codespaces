@@ -22,16 +22,14 @@ namespace DesktopNetFxMsal
     {
         // Button strings
         private const string SignInString = "Sign In";
-
         private const string SignOutString = "Sign Out";
 
-        private enum LegacySignIn
-        {
-            None,
-            VisualStudio,
-            VisualStudioServicesThirdParty,
-            JohnsVsoClientNonMicrosoft,
-        }
+        // Current public client app
+        private IPublicClientApplication publicClientApplication;
+
+        // Serialize output strings via chained async tasks
+        private string outputBuffer;
+        private Task currentSetOutputTask;
 
         /// <summary>
         /// Initializes static members of the <see cref="MainWindow"/> class.
@@ -114,7 +112,13 @@ namespace DesktopNetFxMsal
             _ = CallWebApi(interactive: false, requestUri: null); // do not await
         }
 
-        private IPublicClientApplication publicClientApplication;
+        private enum LegacySignIn
+        {
+            None,
+            VisualStudio,
+            VisualStudioServicesThirdParty,
+            JohnsVsoClientNonMicrosoft,
+        }
 
         private static AppConfig CurrentAppConfig { get; }
 
@@ -245,7 +249,7 @@ namespace DesktopNetFxMsal
             }
         }
 
-        private static string PrettyJson(string json)
+        private string PrettyJson(string json)
         {
             var obj = JsonConvert.DeserializeObject(json);
             return JsonConvert.SerializeObject(obj, Formatting.Indented);
@@ -346,15 +350,12 @@ namespace DesktopNetFxMsal
             return (null, null);
         }
 
-        // Attempt to serialize output strings via chained async tasks
-        private string outputBuffer;
-        private Task currentSetOutputTask;
-
         private void SetOutput(string text)
         {
             this.outputBuffer = text;
             var current = currentSetOutputTask ?? Task.CompletedTask;
-            currentSetOutputTask = current.ContinueWith(async (t) => {
+            currentSetOutputTask = current.ContinueWith(async (t) =>
+            {
                 await Dispatcher.InvokeAsync(() =>
                 {
                     Output.Text = this.outputBuffer;
