@@ -137,6 +137,32 @@
     {
       "name": "plans",
       "routingType": "Default",
+      "authorizationActionMappings": [
+        {
+          "original": "Microsoft.VSOnline/plans/readEnvironments/action",
+          "desired": "Microsoft.VSOnline/plans/environments/read"
+        },
+        {
+          "original": "Microsoft.VSOnline/plans/writeEnvironments/action",
+          "desired": "Microsoft.VSOnline/plans/environments/write"
+        },
+        {
+          "original": "Microsoft.VSOnline/plans/deleteEnvironments/action",
+          "desired": "Microsoft.VSOnline/plans/environments/delete"
+        },
+        {
+          "original": "Microsoft.VSOnline/plans/readDelegates/action",
+          "desired": "Microsoft.VSOnline/plans/delegates/read"
+        },
+        {
+          "original": "Microsoft.VSOnline/plans/writeDelegates/action",
+          "desired": "Microsoft.VSOnline/plans/delegates/write"
+        },
+        {
+          "original": "Microsoft.VSOnline/plans/deleteDelegates/action",
+          "desired": "Microsoft.VSOnline/plans/delegates/delete"
+        }
+      ],
       "endpoints": [
         {
           "apiVersions": [

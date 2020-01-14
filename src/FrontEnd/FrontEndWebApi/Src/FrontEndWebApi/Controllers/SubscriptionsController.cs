@@ -192,7 +192,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and message.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted")]
-        public Task<IActionResult> PlanCreateComplete(
+        public Task<IActionResult> PlanCreateCompleteAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
@@ -219,7 +219,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and message.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate")]
-        public Task<IActionResult> PlanDeleteValidate(
+        public Task<IActionResult> PlanDeleteValidateAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
@@ -377,9 +377,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
-        /// <returns>Returns a Http status code and a VSO SkuPlan object.</returns>
+        /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate")]
-        public Task<IActionResult> GetValidate(
+        public Task<IActionResult> PlanGetValidateAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
@@ -392,7 +392,211 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     // Used for pre-read validation only. The Resource is returned from
                     // RPSaaS(MetaRP) CosmosDB storage and not from here
-                    return Task.FromResult((IActionResult)Ok());
+                    return Task.FromResult<IActionResult>(Ok());
+                });
+        }
+
+        /// <summary>
+        /// Validates updating properties of a plan resource.
+        /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchValidate")]
+        public Task<IActionResult> PlanPatchValidateAsync(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_patch_validate",
+                (logger) =>
+                {
+                    return Task.FromResult<IActionResult>(Ok());
+                });
+        }
+
+        /// <summary>
+        /// Notifies that properties of a plan were updated.
+        /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchCompleted")]
+        public Task<IActionResult> PlanPatchCompletedAsync(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_patch_completed",
+                (logger) =>
+                {
+                    return Task.FromResult<IActionResult>(Ok());
+                });
+        }
+
+        /// <summary>
+        /// Gets an access token with `read:allenvironments` scope that authorizes listing others'
+        /// environments in a plan.
+        /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <returns>An access token response object, or an error object indicating failure.</returns>
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readEnvironments")]
+        public Task<IActionResult> PlanReadEnvironmentsAsync(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_read_environments",
+                (logger) =>
+                {
+                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
+                });
+        }
+
+        /// <summary>
+        /// Gets an access token with `write:environments` scope that authorizes creating
+        /// environments in a plan and deleting one's own environments.
+        /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <returns>An access token response object, or an error object indicating failure.</returns>
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeEnvironments")]
+        public Task<IActionResult> PlanWriteEnvironmentsAsync(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_write_environments",
+                (logger) =>
+                {
+                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
+                });
+        }
+
+        /// <summary>
+        /// Gets an access token with `read:allenvironments` and `delete:allenvironments` scopes that
+        /// authorizes listing and deleting others' environments in a plan.
+        /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <returns>An access token response object, or an error object indicating failure.</returns>
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteEnvironments")]
+        public Task<IActionResult> PlanDeleteEnvironmentsAsync(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_delete_environments",
+                (logger) =>
+                {
+                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
+                });
+        }
+
+        /// <summary>
+        /// Gets a list of current access delegations for a plan (not including the actual tokens).
+        /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <returns>A delegates list response object, or an error object indicating failure.</returns>
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readDelegates")]
+        public Task<IActionResult> PlanReadDelegatesAsync(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_read_delegates",
+                (logger) =>
+                {
+                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
+                });
+        }
+
+        /// <summary>
+        /// Gets a delegated access token with a specified scope that authorizes a delegate user
+        /// to access a plan.
+        /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <returns>An access token response object, or an error object indicating failure.</returns>
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeDelegates")]
+        public Task<IActionResult> PlanWriteDelegatesAsync(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_write_delegates",
+                (logger) =>
+                {
+                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
+                });
+        }
+
+        /// <summary>
+        /// Revokes a delegated access token that was previously issued for a plan.
+        /// </summary>
+        /// <param name="subscriptionId">The Azure subscription identifier.</param>
+        /// <param name="resourceGroup">The Azure resource group.</param>
+        /// <param name="providerNamespace">The Azure resource provider.</param>
+        /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceName">The Azure resource name.</param>
+        /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteDelegates")]
+        public Task<IActionResult> PlanDeleteDelegatesAsync(
+            string subscriptionId,
+            string resourceGroup,
+            string providerNamespace,
+            string resourceType,
+            string resourceName)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_delete_delegates",
+                (logger) =>
+                {
+                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
                 });
         }
 
