@@ -21,6 +21,9 @@ import {
 
 jest.mock('./telemetry', () => ({
     sendTelemetry: jest.fn(),
+    telemetry: {
+        initializeTelemetry: jest.fn()
+    },
 }));
 
 jest.setTimeout(1000);

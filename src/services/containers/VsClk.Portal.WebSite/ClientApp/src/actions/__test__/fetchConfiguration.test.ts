@@ -13,16 +13,6 @@ import {
 } from '../../utils/testUtils';
 import { ServiceContentError } from '../middleware/useWebClient';
 
-jest.mock('../../utils/telemetry', () => {
-    return {
-        initTelemetry: () => {},
-        telemetry: {
-            track: () => {},
-            setIsInternal: () => {}
-        }
-    };
-});
-
 describe('fetchConfiguration', () => {
     let store: MockStore;
 

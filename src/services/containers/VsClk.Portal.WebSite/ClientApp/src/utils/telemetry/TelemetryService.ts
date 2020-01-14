@@ -15,13 +15,16 @@ import { ITelemetryContext } from '../../interfaces/ITelemetryContext';
 
 let sequenceNumber = 0;
 
+type MatchFunction = (pathname: string) => match<{}> | null;
+
 class TelemetryService {
     private appInsights: ApplicationInsights;
     private context!: ITelemetryContext;
     private logger: ReturnType<typeof createTrace>;
     private telemetryEventSerializer: TelemetryEventSerializer;
+    private matchPath?: MatchFunction;
 
-    constructor(private matchPath: (pathname: string) => match<{}> | null) {
+    constructor() {
         this.logger = createTrace('TelemetryService');
         this.telemetryEventSerializer = new TelemetryEventSerializer();
         this.appInsights = new ApplicationInsights({
@@ -37,6 +40,10 @@ class TelemetryService {
         });
         this.appInsights.loadAppInsights();
         this.initializeContext();
+    }
+
+    initializeTelemetry(matchPath: MatchFunction) {
+        this.matchPath = matchPath;
     }
 
     initializeContext() {
@@ -132,6 +139,10 @@ class TelemetryService {
             telemetryEventId: createUniqueId(),
         };
 
+        if (!this.matchPath) {
+            throw new Error('Call `initializeTelemetry` first.');
+        }
+
         const knownPath = this.matchPath(location.pathname);
         if (knownPath) {
             defaultProperties['path'] = knownPath.path;
@@ -158,19 +169,4 @@ class TelemetryService {
     }
 }
 
-export const telemetry = new class {
-    private telemetryCore: TelemetryService | null = null;
-
-    public initializeTelemetry(matchPath: (pathname: string) => match<{}> | null) {
-        this.telemetryCore = new TelemetryService(matchPath);
-    }
-
-    get instance() {
-        if (!this.telemetryCore) {
-            throw new Error('Please call `initializeTelemetry` first.');
-        }
-
-        return this.telemetryCore;
-    }
-}
-
+export const telemetry = new TelemetryService();

@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './app';
 import { store } from './store/store';
 
-import { sendTelemetry, telemetry, initTelemetry } from './utils/telemetry';
+import { sendTelemetry, telemetry } from './utils/telemetry';
 import { trackUnhandled } from './utils/telemetry/unhandledErrors';
 
 import './index.css';
@@ -21,7 +21,7 @@ async function startApplication() {
     const { routeConfig, init } = hostingInitModules;
     const { matchPath, routes } = routeConfig;
 
-    initTelemetry(matchPath);
+    telemetry.initializeTelemetry(matchPath);
     trackUnhandled();
 
     window.addEventListener('beforeunload', () => {

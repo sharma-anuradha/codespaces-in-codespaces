@@ -13,16 +13,6 @@ import { authService } from '../../services/authService';
 import { defaultConfig, configurationEndpoint } from '../../services/configurationService';
 import { getAuthToken } from '../getAuthToken';
 
-jest.mock('../../utils/telemetry', () => {
-    return {
-        initTelemetry: () => {},
-        telemetry: {
-            track: () => {},
-            setIsInternal: () => {}
-        }
-    };
-});
-
 jest.mock('../getUserInfo', () => {
     return {
         getUserInfo: jest.fn().mockReturnValue({ mail: 'test@test.com', displayName: 'test' }),

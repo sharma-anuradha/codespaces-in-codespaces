@@ -1,8 +1,6 @@
 import { test_setMockRequestFactory, createMockMakeRequestFactory } from '../../../utils/testUtils';
 
 import { validateGitRepository, validationMessages } from '../create-environment-panel';
-import { response } from 'express';
-
 jest.mock('../../../utils/telemetry');
 
 describe('create-environment-panel', () => {
