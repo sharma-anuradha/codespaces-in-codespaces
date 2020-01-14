@@ -2,13 +2,10 @@ import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { connect, Provider } from 'react-redux';
 import { configureStore } from './store/configureStore';
-import { init } from './actions/init';
 import { ApplicationState } from './reducers/rootReducer';
-import { ProtectedRoute } from './ProtectedRoute';
 import { Loader } from './components/loader/loader';
 import { ConfigurationState } from './reducers/configuration';
 
-import { routes } from './routes';
 import { telemetry } from './utils/telemetry';
 import { ApplicationLoadEvent } from './utils/telemetry/ApplicationLoadEvent';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react';
@@ -23,7 +20,8 @@ type StoreType = ReturnType<typeof configureStore>;
 interface AppProps {
     store: StoreType;
     configuration: ConfigurationState;
-    init: typeof init;
+    init: Function;
+    routeConfig: unknown[];
 }
 
 const isSupported = isSupportedBrowser();
@@ -36,25 +34,20 @@ class AppRoot extends Component<AppProps, AppState> {
         try {
             await this.props.init();
         } catch {
-            // noop
+            // ignore
         }
     }
 
     private renderMain() {
-        const { store, configuration } = this.props;
+        const {
+            store,
+            configuration,
+            routeConfig
+        } = this.props;
 
         if (!configuration) {
             return <Loader message='Fetching configuration...' />;
         }
-
-        const routeConfig = routes.map((r, i) => {
-            const { authenticated, ...props } = r;
-            return authenticated ? (
-                <ProtectedRoute {...props} key={i} />
-            ) : (
-                <Route {...props} key={i} />
-            );
-        });
 
         return (
             <Provider store={store}>
@@ -93,6 +86,5 @@ const getConfig = ({ configuration }: ApplicationState) => ({
 });
 
 export const App = connect(
-    getConfig,
-    { init }
+    getConfig
 )(AppRoot);

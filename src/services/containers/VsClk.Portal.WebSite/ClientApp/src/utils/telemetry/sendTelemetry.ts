@@ -1,6 +1,6 @@
 import { PropertiesTelemetryEvent, ExceptionTelemetryEvent } from './TelemetryEvents';
-import { telemetryCore } from '../../utils/telemetry/TelemetryService';
 import { EnvironmentType } from '../../interfaces/cloudenvironment';
+import { telemetry } from '.';
 
 type SendTelemetryProps =
     | ['vsonline/cipher/decrypt', IDecryptionTelemetryEventProperties]
@@ -25,7 +25,7 @@ export function sendTelemetry(telemetryEventName: any, properties: any) {
             ? new ExceptionTelemetryEvent(telemetryEventName, properties)
             : new PropertiesTelemetryEvent(telemetryEventName, properties);
 
-    telemetryCore.track(event);
+    telemetry.track(event);
 }
 
 // Properties

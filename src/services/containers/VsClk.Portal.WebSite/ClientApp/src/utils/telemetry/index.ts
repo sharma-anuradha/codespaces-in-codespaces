@@ -5,4 +5,8 @@ export interface IActionTelemetryProperties {
 }
 
 export { sendTelemetry } from './sendTelemetry';
-export { telemetryCore as telemetry } from './TelemetryService';
+
+import { telemetry as telemetryObject } from './TelemetryService';
+
+export const initTelemetry = telemetryObject.initializeTelemetry;
+export const telemetry = telemetryObject.instance;

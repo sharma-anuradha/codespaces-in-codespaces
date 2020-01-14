@@ -5,6 +5,16 @@ import {
 import { ILocalCloudEnvironment } from '../../../interfaces/cloudenvironment';
 import { ActivePlanInfo } from '../../../reducers/plans-reducer';
 
+jest.mock('../../../utils/telemetry', () => {
+    return {
+        initTelemetry: () => {},
+        telemetry: {
+            track: () => {},
+            setIsInternal: () => {}
+        }
+    };
+});
+
 describe('environment-card', () => {
     describe('buildEnvironmentSettingsUpdateRequest', () => {
         const environment = <ILocalCloudEnvironment>{

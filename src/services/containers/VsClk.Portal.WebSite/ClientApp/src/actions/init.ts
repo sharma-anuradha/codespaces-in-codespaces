@@ -1,5 +1,3 @@
-import { getAuthToken } from './getAuthToken';
-
 import { useActionCreator } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
 
@@ -11,18 +9,19 @@ import { tryGetGitHubCredentialsLocal } from './getGitHubCredentials';
 
 import { register as registerServiceWorker } from '../serviceWorker';
 import { getPlans } from './plans-actions';
+import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
 export const initActionFailureType = 'async.app.init.failure';
 
-export async function init() {
+export async function init(getAuthTokenAction: () => Promise<ITokenWithMsalAccount>) {
     const dispatch = useDispatch();
     const action = useActionCreator();
 
     dispatch(action(initActionType));
     try {
-        const tokenPromise = getAuthToken().then((token) => {
+        const tokenPromise = getAuthTokenAction().then((token) => {
             const { email, preferred_username } = token.account.idTokenClaims;
             const userEmail = email || preferred_username;
             telemetry.setIsInternal(userEmail.includes('@microsoft.com'));

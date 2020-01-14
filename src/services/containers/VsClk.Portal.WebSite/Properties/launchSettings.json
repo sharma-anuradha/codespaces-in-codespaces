@@ -13,6 +13,16 @@
           "launchBrowser": true,
           "applicationUrl": "https://online.dev.core.vsengsaas.visualstudio.com",
           "launchUrl": "https://online.dev.core.vsengsaas.visualstudio.com/login"
-      }
+      },
+      "GitHubLocal": {
+        "commandName": "Project",
+        "environmentVariables": {
+            "ASPNETCORE_ENVIRONMENT": "GitHubLocal",
+            "PORTAL_AppSettings__IsLocal": "true"
+        },
+        "launchBrowser": true,
+        "applicationUrl": "https://online.dev.core.vsengsaas.visualstudio.com",
+        "launchUrl": "https://online.dev.core.vsengsaas.visualstudio.com/login"
+    }
   }
 }

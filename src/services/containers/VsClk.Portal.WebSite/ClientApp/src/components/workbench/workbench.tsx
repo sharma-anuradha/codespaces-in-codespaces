@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-import './workbench.css';
+import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-web';
 
 import { trace } from '../../utils/trace';
 import { getVSCodeVersion } from '../../constants';
@@ -15,7 +15,6 @@ import {
     isNotAvailable,
     isActivating,
     isSuspended,
-    stateToDisplayName,
 } from '../../utils/environmentUtils';
 
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
@@ -30,28 +29,32 @@ import { UserDataProvider } from '../../utils/userDataProvider';
 import { vscode } from '../../utils/vscode';
 
 import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
-import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-web';
 import { telemetry } from '../../utils/telemetry';
+import { updateFavicon } from '../../utils/updateFavicon';
 import { defaultConfig } from '../../services/configurationService';
 import { createUniqueId } from '../../dependencies';
-import { PageNotFound } from '../pageNotFound/pageNotFound';
-import { PortalLayout } from '../portalLayout/portalLayout';
-import { Stack, PrimaryButton } from 'office-ui-fabric-react';
-import { Loader } from '../loader/loader';
-import { Text } from 'office-ui-fabric-react/lib/Text';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { pollActivatingEnvironment } from '../../actions/pollEnvironment';
 import { useActionContext } from '../../actions/middleware/useActionContext';
-import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environments';
+import { IWorkbenchSplashScreenProps } from "../../interfaces/IWorkbenchSplashScreenProps";
 
-export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
+import './workbench.css';
+
+export interface IWokbenchState {
+    connectError: string | null;
+}
+
+export interface WorkbenchProps {
+    connectingFavicon: string;
+    workbenchFavicon: string;
+    SplashScreenComponent: React.JSXElementConstructor<IWorkbenchSplashScreenProps>;
+    PageNotFoundComponent: React.JSXElementConstructor<{}>;
     liveShareEndpoint: string;
     token: ITokenWithMsalAccount | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
     params: URLSearchParams;
     correlationId?: string | null;
-    isValidEnvironmentFound?: boolean;
-    connectError: string | null;
+    isValidEnvironmentFound: boolean;
     connectEnvironment: (
         ...params: Parameters<typeof connectEnvironment>
     ) => ReturnType<typeof connectEnvironment>;
@@ -60,18 +63,13 @@ export interface WorkbenchProps extends RouteComponentProps<{ id: string }> {
     ) => ReturnType<typeof pollActivatingEnvironment>;
 }
 
-const managementFavicon = 'favicon.ico';
-const vscodeFavicon = 'static/web-standalone/favicon.ico';
-
-function updateFavicon(isMounting: boolean = true) {
-    const link = document.querySelector("link[rel='shortcut icon']");
-    if (link) {
-        const iconPath = isMounting ? vscodeFavicon : managementFavicon;
-        link.setAttribute('href', iconPath);
+class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
+    constructor(props: WorkbenchProps, state: IWokbenchState) {
+        super(props, state);
+        this.state = {
+            connectError: null
+        };
     }
-}
-
-class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
     // Since we have external scripts running outside of react scope,
     // we'll mange the instantiation flag outside of state as well.
     private workbenchMounted: boolean = false;
@@ -95,7 +93,12 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
     }
 
     componentDidMount() {
-        updateFavicon(true);
+        const {
+            connectingFavicon,
+            workbenchFavicon
+        } = this.props;
+
+        updateFavicon(workbenchFavicon);
         if (!this.correlationId) {
             this.correlationId = createUniqueId();
         }
@@ -150,7 +153,12 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
     }
 
     componentWillUnmount() {
-        updateFavicon(false);
+        const {
+            connectingFavicon,
+            workbenchFavicon
+        } = this.props;
+
+        updateFavicon(connectingFavicon);
         this.cancelPolling();
     }
 
@@ -160,55 +168,8 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
         }
     }
 
-    getLandingPageIfNotReady(environment?: ILocalCloudEnvironment): JSX.Element | undefined {
-        // environment is present but its not in available state.
-        if (environment && isNotAvailable(environment)) {
-            return this.getEnvironmentStatusPage(environment);
-        }
-
-        return undefined;
-    }
-
-    handleClickToRetry() {
+    handleClickToRetry = () => {
         this.setState({ connectError: null });
-    }
-
-    getEnvironmentStatusPage(environment: ILocalCloudEnvironment) {
-        let message: string;
-        let messageElement: JSX.Element | null = null;
-        if (this.state !== null && this.state.connectError !== null) {
-            message = `Connecting to environment ${environment.friendlyName} failed. ${this.state.connectError}`;
-            messageElement = (
-                // tslint:disable-next-line: react-this-binding-issue
-                <PrimaryButton onClick={() => this.handleClickToRetry()}>Retry</PrimaryButton>
-            );
-        } else {
-            message = `Environment ${environment.friendlyName} is ${stateToDisplayName(
-                environment.state
-            ).toLocaleLowerCase()}. Please wait while we connect to your environment.`;
-            if (isActivating(environment)) {
-                messageElement = <Loader />;
-            }
-        }
-
-        return (
-            <PortalLayout>
-                <Stack
-                    horizontalAlign='center'
-                    verticalFill
-                    verticalAlign='center'
-                    tokens={{ childrenGap: '20' }}
-                >
-                    <Stack.Item>
-                        <Text>{message}</Text>
-                    </Stack.Item>
-                    <Stack.Item>{messageElement}</Stack.Item>
-                    <Stack.Item>
-                        <BackToEnvironmentsLink />
-                    </Stack.Item>
-                </Stack>
-            </PortalLayout>
-        );
     }
 
     async mountWorkbench(environmentInfo: ICloudEnvironment) {
@@ -224,7 +185,11 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
 
         this.workbenchMounted = true;
 
-        const { accessToken } = this.props.token!;
+        if (!this.props.token) {
+            throw new Error('No access token present.');
+        }
+
+        const { accessToken } = this.props.token;
 
         const quality =
             window.localStorage.getItem('vso-featureset') === 'insider' ? 'insider' : 'stable';
@@ -313,10 +278,20 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
 
     private workbenchRef: HTMLDivElement | null = null;
 
-    private renderWorkBench() {
-        const isLoading = this.getLandingPageIfNotReady(this.props.environmentInfo);
-        if (isLoading) {
-            return isLoading;
+    private renderWorkbench() {
+        const {
+            environmentInfo,
+            SplashScreenComponent,
+        } = this.props;
+        
+        if (environmentInfo && isNotAvailable(environmentInfo)) {
+            return (
+                <SplashScreenComponent
+                    onRetry={this.handleClickToRetry}
+                    environment={environmentInfo}
+                    connectError={this.state.connectError}
+                />
+            );
         }
 
         return (
@@ -334,12 +309,14 @@ class WorkbenchView extends Component<WorkbenchProps, WorkbenchProps> {
     }
 
     render() {
-        const content =
-            this.props.isValidEnvironmentFound === false ? (
-                <PageNotFound />
-            ) : (
-                this.renderWorkBench()
-            );
+        const {
+            PageNotFoundComponent,
+        } = this.props;
+
+        const content = (this.props.isValidEnvironmentFound === false)
+            ? <PageNotFoundComponent />
+            : this.renderWorkbench();
+
         return <div className='connect-to-environment'>{content}</div>;
     }
 }
@@ -353,14 +330,18 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
 
     const params = new URLSearchParams(props.location.search);
 
+    const isValidEnvironmentFound = (!environmentInfo && state.environments.isLoading === false)
+        ? false
+        : true;
+
     return {
+        ...props,
         token: state.authentication.token,
         environmentInfo,
         params,
         liveShareEndpoint,
         correlationId: params.get('correlationId'),
-        isValidEnvironmentFound:
-            !environmentInfo && state.environments.isLoading === false ? false : undefined,
+        isValidEnvironmentFound,
     };
 };
 

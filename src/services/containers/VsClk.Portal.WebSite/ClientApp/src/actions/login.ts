@@ -7,6 +7,7 @@ import { useDispatch } from './middleware/useDispatch';
 import { tokenFromTokenResponse } from '../services/tokenFromTokenResponse';
 import { clientApplication } from '../services/msalConfig';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
+import { getAuthToken } from './getAuthToken';
 
 export const loginActionType = 'async.authentication.login';
 export const loginSuccessActionType = 'async.authentication.login.success';
@@ -40,7 +41,7 @@ export async function login() {
 
         dispatch(loginSuccessAction(token));
 
-        dispatch(init());
+        dispatch(init(getAuthToken));
 
         return token;
     } catch (err) {
@@ -66,7 +67,7 @@ export const complete2FA = async () => {
     const dispatch = useDispatch();
 
     dispatch(loginSuccessAction(token));
-    dispatch(init());
+    dispatch(init(getAuthToken));
 
     return token;
 };

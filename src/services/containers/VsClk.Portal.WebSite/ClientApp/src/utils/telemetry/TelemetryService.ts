@@ -1,3 +1,5 @@
+import { match } from 'react-router-dom';
+
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { detect } from 'detect-browser';
 
@@ -7,7 +9,6 @@ import { createTrace } from '../createTrace';
 import { TelemetryEventSerializer } from './TelemetryEventSerializer';
 import { ITelemetryEvent, TelemetryPropertyValue } from './types';
 import { prefixPropertyNames } from './prefixPropertyNames';
-import { matchPath } from '../../routes';
 import versionFile from '../../version.json';
 
 import { ITelemetryContext } from '../../interfaces/ITelemetryContext';
@@ -20,7 +21,7 @@ class TelemetryService {
     private logger: ReturnType<typeof createTrace>;
     private telemetryEventSerializer: TelemetryEventSerializer;
 
-    constructor() {
+    constructor(private matchPath: (pathname: string) => match<{}> | null) {
         this.logger = createTrace('TelemetryService');
         this.telemetryEventSerializer = new TelemetryEventSerializer();
         this.appInsights = new ApplicationInsights({
@@ -123,7 +124,7 @@ class TelemetryService {
         return createUniqueId();
     }
 
-    track(userEvent: ITelemetryEvent) {
+    track = (userEvent: ITelemetryEvent) => {
         let defaultProperties: Record<string, TelemetryPropertyValue> = {
             ...this.context,
             date: new Date(),
@@ -131,7 +132,7 @@ class TelemetryService {
             telemetryEventId: createUniqueId(),
         };
 
-        const knownPath = matchPath(location.pathname);
+        const knownPath = this.matchPath(location.pathname);
         if (knownPath) {
             defaultProperties['path'] = knownPath.path;
         }
@@ -157,4 +158,19 @@ class TelemetryService {
     }
 }
 
-export const telemetryCore = new TelemetryService();
+export const telemetry = new class {
+    private telemetryCore: TelemetryService | null = null;
+
+    public initializeTelemetry(matchPath: (pathname: string) => match<{}> | null) {
+        this.telemetryCore = new TelemetryService(matchPath);
+    }
+
+    get instance() {
+        if (!this.telemetryCore) {
+            throw new Error('Please call `initializeTelemetry` first.');
+        }
+
+        return this.telemetryCore;
+    }
+}
+

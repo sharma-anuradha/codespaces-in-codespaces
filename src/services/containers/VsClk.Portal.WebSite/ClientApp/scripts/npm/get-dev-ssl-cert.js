@@ -4,10 +4,10 @@ const atob = require('atob');
 const { execSync } = require('child_process');
 const { writeFile } = require('fs-extra');
 
-(async () => {
+const getCert = async (certName, certOutputPath) => {
     try {
         const azureCliResponse = execSync(
-            'az keyvault secret show --name "dev-core-vsengsaas-visualstudio-com-ssl" --vault-name "vsclk-core-dev-kv" -ojson',
+            `az keyvault secret show --name "${certName}" --vault-name "vsclk-core-dev-kv" -ojson`,
             {
                 encoding: 'utf-8',
             }
@@ -15,10 +15,13 @@ const { writeFile } = require('fs-extra');
     
         const { value } = JSON.parse(azureCliResponse);
         const decodedValue = atob(value);
-        const certPath = path.join(__dirname, '../../../dev-cert.pfx');
+        const certPath = path.join(__dirname, certOutputPath);
 
         await writeFile(certPath, decodedValue, 'binary');
     } catch (err) {
         console.error('Failed to update the "dev-cert".', err);
     }
-})();
+}
+
+getCert('dev-core-vsengsaas-visualstudio-com-ssl', '../../../dev-cert.pfx');
+getCert('local-code-github-com-ssl', '../../../local.code.github.pfx');

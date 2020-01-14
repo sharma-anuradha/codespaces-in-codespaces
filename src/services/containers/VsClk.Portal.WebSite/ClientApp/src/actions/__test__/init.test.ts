@@ -11,6 +11,17 @@ import * as acquireTokenModule from '../../services/acquireToken';
 import { authService } from '../../services/authService';
 
 import { defaultConfig, configurationEndpoint } from '../../services/configurationService';
+import { getAuthToken } from '../getAuthToken';
+
+jest.mock('../../utils/telemetry', () => {
+    return {
+        initTelemetry: () => {},
+        telemetry: {
+            track: () => {},
+            setIsInternal: () => {}
+        }
+    };
+});
 
 jest.mock('../getUserInfo', () => {
     return {
@@ -64,7 +75,7 @@ describe('actions - init', () => {
                 ],
             })
         );
-        await store.dispatch(init());
+        await store.dispatch(init(getAuthToken));
 
         expect(store.dispatchedActions).not.toHaveFailed();
         expect(store.dispatchedActions).toBeHaveBeenDispatched(initActionType);
@@ -110,7 +121,7 @@ describe('actions - init', () => {
         });
         test_setMockRequestFactory(mockFetch);
 
-        await store.dispatch(init());
+        await store.dispatch(init(getAuthToken));
 
         expect(store.dispatchedActions).not.toHaveFailed();
         expect(mockFetch).toHaveBeenCalledWith(
@@ -139,7 +150,7 @@ describe('actions - init', () => {
         );
 
         try {
-            await store.dispatch(init());
+            await store.dispatch(init(getAuthToken));
         } catch {
             expect(store.dispatchedActions).toHaveFailed();
             expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
@@ -179,7 +190,7 @@ describe('actions - init', () => {
         );
 
         try {
-            await store.dispatch(init());
+            await store.dispatch(init(getAuthToken));
         } catch {
             expect(store.dispatchedActions).toHaveFailed();
             expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
