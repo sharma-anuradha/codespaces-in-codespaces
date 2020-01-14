@@ -23,14 +23,21 @@ abstract class BaseExternalUriProvider {
     }
 
     private getLocalHostPortToForward(uri: URI): number | undefined {
+        const defaultHttpPort = 80;
+        const defaultHttpsPort = 443;
         if (uri.scheme !== 'http' && uri.scheme !== 'https') {
             return undefined;
         }
-        const localhostMatch = /^(localhost|127\.0\.0\.1|0\.0\.0\.0):(\d+)$/.exec(uri.authority);
+        const localhostMatch = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/.exec(uri.authority);
         if (!localhostMatch) {
             return undefined;
         }
-        return +localhostMatch[2];
+
+        if (localhostMatch == undefined) {
+            return uri.scheme == 'http' ? defaultHttpPort : defaultHttpsPort; 
+        } else {
+            return +localhostMatch[2].substr(1, localhostMatch[2].length);
+        }
     }
 }
 
