@@ -7,27 +7,20 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.VsCloudKernel.SignalService.Common;
-#if SignalR_Client_Version3
 using Microsoft.Extensions.DependencyInjection;
-#endif
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
     /// <summary>
-    /// Helper class to work with the a hub connection
+    /// Helper class to work with the a hub connection.
     /// </summary>
     public static class HubConnectionHelpers
     {
         public static IHubConnectionBuilder FromUrl(string url)
         {
             Requires.NotNullOrEmpty(url, nameof(url));
-            return new HubConnectionBuilder().WithUrl(url)
-#if SignalR_Client_Version3
-                .AddNewtonsoftJsonProtocol();
-#else
-                ;
-#endif
+            return new HubConnectionBuilder().WithUrl(url).AddNewtonsoftJsonProtocol();
         }
 
         public static IHubConnectionBuilder FromUrlAndAccessToken(string url, string accessToken)
@@ -46,12 +39,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 {
                     return Task.FromResult(accessTokenCallback());
                 };
-            })
-#if SignalR_Client_Version3
-                .AddNewtonsoftJsonProtocol();
-#else
-                ;
-#endif
+            }).AddNewtonsoftJsonProtocol();
         }
 
         public static async Task ConnectAsync(

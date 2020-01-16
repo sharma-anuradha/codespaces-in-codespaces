@@ -5,7 +5,7 @@ parameters:
   nugetConfigPath: 'nuget.config'
   nugetVersionSpec: 4.7
   platform: 'any cpu'
-  poolName: 'VSEng-MicroBuildVS2017'
+  poolName: 'VSEng-MicroBuildVS2019'
   publishEnabled: false
   publishVstsFeed: '11b82e9d-2671-42c3-b9d3-72ea07295ddb'
   signType: 'Test'

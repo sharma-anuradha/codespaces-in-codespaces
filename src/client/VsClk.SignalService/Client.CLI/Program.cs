@@ -17,6 +17,9 @@ namespace SignalService.Client.CLI
 
         public static int Main(string[] args)
         {
+            var runtimeVer = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+            Console.WriteLine($"Starting SignalService CLI using runtime version:{runtimeVer}");
+
             var cli = new Program();
 
             cli.ServiceEndpointOption = cli.Option(
