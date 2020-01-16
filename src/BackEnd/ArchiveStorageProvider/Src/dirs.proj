@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="ArchiveStorageProvider\ArchiveStorageProvider.csproj" />
+    <ProjectReference Include="ArchiveStorageProvider.Contracts\ArchiveStorageProvider.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

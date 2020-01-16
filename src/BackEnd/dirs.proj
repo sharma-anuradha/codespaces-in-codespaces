@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
+    <ProjectReference Include="ArchiveStorageProvider\dirs.proj" />
     <ProjectReference Include="BackEndWebApi\dirs.proj" />
     <ProjectReference Include="Capacity\dirs.proj" />
     <ProjectReference Include="Common\dirs.proj" />

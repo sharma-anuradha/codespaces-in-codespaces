@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
+    <ProjectReference Include="..\ArchiveStorageProvider.Contracts\ArchiveStorageProvider.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
