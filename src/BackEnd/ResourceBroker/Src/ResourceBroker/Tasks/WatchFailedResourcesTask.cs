@@ -140,8 +140,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddValue("TaskDidFailDeleting", didFailDeleting)
                         .FluentAddValue("TaskDidFailReason", reason);
 
-                    // Delete assuming we have something to do
-                    if (didFailProvisioning || didFailStarting || didFailDeleting)
+                    // Delete assuming we have something to do. Double check that only VMs are being deleted if they failed to start.
+                    if (didFailProvisioning || didFailDeleting || (didFailStarting && record.Type == ResourceType.ComputeVM))
                     {
                         childLogger.FluentAddValue("DeleteAttemptCount", record.DeleteAttemptCount);
                         childLogger.LogWarning($"{LogBaseName}_stale_resource_found");
@@ -165,7 +165,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     }
                     else
                     {
-                        throw new Exception("Unexpected resource state while attempting to clean up resource.");
+                        throw new InvalidOperationException("Unexpected resource state while attempting to clean up resource.");
                     }
                 },
                 swallowException: true);

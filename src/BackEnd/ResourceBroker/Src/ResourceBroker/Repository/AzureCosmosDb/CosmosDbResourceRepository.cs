@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
@@ -307,6 +308,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <inheritdoc/>
         public async Task<IEnumerable<ResourceRecord>> GetFailedOperationAsync(string poolCode, int count, IDiagnosticsLogger logger)
         {
+            // Look for failed resources, or resources that are stuck in a temporary state for too long.
+            // Special case: For resources that are stuck/failed in the "Starting" state, only consider
+            // the VM resource type. Storage resources should not be considered because they contain user
+            // data that we do not want to clean up until the user has explicitly asked for deletion.
             var query = new SqlQuerySpec(
                 @"SELECT TOP @count VALUE c
                 FROM c
@@ -314,8 +319,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     AND (
                            c.provisioningStatus = @operationStateFailed
                         OR c.provisioningStatus = @operationStateCancelled
-                        OR c.startingStatus = @operationStateFailed
-                        OR c.startingStatus = @operationStateCancelled
+                        OR (
+                             (c.startingStatus = @operationStateFailed
+                             OR c.startingStatus = @operationStateCancelled
+                             ) AND c.type = @computeVmResourceType
+                        )
                         OR c.deletingStatus = @operationStateFailed
                         OR c.deletingStatus = @operationStateCancelled
                         OR (
@@ -329,8 +337,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                         )
                         OR (
                             (c.startingStatus = @operationStateInitialized
-                             OR c.startingStatus = @operationStateInProgress
+                            OR c.startingStatus = @operationStateInProgress
                             ) AND c.startingStatusChanged <= @operationFailedTimeLimit
+                            AND c.type = @computeVmResourceType
                         )
                         OR (
                             (c.deletingStatus = @operationStateInitialized
@@ -347,6 +356,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     new SqlParameter { Name = "@operationStateInitialized", Value = OperationState.Initialized.ToString() },
                     new SqlParameter { Name = "@operationStateInProgress", Value = OperationState.InProgress.ToString() },
                     new SqlParameter { Name = "@operationFailedTimeLimit", Value = DateTime.UtcNow.AddHours(-1) },
+                    new SqlParameter { Name = "@computeVmResourceType", Value = ResourceType.ComputeVM.ToString() },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<ResourceRecord>(uri, query, feedOptions).AsDocumentQuery(), logger);
