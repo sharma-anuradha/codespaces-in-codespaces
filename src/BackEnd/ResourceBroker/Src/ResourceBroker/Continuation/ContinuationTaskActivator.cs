@@ -56,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 LoggerProperties = loggerProperties,
             };
 
-            logger.FluentAddValues(payload.LoggerProperties);
+            logger.FluentAddBaseValues(payload.LoggerProperties);
 
             return logger.OperationScopeAsync(
                 LogBaseName,
@@ -82,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                 .FluentAddValue("ContinuationPayloadCreated", payload.Created)
                 .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)
                 .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount)
-                .FluentAddValues(payload.LoggerProperties);
+                .FluentAddBaseValues(payload.LoggerProperties);
 
             var continueFindDuration = logger.StartDuration();
 

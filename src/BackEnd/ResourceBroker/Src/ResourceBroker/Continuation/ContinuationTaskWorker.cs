@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                             .FluentAddValue("ContinuationPayloadCreated", payload.Created)
                             .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)
                             .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount)
-                            .FluentAddValues(payload.LoggerProperties);
+                            .FluentAddBaseValues(payload.LoggerProperties);
 
                         // Try and handle message
                         var resultPayload = await childLogger.TrackDurationAsync(

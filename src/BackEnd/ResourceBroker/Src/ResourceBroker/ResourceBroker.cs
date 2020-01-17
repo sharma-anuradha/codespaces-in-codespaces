@@ -84,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             async (itemLogger) =>
                             {
                                 // Try and get item from the pool
-                                var assignResult = await TryGetAsync(input, itemLogger.NewChildLogger());
+                                var assignResult = await TryGetAsync(input, itemLogger);
 
                                 // Deal with case that it didn't exist
                                 if (assignResult.Resource == null)
@@ -173,7 +173,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 async (childLogger) =>
                 {
                     // Try and get item from the pool
-                    var assignResult = await TryGetAsync(input, childLogger.NewChildLogger());
+                    var assignResult = await TryGetAsync(input, childLogger);
 
                     // Deal with case that it didn't exist
                     if (assignResult.Resource == null)

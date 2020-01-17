@@ -446,6 +446,25 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
         }
 
         /// <summary>
+        /// Adds multiple base key/values from the input dictionary.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="keyValues">Target key/values.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger FluentAddBaseValues(this IDiagnosticsLogger logger, IDictionary<string, string> keyValues)
+        {
+            if (keyValues != null)
+            {
+                foreach (var loggerProperty in keyValues)
+                {
+                    logger.FluentAddBaseValue(loggerProperty.Key, loggerProperty.Value);
+                }
+            }
+
+            return logger;
+        }
+
+        /// <summary>
         /// Add details about a client HTTP response.
         /// </summary>
         /// <param name="logger">The <see cref="IDiagnosticsLogger"/> instance.</param>
