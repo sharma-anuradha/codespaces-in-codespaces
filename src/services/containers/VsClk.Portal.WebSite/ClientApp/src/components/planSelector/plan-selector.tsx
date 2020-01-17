@@ -5,7 +5,7 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { newPlanPath } from '../../routerPaths';
 import { ApplicationState } from '../../reducers/rootReducer';
-import { selectPlan } from '../../actions/plans-actions';
+import { selectPlan, blurPlanSelectorDropdown } from '../../actions/plans-actions';
 
 import {
     createNewPlanKey,
@@ -17,12 +17,14 @@ import { IPlan } from '../../interfaces/IPlan';
 import { IPlansDropdownOption } from '../../interfaces/IPlansDropdownOption';
 import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader';
 import { locationToDisplayName } from '../../utils/locations';
+import '../titlebar/titlebar.css';
 
 interface PlanSelectorProps extends RouteComponentProps {
     plansList: IPlan[];
     selectedPlanId: string | null;
     isMadeInitialPlansRequest: boolean;
     isLoadingPlan: boolean;
+    shouldPlanSelectorReceiveFocus: boolean;
     className?: string;
     isServiceAvailable: boolean;
 }
@@ -54,6 +56,7 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
             plansList,
             isMadeInitialPlansRequest,
             isLoadingPlan,
+            shouldPlanSelectorReceiveFocus,
             className = '',
         } = this.props;
 
@@ -72,6 +75,7 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
                 isLoading={!!loadingMessage}
                 loadingMessage={loadingMessage}
                 ariaLabel='Plan Dropdown'
+                shouldFocus={shouldPlanSelectorReceiveFocus}
             />
         );
     }
@@ -113,26 +117,31 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
             return selectPlan(plan);
         }
 
+        blurPlanSelectorDropdown();
+
         this.props.history.push(newPlanPath);
     };
 }
 
 const getPlansStoreState = ({ plans, serviceStatus: { isServiceAvailable } }: ApplicationState) => {
     const plansList = plans.plans;
-    const { selectedPlan, isMadeInitialPlansRequest, isLoadingPlan } = plans;
+    const {
+        selectedPlan,
+        isMadeInitialPlansRequest,
+        isLoadingPlan,
+        shouldPlanSelectorReceiveFocus,
+    } = plans;
 
     return {
         plansList,
         isMadeInitialPlansRequest,
         isLoadingPlan,
+        shouldPlanSelectorReceiveFocus,
         isServiceAvailable,
         selectedPlanId: selectedPlan && selectedPlan.id,
     };
 };
 
-export const PlanSelector = connect(
-    getPlansStoreState,
-    {
-        selectPlan,
-    }
-)(PlanSelectorComponent);
+export const PlanSelector = connect(getPlansStoreState, {
+    selectPlan,
+})(PlanSelectorComponent);

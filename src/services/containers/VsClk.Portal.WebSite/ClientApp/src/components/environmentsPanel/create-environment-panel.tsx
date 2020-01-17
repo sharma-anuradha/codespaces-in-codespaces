@@ -450,6 +450,7 @@ export class CreateEnvironmentPanelView extends Component<
                 <Stack tokens={{ childrenGap: 4 }}>
                     <TextField
                         label='Environment Name'
+                        ariaLabel='Environment Name'
                         className={this.state.friendlyName.style}
                         placeholder=''
                         onKeyDown={this.submitForm}
@@ -465,6 +466,7 @@ export class CreateEnvironmentPanelView extends Component<
                     />
                     <TextField
                         label='Git Repository'
+                        ariaLabel='Git Repository'
                         className={this.state.gitRepositoryUrl.style}
                         placeholder=''
                         onKeyDown={this.submitForm}
@@ -491,6 +493,7 @@ export class CreateEnvironmentPanelView extends Component<
                     <TextField
                         autoFocus
                         label='Dotfiles Repository'
+                        ariaLabel='Dotfiles Repository'
                         className={this.state.dotfilesRepository.style}
                         placeholder=''
                         onKeyDown={this.submitForm}
@@ -505,6 +508,7 @@ export class CreateEnvironmentPanelView extends Component<
                     />
                     <TextField
                         label='Dotfiles Install Command'
+                        ariaLabel='Dotfiles Install Command'
                         placeholder='./install.sh'
                         onKeyDown={this.submitForm}
                         value={this.state.dotfilesInstallCommand.value}
@@ -514,6 +518,7 @@ export class CreateEnvironmentPanelView extends Component<
                     />
                     <TextField
                         label='Dotfiles Target Path'
+                        ariaLabel='Dotfiles Target Path'
                         placeholder='~/dotfiles'
                         onKeyDown={this.submitForm}
                         value={this.state.dotfilesTargetPath.value}

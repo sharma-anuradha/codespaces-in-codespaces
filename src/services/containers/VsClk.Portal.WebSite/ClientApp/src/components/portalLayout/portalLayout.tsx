@@ -16,9 +16,9 @@ export function PortalLayout({
     );
     return (
         <div className='ms-Grid portal-layout'>
-            <div className='ms-Grid-row'>
+            <header className='ms-Grid-row'>
                 <TitleBar />
-            </div>
+            </header>
             <main className='ms-Grid-row portal-layout__app-content'>
                 {navigation}
                 <div className='ms-Grid-col portal-layout__app-content-container'>{children}</div>

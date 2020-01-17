@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Dropdown, IDropdownProps } from 'office-ui-fabric-react/lib/Dropdown';
+import { Dropdown, IDropdownProps, IDropdown } from 'office-ui-fabric-react/lib/Dropdown';
 
 import { Loader } from '../loader/loader';
 
@@ -8,11 +8,21 @@ import './dropdown-with-loader.css';
 interface DropDownWithLoaderProps extends IDropdownProps {
     loadingMessage: string;
     isLoading: boolean;
+    shouldFocus?: boolean;
 }
 
 const loaderOptionKey = 'loader';
 
 export class DropDownWithLoader extends Component<DropDownWithLoaderProps> {
+    private dropdownRef = React.createRef<IDropdown>();
+
+    componentDidMount() {
+        const { shouldFocus } = this.props;
+        if (shouldFocus && this.dropdownRef.current) {
+            this.dropdownRef.current.focus();
+        }
+    }
+
     render() {
         const { className = '' } = this.props;
 
@@ -58,6 +68,7 @@ export class DropDownWithLoader extends Component<DropDownWithLoaderProps> {
                 selectedKey={selectedKey}
                 disabled={disabled}
                 onRenderTitle={onRenderTitle}
+                componentRef={this.dropdownRef}
             />);
     }
 }

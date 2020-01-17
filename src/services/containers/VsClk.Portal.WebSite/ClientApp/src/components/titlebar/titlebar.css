@@ -84,3 +84,7 @@
 .vsonline-avatarmenu__item-button .ms-Button-icon{
     font-size: 20px;
 }
+
+.vsonline-titlebar__plan-selector :focus {
+    border: 1px solid white;
+}

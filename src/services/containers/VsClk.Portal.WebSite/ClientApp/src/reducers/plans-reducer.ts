@@ -10,6 +10,10 @@ import {
     GetPlansAction,
     GetPlansFailureAction,
     getPlansFailureActionType,
+    BlurPlanSelectorAction,
+    blurPlanSelectorActionType,
+    FocusPlanSelectorAction,
+    focusPlanSelectorActionType,
 } from '../actions/plans-actions';
 
 import { IPlan } from '../interfaces/IPlan';
@@ -21,7 +25,9 @@ type AcceptedActions =
     | SelectPlanFailureAction
     | GetPlansAction
     | GetPlansSuccessAction
-    | GetPlansFailureAction;
+    | GetPlansFailureAction
+    | BlurPlanSelectorAction
+    | FocusPlanSelectorAction;
 
 export type ActivePlanInfo = {
     availableSkus: ISku[];
@@ -30,6 +36,7 @@ export type ActivePlanInfo = {
 export type PlansReducerState = {
     isMadeInitialPlansRequest: boolean;
     isLoadingPlan: boolean;
+    shouldPlanSelectorReceiveFocus: boolean;
     plans: IPlan[];
     selectedPlan: ActivePlanInfo | null;
 };
@@ -37,6 +44,7 @@ export type PlansReducerState = {
 const defaultState: PlansReducerState = {
     isMadeInitialPlansRequest: false,
     isLoadingPlan: false,
+    shouldPlanSelectorReceiveFocus: false,
     plans: [],
     selectedPlan: null,
 };
@@ -50,6 +58,7 @@ const savePlansState = (state: PlansReducerState) => {
             ...state,
             isMadeInitialPlansRequest: false,
             isLoadingPlan: false,
+            shouldPlanSelectorReceiveFocus: false,
         };
 
         localStorage.setItem(plansStoreStateKey, JSON.stringify(stateToSave));
@@ -152,6 +161,20 @@ function plansReducerInternal(
                 ...state,
                 selectedPlan: null,
                 isLoadingPlan: false,
+            };
+        }
+
+        case blurPlanSelectorActionType: {
+            return {
+                ...state,
+                shouldPlanSelectorReceiveFocus: false,
+            };
+        }
+
+        case focusPlanSelectorActionType: {
+            return {
+                ...state,
+                shouldPlanSelectorReceiveFocus: true,
             };
         }
 

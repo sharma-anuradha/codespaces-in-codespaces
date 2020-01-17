@@ -21,6 +21,9 @@ export const getPlansActionType = 'async.plans.getPlans';
 export const getPlansSuccessActionType = 'async.plans.getPlans.success';
 export const getPlansFailureActionType = 'async.plans.getPlans.failure';
 
+export const blurPlanSelectorActionType = 'async.plans.blur';
+export const focusPlanSelectorActionType = 'async.plans.focus';
+
 export type SelectPlanAction = ReturnType<typeof selectPlanAction>;
 export type SelectPlanSuccessAction = ReturnType<typeof selectPlanSuccessAction>;
 export type SelectPlanFailureAction = ReturnType<typeof selectPlanFailureAction>;
@@ -28,6 +31,9 @@ export type SelectPlanFailureAction = ReturnType<typeof selectPlanFailureAction>
 export type GetPlansAction = ReturnType<typeof getPlansAction>;
 export type GetPlansSuccessAction = ReturnType<typeof getPlansSuccessAction>;
 export type GetPlansFailureAction = ReturnType<typeof getPlansFailureAction>;
+
+export type BlurPlanSelectorAction = ReturnType<typeof blurPlanSelectorAction>;
+export type FocusPlanSelectorAction = ReturnType<typeof focusPlanSelectorAction>;
 
 const getPlansAction = () => action(getPlansActionType);
 
@@ -38,6 +44,9 @@ const getPlansSuccessAction = (plans: IPlan[], selectedPlanHint?: ActivePlanInfo
 const getPlansFailureAction = (error: Error) => {
     return action(getPlansFailureActionType, error);
 };
+
+const blurPlanSelectorAction = () => action(blurPlanSelectorActionType);
+const focusPlanSelectorAction = () => action(focusPlanSelectorActionType);
 
 export const selectPlanAction = () => action(selectPlanActionType);
 
@@ -128,3 +137,13 @@ export async function getPlans() {
         return dispatch(getPlansFailureAction(err));
     }
 }
+
+export const blurPlanSelectorDropdown = () => {
+    const dispatch = useDispatch();
+    dispatch(blurPlanSelectorAction());
+};
+
+export const focusPlanSelectorDropdown = () => {
+    const dispatch = useDispatch();
+    dispatch(focusPlanSelectorAction());
+};

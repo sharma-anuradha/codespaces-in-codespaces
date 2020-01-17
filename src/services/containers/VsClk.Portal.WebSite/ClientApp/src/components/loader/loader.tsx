@@ -20,7 +20,8 @@ export class Loader extends Component<LoaderProps> {
             <Spinner
                 className={`vsonline-loader ${className}`}
                 label={message}
-                ariaLive="assertive"
+                ariaLabel={message}
+                ariaLive='assertive'
                 labelPosition={labelPosition}
             />
         );

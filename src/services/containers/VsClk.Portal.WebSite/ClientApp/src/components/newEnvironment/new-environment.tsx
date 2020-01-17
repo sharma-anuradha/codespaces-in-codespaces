@@ -2,7 +2,7 @@ import React, { Fragment, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { createEnvironment } from '../../actions/createEnvironment';
+import { createEnvironment, focusCreateEnvironmentButton } from '../../actions/createEnvironment';
 import { EnvironmentsPanel } from '../environments/environments';
 import {
     CreateEnvironmentPanel,
@@ -30,6 +30,8 @@ export function NewEnvironment(props: RouteComponentProps) {
     const skuName = query.get('instanceType');
 
     const hidePanel = useCallback(() => {
+        focusCreateEnvironmentButton();
+
         // going back to environments cards (landing page)
         props.history.replace('/environments');
     }, [props.history]);

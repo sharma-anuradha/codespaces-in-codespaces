@@ -16,6 +16,9 @@ export const createEnvironmentActionType = 'async.environments.create';
 export const createEnvironmentSuccessActionType = 'async.environments.create.success';
 export const createEnvironmentFailureActionType = 'async.environments.create.failure';
 
+export const blurCreateEnvironmentButtonActionType = 'async.environments.blur';
+export const focusCreateEnvironmentButtonActionType = 'async.environments.focus';
+
 // Basic actions dispatched for reducers
 const createEnvironmentAction = (lieId: string, environment: PartialEnvironmentInfo) =>
     action(createEnvironmentActionType, { lieId, environment });
@@ -24,10 +27,20 @@ const createEnvironmentSuccessAction = (lieId: string, environment: ICloudEnviro
 const createEnvironmentFailureAction = (lieId: string, errorMessage: string, error: Error) =>
     action(createEnvironmentFailureActionType, { lieId, errorMessage }, error);
 
+const blurCreateEnvironmentButtonAction = () => action(blurCreateEnvironmentButtonActionType);
+const focusCreateEnvironmentButtonAction = () => action(focusCreateEnvironmentButtonActionType);
+
 // Types to register with reducers
 export type CreateEnvironmentAction = ReturnType<typeof createEnvironmentAction>;
 export type CreateEnvironmentSuccessAction = ReturnType<typeof createEnvironmentSuccessAction>;
 export type CreateEnvironmentFailureAction = ReturnType<typeof createEnvironmentFailureAction>;
+
+export type BlurCreateEnvironmentButtonAction = ReturnType<
+    typeof blurCreateEnvironmentButtonAction
+>;
+export type FocusCreateEnvironmentButtonAction = ReturnType<
+    typeof focusCreateEnvironmentButtonAction
+>;
 
 // Exposed - callable actions that have side-effects
 export async function createEnvironment(parameters: PartialEnvironmentInfo) {
@@ -69,3 +82,13 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
         dispatch(createEnvironmentFailureAction(lieId, err.errorMessage, err));
     }
 }
+
+export const blurCreateEnvironmentButton = () => {
+    const dispatch = useDispatch();
+    dispatch(blurCreateEnvironmentButtonAction());
+};
+
+export const focusCreateEnvironmentButton = () => {
+    const dispatch = useDispatch();
+    dispatch(focusCreateEnvironmentButtonAction());
+};

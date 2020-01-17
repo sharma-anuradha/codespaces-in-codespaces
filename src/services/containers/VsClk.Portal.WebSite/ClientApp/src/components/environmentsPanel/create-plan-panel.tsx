@@ -151,6 +151,7 @@ export class CreatePlanPanelComponent extends Component<
                     <Stack tokens={{ childrenGap: 4 }}>
                         <DropDownWithLoader
                             label='Subscription'
+                            ariaLabel='Subscription'
                             onChange={this.subscriptionChanged}
                             options={subscriptionList}
                             isLoading={isGettingSubscriptions}
@@ -166,6 +167,7 @@ export class CreatePlanPanelComponent extends Component<
                         )}
                         <DropDownWithLoader
                             label='Location'
+                            ariaLabel='Location'
                             onChange={this.locationChanged}
                             options={locationsList}
                             loadingMessage='Determining the closest location...'
@@ -239,6 +241,7 @@ export class CreatePlanPanelComponent extends Component<
                 messageBarType={MessageBarType.error}
                 isMultiline={true}
                 onDismiss={this.hideErrorMessage}
+                dismissButtonAriaLabel={'Close'}
             >
                 {this.state.errorMessage}
             </MessageBar>

@@ -15,6 +15,10 @@ import {
     CreateEnvironmentAction,
     CreateEnvironmentSuccessAction,
     CreateEnvironmentFailureAction,
+    BlurCreateEnvironmentButtonAction,
+    blurCreateEnvironmentButtonActionType,
+    FocusCreateEnvironmentButtonAction,
+    focusCreateEnvironmentButtonActionType,
 } from '../actions/createEnvironment';
 import {
     pollActivatingEnvironmentsActionType,
@@ -44,6 +48,7 @@ type EnvironmentsState = {
     activatingEnvironments: string[];
     selectedPlanId: string | null;
     isLoading: boolean;
+    shouldCreateEnvironmentReceiveFocus: boolean;
 };
 
 type AcceptedActions =
@@ -59,6 +64,8 @@ type AcceptedActions =
     | StateChangeEnvironmentAction
     | SelectPlanSuccessAction
     | EnvironmentChangedAction
+    | BlurCreateEnvironmentButtonAction
+    | FocusCreateEnvironmentButtonAction
     | UpdateEnvironmentSettingsSuccessAction;
 
 const defaultState: EnvironmentsState = {
@@ -67,6 +74,7 @@ const defaultState: EnvironmentsState = {
     activatingEnvironments: [] as string[],
     selectedPlanId: null,
     isLoading: true,
+    shouldCreateEnvironmentReceiveFocus: false,
 } as const;
 
 // tslint:disable-next-line: max-func-body-length
@@ -297,6 +305,20 @@ export function environments(
                     activatingEnvironments,
                 };
             })(state, action);
+
+        case blurCreateEnvironmentButtonActionType: {
+            return {
+                ...state,
+                shouldCreateEnvironmentReceiveFocus: false,
+            };
+        }
+
+        case focusCreateEnvironmentButtonActionType: {
+            return {
+                ...state,
+                shouldCreateEnvironmentReceiveFocus: true,
+            };
+        }
 
         case updateEnvironmentSettingsSuccessActionType:
             const { envId, env } = action.payload;

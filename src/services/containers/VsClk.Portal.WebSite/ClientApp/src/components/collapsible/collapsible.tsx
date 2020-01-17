@@ -36,6 +36,7 @@ export const Collapsible: FC<Props> = ({
         [internalCollapsed, controlledCollapsed, onCollapsedChanged]
     );
 
+    const collapsibleName = `${collapsed ? 'Collapsed' : 'Uncollapsed'}, ${title}`;
     return (
         <Stack>
             <StackItem>
@@ -55,6 +56,8 @@ export const Collapsible: FC<Props> = ({
                     }}
                     className='collapsible__button'
                     onClick={toggle}
+                    name={collapsibleName}
+                    ariaLabel={collapsibleName}
                 >
                     {title}
                 </DefaultButton>

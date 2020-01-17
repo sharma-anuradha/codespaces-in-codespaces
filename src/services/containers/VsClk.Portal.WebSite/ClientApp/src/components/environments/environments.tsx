@@ -3,7 +3,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { connect } from 'react-redux';
 
 import { Spinner } from 'office-ui-fabric-react/lib/Spinner';
-import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, IButton } from 'office-ui-fabric-react/lib/Button';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 
 import { PortalLayout } from '../portalLayout/portalLayout';
@@ -21,6 +21,7 @@ import { isDefined } from '../../utils/isDefined';
 import { fetchEnvironments } from '../../actions/fetchEnvironments';
 import { pollActivatingEnvironments } from '../../actions/pollEnvironment';
 import { environmentIsALie } from '../../utils/environmentUtils';
+import { blurCreateEnvironmentButton } from '../../actions/createEnvironment';
 
 interface EnvironmentsPanelProps extends RouteComponentProps {
     deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
@@ -29,11 +30,13 @@ interface EnvironmentsPanelProps extends RouteComponentProps {
     pollEnvironmentsForState(): void;
     environments: ILocalCloudEnvironment[];
     isLoading: boolean;
+    shouldCreateEnvironmentReceiveFocus: boolean;
     shouldOpenPlanCreation: boolean;
 }
 
 class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
-    private intervals: (ReturnType<typeof setInterval>)[] = [];
+    private intervals: ReturnType<typeof setInterval>[] = [];
+    private createEnvironmentButtonRef = React.createRef<IButton>();
     componentDidMount() {
         this.intervals.push(
             setInterval(() => {
@@ -46,6 +49,13 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
                 this.props.pollEnvironmentsForState();
             }, 1000 * 60 * 2)
         );
+
+        if (
+            this.props.shouldCreateEnvironmentReceiveFocus &&
+            this.createEnvironmentButtonRef.current
+        ) {
+            this.createEnvironmentButtonRef.current.focus();
+        }
     }
 
     componentWillUnmount() {
@@ -71,9 +81,11 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
                         <div className='ms-Grid-col ms-sm6 ms-md4 ms-lg9' />
                         <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg3 environments-panel__tar'>
                             <PrimaryButton
+                                componentRef={this.createEnvironmentButtonRef}
                                 text='Create environment'
                                 className='environments-panel__create-button'
                                 onClick={this.showCreateEnvPanel}
+                                onBlur={blurCreateEnvironmentButton}
                             />
                         </div>
                     </div>
@@ -144,11 +156,12 @@ function getPlanEnvironments(
 }
 
 const stateToProps = ({
-    environments: { environments, isLoading },
+    environments: { environments, isLoading, shouldCreateEnvironmentReceiveFocus },
     plans: { selectedPlan, isLoadingPlan, isMadeInitialPlansRequest },
 }: ApplicationState) => ({
     environments: getPlanEnvironments(selectedPlan, environments),
     isLoading: isLoading || isLoadingPlan || !isMadeInitialPlansRequest,
+    shouldCreateEnvironmentReceiveFocus: shouldCreateEnvironmentReceiveFocus,
     shouldOpenPlanCreation: !isDefined(selectedPlan),
 });
 
@@ -159,7 +172,4 @@ const mapDispatch = {
     pollActivatingEnvironments,
 };
 
-export const EnvironmentsPanel = connect(
-    stateToProps,
-    mapDispatch
-)(EnvironmentsPanelView);
+export const EnvironmentsPanel = connect(stateToProps, mapDispatch)(EnvironmentsPanelView);
