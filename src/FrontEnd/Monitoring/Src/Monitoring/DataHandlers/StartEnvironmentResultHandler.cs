@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        // Mark environment provision to failed status
                        ValidationUtil.IsRequired(jobResultData.EnvironmentId, "Environment Id");
 
-                       var cloudEnvironment = await cloudEnvironmentManager.GetEnvironmentAsync(jobResultData.EnvironmentId, childLogger);
+                       var cloudEnvironment = await cloudEnvironmentManager.GetAsync(jobResultData.EnvironmentId, childLogger);
                        if (cloudEnvironment == default)
                        {
                            childLogger.LogInfo($"No environment found for virtual machine id : {vmResourceId} and environment {jobResultData.EnvironmentId}");
@@ -72,13 +72,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                            cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
                            var newState = CloudEnvironmentState.Failed;
                            var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.StartEnvironmentGenericError.ToString();
-                           await cloudEnvironmentManager.UpdateEnvironmentAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed, errorMessage, childLogger);
+                           await cloudEnvironmentManager.UpdateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed, errorMessage, childLogger);
                            return;
                        }
                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
                        {
                            // Shutdown the environment if the environment has failed to start.
-                           await this.cloudEnvironmentManager.ForceEnvironmentShutdownAsync(cloudEnvironment, childLogger);
+                           await this.cloudEnvironmentManager.ForceSuspendAsync(cloudEnvironment, childLogger);
                            return;
                        }
                    }

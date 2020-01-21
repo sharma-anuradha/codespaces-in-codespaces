@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             bool autoLogOperation = true,
-            Action<Exception, IDiagnosticsLogger> errCallback = default,
+            Func<Exception, IDiagnosticsLogger, Task> errCallback = default,
             TimeSpan? delay = null);
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             bool autoLogOperation = true,
-            Action<Exception, IDiagnosticsLogger> errCallback = default,
+            Func<Exception, IDiagnosticsLogger, Task> errCallback = default,
             TimeSpan? delay = null);
 
         /// <summary>

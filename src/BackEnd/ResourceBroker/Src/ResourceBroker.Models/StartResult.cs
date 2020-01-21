@@ -1,13 +1,13 @@
-﻿// <copyright file="CleanupResult.cs" company="Microsoft">
+﻿// <copyright file="StartResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
     /// <summary>
-    /// Model required for Cleanup result.
+    /// Model required for Deallocation result.
     /// </summary>
-    public class CleanupResult
+    public class StartResult
     {
         /// <summary>
         /// Gets or sets a value indicating whether the request was successful.

@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                     return !Disposed;
                 },
-                (e, childLogger) => !Disposed,
+                (e, childLogger) => Task.FromResult(!Disposed),
                 swallowException: true);
         }
 

@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentStartInput.cs" company="Microsoft">
+﻿// <copyright file="StartInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
     /// <summary>
     /// Environment start input.
     /// </summary>
-    public class EnvironmentStartInput
+    public class StartInput
     {
         /// <summary>
         /// Gets or sets the compute resource token id.

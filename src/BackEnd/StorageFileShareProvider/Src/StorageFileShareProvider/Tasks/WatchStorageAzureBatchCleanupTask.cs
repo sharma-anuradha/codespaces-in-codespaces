@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
                     return Task.FromResult(!Disposed);
                 },
-                (e, childLogger) => !Disposed,
+                (e, childLogger) => Task.FromResult(!Disposed),
                 swallowException: true);
         }
 

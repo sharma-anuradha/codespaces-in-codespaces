@@ -4,6 +4,7 @@
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
+    // TODO: Need to relook at these at some point
     /// <summary>
     /// The environment state.
     /// </summary>

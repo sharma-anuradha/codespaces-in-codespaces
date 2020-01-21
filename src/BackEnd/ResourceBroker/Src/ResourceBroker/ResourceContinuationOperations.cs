@@ -110,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> CleanupResource(
+        public async Task<ContinuationResult> SuspendResource(
             Guid resourceId,
             string environmentId,
             string reason,

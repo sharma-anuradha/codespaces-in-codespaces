@@ -88,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             bool autoLogOperation = true,
-            Action<Exception, IDiagnosticsLogger> errCallback = default,
+            Func<Exception, IDiagnosticsLogger, Task> errCallback = default,
             TimeSpan? delay = null)
         {
             if (delay == null)
@@ -108,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger = null,
             bool autoLogOperation = true,
-            Action<Exception, IDiagnosticsLogger> errCallback = default,
+            Func<Exception, IDiagnosticsLogger, Task> errCallback = default,
             TimeSpan? delay = null)
         {
             if (delay == null)
@@ -295,7 +295,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             if (autoLogOperation)
             {
                 return logger.OperationScopeAsync(
-                    name, callback, (e, childLogger) => errItemCallback != null ? errItemCallback(e, childLogger) : true, swallowException: true);
+                    name,
+                    callback,
+                    (e, childLogger) =>
+                    {
+                        var swallow = errItemCallback != null ? errItemCallback(e, childLogger) : true;
+                        return Task.FromResult(swallow);
+                    },
+                    swallowException: true);
             }
             else
             {
@@ -320,7 +327,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<IDiagnosticsLogger, Task> callback,
             IDiagnosticsLogger logger,
             bool autoLogOperation,
-            Action<Exception, IDiagnosticsLogger> errCallback)
+            Func<Exception, IDiagnosticsLogger, Task> errCallback)
         {
             logger = (logger ?? Logger)
                 .FluentAddBaseValue("TaskBackgroundRunId", Guid.NewGuid())

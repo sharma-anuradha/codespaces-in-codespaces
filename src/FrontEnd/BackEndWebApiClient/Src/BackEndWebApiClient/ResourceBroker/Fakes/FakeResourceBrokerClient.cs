@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<bool> CleanupResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        public Task<bool> SuspendResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
@@ -88,20 +88,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<bool> TriggerEnvironmentHeartbeatAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public Task<bool> ProcessHeartbeatAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(resources.ContainsKey(resourceId));
         }
 
         /// <inheritdoc/>
-        public async Task StartComputeAsync(Guid computeResourceId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        public async Task<bool> StartResourceSetAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
 
             _ = CreateDockerContainerWithCopiedCLI(dockerImageName, publishedCLIPath, startComputeRequestBody, computeResourceId);
+
+            return true;
         }
 
-        private string CreateDockerContainerWithCopiedCLI(string image, string cliPublishedpath, StartComputeRequestBody startComputeRequestBody, Guid computeResourceId)
+        private string CreateDockerContainerWithCopiedCLI(string image, string cliPublishedpath, StartResourceRequestBody startComputeRequestBody, Guid computeResourceId)
         {
             var containerName = computeResourceId.ToString();
             var createCommandLine = new StringBuilder();
@@ -163,7 +165,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             return containerName;
         }
 
-        private string GetCreateOrRunArguments(string image, string containerName, StartComputeRequestBody startComputeRequestBody)
+        private string GetCreateOrRunArguments(string image, string containerName, StartResourceRequestBody startComputeRequestBody)
         {
             var createCommandLine = new StringBuilder();
             foreach (var env in startComputeRequestBody.EnvironmentVariables)

@@ -20,10 +20,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             }
 
             // 20 environments exist
-            var listEnvironments = await this.environmentManager.ListEnvironmentsAsync(
-                                                                    logger,
-                                                                    planId: testPlan.ResourceId
-                                                                    );
+            var listEnvironments = await this.environmentManager.ListAsync(
+                logger, planId: testPlan.ResourceId);
 
             Assert.Equal(20, listEnvironments.Count());
 
@@ -33,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(StatusCodes.Status403Forbidden, result.HttpStatusCode);
 
             // Delete 1 environment.
-            var deleteResult = await this.environmentManager.DeleteEnvironmentAsync(environmentToDelete.CloudEnvironment, logger);
+            var deleteResult = await this.environmentManager.DeleteAsync(environmentToDelete.CloudEnvironment, logger);
             Assert.True(deleteResult);
 
             // User should be allowed to create environment.

@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
                    return !Disposed;
                },
-               (e, _) => !Disposed,
+               (e, _) => Task.FromResult(!Disposed),
                swallowException: true);
         }
 

@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
             this HttpContext httpContext,
             string name,
             Func<IDiagnosticsLogger, Task<T>> callback,
-            Func<Exception, IDiagnosticsLogger, T> errCallback = default,
+            Func<Exception, IDiagnosticsLogger, Task<T>> errCallback = default,
             bool swallowException = false)
         {
             return httpContext.GetLogger().OperationScopeAsync(
@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
             this HttpContext httpContext,
             string name,
             Func<IDiagnosticsLogger, Task<T>> callback,
-            Func<Exception, IDiagnosticsLogger, (bool SwallowException, T Result)> errCallback)
+            Func<Exception, IDiagnosticsLogger, (bool SwallowException, Task<T> Result)> errCallback)
         {
             return httpContext.GetLogger().OperationScopeWithCustomExceptionHandlingAsync(
                 name,

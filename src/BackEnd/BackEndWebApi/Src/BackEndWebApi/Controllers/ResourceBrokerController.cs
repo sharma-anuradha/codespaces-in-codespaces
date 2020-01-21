@@ -51,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// </para>
         /// </summary>
         /// <param name="createResourcesRequestBody">The allocate request body.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>The <see cref="ResourceBrokerResource"/>.</returns>
         [HttpPost]
         [ProducesResponseType(typeof(ResourceBrokerResource), StatusCodes.Status201Created)]
@@ -88,6 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// </para>
         /// </summary>
         /// <param name="id">Resource id token.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>Nothing.</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -106,12 +108,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// </para>
         /// </summary>
         /// <param name="id">Resource id token.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>Nothing.</returns>
         [HttpGet("environmentheartbeat")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("heartbeat")]
-        public async Task<IActionResult> HeartbeatAsync(
+        public async Task<IActionResult> ProcessHeartbeatAsync(
             [FromQuery]string id,
             [FromServices]IDiagnosticsLogger logger)
         {
@@ -124,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             logger.AddBaseResourceId(resourceId);
 
             // Get status
-            var result = await ResourceBrokerHttp.TriggerEnvironmentHeartbeatAsync(resourceId, logger.NewChildLogger());
+            var result = await ResourceBrokerHttp.ProcessHeartbeatAsync(resourceId, logger.NewChildLogger());
 
             // return 200 vs 404 based on the result
             return result ? (IActionResult)Ok(result) : NotFound(result);
@@ -137,6 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// </para>
         /// </summary>
         /// <param name="id">The resource id token.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -171,6 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// </summary>
         /// <param name="id">The resource id token.</param>
         /// <param name="environmentId">The environment id.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
         [HttpPost("cleanup")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -190,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             logger.AddBaseResourceId(resourceId);
 
-            if (!await ResourceBrokerHttp.CleanupResourceAsync(resourceId, environmentId, logger.NewChildLogger()))
+            if (!await ResourceBrokerHttp.SuspendResourceAsync(resourceId, environmentId, logger.NewChildLogger()))
             {
                 return NotFound();
             }
@@ -202,19 +207,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// Start a compute resource.
         /// <para>
         /// POST api/v1/resourcebroker/resources/start?id={id}
-        /// {<see cref="StartComputeRequestBody"/>}.
+        /// {<see cref="StartResourceRequestBody"/>}.
         /// </para>
         /// </summary>
         /// <param name="id">The compute resource token id.</param>
         /// <param name="startComputeRequestBody">The start compute request body.</param>
-        /// <returns>The <see cref="StartComputeRequestBody"/>.</returns>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>The <see cref="StartResourceRequestBody"/>.</returns>
         [HttpPost]
         [Route(ResourceBrokerHttpContract.StartComputeOperation)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpOperationalScope("start")]
         public async Task<IActionResult> StartAsync(
             [FromQuery]string id,
-            [FromBody]StartComputeRequestBody startComputeRequestBody,
+            [FromBody]StartResourceRequestBody startComputeRequestBody,
             [FromServices]IDiagnosticsLogger logger)
         {
             if (!Guid.TryParse(id, out var computeResourceId))
@@ -224,7 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             }
 
             logger.AddBaseResourceId(computeResourceId)
-                .AddStartComputeRequest(startComputeRequestBody);
+                .AddStartResourceRequest(startComputeRequestBody);
 
             if (startComputeRequestBody is null)
             {
@@ -232,9 +238,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 return BadRequest();
             }
 
-            await ResourceBrokerHttp.StartComputeAsync(computeResourceId, startComputeRequestBody, logger.NewChildLogger());
+            if (!startComputeRequestBody.EnvironmentVariables.Any())
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: environment variables required");
+                return BadRequest();
+            }
+
+            await ResourceBrokerHttp.StartResourceSetAsync(computeResourceId, startComputeRequestBody, logger.NewChildLogger());
 
             return Ok();
+        }
+
+        /// <inheritdoc/>
+        Task<ResourceBrokerResource> IResourceBrokerResourcesHttpContract.GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
@@ -253,7 +271,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             }
 
             var brokerResults = await ResourceBroker.AllocateAsync(
-                brokerInput, logger.WithValues(new LogValueSet()));
+                brokerInput, logger.NewChildLogger());
 
             var createResourcesResponseBody = new List<ResourceBrokerResource>();
             foreach (var brokerResult in brokerResults)
@@ -272,72 +290,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <inheritdoc/>
-        Task<ResourceBrokerResource> IResourceBrokerResourcesHttpContract.GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        Task<bool> IResourceBrokerResourcesHttpContract.TriggerEnvironmentHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
-        {
-            return ResourceBroker.ExistsAsync(
-                id, logger.WithValues(new LogValueSet()));
-        }
-
-        /// <inheritdoc/>
         async Task<bool> IResourceBrokerResourcesHttpContract.DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            return (await ResourceBroker.DeallocateAsync(new DeallocateInput { ResourceId = resourceId, Trigger = "FrontEndDeleteResourceService" }, logger.WithValues(new LogValueSet()))).Successful;
+            var input = new DeleteInput { ResourceId = resourceId, Trigger = "FrontEndDeleteResourceService" };
+            var result = await ResourceBroker.DeleteAsync(input, logger.NewChildLogger());
+            return result.Successful;
         }
 
         /// <inheritdoc/>
-        async Task<bool> IResourceBrokerResourcesHttpContract.CleanupResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        async Task<bool> IResourceBrokerResourcesHttpContract.SuspendResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
         {
-            return (await ResourceBroker.CleanupAsync(
-                new CleanupInput
-                {
-                    ResourceId = resourceId,
-                    Trigger = "FrontEndCleanupResourceService",
-                    EnvironmentId = environmentId,
-                }, logger.WithValues(new LogValueSet()))).Successful;
+            var input = new SuspendInput { ResourceId = resourceId, Trigger = "FrontEndCleanupResourceService", EnvironmentId = environmentId };
+            var result = await ResourceBroker.SuspendAsync(input, logger.NewChildLogger());
+            return result.Successful;
         }
 
         /// <inheritdoc/>
-        async Task IResourceBrokerResourcesHttpContract.StartComputeAsync(Guid computeResourceId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        async Task<bool> IResourceBrokerResourcesHttpContract.StartResourceSetAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
-            Requires.NotEmpty(computeResourceId, nameof(computeResourceId));
-            Requires.NotNull(startComputeRequestBody, nameof(startComputeRequestBody));
-            Requires.NotEmpty(startComputeRequestBody.StorageResourceId, nameof(startComputeRequestBody.StorageResourceId));
-            Requires.NotNullOrEmpty(startComputeRequestBody?.EnvironmentVariables, nameof(startComputeRequestBody.EnvironmentVariables));
-
-            var duration = logger.StartDuration();
-
-            try
+            var input = new StartInput
             {
-                var input = new EnvironmentStartInput
-                {
-                    ComputeResourceId = computeResourceId,
-                    StorageResourceId = startComputeRequestBody.StorageResourceId,
-                    EnvironmentVariables = startComputeRequestBody.EnvironmentVariables,
-                    Trigger = "FrontEndStartComputeService",
-                };
+                ComputeResourceId = computeResourceId,
+                StorageResourceId = startComputeRequestBody.StorageResourceId,
+                EnvironmentVariables = startComputeRequestBody.EnvironmentVariables,
+                Trigger = "FrontEndStartComputeService",
+            };
+            var result = await ResourceBroker.StartResourceAsync(input, logger.NewChildLogger());
+            return result.Successful;
+        }
 
-                // Call the resource broker to start the compute.
-                var result = await ResourceBroker.StartComputeAsync(input, logger.WithValues(new LogValueSet()));
-
-                logger.AddDuration(duration)
-                    .AddBaseResourceId(computeResourceId)
-                    .AddStartComputeRequest(startComputeRequestBody)
-                    .LogInfo(GetType().FormatLogMessage(nameof(StartAsync)));
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .AddStartComputeRequest(startComputeRequestBody)
-                    .AddBaseResourceId(computeResourceId)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartAsync)), ex.Message);
-                throw;
-            }
+        /// <inheritdoc/>
+        Task<bool> IResourceBrokerResourcesHttpContract.ProcessHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            return ResourceBroker.ProcessHeartbeatAsync(
+                id, logger.NewChildLogger());
         }
     }
 }

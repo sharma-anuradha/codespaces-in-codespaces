@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// </summary>
         /// <param name="resourceId">The resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetCleanupResourceUri(Guid resourceId, string environmentId) => $"{ResourcesRoute}/cleanup?id={resourceId}&environmentId={environmentId}";
+        public static string GetSuspendResourceUri(Guid resourceId, string environmentId) => $"{ResourcesRoute}/cleanup?id={resourceId}&environmentId={environmentId}";
 
         /// <summary>
         /// Get the resource uri with id.
@@ -113,6 +113,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// </summary>
         /// <param name="computeResourceId">The compute resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetStartComputeUri(Guid computeResourceId) => $"{ResourcesRoute}/{StartComputeOperation}?id={computeResourceId}";
+        public static string GetStartResourceSetUri(Guid computeResourceId) => $"{ResourcesRoute}/{StartComputeOperation}?id={computeResourceId}";
     }
 }

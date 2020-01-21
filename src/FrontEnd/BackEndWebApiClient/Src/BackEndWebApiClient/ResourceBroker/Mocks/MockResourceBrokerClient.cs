@@ -54,19 +54,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task StartComputeAsync(Guid computeResource, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
-        {
-            return Task.CompletedTask;
-        }
-
-        /// <inheritdoc/>
-        public Task<bool> TriggerEnvironmentHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
+        public Task<bool> StartResourceSetAsync(Guid computeResource, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<bool> CleanupResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        public Task<bool> ProcessHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SuspendResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }

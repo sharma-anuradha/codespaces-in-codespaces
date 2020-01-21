@@ -78,7 +78,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                     return result;
                 },
-                (ex, childLogger) => { return new VirtualMachineProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                (ex, childLogger) =>
+                {
+                    var result = new VirtualMachineProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 
@@ -111,7 +115,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
                    return result;
                },
-               (ex, childLogger) => { return new VirtualMachineProviderShutdownResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+               (ex, childLogger) =>
+               {
+                   var result = new VirtualMachineProviderShutdownResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                   return Task.FromResult(result);
+               },
                swallowException: true);
         }
 
@@ -157,7 +165,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                     return result;
                 },
-                (ex, childLogger) => { return new VirtualMachineProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                (ex, childLogger) =>
+                {
+                    var result = new VirtualMachineProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 
@@ -195,7 +207,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                     return result;
                 },
-                (ex, childLogger) => { return new VirtualMachineProviderStartComputeResult() { Status = OperationState.Failed, ErrorReason = ex.Message }; },
+                (ex, childLogger) =>
+                {
+                    var result = new VirtualMachineProviderStartComputeResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 

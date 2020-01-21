@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             this IDiagnosticsLogger logger,
             string name,
             Func<IDiagnosticsLogger, Task> callback,
-            Action<Exception, IDiagnosticsLogger> errCallback = default,
+            Func<Exception, IDiagnosticsLogger, Task> errCallback = default,
             bool swallowException = false)
         {
             return logger.OperationScopeWithCustomExceptionControlFlowAsync(
@@ -56,7 +56,8 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                 (ex, childLogger) =>
                 {
                     errCallback?.Invoke(ex, childLogger);
-                    return swallowException;
+
+                    return Task.FromResult(swallowException);
                 });
         }
 
@@ -75,7 +76,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             this IDiagnosticsLogger logger,
             string name,
             Func<IDiagnosticsLogger, Task<T>> callback,
-            Func<Exception, IDiagnosticsLogger, T> errCallback = default,
+            Func<Exception, IDiagnosticsLogger, Task<T>> errCallback = default,
             bool swallowException = false)
         {
             return logger.OperationScopeWithCustomExceptionHandlingAsync(
@@ -88,7 +89,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
                         return (swallowException, errCallback(ex, childLogger));
                     }
 
-                    return (swallowException, default(T));
+                    return (swallowException, Task.FromResult(default(T)));
                 });
         }
 
@@ -105,7 +106,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             this IDiagnosticsLogger logger,
             string name,
             Func<IDiagnosticsLogger, Task> callback,
-            Func<Exception, IDiagnosticsLogger, bool> errCallback)
+            Func<Exception, IDiagnosticsLogger, Task<bool>> errCallback)
         {
             var childLogger = logger.WithValues(new LogValueSet());
             var duration = Stopwatch.StartNew();
@@ -118,9 +119,19 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             }
             catch (Exception e)
             {
-                var swallowException = errCallback(e, childLogger);
-
-                childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
+                var swallowException = false;
+                try
+                {
+                    swallowException = await errCallback(e, childLogger);
+                }
+                catch (Exception ex)
+                {
+                    childLogger.FluentAddDuration(duration).FluentAddValue("InnerException", true).LogException($"{name}_error", ex);
+                }
+                finally
+                {
+                    childLogger.FluentAddDuration(duration).LogException($"{name}_error", e);
+                }
 
                 if (!swallowException)
                 {
@@ -143,17 +154,17 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
             this IDiagnosticsLogger logger,
             string name,
             Func<IDiagnosticsLogger, Task<T>> callback,
-            Func<Exception, IDiagnosticsLogger, (bool SwallowException, T Result)> errCallback)
+            Func<Exception, IDiagnosticsLogger, (bool SwallowException, Task<T> Result)> errCallback)
         {
             var result = default(T);
 
             await logger.OperationScopeWithCustomExceptionControlFlowAsync(
                 name,
                 async (innerLogger) => { result = await callback(innerLogger); },
-                (e, innerLogger) =>
+                async (e, innerLogger) =>
                 {
                     var errCallbackResult = errCallback(e, innerLogger);
-                    result = errCallbackResult.Result;
+                    result = await errCallbackResult.Result;
                     return errCallbackResult.SwallowException;
                 });
 
@@ -234,7 +245,7 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
 
                             return (true, null);
                         },
-                        (e, innerLogger) => (false, e),
+                        (e, innerLogger) => Task.FromResult((false, e)),
                         true);
                 });
 

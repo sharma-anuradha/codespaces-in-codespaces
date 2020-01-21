@@ -177,7 +177,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format.
                     return CreateResponse(HttpStatusCode.OK, resource);
                 },
-                (ex, logger) => CreateErrorResponse("CreateResourceFailed"),
+                (ex, logger) =>
+                {
+                    var result = (IActionResult)CreateErrorResponse("CreateResourceFailed");
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 
@@ -245,7 +249,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Subscription = subscriptionId,
                     };
 
-                    var environments = await cloudEnvironmentManager.ListEnvironmentsAsync(
+                    var environments = await cloudEnvironmentManager.ListAsync(
                         logger, planId: plan.ResourceId);
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
@@ -259,7 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                                 {
                                       try
                                       {
-                                          var result = await cloudEnvironmentManager.DeleteEnvironmentAsync(environment, childLogger);
+                                          var result = await cloudEnvironmentManager.DeleteAsync(environment, childLogger);
                                           if (!result)
                                           {
                                               childLogger.AddCloudEnvironment(environment)
@@ -290,7 +294,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format in case validation pass with empty body.
                     return Ok();
                 },
-                (ex, logger) => CreateErrorResponse("DeleteFailed"),
+                (ex, logger) =>
+                {
+                    var result = (IActionResult)CreateErrorResponse("DeleteFailed");
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 
@@ -330,7 +338,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format.
                     return CreateResponse(HttpStatusCode.OK, plans);
                 },
-                (ex, logger) => CreateErrorResponse("GetResourceListFailed"),
+                (ex, logger) =>
+                {
+                    var result = (IActionResult)CreateErrorResponse("GetResourceListFailed");
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 
@@ -365,7 +377,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format.
                     return CreateResponse(HttpStatusCode.OK, plans);
                 },
-                (ex, logger) => CreateErrorResponse("GetResourceListFailed"),
+                (ex, logger) =>
+                {
+                    var result = (IActionResult)CreateErrorResponse("GetResourceListFailed");
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 

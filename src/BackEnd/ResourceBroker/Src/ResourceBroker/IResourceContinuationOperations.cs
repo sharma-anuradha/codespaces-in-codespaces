@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
-        Task<ContinuationResult> CleanupResource(
+        Task<ContinuationResult> SuspendResource(
             Guid resourceId,
             string environmentId,
             string reason,

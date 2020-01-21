@@ -25,6 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// <inheritdoc/>
     public class CloudEnvironmentManager : ICloudEnvironmentManager
     {
+        private const string LogBaseName = "environment_manager";
         private const int PersistentSessionExpiresInDays = 30;
 
         /// <summary>
@@ -70,720 +71,662 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironmentServiceResult> ShutdownEnvironmentAsync(
-            CloudEnvironment cloudEnvironment,
+        public Task<CloudEnvironment> GetAsync(
+            string id,
             IDiagnosticsLogger logger)
         {
-            var duration = logger.StartDuration();
+            ValidationUtil.IsRequired(id);
+            Requires.NotNull(logger, nameof(logger));
 
-            try
-            {
-                Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
-                Requires.NotNull(logger, nameof(logger));
-
-                // Static Environment
-                if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_get",
+                async (childLogger) =>
                 {
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentAsync)));
-
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = cloudEnvironment,
-                        MessageCode = MessageCodes.ShutdownStaticEnvironment,
-                        HttpStatusCode = StatusCodes.Status400BadRequest,
-                    };
-                }
-
-                if (cloudEnvironment.State == CloudEnvironmentState.Shutdown)
-                {
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = cloudEnvironment,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
-                }
-
-                if (cloudEnvironment.State != CloudEnvironmentState.Available)
-                {
-                    // If the environment is not in an available state during shutdown,
-                    // force clean the environment details, to put it in a recoverable state.
-                    await ForceEnvironmentShutdownAsync(cloudEnvironment, logger);
-                }
-                else
-                {
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, logger);
-
-                    // Update the database state.
-                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-
-                    // Start the cleanup operation to shutdown environment.
-                    await ResourceBrokerClient.CleanupResourceAsync(cloudEnvironment.Compute.ResourceId, cloudEnvironment.Id, logger);
-                }
-
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentAsync)));
-
-                return new CloudEnvironmentServiceResult
-                {
-                    CloudEnvironment = cloudEnvironment,
-                    HttpStatusCode = StatusCodes.Status200OK,
-                };
-            }
-            catch (Exception ex)
-            {
-                logger
-                    .AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ShutdownEnvironmentAsync)), ex.Message);
-
-                throw;
-            }
+                    return await CloudEnvironmentRepository.GetAsync(id, childLogger.NewChildLogger());
+                });
         }
 
         /// <inheritdoc/>
-        public async Task ShutdownEnvironmentCallbackAsync(
-            CloudEnvironment cloudEnvironment,
-            IDiagnosticsLogger logger)
-        {
-            var duration = logger.StartDuration();
-
-            try
-            {
-                Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
-                Requires.NotNull(logger, nameof(logger));
-
-                // Static Environment
-                if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
-                {
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentCallbackAsync)));
-
-                    return;
-                }
-
-                if (cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
-                {
-                    await ForceEnvironmentShutdownAsync(cloudEnvironment, logger);
-
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogInfo(GetType().FormatLogMessage(nameof(ShutdownEnvironmentCallbackAsync)));
-                }
-            }
-            catch (Exception ex)
-            {
-                logger
-                    .AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(ShutdownEnvironmentCallbackAsync)), ex.Message);
-
-                throw;
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<CloudEnvironmentServiceResult> StartEnvironmentAsync(
-            CloudEnvironment cloudEnvironment,
-            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
-            IDiagnosticsLogger logger)
-        {
-            var duration = logger.StartDuration();
-
-            try
-            {
-                Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
-                Requires.NotNull(logger, nameof(logger));
-
-                Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
-
-                // Static Environment
-                if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
-                {
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogInfo(GetType().FormatLogMessage(nameof(StartEnvironmentAsync)));
-
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = cloudEnvironment,
-                        MessageCode = MessageCodes.StartStaticEnvironment,
-                        HttpStatusCode = StatusCodes.Status400BadRequest,
-                    };
-                }
-
-                if (cloudEnvironment.State == CloudEnvironmentState.Starting ||
-                    cloudEnvironment.State == CloudEnvironmentState.Available)
-                {
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = cloudEnvironment,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
-                }
-
-                if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
-                {
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = null,
-                        MessageCode = MessageCodes.EnvironmentNotShutdown,
-                        HttpStatusCode = StatusCodes.Status400BadRequest,
-                    };
-                }
-
-                var connectionSessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                if (!string.IsNullOrWhiteSpace(connectionSessionId))
-                {
-                    // Delete the previous liveshare session from database.
-                    // Do not block start process on delete of old workspace from liveshare db.
-                    _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId, logger));
-                    cloudEnvironment.Connection = null;
-                }
-
-                // Allocate Compute
-                try
-                {
-                    cloudEnvironment.Compute = await AllocateComputeAsync(cloudEnvironment, logger);
-                }
-                catch (Exception ex) when (ex is RemoteInvocationException || ex is HttpResponseStatusException)
-                {
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), ex.Message);
-
-                    return new CloudEnvironmentServiceResult
-                    {
-                        MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
-                        HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
-                    };
-                }
-
-                // Create the Live Share workspace
-                cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger);
-                if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
-                {
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), "Could not create the cloud environment workspace session.");
-                    return new CloudEnvironmentServiceResult
-                    {
-                        MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
-                        HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
-                    };
-                }
-
-                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateTriggers.StartEnvironment, string.Empty, logger);
-                await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-
-                // Kick off start-compute before returning.
-                await StartComputeAsync(cloudEnvironment, null, startCloudEnvironmentParameters, logger);
-
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogInfo(GetType().FormatLogMessage(nameof(StartEnvironmentAsync)));
-
-                return new CloudEnvironmentServiceResult
-                {
-                    CloudEnvironment = cloudEnvironment,
-                    HttpStatusCode = StatusCodes.Status200OK,
-                };
-            }
-            catch (Exception ex)
-            {
-                logger
-                    .AddDuration(duration)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), ex.Message);
-
-                try
-                {
-                    await ShutdownEnvironmentAsync(cloudEnvironment, logger);
-                }
-                catch (Exception ex2)
-                {
-                    throw new AggregateException(GetType().FormatLogErrorMessage(nameof(StartEnvironmentAsync)), ex, ex2);
-                }
-
-                throw;
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<CloudEnvironmentServiceResult> CreateEnvironmentAsync(
-            CloudEnvironment cloudEnvironment,
-            CloudEnvironmentOptions cloudEnvironmentOptions,
-            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
-            VsoPlanInfo plan,
-            IDiagnosticsLogger logger)
-        {
-            var duration = logger.StartDuration();
-
-            var result = new CloudEnvironmentServiceResult()
-            {
-                MessageCode = MessageCodes.Unknown,
-                HttpStatusCode = StatusCodes.Status409Conflict,
-            };
-
-            try
-            {
-                Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
-                Requires.NotNull(cloudEnvironmentOptions, nameof(cloudEnvironmentOptions));
-                Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
-                Requires.NotNull(plan, nameof(plan));
-                Requires.NotNull(logger, nameof(logger));
-
-                // Validate input
-                ValidationUtil.IsRequired(cloudEnvironment.OwnerId, nameof(cloudEnvironment.OwnerId));
-
-                ValidationUtil.IsRequired(cloudEnvironment.SkuName, nameof(cloudEnvironment.SkuName));
-                ValidationUtil.IsTrue(
-                    cloudEnvironment.Location != default,
-                    "Location is required");
-                ValidationUtil.IsRequired(cloudEnvironment.PlanId, nameof(CloudEnvironment.PlanId));
-                ValidationUtil.IsRequired(cloudEnvironment.PlanId == plan.ResourceId);
-
-                var environmentsInPlan = await ListEnvironmentsAsync(logger, planId: cloudEnvironment.PlanId);
-
-                // Validate against existing environments.
-                if (environmentsInPlan.Any(
-                    (env) =>
-                        /* TODO - when multiple users can access a plan, this should include an ownership check */
-                        string.Equals(
-                            env.FriendlyName,
-                            cloudEnvironment.FriendlyName,
-                            StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    result.MessageCode = MessageCodes.EnvironmentNameAlreadyExists;
-                    result.HttpStatusCode = StatusCodes.Status409Conflict;
-                    return result;
-                }
-
-                var countOfEnvironmentsInPlan = environmentsInPlan.Count();
-                var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(plan.Subscription, logger);
-
-                if (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
-                {
-                    logger.AddDuration(duration)
-                       .AddCloudEnvironment(cloudEnvironment)
-                       .LogInfo(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)));
-
-                    result.MessageCode = MessageCodes.ExceededQuota;
-                    result.HttpStatusCode = StatusCodes.Status403Forbidden;
-                    return result;
-                }
-
-                // Setup
-                cloudEnvironment.Id = Guid.NewGuid().ToString();
-                cloudEnvironment.Created = cloudEnvironment.Updated = DateTime.UtcNow;
-
-                // Static Environment
-                if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
-                {
-                    if (cloudEnvironment.Connection is null)
-                    {
-                        cloudEnvironment.Connection = new ConnectionInfo();
-                    }
-
-                    if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
-                    {
-                        cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.StaticEnvironment, cloudEnvironment.Id, Guid.Empty, logger);
-                    }
-
-                    if (cloudEnvironment.Seed == default || cloudEnvironment.Seed.SeedType != SeedType.StaticEnvironment)
-                    {
-                        cloudEnvironment.Seed = new SeedInfo { SeedType = SeedType.StaticEnvironment };
-                    }
-
-                    cloudEnvironment.SkuName = StaticEnvironmentSku.Name;
-
-                    // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, logger);
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, logger);
-
-                    cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, logger);
-
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogInfo(GetType().FormatLogMessage(nameof(CreateEnvironmentAsync)));
-
-                    result.CloudEnvironment = cloudEnvironment;
-                    result.HttpStatusCode = StatusCodes.Status200OK;
-                    return result;
-                }
-
-                // Allocate Storage and Compute
-                try
-                {
-                    var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, logger);
-                    cloudEnvironment.Storage = allocationResult.Storage;
-                    cloudEnvironment.Compute = allocationResult.Compute;
-                }
-                catch (Exception ex) when (ex is RemoteInvocationException || ex is HttpResponseStatusException)
-                {
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex);
-
-                    result.MessageCode = MessageCodes.UnableToAllocateResources;
-                    result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
-                    return result;
-                }
-
-                // Create the Live Share workspace
-                cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger);
-                if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
-                {
-                    logger.AddDuration(duration)
-                        .AddCloudEnvironment(cloudEnvironment)
-                        .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), "Could not create the cloud environment workspace session.");
-                    result.MessageCode = MessageCodes.UnableToAllocateResources;
-                    result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
-                    return result;
-                }
-
-                // Create the cloud environment record in the provisioning state -- before starting.
-                // This avoids a race condition where the record doesn't exist but the callback could be invoked.
-                // Highly unlikely, but still...
-                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, logger);
-
-                cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, logger);
-
-                // Kick off start-compute before returning.
-                await StartComputeAsync(cloudEnvironment, cloudEnvironmentOptions, startCloudEnvironmentParameters, logger);
-
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogInfo(GetType().FormatLogMessage(nameof(CreateEnvironmentAsync)));
-
-                result.CloudEnvironment = cloudEnvironment;
-                result.HttpStatusCode = StatusCodes.Status200OK;
-                return result;
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex);
-
-                if (cloudEnvironment.Id != null)
-                {
-                    try
-                    {
-                        /*
-                         * TODO: This won't actually cleanup properly because it relies on the workspace,
-                         * compute, and storage to have been written to the database!
-                         */
-                        // Compensating cleanup
-                        await DeleteEnvironmentAsync(cloudEnvironment, logger);
-                    }
-                    catch (Exception ex2)
-                    {
-                        throw new AggregateException(GetType().FormatLogErrorMessage(nameof(CreateEnvironmentAsync)), ex, ex2);
-                    }
-                }
-
-                throw;
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<CloudEnvironment> UpdateEnvironmentCallbackAsync(
-            CloudEnvironment cloudEnvironment,
-            EnvironmentRegistrationCallbackOptions options,
-            IDiagnosticsLogger logger)
-        {
-            var duration = logger.StartDuration();
-
-            try
-            {
-                Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
-                Requires.NotNull(options, nameof(options));
-                Requires.NotNull(logger, nameof(logger));
-
-                ValidationUtil.IsTrue(cloudEnvironment.Connection.ConnectionSessionId == options.Payload.SessionId);
-
-                cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
-                await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, CloudEnvironmentStateUpdateTriggers.EnvironmentCallback, string.Empty, logger);
-                cloudEnvironment.Updated = DateTime.UtcNow;
-                var result = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogInfo(GetType().FormatLogMessage(nameof(UpdateEnvironmentCallbackAsync)));
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(UpdateEnvironmentCallbackAsync)), ex.Message);
-                throw;
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<CloudEnvironment> GetEnvironmentWithStateRefreshAsync(
+        public Task<CloudEnvironment> GetAndStateRefreshAsync(
             string environmentId,
             IDiagnosticsLogger logger)
         {
-            var duration = logger.StartDuration();
-            var cloudEnvironment = default(CloudEnvironment);
+            Requires.NotNullOrEmpty(environmentId, nameof(environmentId));
+            Requires.NotNull(logger, nameof(logger));
 
-            try
-            {
-                Requires.NotNullOrEmpty(environmentId, nameof(environmentId));
-                Requires.NotNull(logger, nameof(logger));
-
-                cloudEnvironment = await GetEnvironmentAsync(environmentId, logger);
-                if (cloudEnvironment is null)
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_get_environment_state_refresh",
+                async (childLogger) =>
                 {
-                    return null;
-                }
+                    var cloudEnvironment = await GetAsync(environmentId, childLogger.NewChildLogger());
+                    if (cloudEnvironment is null)
+                    {
+                        return null;
+                    }
 
-                // Update the new state before returning.
-                var originalState = cloudEnvironment.State;
-                var newState = originalState;
+                    // Update the new state before returning.
+                    var originalState = cloudEnvironment.State;
+                    var newState = originalState;
 
-                // Check for an unavailable environment
-                switch (originalState)
-                {
-                    // Remain in provisioning state until _callback is invoked.
-                    case CloudEnvironmentState.Provisioning:
+                    // TODO: Remove once Anu's update tracking is in.
+                    // Check for an unavailable environment
+                    switch (originalState)
+                    {
+                        // Remain in provisioning state until _callback is invoked.
+                        case CloudEnvironmentState.Provisioning:
 
-                        // Timeout if environment has stayed in provisioning state for more than an hour
-                        var timeInProvisioningStateInMin = (DateTime.UtcNow - cloudEnvironment.LastStateUpdated).TotalMinutes;
-                        if (timeInProvisioningStateInMin > 60)
-                        {
-                            newState = CloudEnvironmentState.Failed;
-                            logger.AddCloudEnvironment(cloudEnvironment)
-                                .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetEnvironmentWithStateRefreshAsync)), $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes ");
-                        }
+                            // Timeout if environment has stayed in provisioning state for more than an hour
+                            var timeInProvisioningStateInMin = (DateTime.UtcNow - cloudEnvironment.LastStateUpdated).TotalMinutes;
+                            if (timeInProvisioningStateInMin > 60)
+                            {
+                                newState = CloudEnvironmentState.Failed;
 
-                        break;
+                                childLogger.LogErrorWithDetail($"{LogBaseName}_get_environment_state_refresh_error", $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes.");
+                            }
 
-                    // Swap between available and awaiting based on the workspace status
-                    case CloudEnvironmentState.Available:
-                    case CloudEnvironmentState.Awaiting:
-                        var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                        var workspace = await WorkspaceRepository.GetStatusAsync(sessionId, logger);
-                        if (workspace == null)
-                        {
-                            // In this case the workspace is deleted. There is no way of getting to an environment without it.
-                            newState = CloudEnvironmentState.Unavailable;
-                        }
-                        else if (workspace.IsHostConnected.HasValue)
-                        {
-                            newState = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
-                        }
+                            break;
 
-                        break;
-                }
+                        // Swap between available and awaiting based on the workspace status
+                        case CloudEnvironmentState.Available:
+                        case CloudEnvironmentState.Awaiting:
+                            var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
+                            var workspace = await WorkspaceRepository.GetStatusAsync(sessionId, childLogger.NewChildLogger());
+                            if (workspace == null)
+                            {
+                                // In this case the workspace is deleted. There is no way of getting to an environment without it.
+                                newState = CloudEnvironmentState.Unavailable;
+                            }
+                            else if (workspace.IsHostConnected.HasValue)
+                            {
+                                newState = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
+                            }
 
-                // Update the new state before returning.
-                if (originalState != newState)
-                {
-                    await SetEnvironmentStateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.GetEnvironment, null, logger);
-                    cloudEnvironment.Updated = DateTime.UtcNow;
-                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
-                }
+                            break;
+                    }
 
-                return cloudEnvironment;
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetEnvironmentWithStateRefreshAsync)), ex.Message);
-                throw;
-            }
+                    // Update the new state before returning.
+                    if (originalState != newState)
+                    {
+                        await SetEnvironmentStateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.GetEnvironment, null, childLogger.NewChildLogger());
+
+                        cloudEnvironment.Updated = DateTime.UtcNow;
+
+                        cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    }
+
+                    return cloudEnvironment;
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<CloudEnvironment>> ListEnvironmentsAsync(
+        public Task<IEnumerable<CloudEnvironment>> ListAsync(
             IDiagnosticsLogger logger,
             string planId = null,
             string environmentName = null,
             UserIdSet userIdSet = null)
         {
             Requires.NotNull(logger, nameof(logger));
-            var environmentNameInLowerCase = environmentName?.Trim()?.ToLowerInvariant();
 
-            /*
-             * The code is written like this to optimize the CosmosDB lookups - consider that optimization if modifying it.
-             */
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_list",
+                async (childLogger) =>
+                {
+                    var environmentNameInLowerCase = environmentName?.Trim()?.ToLowerInvariant();
 
-            if (userIdSet == null)
-            {
-                Requires.NotNull(planId, nameof(planId));
+                    // The code is written like this to optimize the CosmosDB lookups - consider that optimization if modifying it.
+                    if (userIdSet == null)
+                    {
+                        Requires.NotNull(planId, nameof(planId));
 
-                if (!string.IsNullOrEmpty(environmentNameInLowerCase))
-                {
-                    return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => cloudEnvironment.PlanId == planId &&
-                                              cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
-                        logger);
-                }
-                else
-                {
-                    return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => cloudEnvironment.PlanId == planId, logger);
-                }
-            }
-            else if (planId == null)
-            {
-                if (!string.IsNullOrEmpty(environmentNameInLowerCase))
-                {
-                    Requires.NotNull(userIdSet, nameof(userIdSet));
-                    return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
-                                               cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
-                                              cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
-                        logger);
-                }
-                else
-                {
-                    return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => cloudEnvironment.OwnerId == userIdSet.CanonicalUserId || cloudEnvironment.OwnerId == userIdSet.ProfileId, logger);
-                }
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(environmentNameInLowerCase))
-                {
-                    Requires.NotNull(userIdSet, nameof(userIdSet));
-                    return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
-                                               cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
-                                              cloudEnvironment.PlanId == planId &&
-                                              cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
-                        logger);
-                }
-                else
-                {
-                    return await CloudEnvironmentRepository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
-                                               cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
-                                              cloudEnvironment.PlanId == planId,
-                        logger);
-                }
-            }
+                        if (!string.IsNullOrEmpty(environmentNameInLowerCase))
+                        {
+                            return await CloudEnvironmentRepository.GetWhereAsync(
+                                (cloudEnvironment) => cloudEnvironment.PlanId == planId &&
+                                    cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
+                                childLogger.NewChildLogger());
+                        }
+                        else
+                        {
+                            return await CloudEnvironmentRepository.GetWhereAsync(
+                                (cloudEnvironment) => cloudEnvironment.PlanId == planId,
+                                childLogger.NewChildLogger());
+                        }
+                    }
+                    else if (planId == null)
+                    {
+                        if (!string.IsNullOrEmpty(environmentNameInLowerCase))
+                        {
+                            Requires.NotNull(userIdSet, nameof(userIdSet));
+                            return await CloudEnvironmentRepository.GetWhereAsync(
+                                (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
+                                        cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
+                                    cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
+                                childLogger.NewChildLogger());
+                        }
+                        else
+                        {
+                            return await CloudEnvironmentRepository.GetWhereAsync(
+                                (cloudEnvironment) => cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
+                                    cloudEnvironment.OwnerId == userIdSet.ProfileId,
+                                childLogger.NewChildLogger());
+                        }
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(environmentNameInLowerCase))
+                        {
+                            Requires.NotNull(userIdSet, nameof(userIdSet));
+
+                            return await CloudEnvironmentRepository.GetWhereAsync(
+                                (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
+                                        cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
+                                    cloudEnvironment.PlanId == planId &&
+                                    cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
+                                childLogger.NewChildLogger());
+                        }
+                        else
+                        {
+                            return await CloudEnvironmentRepository.GetWhereAsync(
+                                (cloudEnvironment) => (cloudEnvironment.OwnerId == userIdSet.CanonicalUserId ||
+                                        cloudEnvironment.OwnerId == userIdSet.ProfileId) &&
+                                    cloudEnvironment.PlanId == planId,
+                                childLogger.NewChildLogger());
+                        }
+                    }
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> GetEnvironmentAsync(
-            string id,
+        public Task<CloudEnvironment> UpdateAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_update",
+                async (childLogger) =>
+                {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+
+                    cloudEnvironment.Updated = DateTime.UtcNow;
+                    if (newState != default && newState != cloudEnvironment.State)
+                    {
+                        await SetEnvironmentStateAsync(cloudEnvironment, newState, trigger, reason, childLogger.NewChildLogger());
+                    }
+
+                    return await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironment> UpdateCallbackAsync(
+            CloudEnvironment cloudEnvironment,
+            EnvironmentRegistrationCallbackOptions options,
             IDiagnosticsLogger logger)
         {
-            ValidationUtil.IsRequired(id);
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(options, nameof(options));
             Requires.NotNull(logger, nameof(logger));
-            return await CloudEnvironmentRepository.GetAsync(id, logger);
+
+            ValidationUtil.IsTrue(cloudEnvironment.Connection.ConnectionSessionId == options.Payload.SessionId);
+
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_update_callback",
+                async (childLogger) =>
+                {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+
+                    cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
+
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, CloudEnvironmentStateUpdateTriggers.EnvironmentCallback, string.Empty, childLogger.NewChildLogger());
+
+                    cloudEnvironment.Updated = DateTime.UtcNow;
+
+                    return await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteEnvironmentAsync(
+        public Task<CloudEnvironmentServiceResult> CreateAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentOptions cloudEnvironmentOptions,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            VsoPlanInfo plan,
+            IDiagnosticsLogger logger)
+        {
+            // Validate input
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(cloudEnvironmentOptions, nameof(cloudEnvironmentOptions));
+            Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
+            Requires.NotNull(plan, nameof(plan));
+            Requires.NotNull(logger, nameof(logger));
+
+            ValidationUtil.IsRequired(cloudEnvironment.OwnerId, nameof(cloudEnvironment.OwnerId));
+            ValidationUtil.IsRequired(cloudEnvironment.SkuName, nameof(cloudEnvironment.SkuName));
+            ValidationUtil.IsTrue(cloudEnvironment.Location != default, "Location is required");
+            ValidationUtil.IsRequired(cloudEnvironment.PlanId, nameof(CloudEnvironment.PlanId));
+            ValidationUtil.IsRequired(cloudEnvironment.PlanId == plan.ResourceId);
+
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_create",
+                async (childLogger) =>
+                {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+
+                    var result = new CloudEnvironmentServiceResult()
+                    {
+                        MessageCode = MessageCodes.Unknown,
+                        HttpStatusCode = StatusCodes.Status409Conflict,
+                    };
+
+                    var environmentsInPlan = await ListAsync(childLogger.NewChildLogger(), planId: cloudEnvironment.PlanId);
+
+                    // Validate against existing environments.
+                    // TODO - when multiple users can access a plan, this should include an ownership check
+                    if (environmentsInPlan.Any(
+                        (env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        result.MessageCode = MessageCodes.EnvironmentNameAlreadyExists;
+                        result.HttpStatusCode = StatusCodes.Status409Conflict;
+
+                        return result;
+                    }
+
+                    var countOfEnvironmentsInPlan = environmentsInPlan.Count();
+                    var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(plan.Subscription, childLogger.NewChildLogger());
+
+                    if (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
+                    {
+                        childLogger.LogError($"{LogBaseName}_create_maxenvironmentsforplan_error");
+
+                        result.MessageCode = MessageCodes.ExceededQuota;
+                        result.HttpStatusCode = StatusCodes.Status403Forbidden;
+
+                        return result;
+                    }
+
+                    // Setup
+                    cloudEnvironment.Id = Guid.NewGuid().ToString();
+                    cloudEnvironment.Created = cloudEnvironment.Updated = DateTime.UtcNow;
+
+                    // Static Environment
+                    if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                    {
+                        if (cloudEnvironment.Connection is null)
+                        {
+                            cloudEnvironment.Connection = new ConnectionInfo();
+                        }
+
+                        if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
+                        {
+                            cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.StaticEnvironment, cloudEnvironment.Id, Guid.Empty, childLogger.NewChildLogger());
+                        }
+
+                        if (cloudEnvironment.Seed == default || cloudEnvironment.Seed.SeedType != SeedType.StaticEnvironment)
+                        {
+                            cloudEnvironment.Seed = new SeedInfo { SeedType = SeedType.StaticEnvironment };
+                        }
+
+                        cloudEnvironment.SkuName = StaticEnvironmentSku.Name;
+
+                        // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.
+                        await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
+                        await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
+
+                        cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                        result.CloudEnvironment = cloudEnvironment;
+                        result.HttpStatusCode = StatusCodes.Status200OK;
+
+                        return result;
+                    }
+
+                    // Allocate Storage and Compute
+                    try
+                    {
+                        var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, childLogger.NewChildLogger());
+                        cloudEnvironment.Storage = allocationResult.Storage;
+                        cloudEnvironment.Compute = allocationResult.Compute;
+                    }
+                    catch (Exception ex) when (ex is RemoteInvocationException || ex is HttpResponseStatusException)
+                    {
+                        childLogger.LogError($"{LogBaseName}_create_allocate_error");
+
+                        result.MessageCode = MessageCodes.UnableToAllocateResources;
+                        result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
+
+                        return result;
+                    }
+
+                    // Create the Live Share workspace
+                    cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                    if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
+                    {
+                        childLogger.LogErrorWithDetail($"{LogBaseName}_create_workspace_error", "Could not create the cloud environment workspace session.");
+
+                        result.MessageCode = MessageCodes.UnableToAllocateResources;
+                        result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
+
+                        return result;
+                    }
+
+                    // Create the cloud environment record in the provisioning state -- before starting.
+                    // This avoids a race condition where the record doesn't exist but the callback could be invoked.
+                    // Highly unlikely, but still...
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
+
+                    cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                    // Kick off start-compute before returning.
+                    await StartComputeAsync(cloudEnvironment, cloudEnvironmentOptions, startCloudEnvironmentParameters, childLogger.NewChildLogger());
+
+                    result.CloudEnvironment = cloudEnvironment;
+                    result.HttpStatusCode = StatusCodes.Status200OK;
+
+                    return result;
+                },
+                async (ex, childLogger) =>
+                {
+                    if (cloudEnvironment.Id != null)
+                    {
+                        // TODO: This won't actually cleanup properly because it relies on the workspace,
+                        //       compute, and storage to have been written to the database!
+                        // Compensating cleanup
+                        await DeleteAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    }
+
+                    return default(CloudEnvironmentServiceResult);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> DeleteAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
             Requires.NotNull(logger, nameof(logger));
 
-            /*
-            // TODO: this delete logic isn't complete!
-            // It should handle Workspace, Storage, and Compute, and CosmosDB independently.
-            */
-
-            await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, logger);
-
-            if (cloudEnvironment.Type == CloudEnvironmentType.CloudEnvironment)
-            {
-                var storageIdToken = cloudEnvironment.Storage?.ResourceId;
-                if (storageIdToken != null)
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_delete",
+                async (childLogger) =>
                 {
-                    await logger.OperationScopeAsync(
-                        $"{GetType().GetLogMessageBaseName()}_delete_storage_async",
-                        async (childLogger) =>
-                        {
-                            childLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
-                            .FluentAddBaseValue(nameof(storageIdToken), storageIdToken.Value);
-                            await ResourceBrokerClient.DeleteResourceAsync(storageIdToken.Value, childLogger);
-                        },
-                        swallowException: true);
-                }
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, childLogger.NewChildLogger());
 
-                var computeIdToken = cloudEnvironment.Compute?.ResourceId;
-                if (computeIdToken != null)
-                {
-                    await logger.OperationScopeAsync(
-                       $"{GetType().GetLogMessageBaseName()}_delete_compute_async",
-                       async (childLogger) =>
-                       {
-                           childLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
-                            .FluentAddBaseValue(nameof(computeIdToken), computeIdToken.Value);
-                           await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, childLogger);
-                       },
-                       swallowException: true);
-                }
-            }
-
-            if (cloudEnvironment.Connection?.ConnectionSessionId != null)
-            {
-                await logger.OperationScopeAsync(
-                    $"{GetType().GetLogMessageBaseName()}_delete_workspace_async",
-                    async (childLogger) =>
+                    if (cloudEnvironment.Type == CloudEnvironmentType.CloudEnvironment)
                     {
-                        childLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
-                            .FluentAddBaseValue("ConnectionSessionId", cloudEnvironment.Connection?.ConnectionSessionId);
-                        await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId, logger);
-                    },
-                    swallowException: true);
-            }
+                        var storageIdToken = cloudEnvironment.Storage?.ResourceId;
+                        if (storageIdToken != null)
+                        {
+                            await childLogger.OperationScopeAsync(
+                                $"{LogBaseName}_delete_storage",
+                                async (innerLogger) =>
+                                {
+                                    innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
+                                        .FluentAddBaseValue(nameof(storageIdToken), storageIdToken.Value);
 
-            await CloudEnvironmentRepository.DeleteAsync(cloudEnvironment.Id, logger);
+                                    await ResourceBrokerClient.DeleteResourceAsync(storageIdToken.Value, innerLogger.NewChildLogger());
+                                },
+                                swallowException: true);
+                        }
 
-            return true;
+                        var computeIdToken = cloudEnvironment.Compute?.ResourceId;
+                        if (computeIdToken != null)
+                        {
+                            await childLogger.OperationScopeAsync(
+                               $"{LogBaseName}_delete_compute",
+                               async (innerLogger) =>
+                               {
+                                   innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
+                                        .FluentAddBaseValue(nameof(computeIdToken), computeIdToken.Value);
+
+                                   await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, innerLogger.NewChildLogger());
+                               },
+                               swallowException: true);
+                        }
+                    }
+
+                    if (cloudEnvironment.Connection?.ConnectionSessionId != null)
+                    {
+                        await childLogger.OperationScopeAsync(
+                            $"{LogBaseName}_delete_workspace",
+                            async (innerLogger) =>
+                            {
+                                innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
+                                    .FluentAddBaseValue("ConnectionSessionId", cloudEnvironment.Connection?.ConnectionSessionId);
+
+                                await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId, innerLogger.NewChildLogger());
+                            },
+                            swallowException: true);
+                    }
+
+                    await CloudEnvironmentRepository.DeleteAsync(cloudEnvironment.Id, childLogger.NewChildLogger());
+
+                    return true;
+                });
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> UpdateEnvironmentAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger)
+        public Task<CloudEnvironmentServiceResult> ResumeAsync(
+            CloudEnvironment cloudEnvironment,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            IDiagnosticsLogger logger)
         {
-            cloudEnvironment.Updated = DateTime.UtcNow;
-            if (newState != default && newState != cloudEnvironment.State)
-            {
-                await SetEnvironmentStateAsync(cloudEnvironment, newState, trigger, reason, logger);
-            }
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(logger, nameof(logger));
+            Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
 
-            return await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_resume",
+                async (childLogger) =>
+                {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+
+                    // Static Environment
+                    if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                    {
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = cloudEnvironment,
+                            MessageCode = MessageCodes.StartStaticEnvironment,
+                            HttpStatusCode = StatusCodes.Status400BadRequest,
+                        };
+                    }
+
+                    if (cloudEnvironment.State == CloudEnvironmentState.Starting ||
+                        cloudEnvironment.State == CloudEnvironmentState.Available)
+                    {
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = cloudEnvironment,
+                            HttpStatusCode = StatusCodes.Status200OK,
+                        };
+                    }
+
+                    if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
+                    {
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = null,
+                            MessageCode = MessageCodes.EnvironmentNotShutdown,
+                            HttpStatusCode = StatusCodes.Status400BadRequest,
+                        };
+                    }
+
+                    var connectionSessionId = cloudEnvironment.Connection?.ConnectionSessionId;
+                    if (!string.IsNullOrWhiteSpace(connectionSessionId))
+                    {
+                        // Delete the previous liveshare session from database.
+                        // Do not block start process on delete of old workspace from liveshare db.
+                        _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId, childLogger.NewChildLogger()));
+                        cloudEnvironment.Connection = null;
+                    }
+
+                    // Allocate Compute
+                    try
+                    {
+                        cloudEnvironment.Compute = await AllocateComputeAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    }
+                    catch (Exception ex) when (ex is RemoteInvocationException || ex is HttpResponseStatusException)
+                    {
+                        childLogger.LogException($"{LogBaseName}_resume_allocate_error", ex);
+
+                        return new CloudEnvironmentServiceResult
+                        {
+                            MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
+                            HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
+                        };
+                    }
+
+                    // Create the Live Share workspace
+                    cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                    if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
+                    {
+                        childLogger.LogErrorWithDetail($"{LogBaseName}_resume_workspace_error", "Could not create the cloud environment workspace session.");
+
+                        return new CloudEnvironmentServiceResult
+                        {
+                            MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
+                            HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
+                        };
+                    }
+
+                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateTriggers.StartEnvironment, string.Empty, childLogger.NewChildLogger());
+
+                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                    // Kick off start-compute before returning.
+                    await StartComputeAsync(cloudEnvironment, null, startCloudEnvironmentParameters, childLogger.NewChildLogger());
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
+                },
+                async (e, childLogger) =>
+                {
+                    await SuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                    return default(CloudEnvironmentServiceResult);
+                });
         }
 
         /// <inheritdoc/>
-        public async Task ForceEnvironmentShutdownAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        public Task<CloudEnvironmentServiceResult> SuspendAsync(
+            CloudEnvironment cloudEnvironment,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(logger, nameof(logger));
+
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_suspsend",
+                async (childLogger) =>
+                {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+
+                    // Static Environment
+                    if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                    {
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = cloudEnvironment,
+                            MessageCode = MessageCodes.ShutdownStaticEnvironment,
+                            HttpStatusCode = StatusCodes.Status400BadRequest,
+                        };
+                    }
+
+                    if (cloudEnvironment.State == CloudEnvironmentState.Shutdown)
+                    {
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = cloudEnvironment,
+                            HttpStatusCode = StatusCodes.Status200OK,
+                        };
+                    }
+
+                    if (cloudEnvironment.State != CloudEnvironmentState.Available)
+                    {
+                        // If the environment is not in an available state during shutdown,
+                        // force clean the environment details, to put it in a recoverable state.
+                        await ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    }
+                    else
+                    {
+                        await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, childLogger.NewChildLogger());
+
+                        // Update the database state.
+                        await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                        // Start the cleanup operation to shutdown environment.
+                        await ResourceBrokerClient.SuspendResourceAsync(cloudEnvironment.Compute.ResourceId, cloudEnvironment.Id, childLogger.NewChildLogger());
+
+                        // Start the cleanup operation to shutdown environment.
+                        await ResourceBrokerClient.SuspendResourceAsync(cloudEnvironment.Storage.ResourceId, cloudEnvironment.Id, childLogger.NewChildLogger());
+                    }
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task SuspendCallbackAsync(
+            CloudEnvironment cloudEnvironment,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(logger, nameof(logger));
+
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_suspsend_callback",
+                async (childLogger) =>
+                {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+
+                    // Static Environment
+                    if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                    {
+                        return;
+                    }
+
+                    if (cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
+                    {
+                        await ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    }
+                });
+        }
+
+        /// <inheritdoc/>
+        public async Task ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
             Requires.NotNull(logger, nameof(logger));
 
             await logger.OperationScopeAsync(
-                $"{GetType().GetLogMessageBaseName()}_force_shutdown_async",
+                $"{LogBaseName}_force_suspend",
                 async (childLogger) =>
                 {
                     await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown, null, logger);
+
                     var computeIdToken = cloudEnvironment.Compute?.ResourceId;
                     cloudEnvironment.Compute = null;
 
                     // Update the database state.
-                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
                     // Delete the allocated resources.
                     if (computeIdToken != null)
                     {
-                        await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, logger);
+                        await ResourceBrokerClient.DeleteResourceAsync(computeIdToken.Value, childLogger.NewChildLogger());
                     }
-                }, swallowException: true);
+                },
+                swallowException: true);
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironmentSettingsUpdateResult> UpdateEnvironmentSettingsAsync(
+        public async Task<CloudEnvironmentSettingsUpdateResult> UpdateSettingsAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentUpdate update,
             IDiagnosticsLogger logger)
@@ -793,13 +736,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
 
             return await logger.OperationScopeAsync(
-                $"{GetType().GetLogMessageBaseName()}_update_environment_settings_async",
+                $"{LogBaseName}_update_settings",
                 async (childLogger) =>
                 {
-                    childLogger
-                        .AddCloudEnvironmentUpdate(update);
+                    childLogger.AddCloudEnvironmentUpdate(update);
 
-                    var allowedUpdates = GetEnvironmentAvailableSettingsUpdates(cloudEnvironment, logger);
+                    var allowedUpdates = await GetAvailableSettingsUpdatesAsync(cloudEnvironment, childLogger.NewChildLogger());
                     var validationErrors = new List<MessageCodes>();
 
                     if (cloudEnvironment.State != CloudEnvironmentState.Shutdown)
@@ -846,65 +788,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     cloudEnvironment.Updated = DateTime.UtcNow;
-                    await SetEnvironmentStateAsync(cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged, null, logger);
-                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
+
+                    await SetEnvironmentStateAsync(
+                        cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged, null, childLogger.NewChildLogger());
+
+                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
                     return CloudEnvironmentSettingsUpdateResult.Success(cloudEnvironment);
-                }, swallowException: false);
+                },
+                swallowException: false);
         }
 
         /// <inheritdoc/>
-        public CloudEnvironmentAvailableSettingsUpdates GetEnvironmentAvailableSettingsUpdates(
+        public Task<CloudEnvironmentAvailableSettingsUpdates> GetAvailableSettingsUpdatesAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
         {
-            var duration = logger.StartDuration();
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(logger, nameof(logger));
 
-            try
-            {
-                Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
-                Requires.NotNull(logger, nameof(logger));
-
-                var result = new CloudEnvironmentAvailableSettingsUpdates();
-
-                result.AllowedAutoShutdownDelayMinutes =
-                    EnvironmentManagerSettings.DefaultAutoShutdownDelayMinutesOptions?.ToArray() ??
-                    Array.Empty<int>();
-
-                if (
-                    SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var currentSku) &&
-                    currentSku.SupportedSkuTransitions != null &&
-                    currentSku.SupportedSkuTransitions.Any())
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_get_available_settings_updates",
+                (childLogger) =>
                 {
-                    result.AllowedSkus = currentSku.SupportedSkuTransitions
-                        .Select((skuName) =>
-                        {
-                            SkuCatalog.CloudEnvironmentSkus.TryGetValue(skuName, out var sku);
-                            return sku;
-                        })
-                        .Where((sku) =>
-                            sku != null &&
-                            sku.SkuLocations.Contains(cloudEnvironment.Location))
-                        .ToArray();
-                }
-                else
-                {
-                    result.AllowedSkus = Array.Empty<ICloudEnvironmentSku>();
-                }
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
 
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogInfo(GetType().FormatLogMessage(nameof(GetEnvironmentAvailableSettingsUpdates)));
+                    var result = new CloudEnvironmentAvailableSettingsUpdates();
 
-                return result;
-            }
-            catch (Exception ex)
-            {
-                logger.AddDuration(duration)
-                    .AddCloudEnvironment(cloudEnvironment)
-                    .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetEnvironmentAvailableSettingsUpdates)), ex.Message);
-                throw;
-            }
+                    result.AllowedAutoShutdownDelayMinutes =
+                        EnvironmentManagerSettings.DefaultAutoShutdownDelayMinutesOptions?.ToArray() ?? Array.Empty<int>();
+
+                    if (SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var currentSku) &&
+                        currentSku.SupportedSkuTransitions != null &&
+                        currentSku.SupportedSkuTransitions.Any())
+                    {
+                        result.AllowedSkus = currentSku.SupportedSkuTransitions
+                            .Select((skuName) =>
+                            {
+                                SkuCatalog.CloudEnvironmentSkus.TryGetValue(skuName, out var sku);
+                                return sku;
+                            })
+                            .Where((sku) => sku != null && sku.SkuLocations.Contains(cloudEnvironment.Location))
+                            .ToArray();
+                    }
+                    else
+                    {
+                        result.AllowedSkus = Array.Empty<ICloudEnvironmentSku>();
+                    }
+
+                    return Task.FromResult(result);
+                });
         }
 
         private async Task SetEnvironmentStateAsync(
@@ -916,6 +849,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var oldState = cloudEnvironment.State;
             var oldStateUpdated = cloudEnvironment.LastStateUpdated;
+
             logger.FluentAddBaseValue("OldState", oldState)
                 .FluentAddBaseValue("OldStateUpdated", oldStateUpdated);
 
@@ -1126,9 +1060,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 cascadeToken,
                 cloudEnvironmentOptions);
 
-            await ResourceBrokerClient.StartComputeAsync(
+            await ResourceBrokerClient.StartResourceSetAsync(
                 cloudEnvironment.Compute.ResourceId,
-                new StartComputeRequestBody
+                new StartResourceRequestBody
                 {
                     StorageResourceId = cloudEnvironment.Storage.ResourceId,
                     EnvironmentVariables = environmentVariables,

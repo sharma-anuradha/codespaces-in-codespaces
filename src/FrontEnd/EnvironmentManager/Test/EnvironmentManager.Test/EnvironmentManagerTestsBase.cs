@@ -89,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
         public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")
         {
-            var serviceResult = await environmentManager.CreateEnvironmentAsync(
+            var serviceResult = await environmentManager.CreateAsync(
                 new CloudEnvironment
                 {
                     FriendlyName = name,
@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
         public async Task MakeTestEnvironmentAvailableAsync(CloudEnvironment testEnvironment)
         {
-            await this.environmentManager.UpdateEnvironmentCallbackAsync(
+            await this.environmentManager.UpdateCallbackAsync(
                 testEnvironment,
                 new EnvironmentRegistrationCallbackOptions
                 {

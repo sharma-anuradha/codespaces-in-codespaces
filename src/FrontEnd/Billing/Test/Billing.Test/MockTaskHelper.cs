@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             throw new NotImplementedException();
         }
 
-        public void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception, IDiagnosticsLogger> errCallback = null, TimeSpan? delay = null)
+        public void RunBackground(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Func<Exception, IDiagnosticsLogger, Task> errCallback = null, TimeSpan? delay = null)
         {
             throw new NotImplementedException();
         }
@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             return callback(list.First(), logger);
         }
 
-        public void RunBackgroundLong(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Action<Exception, IDiagnosticsLogger> errCallback = null, TimeSpan? delay = null)
+        public void RunBackgroundLong(string name, Func<IDiagnosticsLogger, Task> callback, IDiagnosticsLogger logger = null, bool autoLogOperation = true, Func<Exception, IDiagnosticsLogger, Task> errCallback = null, TimeSpan? delay = null)
         {
             throw new NotImplementedException();
         }

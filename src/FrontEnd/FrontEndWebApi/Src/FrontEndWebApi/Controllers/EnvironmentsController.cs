@@ -134,7 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
 
-            var modelsRaw = await EnvironmentManager.ListEnvironmentsAsync(
+            var modelsRaw = await EnvironmentManager.ListAsync(
                 logger.NewChildLogger(),
                 planId: planId,
                 name: name,
@@ -152,12 +152,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="logger">Target logger.</param>
         /// <returns>A cloud environment.</returns>
         [HttpPost("{environmentId}/shutdown")]
-        [ThrottlePerUserHigh(nameof(EnvironmentsController), nameof(ShutdownAsync))]
+        [ThrottlePerUserHigh(nameof(EnvironmentsController), nameof(SuspendAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("shutdown")]
-        public async Task<IActionResult> ShutdownAsync(
+        public async Task<IActionResult> SuspendAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
@@ -175,7 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             // We are in the right location, go ahead and shutdown
-            var result = await EnvironmentManager.ShutdownEnvironmentAsync(
+            var result = await EnvironmentManager.SuspendAsync(
                 environment, logger.NewChildLogger());
             if (result.CloudEnvironment == null)
             {
@@ -196,12 +196,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="logger">Target logger.</param>
         /// <returns>A cloud environment.</returns>
         [HttpPost("{environmentId}/start")]
-        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(StartAsync))]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(ResumeAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("start")]
-        public async Task<IActionResult> StartAsync(
+        public async Task<IActionResult> ResumeAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
@@ -220,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             var startEnvParams = GetStartCloudEnvironmentParameters();
 
-            var result = await EnvironmentManager.StartEnvironmentAsync(
+            var result = await EnvironmentManager.ResumeAsync(
                 environment,
                 startEnvParams,
                 logger.NewChildLogger());
@@ -344,7 +344,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                 cloudEnvironment.OwnerId = currentUserIdSet.PreferredUserId;
 
-                createCloudEnvironmentResult = await EnvironmentManager.CreateEnvironmentAsync(
+                createCloudEnvironmentResult = await EnvironmentManager.CreateAsync(
                     cloudEnvironment,
                     cloudEnvironmentOptions,
                     startEnvParams,
@@ -413,7 +413,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             // We are in the right location, go ahead and delete
-            var result = await EnvironmentManager.DeleteEnvironmentAsync(
+            var result = await EnvironmentManager.DeleteAsync(
                 environment, logger.NewChildLogger());
             if (!result)
             {
@@ -463,7 +463,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             // We are in the right location, go ahead and update the callback
             var options = Mapper.Map<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>(callbackBody);
-            var result = await EnvironmentManager.UpdateEnvironmentCallbackAsync(
+            var result = await EnvironmentManager.UpdateCallbackAsync(
                 environment, options, logger.NewChildLogger());
             if (result is null)
             {
@@ -516,7 +516,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             var updateRequest = Mapper.Map<CloudEnvironmentUpdate>(updateEnvironmentInput);
 
-            var result = await EnvironmentManager.UpdateEnvironmentSettingsAsync(environment, updateRequest, logger);
+            var result = await EnvironmentManager.UpdateSettingsAsync(environment, updateRequest, logger);
 
             if (result.IsSuccess)
             {
@@ -535,12 +535,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="logger">Target logger.</param>
         /// <returns>An object result that contains the <see cref="CloudEnvironmentAvailableUpdatesResult"/>.</returns>
         [HttpGet("{environmentId}/updates")]
-        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(GetAvailableUpdatesAsync))]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(GetAvailableSettingsUpdatesAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("available_updates")]
-        public async Task<IActionResult> GetAvailableUpdatesAsync(
+        public async Task<IActionResult> GetAvailableSettingsUpdatesAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
@@ -557,7 +557,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return RedirectToLocation(owningStamp);
             }
 
-            var availableUpdates = EnvironmentManager.GetEnvironmentAvailableSettingsUpdates(environment, logger.NewChildLogger());
+            var availableUpdates = await EnvironmentManager.GetAvailableSettingsUpdatesAsync(environment, logger.NewChildLogger());
 
             var result = new CloudEnvironmentAvailableUpdatesResult();
 
@@ -612,7 +612,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             logger.AddEnvironmentId(environmentId);
             ValidationUtil.IsRequired(environmentId, nameof(environmentId));
 
-            var environment = await EnvironmentManager.GetEnvironmentWithStateRefreshAsync(environmentId, logger);
+            var environment = await EnvironmentManager.GetAndStateRefreshAsync(environmentId, logger);
             if (environment == null)
             {
                 return null;

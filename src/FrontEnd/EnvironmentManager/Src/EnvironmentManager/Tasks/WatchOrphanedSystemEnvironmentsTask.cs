@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
                     return !Disposed;
                 },
-                (e, childLogger) => !Disposed,
+                (e, childLogger) => Task.FromResult(!Disposed),
                 swallowException: true);
         }
 
@@ -106,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                                 try
                                 {
                                     // Call backend to ensure exists
-                                    hasComputeResource = await ResourceBrokerHttpClient.TriggerEnvironmentHeartbeatAsync(
+                                    hasComputeResource = await ResourceBrokerHttpClient.ProcessHeartbeatAsync(
                                         environment.Compute.ResourceId, childLogger.NewChildLogger());
 
                                     // Update keep alive details
@@ -128,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                             {
                                 try
                                 {
-                                    hasStorageResource = await ResourceBrokerHttpClient.TriggerEnvironmentHeartbeatAsync(
+                                    hasStorageResource = await ResourceBrokerHttpClient.ProcessHeartbeatAsync(
                                         environment.Storage.ResourceId, childLogger.NewChildLogger());
 
                                     // Update keep alive details

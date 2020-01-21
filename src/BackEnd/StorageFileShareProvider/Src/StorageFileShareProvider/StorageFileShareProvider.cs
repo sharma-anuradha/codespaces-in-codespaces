@@ -32,14 +32,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         }
 
         /// <inheritdoc/>
-        public async Task<FileShareProviderCreateResult> CreateAsync(
+        public Task<FileShareProviderCreateResult> CreateAsync(
             FileShareProviderCreateInput input,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
 
-            var result = await logger.OperationScopeAsync(
+            return logger.OperationScopeAsync(
                     "file_share_storage_provider_create_step",
                     async (childLogger) =>
                     {
@@ -55,10 +55,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                               .FluentAddValue(nameof(r.Status), r.Status.ToString());
                         return r;
                     },
-                    (ex, childLogger) => new FileShareProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message },
+                    (ex, childLogger) =>
+                    {
+                        var result = new FileShareProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                        return Task.FromResult(result);
+                    },
                     swallowException: true);
-
-            return result;
         }
 
         /// <inheritdoc/>
@@ -81,7 +83,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                           .FluentAddValue(nameof(r.Status), r.Status.ToString());
                     return r;
                 },
-                (ex, childLogger) => new FileShareProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message },
+                (ex, childLogger) =>
+                {
+                    var result = new FileShareProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 
@@ -110,7 +116,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         .FluentAddValue(nameof(r.Status), r.Status.ToString());
                     return r;
                 },
-                (ex, childLogger) => new FileShareProviderAssignResult() { Status = OperationState.Failed, ErrorReason = ex.Message },
+                (ex, childLogger) =>
+                {
+                    var result = new FileShareProviderAssignResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    return Task.FromResult(result);
+                },
                 swallowException: true);
         }
 

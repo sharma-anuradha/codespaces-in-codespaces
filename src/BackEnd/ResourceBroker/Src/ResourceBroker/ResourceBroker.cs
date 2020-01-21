@@ -195,7 +195,61 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<bool> ExistsAsync(Guid id, IDiagnosticsLogger logger)
+        public Task<DeleteResult> DeleteAsync(
+            DeleteInput input,
+            IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_delete",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
+
+                    await ResourceContinuationOperations.DeleteResource(
+                        input.ResourceId, input.Trigger, childLogger.NewChildLogger());
+
+                    return new DeleteResult { Successful = true };
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<SuspendResult> SuspendAsync(
+            SuspendInput input,
+            IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_cleanup",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
+
+                    await ResourceContinuationOperations.SuspendResource(input.ResourceId, input.EnvironmentId, input.Trigger, logger);
+
+                    return new SuspendResult { Successful = true };
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<StartResult> StartResourceAsync(
+            StartInput input,
+            IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_start",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ComputeResourceId)
+                        .FluentAddBaseValue("StorageResourceId", input.StorageResourceId);
+
+                    await ResourceContinuationOperations.StartEnvironment(
+                        input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, childLogger.NewChildLogger());
+
+                    return new StartResult { Successful = true };
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> ProcessHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
         {
             return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_exists",
@@ -224,58 +278,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         .FluentAddValue("ResourceIsDeleted", result != null ? (bool?)result.IsDeleted : null);
 
                     return exists;
-                });
-        }
-
-        /// <inheritdoc/>
-        public Task<DeallocateResult> DeallocateAsync(
-            DeallocateInput input,
-            IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_deallocate",
-                async (childLogger) =>
-                {
-                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
-
-                    await ResourceContinuationOperations.DeleteResource(
-                        input.ResourceId, input.Trigger, childLogger.NewChildLogger());
-
-                    return new DeallocateResult { Successful = true };
-                });
-        }
-
-        /// <inheritdoc/>
-        public Task<CleanupResult> CleanupAsync(
-            CleanupInput input,
-            IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_cleanup",
-                async (childLogger) =>
-                {
-                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
-                    await ResourceContinuationOperations.CleanupResource(input.ResourceId, input.EnvironmentId, input.Trigger, logger);
-                    return new CleanupResult { Successful = true };
-                });
-        }
-
-        /// <inheritdoc/>
-        public Task<EnvironmentStartResult> StartComputeAsync(
-            EnvironmentStartInput input,
-            IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_start_compute",
-                async (childLogger) =>
-                {
-                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ComputeResourceId)
-                        .FluentAddBaseValue("StorageResourceId", input.StorageResourceId);
-
-                    await ResourceContinuationOperations.StartEnvironment(
-                        input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, childLogger.NewChildLogger());
-
-                    return new EnvironmentStartResult { Successful = true };
                 });
         }
 

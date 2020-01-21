@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         private static readonly IDiagnosticsLogger Logger = new DefaultLoggerFactory().New();
 
         [Fact]
-        public void EnvironmentSettingsUpdate_GetEnvironmentAvailableSettingsUpdates()
+        public async Task EnvironmentSettingsUpdate_GetEnvironmentAvailableSettingsUpdates()
         {
             var sku1 = MockSku(skuName: "Sku1", skuTransitions: new[] { "Sku2" });
             var sku2 = MockSku(skuName: "Sku2");
@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var expectedAutoShutdownOptions = new[] { 123, 456, };
             var manager = CreateManager(skuCatalog: skuCatalog, autoShutdownDelayOptions: expectedAutoShutdownOptions);
 
-            var result = manager.GetEnvironmentAvailableSettingsUpdates(environment, Logger);
+            var result = await manager.GetAvailableSettingsUpdatesAsync(environment, Logger);
 
             Assert.Equal(expectedAutoShutdownOptions, result.AllowedAutoShutdownDelayMinutes);
             Assert.Single(result.AllowedSkus);
@@ -76,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.CloudEnvironment);
@@ -98,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository.Object);
 
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await manager.UpdateEnvironmentSettingsAsync(null, update, Logger));
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await manager.UpdateSettingsAsync(null, update, Logger));
         }
 
         [Fact]
@@ -118,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -147,7 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -176,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -206,7 +206,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateEnvironmentSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);

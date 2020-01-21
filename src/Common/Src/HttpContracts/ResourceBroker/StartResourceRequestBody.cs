@@ -1,4 +1,4 @@
-﻿// <copyright file="StartComputeRequestBody.cs" company="Microsoft">
+﻿// <copyright file="StartResourceRequestBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
     /// <summary>
     /// A request to start compute with storage and env vars.
     /// </summary>
-    public class StartComputeRequestBody
+    public class StartResourceRequestBody
     {
         /// <summary>
         /// Gets or sets the storage resource id token.

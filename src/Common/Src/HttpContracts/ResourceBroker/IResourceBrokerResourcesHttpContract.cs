@@ -15,21 +15,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
     public interface IResourceBrokerResourcesHttpContract
     {
         /// <summary>
-        /// Allocate a resource from the resource broker.
-        /// </summary>
-        /// <param name="requestBodies">The allocation input properties.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>The allocation result.</returns>
-        Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
-            IEnumerable<CreateResourceRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger);
-
-        /// <summary>
         /// Get a resource by id from the resource broker.
         /// </summary>
         /// <param name="resourceId">The resource id token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The allocation result.</returns>
         Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Allocate a set of resources.
+        /// </summary>
+        /// <param name="createResourcesRequestBody">The allocation input properties.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>The allocation result.</returns>
+        Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
+            IEnumerable<CreateResourceRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Deallocate a resource from the resource broker.
@@ -40,13 +40,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Perform cleanup operations prior to delete on a resource from the resource broker.
+        /// Perform suspend operations on a resource.
         /// </summary>
         /// <param name="resourceId">The resource id.</param>
         /// <param name="environmentId">Environment id associated with the resource.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource has been cleaned.</returns>
-        Task<bool> CleanupResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger);
+        Task<bool> SuspendResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Start the compute VM instance with the specified storage.
@@ -55,14 +55,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <param name="startComputeRequestBody">The bind input parameters.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Task.</returns>
-        Task StartComputeAsync(Guid computeResourceId, StartComputeRequestBody startComputeRequestBody, IDiagnosticsLogger logger);
+        Task<bool> StartResourceSetAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Checks to see if a given resource exists.
+        /// Updates resource environment keepalive if exists.
         /// </summary>
         /// <param name="id">The target resource id.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the resource exists.</returns>
-        Task<bool> TriggerEnvironmentHeartbeatAsync(Guid id, IDiagnosticsLogger logger);
+        /// <returns>Whether the resource has not been deleted
+        /// or in the process of being deleted.</returns>
+        Task<bool> ProcessHeartbeatAsync(Guid id, IDiagnosticsLogger logger);
     }
 }

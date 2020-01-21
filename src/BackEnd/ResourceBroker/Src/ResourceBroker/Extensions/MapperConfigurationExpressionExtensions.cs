@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             cfg.CreateMap<ResourceRecord, AllocateResult>();
             cfg.CreateMap<ResourcePool, ResourcePool>();
             cfg.CreateMap<FileShareProviderAssignResult, ShareConnectionInfo>();
-            cfg.CreateMap<VirtualMachineProviderStartComputeResult, EnvironmentStartResult>();
+            cfg.CreateMap<VirtualMachineProviderStartComputeResult, StartResult>();
             cfg.CreateMap<HeartBeatBody, HeartBeatInput>();
             cfg.CreateMap<HeartBeatInput, ResourceHeartBeatRecord>();
         }

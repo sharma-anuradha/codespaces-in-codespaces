@@ -138,7 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 httpContext: mockHttpContext,
                 serviceUriBuilder: mockServiceUriBuilder);
 
-            var actionResult = await environmentController.StartAsync(expectedEnvId, logger);
+            var actionResult = await environmentController.ResumeAsync(expectedEnvId, logger);
             Assert.IsType<OkObjectResult>(actionResult);
         }
 
@@ -287,7 +287,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
             
             mockEnvironmentManager
-                .Setup(x => x.GetEnvironmentWithStateRefreshAsync(
+                .Setup(x => x.GetAndStateRefreshAsync(
                     It.IsAny<string>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
@@ -295,14 +295,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
-                .Setup(x => x.GetEnvironmentAvailableSettingsUpdates(
+                .Setup(x => x.GetAvailableSettingsUpdatesAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<IDiagnosticsLogger>()))
-                .Returns(allowedUpdates);
+                .Returns(Task.FromResult(allowedUpdates));
 
             var environmentController = CreateTestEnvironmentsController(cloudEnvironmentManager: mockEnvironmentManager.Object);
 
-            var actionResult = await environmentController.GetAvailableUpdatesAsync(mockEnvironment.Id, logger);
+            var actionResult = await environmentController.GetAvailableSettingsUpdatesAsync(mockEnvironment.Id, logger);
             Assert.IsType<OkObjectResult>(actionResult);
 
             var result = (actionResult as OkObjectResult).Value as CloudEnvironmentAvailableUpdatesResult;
@@ -338,7 +338,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
 
             mockEnvironmentManager
-                .Setup(x => x.GetEnvironmentWithStateRefreshAsync(
+                .Setup(x => x.GetAndStateRefreshAsync(
                     It.IsAny<string>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
@@ -346,7 +346,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
-                .Setup(x => x.UpdateEnvironmentSettingsAsync(
+                .Setup(x => x.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
                     It.IsAny<IDiagnosticsLogger>()))
@@ -387,7 +387,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnvironmentManager = new Mock<ICloudEnvironmentManager>();
 
             mockEnvironmentManager
-                .Setup(x => x.GetEnvironmentWithStateRefreshAsync(
+                .Setup(x => x.GetAndStateRefreshAsync(
                     It.IsAny<string>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockEnvironment))
@@ -395,7 +395,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Assert.Equal(mockEnvironment.Id, id));
 
             mockEnvironmentManager
-                .Setup(x => x.UpdateEnvironmentSettingsAsync(
+                .Setup(x => x.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
                     It.IsAny<IDiagnosticsLogger>()))
@@ -712,7 +712,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var moq = new Mock<ICloudEnvironmentManager>();
 
             moq
-                .Setup(obj => obj.CreateEnvironmentAsync(
+                .Setup(obj => obj.CreateAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentOptions>(),
                     It.IsAny<StartCloudEnvironmentParameters>(),
@@ -737,7 +737,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 });
 
             moq
-                .Setup(obj => obj.StartEnvironmentAsync(
+                .Setup(obj => obj.ResumeAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<StartCloudEnvironmentParameters>(),
                     It.IsAny<IDiagnosticsLogger>()))
@@ -760,7 +760,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             if (environment != null)
             {
                 moq
-                    .Setup(obj => obj.GetEnvironmentWithStateRefreshAsync(
+                    .Setup(obj => obj.GetAndStateRefreshAsync(
                         It.Is<string>((id) => id == environment.Id),
                         It.IsAny<IDiagnosticsLogger>()))
                     .Returns(Task.FromResult(environment));
