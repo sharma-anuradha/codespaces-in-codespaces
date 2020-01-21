@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 
         private void UpdateDeveloperAppConfig(Dictionary<string, string> vmAgents)
         {
-            var devConfigFile = $@"C:\Users\{System.Environment.UserName}\CEDev\appsettings.json";
+            var devConfigFile = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), "CEDev", "appsettings.json");
             var devConfig = JsonConvert.DeserializeObject<AppConfiguration>(File.ReadAllText(devConfigFile));
 
             var families = new Dictionary<string, ImageFamilySettings>();
