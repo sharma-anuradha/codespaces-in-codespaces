@@ -106,6 +106,7 @@ export enum EnvironmentErrorCodes {
     startEnvironmentHandlerRequiredParameterMissing = 1005,
     startEnvironmentHandlerKitchensinkMissing = 1006,
     startEnvironmentHandlerLiveshareLoginFailed = 1007,
+    startEnvironmentHandlerMoreThanOneContainerFoundOnRestart = 1008,
     customContainersGeneralError = 1100,
     customContainersKitchensinkCreationFailed = 1121,
     customContainersKitchensinkStartFailed = 1122,

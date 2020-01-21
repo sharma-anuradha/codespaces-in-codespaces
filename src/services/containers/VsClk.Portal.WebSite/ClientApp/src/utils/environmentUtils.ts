@@ -127,6 +127,8 @@ export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
             return 'Error Code: 1006';
         case  EnvironmentErrorCodes.startEnvironmentHandlerLiveshareLoginFailed: 
             return 'Error Code: 1007';
+        case  EnvironmentErrorCodes.startEnvironmentHandlerMoreThanOneContainerFoundOnRestart: 
+            return 'Error Code: 1008';
         case  EnvironmentErrorCodes.customContainersGeneralError: 
             return 'Unknown error in environment creation.';
         case  EnvironmentErrorCodes.customContainersKitchensinkCreationFailed: 
