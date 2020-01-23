@@ -1,6 +1,6 @@
 export interface IRelayHubParticipant {
     readonly id: string;
-    readonly properties: { [key: string]: any; }
+    readonly properties: { [key: string]: any; };
     readonly isSelf: boolean;
 }
 

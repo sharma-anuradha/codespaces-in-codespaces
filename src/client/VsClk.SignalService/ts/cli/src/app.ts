@@ -1,14 +1,16 @@
-import { HubClient } from './HubClient';
-import { PresenceServiceProxy } from './PresenceServiceProxy';
-import { RelayServiceProxy } from './RelayServiceProxy';
+import {
+    HubClient,
+    ContactServiceProxy,
+    RelayServiceProxy,
+    IRelayHubProxy
+} from '@vs/signalr-client';
 
-import * as signalR from '@aspnet/signalr';
+import * as signalR from '@microsoft/signalr';
 import * as process from 'process';
 import * as yargs from 'yargs';
 import * as readline from 'readline';
-import { IRelayHubProxy } from './IRelayServiceProxy';
 
-import {StringDecoder} from 'string_decoder';
+import { StringDecoder } from 'string_decoder';
 const decoder = new StringDecoder('utf8');
 
 const argv = yargs
@@ -26,11 +28,6 @@ const argv = yargs
         description: 'Service Uri',
         type: 'string',
     })
-    .option('useSignalRHub', {
-        alias: 'u',
-        description: 'If using universal signalR hub',
-        type: 'boolean',
-    })
     .option('relayHub', {
         alias: 'r',
         description: 'If releay hub app',
@@ -43,7 +40,7 @@ const argv = yargs
 
 async function main() {
 
-    const serviceUri = argv.service || argv.useSignalRHub ? 'http://localhost:5000/signalrhub' : 'http://localhost:5000/presencehub';
+    const serviceUri = argv.service || 'http://localhost:5000/signalrhub';
 
     const logger: signalR.ILogger = {
         log: (level: signalR.LogLevel, msg: string) => console.log(msg)
@@ -65,18 +62,17 @@ async function main() {
         } else {
             try {
                 await keyPressCallback(key.name);
-            }
-            catch(err) {
+            } catch (err) {
                 console.log(`Error: ${err}`);
             }
         }
     });
 }
 
-function main_presence(hubClient: HubClient,logger: signalR.ILogger): (key: any) => Promise<void> {  
-    const presenceServiceProxy = new PresenceServiceProxy(hubClient.hubConnection, logger, argv.useSignalRHub );
+function main_presence(hubClient: HubClient, logger: signalR.ILogger): (key: any) => Promise<void> {  
+    const contactServiceProxy = new ContactServiceProxy(hubClient.hubConnection, logger, true );
 
-    presenceServiceProxy.onUpdateProperties((contact, properties, targetConnectionId) => {
+    contactServiceProxy.onUpdateProperties((contact, properties, targetConnectionId) => {
         // our ILogger will already send this to the console
     });
 
@@ -89,26 +85,26 @@ function main_presence(hubClient: HubClient,logger: signalR.ILogger): (key: any)
                 'status': 'available'
             };
 
-            const registerInfo = await presenceServiceProxy.registerSelfContact(argv.id, initialProperties);
+            const registerInfo = await contactServiceProxy.registerSelfContact(argv.id, initialProperties);
             console.log(`registerInfo-> ${JSON.stringify(registerInfo)}`);
         }
     });
 
     return async (key: any): Promise<void> => {
         if (key === 'a') {
-            await presenceServiceProxy.publishProperties({
+            await contactServiceProxy.publishProperties({
                 'status': 'available'
             });
         } else if (key === 'b') {
-            await presenceServiceProxy.publishProperties({
+            await contactServiceProxy.publishProperties({
                 'status': 'busy'
             });
         }
     };
 }
 
-function main_relay(hubClient: HubClient,logger: signalR.ILogger): (key: any) => Promise<void> {  
-    const relayServiceProxy = new RelayServiceProxy(hubClient.hubConnection, logger, argv.useSignalRHub);
+function main_relay(hubClient: HubClient, logger: signalR.ILogger): (key: any) => Promise<void> {  
+    const relayServiceProxy = new RelayServiceProxy(hubClient.hubConnection, logger, true);
 
     let relayHubProxy: IRelayHubProxy;
     return async (key: any): Promise<void> => {

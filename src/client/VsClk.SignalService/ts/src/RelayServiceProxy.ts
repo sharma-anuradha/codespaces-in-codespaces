@@ -1,4 +1,4 @@
-import * as signalR from '@aspnet/signalr';
+import * as signalR from '@microsoft/signalr';
 
 import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType, SendOption }  from './IRelayServiceProxy';
 import { HubProxyBase } from './HubProxyBase';
@@ -10,7 +10,7 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
         hubConnection: signalR.HubConnection,
         logger?: signalR.ILogger,
         useSignalRHub?: boolean) {
-        super(hubConnection, logger, useSignalRHub ? 'relayServiceHub' : undefined)
+        super(hubConnection, logger, useSignalRHub ? 'relayServiceHub' : undefined);
 
         hubConnection.on(this.toHubMethodName('receiveData'), async (hubId, fromParticipantId, uniqueId, type, data) => {
             if (this.logger) {
@@ -28,7 +28,8 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
             if (this.logger) {
                 this.logger.log(signalR.LogLevel.Debug, `RelayServiceProxy.participantChanged hubId:${hubId} participantId:${participantId} properties:${JSON.stringify(properties)} changeType:${changeType}`);
             }
-                       const relayHub = this.relayHubs.get(hubId);
+
+            const relayHub = this.relayHubs.get(hubId);
             if (relayHub) {
                 await relayHub._OnParticipantChanged(participantId, properties, changeType);
             }
@@ -55,7 +56,7 @@ class RelayHubProxy implements IRelayHubProxy {
     private hubParticipants = new Map<string, IRelayHubParticipant>();
 
     constructor(
-        private readonly relayServiceProxy : RelayServiceProxy,
+        private readonly relayServiceProxy: RelayServiceProxy,
         public id: string,
         joinHub: JoinHubInfo) {
             joinHub.Participants.forEach(p => {
@@ -64,7 +65,7 @@ class RelayHubProxy implements IRelayHubProxy {
                     properties: p.Properties,
                     isSelf: joinHub.ParticipantId === p.Id
                 };
-                this.hubParticipants.set(p.Id,relayHubParticipant);
+                this.hubParticipants.set(p.Id, relayHubParticipant);
             });
     }
 
@@ -97,7 +98,7 @@ class RelayHubProxy implements IRelayHubProxy {
                 uniqueId,
                 type,
                 data
-            }
+            };
 
             for (const callback of this.receiveDataCallbacks) {
                 await callback(receivedData);
@@ -139,14 +140,12 @@ class RelayHubProxy implements IRelayHubProxy {
     }
 }
 
-interface HubParticipant
-{
+interface HubParticipant {
     readonly Id: string;
-    readonly Properties: { [key: string]: any; }
+    readonly Properties: { [key: string]: any; };
 }
 
-interface JoinHubInfo
-{
+interface JoinHubInfo {
     readonly ParticipantId: string;
     readonly Participants: HubParticipant[];
 }

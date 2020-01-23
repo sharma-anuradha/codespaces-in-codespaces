@@ -1,0 +1,19 @@
+{
+    "name": "cli-signalr-client",
+    "private": true,
+    "version": "1.0.0",
+    "main": "out/app.js",
+    "description": "CLI test sample for the signalR client package",
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "dependencies": {
+        "@vs/signalr-client": "link:..",
+        "@types/yargs": "^13.0.0",
+        "yargs": "^13.2.4"
+    },
+    "devDependencies": {
+        "typescript": "^3.7.4"
+    }
+}

@@ -9,7 +9,7 @@ export declare enum ConnectionChangeType {
     Removed = 2
 }
 
-export interface IPresenceServiceProxy {
+export interface IContactServiceProxy {
     onUpdateProperties(callback: (contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void): void;
 
     onMessageReceived(callback: (targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void): void;

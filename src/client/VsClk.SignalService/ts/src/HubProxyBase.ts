@@ -1,8 +1,7 @@
-import * as signalR from '@aspnet/signalr';
+import * as signalR from '@microsoft/signalr';
 
-export class HubProxyBase
-{
-    private static readonly InvokeHubMethodAsync = 'InvokeHubMethodAsync';
+export class HubProxyBase {
+    private static readonly invokeHubMethodAsync = 'InvokeHubMethodAsync';
 
     constructor(
         public readonly hubConnection: signalR.HubConnection,
@@ -10,13 +9,13 @@ export class HubProxyBase
         protected readonly hubName?: string) {
     }
 
-    protected toHubMethodName(methodName:string): string {
+    protected toHubMethodName(methodName: string): string {
         return this.hubName ? `${this.hubName}.${methodName}` : methodName;
     }
 
     public invoke<T = any>(methodName: string, ...args: any[]): Promise<T> {
         if (this.hubName) {
-            return this.hubConnection.invoke<T>(HubProxyBase.InvokeHubMethodAsync,this.toHubMethodName(methodName), args );
+            return this.hubConnection.invoke<T>(HubProxyBase.invokeHubMethodAsync, this.toHubMethodName(methodName), args );
         } else {
             return this.hubConnection.invoke<T>(methodName, ...args);
         }
@@ -24,7 +23,7 @@ export class HubProxyBase
 
     public send(methodName: string, ...args: any[]): Promise<void> {
         if (this.hubName) {
-            return this.hubConnection.send(HubProxyBase.InvokeHubMethodAsync,this.toHubMethodName(methodName), args );
+            return this.hubConnection.send(HubProxyBase.invokeHubMethodAsync, this.toHubMethodName(methodName), args );
         } else {
             return this.hubConnection.send(methodName, ...args);
         }     

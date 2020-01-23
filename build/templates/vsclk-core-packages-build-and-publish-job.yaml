@@ -21,12 +21,22 @@ jobs:
     demands:
     - 'msbuild'
     - 'vstest'
+    - npm
 
   steps:
   - task: NuGetToolInstaller@0
     displayName: 'Install NuGet ${{ parameters.nugetVersionSpec }}'
     inputs:
       versionSpec: ${{ parameters.nugetVersionSpec }}
+
+  - task: NodeTool@0
+    displayName: Use Node 10.15.2
+    inputs:
+      versionSpec: 10.15.2
+
+  - task: YarnInstaller@3
+    inputs:
+     versionSpec: '1.19.1'
 
   - task: ms-vseng.MicroBuildTasks.30666190-6959-11e5-9f96-f56098202fef.MicroBuildSigningPlugin@2
     displayName: 'Install Signing Plugin'
@@ -39,6 +49,30 @@ jobs:
   - task: ms-vseng.MicroBuildShipTasks.8d7ae058-5d31-4092-9666-bf0d957afeea.MicroBuildAPIScanPlugin@2
     displayName: 'Install APIScan Plugin'
     condition: eq(True, ${{ parameters.apiScanEnabled }})
+
+  - task: Yarn@3
+    displayName: Install signalR client type script
+    inputs:
+      projectDirectory: 'src/client/VsClk.SignalService/ts'
+
+  - task: Yarn@3
+    displayName: signalR client build & pack
+    inputs:
+      projectDirectory: 'src/client/VsClk.SignalService/ts'
+      arguments: 'build:pack'
+
+  - task: Yarn@3
+    displayName: signalR client publish (optional when condition)
+    condition: eq(True, ${{ parameters.publishEnabled }})
+    inputs:
+      projectDirectory: 'src/client/VsClk.SignalService/ts'
+      arguments: 'build:pack-publish'
+
+  - task: PublishBuildArtifacts@1
+    displayName: Publish npm packages
+    inputs:
+      PathtoPublish: 'src/client/VsClk.SignalService/ts/pkgs'
+      ArtifactName: 'VSO npm packages'
 
   - task: NuGetCommand@2
     displayName: 'NuGet Restore'

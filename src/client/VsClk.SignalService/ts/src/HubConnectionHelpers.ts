@@ -1,4 +1,4 @@
-import * as signalR from '@aspnet/signalr';
+import * as signalR from '@microsoft/signalr';
 import { ExponentialBackoff } from './ExponentialBackoff';
 
 export async function connect(

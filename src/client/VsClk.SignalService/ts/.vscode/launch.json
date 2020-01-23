@@ -8,12 +8,11 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}\\dist\\app.js",
-            "preLaunchTask": "tsc: build - tsconfig.json",
+            "program": "${workspaceFolder}/cli/out/app.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ],
-            "args": ["--id", "rodrigov", "--useSignalRHub", "--relayHub"],
+            "args": ["--id", "rodrigov"],
             "console": "integratedTerminal"
         }
     ]

@@ -1,8 +1,8 @@
-import * as signalR from '@aspnet/signalr';
-import { IPresenceServiceProxy, ConnectionChangeType, IContactReference }  from './IPresenceServiceProxy';
+import * as signalR from '@microsoft/signalr';
+import { IContactServiceProxy, ConnectionChangeType, IContactReference }  from './IContactServiceProxy';
 import { HubProxyBase } from './HubProxyBase';
 
-export class PresenceServiceProxy extends HubProxyBase implements IPresenceServiceProxy {
+export class ContactServiceProxy extends HubProxyBase implements IContactServiceProxy {
     private updatePropertiesCallbacks: Array<(contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void>;
     private receiveMessageCallbacks: Array<(targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void>;
     private connectionChangedCallbacks: Array<(contact: IContactReference, changeType: ConnectionChangeType) => void>;
@@ -11,7 +11,7 @@ export class PresenceServiceProxy extends HubProxyBase implements IPresenceServi
         hubConnection: signalR.HubConnection,
         logger?: signalR.ILogger,
         useSignalRHub?: boolean) {
-        super(hubConnection, logger, useSignalRHub ? 'presenceServiceHub' : undefined)
+        super(hubConnection, logger, useSignalRHub ? 'presenceServiceHub' : undefined);
 
         hubConnection.on(this.toHubMethodName('updateValues'), (contact, properties, targetConnectionId) => this.updateValues(contact, properties, targetConnectionId));
         hubConnection.on(this.toHubMethodName('receiveMessage'), (targetContact, fromContact, messageType, body) => this.receiveMessage(targetContact, fromContact, messageType, body));
@@ -58,7 +58,7 @@ export class PresenceServiceProxy extends HubProxyBase implements IPresenceServi
     }
 
     public requestSubcriptions(targetContactProperties: { [key: string]: any; }[], propertyNames: string[], useStubContact: boolean): Promise<{ [key: string]: any; }[]> {
-        return this.invoke<{ [key: string]: any; }[]>('RequestSubcriptionsAsync)', targetContactProperties, propertyNames, useStubContact);
+        return this.invoke<{ [key: string]: any; }[]>('RequestSubcriptionsAsync', targetContactProperties, propertyNames, useStubContact);
     }
 
     public removeSubscription(targetContacts: IContactReference[]): Promise<void> {
