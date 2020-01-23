@@ -72,9 +72,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             var appSettings = ConfigureAppSettings(services);
             var frontEndAppSettings = appSettings.FrontEnd;
 
-            if (IsRunningInAzure() && frontEndAppSettings.UseMocksForLocalDevelopment)
+            if (IsRunningInAzure() &&
+                (frontEndAppSettings.UseMocksForLocalDevelopment ||
+                 frontEndAppSettings.DisableBackgroundTasksForLocalDevelopment))
             {
-                throw new InvalidOperationException("Cannot use mocks outside of local development");
+                throw new InvalidOperationException("Cannot use mocks or disable background tasks outside of local development.");
             }
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
@@ -121,23 +123,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                             .AllowAnyMethod());
                 });
 
-            // Add the account manager and the account management repository
-            services.AddPlanManager(frontEndAppSettings.PlanManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment);
+            // Add the environment manager and the cloud environment repository.
+            services.AddEnvironmentManager(
+                frontEndAppSettings.EnvironmentManagerSettings,
+                frontEndAppSettings.UseMocksForLocalDevelopment || frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker,
+                frontEndAppSettings.DisableBackgroundTasksForLocalDevelopment);
 
-            // Add the plan background worker
-            services.AddPlanWorker();
+            // Add the plan manager and the plan management repository
+            services.AddPlanManager(frontEndAppSettings.PlanManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment);
 
             // Add the billing event manager and the billing event repository
             services.AddBillingEventManager(frontEndAppSettings.UseMocksForLocalDevelopment);
 
-            // Add the Billing SubmissionWorker
-            services.AddBillingSubmissionWorker(frontEndAppSettings.UseMocksForLocalDevelopment);
+            if (!frontEndAppSettings.DisableBackgroundTasksForLocalDevelopment)
+            {
+                // Add the plan background worker
+                services.AddPlanWorker();
 
-            // Add the environment manager and the cloud environment repository.
-            services.AddEnvironmentManager(frontEndAppSettings.EnvironmentManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment || frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker);
+                // Add the Billing SubmissionWorker
+                services.AddBillingSubmissionWorker(frontEndAppSettings.UseMocksForLocalDevelopment);
 
-            // Add the billing backgroud worker
-            services.AddBillingWorker();
+                // Add the billing backgroud worker
+                services.AddBillingWorker();
+            }
 
             // Add the Live Share user profile and workspace providers.
             services

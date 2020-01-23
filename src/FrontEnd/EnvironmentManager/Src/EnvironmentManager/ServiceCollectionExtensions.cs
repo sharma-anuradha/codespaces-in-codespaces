@@ -23,11 +23,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="services">The service collection.</param>
         /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository.</param>
+        /// <param name="disableBackgroundTasks">A value indicating whether non-critical background tasks are disabled.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddEnvironmentManager(
             this IServiceCollection services,
             EnvironmentManagerSettings environmentManagerSettings,
-            bool useMockCloudEnvironmentRepository)
+            bool useMockCloudEnvironmentRepository,
+            bool disableBackgroundTasks)
         {
             services.AddSingleton(environmentManagerSettings);
 
@@ -43,13 +45,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // The environment mangaer
             services.AddSingleton<ICloudEnvironmentManager, CloudEnvironmentManager>();
 
-            // Register tasks
-            services.AddSingleton<IWatchOrphanedSystemEnvironmentsTask, WatchOrphanedSystemEnvironmentsTask>();
-            services.AddSingleton<ILogCloudEnvironmentStateTask, LogCloudEnvironmentStateTask>();
-            services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
+            if (!disableBackgroundTasks)
+            {
+                // Register background tasks
+                services.AddSingleton<IWatchOrphanedSystemEnvironmentsTask, WatchOrphanedSystemEnvironmentsTask>();
+                services.AddSingleton<ILogCloudEnvironmentStateTask, LogCloudEnvironmentStateTask>();
+                services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
 
-            // Job warmup
-            services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();
+                // Job warmup
+                services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();
+            }
 
             return services;
         }

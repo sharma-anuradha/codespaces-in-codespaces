@@ -42,6 +42,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public bool UseMocksForLocalDevelopment { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether non-critical background tasks are
+        /// disabled for local development.
+        /// </summary>
+        public bool DisableBackgroundTasksForLocalDevelopment { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to use fake local docker deployment for cloud environment development.
         /// This would be useful mostly for CE CLI development and testing.
         /// </summary>
