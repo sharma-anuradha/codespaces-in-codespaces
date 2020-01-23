@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Tracks the state of operation in continuation framework.

@@ -1,28 +1,27 @@
-﻿// <copyright file="ResourceJobQueuePayload.cs" company="Microsoft">
+﻿// <copyright file="ContinuationQueuePayload.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Core payload that is used to queue the continuation request.
     /// </summary>
-    public class ResourceJobQueuePayload
+    public class ContinuationQueuePayload
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResourceJobQueuePayload"/> class.
+        /// Initializes a new instance of the <see cref="ContinuationQueuePayload"/> class.
         /// </summary>
-        public ResourceJobQueuePayload()
+        public ContinuationQueuePayload()
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResourceJobQueuePayload"/> class.
+        /// Initializes a new instance of the <see cref="ContinuationQueuePayload"/> class.
         /// </summary>
         /// <param name="trackingId">Tracking id for this job.</param>
         /// <param name="trackingInstanceId">Tracking instance id for this job.</param>
@@ -30,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <param name="created">Created date/time.</param>
         /// <param name="stepCount">What step count we are at.</param>
         /// <param name="loggerProperties">Target logger properties.</param>
-        public ResourceJobQueuePayload(
+        public ContinuationQueuePayload(
             string trackingId, string trackingInstanceId, string target, DateTime created, int stepCount, IDictionary<string, string> loggerProperties)
         {
             TrackingId = trackingId;

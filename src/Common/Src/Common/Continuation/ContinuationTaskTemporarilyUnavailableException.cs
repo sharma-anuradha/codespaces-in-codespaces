@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Operation Temporarily Unavailable exception.

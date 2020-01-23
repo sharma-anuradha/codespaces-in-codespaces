@@ -6,10 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Continuation Activator which works with the supplied message and the
@@ -34,6 +32,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <param name="payload">Payload that needs to be continued.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Next payload.</returns>
-        Task<ResourceJobQueuePayload> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger);
+        Task<ContinuationQueuePayload> Continue(ContinuationQueuePayload payload, IDiagnosticsLogger logger);
     }
 }

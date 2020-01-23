@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using System.Threading.Tasks;
 using Xunit;
 

@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Represents the continuation result.

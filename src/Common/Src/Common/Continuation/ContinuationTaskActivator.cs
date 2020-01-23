@@ -7,11 +7,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Continuation Activator which works with the supplied message and the
@@ -19,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
     /// </summary>
     public class ContinuationTaskActivator : IContinuationTaskActivator
     {
-        private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskActivator;
+        private const string LogBaseName = "continuation_task_activator";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContinuationTaskActivator"/> class.
@@ -45,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             var trackingInstanceId = Guid.NewGuid();
             trackingId = trackingId ?? trackingInstanceId;
 
-            var payload = new ResourceJobQueuePayload
+            var payload = new ContinuationQueuePayload
             {
                 TrackingId = trackingId.ToString(),
                 TrackingInstanceId = trackingInstanceId.ToString(),
@@ -64,14 +61,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         }
 
         /// <inheritdoc/>
-        public Task<ResourceJobQueuePayload> Continue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        public Task<ContinuationQueuePayload> Continue(ContinuationQueuePayload payload, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 LogBaseName,
                 async (childLogger) => (await InnerContinue(payload, childLogger)).ResultPayload);
         }
 
-        private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        private async Task<(ContinuationQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(ContinuationQueuePayload payload, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("ContinuationActivatorId", Guid.NewGuid())
                 .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
@@ -87,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             var continueFindDuration = logger.StartDuration();
 
             var result = (ContinuationResult)null;
-            var resultPayload = (ResourceJobQueuePayload)null;
+            var resultPayload = (ContinuationQueuePayload)null;
 
             var didHandle = false;
             foreach (var handler in Handlers)
@@ -121,10 +118,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             return (resultPayload, result);
         }
 
-        private async Task<(ResourceJobQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(IContinuationTaskMessageHandler handler, ResourceJobQueuePayload payload, IDiagnosticsLogger logger)
+        private async Task<(ContinuationQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(IContinuationTaskMessageHandler handler, ContinuationQueuePayload payload, IDiagnosticsLogger logger)
         {
             // Result is based off the current
-            var resultPayload = new ResourceJobQueuePayload(
+            var resultPayload = new ContinuationQueuePayload(
                 payload.TrackingId, payload.TrackingInstanceId, payload.Target, payload.Created, payload.StepCount + 1, payload.LoggerProperties);
 
             // Run the continuation
@@ -141,11 +138,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                     .FluentAddValue("ContinuationHandlerTemporarilyUnavailableMessage", e.Message);
 
                 result = new ContinuationResult
-                    {
-                        NextInput = payload.Input,
-                        RetryAfter = e.RetryAfter,
-                        Status = payload.Status.GetValueOrDefault(),
-                    };
+                {
+                    NextInput = payload.Input,
+                    RetryAfter = e.RetryAfter,
+                    Status = payload.Status.GetValueOrDefault(),
+                };
             }
             catch (Exception e)
             {

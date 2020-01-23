@@ -6,9 +6,8 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Message pump which gates messages to/from the underlying queue.
@@ -41,8 +40,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// Pushes message onto queue.
         /// </summary>
         /// <param name="payload">Payload to be pushed.</param>
+        /// <param name="initialVisibilityDelay">Initial visibility delay.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task PushMessageAsync(ResourceJobQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger);
+        Task PushMessageAsync(ContinuationQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger);
     }
 }

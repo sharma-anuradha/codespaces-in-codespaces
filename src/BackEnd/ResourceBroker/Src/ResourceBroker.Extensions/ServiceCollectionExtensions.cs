@@ -7,10 +7,10 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -118,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             // Use the mock services if we're developing locally
             if (mocksSettings?.UseMocksForExternalDependencies == true)
             {
-                services.AddSingleton<IResourceJobQueueRepository, MockResourceJobQueueRepository>();
+                services.AddSingleton<IContinuationJobQueueRepository, MockResourceJobQueueRepository>();
                 services.AddSingleton<IResourceRepository, MockResourceRepository>();
 
                 return;
@@ -133,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                 CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
 
             // Register Queue Items
-            services.AddSingleton<IResourceJobQueueRepository, StorageResourceJobQueueRepository>();
+            services.AddSingleton<IContinuationJobQueueRepository, StorageResourceJobQueueRepository>();
 
             // SDK provider
             services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 

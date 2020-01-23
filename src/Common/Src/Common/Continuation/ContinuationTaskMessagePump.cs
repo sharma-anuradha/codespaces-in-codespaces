@@ -9,18 +9,15 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Message pump which gates messages to/from the underlying queue.
     /// </summary>
     public class ContinuationTaskMessagePump : IContinuationTaskMessagePump
     {
-        private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskMessagePump;
+        private const string LogBaseName = "continuation_task_message_pump";
         private static TimeSpan defaultTimeout = TimeSpan.FromMinutes(2.5);
 
         /// <summary>
@@ -30,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         /// <param name="resourceJobQueueRepository">Underlying resourcec job queue repository.</param>
         public ContinuationTaskMessagePump(
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
-            IResourceJobQueueRepository resourceJobQueueRepository)
+            IContinuationJobQueueRepository resourceJobQueueRepository)
         {
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             ResourceJobQueueRepository = resourceJobQueueRepository;
@@ -39,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
-        private IResourceJobQueueRepository ResourceJobQueueRepository { get; }
+        private IContinuationJobQueueRepository ResourceJobQueueRepository { get; }
 
         private ConcurrentQueue<CloudQueueMessage> MessageCache { get; }
 
@@ -58,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
                         .FluentAddValue("PumpTargetLevel", targetMessageCacheLength);
 
                     // Only trigger work when we have something to really do
-                    if (MessageCache.Count < (targetMessageCacheLength / 2))
+                    if (MessageCache.Count < targetMessageCacheLength / 2)
                     {
                         childLogger.FluentAddValue("PumpFillDidTrigger", true.ToString());
 
@@ -128,7 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
         }
 
         /// <inheritdoc/>
-        public async Task PushMessageAsync(ResourceJobQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
+        public async Task PushMessageAsync(ContinuationQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             await ResourceJobQueueRepository.AddAsync(payload.ToJson(), initialVisibilityDelay, logger);
         }

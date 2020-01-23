@@ -9,10 +9,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Continuation manager that controls the workers that gets available messages
@@ -20,8 +18,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
     /// </summary>
     public class ContinuationTaskWorkerPoolManager : IContinuationTaskWorkerPoolManager
     {
-        private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskWorkerPoolManager;
-        private const string LogLevelBaseName = ResourceLoggingConstants.ContinuationTaskWorkerPoolManager + "-manage-level";
+        private const string LogBaseName = "continuation_task_worker_pool_manager";
+        private const string LogLevelBaseName = "continuation_task_worker_pool_manager" + "_manage_level";
         private const int TargetWorkerCount = 5;
         private const int MaxWorkerCount = 10;
         private const int MinWorkerCount = 3;
@@ -180,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
 
                     // Spin worker up in the backround
                     TaskHelper.RunBackgroundLoop(
-                        $"{ResourceLoggingConstants.ContinuationTaskWorker}-run",
+                        $"continuation_task_worker_run",
                         (taskLogger) => worker.RunAsync(taskLogger),
                         null,
                         childLogger);

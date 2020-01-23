@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {

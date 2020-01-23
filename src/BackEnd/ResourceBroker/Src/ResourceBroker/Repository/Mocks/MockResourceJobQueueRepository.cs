@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mocks
 {
     /// <summary>
     /// Mock resource job queue repository.
     /// </summary>
-    public class MockResourceJobQueueRepository : IResourceJobQueueRepository
+    public class MockResourceJobQueueRepository : IContinuationJobQueueRepository
     {
         /// <summary>
         /// Queue name that should be used.
@@ -86,21 +86,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             await ResourceRepository.UpdateAsync(resource, Logger);
         }
 
+        /// <inheritdoc/>
         public Task<IEnumerable<CloudQueueMessage>> GetAsync(int popCount, IDiagnosticsLogger logger, TimeSpan? timeout = null)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
         public Task<CloudQueueMessage> GetAsync(IDiagnosticsLogger logger, TimeSpan? timeout = null)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
         public Task DeleteAsync(CloudQueueMessage message, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
         public Task<int?> GetApproximateMessageCount(IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();

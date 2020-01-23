@@ -5,13 +5,14 @@
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
 {
     /// <summary>
     /// Resource repository fronting storage queue.
     /// </summary>
-    public class StorageResourceJobQueueRepository : StorageQueueCollection, IResourceJobQueueRepository
+    public class StorageResourceJobQueueRepository : StorageQueueCollection, IContinuationJobQueueRepository
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageResourceJobQueueRepository"/> class.

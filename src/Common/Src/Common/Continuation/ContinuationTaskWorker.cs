@@ -8,11 +8,9 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
     /// <summary>
     /// Continuation worker that gets available messages and passes them off to the activator
@@ -20,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
     /// </summary>
     public class ContinuationTaskWorker : IContinuationTaskWorker
     {
-        private const string LogBaseName = ResourceLoggingConstants.ContinuationTaskWorker;
+        private const string LogBaseName = "continuation_task_worker";
         private static readonly TimeSpan MissDelayTime = TimeSpan.FromSeconds(1);
         private static readonly int LongMinMissDelayTime = 2;
         private static readonly int LongMaxMissDelayTime = 5;
@@ -141,9 +139,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Continuatio
             Disposed = true;
         }
 
-        private ResourceJobQueuePayload GetTypedPayload(CloudQueueMessage message)
+        private ContinuationQueuePayload GetTypedPayload(CloudQueueMessage message)
         {
-            return JsonConvert.DeserializeObject<ResourceJobQueuePayload>(
+            return JsonConvert.DeserializeObject<ContinuationQueuePayload>(
                 message.AsString, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
         }
     }
