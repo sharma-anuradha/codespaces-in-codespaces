@@ -12,6 +12,8 @@ import './index.css';
 import { getHostingModules } from './getHostingInitModules';
 import { initHostingHtmlTags } from './initHostingHtmlTags';
 
+import { cleanupLegacyMSALCookies } from './utils/cleanupLegacyMSALCookies';
+
 async function startApplication() {
     const [ hostingInitModules ] = await Promise.all([
         getHostingModules(),
@@ -23,6 +25,8 @@ async function startApplication() {
 
     telemetry.initializeTelemetry(matchPath);
     trackUnhandled();
+
+    cleanupLegacyMSALCookies();
 
     window.addEventListener('beforeunload', () => {
         sendTelemetry('vsonline/application/before-unload', {});
