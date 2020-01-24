@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -18,6 +19,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
     public class Startup
     {
+        private static readonly TimeSpan CacheControl_MaxAgeValue = TimeSpan.FromHours(2);
+
         public Startup(IConfiguration configuration, IWebHostEnvironment hostEnvironment)
         {
             Configuration = configuration;
@@ -192,6 +195,20 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 }
             });
             app.UseRouting();
+            app.Use(async (context, next) =>
+            {
+                if (!context.Request.Path.StartsWithSegments("/static", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.GetTypedHeaders().CacheControl = 
+                        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                        {
+                            Public = true,
+                            MaxAge = CacheControl_MaxAgeValue
+                        };
+                }
+
+                await next();
+            });
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(routes =>
