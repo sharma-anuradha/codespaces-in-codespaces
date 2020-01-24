@@ -50,6 +50,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         {
             if (properties.TryGetValue(propertyName, out var value) && value != null)
             {
+                if (!(value is IConvertible))
+                {
+                    throw new InvalidCastException($"Failed to cast value for property:{propertyName} and type:{value.GetType().FullName}");
+                }
+
                 return (T)Convert.ChangeType(value, typeof(T));
             }
 

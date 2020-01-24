@@ -29,6 +29,7 @@
     <ProjectReference Include="..\AzureDocumentsProvider.AspNetCore\AzureDocumentsProvider.AspNetCore.csproj" />
     <ProjectReference Include="..\AzureRedisProvider.AspNetCore\AzureRedisProvider.AspNetCore.csproj" />
     <ProjectReference Include="..\ContactBackplane.Common\ContactBackplane.Common.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="$(Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version)" />
   </ItemGroup>
 
   <ItemGroup>

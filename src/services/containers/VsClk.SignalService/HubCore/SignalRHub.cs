@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsCloudKernel.SignalService.Common;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
@@ -16,11 +17,6 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         private readonly Dictionary<string, HubDispatcher> hubDispatchers;
         private readonly IServiceScopeFactory serviceScopeFactory;
-
-        private static JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
 
         public SignalRHub(
             IServiceScopeFactory serviceScopeFactory, 
@@ -141,107 +137,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
             else if (value is JsonElement jsonElement)
             {
-                if (jsonElement.ValueKind == JsonValueKind.Array)
-                {
-                    var array = Array.CreateInstance(argumentType.GetElementType(), jsonElement.GetArrayLength());
-                    int index = 0;
-                    foreach (var item in jsonElement.EnumerateArray())
-                    {
-                        array.SetValue(ToObject(item, argumentType.GetElementType()), index++);
-                    }
-
-                    return array;
-                }
-                else if (argumentType == typeof(Dictionary<string, object>))
-                {
-                    var obj = new Dictionary<string, object>();
-                    foreach (var property in jsonElement.EnumerateObject())
-                    {
-                        obj[property.Name] = ToObject(property.Value, ToType(property.Value.ValueKind));
-                    }
-
-                    return obj;
-                }
-
-                return ToObject(jsonElement, argumentType);
+                return JsonHelpers.ConvertTo(jsonElement, argumentType);
             }
 
             return value;
-        }
-
-        private static object ToObject(JsonElement jsonElement, Type argumentType)
-        {
-            if (jsonElement.ValueKind == JsonValueKind.Null)
-            {
-                return null;
-            }
-
-            if (argumentType == typeof(bool))
-            {
-                return jsonElement.GetBoolean();
-            }
-            else if (argumentType == typeof(sbyte))
-            {
-                return jsonElement.GetSByte();
-            }
-            else if (argumentType == typeof(byte))
-            {
-                return jsonElement.GetByte();
-            }
-            else if (argumentType == typeof(ushort))
-            {
-                return jsonElement.GetUInt16();
-            }
-            else if (argumentType == typeof(short))
-            {
-                return jsonElement.GetInt16();
-            }
-            if (argumentType == typeof(uint))
-            {
-                return jsonElement.GetUInt32();
-            }
-            else if (argumentType == typeof(int))
-            {
-                return jsonElement.GetInt32();
-            }
-            else if (argumentType == typeof(double))
-            {
-                return jsonElement.GetDouble();
-            }
-            else if (argumentType == typeof(string))
-            {
-                return jsonElement.GetString();
-            }
-            else if (argumentType == typeof(object))
-            {
-                var typeObj = ToType(jsonElement.ValueKind);
-                if (typeObj != typeof(object))
-                {
-                    return ToObject(jsonElement, typeObj);
-                }
-
-                return jsonElement;
-            }
-
-            return JsonSerializer.Deserialize(jsonElement.ToString(), argumentType, JsonSerializerOptions);
-        }
-
-        private static Type ToType(JsonValueKind jsonValueKind)
-        {
-            switch(jsonValueKind)
-            {
-                case JsonValueKind.Array:
-                    return typeof(object[]);
-                case JsonValueKind.String:
-                    return typeof(string);
-                case JsonValueKind.Number:
-                    return typeof(double);
-                case JsonValueKind.True:
-                case JsonValueKind.False:
-                    return typeof(bool);
-                default:
-                    return typeof(object);
-            }
         }
 
         private async Task HubCallbackAsync(HubDispatcher hubDispatcher, Func<Hub, Task> hubCallback )
@@ -283,12 +182,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private static ValueTask DisposeAsync(IDisposable disposable)
         {
-#if _NETCORE3
             if (disposable is IAsyncDisposable asyncDisposable)
             {
                 return asyncDisposable.DisposeAsync();
             }
-#endif
+
             disposable.Dispose();
             return default;
         }

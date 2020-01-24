@@ -59,7 +59,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             {
                 hubOptions.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
                 hubOptions.KeepAliveInterval = TimeSpan.FromMinutes(1);
-            });
+            }).AddNewtonsoftJsonProtocol();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

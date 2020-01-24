@@ -102,10 +102,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             services.AddSingleton<RelayService>();
 
-            var signalRService = services.AddSignalR().AddJsonProtocol(options =>
-            {
-                options.PayloadSerializerOptions.PropertyNamingPolicy = null;
-            });
+            var signalRService = services.AddSignalR().AddNewtonsoftJsonProtocol();
 
             var keyVaultName = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.KeyVaultName));
             // if we can eventually retrieve signalR endpoints from the key vault

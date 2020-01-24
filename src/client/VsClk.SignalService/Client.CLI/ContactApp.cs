@@ -19,6 +19,8 @@ namespace SignalService.Client.CLI
 {
     internal class ContactApp : SignalRApp
     {
+        private const string TextMessageType = "typeTest";
+
         private string contactId;
         private string email;
         private ContactServiceProxy presenceServiceProxy;
@@ -54,6 +56,12 @@ namespace SignalService.Client.CLI
             this.presenceServiceProxy.MessageReceived += (s, e) =>
             {
                 Console.WriteLine($"->MessageReceived: from:{e.FromContact} type:{e.Type} body:{e.Body}");
+
+                if (e.Type == TextMessageType)
+                {
+                    var payload = ((JToken)e.Body).ToObject<MessagePayload>();
+                    Console.WriteLine($"->MessagePayload: text:{payload.Text} type:{e.Type} type:{payload.Metadata.Type}");
+                }
             };
 
             this.presenceServiceProxy.ConnectionChanged += (s, e) =>
@@ -231,7 +239,16 @@ namespace SignalService.Client.CLI
                 Console.Write("Enter target contact id:");
                 var targetContactId = Console.ReadLine();
 
-                await this.presenceServiceProxy.SendMessageAsync(new ContactReference(targetContactId, null), "typeTest", JToken.FromObject("Hi !"), default);
+                var payload = new MessagePayload()
+                {
+                    Text = "Hi !",
+                    Metadata = new Textmetadata()
+                    {
+                        Type = "text",
+                    },
+                };
+
+                await this.presenceServiceProxy.SendMessageAsync(new ContactReference(targetContactId, null), TextMessageType, JToken.FromObject(payload), default);
             }
             else if (key == 'f')
             {
@@ -265,6 +282,18 @@ namespace SignalService.Client.CLI
                     }
                 }
             }
+        }
+
+        private class Textmetadata
+        {
+            public string Type { get; set; }
+        }
+
+        private class MessagePayload
+        {
+            public string Text { get; set; }
+
+            public Textmetadata Metadata { get; set; }
         }
     }
 }

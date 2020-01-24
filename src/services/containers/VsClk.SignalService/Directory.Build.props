@@ -6,5 +6,6 @@
     <SignalRVersion>1.2.3</SignalRVersion>
     <VisualStudioThreadingVersion>16.0.102</VisualStudioThreadingVersion>
     <StreamJsonRpcVersion>2.0.167</StreamJsonRpcVersion>
+    <Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>3.1.1</Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>
   </PropertyGroup>
 </Project>
