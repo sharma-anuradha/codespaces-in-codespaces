@@ -37,7 +37,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <returns>True if the test succeeded.</returns>
         public static bool IsWindowsSkuInternalUser(this Profile profile)
         {
-            return profile.Email?.EndsWith("@microsoft.com") ?? false;
+            var email = profile.Email;
+            if (string.IsNullOrEmpty(email))
+            {
+                return false;
+            }
+
+            // Find the '@' char and create a string of all characters after it
+            var amperstandIndex = email.LastIndexOf('@');
+            var emailDomain = email.Substring(amperstandIndex + 1);
+            return emailDomain.Equals("microsoft.com", System.StringComparison.OrdinalIgnoreCase) ||
+                   emailDomain.EndsWith(".microsoft.com", System.StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
