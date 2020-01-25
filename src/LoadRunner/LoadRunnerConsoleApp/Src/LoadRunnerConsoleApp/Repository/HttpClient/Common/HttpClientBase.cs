@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         /// <summary>
         /// Gets of sets the http client provider.
         /// </summary>
-        protected IHttpClientProvider HttpClientProvider { get; }
+        protected ICurrentUserHttpClientProvider HttpClientProvider { get; }
 
         /// <summary>
         /// Sends request using current http client.
@@ -73,9 +74,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
             HttpMethod method,
             string requestUri,
             TInput input,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            System.Net.Http.HttpClient httpclient = null)
         {
             var httpRequestMessage = new HttpRequestMessage(method, requestUri);
+
+            // Default the client if none is specified
+            httpclient = httpclient ?? HttpClientProvider.HttpClient;
 
             // Set up logging
             var duration = logger?.StartDuration();
@@ -98,10 +103,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
             try
             {
                 httpResponseMessage = await HttpClientProvider.HttpClient.SendAsync(httpRequestMessage);
+
                 await httpResponseMessage.ThrowIfFailedAsync();
 
                 // Get the response body
-                var resultBody = await httpResponseMessage.Content.ReadAsStringAsync();
+                var resultBody = default(string);
+                if (httpResponseMessage.StatusCode == HttpStatusCode.TemporaryRedirect)
+                {
+                    // Fetch new location for the redirect
+                    var finalRequestUri = httpResponseMessage.Headers.Location;
+
+                    // Create fresh http client for the redict
+                    using (var redirectHttpClient = HttpClientProvider.Create(null))
+                    {
+                        resultBody = await SendRawAsync(method, finalRequestUri.AbsoluteUri, input, logger, redirectHttpClient);
+                    }
+                }
+                else
+                {
+                    // Fetch  content from request
+                    resultBody = await httpResponseMessage.Content.ReadAsStringAsync();
+                }
 
                 logger?.TryAddDuration(duration);
                 logger?.LogInfo(GetType().FormatLogMessage(nameof(SendRawAsync)));

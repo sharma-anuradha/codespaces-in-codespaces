@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -60,29 +61,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        public Task<int> RunAsync(IDiagnosticsLogger logger)
+        public async Task<int> RunAsync(IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
-                LogBaseName,
-                async (childLogger) =>
+            var regions = AppSettings.Regions.Where(x => x.Value.Enabled);
+
+            // Iterate through each region we have, working on 3 at a time
+            await TaskHelper.RunConcurrentEnumerableAsync(
+                $"{LogBaseName}_region_run",
+                regions,
+                async (region, childLogger) =>
                 {
                     // Pre cleanup
-                    var poolCodes = await PreExecutionCleanupAsync(childLogger);
+                    var poolCodes = await PreExecutionCleanupAsync(region, childLogger);
+
+                    // Filter codes only to those that are targeted
+                    if (region.Value.TargetPools != null && region.Value.TargetPools.Any())
+                    {
+                        poolCodes = poolCodes.Where(x => region.Value.TargetPools.Where(y => y.Id == x).Any());
+                    }
 
                     // Pre execution setup
-                    await PreExecutionSetupAsync(poolCodes, childLogger);
+                    await PreExecutionSetupAsync(poolCodes, region, childLogger);
 
                     // Run tests
-                    await RunCoreTestAsync(childLogger);
+                    var totalRuns = AppSettings.BatchTotalRuns.HasValue ? AppSettings.BatchTotalRuns.Value : 1;
+                    for (var i = 0; i < totalRuns; i++)
+                    {
+                        await RunCoreTestAsync(region, childLogger);
+                    }
 
                     // Post cleanup
-                    await PostExecutionCleanupAsync(poolCodes, childLogger);
+                    await PostExecutionCleanupAsync(poolCodes, region, childLogger);
+                },
+                logger);
 
-                    return 0;
-                });
+            return 0;
         }
 
-        private async Task<IEnumerable<string>> PreExecutionCleanupAsync(IDiagnosticsLogger logger)
+        private async Task<IEnumerable<string>> PreExecutionCleanupAsync(KeyValuePair<string, AppSettingsRegion> region, IDiagnosticsLogger logger)
         {
             // Fetch current snapshot
             var poolSnapshots = await FetchPoolSnapshotsAsync(logger.NewChildLogger());
@@ -117,17 +133,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
                 () => throw new Exception("Pool snapshots didn't appear within alloted time."));
 
             // Currently the same
-            await PostExecutionCleanupAsync(poolCodes, logger);
+            await PostExecutionCleanupAsync(poolCodes, region, logger);
 
             return poolCodes;
         }
 
-        private async Task PreExecutionSetupAsync(IEnumerable<string> poolCodes, IDiagnosticsLogger logger)
+        private async Task PreExecutionSetupAsync(IEnumerable<string> poolCodes, KeyValuePair<string, AppSettingsRegion> region, IDiagnosticsLogger logger)
         {
             // Enable pools
             await poolCodes.ForEachAsync(
                 x => ResourcePoolSettingsRepository.CreateOrUpdateAsync(
-                    new ResourcePoolSettingsRecord { Id = x, IsEnabled = true }, logger.NewChildLogger()));
+                    new ResourcePoolSettingsRecord
+                    {
+                        Id = x,
+                        IsEnabled = true,
+                        TargetCount =
+                            region.Value.TargetPools?.Where(y => y.Id == x).FirstOrDefault()?.TargetCount
+                                ?? region.Value.DefaultTargetCount
+                                ?? AppSettings.DefaultTargetCount,
+                    }, logger.NewChildLogger()));
 
             // Check that pool levels are at 0, wait till 0 if not
             await TaskHelper.RetryUntilSuccessOrTimeout(
@@ -140,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
 
                     // Check that all pools are empty
                     return currentSnapshots.Any() && currentSnapshots
-                        .Select(x => x.ReadyUnassignedCount >= (x.TargetCount * 0.5))
+                        .Select(x => x.ReadyUnassignedCount >= (x.TargetCount * 0.8))
                         .Aggregate((result, x) => result && x);
                 },
                 TimeSpan.FromMinutes(35), // Takes a while for all the storage accounts to come up
@@ -149,82 +173,95 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
                 () => throw new Exception("Pool populate didn't occur within alloted time."));
         }
 
-        private async Task RunCoreTestAsync(IDiagnosticsLogger logger)
+        private async Task RunCoreTestAsync(KeyValuePair<string, AppSettingsRegion> region, IDiagnosticsLogger logger)
         {
-            var regions = AppSettings.Regions.Where(x => x.Value.Enabled);
             var repositories = AppSettings.GitRepositories.ToList();
             var regionEnvironments = new Dictionary<string, IList<string>>();
 
-            // Iterate through each region we have, working on 3 at a time
-            await TaskHelper.RunBackgroundEnumerableAsync(
-                "region-environement-create-run",
-                regions,
-                async (region, childLogger) =>
-                {
-                    var environments = new List<string>();
-                    var planId = region.Value.AccountPlanId;
-                    var location = region.Key;
+            var environments = new List<string>();
+            var planId = region.Value.AccountPlanId;
+            var location = region.Key;
 
-                    // Request total environments needed
-                    for (var i = 0; i < region.Value.TotalEnvironementRunCount; i++)
+            // Request total environments needed
+            for (var i = 0; i < region.Value.TotalEnvironementRunCount; i++)
+            {
+                // Track http error count
+                var errorCount = 0;
+
+                // Setup environment inputs
+                var repository = repositories[i % repositories.Count];
+
+                // Try provisioning the environement till we get one, this is
+                // designed to cater for the case where the pool capacity runs
+                // out and we want to give it a chance to start filling again.
+                await TaskHelper.RetryUntilSuccessOrTimeout(
+                    "region-environement-create-item-run",
+                    async (itemLogger) =>
                     {
-                        // Setup environment inputs
-                        var repository = repositories[i % repositories.Count];
+                        try
+                        {
+                            // Create environement
+                            var result = await EnvironementsRepository.ProvisionEnvironmentAsync(
+                                planId, $"GeneratedName_{Guid.NewGuid().ToString()}", repository, location, "standardLinux", itemLogger.NewChildLogger());
 
-                        // Try provisioning the environement till we get one, this is
-                        // designed to cater for the case where the pool capacity runs
-                        // out and we want to give it a chance to start filling again.
-                        await TaskHelper.RetryUntilSuccessOrTimeout(
-                            "region-environement-create-item-run",
-                            async (itemLogger) =>
+                            // Record the environment
+                            environments.Add(result.Id);
+
+                            return true;
+                        }
+                        catch (HttpResponseStatusException e) when (e.StatusCode == HttpStatusCode.ServiceUnavailable)
+                        {
+                            var delay = e.RetryAfter.HasValue ? e.RetryAfter.Value * 1000 : 30000;
+                            await Task.Delay(delay);
+                        }
+                        catch (HttpRequestException e)
+                        {
+                            // Throw if we have tried too many times
+                            if (++errorCount == 3)
                             {
-                                try
-                                {
-                                    // Create environement
-                                    var result = await EnvironementsRepository.ProvisionEnvironmentAsync(
-                                        planId, $"GeneratedName_{Guid.NewGuid().ToString()}", repository, location, "standardLinux", itemLogger.NewChildLogger());
+                                throw;
+                            }
 
-                                    // Record the environment
-                                    environments.Add(result.Id);
+                            await Task.Delay((int)TimeSpan.FromSeconds(1).TotalMilliseconds);
+                        }
+                        catch (Exception e)
+                        {
+                            if (errorCount > -1)
+                            {
+                                throw;
+                            }
+                        }
 
-                                    return true;
-                                }
-                                catch (HttpResponseStatusException e) when (e.StatusCode == HttpStatusCode.ServiceUnavailable)
-                                {
-                                    var delay = e.RetryAfter.HasValue ? e.RetryAfter.Value * 1000 : 30000;
-                                    await Task.Delay(delay);
-                                }
-                                catch (Exception e)
-                                {
-                                    throw;
-                                }
+                        return false;
+                    },
+                    TimeSpan.FromMinutes(20),
+                    null,
+                    logger,
+                    () => throw new Exception("Pool refresh did not occur in time."));
 
-                                return false;
-                            },
-                            TimeSpan.FromMinutes(20),
-                            null,
-                            childLogger,
-                            () => throw new Exception("Pool refresh did not occur in time."));
+                // Drain these out slowly
+                await Task.Delay((int)TimeSpan.FromSeconds(21).TotalMilliseconds);
+            }
 
-                        // Drain these out slowly
-                        await Task.Delay(1000);
-                    }
+            regionEnvironments.Add(region.Key, environments);
 
-                    regionEnvironments.Add(region.Key, environments);
-                },
-                logger);
+            // Add in pause to allow the environment to spin up
+            if (AppSettings.PauseExecutionTime.HasValue)
+            {
+                await Task.Delay((int)TimeSpan.FromMinutes(AppSettings.PauseExecutionTime.Value).TotalMilliseconds);
+            }
 
             // Now that everything is running, lets start deallocating
-            await TaskHelper.RunBackgroundEnumerableAsync(
+            await TaskHelper.RunConcurrentEnumerableAsync(
                 "region-environement-deallocate-run",
                 regionEnvironments,
-                async (region, childLogger) =>
+                async (regionEnvironment, childLogger) =>
                 {
-                    var environments = region.Value;
-                    var location = region.Key;
+                    var currentEnvironments = regionEnvironment.Value;
+                    var currentLocation = regionEnvironment.Key;
 
                     // Request total environments needed
-                    foreach (var environement in environments)
+                    foreach (var environement in currentEnvironments)
                     {
                         // Delete the environement
                         await EnvironementsRepository.DeleteEnvironmentAsync(
@@ -245,7 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
             // ...
         }
 
-        private async Task PostExecutionCleanupAsync(IEnumerable<string> poolCodes, IDiagnosticsLogger logger)
+        private async Task PostExecutionCleanupAsync(IEnumerable<string> poolCodes, KeyValuePair<string, AppSettingsRegion> region, IDiagnosticsLogger logger)
         {
             // Make sure that pools are disabled
             await poolCodes.ForEachAsync(

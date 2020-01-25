@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
 {
     /// <summary>
@@ -23,5 +25,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
         /// Gets or sets the total environement count that is needed for the region.
         /// </summary>
         public int TotalEnvironementRunCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the auth account id that should be used.
+        /// </summary>
+        public IEnumerable<AppSettingsRegionPool> TargetPools { get; set; }
+
+        /// <summary>
+        /// Gets or sets the pool target count.
+        /// </summary>
+        public int? DefaultTargetCount { get; set; }
     }
 }

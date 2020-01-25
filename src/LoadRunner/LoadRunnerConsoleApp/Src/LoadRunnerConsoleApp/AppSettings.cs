@@ -55,6 +55,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
         public string AuthAudience { get; set; }
 
         /// <summary>
+        /// Gets or sets the pool target count.
+        /// </summary>
+        public int? DefaultTargetCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the total batch runs that we want to run.
+        /// </summary>
+        public int? BatchTotalRuns { get; set; }
+
+        /// <summary>
+        /// Gets or sets the amount of time we want to pause execution between when
+        /// an environment was created and when its torn down in minutes.
+        /// </summary>
+        public int? PauseExecutionTime { get; set; }
+
+        /// <summary>
         /// Gets or sets the regions that we want to work through.
         /// </summary>
         public IDictionary<string, AppSettingsRegion> Regions { get; set; }

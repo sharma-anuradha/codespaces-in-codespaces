@@ -14,5 +14,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         /// </summary>
         /// <param name="serviceBaseUri">Target service base uri.</param>
         void Initalize(string serviceBaseUri);
+
+        /// <summary>
+        /// Creates http client object with given service base uri.
+        /// </summary>
+        /// <param name="serviceBaseUri">Target service base uri.</param>
+        /// <returns>New http client</returns>
+        System.Net.Http.HttpClient Create(string serviceBaseUri);
     }
 }

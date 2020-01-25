@@ -32,14 +32,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         /// <inheritdoc/>
         public void Initalize(string serviceBaseUri)
         {
-            HttpMessageHandler httpHandlerChain = new HttpClientHandler();
+            HttpClient = Create(serviceBaseUri);
+        }
+
+        /// <inheritdoc/>
+        public System.Net.Http.HttpClient Create(string serviceBaseUri)
+        {
+            HttpMessageHandler httpHandlerChain = new HttpClientHandler { AllowAutoRedirect = false };
             httpHandlerChain = new ForwardingBearerAuthMessageHandler(httpHandlerChain, CurrentUserProvider);
             httpHandlerChain = new ForwardingCorrelationIdHandler(httpHandlerChain);
 
-            HttpClient = new System.Net.Http.HttpClient(httpHandlerChain)
+            var httpClient = new System.Net.Http.HttpClient(httpHandlerChain);
+
+            if (!string.IsNullOrEmpty(serviceBaseUri))
             {
-                BaseAddress = new Uri(serviceBaseUri),
-            };
+                httpClient.BaseAddress = new Uri(serviceBaseUri);
+            }
+
+            return httpClient;
         }
     }
 }
