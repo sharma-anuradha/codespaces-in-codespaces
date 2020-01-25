@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
@@ -349,7 +350,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <returns>Returns the core task.</returns>
         protected async virtual Task FailOperationCleanupAsync(ResourceRecordRef record, string trigger, IDiagnosticsLogger logger)
         {
-            var shouldTriggerDelete = Operation == ResourceOperation.Provisioning || Operation == ResourceOperation.Starting;
+            var shouldTriggerDelete = Operation == ResourceOperation.Provisioning ||
+                (Operation == ResourceOperation.Starting && record.Value.Type == ResourceType.ComputeVM);
 
             trigger = $"{Operation}_{trigger}";
 
