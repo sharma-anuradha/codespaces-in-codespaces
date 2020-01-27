@@ -67,6 +67,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                     this.appSettings.SubscriptionId,
                     this.appSettings.ResourceGroupName,
                     this.appSettings.ResourceGroupInstanceName,
+                    this.appSettings.CorsOrigin,
                 },
                 this.startup.EnableAuthentication,
                 this.startup.UseAzureSignalR,

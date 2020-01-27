@@ -12,5 +12,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public string BackplaneJsonRpcServer { get; set; }
 
         public string KeyVaultName { get; set; }
+
+        public string[] CorsOrigin { get; set; }
     }
 }

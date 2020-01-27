@@ -34,6 +34,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string PresenceHubDevMap = "/presencehub-dev";
 
         /// <summary>
+        /// CORS policy name
+        /// </summary>
+        private const string VsoCorsPolicy = "vsoCORSPolicy";
+
+        /// <summary>
         /// Map to the health hub signalR
         /// </summary>
         internal const string HealthHubMap = "/healthhub";
@@ -55,6 +60,25 @@ namespace Microsoft.VsCloudKernel.SignalService
         public void ConfigureServices(IServiceCollection services)
         {
             ConfigureCommonServices(services);
+
+            // define CORS
+            var corsOrigins = AppSettingsConfiguration.GetSection(nameof(AppSettings.CorsOrigin))
+                .GetChildren()
+                .Select(x => x.Value)
+                .ToArray();
+            services.AddCors(options =>
+            {
+                // define VSO Cors policy
+                options.AddPolicy(VsoCorsPolicy,
+                builder =>
+                {
+                    builder
+                        .WithOrigins(corsOrigins.ToArray())
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            });
 
             // Frameworks
             services.AddControllers();
@@ -190,6 +214,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             app.UseAuthorization();
 
             app.UseFileServer();
+
+            // activate VSO Cors policy
+            app.UseCors(VsoCorsPolicy);
 
             // SignalR configure
             if (UseAzureSignalR)
