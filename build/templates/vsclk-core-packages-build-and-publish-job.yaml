@@ -7,6 +7,7 @@ parameters:
   platform: 'any cpu'
   poolName: 'VSEng-MicroBuildVS2019'
   publishEnabled: false
+  publishNpmEnabled: false
   publishVstsFeed: '11b82e9d-2671-42c3-b9d3-72ea07295ddb'
   signType: 'Test'
   solution: 'src/client/vsclk-core-packages.sln'
@@ -63,7 +64,7 @@ jobs:
 
   - task: Yarn@3
     displayName: signalR client publish (optional when condition)
-    condition: eq(True, ${{ parameters.publishEnabled }})
+    condition: eq(True, ${{ parameters.publishNpmEnabled }})
     inputs:
       projectDirectory: 'src/client/VsClk.SignalService/ts'
       arguments: 'build:pack-publish'
