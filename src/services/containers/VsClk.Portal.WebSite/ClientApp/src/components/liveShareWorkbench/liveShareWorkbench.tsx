@@ -27,7 +27,18 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
     }
 
     render() {
-        const extensionUrls = [this.props.liveShareWebExtensionEndpoint];
+        let extensionUrl = this.props.liveShareWebExtensionEndpoint;
+
+        // In the dev environment allow a localhost url to make it easy to test
+        // LiveShare changes locally
+        if (
+            window.location.hostname === 'online.dev.core.vsengsaas.visualstudio.com' &&
+            window.localStorage.getItem('debugLocalExtension')
+        ) {
+            extensionUrl = `http://localhost:5500/web/deploy-web`;
+        }
+
+        const extensionUrls = [extensionUrl];
 
         // This is the folder URI format recognized by the LiveShare file system provider.
         const folderUri = `vsls:///?${this.props.sessionId}`;
