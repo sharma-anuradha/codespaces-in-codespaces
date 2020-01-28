@@ -1,7 +1,12 @@
 import React, { Component, SyntheticEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
 
-import { PrimaryButton, DefaultButton, IconButton, ActionButton } from 'office-ui-fabric-react/lib/Button';
+import {
+    PrimaryButton,
+    DefaultButton,
+    IconButton,
+    ActionButton,
+} from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField, ITextFieldProps } from 'office-ui-fabric-react/lib/TextField';
@@ -548,7 +553,7 @@ export class CreateEnvironmentPanelView extends Component<
         options.push({
             key: SKU_SHOW_PRICING_KEY,
             text: SKU_PRICING_LABEL,
-            data: { icon: 'OpenInNewTab' },
+            data: { icon: 'OpenInNewTab', url: SKU_PRICING_URL },
         });
 
         const onSkuLabelRender = createLabelRenderCallback(SKU_PRICING_LABEL, SKU_PRICING_URL);
@@ -581,7 +586,15 @@ export class CreateEnvironmentPanelView extends Component<
                         title={option.data.icon}
                     />
                 )}
-                <span>{option.text}</span>
+                <span>
+                    {option.data && option.data.url ? (
+                        <Link href={option.data.url} target='blank'>
+                            {option.text}
+                        </Link>
+                    ) : (
+                        option.text
+                    )}
+                </span>
             </div>
         );
     };
@@ -618,7 +631,9 @@ export class CreateEnvironmentPanelView extends Component<
                     <Icon iconName='ReportHacked' style={{ marginRight: '.8rem' }} />
                     <div>
                         {USE_TRUSTWORTHY_REPO_LABEL_TEXT}
-                        <Link target='_blank' href={USE_TRUSTWORTHY_REPO_URL}>{USE_TRUSTWORTHY_REPO_LABEL_LINK}</Link>
+                        <Link target='_blank' href={USE_TRUSTWORTHY_REPO_URL}>
+                            {USE_TRUSTWORTHY_REPO_LABEL_LINK}
+                        </Link>
                         .
                     </div>
                 </div>
@@ -1042,10 +1057,6 @@ export class CreateEnvironmentPanelView extends Component<
         }
 
         if (option.key === SKU_SHOW_PRICING_KEY) {
-            setTimeout(() => {
-                this.skuDropdownRef.current && this.skuDropdownRef.current.focus(true);
-            });
-            openExternalUrl(SKU_PRICING_URL);
             return;
         }
 
