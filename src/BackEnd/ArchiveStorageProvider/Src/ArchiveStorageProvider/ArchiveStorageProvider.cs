@@ -6,8 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
 {
@@ -17,13 +18,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
         private static readonly StubArchiveStorageInfo Stub = new StubArchiveStorageInfo();
 
         /// <inheritdoc/>
-        public Task<IArchiveStorageInfo> GetArchiveStorageAccountAsync(AzureLocation azureLocation, int minimumRequiredGB)
+        public Task<IArchiveStorageInfo> GetArchiveStorageAccountAsync(AzureLocation azureLocation, int minimumRequiredGB, IDiagnosticsLogger logger, bool forceCapacityCheck = false)
         {
             return Task.FromResult<IArchiveStorageInfo>(Stub);
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<IArchiveStorageInfo>> ListArchiveStorageAccountsAsync(AzureLocation azureLocation)
+        public Task<IEnumerable<IArchiveStorageInfo>> ListArchiveStorageAccountsAsync(AzureLocation azureLocation, IDiagnosticsLogger logger)
         {
             var stub = new StubArchiveStorageInfo();
             return Task.FromResult<IEnumerable<IArchiveStorageInfo>>(new[] { Stub });
@@ -31,9 +32,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
 
         private class StubArchiveStorageInfo : IArchiveStorageInfo
         {
-            public IAzureResourceLocation AzureResourceLocation => throw new NotImplementedException();
+            public AzureResourceInfo AzureResourceInfo => throw new NotImplementedException();
 
-            public string StorageAccountName => throw new NotImplementedException();
+            public string StorageAccountKey => throw new NotImplementedException();
         }
     }
 }

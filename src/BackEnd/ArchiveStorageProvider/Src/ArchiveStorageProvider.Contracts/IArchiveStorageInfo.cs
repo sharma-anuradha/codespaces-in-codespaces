@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts
 {
@@ -12,13 +12,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Con
     public interface IArchiveStorageInfo
     {
         /// <summary>
-        /// Gets the storage account azure resource location.
+        /// Gets the storage account azure resource info.
         /// </summary>
-        IAzureResourceLocation AzureResourceLocation { get; }
+        AzureResourceInfo AzureResourceInfo { get; }
 
         /// <summary>
-        /// Gets the storage account name.
+        /// Gets the storage account key for the <see cref="AzureResourceInfo"/>.
         /// </summary>
-        string StorageAccountName { get; }
+        string StorageAccountKey { get; }
     }
 }

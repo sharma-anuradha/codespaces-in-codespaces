@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts
 {
@@ -16,8 +17,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Con
         /// <summary>
         /// Gets an archive storage account in the specified region having the minimum required available GB of storage.
         /// </summary>
-        /// <param name="azureLocation">The azure location.</param>
+        /// <param name="location">The azure location.</param>
         /// <param name="minimumRequiredGB">The minimum required GB of available storage.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="forceCapacityCheck">A value indicating whether to re-evaluate storage capacity on any cached entities.</param>
         /// <returns>An <see cref="IArchiveStorageInfo"/> instance.</returns>
         /// <remarks>
         /// The implementation should create a new storage account if none exists.
@@ -28,13 +31,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Con
         ///     Performance/Access tier: Standard/Hot
         /// See https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-storage-tiers?tabs=azure-portal#cool-and-archive-early-deletion.
         /// </remarks>
-        Task<IArchiveStorageInfo> GetArchiveStorageAccountAsync(AzureLocation azureLocation, int minimumRequiredGB);
+        Task<IArchiveStorageInfo> GetArchiveStorageAccountAsync(AzureLocation location, int minimumRequiredGB, IDiagnosticsLogger logger, bool forceCapacityCheck = false);
 
         /// <summary>
         /// Lists the archive storage accounts that exist in the specified azure location.
         /// </summary>
-        /// <param name="azureLocation">The azure location.</param>
+        /// <param name="location">The azure location.</param>
+        /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A list of <see cref="IArchiveStorageInfo"/>.</returns>
-        Task<IEnumerable<IArchiveStorageInfo>> ListArchiveStorageAccountsAsync(AzureLocation azureLocation);
+        Task<IEnumerable<IArchiveStorageInfo>> ListArchiveStorageAccountsAsync(AzureLocation location, IDiagnosticsLogger logger);
     }
 }
