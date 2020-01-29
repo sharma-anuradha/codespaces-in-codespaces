@@ -10,11 +10,13 @@ import { GistWorkbench } from '../../components/gistWorkbench/gistWorkbench';
 import { GitHubLogin } from '../../components/gitHubLogin/gitHubLogin';
 import { BlogPost } from '../../BlogPost';
 import { PageNotFound } from '../../components/pageNotFound/pageNotFound';
+import { SettingsMenu } from '../../components/settingsMenu/settings-menu';
 import {
     environmentPath,
     environmentsPath,
     newEnvironmentPath,
     newPlanPath,
+    settingsPath,
     githubLoginPath,
     loginPath,
     rootPath,
@@ -50,6 +52,12 @@ export const routes: IRoute[] = [
         path: newPlanPath,
         exact: true,
         component: NewPlan,
+    },
+    {
+        authenticated: true,
+        path: settingsPath,
+        exact: true,
+        component: SettingsMenu,
     },
     {
         authenticated: true,

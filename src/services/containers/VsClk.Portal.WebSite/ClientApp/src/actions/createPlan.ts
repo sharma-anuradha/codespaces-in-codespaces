@@ -78,6 +78,30 @@ export async function createPlan(resourceGroupPath: string, planName: string, lo
     }
 }
 
+export async function deletePlan (planId: string) {
+    const myAuthToken = await authService.getARMToken(60);
+
+    if (!myAuthToken) {
+        return "Not authenticated";
+    }
+
+    const { accessToken } = myAuthToken;
+
+    const url = `https://management.azure.com${planId}?api-version=${getAPIVersion()}`
+
+    const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+            authorization: `Bearer ${accessToken}`,
+        },
+    });
+
+    if (!response.ok) {
+        return `Plan deletion failed: ${response.status}`;
+    }
+    
+}
+
 /**
  * API Version	Endpoint URL
  * 2019-07-01-preview	online.visualstudio.com/api/v1

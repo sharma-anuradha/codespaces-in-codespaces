@@ -1,0 +1,39 @@
+.settings-panel__overlay {
+    background: inherit;
+    opacity: .85;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    background: white;
+}
+
+.vsonline-settings-panel__separator {
+    background-color: #CCC;
+    height: 1px;
+    width: 30rem;
+    margin-top: 2rem;
+    margin-bottom: 1.5rem;
+    float: left;
+}
+
+.vsonline-settings-panel__plan-selector {
+    width: 21rem;
+}
+
+.vsonline-settings-panel__delete-button {
+    margin-top: -3.2rem;
+    margin-right: 0.3rem;
+    float: right;
+}
+
+.vsonline-settings-panel__delete-text {
+    height: 5rem;
+}
+
+.ms-dialogMainOverride {
+    margin-left: 0;
+    margin-right: 0;
+}

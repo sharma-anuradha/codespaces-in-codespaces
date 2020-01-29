@@ -27,6 +27,7 @@ interface PlanSelectorProps extends RouteComponentProps {
     shouldPlanSelectorReceiveFocus: boolean;
     className?: string;
     isServiceAvailable: boolean;
+    hasNoCreate?: boolean;
 }
 
 export class PlanSelectorComponent extends Component<PlanSelectorProps> {
@@ -36,7 +37,7 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
         const selectedPlanName = query.get('plan');
 
         if (selectedPlanName) {
-            const selectedPlanObj: IPlan | undefined = this.props.plansList.find(
+            const selectedPlanObj = this.props.plansList.find(
                 (item) => item.name.toLowerCase() === selectedPlanName.toLowerCase()
             );
 
@@ -98,12 +99,14 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
             planOptions.push(dividerDropdownOption);
         }
 
-        planOptions.push(createNewPlanDropdownOption);
+        if (!this.props.hasNoCreate){
+            planOptions.push(createNewPlanDropdownOption);
+        }
 
         return planOptions;
     }
 
-    public selectedPlanChanged: (
+    private selectedPlanChanged: (
         event: FormEvent<HTMLDivElement>,
         option?: IDropdownOption,
         index?: number

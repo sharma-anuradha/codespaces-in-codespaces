@@ -136,7 +136,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
     }
 }
 
-function getPlanEnvironments(
+export function getPlanEnvironments(
     plan: ActivePlanInfo | null,
     environments: ILocalCloudEnvironment[]
 ): ILocalCloudEnvironment[] {
