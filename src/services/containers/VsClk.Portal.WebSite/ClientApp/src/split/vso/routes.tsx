@@ -70,7 +70,7 @@ export const routes: IRoute[] = [
         component: LiveShareWorkbench,
     },
     {
-        authenticated: false,
+        authenticated: true,
         path: githubPath,
         exact: false,
         component: GitHubWorkbench,

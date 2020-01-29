@@ -7,8 +7,9 @@ import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench'
 import { PageNotFound } from '../pageNotFound/pageNotFound';
 
 export interface GitHubWorkbenchProps extends RouteComponentProps<{ id: string }> {
-    owner: string;
-    repo: string;
+    org: string;
+    repoId: string;
+    commitId: string;
 }
 
 class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenchProps> {
@@ -22,25 +23,34 @@ class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenc
             'https://testrichcodenavext.blob.core.windows.net/richnavext/vscode-lsif-browser',
         ];
 
-        // This is the folder URI format recognized by the RichNav file system provider.
-        // TODO: What's the format for passing in owner/repo?
-        // const folderUri = `vsck://RichCodeNav/${this.props.owner}/${this.props.repo}
-        const folderUri = `vsck://RichCodeNav/`;
-
-        return <ServerlessWorkbench folderUri={folderUri} extensionUrls={extensionUrls} />;
+         // Repo Info to pass to Rich Code Nav should be stored in the workspace URI
+         const uriQueryObj = {
+            org: this.props.org,
+            repoId: this.props.repoId,
+            commitId: this.props.commitId
+        };
+        const uriQueryString = JSON.stringify(uriQueryObj);
+        const folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
+        
+        return <ServerlessWorkbench
+                    folderUri={folderUri}
+                    extensionUrls={extensionUrls}
+                />;
     }
 }
 
 const getProps = (
     state: ApplicationState,
-    props: RouteComponentProps<{ owner: string; repo: string }>
+    props: RouteComponentProps<{ org: string; repoId: string, commitId: string }>
 ) => {
-    const owner = props.match.params.owner;
-    const repo = props.match.params.repo;
+    const org = props.match.params.org;
+    const repoId = props.match.params.repoId;
+    const commitId = props.match.params.commitId;
 
     return {
-        owner,
-        repo,
+        org,
+        repoId,
+        commitId
     };
 };
 
