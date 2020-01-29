@@ -19,6 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     /// <inheritdoc/>
     public class PlanManager : IPlanManager
     {
+        private const string LogBaseName = "plan_manager";
+
         private readonly IPlanRepository planRepository;
         private readonly PlanManagerSettings planManagerSettings;
         private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
@@ -46,8 +48,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             // Validate Plan quota is not reached.
             if (await IsPlanCreationAllowedAsync(model.Plan.Subscription, logger))
             {
+                logger.LogError($"{LogBaseName}_create_maxplansforsubscription_error");
+
                 result.VsoPlan = null;
                 result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
+
                 return result;
             }
 

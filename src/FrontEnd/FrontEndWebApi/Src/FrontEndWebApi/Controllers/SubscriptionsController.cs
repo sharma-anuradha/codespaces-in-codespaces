@@ -165,15 +165,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         UserId = resource.Properties.UserId,
                     };
 
-                    await planManager.CreateAsync(plan, logger);
+                    var result = await planManager.CreateAsync(plan, logger);
+
+                    logger.AddVsoPlan(plan.Plan);
+
+                    if (result.VsoPlan == null)
+                    {
+                        logger.LogErrorWithDetail("plan_create_error", $"Plan creation failed with ErrorCode: {result.ErrorCode}");
+                        return CreateErrorResponse("ValidateResourceFailed");
+                    }
 
                     // Clear the userId property so it will not be stored on the created ARM resource.
                     // It will only be saved internally by the plan manager.
                     resource.Properties.UserId = null;
 
-                    logger.AddVsoPlan(plan.Plan);
-
-                    // Required response format.
                     return CreateResponse(HttpStatusCode.OK, resource);
                 },
                 (ex, logger) =>

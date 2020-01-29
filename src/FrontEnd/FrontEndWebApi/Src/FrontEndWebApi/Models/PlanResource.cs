@@ -15,13 +15,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         [JsonProperty(Required = Required.Default, PropertyName = "properties")]
         public PlanResourceProperties Properties { get; set; }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "id")]
+        [JsonProperty(Required = Required.Default, PropertyName = "id")]
         public string Id { get; set; }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "type")]
+        [JsonProperty(Required = Required.Default, PropertyName = "type")]
         public string Type { get; set; }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "name")]
+        [JsonProperty(Required = Required.Default, PropertyName = "name")]
         public string Name { get; set; }
 
         [JsonProperty(Required = Required.Default, PropertyName = "provisioningState")]
