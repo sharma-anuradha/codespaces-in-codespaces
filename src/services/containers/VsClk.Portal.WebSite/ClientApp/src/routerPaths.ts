@@ -7,6 +7,6 @@ export const githubLoginPath = '/github/login';
 export const newPlanPath = '/environments/plan';
 export const pageNotFoundPath = '/pageNotFound';
 export const liveShareSessionPath = '/liveshare/:id';
-export const githubPath = '/github/:owner/:repo/:commitId?';
+export const githubPath = '/github/:org/:repoId/:commitId?';
 export const gistPath = '/gist/:id';
 export const settingsPath = '/settings';
