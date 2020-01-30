@@ -661,9 +661,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // Start the cleanup operation to shutdown environment.
                         await ResourceBrokerClient.SuspendAsync(cloudEnvironment.Compute.ResourceId, Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
 
-                        // Start the cleanup operation to shutdown environment.
-                        await ResourceBrokerClient.SuspendAsync(cloudEnvironment.Storage.ResourceId, Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
-
 #pragma warning restore CS0612 // Type or member is obsolete
                     }
 
