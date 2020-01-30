@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             var result = default(PlanManagerServiceResult);
 
             // Validate Plan quota is not reached.
-            if (await IsPlanCreationAllowedAsync(model.Plan.Subscription, logger))
+            if (!await IsPlanCreationAllowedAsync(model.Plan.Subscription, logger))
             {
                 logger.LogError($"{LogBaseName}_create_maxplansforsubscription_error");
 
@@ -89,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         {
             var plans = await ListAsync(userIdSet: null, subscriptionId, resourceGroup: null, logger);
 
-            return plans.Count() >= await planManagerSettings.MaxPlansPerSubscriptionAsync(subscriptionId, logger);
+            return plans.Count() < await planManagerSettings.MaxPlansPerSubscriptionAsync(subscriptionId, logger);
         }
 
         /// <inheritdoc/>
