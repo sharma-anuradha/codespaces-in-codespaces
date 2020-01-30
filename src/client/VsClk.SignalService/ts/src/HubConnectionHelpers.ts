@@ -18,7 +18,7 @@ export async function connect(
             break;
         } catch (error) {
             let delay = exponentialBackoff.nextDelayMilliseconds();
-            logger.log(signalR.LogLevel.Error, `Failed to connect-> delay:${delay} err:${error}`);
+            logger.log(signalR.LogLevel.Error, `Failed to connect-> delay:${delay} err:${JSON.stringify(error)}`);
             delay = await onConnectCallback(exponentialBackoff.retriesCount, delay, error);
             if (delay === -1) {
                 break;

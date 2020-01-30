@@ -46,7 +46,12 @@ async function main() {
         log: (level: signalR.LogLevel, msg: string) => console.log(msg)
     };
 
-    const hubClient = argv.token ? HubClient.createWithUrlAndToken(serviceUri, () => argv.token!, logger) : HubClient.createWithUrl(serviceUri, logger);
+    const httpConnectionOptions: signalR.IHttpConnectionOptions = { logger: undefined };
+    if (argv.token) {
+        httpConnectionOptions.accessTokenFactory = () => argv.token!;
+    }
+
+    const hubClient = HubClient.create(serviceUri, httpConnectionOptions);
 
     const keyPressCallback = argv.relayHub ? main_relay(hubClient, logger) : main_presence(hubClient, logger);
 
@@ -76,6 +81,10 @@ function main_presence(hubClient: HubClient, logger: signalR.ILogger): (key: any
         // our ILogger will already send this to the console
     });
 
+    contactServiceProxy.onMessageReceived((targetContact, fromContact, messageType, body) => {
+        // our ILogger will already send this to the console
+    });
+
     hubClient.onConnectionStateChanged(async () => {
         console.log(`onConnectionStateChanged-> state:${hubClient.state}`);
 
@@ -99,6 +108,12 @@ function main_presence(hubClient: HubClient, logger: signalR.ILogger): (key: any
             await contactServiceProxy.publishProperties({
                 'status': 'busy'
             });
+        } else if (key === 's') {
+            const response = await contactServiceProxy.requestSubcriptions([ { 'email': 'rcollado@gmail.com' }
+            ], ['*'], true);
+            console.log(`requestSubcriptions-> ${JSON.stringify(response)}`);
+        } else if (key === 'x') {
+            await contactServiceProxy.sendMessage({'id': 'rcollado'}, 'typeTest', { 'Text': 'hi from node', 'Metadata': { 'Type': 'text' } });
         }
     };
 }

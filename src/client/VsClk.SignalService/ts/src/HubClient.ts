@@ -15,15 +15,16 @@ export class HubClient {
         hubConnection.onclose((error?: Error) => this.onClosed(error));
     }
 
-    public static createWithUrl(url: string, logger?: signalR.ILogger): HubClient  {
-        return new HubClient(new signalR.HubConnectionBuilder().withUrl(url).build(), logger);
+    public static createWithHub(hubConnection: signalR.HubConnection, logger?: signalR.ILogger) {
+        return new HubClient(hubConnection, logger);
     }
 
-    public static createWithUrlAndToken(url: string, accessTokenFactory: () => string | Promise<string>, logger?: signalR.ILogger) {
-        return new HubClient(new signalR.HubConnectionBuilder()
-        .withUrl(url, <signalR.IHttpConnectionOptions> {
-            accessTokenFactory
-        }).build(), logger);
+    public static create(url: string, httpConnectionOptions: signalR.IHttpConnectionOptions, logger?: signalR.ILogger) {
+        if (logger) {
+            logger.log(signalR.LogLevel.Debug, `createWithOptions url:${url}`);           
+        }
+
+        return new HubClient(new signalR.HubConnectionBuilder().withUrl(url, httpConnectionOptions).build(), logger);
     }
 
     public start(): Promise<void> {

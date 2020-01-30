@@ -71,7 +71,7 @@ export class ContactServiceProxy extends HubProxyBase implements IContactService
 
     private updateValues(contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string): void {
         if (this.logger) {
-            this.logger.log(signalR.LogLevel.Debug, `PresenceServiceProxy.updateValues contact:${JSON.stringify(contact)} properties:${JSON.stringify(properties)}`);
+            this.logger.log(signalR.LogLevel.Debug, `ContactServiceProxy.updateValues contact:${JSON.stringify(contact)} properties:${JSON.stringify(properties)}`);
         }
 
         this.updatePropertiesCallbacks.forEach(c => c(contact, properties, targetConnectionId));
@@ -79,7 +79,7 @@ export class ContactServiceProxy extends HubProxyBase implements IContactService
 
     private receiveMessage(targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any): void {
         if (this.logger) {
-            this.logger.log(signalR.LogLevel.Debug, `PresenceServiceProxy.receiveMessage targetContact:${JSON.stringify(targetContact)} fromContact:${JSON.stringify(fromContact)} messageType:${messageType} body:${JSON.stringify(body)}`);
+            this.logger.log(signalR.LogLevel.Debug, `ContactServiceProxy.receiveMessage targetContact:${JSON.stringify(targetContact)} fromContact:${JSON.stringify(fromContact)} messageType:${messageType} body:${JSON.stringify(body)}`);
         }
 
         this.receiveMessageCallbacks.forEach(c => c(targetContact, fromContact, messageType, body));
@@ -87,7 +87,7 @@ export class ContactServiceProxy extends HubProxyBase implements IContactService
 
     private connectionChanged(contact: IContactReference, changeType: ConnectionChangeType): void {
         if (this.logger) {
-            this.logger.log(signalR.LogLevel.Debug, `PresenceServiceProxy.connectionChanged contact:${JSON.stringify(contact)} changeType:${changeType}`);
+            this.logger.log(signalR.LogLevel.Debug, `ContactServiceProxy.connectionChanged contact:${JSON.stringify(contact)} changeType:${changeType}`);
         }
 
         this.connectionChangedCallbacks.forEach(c => c(contact, changeType));

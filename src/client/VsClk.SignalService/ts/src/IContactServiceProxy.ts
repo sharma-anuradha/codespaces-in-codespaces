@@ -1,6 +1,6 @@
 export interface IContactReference {
-    readonly Id: string;
-    readonly ConnectionId: string;
+    readonly id: string;
+    readonly connectionId?: string;
 }
 
 export declare enum ConnectionChangeType {

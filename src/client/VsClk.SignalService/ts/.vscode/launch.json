@@ -12,7 +12,7 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ],
-            "args": ["--id", "rodrigov"],
+            "args": ["--service", "https://signlr.dev.core.vsengsaas.visualstudio.com/api/signalr/signalrhub-dev", "--id", "rodrigov"],
             "console": "integratedTerminal"
         }
     ]
