@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
@@ -14,6 +15,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// <summary>
         /// Gets or sets the environment id.
         /// </summary>
-        public string EnvironmentId { get; set; }
+        public Guid EnvironmentId { get; set; }
     }
 }

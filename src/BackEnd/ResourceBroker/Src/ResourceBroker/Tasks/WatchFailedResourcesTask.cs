@@ -187,7 +187,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
-            await ResourceContinuationOperations.DeleteResource(id, reason, logger.NewChildLogger());
+            await ResourceContinuationOperations.DeleteAsync(id, reason, logger.NewChildLogger());
         }
     }
 }

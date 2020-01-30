@@ -33,20 +33,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Deallocate a resource.
+        /// Delete resource set based on input manifest.
+        /// </summary>
+        /// <param name="inputs">The delete input.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the resource was deleted.</returns>
+        Task<bool> DeleteAsync(
+           IEnumerable<DeleteInput> inputs, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Delete a resource.
         /// </summary>
         /// <param name="input">The deallocate input.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource was deleted.</returns>
-        Task<DeleteResult> DeleteAsync(DeleteInput input, IDiagnosticsLogger logger);
+        Task<bool> DeleteAsync(DeleteInput input, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Suspends resource set based on input manifest.
+        /// </summary>
+        /// <param name="input">The suspend input.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the suspend operation was successful.</returns>
+        Task<bool> SuspendAsync(
+            IEnumerable<SuspendInput> input, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Performs cleanup operations to be done before delete on the resource.
         /// </summary>
-        /// <param name="input">The cleanup input.</param>
+        /// <param name="input">The suspend input.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the cleanup operation was successful.</returns>
-        Task<SuspendResult> SuspendAsync(SuspendInput input, IDiagnosticsLogger logger);
+        /// <returns>True if the suspend operation was successful.</returns>
+        [Obsolete]
+        Task<bool> SuspendAsync(
+            SuspendInput input, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Start compute with storage and startup parameters.
@@ -54,9 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// <param name="input">Input for the environment to be started.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task.</returns>
-        Task<StartResult> StartResourceAsync(
-            StartInput input,
-            IDiagnosticsLogger logger);
+        Task<bool> StartAsync(StartInput input, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Checks to see if a given resource exists.

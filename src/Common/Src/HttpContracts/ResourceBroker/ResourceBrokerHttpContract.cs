@@ -98,8 +98,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// Get the cleanup uri.
         /// </summary>
         /// <param name="resourceId">The resource id token.</param>
+        /// <param name="environmentId">The environment id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetSuspendResourceUri(Guid resourceId, string environmentId) => $"{ResourcesRoute}/cleanup?id={resourceId}&environmentId={environmentId}";
+        [Obsolete]
+        public static string GetCleanupResourceUri(Guid resourceId, Guid environmentId) => $"{ResourcesRoute}/cleanup?id={resourceId}&environmentId={environmentId}";
+
+        /// <summary>
+        /// Get the suspend uri.
+        /// </summary>
+        /// <param name="environmentId">The environment id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetSuspendResourceUri(Guid environmentId) => $"{ResourcesRoute}/suspend?environmentId={environmentId}";
 
         /// <summary>
         /// Get the resource uri with id.

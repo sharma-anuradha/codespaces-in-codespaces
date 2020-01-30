@@ -28,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
-        Task<ContinuationResult> CreateResource(
+        Task<ContinuationResult> CreateAsync(
             Guid resourceId,
             ResourceType type,
             ResourcePoolResourceDetails details,
@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
-        Task<ContinuationResult> StartEnvironment(
+        Task<ContinuationResult> StartAsync(
             Guid computeResourceId,
             Guid storageResourceId,
             IDictionary<string, string> environmentVariables,
@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
-        Task<ContinuationResult> DeleteResource(
+        Task<ContinuationResult> DeleteAsync(
             Guid resourceId,
             string reason,
             IDiagnosticsLogger logger);
@@ -71,9 +71,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
-        Task<ContinuationResult> SuspendResource(
+        Task<ContinuationResult> SuspendAsync(
             Guid resourceId,
-            string environmentId,
+            Guid environmentId,
             string reason,
             IDiagnosticsLogger logger);
 

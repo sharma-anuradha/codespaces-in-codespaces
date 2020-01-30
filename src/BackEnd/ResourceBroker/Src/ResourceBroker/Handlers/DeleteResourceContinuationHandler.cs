@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IStorageProvider StorageProvider { get; set; }
 
         /// <inheritdoc/>
-        protected override Task<ContinuationResult> QueueOperationAsync(
+        protected override Task<ContinuationResult> InitiallyQueueContinuationAsync(
             DeleteResourceContinuationInput input,
             ResourceRecordRef record,
             IDiagnosticsLogger logger)
@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Increment the delete count
             record.Value.DeleteAttemptCount++;
 
-            return base.QueueOperationAsync(input, record, logger);
+            return base.InitiallyQueueContinuationAsync(input, record, logger);
         }
 
         /// <inheritdoc/>

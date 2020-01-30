@@ -44,6 +44,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
         public string AuthClientSecret { get; set; }
 
         /// <summary>
+        /// Gets or sets the auth refresh token.
+        /// </summary>
+        public string AuthRefreshToken { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether we should be using the
         /// developers personal stamp.
         /// </summary>

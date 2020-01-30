@@ -18,17 +18,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         private static readonly Guid MockSubscriptionId = Guid.NewGuid();
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
-            IEnumerable<CreateResourceRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
+            IEnumerable<AllocateRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
 
             var now = DateTime.UtcNow;
-            var results = new List<ResourceBrokerResource>();
+            var results = new List<AllocateResponseBody>();
             foreach (var createResourceRequestBody in createResourcesRequestBody)
             {
                 var mockInstanceId = Guid.NewGuid();
-                results.Add(new ResourceBrokerResource
+                results.Add(new AllocateResponseBody
                 {
                     ResourceId = mockInstanceId,
                     Created = DateTime.UtcNow,
@@ -42,19 +42,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public Task<ResourceBrokerResource> GetAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public Task<bool> DeleteAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<bool> StartResourceSetAsync(Guid computeResource, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        public Task<bool> StartAsync(Guid computeResource, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
@@ -66,7 +66,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(Guid resourceId, Guid environmentId, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SuspendAsync(IEnumerable<SuspendRequestBody> suspendRequestBody, Guid environmentId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }

@@ -292,7 +292,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Create the actual record
             record = await ResourceRepository.CreateAsync(record, logger);
 
-            return new ResourceRecordRef(record);
+            return new ResourceRecordRef(record, id);
         }
 
         private async Task<IAzureResourceLocation> SelectAzureResourceLocation(

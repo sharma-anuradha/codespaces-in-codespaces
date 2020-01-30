@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
@@ -126,8 +127,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // If first time through, queue things up
             if (string.IsNullOrEmpty(input.ContinuationToken))
             {
-                return await logger.TrackDurationAsync(
-                    "HandlerQueueOperation", () => QueueOperationAsync(input, record, logger));
+                // Short circuit things if thats whats happening
+                if (await ShouldInitiallyHandleContinuationAsync(input, record, logger))
+                {
+                    // Custom logic to terminate things early if we are able to
+                    return await logger.TrackDurationAsync(
+                        "HandlerInitiallyHandleContinuationn", () => InitiallyHandleContinuationAsync(input, record, logger));
+                }
+                else
+                {
+                    // Queue operation to allow the rest of the continuation to occur
+                    return await logger.TrackDurationAsync(
+                        "HandlerInitiallyQueueContinuation", () => InitiallyQueueContinuationAsync(input, record, logger));
+                }
             }
 
             // If we don't have the operation input build it
@@ -162,34 +174,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <summary>
-        /// Builds the input required for the target continuation.
-        /// </summary>
-        /// <param name="input">Target input.</param>
-        /// <param name="record">Referene to target resource.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Required target input.</returns>
-        protected abstract Task<ContinuationInput> BuildOperationInputAsync(TI input, ResourceRecordRef record, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Triggers the run operation on the target continuation.
-        /// </summary>
-        /// <param name="operationInput">Target operation input.</param>
-        /// <param name="record">Referene to target resource.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Target operations continuation result.</returns>
-        protected abstract Task<ContinuationResult> RunOperationCoreAsync(TI operationInput, ResourceRecordRef record, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Build the continuation, by default will be the `input.ResourceId`.
-        /// </summary>
-        /// <param name="input">Target input.</param>
-        /// <returns>String that represents the continuation token.</returns>
-        protected virtual string BuildContinuationToken(TI input)
-        {
-            return input.ResourceId.ToString();
-        }
-
-        /// <summary>
         /// Obtains a record state management object for a Resource.
         /// </summary>
         /// <param name="input">Target input.</param>
@@ -217,8 +201,147 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 throw new ResourceNotFoundException(resourceId);
             }
 
-            return new ResourceRecordRef(resource);
+            return new ResourceRecordRef(resource, resourceId);
         }
+
+        /// <summary>
+        /// Signals whether operation should be initially handled or added to queue for
+        /// further processing.
+        /// </summary>
+        /// <param name="input">Target input.</param>
+        /// <param name="record">Referene to target resource.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Whether we are short cirting the operaiton.</returns>
+        protected virtual Task<bool> ShouldInitiallyHandleContinuationAsync(TI input, ResourceRecordRef record, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(false);
+        }
+
+        /// <summary>
+        /// Handler which runs if we are short circuiting the opertion by not adding to queue.
+        /// </summary>
+        /// <param name="input">Target input.</param>
+        /// <param name="record">Referene to target resource.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Required target input.</returns>
+        protected virtual async Task<ContinuationResult> InitiallyHandleContinuationAsync(TI input, ResourceRecordRef record, IDiagnosticsLogger logger)
+        {
+            var resultStatus = OperationState.Succeeded;
+
+            // Update status straight to target status
+            await UpdateRecordStatusAsync(input, record, resultStatus, "HandleOperation", logger.NewChildLogger());
+
+            return new ContinuationResult { Status = resultStatus };
+        }
+
+        /// <summary>
+        /// Preforms the steps required to build a response that will put the operation request
+        /// on the queue.
+        /// </summary>
+        /// <param name="input">Target input.</param>
+        /// <param name="record">Referene to target resource.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Queue continuation result.</returns>
+        protected virtual async Task<ContinuationResult> InitiallyQueueContinuationAsync(
+            TI input,
+            ResourceRecordRef record,
+            IDiagnosticsLogger logger)
+        {
+            // Update status
+            await UpdateRecordStatusAsync(input, record, OperationState.Initialized, "QueueOperation", logger);
+
+            // Build desired result setting up continuation
+            input.ContinuationToken = BuildContinuationToken(input);
+
+            return new ContinuationResult
+            {
+                Status = OperationState.Initialized,
+                RetryAfter = TimeSpan.Zero,
+                NextInput = input,
+            };
+        }
+
+        /// <summary>
+        /// Builds the input required for the target continuation.
+        /// </summary>
+        /// <param name="input">Target input.</param>
+        /// <param name="record">Referene to target resource.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Required target input.</returns>
+        protected abstract Task<ContinuationInput> BuildOperationInputAsync(TI input, ResourceRecordRef record, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Preforms the steps required to build a response that indicates the contnuation should
+        /// run.
+        /// </summary>
+        /// <param name="input">Target input.</param>
+        /// <param name="record">Referene to target resource.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Run continuation result.</returns>
+        protected virtual async Task<ContinuationResult> RunOperationAsync(
+            TI input,
+            ResourceRecordRef record,
+            IDiagnosticsLogger logger)
+        {
+            // Update status to reflect that we are in progress
+            await UpdateRecordStatusAsync(input, record, OperationState.InProgress, "PreRunOperation", logger);
+
+            // Run core operation
+            var threwException = false;
+            var operationResult = (ContinuationResult)null;
+            try
+            {
+                operationResult = await RunOperationCoreAsync(input, record, logger.NewChildLogger());
+            }
+            catch (Exception e)
+            {
+                // Log core details
+                LogExceptionDetails("HandlerOperationException", e, logger);
+
+                threwException = true;
+            }
+
+            // If we didn't get a result record error
+            if (operationResult == null
+                || operationResult.Status == OperationState.Failed
+                || operationResult.Status == OperationState.Cancelled)
+            {
+                var failTrigger = threwException ? "Exception" : (operationResult == null ? "ResultNull" : operationResult.Status.ToString());
+
+                logger.FluentAddValue("HandlerFailedGetResultFromOperationException", threwException)
+                    .FluentAddValue("HandlerFailedGetResultFromOperation", operationResult == null)
+                    .FluentAddValue("HandlerFailedReason", operationResult?.ErrorReason);
+
+                return await FailOperationAsync(input, record, $"PostRunOperation{failTrigger}", logger);
+            }
+            else
+            {
+                logger.FluentAddValue("HandlerOperationPostContinuationToken", operationResult.NextInput?.ContinuationToken)
+                    .FluentAddValue("HandlerOperationPostStatus", operationResult.Status)
+                    .FluentAddValue("HandlerOperationPostRetryAfter", operationResult.RetryAfter);
+
+                // Update status to reflect compute result
+                await UpdateRecordStatusAsync(input, record, operationResult.Status, "PostRunOperation", logger);
+
+                // Build desired result setting up next input
+                input.OperationInput = operationResult.NextInput;
+                return new ContinuationResult
+                {
+                    Status = operationResult.Status,
+                    RetryAfter = operationResult.RetryAfter,
+                    NextInput = input,
+                };
+            }
+        }
+
+        /// <summary>
+        /// Triggers the run operation on the target continuation.
+        /// </summary>
+        /// <param name="operationInput">Target operation input.</param>
+        /// <param name="record">Referene to target resource.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target operations continuation result.</returns>
+        protected abstract Task<ContinuationResult> RunOperationCoreAsync(TI operationInput, ResourceRecordRef record, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Saves status update on a record.
@@ -229,58 +352,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="trigger">Trigger that caused the action.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returned task.</returns>
-        protected async Task<bool> SaveStatusAsync(
+        protected async Task<bool> UpdateRecordStatusAsync(
             TI input,
             ResourceRecordRef record,
             OperationState state,
             string trigger,
             IDiagnosticsLogger logger)
         {
-            var stateChanged = false;
-
-            // retry till we succeed
-            await logger.RetryOperationScopeAsync(
-                $"{LogBaseName}_status_update",
-                async (IDiagnosticsLogger innerLogger) =>
+            var stateChanged = await UpdateRecordAsync(
+                input,
+                record,
+                (resource) =>
                 {
-                    stateChanged = false;
-
-                    // Obtain a fresh record.
-                    record.Value = (await FetchReferenceAsync(Guid.Parse(record.Value.Id), logger)).Value;
+                    var changed = false;
 
                     // Determine what needs to be updated
                     if (Operation == ResourceOperation.Starting)
                     {
-                        record.Value.StartingReason = input.Reason;
-                        stateChanged = record.Value.UpdateStartingStatus(state, trigger);
+                        resource.StartingReason = input.Reason;
+                        changed = resource.UpdateStartingStatus(state, trigger);
                     }
                     else if (Operation == ResourceOperation.Deleting)
                     {
-                        record.Value.DeletingReason = input.Reason;
-                        stateChanged = record.Value.UpdateDeletingStatus(state, trigger);
+                        resource.DeletingReason = input.Reason;
+                        changed = resource.UpdateDeletingStatus(state, trigger);
                     }
                     else if (Operation == ResourceOperation.Provisioning)
                     {
-                        record.Value.ProvisioningReason = input.Reason;
-                        stateChanged = record.Value.UpdateProvisioningStatus(state, trigger);
+                        resource.ProvisioningReason = input.Reason;
+                        changed = resource.UpdateProvisioningStatus(state, trigger);
                     }
                     else if (Operation == ResourceOperation.CleanUp)
                     {
-                        record.Value.CleanupReason = input.Reason;
-                        stateChanged = record.Value.UpdateCleanupStatus(state, trigger);
+                        resource.CleanupReason = input.Reason;
+                        changed = resource.UpdateCleanupStatus(state, trigger);
                     }
                     else
                     {
                         throw new NotSupportedException($"Operation type is not supported - {Operation}");
                     }
 
-                    // Only need to update things if something has changed
-                    if (stateChanged)
-                    {
-                        record.Value = await ResourceRepository.UpdateAsync(record.Value, innerLogger.NewChildLogger());
-                    }
-                });
+                    return changed;
+                },
+                logger);
 
+            // If the state was changed
             if (stateChanged)
             {
                 // Trigger cleanup post fail
@@ -294,29 +410,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <summary>
-        /// Preforms the steps required to build a response that will put the operation request
-        /// on the queue.
+        /// Saves status update on a record.
         /// </summary>
         /// <param name="input">Target input.</param>
         /// <param name="record">Referene to target resource.</param>
+        /// <param name="mutateRecordCallback">Target callback which mutes the state.</param>
         /// <param name="logger">Target logger.</param>
-        /// <returns>Queue continuation result.</returns>
-        protected virtual async Task<ContinuationResult> QueueOperationAsync(
+        /// <returns>Returned task.</returns>
+        protected async Task<bool> UpdateRecordAsync(
             TI input,
             ResourceRecordRef record,
+            Func<ResourceRecord, bool> mutateRecordCallback,
             IDiagnosticsLogger logger)
         {
-            // Update status
-            await SaveStatusAsync(input, record, OperationState.Initialized, "QueueOperation", logger);
+            var stateChanged = false;
 
-            // Build desired result setting up continuation
-            input.ContinuationToken = BuildContinuationToken(input);
-            return new ContinuationResult
-            {
-                Status = OperationState.Initialized,
-                RetryAfter = TimeSpan.Zero,
-                NextInput = input,
-            };
+            // retry till we succeed
+            await logger.RetryOperationScopeAsync(
+                $"{LogBaseName}_status_update",
+                async (IDiagnosticsLogger innerLogger) =>
+                {
+                    // Obtain a fresh record.
+                    record.Value = (await FetchReferenceAsync(record.ResourceId, logger)).Value;
+
+                    // Mutate record
+                    stateChanged = mutateRecordCallback(record.Value);
+
+                    // Only need to update things if something has changed
+                    if (stateChanged)
+                    {
+                        record.Value = await ResourceRepository.UpdateAsync(record.Value, innerLogger.NewChildLogger());
+                    }
+                });
+
+            return stateChanged;
         }
 
         /// <summary>
@@ -335,7 +462,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IDiagnosticsLogger logger)
         {
             // Update compute to deal with the fact that storage has bombed
-            await SaveStatusAsync(input, record, OperationState.Failed, trigger, logger);
+            await UpdateRecordStatusAsync(input, record, OperationState.Failed, trigger, logger);
 
             // Setup failed result
             return new ContinuationResult { Status = OperationState.Failed };
@@ -367,7 +494,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     var resourceContinuationOperations = ServiceProvider.GetService<IResourceContinuationOperations>();
 
                     // Starts the delete workflow on the resource
-                    var deleteResult = await resourceContinuationOperations.DeleteResource(
+                    var deleteResult = await resourceContinuationOperations.DeleteAsync(
                         Guid.Parse(record.Value.Id), trigger, logger.NewChildLogger());
 
                     logger.FluentAddValue("HandlerFailCleanupPostState", deleteResult?.Status)
@@ -385,66 +512,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <summary>
-        /// Preforms the steps required to build a response that indicates the contnuation should
-        /// run.
+        /// Build the continuation, by default will be the `input.ResourceId`.
         /// </summary>
         /// <param name="input">Target input.</param>
-        /// <param name="record">Referene to target resource.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Run continuation result.</returns>
-        protected virtual async Task<ContinuationResult> RunOperationAsync(
-            TI input,
-            ResourceRecordRef record,
-            IDiagnosticsLogger logger)
+        /// <returns>String that represents the continuation token.</returns>
+        protected virtual string BuildContinuationToken(TI input)
         {
-            // Update status to reflect that we are in progress
-            await SaveStatusAsync(input, record, OperationState.InProgress, "PreRunOperation", logger);
-
-            // Run core operation
-            var threwException = false;
-            var operationResult = (ContinuationResult)null;
-            try
-            {
-                operationResult = await RunOperationCoreAsync(input, record, logger.NewChildLogger());
-            }
-            catch (Exception e)
-            {
-                // Log core details
-                LogExceptionDetails("HandlerOperationException", e, logger);
-
-                threwException = true;
-            }
-
-            // If we didn't get a result record error
-            if (operationResult == null
-                || operationResult.Status == OperationState.Failed
-                || operationResult.Status == OperationState.Cancelled)
-            {
-                var failTrigger = threwException ? "Exception" : (operationResult == null ? "ResultNull" : operationResult.Status.ToString());
-
-                logger.FluentAddValue("HandlerFailedGetResultFromOperationException", threwException)
-                    .FluentAddValue("HandlerFailedGetResultFromOperation", operationResult == null);
-
-                return await FailOperationAsync(input, record, $"PostRunOperation{failTrigger}", logger);
-            }
-            else
-            {
-                logger.FluentAddValue("HandlerOperationPostContinuationToken", operationResult.NextInput?.ContinuationToken)
-                    .FluentAddValue("HandlerOperationPostStatus", operationResult.Status)
-                    .FluentAddValue("HandlerOperationPostRetryAfter", operationResult.RetryAfter);
-
-                // Update status to reflect compute result
-                await SaveStatusAsync(input, record, operationResult.Status, "PostRunOperation", logger);
-
-                // Build desired result setting up next input
-                input.OperationInput = operationResult.NextInput;
-                return new ContinuationResult
-                {
-                    Status = operationResult.Status,
-                    RetryAfter = operationResult.RetryAfter,
-                    NextInput = input,
-                };
-            }
+            return input.ResourceId.ToString();
         }
 
         private void LogExceptionDetails(string propertyName, Exception e, IDiagnosticsLogger logger)

@@ -1,13 +1,9 @@
-﻿// <copyright file="AppSettingsRegion.cs" company="Microsoft">
+﻿// <copyright file="AppSettingsRegionPool.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.Collections.Generic;
-
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
 {
-
-
     /// <summary>
     /// Regional app settings.
     /// </summary>

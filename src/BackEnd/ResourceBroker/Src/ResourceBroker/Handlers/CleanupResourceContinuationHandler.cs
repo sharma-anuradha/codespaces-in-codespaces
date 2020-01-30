@@ -31,8 +31,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// Initializes a new instance of the <see cref="CleanupResourceContinuationHandler"/> class.
         /// </summary>
         /// <param name="computeProvider">Compute provider.</param>
-        /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
+        /// <param name="serviceProvider">Service provider.</param>
         public CleanupResourceContinuationHandler(
             IComputeProvider computeProvider,
             IResourceRepository resourceRepository,
@@ -54,8 +54,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IComputeProvider ComputeProvider { get; set; }
 
         /// <inheritdoc/>
+        protected override Task<bool> ShouldInitiallyHandleContinuationAsync(CleanupResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
+        {
+            // If we are dealing with storage, we want to initially handle
+            return Task.FromResult(resource.Value.Type == ResourceType.StorageFileShare);
+        }
+
+        /// <inheritdoc/>
         protected override Task<ContinuationInput> BuildOperationInputAsync(CleanupResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
+            // Handle compute case only, don't need to do anything with storage here as its already circuited.
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
                 var didParseLocation = Enum.TryParse(resource.Value.Location, true, out AzureLocation azureLocation);
@@ -70,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureResourceInfo = resource.Value.AzureResourceInfo,
                         AzureVmLocation = azureLocation,
                         ComputeOS = resource.Value.PoolReference.GetComputeOS(),
-                        EnvironmentId = input.EnvironmentId,
+                        EnvironmentId = input.EnvironmentId.ToString(),
                     });
             }
 
@@ -80,6 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override async Task<ContinuationResult> RunOperationCoreAsync(CleanupResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
+            // Handle compute case only, don't need to do anything with storage here as its already circuited.
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
                 return await ComputeProvider.ShutdownAsync((VirtualMachineProviderShutdownInput)input.OperationInput, logger.WithValues(new LogValueSet()));

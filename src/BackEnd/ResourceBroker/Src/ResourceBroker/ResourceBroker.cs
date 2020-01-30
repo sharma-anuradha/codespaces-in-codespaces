@@ -128,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             // Trigger auto pool create to replace assigned item
                             TaskHelper.RunBackground(
                                 $"{LogBaseName}_run_create",
-                                (taskLogger) => ResourceContinuationOperations.CreateResource(
+                                (taskLogger) => ResourceContinuationOperations.CreateAsync(
                                     Guid.NewGuid(), pool.Type, pool.Details, "ResourceAssignedReplace", taskLogger),
                                 childLogger);
 
@@ -186,7 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     // Trigger auto pool create to replace assigned item
                     TaskHelper.RunBackground(
                         $"{LogBaseName}_run_create",
-                        (taskLogger) => ResourceContinuationOperations.CreateResource(
+                        (taskLogger) => ResourceContinuationOperations.CreateAsync(
                             Guid.NewGuid(), assignResult.ResourceSku.Type, assignResult.ResourceSku.Details, "ResourceAssignedReplace", taskLogger),
                         childLogger);
 
@@ -195,7 +195,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<DeleteResult> DeleteAsync(
+        public Task<bool> DeleteAsync(
+            IEnumerable<DeleteInput> inputs,
+            IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_delete_set",
+                async (childLogger) =>
+                {
+                    var results = await Task.WhenAll(inputs.Select(input => DeleteAsync(input, childLogger.NewChildLogger())));
+
+                    return results.All(x => x);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> DeleteAsync(
             DeleteInput input,
             IDiagnosticsLogger logger)
         {
@@ -205,32 +220,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 {
                     childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
 
-                    await ResourceContinuationOperations.DeleteResource(
+                    await ResourceContinuationOperations.DeleteAsync(
                         input.ResourceId, input.Trigger, childLogger.NewChildLogger());
 
-                    return new DeleteResult { Successful = true };
+                    return true;
                 });
         }
 
         /// <inheritdoc/>
-        public Task<SuspendResult> SuspendAsync(
+        public Task<bool> SuspendAsync(
+            IEnumerable<SuspendInput> inputs,
+            IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_suspend_set",
+                async (childLogger) =>
+                {
+                    var results = await Task.WhenAll(inputs.Select(input => SuspendAsync(input, childLogger.NewChildLogger())));
+
+                    return results.All(x => x);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SuspendAsync(
             SuspendInput input,
             IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_cleanup",
+                $"{LogBaseName}_suspend",
                 async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
 
-                    await ResourceContinuationOperations.SuspendResource(input.ResourceId, input.EnvironmentId, input.Trigger, logger);
+                    await ResourceContinuationOperations.SuspendAsync(input.ResourceId, input.EnvironmentId, input.Trigger, logger);
 
-                    return new SuspendResult { Successful = true };
+                    return true;
                 });
         }
 
         /// <inheritdoc/>
-        public Task<StartResult> StartResourceAsync(
+        public Task<bool> StartAsync(
             StartInput input,
             IDiagnosticsLogger logger)
         {
@@ -241,10 +271,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ComputeResourceId)
                         .FluentAddBaseValue("StorageResourceId", input.StorageResourceId);
 
-                    await ResourceContinuationOperations.StartEnvironment(
+                    await ResourceContinuationOperations.StartAsync(
                         input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, childLogger.NewChildLogger());
 
-                    return new StartResult { Successful = true };
+                    return true;
                 });
         }
 

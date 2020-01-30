@@ -63,15 +63,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<SuspendResult> SuspendAsync(SuspendInput input, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(SuspendInput input, IDiagnosticsLogger logger)
         {
-            return Task.FromResult(new SuspendResult { Successful = true });
+            return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<DeleteResult> DeleteAsync(DeleteInput input, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(IEnumerable<SuspendInput> input, IDiagnosticsLogger logger)
         {
-            return Task.FromResult(new DeleteResult { Successful = true });
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> DeleteAsync(DeleteInput input, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> DeleteAsync(IEnumerable<DeleteInput> inputs, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
@@ -81,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
-        public async Task<StartResult> StartResourceAsync(StartInput input, IDiagnosticsLogger logger)
+        public async Task<bool> StartAsync(StartInput input, IDiagnosticsLogger logger)
         {
             // TODO: get these from shared Constants.
             const string SessionCallbackVaraible = "SESSION_CALLBACK";
@@ -95,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
 
             var task = Task.Run(() =>
             {
-                return new StartResult { Successful = true };
+                return true;
             });
 
             // Mock the VM callback.

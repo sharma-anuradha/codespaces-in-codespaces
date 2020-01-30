@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IResourceRepository ResourceRepository { get; }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> CreateResource(
+        public async Task<ContinuationResult> CreateAsync(
             Guid resourceId,
             ResourceType type,
             ResourcePoolResourceDetails details,
@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> StartEnvironment(
+        public async Task<ContinuationResult> StartAsync(
             Guid computeResourceId,
             Guid storageResourceId,
             IDictionary<string, string> environmentVariables,
@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> DeleteResource(
+        public async Task<ContinuationResult> DeleteAsync(
             Guid resourceId,
             string reason,
             IDiagnosticsLogger logger)
@@ -110,9 +110,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> SuspendResource(
+        public async Task<ContinuationResult> SuspendAsync(
             Guid resourceId,
-            string environmentId,
+            Guid environmentId,
             string reason,
             IDiagnosticsLogger logger)
         {

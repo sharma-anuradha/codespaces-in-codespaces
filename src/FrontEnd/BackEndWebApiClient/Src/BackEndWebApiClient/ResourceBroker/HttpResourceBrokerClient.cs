@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public async Task<ResourceBrokerResource> GetAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetGetResourceUri(resourceId);
@@ -38,17 +38,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
-            IEnumerable<CreateResourceRequestBody> input, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
+            IEnumerable<AllocateRequestBody> input, IDiagnosticsLogger logger)
         {
             var requestUri = ResourceBrokerHttpContract.GetCreateResourceUri();
-            var result = await SendAsync<IEnumerable<CreateResourceRequestBody>, IEnumerable<ResourceBrokerResource>>(
+            var result = await SendAsync<IEnumerable<AllocateRequestBody>, IEnumerable<AllocateResponseBody>>(
                 ResourceBrokerHttpContract.PostResourceMethod, requestUri, input, logger.NewChildLogger());
             return result;
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public async Task<bool> DeleteAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(resourceId);
@@ -57,16 +57,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<bool> SuspendResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        public async Task<bool> SuspendAsync(Guid resourceId, Guid environmentId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
-            var requestUri = ResourceBrokerHttpContract.GetSuspendResourceUri(resourceId, environmentId);
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+#pragma warning disable CS0612 // Type or member is obsolete
+            var requestUri = ResourceBrokerHttpContract.GetCleanupResourceUri(resourceId, environmentId);
+#pragma warning restore CS0612 // Type or member is obsolete
             await SendRawAsync<string>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, null, logger.NewChildLogger());
             return true;
         }
 
         /// <inheritdoc/>
-        public async Task<bool> StartResourceSetAsync(Guid computeResourceId, StartResourceRequestBody startResourceSetRequestBody, IDiagnosticsLogger logger)
+        public async Task<bool> SuspendAsync(IEnumerable<SuspendRequestBody> suspendRequestBody, Guid environmentId, IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+            var requestUri = ResourceBrokerHttpContract.GetSuspendResourceUri(environmentId);
+            var response = await SendAsync<IEnumerable<SuspendRequestBody>, bool>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, null, logger.NewChildLogger());
+            return true;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> StartAsync(Guid computeResourceId, StartResourceRequestBody startResourceSetRequestBody, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(computeResourceId, nameof(computeResourceId));
             var requestUri = ResourceBrokerHttpContract.GetStartResourceSetUri(computeResourceId);

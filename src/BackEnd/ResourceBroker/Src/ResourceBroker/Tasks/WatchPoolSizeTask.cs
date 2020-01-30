@@ -156,7 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
-            await ResourceContinuationOperations.CreateResource(
+            await ResourceContinuationOperations.CreateAsync(
                 id, resourcePool.Type, resourcePool.Details, reason, logger.NewChildLogger());
         }
 
@@ -165,7 +165,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
-            await ResourceContinuationOperations.DeleteResource(id, reason, logger.NewChildLogger());
+            await ResourceContinuationOperations.DeleteAsync(id, reason, logger.NewChildLogger());
         }
     }
 }

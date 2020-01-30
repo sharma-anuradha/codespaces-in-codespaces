@@ -7,7 +7,7 @@ using System;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
     /// <summary>
-    /// Model required for Cleanup input.
+    /// Model required for Suspend input.
     /// </summary>
     public class SuspendInput
     {
@@ -24,6 +24,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// <summary>
         /// Gets or sets the environment id.
         /// </summary>
-        public string EnvironmentId { get; set; }
+        public Guid EnvironmentId { get; set; }
     }
 }

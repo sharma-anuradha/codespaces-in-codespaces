@@ -116,6 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <summary>
         /// Gets or sets the starting reason.
         /// </summary>
+        [JsonProperty(PropertyName = "startingReason")]
         public string StartingReason { get; set; }
 
         /// <summary>

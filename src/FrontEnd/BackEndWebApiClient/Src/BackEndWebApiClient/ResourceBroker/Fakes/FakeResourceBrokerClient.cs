@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
     {
         private const string DockerCLI = "docker";
 
-        private readonly ConcurrentDictionary<Guid, ResourceBrokerResource> resources = new ConcurrentDictionary<Guid, ResourceBrokerResource>();
+        private readonly ConcurrentDictionary<Guid, AllocateResponseBody> resources = new ConcurrentDictionary<Guid, AllocateResponseBody>();
         private readonly string dockerImageName;
         private readonly string publishedCLIPath;
 
@@ -37,21 +37,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(Guid resourceId, Guid environmentId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<ResourceBrokerResource>> CreateResourceSetAsync(
-            IEnumerable<CreateResourceRequestBody> allocateRequestsBody, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
+            IEnumerable<AllocateRequestBody> allocateRequestsBody, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
 
-            var results = new List<ResourceBrokerResource>();
+            var results = new List<AllocateResponseBody>();
             foreach (var allocateRequestBody in allocateRequestsBody)
             {
-                var resource = new ResourceBrokerResource
+                var resource = new AllocateResponseBody
                 {
                     ResourceId = Guid.NewGuid(),
                     Created = DateTime.UtcNow,
@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public async Task<bool> DeleteAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
 
@@ -82,9 +82,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<ResourceBrokerResource> GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public Task<ResourceBrokerResource> GetAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            return Task.FromResult(resources.GetValueOrDefault(resourceId));
+            throw new NotSupportedException();
         }
 
         /// <inheritdoc/>
@@ -94,13 +94,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<bool> StartResourceSetAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        public async Task<bool> StartAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
 
             _ = CreateDockerContainerWithCopiedCLI(dockerImageName, publishedCLIPath, startComputeRequestBody, computeResourceId);
 
             return true;
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SuspendAsync(IEnumerable<SuspendRequestBody> suspendRequestBody, Guid environmentId, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
         }
 
         private string CreateDockerContainerWithCopiedCLI(string image, string cliPublishedpath, StartResourceRequestBody startComputeRequestBody, Guid computeResourceId)

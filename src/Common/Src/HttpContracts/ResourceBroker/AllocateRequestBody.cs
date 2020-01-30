@@ -1,4 +1,4 @@
-﻿// <copyright file="CreateResourceRequestBody.cs" company="Microsoft">
+﻿// <copyright file="AllocateRequestBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
     /// <summary>
     /// The allocate request body.
     /// </summary>
-    public class CreateResourceRequestBody
+    public class AllocateRequestBody
     {
         /// <summary>
         /// Gets or sets the cloud environment sku name.

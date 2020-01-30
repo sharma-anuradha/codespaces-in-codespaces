@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Providers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repository.Models;
 
@@ -55,6 +56,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
         private IResourcePoolStateSnapshotRepository ResourcePoolStateSnapshotRepository { get; }
 
         private ITaskHelper TaskHelper { get; }
+
+        private ICurrentUserProvider CurrentUserProvider { get; }
 
         /// <summary>
         /// Runs the actual load test.
@@ -120,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
                     // Avoid possible race considition where pool was still populating
                     if (poolCodes.Any())
                     {
-                        await Task.Delay(10000);
+                        await Task.Delay(30000);
                         poolCodes = (await FetchPoolSnapshotsAsync(logger)).Select(x => x.Id);
                     }
 
@@ -216,6 +219,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
                         }
                         catch (HttpRequestException e)
                         {
+                            if (e == null)
+                            {
+                                return false;
+                            }
+
                             // Throw if we have tried too many times
                             if (++errorCount == 3)
                             {
@@ -226,6 +234,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
                         }
                         catch (Exception e)
                         {
+                            if (e == null)
+                            {
+                                return false;
+                            }
+
                             if (errorCount > -1)
                             {
                                 throw;

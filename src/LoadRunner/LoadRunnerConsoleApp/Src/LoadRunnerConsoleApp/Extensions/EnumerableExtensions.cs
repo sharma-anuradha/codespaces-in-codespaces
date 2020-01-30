@@ -1,6 +1,9 @@
-﻿using System;
+﻿// <copyright file="EnumerableExtensions.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Extensions

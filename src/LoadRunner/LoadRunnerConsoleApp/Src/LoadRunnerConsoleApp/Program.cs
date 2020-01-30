@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
         /// </summary>
         /// <param name="args">Arguments to change the way the host is built.
         /// Not usually needed.</param>
+        /// <returns>Resulting task.</returns>
         public static async Task Main(string[] args)
         {
             var collection = new ServiceCollection();

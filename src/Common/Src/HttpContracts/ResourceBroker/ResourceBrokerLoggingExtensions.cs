@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker
 {
     /// <summary>
-    /// Logging helper for <see cref="ResourceBrokerResource"/>, <see cref="CreateResourceRequestBody"/>, and <see cref="StartResourceRequestBody"/>.
+    /// Logging helper for <see cref="ResourceBrokerResource"/>, <see cref="AllocateRequestBody"/>, and <see cref="StartResourceRequestBody"/>.
     /// </summary>
     public static class ResourceBrokerLoggingExtensions
     {
@@ -18,11 +18,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// Add a resource id token to the logging context.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <param name="resourceId">The resource id otken value.</param>
+        /// <param name="resourceId">The resource id value.</param>
         /// <returns>The <paramref name="logger"/> instance.</returns>
         public static IDiagnosticsLogger AddBaseResourceId(this IDiagnosticsLogger logger, Guid? resourceId)
         {
             return logger.FluentAddBaseValue(nameof(ResourceBrokerResource.ResourceId), resourceId?.ToString());
+        }
+
+        /// <summary>
+        /// Add a environment id token to the logging context.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="environmentId">The environment id value.</param>
+        /// <returns>The <paramref name="logger"/> instance.</returns>
+        public static IDiagnosticsLogger AddBaseEnvironmentId(this IDiagnosticsLogger logger, Guid? environmentId)
+        {
+            return logger.FluentAddBaseValue("EnvironmentId", environmentId?.ToString());
         }
 
         /// <summary>

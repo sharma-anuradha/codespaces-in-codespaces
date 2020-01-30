@@ -64,6 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         protected override async Task<ContinuationInput> BuildOperationInputAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
         {
             var computeOs = compute.Value.PoolReference.GetComputeOS();
+
             var storageResult = await AssignStorageAsync(input, input.StorageResourceId, computeOs, logger);
             if (storageResult.Status != OperationState.Succeeded)
             {
@@ -102,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var storage = await FetchReferenceAsync(storageId, logger);
 
             // Update storage to be inprogress
-            await SaveStatusAsync(input, storage, OperationState.Initialized, "PreAssignStorage", logger);
+            await UpdateRecordStatusAsync(input, storage, OperationState.Initialized, "PreAssignStorage", logger);
 
             // Get file share connection info for target share
             var fileShareProviderAssignInput = new FileShareProviderAssignInput
@@ -113,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, logger);
 
             // Update storage to be completed
-            await SaveStatusAsync(input, storage, storageResult.Status, "PostAssignStorage", logger);
+            await UpdateRecordStatusAsync(input, storage, storageResult.Status, "PostAssignStorage", logger);
 
             return storageResult;
         }

@@ -42,47 +42,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         private IResourceBrokerResourcesHttpContract ResourceBrokerHttp { get => this; }
 
         /// <summary>
-        /// Allocate new resources from the resource broker.
-        /// <para>
-        /// POST api/v1/resourcebroker/resources.
-        /// </para>
-        /// <para>
-        /// {<see cref="CreateResourceRequestBody"/>}.
-        /// </para>
-        /// </summary>
-        /// <param name="createResourcesRequestBody">The allocate request body.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>The <see cref="ResourceBrokerResource"/>.</returns>
-        [HttpPost]
-        [ProducesResponseType(typeof(ResourceBrokerResource), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpOperationalScope("allocate")]
-        public async Task<IActionResult> AllocateAsync(
-            [FromBody]IEnumerable<CreateResourceRequestBody> createResourcesRequestBody,
-            [FromServices]IDiagnosticsLogger logger)
-        {
-            if (createResourcesRequestBody is null || !createResourcesRequestBody.Any())
-            {
-                logger.AddReason($"{HttpStatusCode.BadRequest}: body is null");
-                return BadRequest();
-            }
-
-            var result = default(IEnumerable<ResourceBrokerResource>);
-            try
-            {
-                result = await ResourceBrokerHttp.CreateResourceSetAsync(createResourcesRequestBody, logger.NewChildLogger());
-            }
-            catch (OutOfCapacityException e)
-            {
-                Response.Headers.Add("Retry-After", TimeSpan.FromSeconds(30).TotalSeconds.ToString());
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, e);
-            }
-
-            // Returns 200-Ok
-            return Ok(result);
-        }
-
-        /// <summary>
         /// Gets a resource by id.
         /// <para>
         /// GET api/v1/resourcebroker/resources?id={resourceId}.
@@ -102,105 +61,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <summary>
-        /// Gets a resource by id.
+        /// Allocate new resources from the resource broker.
         /// <para>
-        /// GET api/v1/resourcebroker/resources?id={resourceId}.
+        /// POST api/v1/resourcebroker/resources.
+        /// </para>
+        /// <para>
+        /// {<see cref="AllocateRequestBody"/>}.
         /// </para>
         /// </summary>
-        /// <param name="id">Resource id token.</param>
+        /// <param name="allocateRequestBody">The allocate request body.</param>
         /// <param name="logger">Target logger.</param>
-        /// <returns>Nothing.</returns>
-        [HttpGet("environmentheartbeat")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpOperationalScope("heartbeat")]
-        public async Task<IActionResult> ProcessHeartbeatAsync(
-            [FromQuery]string id,
-            [FromServices]IDiagnosticsLogger logger)
-        {
-            if (!Guid.TryParse(id, out var resourceId))
-            {
-                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid");
-                return BadRequest();
-            }
-
-            logger.AddBaseResourceId(resourceId);
-
-            // Get status
-            var result = await ResourceBrokerHttp.ProcessHeartbeatAsync(resourceId, logger.NewChildLogger());
-
-            // return 200 vs 404 based on the result
-            return result ? (IActionResult)Ok(result) : NotFound(result);
-        }
-
-        /// <summary>
-        /// Deallocates a resource from the resource broker.
-        /// <para>
-        /// DELETE api/resourcebroker/resources?id={resourceId}.
-        /// </para>
-        /// </summary>
-        /// <param name="id">The resource id token.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>No content.</returns>
-        [HttpDelete]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        /// <returns>The <see cref="ResourceBrokerResource"/>.</returns>
+        [HttpPost]
+        [ProducesResponseType(typeof(ResourceBrokerResource), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpOperationalScope("heartbeat")]
-        public async Task<IActionResult> DeallocateAsync(
-            [FromQuery] string id,
+        [HttpOperationalScope("allocate")]
+        public async Task<IActionResult> AllocateAsync(
+            [FromBody]IEnumerable<AllocateRequestBody> allocateRequestBody,
             [FromServices]IDiagnosticsLogger logger)
         {
-            if (!Guid.TryParse(id, out var resourceId))
+            if (allocateRequestBody is null || !allocateRequestBody.Any())
             {
-                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid");
+                logger.AddReason($"{HttpStatusCode.BadRequest}: body is null");
                 return BadRequest();
             }
 
-            logger.AddBaseResourceId(resourceId);
-
-            if (!await ResourceBrokerHttp.DeleteResourceAsync(resourceId, logger.NewChildLogger()))
+            try
             {
-                return NotFound();
+                var result = await ResourceBrokerHttp.AllocateAsync(allocateRequestBody, logger.NewChildLogger());
+                return Ok(result);
             }
-
-            return NoContent();
-        }
-
-        /// <summary>
-        /// Cleans a resource in the resource broker.
-        /// <para>
-        /// GET api/resourcebroker/resources/cleanup?id={resourceId}.
-        /// </para>
-        /// </summary>
-        /// <param name="id">The resource id token.</param>
-        /// <param name="environmentId">The environment id.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>No content.</returns>
-        [HttpPost("cleanup")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpOperationalScope("cleanup")]
-        public async Task<IActionResult> CleanupAsync(
-            [FromQuery] string id,
-            [FromQuery] string environmentId,
-            [FromServices]IDiagnosticsLogger logger)
-        {
-            if (!Guid.TryParse(id, out var resourceId))
+            catch (OutOfCapacityException e)
             {
-                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid");
-                return BadRequest();
+                Response.Headers.Add("Retry-After", TimeSpan.FromSeconds(30).TotalSeconds.ToString());
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, e);
             }
-
-            logger.AddBaseResourceId(resourceId);
-
-            if (!await ResourceBrokerHttp.SuspendResourceAsync(resourceId, environmentId, logger.NewChildLogger()))
-            {
-                return NotFound();
-            }
-
-            return NoContent();
         }
 
         /// <summary>
@@ -244,39 +139,191 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 return BadRequest();
             }
 
-            await ResourceBrokerHttp.StartResourceSetAsync(computeResourceId, startComputeRequestBody, logger.NewChildLogger());
+            await ResourceBrokerHttp.StartAsync(computeResourceId, startComputeRequestBody, logger.NewChildLogger());
 
             return Ok();
         }
 
+        /// <summary>
+        /// Cleans a resource in the resource broker.
+        /// <para>
+        /// GET api/resourcebroker/resources/cleanup?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="rawResourceId">The resource id token.</param>
+        /// <param name="rawEnvironmentId">The environment id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>No content.</returns>
+        [HttpPost("cleanup")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("cleanup")]
+        [Obsolete]
+        public async Task<IActionResult> CleanupAsync(
+            [FromQuery] string rawResourceId,
+            [FromQuery] string rawEnvironmentId,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            if (!Guid.TryParse(rawResourceId, out var resourceId))
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: resourceId is missing or invalid");
+                return BadRequest();
+            }
+
+            if (!Guid.TryParse(rawEnvironmentId, out var environmentId))
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: environmentId is missing or invalid");
+                return BadRequest();
+            }
+
+            logger.AddBaseResourceId(resourceId)
+                .AddBaseEnvironmentId(environmentId);
+
+            if (!await ResourceBrokerHttp.SuspendAsync(resourceId, environmentId, logger.NewChildLogger()))
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Cleans a resource in the resource broker.
+        /// <para>
+        /// GET api/resourcebroker/resources/cleanup?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="suspendRequestBody">Target suspend request body.</param>
+        /// <param name="rawEnvironmentId">Target environment id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>No content.</returns>
+        [HttpPost("suspend")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("suspend")]
+        public async Task<IActionResult> SuspendAsync(
+            [FromBody]IEnumerable<SuspendRequestBody> suspendRequestBody,
+            [FromQuery] string rawEnvironmentId,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            if (suspendRequestBody is null || !suspendRequestBody.Any())
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: body is null");
+                return BadRequest();
+            }
+
+            if (!Guid.TryParse(rawEnvironmentId, out var environmentId))
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: environmentId is missing or invalid");
+                return BadRequest();
+            }
+
+            logger.AddBaseEnvironmentId(environmentId);
+
+            if (!await ResourceBrokerHttp.SuspendAsync(suspendRequestBody, environmentId, logger.NewChildLogger()))
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Deallocates a resource from the resource broker.
+        /// <para>
+        /// DELETE api/resourcebroker/resources?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="id">The resource id token.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>No content.</returns>
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("delete")]
+        public async Task<IActionResult> DeleteAsync(
+            [FromQuery] string id,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            if (!Guid.TryParse(id, out var resourceId))
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid");
+                return BadRequest();
+            }
+
+            logger.AddBaseResourceId(resourceId);
+
+            if (!await ResourceBrokerHttp.DeleteAsync(resourceId, logger.NewChildLogger()))
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Gets a resource by id.
+        /// <para>
+        /// GET api/v1/resourcebroker/resources?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="id">Resource id token.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Nothing.</returns>
+        [HttpGet("environmentheartbeat")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("heartbeat")]
+        public async Task<IActionResult> ProcessHeartbeatAsync(
+            [FromQuery]string id,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            if (!Guid.TryParse(id, out var resourceId))
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: id is missing or invalid");
+                return BadRequest();
+            }
+
+            logger.AddBaseResourceId(resourceId);
+
+            // Get status
+            var result = await ResourceBrokerHttp.ProcessHeartbeatAsync(resourceId, logger.NewChildLogger());
+
+            // return 200 vs 404 based on the result
+            return result ? (IActionResult)Ok(result) : NotFound(result);
+        }
+
         /// <inheritdoc/>
-        Task<ResourceBrokerResource> IResourceBrokerResourcesHttpContract.GetResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
+        Task<ResourceBrokerResource> IResourceBrokerResourcesHttpContract.GetAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        async Task<IEnumerable<ResourceBrokerResource>> IResourceBrokerResourcesHttpContract.CreateResourceSetAsync(
-            IEnumerable<CreateResourceRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger)
+        async Task<IEnumerable<AllocateResponseBody>> IResourceBrokerResourcesHttpContract.AllocateAsync(
+            IEnumerable<AllocateRequestBody> allocateRequestBody, IDiagnosticsLogger logger)
         {
             var brokerInput = new List<AllocateInput>();
-            foreach (var createResourceRequestBody in createResourcesRequestBody)
+            foreach (var body in allocateRequestBody)
             {
                 brokerInput.Add(new AllocateInput
                     {
-                        Location = createResourceRequestBody.Location,
-                        SkuName = createResourceRequestBody.SkuName,
-                        Type = createResourceRequestBody.Type,
+                        Location = body.Location,
+                        SkuName = body.SkuName,
+                        Type = body.Type,
                     });
             }
 
             var brokerResults = await ResourceBroker.AllocateAsync(
                 brokerInput, logger.NewChildLogger());
 
-            var createResourcesResponseBody = new List<ResourceBrokerResource>();
+            var createResourcesResponseBody = new List<AllocateResponseBody>();
             foreach (var brokerResult in brokerResults)
             {
-                createResourcesResponseBody.Add(new ResourceBrokerResource
+                createResourcesResponseBody.Add(new AllocateResponseBody
                     {
                         Type = brokerResult.Type,
                         SkuName = brokerResult.SkuName,
@@ -290,23 +337,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <inheritdoc/>
-        async Task<bool> IResourceBrokerResourcesHttpContract.DeleteResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
-        {
-            var input = new DeleteInput { ResourceId = resourceId, Trigger = "FrontEndDeleteResourceService" };
-            var result = await ResourceBroker.DeleteAsync(input, logger.NewChildLogger());
-            return result.Successful;
-        }
-
-        /// <inheritdoc/>
-        async Task<bool> IResourceBrokerResourcesHttpContract.SuspendResourceAsync(Guid resourceId, string environmentId, IDiagnosticsLogger logger)
-        {
-            var input = new SuspendInput { ResourceId = resourceId, Trigger = "FrontEndCleanupResourceService", EnvironmentId = environmentId };
-            var result = await ResourceBroker.SuspendAsync(input, logger.NewChildLogger());
-            return result.Successful;
-        }
-
-        /// <inheritdoc/>
-        async Task<bool> IResourceBrokerResourcesHttpContract.StartResourceSetAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        async Task<bool> IResourceBrokerResourcesHttpContract.StartAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
         {
             var input = new StartInput
             {
@@ -315,8 +346,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 EnvironmentVariables = startComputeRequestBody.EnvironmentVariables,
                 Trigger = "FrontEndStartComputeService",
             };
-            var result = await ResourceBroker.StartResourceAsync(input, logger.NewChildLogger());
-            return result.Successful;
+            return await ResourceBroker.StartAsync(input, logger.NewChildLogger());
+        }
+
+        /// <inheritdoc/>
+        [Obsolete]
+        async Task<bool> IResourceBrokerResourcesHttpContract.SuspendAsync(Guid resourceId, Guid environmentId, IDiagnosticsLogger logger)
+        {
+            var input = new SuspendInput
+                { ResourceId = resourceId, Trigger = "FrontEndSuspendResourceService", EnvironmentId = environmentId };
+            return await ResourceBroker.SuspendAsync(
+                input, logger.NewChildLogger());
+        }
+
+        /// <inheritdoc/>
+        async Task<bool> IResourceBrokerResourcesHttpContract.SuspendAsync(
+            IEnumerable<SuspendRequestBody> suspendRequestBody, Guid environmentId, IDiagnosticsLogger logger)
+        {
+            var brokerInput = new List<SuspendInput>();
+            foreach (var body in suspendRequestBody)
+            {
+                brokerInput.Add(new SuspendInput
+                {
+                    ResourceId = body.ResourceId,
+                    Trigger = "FrontEndSuspendResourceService",
+                    EnvironmentId = environmentId,
+                });
+            }
+
+            return await ResourceBroker.SuspendAsync(
+                brokerInput, logger.NewChildLogger());
+        }
+
+        /// <inheritdoc/>
+        async Task<bool> IResourceBrokerResourcesHttpContract.DeleteAsync(Guid resourceId, IDiagnosticsLogger logger)
+        {
+            var input = new DeleteInput { ResourceId = resourceId, Trigger = "FrontEndDeleteResourceService" };
+            return await ResourceBroker.DeleteAsync(input, logger.NewChildLogger());
         }
 
         /// <inheritdoc/>
