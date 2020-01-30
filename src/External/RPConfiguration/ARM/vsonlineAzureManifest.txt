@@ -139,16 +139,16 @@
       "routingType": "Default",
       "authorizationActionMappings": [
         {
-          "original": "Microsoft.VSOnline/plans/readEnvironments/action",
-          "desired": "Microsoft.VSOnline/plans/environments/read"
+          "original": "Microsoft.VSOnline/plans/readAllEnvironments/action",
+          "desired": "Microsoft.VSOnline/plans/allEnvironments/read"
         },
         {
           "original": "Microsoft.VSOnline/plans/writeEnvironments/action",
           "desired": "Microsoft.VSOnline/plans/environments/write"
         },
         {
-          "original": "Microsoft.VSOnline/plans/deleteEnvironments/action",
-          "desired": "Microsoft.VSOnline/plans/environments/delete"
+          "original": "Microsoft.VSOnline/plans/deleteAllEnvironments/action",
+          "desired": "Microsoft.VSOnline/plans/allEnvironments/delete"
         },
         {
           "original": "Microsoft.VSOnline/plans/readDelegates/action",
