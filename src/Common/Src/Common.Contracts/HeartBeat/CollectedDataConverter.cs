@@ -27,13 +27,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 
                 if (name.Equals(nameof(EnvironmentData), StringComparison.OrdinalIgnoreCase))
                 {
-                    var environmentData = collectedData.ToObject<EnvironmentData>();
-                    return environmentData;
+                    return collectedData.ToObject<EnvironmentData>();
                 }
                 else if (!string.IsNullOrEmpty((string)collectedData["jobState"]))
                 {
-                    var jobResult = collectedData.ToObject<JobResult>();
-                    return jobResult;
+                    return collectedData.ToObject<JobResult>();
+                }
+                else if (name.Equals(nameof(EnvironmentSessionData), StringComparison.OrdinalIgnoreCase))
+                {
+                    return collectedData.ToObject<EnvironmentSessionData>();
                 }
                 else
                 {

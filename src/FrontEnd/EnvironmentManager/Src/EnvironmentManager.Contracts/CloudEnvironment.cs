@@ -183,6 +183,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public DateTime LastUpdatedByHeartBeat { get; set; }
 
         /// <summary>
+        /// Gets or sets the last time the record is updated based on active sessions on environment.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "lastUsed")]
+        public DateTime LastUsed { get; set; }
+
+        /// <summary>
         /// Gets or sets the auto shutdown time the user specified.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "autoShutdownDelayMinutes")]

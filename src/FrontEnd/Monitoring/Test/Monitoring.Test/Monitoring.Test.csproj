@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj" />
+    <ProjectReference Include="..\..\Src\Monitoring\Monitoring.csproj" />
+  </ItemGroup>
+
+</Project>
