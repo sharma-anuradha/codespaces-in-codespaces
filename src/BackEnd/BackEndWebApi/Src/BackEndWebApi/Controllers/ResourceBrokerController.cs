@@ -150,8 +150,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// GET api/resourcebroker/resources/cleanup?id={resourceId}.
         /// </para>
         /// </summary>
-        /// <param name="rawResourceId">The resource id token.</param>
-        /// <param name="rawEnvironmentId">The environment id.</param>
+        /// <param name="id">The resource id token.</param>
+        /// <param name="environmentId">The environment id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
         [HttpPost("cleanup")]
@@ -161,26 +161,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [HttpOperationalScope("cleanup")]
         [Obsolete]
         public async Task<IActionResult> CleanupAsync(
-            [FromQuery] string rawResourceId,
-            [FromQuery] string rawEnvironmentId,
+            [FromQuery] string id,
+            [FromQuery] string environmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
-            if (!Guid.TryParse(rawResourceId, out var resourceId))
+            if (!Guid.TryParse(id, out var typedResourceId))
             {
                 logger.AddReason($"{HttpStatusCode.BadRequest}: resourceId is missing or invalid");
                 return BadRequest();
             }
 
-            if (!Guid.TryParse(rawEnvironmentId, out var environmentId))
+            if (!Guid.TryParse(environmentId, out var typedEnvironmentId))
             {
                 logger.AddReason($"{HttpStatusCode.BadRequest}: environmentId is missing or invalid");
                 return BadRequest();
             }
 
-            logger.AddBaseResourceId(resourceId)
-                .AddBaseEnvironmentId(environmentId);
+            logger.AddBaseResourceId(typedResourceId)
+                .AddBaseEnvironmentId(typedEnvironmentId);
 
-            if (!await ResourceBrokerHttp.SuspendAsync(resourceId, environmentId, logger.NewChildLogger()))
+            if (!await ResourceBrokerHttp.SuspendAsync(typedResourceId, typedEnvironmentId, logger.NewChildLogger()))
             {
                 return NotFound();
             }
