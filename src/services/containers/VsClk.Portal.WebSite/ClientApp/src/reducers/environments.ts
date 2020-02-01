@@ -203,7 +203,7 @@ export function environments(
                 const environments = replaceAtIndex([...state.environments], index, environment);
                 return {
                     ...state,
-                    environments: environments,
+                    environments,
                     activatingEnvironments: [...state.activatingEnvironments, environment.id],
                 };
             })(state, action);
@@ -228,16 +228,15 @@ export function environments(
         case stateChangeEnvironmentActionType:
             return ((state, action) => {
                 let { activatingEnvironments } = state;
-                const { id, environmentState } = action.payload;
+                const { id, environmentState, oldState } = action.payload;
                 const index = state.environments.findIndex((e) => e.id === id);
-
                 if (index < 0) {
                     throw new Error(`${action.type} returned an environment we are not tracking.`);
                 }
-
                 let updatedEnvironment = {
                     ...state.environments[index],
                     state: environmentState,
+                    oldState
                 };
 
                 const environments = replaceAtIndex(
@@ -247,7 +246,7 @@ export function environments(
                 );
                 return {
                     ...state,
-                    environments: environments,
+                    environments,
                     activatingEnvironments,
                 };
             })(state, action);
@@ -274,7 +273,7 @@ export function environments(
                 const environments = replaceAtIndex([...state.environments], index, environment);
                 return {
                     ...state,
-                    environments: environments,
+                    environments,
                     activatingEnvironments,
                 };
             })(state, action);

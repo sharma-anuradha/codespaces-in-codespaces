@@ -398,9 +398,9 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
             return;
         }
 
-        shutdownEnvironment(environment.id);
+        shutdownEnvironment(environment.id, environment.state);
         close();
-    }, [shutdownEnvironment, close, environment.id]);
+    }, [shutdownEnvironment, close, environment.id, environment.state]);
 
     return (
         <Dialog
@@ -443,10 +443,10 @@ function ChangeSettingsDialog({
             return;
         }
 
-        shutdownEnvironment(environment.id);
+        shutdownEnvironment(environment.id, environment.state);
         enableEditing();
         close();
-    }, [shutdownEnvironment, close, environment.id]);
+    }, [shutdownEnvironment, close, environment.id, environment.state]);
 
     return (
         <Dialog
@@ -657,7 +657,7 @@ type FooterProps = {
     settingsChangeState: EnvironmentSettingsChangeState;
 
     deleteEnvironment: (id: string) => void;
-    shutdownEnvironment: (id: string) => void;
+    shutdownEnvironment: (id: string, state: StateInfo) => void;
     submitSettingsUpdate: () => void;
 
     startEditing: () => void;

@@ -31,7 +31,7 @@ export async function connectEnvironment(
 
     try {
         if (isSuspended) {
-            dispatch(stateChangeEnvironmentAction(id, StateInfo.Starting));
+            dispatch(stateChangeEnvironmentAction(id, StateInfo.Starting, StateInfo.Shutdown));
         }
 
         const environment = await envRegService.connectEnvironment(id, environmentState);
@@ -70,7 +70,7 @@ export async function connectEnvironment(
             // If starting environment failed, put it to right state.
             let e = await envRegService.getEnvironment(id);
             if (e) {
-                dispatch(stateChangeEnvironmentAction(id, e.state));
+                dispatch(stateChangeEnvironmentAction(id, e.state, StateInfo.Shutdown));
             }
         }
 

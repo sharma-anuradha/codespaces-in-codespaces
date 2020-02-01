@@ -2,8 +2,8 @@ import * as envRegService from '../services/envRegService';
 import { useDispatch } from './middleware/useDispatch';
 import { action } from './middleware/useActionCreator';
 import { useActionContext } from './middleware/useActionContext';
-
 import { environmentChangedAction } from './environmentChanged';
+import { stateChangeEnvironmentAction } from './environmentStateChange';
 
 export const pollActivatingEnvironmentsActionType = 'async.environments.activating.poll';
 export const pollActivatingEnvironmentsUpdateActionType =
@@ -36,14 +36,20 @@ export async function pollActivatingEnvironments() {
 
 export async function pollActivatingEnvironment(id: string) {
     const dispatch = useDispatch();
+    const activatingEnvironments = useActionContext().state.environments.environments;
     try {
         dispatch(pollActivatingEnvironmentAction(id));
+
+        const envWithOldState = activatingEnvironments.find((item) => item.id === id);
+        const oldState = envWithOldState && envWithOldState.state;
         const environment = await envRegService.getEnvironment(id);
 
         if (!environment) {
             return;
         }
-
+        if (oldState !== environment.state) {
+            stateChangeEnvironmentAction(id, environment.state, oldState);
+        }
         dispatch(environmentChangedAction(environment));
     } catch {
         dispatch(pollActivatingEnvironmentUpdateAction(id));

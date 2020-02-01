@@ -16,6 +16,7 @@ export class Context implements IActionContext {
 
     readonly __id: string;
     readonly __instanceId = createUniqueId();
+    readonly contextTelemetryValues: Record<string, TelemetryPropertyValue> = {};
 
     constructor(id?: string) {
         this.__id = id || createUniqueId();
@@ -61,7 +62,11 @@ export class Context implements IActionContext {
     }
 
     getTelemetryProperties(): Record<string, TelemetryPropertyValue> {
-        return {};
+        return this.contextTelemetryValues;
+    }
+
+    setContextTelemetryProperty(propertyName: string, value: TelemetryPropertyValue) {
+        this.contextTelemetryValues[`action.context.${propertyName}`] = value;
     }
 
     clone() {

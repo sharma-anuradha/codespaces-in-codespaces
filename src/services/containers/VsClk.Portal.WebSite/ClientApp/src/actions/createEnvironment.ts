@@ -9,6 +9,7 @@ import { useDispatch } from './middleware/useDispatch';
 import { getUserInfo } from './getUserInfo';
 import { ServiceResponseError } from './middleware/useWebClient';
 import { environmentErrorCodeToString } from '../utils/environmentUtils';
+import { useActionContext } from './middleware/useActionContext';
 
 type PartialEnvironmentInfo = Omit<CreateEnvironmentParameters, 'userEmail' | 'userName'>;
 
@@ -22,8 +23,12 @@ export const focusCreateEnvironmentButtonActionType = 'async.environments.focus'
 // Basic actions dispatched for reducers
 const createEnvironmentAction = (lieId: string, environment: PartialEnvironmentInfo) =>
     action(createEnvironmentActionType, { lieId, environment });
-const createEnvironmentSuccessAction = (lieId: string, environment: ICloudEnvironment) =>
-    action(createEnvironmentSuccessActionType, { lieId, environment });
+
+const createEnvironmentSuccessAction = (lieId: string, environment: ICloudEnvironment) => {
+    const context = useActionContext();
+    context.setContextTelemetryProperty('environmentid', environment.id);
+    return action(createEnvironmentSuccessActionType, { lieId, environment });
+}
 const createEnvironmentFailureAction = (lieId: string, errorMessage: string, error: Error) =>
     action(createEnvironmentFailureActionType, { lieId, errorMessage }, error);
 

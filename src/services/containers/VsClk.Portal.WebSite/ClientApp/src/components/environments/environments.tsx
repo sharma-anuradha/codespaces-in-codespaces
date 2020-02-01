@@ -161,7 +161,7 @@ const stateToProps = ({
 }: ApplicationState) => ({
     environments: getPlanEnvironments(selectedPlan, environments),
     isLoading: isLoading || isLoadingPlan || !isMadeInitialPlansRequest,
-    shouldCreateEnvironmentReceiveFocus: shouldCreateEnvironmentReceiveFocus,
+    shouldCreateEnvironmentReceiveFocus,
     shouldOpenPlanCreation: !isDefined(selectedPlan),
 });
 
