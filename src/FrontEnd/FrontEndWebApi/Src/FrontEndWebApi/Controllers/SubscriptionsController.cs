@@ -37,22 +37,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private const string ResourceType = "Microsoft.VSOnline";
         private readonly IPlanManager planManager;
         private readonly ICurrentUserProvider currentUserProvider;
-        private readonly ICloudEnvironmentManager cloudEnvironmentManager;
+        private readonly IEnvironmentManager environmentManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
         /// <param name="planManager">The IPlanManager interface.</param>
         /// <param name="currentUserProvider">The ICurrentUserProvider interface.</param>
-        /// <param name="cloudEnvironmentManager">The ICloudEnvironmentManager interface.</param>
+        /// <param name="environmentManager">The IEnvironmentManager interface.</param>
         public SubscriptionsController(
             IPlanManager planManager,
             ICurrentUserProvider currentUserProvider,
-            ICloudEnvironmentManager cloudEnvironmentManager)
+            IEnvironmentManager environmentManager)
         {
             this.planManager = planManager;
             this.currentUserProvider = currentUserProvider;
-            this.cloudEnvironmentManager = cloudEnvironmentManager;
+            this.environmentManager = environmentManager;
         }
 
         /// <summary>
@@ -253,7 +253,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Subscription = subscriptionId,
                     };
 
-                    var environments = await cloudEnvironmentManager.ListAsync(
+                    var environments = await environmentManager.ListAsync(
                         logger, planId: plan.ResourceId);
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
@@ -267,7 +267,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                                 {
                                       try
                                       {
-                                          var result = await cloudEnvironmentManager.DeleteAsync(environment, childLogger);
+                                          var result = await environmentManager.DeleteAsync(environment, childLogger);
                                           if (!result)
                                           {
                                               childLogger.AddCloudEnvironment(environment)

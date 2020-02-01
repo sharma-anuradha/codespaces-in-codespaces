@@ -1,4 +1,4 @@
-﻿// <copyright file="ICloudEnvironmentManager.cs" company="Microsoft">
+﻿// <copyright file="IEnvironmentManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// <summary>
     /// The front-end environment manager.
     /// </summary>
-    public interface ICloudEnvironmentManager
+    public interface IEnvironmentManager
     {
         /// <summary>
         /// Get environment by id without any ownership validation.

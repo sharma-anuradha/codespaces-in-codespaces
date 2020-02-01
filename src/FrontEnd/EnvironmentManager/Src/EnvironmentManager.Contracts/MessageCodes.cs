@@ -5,7 +5,7 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
     /// <summary>
-    /// List error codes returned by <see cref="ICloudEnvironmentManager"/>.
+    /// List error codes returned by <see cref="IEnvironmentManager"/>.
     /// </summary>
     public enum MessageCodes : int
     {

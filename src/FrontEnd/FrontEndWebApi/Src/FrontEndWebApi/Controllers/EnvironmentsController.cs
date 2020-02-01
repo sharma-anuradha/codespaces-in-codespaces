@@ -52,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="mapper">The configured auto-mapper.</param>
         /// <param name="serviceUriBuilder">The service uri builder.</param>
         public EnvironmentsController(
-            ICloudEnvironmentManager environmentManager,
+            IEnvironmentManager environmentManager,
             IPlanManager planManager,
             ICurrentUserProvider currentUserProvider,
             IControlPlaneInfo controlPlaneInfo,
@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ServiceUriBuilder = Requires.NotNull(serviceUriBuilder, nameof(serviceUriBuilder));
         }
 
-        private ICloudEnvironmentManager EnvironmentManager { get; }
+        private IEnvironmentManager EnvironmentManager { get; }
 
         private IPlanManager PlanManager { get; }
 

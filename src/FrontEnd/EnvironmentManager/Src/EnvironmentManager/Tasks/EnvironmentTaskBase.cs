@@ -25,11 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="claimedDistributedLease"> used to create leases.</param>
         /// <param name="resourceNameBuilder">Used to build the lease name.</param>
         public EnvironmentTaskBase(
-                                   EnvironmentManagerSettings environmentManagerSettings,
-                                   ICloudEnvironmentRepository cloudEnvironmentRepository,
-                                   ITaskHelper taskHelper,
-                                   IClaimedDistributedLease claimedDistributedLease,
-                                   IResourceNameBuilder resourceNameBuilder)
+            EnvironmentManagerSettings environmentManagerSettings,
+            ICloudEnvironmentRepository cloudEnvironmentRepository,
+            ITaskHelper taskHelper,
+            IClaimedDistributedLease claimedDistributedLease,
+            IResourceNameBuilder resourceNameBuilder)
         {
             EnvironmentManagerSettings = environmentManagerSettings;
             CloudEnvironmentRepository = cloudEnvironmentRepository;

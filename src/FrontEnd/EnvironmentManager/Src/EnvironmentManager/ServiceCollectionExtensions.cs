@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Add the <see cref="CloudEnvironmentRepository"/> and <see cref="ICloudEnvironmentManager"/> to the service collection.
+        /// Add the <see cref="CloudEnvironmentRepository"/> and <see cref="IEnvironmentManager"/> to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="environmentManagerSettings">Target environment manager settings.</param>
@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
 
             // The environment mangaer
-            services.AddSingleton<ICloudEnvironmentManager, CloudEnvironmentManager>();
+            services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
 
             if (!disableBackgroundTasks)
             {

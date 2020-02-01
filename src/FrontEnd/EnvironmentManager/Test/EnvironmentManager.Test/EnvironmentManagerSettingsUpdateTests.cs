@@ -213,7 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(MessageCodes.RequestedSkuIsInvalid, result.ValidationErrors.First());
         }
 
-        private CloudEnvironmentManager CreateManager(
+        private EnvironmentManager CreateManager(
             ICloudEnvironmentRepository environmentRepository = null,
             ISkuCatalog skuCatalog = null,
             int[] autoShutdownDelayOptions = null)
@@ -245,7 +245,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
 
-            return new CloudEnvironmentManager(
+            return new EnvironmentManager(
                 environmentRepository,
                 resourceBroker,
                 workspaceRepository,

@@ -1,10 +1,9 @@
-﻿// <copyright file="MockCloudEnvironmentManager.cs" company="Microsoft">
+﻿// <copyright file="MockEnvironmentManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -16,14 +15,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
     /// <summary>
     /// The mock cloud environment manager.
     /// </summary>
-    public class MockCloudEnvironmentManager : ICloudEnvironmentManager
+    public class MockEnvironmentManager : IEnvironmentManager
     {
         private CloudEnvironment cloudEnvironment;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MockCloudEnvironmentManager"/> class.
+        /// Initializes a new instance of the <see cref="MockEnvironmentManager"/> class.
         /// </summary>
-        public MockCloudEnvironmentManager()
+        public MockEnvironmentManager()
         {
             cloudEnvironment = new CloudEnvironment() { LastUsed = DateTime.UtcNow.AddDays(-1), };
         }

@@ -19,15 +19,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
     /// </summary>
     public class StartEnvironmentResultHandler : IDataHandler
     {
-        private readonly ICloudEnvironmentManager cloudEnvironmentManager;
+        private readonly IEnvironmentManager environmentManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StartEnvironmentResultHandler"/> class.
         /// </summary>
         /// <param name="environmentManager">Environment Manager.</param>
-        public StartEnvironmentResultHandler(ICloudEnvironmentManager environmentManager)
+        public StartEnvironmentResultHandler(IEnvironmentManager environmentManager)
         {
-            cloudEnvironmentManager = environmentManager;
+            this.environmentManager = environmentManager;
         }
 
         /// <inheritdoc/>
@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        // Mark environment provision to failed status
                        ValidationUtil.IsRequired(jobResultData.EnvironmentId, "Environment Id");
 
-                       var cloudEnvironment = await cloudEnvironmentManager.GetAsync(jobResultData.EnvironmentId, childLogger);
+                       var cloudEnvironment = await environmentManager.GetAsync(jobResultData.EnvironmentId, childLogger);
                        if (cloudEnvironment == default)
                        {
                            childLogger.LogInfo($"No environment found for virtual machine id : {vmResourceId} and environment {jobResultData.EnvironmentId}");
@@ -72,13 +72,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                            cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
                            var newState = CloudEnvironmentState.Failed;
                            var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.StartEnvironmentGenericError.ToString();
-                           await cloudEnvironmentManager.UpdateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed, errorMessage, childLogger);
+                           await environmentManager.UpdateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed, errorMessage, childLogger);
                            return;
                        }
                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
                        {
                            // Shutdown the environment if the environment has failed to start.
-                           await this.cloudEnvironmentManager.ForceSuspendAsync(cloudEnvironment, childLogger);
+                           await this.environmentManager.ForceSuspendAsync(cloudEnvironment, childLogger);
                            return;
                        }
                    }

@@ -18,15 +18,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
     public class ShutdownJobHandler : IDataHandler
     {
         private const string JobName = "ShutdownEnvironment";
-        private ICloudEnvironmentManager cloudEnvironmentManager;
+        private IEnvironmentManager environmentManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ShutdownJobHandler"/> class.
         /// </summary>
-        /// <param name="cloudEnvironmentManager"><see cref="ICloudEnvironmentManager"/>.</param>
-        public ShutdownJobHandler(ICloudEnvironmentManager cloudEnvironmentManager)
+        /// <param name="environmentManager"><see cref="IEnvironmentManager"/>.</param>
+        public ShutdownJobHandler(IEnvironmentManager environmentManager)
         {
-            this.cloudEnvironmentManager = cloudEnvironmentManager;
+            this.environmentManager = environmentManager;
         }
 
         /// <inheritdoc/>
@@ -53,13 +53,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(jobResult))
                         .FluentAddBaseValue("CloudEnvironmentId", jobResult.EnvironmentId);
 
-                   var environment = await this.cloudEnvironmentManager.GetAsync(jobResult.Id, logger);
+                   var environment = await this.environmentManager.GetAsync(jobResult.Id, logger);
                    if (environment == null)
                    {
                        return;
                    }
 
-                   await this.cloudEnvironmentManager.SuspendCallbackAsync(environment, logger);
+                   await this.environmentManager.SuspendCallbackAsync(environment, logger);
                });
         }
     }

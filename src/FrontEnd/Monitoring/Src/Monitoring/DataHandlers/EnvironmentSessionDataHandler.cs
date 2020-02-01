@@ -19,13 +19,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
     /// </summary>
     public class EnvironmentSessionDataHandler : IDataHandler
     {
-        private readonly ICloudEnvironmentManager environmentManager;
+        private readonly IEnvironmentManager environmentManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentSessionDataHandler"/> class.
         /// </summary>
         /// <param name="environmentManager">Environment Manager.</param>
-        public EnvironmentSessionDataHandler(ICloudEnvironmentManager environmentManager)
+        public EnvironmentSessionDataHandler(IEnvironmentManager environmentManager)
         {
             this.environmentManager = environmentManager;
         }

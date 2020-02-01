@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentManager.cs" company="Microsoft">
+﻿// <copyright file="EnvironmentManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -23,13 +23,13 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
     /// <inheritdoc/>
-    public class CloudEnvironmentManager : ICloudEnvironmentManager
+    public class EnvironmentManager : IEnvironmentManager
     {
         private const string LogBaseName = "environment_manager";
         private const int PersistentSessionExpiresInDays = 30;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CloudEnvironmentManager"/> class.
+        /// Initializes a new instance of the <see cref="EnvironmentManager"/> class.
         /// </summary>
         /// <param name="cloudEnvironmentRepository">The cloud environment repository.</param>
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="billingEventManager">The billing event manager.</param>
         /// <param name="skuCatalog">The SKU catalog.</param>
         /// <param name="environmentManagerSettings">The environment manager settings.</param>
-        public CloudEnvironmentManager(
+        public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
             IWorkspaceRepository workspaceRepository,

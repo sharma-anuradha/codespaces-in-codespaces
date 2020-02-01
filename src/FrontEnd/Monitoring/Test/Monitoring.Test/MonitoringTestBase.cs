@@ -12,25 +12,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test
     {
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
-        public readonly ICloudEnvironmentManager cloudEnvironmentManager;
+        public readonly IEnvironmentManager environmentManager;
         public readonly EnvironmentSessionDataHandler environmentSessionDataHandler;
 
         public MonitoringTestBase()
         {
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
-            cloudEnvironmentManager = new MockCloudEnvironmentManager();
-            environmentSessionDataHandler = new EnvironmentSessionDataHandler(cloudEnvironmentManager);
+            environmentManager = new MockEnvironmentManager();
+            environmentSessionDataHandler = new EnvironmentSessionDataHandler(environmentManager);
         }
 
         protected async void UpdateCloudEnvironmentForTest(CloudEnvironment cloudEnvironment)
         {
-            await cloudEnvironmentManager.UpdateAsync(cloudEnvironment, CloudEnvironmentState.None, string.Empty, string.Empty, logger);
+            await environmentManager.UpdateAsync(cloudEnvironment, CloudEnvironmentState.None, string.Empty, string.Empty, logger);
         }
 
         protected async Task<CloudEnvironment> GetCloudEnvironment()
         {
-            return await cloudEnvironmentManager.GetAsync(string.Empty, logger);
+            return await environmentManager.GetAsync(string.Empty, logger);
         }
 
         public static readonly EnvironmentData testEnvironmentData = new EnvironmentData

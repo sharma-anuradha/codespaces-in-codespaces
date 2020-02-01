@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IBillingEventManager billingEventManager;
         public readonly MockClientAuthRepository authRepository;
         public readonly IResourceBrokerResourcesHttpContract resourceBroker;
-        public readonly CloudEnvironmentManager environmentManager;
+        public readonly EnvironmentManager environmentManager;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             skuCatalog = new Mock<ISkuCatalog>(MockBehavior.Strict).Object;
 
-            this.environmentManager = new CloudEnvironmentManager(
+            this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
                 this.resourceBroker,
                 this.workspaceRepository,
