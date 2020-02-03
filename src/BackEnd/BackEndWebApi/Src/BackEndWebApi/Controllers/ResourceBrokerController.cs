@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         [HttpOperationalScope("get")]
         public IActionResult GetAsync(
-            [FromQuery]string id,
+            string id,
             [FromServices]IDiagnosticsLogger logger)
         {
             return StatusCode(StatusCodes.Status501NotImplemented);
@@ -101,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Start a compute resource.
         /// <para>
-        /// POST api/v1/resourcebroker/resources/start?id={id}
+        /// POST api/v1/resourcebroker/resources/obsoletestart?id={id}
         /// {<see cref="StartResourceRequestBody"/>}.
         /// </para>
         /// </summary>
@@ -109,12 +109,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <param name="startComputeRequestBody">The start compute request body.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>The <see cref="StartResourceRequestBody"/>.</returns>
-        [HttpPost]
-        [Route(ResourceBrokerHttpContract.StartComputeOperation)]
+        [HttpPost("obsoletestart")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [HttpOperationalScope("start")]
-        public async Task<IActionResult> StartAsync(
-            [FromQuery]string id,
+        [HttpOperationalScope("obsoletestart")]
+        [Obsolete]
+        public async Task<IActionResult> ObsoleteStartAsync(
+            string id,
             [FromBody]StartResourceRequestBody startComputeRequestBody,
             [FromServices]IDiagnosticsLogger logger)
         {
@@ -145,13 +145,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <summary>
-        /// Cleans a resource in the resource broker.
+        /// Start a compute resource.
         /// <para>
-        /// GET api/resourcebroker/resources/cleanup?id={resourceId}.
+        /// POST api/v1/resourcebroker/resources/?id={id}
+        /// {<see cref="StartResourceRequestBody"/>}.
         /// </para>
         /// </summary>
-        /// <param name="id">The resource id token.</param>
-        /// <param name="environmentId">The environment id.</param>
+        /// <param name="id">The compute resource token id.</param>
+        /// <param name="startComputeRequestBody">The start compute request body.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>The <see cref="StartResourceRequestBody"/>.</returns>
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpOperationalScope("start")]
+        public Task<IActionResult> StartAsync(
+            string id,
+            [FromBody]StartResourceRequestBody startComputeRequestBody,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+#pragma warning disable CS0612 // Type or member is obsolete
+            return ObsoleteStartAsync(id, startComputeRequestBody, logger);
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
+
+        /// <summary>
+        /// Cleans a resource in the resource broker.
+        /// <para>
+        /// GET api/v1/resourcebroker/resources/cleanup?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="rawResourceId">The resource id token.</param>
+        /// <param name="rawEnvironmentId">The environment id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
         [HttpPost("cleanup")]
@@ -160,27 +184,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("cleanup")]
         [Obsolete]
-        public async Task<IActionResult> CleanupAsync(
-            [FromQuery] string id,
-            [FromQuery] string environmentId,
+        public async Task<IActionResult> ObsoleteCleanupAsync(
+            string rawResourceId,
+            string rawEnvironmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
-            if (!Guid.TryParse(id, out var typedResourceId))
+            if (!Guid.TryParse(rawResourceId, out var resourceId))
             {
                 logger.AddReason($"{HttpStatusCode.BadRequest}: resourceId is missing or invalid");
                 return BadRequest();
             }
 
-            if (!Guid.TryParse(environmentId, out var typedEnvironmentId))
+            if (!Guid.TryParse(rawEnvironmentId, out var environmentId))
             {
                 logger.AddReason($"{HttpStatusCode.BadRequest}: environmentId is missing or invalid");
                 return BadRequest();
             }
 
-            logger.AddBaseResourceId(typedResourceId)
-                .AddBaseEnvironmentId(typedEnvironmentId);
+            logger.AddBaseResourceId(resourceId)
+                .AddBaseEnvironmentId(environmentId);
 
-            if (!await ResourceBrokerHttp.SuspendAsync(typedResourceId, typedEnvironmentId, logger.NewChildLogger()))
+            if (!await ResourceBrokerHttp.SuspendAsync(resourceId, environmentId, logger.NewChildLogger()))
             {
                 return NotFound();
             }
@@ -191,21 +215,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Cleans a resource in the resource broker.
         /// <para>
-        /// GET api/resourcebroker/resources/cleanup?id={resourceId}.
+        /// GET api/v1/resourcebroker/resources/obsoletesuspend?id={resourceId}.
         /// </para>
         /// </summary>
         /// <param name="suspendRequestBody">Target suspend request body.</param>
         /// <param name="rawEnvironmentId">Target environment id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
-        [HttpPost("suspend")]
+        [HttpPost("obsoletesuspend")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpOperationalScope("suspend")]
-        public async Task<IActionResult> SuspendAsync(
+        [HttpOperationalScope("obsoletesuspend")]
+        [Obsolete]
+        public async Task<IActionResult> ObsoleteSuspendAsync(
             [FromBody]IEnumerable<SuspendRequestBody> suspendRequestBody,
-            [FromQuery] string rawEnvironmentId,
+            string rawEnvironmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
             if (suspendRequestBody is null || !suspendRequestBody.Any())
@@ -231,21 +256,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <summary>
+        /// Cleans a resource in the resource broker.
+        /// <para>
+        /// GET api/v1/resourcebroker/resources/suspend?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="suspendRequestBody">Target suspend request body.</param>
+        /// <param name="rawEnvironmentId">Target environment id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>No content.</returns>
+        [HttpPost("suspend")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("suspend")]
+        public Task<IActionResult> SuspendAsync(
+            [FromBody]IEnumerable<SuspendRequestBody> suspendRequestBody,
+            string rawEnvironmentId,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+#pragma warning disable CS0612 // Type or member is obsolete
+            return ObsoleteSuspendAsync(suspendRequestBody, rawEnvironmentId, logger);
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
+
+        /// <summary>
         /// Deallocates a resource from the resource broker.
         /// <para>
-        /// DELETE api/resourcebroker/resources?id={resourceId}.
+        /// DELETE api/v1/resourcebroker/obsoletedelete?id={resourceId}.
         /// </para>
         /// </summary>
         /// <param name="id">The resource id token.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
-        [HttpDelete]
+        [HttpDelete("obsoletedelete")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpOperationalScope("delete")]
-        public async Task<IActionResult> DeleteAsync(
-            [FromQuery] string id,
+        [HttpOperationalScope("obsoletedelete")]
+        [Obsolete]
+        public async Task<IActionResult> ObsoleteDeleteAsync(
+            string id,
             [FromServices]IDiagnosticsLogger logger)
         {
             if (!Guid.TryParse(id, out var resourceId))
@@ -265,20 +316,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <summary>
+        /// Deallocates a resource from the resource broker.
+        /// <para>
+        /// DELETE api/v1/resourcebroker/resources?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="id">The resource id token.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>No content.</returns>
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("delete")]
+        public Task<IActionResult> DeleteAsync(
+            string id,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+#pragma warning disable CS0612 // Type or member is obsolete
+            return ObsoleteDeleteAsync(id, logger);
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
+
+        /// <summary>
         /// Gets a resource by id.
         /// <para>
-        /// GET api/v1/resourcebroker/resources?id={resourceId}.
+        /// GET api/v1/resourcebroker/obsoleteenvironmentheartbeat?id={resourceId}.
         /// </para>
         /// </summary>
         /// <param name="id">Resource id token.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Nothing.</returns>
-        [HttpGet("environmentheartbeat")]
+        [HttpGet("obsoleteenvironmentheartbeat")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpOperationalScope("heartbeat")]
-        public async Task<IActionResult> ProcessHeartbeatAsync(
-            [FromQuery]string id,
+        [HttpOperationalScope("obsoleteheartbeat")]
+        [Obsolete]
+        public async Task<IActionResult> ObsoleteProcessHeartbeatAsync(
+            string id,
             [FromServices]IDiagnosticsLogger logger)
         {
             if (!Guid.TryParse(id, out var resourceId))
@@ -294,6 +369,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             // return 200 vs 404 based on the result
             return result ? (IActionResult)Ok(result) : NotFound(result);
+        }
+
+        /// <summary>
+        /// Gets a resource by id.
+        /// <para>
+        /// GET api/v1/resourcebroker/environmentheartbeat?id={resourceId}.
+        /// </para>
+        /// </summary>
+        /// <param name="id">Resource id token.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Nothing.</returns>
+        [HttpGet("environmentheartbeat")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("heartbeat")]
+        public Task<IActionResult> ProcessHeartbeatAsync(
+            string id,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+#pragma warning disable CS0612 // Type or member is obsolete
+            return ObsoleteProcessHeartbeatAsync(id, logger);
+#pragma warning restore CS0612 // Type or member is obsolete
         }
 
         /// <inheritdoc/>
