@@ -1,4 +1,4 @@
-// <copyright file="PrepareFileShareTaskInfo.cs" company="Microsoft">
+// <copyright file="BatchTaskInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,22 +7,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     /// <summary>
     /// Task and job information of the current task that's preparing the file share.
     /// </summary>
-    public class PrepareFileShareTaskInfo
+    public class BatchTaskInfo
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrepareFileShareTaskInfo"/> class.
+        /// Initializes a new instance of the <see cref="BatchTaskInfo"/> class.
         /// </summary>
-        public PrepareFileShareTaskInfo()
+        public BatchTaskInfo()
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrepareFileShareTaskInfo"/> class.
+        /// Initializes a new instance of the <see cref="BatchTaskInfo"/> class.
         /// </summary>
         /// <param name="jobId"><see cref="JobId"/>.</param>
         /// <param name="taskId"><see cref="TaskId"/>.</param>
         /// <param name="taskLocation"><see cref="TaskLocation"/>.</param>
-        public PrepareFileShareTaskInfo(
+        public BatchTaskInfo(
             string jobId,
             string taskId,
             string taskLocation)

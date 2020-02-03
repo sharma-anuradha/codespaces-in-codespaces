@@ -21,15 +21,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
     {
         private const int StorageCreationRetryAfterSeconds = 60;
         private readonly IStorageFileShareProviderHelper providerHelper;
+        private readonly IBatchPrepareFileShareJobProvider batchPrepareFileShareJobProvider;
+        private readonly IBatchArchiveFileShareJobProvider batchArchiveFileShareJobProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageFileShareProvider"/> class.
         /// This class acts as the provider interface for File Share Storage.
         /// </summary>
         /// <param name="providerHelper">An implementation of the <see cref="IStorageFileShareProviderHelper"/> interface.</param>
-        public StorageFileShareProvider(IStorageFileShareProviderHelper providerHelper)
+        /// <param name="batchPrepareFileShareJobProvider">An implementation of the <see cref="IBatchPrepareFileShareJobProvider"/> interface.</param>
+        /// <param name="batchSuspendFileShareJobProvider">An implementation of the <see cref="IBatchArchiveFileShareJobProvider"/> interface.</param>
+        public StorageFileShareProvider(
+            IStorageFileShareProviderHelper providerHelper,
+            IBatchPrepareFileShareJobProvider batchPrepareFileShareJobProvider,
+            IBatchArchiveFileShareJobProvider batchSuspendFileShareJobProvider)
         {
             this.providerHelper = Requires.NotNull(providerHelper, nameof(providerHelper));
+            this.batchPrepareFileShareJobProvider = Requires.NotNull(batchPrepareFileShareJobProvider, nameof(batchPrepareFileShareJobProvider));
+            this.batchArchiveFileShareJobProvider = Requires.NotNull(batchSuspendFileShareJobProvider, nameof(batchSuspendFileShareJobProvider));
         }
 
         /// <inheritdoc/>
@@ -125,6 +134,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 swallowException: true);
         }
 
+        /// <inheritdoc/>
+        public Task<FileShareProviderArchiveResult> ArchiveAsync(FileShareProviderArchiveInput input, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
+
+            return logger.OperationScopeAsync(
+                    "file_share_storage_provider_archive_step",
+                    async (childLogger) =>
+                    {
+                        childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
+
+                        var result = await ArchiveInnerAsync(input, childLogger);
+                        childLogger.FluentAddValue(nameof(result.AzureResourceInfo.Name), result.AzureResourceInfo.Name)
+                              .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+                              .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
+                              .FluentAddValue(nameof(result.Status), result.Status.ToString());
+                        return result;
+                    },
+                    (ex, childLogger) =>
+                    {
+                        var result = new FileShareProviderArchiveResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                        return Task.FromResult(result);
+                    },
+                    swallowException: true);
+        }
+
         /// <summary>
         /// Create operation helper function that implements the Create continuation state machine.
         /// </summary>
@@ -141,7 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             string resultContinuationToken = default;
             FileShareProviderCreateState nextState;
             AzureResourceInfo resultResourceInfo;
-            PrepareFileShareTaskInfo prepareTaskInfo = default;
+            BatchTaskInfo prepareTaskInfo = default;
             var continuationToken = input.ContinuationToken;
 
             if (continuationToken == null)
@@ -166,16 +202,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         nextState = FileShareProviderCreateState.PrepareFileShare;
                         break;
                     case FileShareProviderCreateState.PrepareFileShare:
-                        prepareTaskInfo = await providerHelper.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageCopyItems, input.StorageSizeInGb, logger);
+                        prepareTaskInfo = await batchPrepareFileShareJobProvider.StartPrepareFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageCopyItems, input.StorageSizeInGb, logger);
                         nextState = FileShareProviderCreateState.CheckFileShare;
                         break;
                     case FileShareProviderCreateState.CheckFileShare:
-                        var prepareStatus = await providerHelper.CheckPrepareFileShareAsync(prevContinuation.AzureResourceInfo, prevContinuation.PrepareTaskInfo, logger);
-                        if (prepareStatus == PrepareFileShareStatus.Succeeded)
+                        var prepareStatus = await batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(prevContinuation.AzureResourceInfo, prevContinuation.PrepareTaskInfo, logger);
+                        if (prepareStatus == BatchTaskStatus.Succeeded)
                         {
                             nextState = default;
                         }
-                        else if (prepareStatus == PrepareFileShareStatus.Failed)
+                        else if (prepareStatus == BatchTaskStatus.Failed)
                         {
                             throw new StorageCreateException("Failed to prepare the file share.");
                         }
@@ -207,6 +243,76 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             }
 
             var result = new FileShareProviderCreateResult()
+            {
+                AzureResourceInfo = resultResourceInfo,
+                RetryAfter = resultRetryAfter,
+                NextInput = input.BuildNextInput(resultContinuationToken),
+                Status = resultState,
+            };
+
+            return result;
+        }
+
+        /// <summary>
+        /// Suspend operation helper function that implements the Suspend continuation state machine.
+        /// </summary>
+        /// <param name="input">Provides input to Create Azure file share.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>
+        /// The result of this step in the state machine.
+        /// </returns>
+        private async Task<FileShareProviderArchiveResult> ArchiveInnerAsync(
+            FileShareProviderArchiveInput input,
+            IDiagnosticsLogger logger)
+        {
+            TimeSpan resultRetryAfter = default;
+            string resultContinuationToken = default;
+            FileShareProviderArchiveState nextState;
+            AzureResourceInfo resultResourceInfo;
+            BatchTaskInfo archiveTaskInfo = default;
+
+            var continuationToken = input.ContinuationToken;
+            if (continuationToken == null)
+            {
+                archiveTaskInfo = await batchArchiveFileShareJobProvider.StartArchiveFileShareAsync(input.AzureResourceInfo, input.DestBlobUriWithSas, logger);
+                nextState = FileShareProviderArchiveState.CheckBlob;
+                resultResourceInfo = input.AzureResourceInfo;
+            }
+            else
+            {
+                var prevContinuation = JsonConvert.DeserializeObject<FileShareProviderArchiveContinuationToken>(continuationToken);
+                var prepareStatus = await batchArchiveFileShareJobProvider.CheckBatchTaskStatusAsync(prevContinuation.AzureResourceInfo, prevContinuation.PrepareTaskInfo, logger);
+                if (prepareStatus == BatchTaskStatus.Succeeded)
+                {
+                    nextState = default;
+                }
+                else if (prepareStatus == BatchTaskStatus.Failed)
+                {
+                    throw new StorageCreateException("Failed to archive the file share.");
+                }
+                else
+                {
+                    resultRetryAfter = TimeSpan.FromSeconds(StorageCreationRetryAfterSeconds);
+                    nextState = FileShareProviderArchiveState.CheckBlob;
+                    archiveTaskInfo = prevContinuation.PrepareTaskInfo;
+                }
+
+                resultResourceInfo = prevContinuation.AzureResourceInfo;
+            }
+
+            OperationState resultState;
+            if (nextState == default)
+            {
+                resultState = OperationState.Succeeded;
+            }
+            else
+            {
+                var nextContinuation = new FileShareProviderArchiveContinuationToken(nextState, resultResourceInfo, archiveTaskInfo);
+                resultContinuationToken = JsonConvert.SerializeObject(nextContinuation);
+                resultState = OperationState.InProgress;
+            }
+
+            var result = new FileShareProviderArchiveResult()
             {
                 AzureResourceInfo = resultResourceInfo,
                 RetryAfter = resultRetryAfter,

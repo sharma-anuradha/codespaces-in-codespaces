@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     /// <summary>
     /// Prepare file share status.
     /// </summary>
-    public enum PrepareFileShareStatus
+    public enum BatchTaskStatus
     {
         /// <summary>
         /// Queued but not running yet

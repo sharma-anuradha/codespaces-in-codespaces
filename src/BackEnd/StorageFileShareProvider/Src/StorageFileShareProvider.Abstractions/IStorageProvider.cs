@@ -45,5 +45,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         ///  can be used to call this method again to continue the next step of operation.
         /// </returns>
         Task<FileShareProviderAssignResult> AssignAsync(FileShareProviderAssignInput input, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Suspend a storage resource.
+        /// </summary>
+        /// <param name="input">Provides input to get the suspend information for the Azure file share.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>
+        ///  Result of the suspend operation which includes continuationToken which
+        ///  can be used to call this method again to continue the next step of operation.
+        /// </returns>
+        Task<FileShareProviderArchiveResult> ArchiveAsync(FileShareProviderArchiveInput input, IDiagnosticsLogger logger);
     }
 }

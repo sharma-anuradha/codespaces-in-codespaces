@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
@@ -36,25 +37,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         Task CreateFileShareAsync(AzureResourceInfo azureStorageAccountId, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Prepare the file share by seeding it with the blob specified.
-        /// </summary>
-        /// <param name="azureResourceInfo">Azure resource info of the storage account.</param>
-        /// <param name="storageCopyItems">Array of storage items to copy.</param>
-        /// <param name="storageSizeInGb">Azure storage size in GB.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>The task info that can be used to query the task.</returns>
-        Task<PrepareFileShareTaskInfo> StartPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, IEnumerable<StorageCopyItem> storageCopyItems, int storageSizeInGb, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Check if the preparation of the file share has completed.
-        /// </summary>
-        /// <param name="azureResourceInfo">Azure resource info of the storage account.</param>
-        /// <param name="prepareTaskInfo">The info for the task preparing the file share.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>Status.</returns>
-        Task<PrepareFileShareStatus> CheckPrepareFileShareAsync(AzureResourceInfo azureResourceInfo, PrepareFileShareTaskInfo prepareTaskInfo, IDiagnosticsLogger logger);
-
-        /// <summary>
         /// Provides the connection information needed to connect to the file share.
         /// </summary>
         /// <param name="azureResourceInfo">Azure resource info of the storage account.</param>
@@ -70,5 +52,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Task.</returns>
         Task DeleteStorageAccountAsync(AzureResourceInfo azureResourceInfo, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the stroage account key from the target account.
+        /// </summary>
+        /// <param name="storageAccount">Target storage account.</param>
+        /// <returns>Account key.</returns>
+        Task<string> GetStorageAccountKey(IStorageAccount storageAccount);
+
+        /// <summary>
+        /// Given a specific storage type, derive the mountable file name.
+        /// </summary>
+        /// <param name="storageType">Target stroage type.</param>
+        /// <returns>Mountable File Name.</returns>
+        string GetStorageMountableFileName(StorageType storageType);
+
+        /// <summary>
+        /// Gets the stroage mountable share name.
+        /// </summary>
+        /// <returns>Mountable Share Name.</returns>
+        string GetStorageMountableShareName();
     }
 }

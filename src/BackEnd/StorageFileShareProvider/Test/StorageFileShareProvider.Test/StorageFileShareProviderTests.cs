@@ -6,10 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Moq;
 using Xunit;
 
@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         };
         private static readonly Guid MockSubscriptionId = Guid.Parse("a058a07c-dfbb-4501-82a2-fa0bb37ec166");
         private static readonly AzureResourceInfo MockAzureResourceInfo = new AzureResourceInfo(MockSubscriptionId, MockResourceGroup, MockStorageAccountName);
-        private static readonly PrepareFileShareTaskInfo MockPrepareTaskInfo = new PrepareFileShareTaskInfo("job1", "task1", MockLocation);
+        private static readonly BatchTaskInfo MockPrepareTaskInfo = new BatchTaskInfo("job1", "task1", MockLocation);
 
         private static readonly IDictionary<string, string> MockResourceTags = new Dictionary<string, string>
         {
@@ -43,7 +43,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         [Fact]
         public void Ctor_with_bad_options()
         {
-            Assert.Throws<ArgumentNullException>(() => new StorageFileShareProvider(null));
+            var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
+
+            Assert.Throws<ArgumentNullException>(() => new StorageFileShareProvider(
+                null, batchPrepareFileShareJobProviderMoq.Object, batchSuspendFileShareJobProviderMoq.Object));
+            Assert.Throws<ArgumentNullException>(() => new StorageFileShareProvider(
+                providerHelperMoq.Object, null, batchSuspendFileShareJobProviderMoq.Object));
+            Assert.Throws<ArgumentNullException>(() => new StorageFileShareProvider(
+                providerHelperMoq.Object, batchPrepareFileShareJobProviderMoq.Object, null));
         }
 
         /// <summary>
@@ -53,31 +62,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         public async Task FileShare_Create_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
-            var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
+
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
             var mockCheckPrepareResults = new[] {
-                PrepareFileShareStatus.Pending,
-                PrepareFileShareStatus.Running,
-                PrepareFileShareStatus.Running,
-                PrepareFileShareStatus.Succeeded,
-             };
+                BatchTaskStatus.Pending,
+                BatchTaskStatus.Running,
+                BatchTaskStatus.Running,
+                BatchTaskStatus.Succeeded,
+            };
+            batchPrepareFileShareJobProviderMoq
+                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageCopyItem[]>(), It.IsAny<int>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync(MockPrepareTaskInfo);
+            batchPrepareFileShareJobProviderMoq
+                .SetupSequence(x => x.CheckBatchTaskStatusAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<BatchTaskInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync(mockCheckPrepareResults[0])
+                .ReturnsAsync(mockCheckPrepareResults[1])
+                .ReturnsAsync(mockCheckPrepareResults[2])
+                .ReturnsAsync(mockCheckPrepareResults[3]);
+
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
+
+            var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
                 .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockAzureResourceInfo);
             providerHelperMoq
                 .Setup(x => x.CreateFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
-            providerHelperMoq
-                .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageCopyItem[]>(), It.IsAny<int>(), It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(MockPrepareTaskInfo);
 
-            providerHelperMoq
-                .SetupSequence(x => x.CheckPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<PrepareFileShareTaskInfo>(), It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(mockCheckPrepareResults[0])
-                .ReturnsAsync(mockCheckPrepareResults[1])
-                .ReturnsAsync(mockCheckPrepareResults[2])
-                .ReturnsAsync(mockCheckPrepareResults[3]);
-
-            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var storageProvider = new StorageFileShareProvider(
+                providerHelperMoq.Object,
+                batchPrepareFileShareJobProviderMoq.Object,
+                batchSuspendFileShareJobProviderMoq.Object);
 
             var input = new FileShareProviderCreateInput()
             {
@@ -129,11 +145,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         public async Task FileShare_Create_Failed()
         {
             var logger = new DefaultLoggerFactory().New();
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
                 .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
                 .Throws(new Exception());
-            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var storageProvider = new StorageFileShareProvider(
+                providerHelperMoq.Object,
+                batchPrepareFileShareJobProviderMoq.Object,
+                batchSuspendFileShareJobProviderMoq.Object);
             var input = new FileShareProviderCreateInput()
             {
                 AzureResourceGroup = MockResourceGroup,
@@ -157,10 +178,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             var logger = new DefaultLoggerFactory().New();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
             providerHelperMoq
                 .Setup(x => x.DeleteStorageAccountAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
-            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var storageProvider = new StorageFileShareProvider(
+                providerHelperMoq.Object,
+                batchPrepareFileShareJobProviderMoq.Object,
+                batchSuspendFileShareJobProviderMoq.Object);
             var input = new FileShareProviderDeleteInput()
             {
                 AzureResourceInfo = MockAzureResourceInfo,
@@ -178,8 +204,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         public async Task FileShare_Delete_Null_Input()
         {
             var logger = new DefaultLoggerFactory().New();
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
-            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var storageProvider = new StorageFileShareProvider(
+                providerHelperMoq.Object,
+                batchPrepareFileShareJobProviderMoq.Object,
+                batchSuspendFileShareJobProviderMoq.Object);
             FileShareProviderDeleteInput input = null;
             await Assert.ThrowsAsync<ArgumentNullException>(async () => await storageProvider.DeleteAsync(input, logger));
         }
@@ -191,11 +222,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         public async Task FileShare_Delete_Failed()
         {
             var logger = new DefaultLoggerFactory().New();
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
                 .Setup(x => x.DeleteStorageAccountAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
                 .Throws(new Exception());
-            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var storageProvider = new StorageFileShareProvider(
+                providerHelperMoq.Object,
+                batchPrepareFileShareJobProviderMoq.Object,
+                batchSuspendFileShareJobProviderMoq.Object);
             var input = new FileShareProviderDeleteInput()
             {
                 AzureResourceInfo = MockAzureResourceInfo,
@@ -214,6 +250,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         public async Task FileShare_Assign_Ok()
         {
             var logger = new DefaultLoggerFactory().New();
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             var mockConnInfo = new ShareConnectionInfo(
                 MockStorageAccountName,
@@ -223,7 +261,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             providerHelperMoq
                 .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageType>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockConnInfo));
-            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var storageProvider = new StorageFileShareProvider(
+                providerHelperMoq.Object,
+                batchPrepareFileShareJobProviderMoq.Object,
+                batchSuspendFileShareJobProviderMoq.Object);
             var input = new FileShareProviderAssignInput()
             {
                 AzureResourceInfo = MockAzureResourceInfo,
@@ -245,8 +286,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         public async Task FileShare_Assign_Null_Input()
         {
             var logger = new DefaultLoggerFactory().New();
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
-            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var storageProvider = new StorageFileShareProvider(
+                providerHelperMoq.Object,
+                batchPrepareFileShareJobProviderMoq.Object,
+                batchSuspendFileShareJobProviderMoq.Object);
             FileShareProviderAssignInput input = null;
             await Assert.ThrowsAsync<ArgumentNullException>(async () => await storageProvider.AssignAsync(input, logger));
         }
@@ -258,11 +304,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         public async Task FileShare_Assign_Failed()
         {
             var logger = new DefaultLoggerFactory().New();
+            var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
+            var batchSuspendFileShareJobProviderMoq = new Mock<IBatchArchiveFileShareJobProvider>();
             var providerHelperMoq = new Mock<IStorageFileShareProviderHelper>();
             providerHelperMoq
                 .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageType>(), It.IsAny<IDiagnosticsLogger>()))
                 .Throws(new Exception());
-            var storageProvider = new StorageFileShareProvider(providerHelperMoq.Object);
+            var storageProvider = new StorageFileShareProvider(
+                providerHelperMoq.Object,
+                batchPrepareFileShareJobProviderMoq.Object,
+                batchSuspendFileShareJobProviderMoq.Object);
             var input = new FileShareProviderAssignInput()
             {
                 AzureResourceInfo = MockAzureResourceInfo,

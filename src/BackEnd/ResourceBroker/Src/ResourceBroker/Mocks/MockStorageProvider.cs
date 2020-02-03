@@ -41,5 +41,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         {
             return await RunAsync<FileShareProviderDeleteInput, FileShareProviderDeleteResult>(input, logger);
         }
+
+        /// <inheritdoc/>
+        public Task<FileShareProviderArchiveResult> ArchiveAsync(FileShareProviderArchiveInput input, IDiagnosticsLogger logger)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

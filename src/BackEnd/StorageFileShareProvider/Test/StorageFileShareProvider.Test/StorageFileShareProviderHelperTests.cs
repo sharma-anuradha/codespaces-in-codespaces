@@ -159,9 +159,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
             // construct the real StorageFileShareProviderHelper
             IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(
-                catalogMoq.Object,
-                batchClientFactory,
-                storageProviderSettings);
+                catalogMoq.Object, batchClientFactory, storageProviderSettings);
+
+            IBatchPrepareFileShareJobProvider batchPrepareFileShareJobProvider = new BatchPrepareFileShareJobProvider(
+                providerHelper, catalogMoq.Object, batchClientFactory, storageProviderSettings);
 
             // Create storage accounts
             var storageAccounts = await Task.WhenAll(
@@ -192,23 +193,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     StorageType = StorageType.Windows,
                 };
 
-                var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => providerHelper.StartPrepareFileShareAsync(sa, new[] { linuxCopyItem, windowsCopyItem }, STORAGE_SIZE_IN_GB, logger)));
+                var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => batchPrepareFileShareJobProvider.StartPrepareFileShareAsync(sa, new[] { linuxCopyItem, windowsCopyItem }, STORAGE_SIZE_IN_GB, logger)));
 
-                var fileShareStatus  = new PrepareFileShareStatus[NUM_STORAGE_TO_CREATE];
+                var fileShareStatus  = new BatchTaskStatus[NUM_STORAGE_TO_CREATE];
 
                 var stopWatch = new Stopwatch();
                 stopWatch.Start();
 
-                while (fileShareStatus.Any(x => x != PrepareFileShareStatus.Succeeded) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
+                while (fileShareStatus.Any(x => x != BatchTaskStatus.Succeeded) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
                 {
                     Thread.Sleep(TimeSpan.FromSeconds(60));
-                    fileShareStatus = await Task.WhenAll(storageAccounts.Zip(prepareFileShareTaskInfos, (sa, prepareInfo) => providerHelper.CheckPrepareFileShareAsync(sa, prepareInfo, logger)));
+                    fileShareStatus = await Task.WhenAll(storageAccounts.Zip(prepareFileShareTaskInfos, (sa, prepareInfo) => batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(sa, prepareInfo, logger)));
                 }
 
                 stopWatch.Stop();
 
                 // Verify that none still haven't finished after the timeout
-                if (fileShareStatus.Any(x => x != PrepareFileShareStatus.Succeeded))
+                if (fileShareStatus.Any(x => x != BatchTaskStatus.Succeeded))
                 {
                     Assert.True(false, string.Format("Failed to complete all file share preparations in given time of {0} minutes.", PREPARE_TIMEOUT_MINS));
                 }

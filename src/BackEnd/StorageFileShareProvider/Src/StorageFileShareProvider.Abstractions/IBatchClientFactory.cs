@@ -7,7 +7,7 @@ using Microsoft.Azure.Batch;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions
 {
     /// <summary>
     /// Batch client factory.

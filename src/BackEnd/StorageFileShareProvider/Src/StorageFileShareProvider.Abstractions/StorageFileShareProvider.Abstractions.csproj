@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Batch" Version="$(AzureBatchPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common.Abstractions\Common.Abstractions.csproj" />
   </ItemGroup>

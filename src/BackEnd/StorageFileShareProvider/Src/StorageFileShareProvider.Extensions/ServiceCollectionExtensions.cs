@@ -43,6 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.E
             services.AddSingleton(storageProviderSettings);
             services.AddSingleton<IStorageProvider, StorageFileShareProvider>();
             services.AddSingleton<IStorageFileShareProviderHelper, StorageFileShareProviderHelper>();
+            services.AddSingleton<IBatchPrepareFileShareJobProvider, BatchPrepareFileShareJobProvider>();
+            services.AddSingleton<IBatchArchiveFileShareJobProvider, BatchArchiveFileShareJobProvider>();
 
             // Jobs
             services.AddSingleton<IAsyncBackgroundWarmup, StorageFileShareProviderRegisterJobs>();

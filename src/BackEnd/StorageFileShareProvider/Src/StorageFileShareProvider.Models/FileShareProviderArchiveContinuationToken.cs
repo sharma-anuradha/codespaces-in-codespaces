@@ -1,4 +1,4 @@
-// <copyright file="FileShareProviderCreateContinuationToken.cs" company="Microsoft">
+﻿// <copyright file="FileShareProviderArchiveContinuationToken.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,15 +9,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     /// <summary>
     /// Represents the continuation token for the create operation.
     /// </summary>
-    public class FileShareProviderCreateContinuationToken
+    public class FileShareProviderArchiveContinuationToken
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="FileShareProviderCreateContinuationToken"/> class.
+        /// Initializes a new instance of the <see cref="FileShareProviderArchiveContinuationToken"/> class.
         /// </summary>
         /// <param name="nextState"><see cref="NextState"/>.</param>
         /// <param name="azureResourceInfo">The resource info of the azure storage account.</param>
         /// <param name="prepareTaskInfo">The info for the task preparing the file share.</param>
-        public FileShareProviderCreateContinuationToken(FileShareProviderCreateState nextState, AzureResourceInfo azureResourceInfo, BatchTaskInfo prepareTaskInfo)
+        public FileShareProviderArchiveContinuationToken(FileShareProviderArchiveState nextState, AzureResourceInfo azureResourceInfo, BatchTaskInfo prepareTaskInfo)
         {
             NextState = nextState;
             AzureResourceInfo = azureResourceInfo;
@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
         /// <summary>
         /// Gets the next state of the operation.
         /// </summary>
-        public FileShareProviderCreateState NextState { get; }
+        public FileShareProviderArchiveState NextState { get; }
 
         /// <summary>
         /// Gets the resource info of the azure storage account.
