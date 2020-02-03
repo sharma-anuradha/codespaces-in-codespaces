@@ -10,8 +10,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
+using Microsoft.VsSaaS.Azure.KeyVault;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
@@ -147,6 +149,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // Auth/Token Providers
             services
+                .AddKeyVaultSecretReader(keyVaultSecretOptions =>
+                {
+                    var servicePrincipal = ApplicationServicesProvider.GetRequiredService<IServicePrincipal>();
+                    keyVaultSecretOptions.ServicePrincipalClientId = servicePrincipal.ClientId;
+                    keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetServicePrincipalClientSecretAsync;
+                })
                 .AddCertificateCredentialCacheFactory()
                 .AddTokenProvider(appSettings.AuthenticationSettings);
 
