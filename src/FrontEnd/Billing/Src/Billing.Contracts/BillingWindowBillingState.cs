@@ -4,6 +4,9 @@
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
 {
+    /// <summary>
+    /// Billing Window Billing State.
+    /// </summary>
     public enum BillingWindowBillingState
     {
         /// <summary>

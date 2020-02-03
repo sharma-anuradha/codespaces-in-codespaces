@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -99,5 +100,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// Gets or sets the SkuPlan Manager Settings.
         /// </summary>
         public PlanManagerSettings PlanManagerSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets privacy CommandFeed Settings.
+        /// </summary>
+        public PrivacyCommandFeedSettings PrivacyCommandFeedSettings { get; set; }
     }
 }

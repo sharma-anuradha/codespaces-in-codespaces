@@ -28,6 +28,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserSubscriptions;
@@ -145,6 +146,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
                 // Add the billing backgroud worker
                 services.AddBillingWorker();
+
+                // Add PCF Agent.
+                if (frontEndAppSettings.PrivacyCommandFeedSettings.IsPcfEnabled)
+                {
+                    services.AddPcfAgent(frontEndAppSettings.PrivacyCommandFeedSettings.PcfAgentId, frontEndAppSettings.UseMocksForLocalDevelopment);
+                }
             }
 
             // Add the Live Share user profile and workspace providers.

@@ -116,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="end">the end time for the bill to be generated/processed.</param>
         /// <param name="planShard">the specific plan shard.</param>
         /// <param name="region">the region being operated in.</param>
-        /// <returns></returns>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         protected abstract Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime start, DateTime end, string planShard, AzureLocation region);
     }
 }

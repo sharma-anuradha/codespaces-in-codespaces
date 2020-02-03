@@ -38,6 +38,7 @@
     <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveShareAuthentication\LiveShareAuthentication.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace\LiveShareWorkspace.csproj" />
     <ProjectReference Include="..\..\..\Monitoring\Src\Monitoring\Monitoring.csproj" />
+    <ProjectReference Include="..\..\..\PCFAgent\Src\PCFAgent\PCFAgent.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Plans\Test\Plans.Test\Plans.Test.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
