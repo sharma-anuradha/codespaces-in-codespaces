@@ -28,7 +28,7 @@ const createEnvironmentSuccessAction = (lieId: string, environment: ICloudEnviro
     const context = useActionContext();
     context.setContextTelemetryProperty('environmentid', environment.id);
     return action(createEnvironmentSuccessActionType, { lieId, environment });
-}
+};
 const createEnvironmentFailureAction = (lieId: string, errorMessage: string, error: Error) =>
     action(createEnvironmentFailureActionType, { lieId, errorMessage }, error);
 
@@ -53,6 +53,28 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
 
     // Have a lieId so we can identify the instance for optimistic UI updates.
     const lieId = createUniqueId();
+
+    if (parameters.gitRepositoryUrl) {
+        try {
+            const url = new URL(parameters.gitRepositoryUrl);
+
+            const context = useActionContext();
+            context.setContextTelemetryProperty('repositoryHost', url.host);
+        } catch (err) {
+            // NOOP
+        }
+    }
+
+    if (parameters.dotfilesRepository) {
+        try {
+            const url = new URL(parameters.dotfilesRepository);
+
+            const context = useActionContext();
+            context.setContextTelemetryProperty('dotfilesRepositoryHost', url.host);
+        } catch (err) {
+            // NOOP
+        }
+    }
 
     try {
         // 1. We can start lying immediately.
