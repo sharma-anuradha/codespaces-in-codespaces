@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Gets a resource by id.
         /// <para>
-        /// GET api/v1/resourcebroker/resources?id={resourceId}.
+        /// GET api/v1/resourcebroker/resources?id={id}.
         /// </para>
         /// </summary>
         /// <param name="id">Resource id token.</param>
@@ -171,11 +171,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Cleans a resource in the resource broker.
         /// <para>
-        /// GET api/v1/resourcebroker/resources/cleanup?id={resourceId}.
+        /// GET api/v1/resourcebroker/resources/cleanup?id={id}.
         /// </para>
         /// </summary>
-        /// <param name="rawResourceId">The resource id token.</param>
-        /// <param name="rawEnvironmentId">The environment id.</param>
+        /// <param name="id">The resource id token.</param>
+        /// <param name="environmentId">The environment id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
         [HttpPost("cleanup")]
@@ -185,26 +185,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [HttpOperationalScope("cleanup")]
         [Obsolete]
         public async Task<IActionResult> ObsoleteCleanupAsync(
-            string rawResourceId,
-            string rawEnvironmentId,
+            string id,
+            string environmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
-            if (!Guid.TryParse(rawResourceId, out var resourceId))
+            if (!Guid.TryParse(id, out var typedResourceId))
             {
                 logger.AddReason($"{HttpStatusCode.BadRequest}: resourceId is missing or invalid");
                 return BadRequest();
             }
 
-            if (!Guid.TryParse(rawEnvironmentId, out var environmentId))
+            if (!Guid.TryParse(environmentId, out var typedEnvironmentId))
             {
                 logger.AddReason($"{HttpStatusCode.BadRequest}: environmentId is missing or invalid");
                 return BadRequest();
             }
 
-            logger.AddBaseResourceId(resourceId)
-                .AddBaseEnvironmentId(environmentId);
+            logger.AddBaseResourceId(typedResourceId)
+                .AddBaseEnvironmentId(typedEnvironmentId);
 
-            if (!await ResourceBrokerHttp.SuspendAsync(resourceId, environmentId, logger.NewChildLogger()))
+            if (!await ResourceBrokerHttp.SuspendAsync(typedResourceId, typedEnvironmentId, logger.NewChildLogger()))
             {
                 return NotFound();
             }
@@ -215,11 +215,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Cleans a resource in the resource broker.
         /// <para>
-        /// GET api/v1/resourcebroker/resources/obsoletesuspend?id={resourceId}.
+        /// GET api/v1/resourcebroker/resources/obsoletesuspend?environmentId={environmentId}.
         /// </para>
         /// </summary>
+        /// <param name="environmentId">Target environment id.</param>
         /// <param name="suspendRequestBody">Target suspend request body.</param>
-        /// <param name="rawEnvironmentId">Target environment id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
         [HttpPost("obsoletesuspend")]
@@ -229,8 +229,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [HttpOperationalScope("obsoletesuspend")]
         [Obsolete]
         public async Task<IActionResult> ObsoleteSuspendAsync(
+            string environmentId,
             [FromBody]IEnumerable<SuspendRequestBody> suspendRequestBody,
-            string rawEnvironmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
             if (suspendRequestBody is null || !suspendRequestBody.Any())
@@ -239,15 +239,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 return BadRequest();
             }
 
-            if (!Guid.TryParse(rawEnvironmentId, out var environmentId))
+            if (!Guid.TryParse(environmentId, out var typedEnvironmentId))
             {
                 logger.AddReason($"{HttpStatusCode.BadRequest}: environmentId is missing or invalid");
                 return BadRequest();
             }
 
-            logger.AddBaseEnvironmentId(environmentId);
+            logger.AddBaseEnvironmentId(typedEnvironmentId);
 
-            if (!await ResourceBrokerHttp.SuspendAsync(suspendRequestBody, environmentId, logger.NewChildLogger()))
+            if (!await ResourceBrokerHttp.SuspendAsync(suspendRequestBody, typedEnvironmentId, logger.NewChildLogger()))
             {
                 return NotFound();
             }
@@ -258,11 +258,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Cleans a resource in the resource broker.
         /// <para>
-        /// GET api/v1/resourcebroker/resources/suspend?id={resourceId}.
+        /// GET api/v1/resourcebroker/resources/suspend?environmentId={environmentId}.
         /// </para>
         /// </summary>
+        /// <param name="environmentId">Target environment id.</param>
         /// <param name="suspendRequestBody">Target suspend request body.</param>
-        /// <param name="rawEnvironmentId">Target environment id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>No content.</returns>
         [HttpPost("suspend")]
@@ -271,12 +271,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("suspend")]
         public Task<IActionResult> SuspendAsync(
+            string environmentId,
             [FromBody]IEnumerable<SuspendRequestBody> suspendRequestBody,
-            string rawEnvironmentId,
             [FromServices]IDiagnosticsLogger logger)
         {
 #pragma warning disable CS0612 // Type or member is obsolete
-            return ObsoleteSuspendAsync(suspendRequestBody, rawEnvironmentId, logger);
+            return ObsoleteSuspendAsync(environmentId, suspendRequestBody, logger);
 #pragma warning restore CS0612 // Type or member is obsolete
         }
 
@@ -318,7 +318,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Deallocates a resource from the resource broker.
         /// <para>
-        /// DELETE api/v1/resourcebroker/resources?id={resourceId}.
+        /// DELETE api/v1/resourcebroker/resources?id={id}.
         /// </para>
         /// </summary>
         /// <param name="id">The resource id token.</param>
@@ -341,7 +341,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Gets a resource by id.
         /// <para>
-        /// GET api/v1/resourcebroker/obsoleteenvironmentheartbeat?id={resourceId}.
+        /// GET api/v1/resourcebroker/obsoleteenvironmentheartbeat?id={id}.
         /// </para>
         /// </summary>
         /// <param name="id">Resource id token.</param>
@@ -374,7 +374,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <summary>
         /// Gets a resource by id.
         /// <para>
-        /// GET api/v1/resourcebroker/environmentheartbeat?id={resourceId}.
+        /// GET api/v1/resourcebroker/environmentheartbeat?id={id}.
         /// </para>
         /// </summary>
         /// <param name="id">Resource id token.</param>
