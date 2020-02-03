@@ -51,7 +51,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             services.AddVsSaaSCoreDataProtection(hostEnvironment, redisCacheOptions.RedisConnectionString);
 
-            services.AddAuthentication()
+            services
+                .AddAuthentication()
                 .AddRPSaaSJwtBearer(rpSaasAuthority)
                 .AddVMTokenJwtBearer()
                 .AddVsSaaSCookieBearer();

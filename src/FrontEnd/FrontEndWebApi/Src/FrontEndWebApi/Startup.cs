@@ -181,7 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddModelMapper();
 
             // Add the certificate settings.
-            services.AddSingleton(appSettings.CertificateSettings);
+            services.AddSingleton(appSettings.AuthenticationSettings);
 
             // Add ClaimedDistributedLease
             services.AddSingleton<IClaimedDistributedLease, ClaimedDistributedLease>();
@@ -213,7 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     RedisConnectionString = frontEndAppSettings.RedisConnectionString,
                 },
                 ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSAuthorityString, nameof(frontEndAppSettings.RPSaaSAuthorityString)))
-                .AddVMTokenValidator();
+                .AddCertificateCredentialCacheFactory();
 
             services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
             {
@@ -252,6 +252,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Add user-subscriptions
             services.AddDocumentDbCollection<UserSubscription, IUserSubscriptionRepository, UserSubscriptionRepository>(UserSubscriptionRepository.ConfigureOptions);
+
+            services
+                .AddCertificateCredentialCacheFactory()
+                .AddTokenProvider(appSettings.AuthenticationSettings);
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>

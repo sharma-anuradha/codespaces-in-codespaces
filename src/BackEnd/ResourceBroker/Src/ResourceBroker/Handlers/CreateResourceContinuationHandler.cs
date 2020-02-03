@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="capacityManager">The capacity manager.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service provider.</param>
-        /// <param name="virtualMachineTokenProvider">Virtual machine token provider.</param>
+        /// <param name="tokenProvider">Token provider.</param>
         /// <param name="imageUrlGenerator">Image URL generator.</param>
         public CreateResourceContinuationHandler(
             IComputeProvider computeProvider,
@@ -59,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             IControlPlaneInfo controlPlaneInfo,
             ICapacityManager capacityManager,
-            IVirtualMachineTokenProvider virtualMachineTokenProvider,
+            ITokenProvider tokenProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider,
             IImageUrlGenerator imageUrlGenerator)
@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             ControlPlaneInfo = controlPlaneInfo;
             CapacityManager = capacityManager;
-            VirtualMachineTokenProvider = virtualMachineTokenProvider;
+            TokenProvider = tokenProvider;
             ImageUrlGenerator = imageUrlGenerator;
         }
 
@@ -93,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private ICapacityManager CapacityManager { get; }
 
-        private IVirtualMachineTokenProvider VirtualMachineTokenProvider { get; }
+        private ITokenProvider TokenProvider { get; }
 
         private IImageUrlGenerator ImageUrlGenerator { get; }
 
@@ -144,7 +144,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
 
                     // Get VM Agent Blob Url
-                    var token = await VirtualMachineTokenProvider.GenerateAsync(resource.Value.Id, logger);
+                    var token = await TokenProvider.GenerateVmTokenAsync(resource.Value.Id, logger);
                     var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, computeDetails.VmAgentImageName);
 
                     // Add additional tags

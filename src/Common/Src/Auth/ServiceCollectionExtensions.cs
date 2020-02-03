@@ -2,9 +2,13 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common.Warmup;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Jobs;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
 {
@@ -14,41 +18,150 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds VM token provider and dependencies to the collection of services.
+        /// Adds a certificate credential cache factory to the collection of services.
         /// </summary>
         /// <param name="services">Service collection.</param>
-        /// <returns>Collection of services along with vm token provider.</returns>
-        public static IServiceCollection AddVMTokenProvider(
+        /// <returns>Collection of services along with a certificate credential cache factory.</returns>
+        public static IServiceCollection AddCertificateCredentialCacheFactory(
             this IServiceCollection services)
         {
             Requires.NotNull(services, nameof(services));
 
             return services
-                .AddCommonServices()
-                .AddSingleton<IVirtualMachineTokenProvider, VirtualMachineTokenProvider>();
+                .AddSingleton<IJwtCertificateCredentialsKeyVaultCacheFactory, JwtCertificateCredentialsKeyVaultCacheFactory>();
         }
 
         /// <summary>
-        /// Adds VM token validator and dependencies to the collection of services.
+        /// Adds a token writer to the collection of services.
         /// </summary>
         /// <param name="services">Service collection.</param>
-        /// <returns>Collection of services along with vm token validator.</returns>
-        public static IServiceCollection AddVMTokenValidator(
-            this IServiceCollection services)
+        /// <param name="authSettings">Global authentication settings.</param>
+        /// <returns>Collection of services along with token writer.</returns>
+        public static IServiceCollection AddTokenProvider(
+            this IServiceCollection services,
+            AuthenticationSettings authSettings)
         {
             Requires.NotNull(services, nameof(services));
+            Requires.NotNull(authSettings, nameof(authSettings));
+
+            var writer = new JwtWriter();
+            writer.UnencryptedClaims.Add(JwtRegisteredClaimNames.Exp);
 
             return services
-                .AddCommonServices()
-                .AddSingleton<IVirtualMachineTokenValidator, VirtualMachineTokenValidator>();
+                .AddTokenSettingsToJwtWriter(writer, authSettings.VmTokenSettings)
+                .AddTokenSettingsToJwtWriter(writer, authSettings.VsSaaSTokenSettings)
+                .AddSingleton<IJwtWriter>(writer)
+                .AddSingleton<ITokenProvider, TokenProvider>();
         }
 
-        private static IServiceCollection AddCommonServices(
-            this IServiceCollection services)
+        /// <summary>
+        /// Adds issuer and audience credential caches to the <see cref="IJwtReader"/> and adds the caches to the services warmups.
+        /// </summary>
+        /// <param name="services">Service collection.</param>
+        /// <param name="reader">JWT reader.</param>
+        /// <param name="tokenSettingsSelector">Callback to select the desired token settings.</param>
+        /// <returns>Collection of services along with the warmups for the credential caches.</returns>
+        public static IServiceCollection AddTokenSettingsToJwtReader(
+            this IServiceCollection services,
+            IJwtReader reader,
+            Func<AuthenticationSettings, TokenSettings> tokenSettingsSelector)
         {
             return services
-                .AddSingleton<ICertificateProvider, CertificateProvider>()
-                .AddSingleton<IAsyncWarmup, InitializeCertificateProvider>();
+                .AddSingleton((servicesProvider) =>
+                {
+                    var tokenSettings = tokenSettingsSelector(servicesProvider.GetRequiredService<AuthenticationSettings>());
+                    return AddIssuerToReader(reader, tokenSettings, servicesProvider);
+                })
+                .AddSingleton((servicesProvider) =>
+                {
+                    var tokenSettings = tokenSettingsSelector(servicesProvider.GetRequiredService<AuthenticationSettings>());
+                    return AddAudienceToReader(reader, tokenSettings, servicesProvider);
+                });
+        }
+
+        private static IServiceCollection AddTokenSettingsToJwtWriter(
+            this IServiceCollection services,
+            IJwtWriter writer,
+            TokenSettings tokenSettings)
+        {
+            return services
+                .AddSingleton((servicesProvider) => AddIssuerToWriter(writer, tokenSettings, servicesProvider))
+                .AddSingleton((servicesProvider) => AddAudienceToWriter(writer, tokenSettings, servicesProvider));
+        }
+
+        private static IAsyncWarmup AddIssuerToWriter(IJwtWriter writer, TokenSettings tokenSettings, IServiceProvider serviceProvider)
+        {
+            var certCacheFactory = serviceProvider.GetRequiredService<IJwtCertificateCredentialsKeyVaultCacheFactory>();
+
+            var issuerCache = certCacheFactory.New(tokenSettings.IssuerCertificateName, keyVaultName: tokenSettings.KeyVaultName);
+
+            writer.AddIssuer(tokenSettings.Issuer, issuerCache);
+
+            return issuerCache;
+        }
+
+        private static IAsyncWarmup AddAudienceToWriter(IJwtWriter writer, TokenSettings tokenSettings, IServiceProvider serviceProvider)
+        {
+            if (string.IsNullOrWhiteSpace(tokenSettings.AudienceCertificateName))
+            {
+                writer.AddAudience(tokenSettings.Audience);
+                return NoOpAsyncWarmup.Instance;
+            }
+            else
+            {
+                var certCacheFactory = serviceProvider.GetRequiredService<IJwtCertificateCredentialsKeyVaultCacheFactory>();
+
+                var audienceCache = certCacheFactory.New(tokenSettings.AudienceCertificateName, keyVaultName: tokenSettings.KeyVaultName);
+                audienceCache.ConvertPrivateCertificatesToPublic = true;
+
+                writer.AddAudience(tokenSettings.Audience, audienceCache);
+                return audienceCache;
+            }
+        }
+
+        private static IAsyncWarmup AddIssuerToReader(IJwtReader reader, TokenSettings tokenSettings, IServiceProvider serviceProvider)
+        {
+            var certCacheFactory = serviceProvider.GetRequiredService<IJwtCertificateCredentialsKeyVaultCacheFactory>();
+
+            var issuerCache = certCacheFactory.New(tokenSettings.IssuerCertificateName);
+            issuerCache.ConvertPrivateCertificatesToPublic = true;
+
+            reader.AddIssuer(tokenSettings.Issuer, issuerCache);
+
+            return issuerCache;
+        }
+
+        private static IAsyncWarmup AddAudienceToReader(IJwtReader reader, TokenSettings tokenSettings, IServiceProvider serviceProvider)
+        {
+            if (string.IsNullOrWhiteSpace(tokenSettings.AudienceCertificateName))
+            {
+                // Is this valid?
+                reader.AddAudience(tokenSettings.Audience);
+                return NoOpAsyncWarmup.Instance;
+            }
+            else
+            {
+                var certCacheFactory = serviceProvider.GetRequiredService<IJwtCertificateCredentialsKeyVaultCacheFactory>();
+
+                var audienceCache = certCacheFactory.New(tokenSettings.AudienceCertificateName);
+
+                reader.AddAudience(tokenSettings.Audience, audienceCache);
+                return audienceCache;
+            }
+        }
+
+        private class NoOpAsyncWarmup : IAsyncWarmup
+        {
+            private NoOpAsyncWarmup()
+            {
+            }
+
+            public static NoOpAsyncWarmup Instance { get; } = new NoOpAsyncWarmup();
+
+            public Task WarmupCompletedAsync()
+            {
+                return Task.CompletedTask;
+            }
         }
     }
 }

@@ -143,10 +143,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);
 
             // Add the certificate settings.
-            services.AddSingleton(appSettings.CertificateSettings);
+            services.AddSingleton(appSettings.AuthenticationSettings);
 
             // Auth/Token Providers
-            services.AddVMTokenProvider();
+            services
+                .AddCertificateCredentialCacheFactory()
+                .AddTokenProvider(appSettings.AuthenticationSettings);
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>

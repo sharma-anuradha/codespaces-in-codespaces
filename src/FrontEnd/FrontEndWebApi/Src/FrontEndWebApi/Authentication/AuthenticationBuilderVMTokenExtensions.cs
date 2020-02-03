@@ -8,12 +8,18 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
+using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
 {
@@ -42,17 +48,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         public static AuthenticationBuilder AddVMTokenJwtBearer(
             this AuthenticationBuilder builder)
         {
+            var jwtReader = new JwtReader();
+
             builder
-                .AddJwtBearer(AuthenticationScheme, async options =>
+                .AddJwtBearer(AuthenticationScheme, options =>
                 {
-                    var tokenValidator = ApplicationServicesProvider.GetRequiredService<IVirtualMachineTokenValidator>();
-                    options.TokenValidationParameters = await tokenValidator.GetTokenValidationParameters();
+                    var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
+
+                    options.TokenValidationParameters = jwtReader.GetValidationParameters(logger);
+
                     options.Events = new JwtBearerEvents
                     {
                         OnAuthenticationFailed = AuthenticationFailedAsync,
                         OnTokenValidated = TokenValidatedAsync,
                     };
-                });
+                })
+                .Services
+                .AddTokenSettingsToJwtReader(jwtReader, (authSettings) => authSettings.VmTokenSettings);
+
             return builder;
         }
 

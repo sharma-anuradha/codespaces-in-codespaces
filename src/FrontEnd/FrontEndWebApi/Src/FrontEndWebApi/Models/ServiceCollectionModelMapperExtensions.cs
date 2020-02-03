@@ -8,7 +8,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
@@ -38,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                     cfg.CreateMap<EnvironmentRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
                     cfg.CreateMap<PlanResource, VsoPlan>();
                     cfg.CreateMap<UpdateCloudEnvironmentBody, CloudEnvironmentUpdate>();
+                    cfg.CreateMap<PlanAccessToken, PlanAccessTokenResult>();
                 });
                 return config.CreateMapper();
             });

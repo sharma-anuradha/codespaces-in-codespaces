@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="$(MicrosoftIdentityModelTokensPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Tokens" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="$(SystemIdentityModelTokensJwtPackageVersion)" />
   </ItemGroup>
 

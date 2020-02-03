@@ -51,10 +51,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         public DataPlaneSettings DataPlaneSettings { get; set; }
 
         /// <summary>
-        /// Gets or sets the certificate settings.
+        /// Gets or sets the authentication settings.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public CertificateSettings CertificateSettings { get; set; }
+        public AuthenticationSettings AuthenticationSettings { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether developer personal azure resources should be used.

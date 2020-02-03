@@ -3,21 +3,28 @@
 // </copyright>
 
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
@@ -36,22 +43,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private const string PlanResourceType = "plans";
         private const string ResourceType = "Microsoft.VSOnline";
         private readonly IPlanManager planManager;
-        private readonly ICurrentUserProvider currentUserProvider;
         private readonly IEnvironmentManager environmentManager;
+        private readonly ITokenProvider tokenProvider;
+        private readonly IMapper mapper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
         /// <param name="planManager">The IPlanManager interface.</param>
-        /// <param name="currentUserProvider">The ICurrentUserProvider interface.</param>
+        /// <param name="tokenProvider">The ITokenProvider interface.</param>
+        /// <param name="mapper">The IMapper interface.</param>
         /// <param name="environmentManager">The IEnvironmentManager interface.</param>
         public SubscriptionsController(
             IPlanManager planManager,
-            ICurrentUserProvider currentUserProvider,
+            ITokenProvider tokenProvider,
+            IMapper mapper,
             IEnvironmentManager environmentManager)
         {
             this.planManager = planManager;
-            this.currentUserProvider = currentUserProvider;
+            this.tokenProvider = tokenProvider;
+            this.mapper = mapper;
             this.environmentManager = environmentManager;
         }
 
@@ -137,8 +148,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 $"{LoggingBaseName}_plan_create",
                 async (logger) =>
                 {
-                    var accessToken = currentUserProvider.GetBearerToken();
-
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
                     ValidationUtil.IsRequired(providerNamespace);
@@ -181,11 +190,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     return CreateResponse(HttpStatusCode.OK, resource);
                 },
-                (ex, logger) =>
-                {
-                    var result = (IActionResult)CreateErrorResponse("CreateResourceFailed");
-                    return Task.FromResult(result);
-                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("CreateResourceFailed")),
                 swallowException: true);
         }
 
@@ -298,11 +303,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format in case validation pass with empty body.
                     return Ok();
                 },
-                (ex, logger) =>
-                {
-                    var result = (IActionResult)CreateErrorResponse("DeleteFailed");
-                    return Task.FromResult(result);
-                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("ResourceDeleteFailed")),
                 swallowException: true);
         }
 
@@ -325,8 +326,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 $"{LoggingBaseName}_plan_list",
                 async (logger) =>
                 {
-                    var accessToken = currentUserProvider.GetBearerToken();
-
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
                     ValidationUtil.IsRequired(providerNamespace);
@@ -342,11 +341,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format.
                     return CreateResponse(HttpStatusCode.OK, plans);
                 },
-                (ex, logger) =>
-                {
-                    var result = (IActionResult)CreateErrorResponse("GetResourceListFailed");
-                    return Task.FromResult(result);
-                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetResourceListFailed")),
                 swallowException: true);
         }
 
@@ -381,11 +376,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format.
                     return CreateResponse(HttpStatusCode.OK, plans);
                 },
-                (ex, logger) =>
-                {
-                    var result = (IActionResult)CreateErrorResponse("GetResourceListFailed");
-                    return Task.FromResult(result);
-                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetResourceListFailed")),
                 swallowException: true);
         }
 
@@ -475,21 +466,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
-        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readEnvironments")]
-        public Task<IActionResult> PlanReadEnvironmentsAsync(
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readAllEnvironments")]
+        public async Task<IActionResult> PlanReadEnvironmentsAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
             string resourceType,
-            string resourceName)
+            string resourceName,
+            [FromQuery]DateTime? expiration)
         {
-            return HttpContext.HttpScopeAsync<IActionResult>(
+            return await HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_read_environments",
-                (logger) =>
+                async (logger) =>
                 {
-                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
-                });
+                    ValidationUtil.IsRequired(subscriptionId);
+                    ValidationUtil.IsRequired(resourceGroup);
+                    ValidationUtil.IsRequired(providerNamespace);
+                    ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceName);
+                    ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
+                    var planInfo = new VsoPlanInfo
+                    {
+                        Name = resourceName,
+                        ResourceGroup = resourceGroup,
+                        Subscription = subscriptionId,
+                    };
+
+                    var result = await planManager.GetAsync(planInfo, logger);
+                    if (result.ErrorCode == Plans.Contracts.ErrorCodes.PlanDoesNotExist || result.VsoPlan == null)
+                    {
+                        return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
+                    }
+
+                    var plan = result.VsoPlan;
+
+                    var token = tokenProvider.GenerateVsSaaSToken(
+                        plan,
+                        new[] { PlanAccessTokenScopes.ReadEnvironments, },
+                        HttpContext.User.Claims,
+                        expiration,
+                        logger);
+
+                    var response = new PlanAccessToken
+                    {
+                        AccessToken = token,
+                    };
+
+                    return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
+                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed")),
+                swallowException: true);
         }
 
         /// <summary>
@@ -501,21 +531,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeEnvironments")]
-        public Task<IActionResult> PlanWriteEnvironmentsAsync(
+        public async Task<IActionResult> PlanWriteEnvironmentsAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
             string resourceType,
-            string resourceName)
+            string resourceName,
+            [FromQuery]DateTime? expiration)
         {
-            return HttpContext.HttpScopeAsync<IActionResult>(
+            return await HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_write_environments",
-                (logger) =>
+                async (logger) =>
                 {
-                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
-                });
+                    ValidationUtil.IsRequired(subscriptionId);
+                    ValidationUtil.IsRequired(resourceGroup);
+                    ValidationUtil.IsRequired(providerNamespace);
+                    ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceName);
+                    ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
+                    var planInfo = new VsoPlanInfo
+                    {
+                        Name = resourceName,
+                        ResourceGroup = resourceGroup,
+                        Subscription = subscriptionId,
+                    };
+
+                    var result = await planManager.GetAsync(planInfo, logger);
+                    if (result.ErrorCode == Plans.Contracts.ErrorCodes.PlanDoesNotExist || result.VsoPlan == null)
+                    {
+                        return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
+                    }
+
+                    var plan = result.VsoPlan;
+
+                    var token = tokenProvider.GenerateVsSaaSToken(
+                        plan,
+                        new[] { PlanAccessTokenScopes.WriteEnvironments, },
+                        HttpContext.User.Claims,
+                        expiration,
+                        logger);
+
+                    var response = new PlanAccessToken
+                    {
+                        AccessToken = token,
+                    };
+
+                    return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
+                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed")),
+                swallowException: true);
         }
 
         /// <summary>
@@ -527,21 +596,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
-        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteEnvironments")]
-        public Task<IActionResult> PlanDeleteEnvironmentsAsync(
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteAllEnvironments")]
+        public async Task<IActionResult> PlanDeleteEnvironmentsAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
             string resourceType,
-            string resourceName)
+            string resourceName,
+            [FromQuery]DateTime? expiration)
         {
-            return HttpContext.HttpScopeAsync<IActionResult>(
+            return await HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_delete_environments",
-                (logger) =>
+                async (logger) =>
                 {
-                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
-                });
+                    ValidationUtil.IsRequired(subscriptionId);
+                    ValidationUtil.IsRequired(resourceGroup);
+                    ValidationUtil.IsRequired(providerNamespace);
+                    ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceName);
+                    ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
+                    var planInfo = new VsoPlanInfo
+                    {
+                        Name = resourceName,
+                        ResourceGroup = resourceGroup,
+                        Subscription = subscriptionId,
+                    };
+
+                    var result = await planManager.GetAsync(planInfo, logger);
+                    if (result.ErrorCode == Plans.Contracts.ErrorCodes.PlanDoesNotExist || result.VsoPlan == null)
+                    {
+                        return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
+                    }
+
+                    var plan = result.VsoPlan;
+
+                    var token = tokenProvider.GenerateVsSaaSToken(
+                        plan,
+                        new[] { PlanAccessTokenScopes.ReadEnvironments, PlanAccessTokenScopes.DeleteEnvironments, },
+                        HttpContext.User.Claims,
+                        expiration,
+                        logger);
+
+                    var response = new PlanAccessToken
+                    {
+                        AccessToken = token,
+                    };
+
+                    return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
+                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed")),
+                swallowException: true);
         }
 
         /// <summary>
@@ -578,21 +686,82 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="requestBody">The request body.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeDelegates")]
-        public Task<IActionResult> PlanWriteDelegatesAsync(
+        public async Task<IActionResult> PlanWriteDelegatesAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
             string resourceType,
-            string resourceName)
+            string resourceName,
+            [FromBody]IssueDelegatePlanAccessTokenBody requestBody)
         {
-            return HttpContext.HttpScopeAsync<IActionResult>(
+            return await HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_write_delegates",
-                (logger) =>
+                async (logger) =>
                 {
-                    return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
-                });
+                    ValidationUtil.IsRequired(subscriptionId);
+                    ValidationUtil.IsRequired(resourceGroup);
+                    ValidationUtil.IsRequired(providerNamespace);
+                    ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceName);
+                    ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
+                    Requires.NotNull(requestBody, nameof(requestBody));
+                    Requires.NotNull(requestBody.Identity, nameof(requestBody.Identity));
+                    Requires.NotNull(requestBody.Scope, nameof(requestBody.Scope));
+
+                    var planInfo = new VsoPlanInfo
+                    {
+                        Name = resourceName,
+                        ResourceGroup = resourceGroup,
+                        Subscription = subscriptionId,
+                    };
+
+                    var result = await planManager.GetAsync(planInfo, logger);
+                    if (result.ErrorCode == Plans.Contracts.ErrorCodes.PlanDoesNotExist || result.VsoPlan == null)
+                    {
+                        return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
+                    }
+
+                    var plan = result.VsoPlan;
+
+                    var scopesArray = string.IsNullOrWhiteSpace(requestBody.Scope)
+                        ? Array.Empty<string>()
+                        : requestBody.Scope.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (scopesArray.Any((scope) => !PlanAccessTokenScopes.ValidScopes.Contains(scope)))
+                    {
+                        return CreateErrorResponse("InvalidScope", "InvalidScope", HttpStatusCode.BadRequest);
+                    }
+
+                    DateTime? sourceArmTokenExpiration = null;
+                    if (HttpContext.Items.TryGetValue(AuthenticationBuilderRPSaasExtensions.SourceArmTokenClaims, out var value) &&
+                        value is ClaimsPrincipal sourceArmTokenClaims &&
+                        int.TryParse(sourceArmTokenClaims.FindFirstValue(JwtRegisteredClaimNames.Exp), out var secSinceEpoch))
+                    {
+                        sourceArmTokenExpiration = DateTime.UnixEpoch.AddSeconds(secSinceEpoch);
+                    }
+
+                    var token = tokenProvider.GenerateDelegatedVsSaaSToken(
+                        plan,
+                        scopesArray,
+                        requestBody.Identity,
+                        sourceArmTokenExpiration,
+                        requestBody.Expiration,
+                        logger);
+
+                    var response = new PlanAccessToken
+                    {
+                        AccessToken = token,
+                    };
+
+                    return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
+                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed")),
+                swallowException: true);
         }
 
         /// <summary>
@@ -663,7 +832,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="errorCode">The string represented error code.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>JsonResult.</returns>
-        private static JsonResult CreateErrorResponse(string errorCode, string errorMessage = default)
+        private static IActionResult CreateErrorResponse(string errorCode, string errorMessage = default, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
             var errorResponse = new ResourceProviderErrorResponse
             {
@@ -677,7 +846,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             return new JsonResult(errorResponse)
             {
-                StatusCode = (int)HttpStatusCode.OK,
+                StatusCode = (int)statusCode,
             };
         }
     }
