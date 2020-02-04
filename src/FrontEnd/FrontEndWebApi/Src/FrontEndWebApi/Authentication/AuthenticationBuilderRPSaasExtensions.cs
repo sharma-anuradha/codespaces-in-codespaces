@@ -138,26 +138,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             await Task.CompletedTask;
 
             var identity = context.Principal;
-            var tenantClaim = identity.Claims.FirstOrDefault(j => j.Type == TenantClaimType);
-            var issuerClaim = identity.Claims.FirstOrDefault(i => i.Type == "iss");
+            var tenantClaim = identity.FindFirstValue(TenantClaimType);
+            var issuerClaim = identity.FindFirstValue("iss");
 
             var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
 
-            // Construct the fully tenant qualified issuer url.
-            var issuerFull = Issuer + tenantClaim.Value + "/";
-            if (issuerClaim.Value != issuerFull)
-            {
-                // fail request
-                logger
-                    .FluentAddValue("Scheme", context.Scheme.Name)
-                    .FluentAddValue("Audience", context.Options.Audience)
-                    .FluentAddValue("Authority", context.Options.Authority)
-                    .FluentAddValue("RequestUri", context.Request.GetDisplayUrl())
-                    .FluentAddValue("PrincipalIdentityName", context.Principal?.Identity.Name)
-                    .FluentAddValue("PrincipalIsAuthenticationType", context.Principal?.Identity.AuthenticationType)
-                    .FluentAddValue("PrincipalIsAuthenticated", context.Principal?.Identity.IsAuthenticated.ToString())
-                    .LogInfo("jwt_issuer_notmatched");
+            logger
+                .FluentAddValue("Scheme", context.Scheme.Name)
+                .FluentAddValue("Audience", context.Options.Audience)
+                .FluentAddValue("Authority", context.Options.Authority)
+                .FluentAddValue("RequestUri", context.Request.GetDisplayUrl())
+                .FluentAddValue("PrincipalIdentityName", identity.Identity.Name)
+                .FluentAddValue("PrincipalIsAuthenticationType", identity.Identity.AuthenticationType)
+                .FluentAddValue("PrincipalIsAuthenticated", identity.Identity.IsAuthenticated.ToString())
+                .FluentAddValue("ArmAppId", identity.FindFirstValue("appid"));
 
+            // Construct the fully tenant qualified issuer url.
+            var issuerFull = Issuer + tenantClaim + "/";
+
+            // TODO - remove this, add above add Issuer = "https://sts.windows.net/{tenantid}", and remove ValidateIssuer = false above
+            if (issuerClaim != issuerFull)
+            {
+                logger.LogInfo("jwt_issuer_notmatched");
                 context.Fail("Issuer claim did not match expected claim");
                 return;
             }
@@ -167,6 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             var signedUserHeader = context.HttpContext.Request.Headers[SignedUserHeaderKey].FirstOrDefault();
             if (string.IsNullOrWhiteSpace(signedUserHeader))
             {
+                logger.LogInfo("jwt_armsigneduser_notprovided");
                 context.Fail("ARM signed user token header not provided");
                 return;
             }
@@ -174,10 +177,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             var claimsPrincipal = TryGetSignedUserClaimsPrincipal(signedUserHeader, issuerFull, logger);
             if (claimsPrincipal == null)
             {
+                logger.LogInfo("jwt_armsigneduser_novtvalid");
                 context.Fail("Failed to extract ClaimsPrincipal from ARM signed user token header");
                 return;
             }
 
+            logger.LogInfo("jwt_aadrpsaas_success");
             context.Principal = claimsPrincipal;
         }
 

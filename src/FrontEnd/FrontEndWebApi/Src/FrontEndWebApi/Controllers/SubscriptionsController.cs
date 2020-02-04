@@ -25,7 +25,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
