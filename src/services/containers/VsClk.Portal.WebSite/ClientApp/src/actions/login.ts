@@ -60,6 +60,10 @@ export const complete2FA = async () => {
         scopes: ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'],
     };
 
+    if (!clientApplication) {
+        throw new Error('Initialize MSAL first.');
+    }
+
     const tokenResponse = await clientApplication.acquireTokenPopup(tokenRequest);
 
     const token = tokenFromTokenResponse(tokenResponse);

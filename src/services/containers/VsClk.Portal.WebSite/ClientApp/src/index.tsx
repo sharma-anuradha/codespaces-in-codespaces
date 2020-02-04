@@ -9,6 +9,9 @@ import { sendTelemetry, telemetry } from './utils/telemetry';
 import { trackUnhandled } from './utils/telemetry/unhandledErrors';
 
 import './index.css';
+import { authService } from './services/authService';
+import { initializeMsal } from './services/msalConfig';
+
 import { getHostingModules } from './getHostingInitModules';
 import { initHostingHtmlTags } from './initHostingHtmlTags';
 
@@ -27,6 +30,8 @@ async function startApplication() {
     trackUnhandled();
 
     cleanupLegacyMSALCookies();
+
+    authService.init();
 
     window.addEventListener('beforeunload', () => {
         sendTelemetry('vsonline/application/before-unload', {});
@@ -58,7 +63,9 @@ async function startApplication() {
     );
 }
 
-// Don't start application in iframe created by MSAL.
+// Don't start application in iframe created by MSAL, but start the MSAL itself.
 if (window.parent === window) {
     startApplication();
+ } else {
+    initializeMsal();
 }

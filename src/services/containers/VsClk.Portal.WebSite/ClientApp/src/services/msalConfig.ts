@@ -16,4 +16,8 @@ export const msalConfig: msal.Configuration = {
     },
 };
 
-export const clientApplication = new msal.UserAgentApplication(msalConfig);
+export let clientApplication: msal.UserAgentApplication | null = null;
+
+export const initializeMsal = () => {
+    clientApplication = new msal.UserAgentApplication(msalConfig);
+}

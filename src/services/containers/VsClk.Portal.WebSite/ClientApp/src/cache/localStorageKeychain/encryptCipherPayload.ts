@@ -5,15 +5,15 @@ import { createTrace } from '../../utils/createTrace';
 
 import { WebCipher } from './webCipher';
 import { ICipherPayload } from '../../interfaces/ICipherPayload';
-import { IKeyVaultKey } from '../../interfaces/IKeyVaultKey';
+import { IKeychainKey } from '../../interfaces/IKeychainKey';
 import { randomBytes } from '../../utils/randomBytes';
 import { intToBytes } from '../../utils/intToBytes';
 
-export const trace = createTrace('LocalStorageKeyVault:encrypt');
+export const trace = createTrace('LocalStorageKeychain:encrypt');
 
 const MIN_PAD_LENGTH = 8;
 
-export const encryptCipherPayload = async (unencryptedText: string, key: IKeyVaultKey): Promise<ICipherPayload | undefined> => {
+export const encryptCipherPayload = async (unencryptedText: string, key: IKeychainKey): Promise<ICipherPayload | undefined> => {
     try {
         const ivBuffer = randomBytes(16);
 

@@ -1,29 +1,29 @@
 import * as msal from '@vs/msal';
 
-import { localStorageKeyVault } from '../cache/localStorageKeyVaultInstance';
+import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
 
 class StorageAdapter extends msal.CustomStorage {
     async setItem(key: string, value: string) {
-        await localStorageKeyVault.set(key, value);
+        await localStorageKeychain.set(key, value);
     }
     async getItem(key: string) {
-        return await localStorageKeyVault.get(key) || '';
+        return await localStorageKeychain.get(key) || '';
     }
     async removeItem(key: string) {
-        await localStorageKeyVault.delete(key);
+        await localStorageKeychain.delete(key);
     }
     async clear() {
-        await localStorageKeyVault.deleteAll();
+        await localStorageKeychain.deleteAll();
     }
     async key(index: number) {
-        const keys = localStorageKeyVault.getAllKeys();
+        const keys = localStorageKeychain.getAllKeys();
         return keys[index];
     }
     async getAllKeys() {
-        return localStorageKeyVault.getAllKeys();
+        return localStorageKeychain.getAllKeys();
     }
     *[Symbol.iterator]() {
-        yield* localStorageKeyVault.getAllKeys();
+        yield* localStorageKeychain.getAllKeys();
     }
 }
 
@@ -34,13 +34,13 @@ const defaultPropertyDescriptor = {
 
 export const storageAdapter = new Proxy(new StorageAdapter(), {
     ownKeys() {
-        return localStorageKeyVault.getAllKeys();
+        return localStorageKeychain.getAllKeys();
     },
     getOwnPropertyDescriptor(target, key) {
         if (typeof key === 'symbol') {
             return defaultPropertyDescriptor;
         }
-        const hasTheKey = localStorageKeyVault.has(key);
+        const hasTheKey = localStorageKeychain.has(key);
         if (!hasTheKey) {
             return defaultPropertyDescriptor;
         }
@@ -50,6 +50,6 @@ export const storageAdapter = new Proxy(new StorageAdapter(), {
         };
     },
     set(_, key) {
-        throw new Error(`Cannot set the key "${key as string}" directly on the keyvault, please use "setItem" setter for the purpose.`);
+        throw new Error(`Cannot set the key "${key as string}" directly on the keychain, please use "setItem" setter for the purpose.`);
     }
 });

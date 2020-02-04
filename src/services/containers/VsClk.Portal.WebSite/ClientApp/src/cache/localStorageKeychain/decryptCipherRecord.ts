@@ -4,12 +4,12 @@ import { sendTelemetry } from '../../utils/telemetry';
 import { createTrace } from '../../utils/createTrace';
 import { WebCipher } from './webCipher';
 import { ICipherPayload } from '../../interfaces/ICipherPayload';
-import { IKeyVaultKey } from '../../interfaces/IKeyVaultKey';
+import { IKeychainKey } from '../../interfaces/IKeychainKey';
 import { bufferToInt } from '../../utils/bufferToInt';
 
-export const trace = createTrace('LocalStorageKeyVault:decrypt');
+export const trace = createTrace('LocalStorageKeychain:decrypt');
 
-export const decryptCipherRecord = async (cipherRecord: ICipherPayload, key: IKeyVaultKey): Promise<string | undefined> => {
+export const decryptCipherRecord = async (cipherRecord: ICipherPayload, key: IKeychainKey): Promise<string | undefined> => {
     try {
         const startDecryptingTimes = Date.now();
 

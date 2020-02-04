@@ -3,14 +3,14 @@ import { Emitter } from 'vscode-jsonrpc';
 import { IJWTCache, IJWTAsyncCache } from '../typings/IJWTCache';
 import { inMemoryCacheFactory } from './inMemoryJWTCache';
 import { TokenType } from '../typings/TokenType';
-import { localStorageKeyVault } from './localStorageKeyVaultInstance';
+import { localStorageKeychain } from './localStorageKeychainInstance';
 
-import { IKeyVault } from '../interfaces/IKeyVault';
+import { IKeychain } from '../interfaces/IKeychain';
 
 export const inLocalStorageJWTTokenCacheFactory = (keyPrefix?: string)=> {
     const inMemoryCache = inMemoryCacheFactory();
 
-    return new InLocalStorageJWTCache(inMemoryCache, localStorageKeyVault, keyPrefix);
+    return new InLocalStorageJWTCache(inMemoryCache, localStorageKeychain, keyPrefix);
 }
 
 interface ITokenChangeEvent {
@@ -25,7 +25,7 @@ export class InLocalStorageJWTCache implements IJWTAsyncCache<TokenType>  {
 
     constructor(
         private readonly inMemoryCache: IJWTCache<TokenType>,
-        private readonly keyvault: IKeyVault,
+        private readonly keychain: IKeychain,
         private readonly keyPrefix?: string
     ) {}
 
@@ -34,7 +34,7 @@ export class InLocalStorageJWTCache implements IJWTAsyncCache<TokenType>  {
 
         this.inMemoryCache.cacheToken(keyName, token);
 
-        await this.keyvault.set(keyName, JSON.stringify(token));
+        await this.keychain.set(keyName, JSON.stringify(token));
 
         this.tokenChangeSignal.fire({
             name,
@@ -51,7 +51,7 @@ export class InLocalStorageJWTCache implements IJWTAsyncCache<TokenType>  {
             return cachedToken;
         }
 
-        const tokenStr = await this.keyvault.get(keyName);
+        const tokenStr = await this.keychain.get(keyName);
 
         if (!tokenStr) {
             return;
@@ -84,7 +84,7 @@ export class InLocalStorageJWTCache implements IJWTAsyncCache<TokenType>  {
 
         this.inMemoryCache.deleteCachedToken(keyName);
 
-        this.keyvault.delete(keyName);
+        this.keychain.delete(keyName);
 
         this.tokenChangeSignal.fire({
             name,
@@ -95,7 +95,7 @@ export class InLocalStorageJWTCache implements IJWTAsyncCache<TokenType>  {
 
     public async clearCache() {
         for (let key of await this.getAllCachedKeys()) {
-            await this.keyvault.delete(key);
+            await this.keychain.delete(key);
         }
 
         this.inMemoryCache.clearCache();

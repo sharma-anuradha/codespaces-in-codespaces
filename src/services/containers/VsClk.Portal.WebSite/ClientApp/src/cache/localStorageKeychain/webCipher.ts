@@ -26,9 +26,7 @@ export class WebCipher implements ICipher {
 	) {
 		if (this.algorithmName === 'AES' && this.cipherMode === 'CTR') {
 			this.transform = this.aesCtr.bind(this, isEncryption);
-			this.transform = this.aesCtr.bind(this, isEncryption);
 		} else if (this.algorithmName === 'AES' && this.cipherMode === 'CBC') {
-			this.transform = this.aesCbc.bind(this, isEncryption);
 			this.transform = this.aesCbc.bind(this, isEncryption);
 		} else {
 			throw new Error(

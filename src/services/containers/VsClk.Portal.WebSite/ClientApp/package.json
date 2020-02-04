@@ -114,7 +114,7 @@
   },
   "scripts": {
     "preinstall": "node scripts/npm/preinstall.js",
-    "postinstall": "node scripts/npm/postinstall.js",
+    "postinstall": "node scripts/npm/postinstall.js && yarn get-service-principal",
     "clean": "run-p clean:vscode clean:build",
     "clean:vscode": "rimraf public/static/web-standalone",
     "clean:build": "rimraf build",
@@ -137,6 +137,7 @@
     "test:ci": "cross-env NODE_ENV=test jest --reporters=\"default\" --reporters=\"jest-junit\"",
     "update-vscode": "node scripts/npm/update-vscode.js",
     "update-github-secret": "node scripts/npm/update-github-secret.js",
+    "get-service-principal": "node scripts/npm/get-service-principal.js",
     "get-dev-cert": "node scripts/npm/get-dev-ssl-cert.js",
     "lint": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json && npm run circular-dependencies",
     "circular-dependencies": "node ./scripts/circular-dependencies.js"

@@ -31,6 +31,7 @@ static_analysis_options:
           - 'scripts\npm\update-github-secret.js'
           - 'scripts\npm\utils.js'
           - 'scripts\npm\get-dev-ssl-cert.js'
+          - 'scripts\npm\get-service-principal.js'
           - 'scripts\vscode\download-vscode.js'
           - 'scripts\vscode\fileUtils.js'
           - 'scripts\vscode\get-current-vscode-assets-version.js'

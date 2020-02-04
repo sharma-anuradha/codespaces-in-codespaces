@@ -3,7 +3,7 @@ import { ICredentialsProvider } from 'vscode-web';
 import { createTrace } from '../utils/createTrace';
 import { authService } from '../services/authService';
 import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
-import { localStorageKeyVault } from '../cache/localStorageKeyVaultInstance';
+import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
 
 const trace = createTrace('credentials-provider:info');
 
@@ -135,7 +135,7 @@ export class CredentialsProvider implements ICredentialsProvider {
 
         // generic keytar request
         const genericKey = this.generateGenericLocalStorageKey(service, account);
-        const password = await localStorageKeyVault.get(genericKey);
+        const password = await localStorageKeychain.get(genericKey);
 
         if (password) {
             return password;
@@ -148,14 +148,14 @@ export class CredentialsProvider implements ICredentialsProvider {
 
     async setPassword(service: string, account: string, password: string): Promise<void> {
         const key = this.generateGenericLocalStorageKey(service, account);
-        await localStorageKeyVault.set(key, password);
+        await localStorageKeychain.set(key, password);
     }
 
     async deletePassword(service: string, account: string): Promise<boolean> {
         const key = this.generateGenericLocalStorageKey(service, account);
-        const isPresent = localStorageKeyVault.has(key);
+        const isPresent = localStorageKeychain.has(key);
 
-        await localStorageKeyVault.delete(key);
+        await localStorageKeychain.delete(key);
 
         return isPresent;
     }

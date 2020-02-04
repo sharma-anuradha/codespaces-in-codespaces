@@ -1,3 +1,6 @@
+using System;
+using System.Threading.Tasks;
+
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
     public class AppSettings
@@ -10,11 +13,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         // Redis configuration
         public string VsClkRedisConnectionString { get; set; }
-
-        // Microsoft account configuration
-        public string MicrosoftAppClientId { get; set; }
-
-        public string MicrosoftAppClientSecret { get; set; }
 
         // GitHub account configuration
         public string GitHubAppClientId { get; set; }
@@ -32,5 +30,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public string Domain { get; set; }
         public string AesKey { get; set; }
         public string AesIV { get; set; }
+        // The app service principal that has access to reading the app key vault
+        public string KeyVaultReaderServicePrincipalClientId { get; set; }
+        public string KeyVaultReaderServicePrincipalClientSecret { get; set; }
     }
 }

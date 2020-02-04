@@ -1,34 +1,30 @@
-import { Buffer } from 'buffer';
 
 import { createTrace } from '../../utils/createTrace';
 import { sendTelemetry } from '../../utils/telemetry';
 
 import { encryptCipherPayload } from './encryptCipherPayload';
 import { decryptCipherRecord } from './decryptCipherRecord';
-import { IKeyVault } from '../../interfaces/IKeyVault';
+import { IKeychain } from '../../interfaces/IKeychain';
 
 import { ICipherRecord } from '../../interfaces/ICipherRecord';
-import { IKeyVaultKey } from '../../interfaces/IKeyVaultKey';
+import { IKeychainKey } from '../../interfaces/IKeychainKey';
 
-export const trace = createTrace('LocalStorageKeyVault');
+import { getKeychainKeys, defaultKey, isExpiredKey } from './localstorageKeychainKeys';
 
-const ENTRIES_STORED_KEY = 'vsonline.keyvault.keys';
+export const trace = createTrace('LocalStorageKeychain');
+
+const ENTRIES_STORED_KEY = 'vsonline.keychain.keys';
 
 interface IStoredKeys {
     [key: string]: boolean;
 }
 
-export class LocalStorageKeyVault implements IKeyVault {
-    constructor(private readonly keys: IKeyVaultKey[]) {
-        if (!this.keys || !this.keys.length) {
-            const noKeysError = new Error('No keys provided.');
+export class LocalStorageKeychain implements IKeychain {
+    private get keys() {
+        const keys = getKeychainKeys()
+                    .sort((a, b) => b.expiresOn - a.expiresOn);
 
-            sendTelemetry('vsonline/cipher/error', noKeysError);
-            throw noKeysError;
-        }
-
-        // longer expiration times are in the beginning
-        this.keys.sort((a, b) => b.expiresOn - a.expiresOn);
+        return keys;
     }
 
     private readBookKeepingKeys(): IStoredKeys {
@@ -70,15 +66,29 @@ export class LocalStorageKeyVault implements IKeyVault {
         this.writeBookKeeingKeys(keys);
     }
 
-    async get(key: string) {
+    private getCipherRecord(key: string): ICipherRecord | undefined {
         try {
             const storedValue = localStorage.getItem(key);
 
             if (!storedValue) {
-                return storedValue;
+                return;
             }
 
             const storedRecord: ICipherRecord = JSON.parse(storedValue);
+
+            return storedRecord;
+        } catch (e) {
+            trace.error(e);
+        }
+    }
+
+    async get(key: string) {
+        try {
+            const storedRecord = this.getCipherRecord(key);
+            if (!storedRecord) {
+                return;
+            }
+
             const aesKey = this.getKeyToDecrypt(storedRecord.keyId);
 
             // if no key to decrypt found,
@@ -136,8 +146,10 @@ export class LocalStorageKeyVault implements IKeyVault {
         }
     }
 
-    private getKeyToDecrypt(keyId: string): IKeyVaultKey | undefined {
-        const aesKey = this.keys.find((key: IKeyVaultKey) => {
+    private getKeyToDecrypt(keyId: string): IKeychainKey | undefined {
+        const keys = this.keys;
+
+        const aesKey = keys.find((key: IKeychainKey) => {
             return key.id === keyId;
         });
 
@@ -157,7 +169,7 @@ export class LocalStorageKeyVault implements IKeyVault {
         throw noKeysError;
     }
 
-    private isValidAesKey(key: IKeyVaultKey) {
+    private isValidAesKey(key: IKeychainKey) {
         const delta = new Date(key.expiresOn).getTime() - Date.now();
 
         return delta > 0;
@@ -188,17 +200,39 @@ export class LocalStorageKeyVault implements IKeyVault {
 
         return !!keys[key];
     }
+
+    private async rehashKey(key: string) {
+        const value = await this.get(key);
+
+        if (value) {
+            await this.set(key, value);
+            return;
+        }
+
+        await this.delete(key);
+    }
+    
+    public async rehash(rehashLegacyKeysOnly = false) {
+        const keys = this.getAllKeys();
+
+        for (let key of keys) {
+            if (!rehashLegacyKeysOnly) {
+                await this.rehashKey(key);
+                continue;
+            }
+
+            const storedRecord = this.getCipherRecord(key);
+            if (!storedRecord) {
+                continue;
+            }
+
+            if (storedRecord.keyId === defaultKey.id || isExpiredKey(storedRecord.keyId)) {
+                await this.rehashKey(key);
+            }
+        }
+    }
 }
 
-export const localStorageKeyVaultFactory = () => {
-    const record: IKeyVaultKey = {
-        id: '012345827ccb0eea8a706c4c34a16891f84e7c',
-        // An example 128-bit key
-        key: new Buffer('0123456789ABCDEF'),
-        expiresOn: Date.now() + 10 * 24 * 60 * 60 * 1000,
-        method: 'AES',
-        methodMode: 'CBC',
-    };
-
-    return new LocalStorageKeyVault([record]);
+export const localStorageKeychainFactory = () => {
+    return new LocalStorageKeychain();
 };

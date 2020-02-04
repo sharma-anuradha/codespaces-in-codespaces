@@ -50,3 +50,5 @@ appSettings:
   - PORTAL_AppSettings__LiveShareWebExtensionEndpoint
   - PORTAL_AppSettings__GitHubAppClientId
   - PORTAL_AppSettings__GitHubAppClientSecret
+  - PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientId
+  - PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientSecret
