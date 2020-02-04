@@ -155,7 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// <param name="startComputeRequestBody">The start compute request body.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>The <see cref="StartResourceRequestBody"/>.</returns>
-        [HttpPost]
+        [HttpPost("startcompute")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpOperationalScope("start")]
         public Task<IActionResult> StartAsync(
