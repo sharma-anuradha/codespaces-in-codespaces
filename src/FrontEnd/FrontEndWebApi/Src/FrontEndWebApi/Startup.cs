@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
@@ -72,6 +73,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Configuration
             var appSettings = ConfigureAppSettings(services);
             var frontEndAppSettings = appSettings.FrontEnd;
+
+            if (HostingEnvironment.IsDevelopment())
+            {
+                // Enable PII data in logs for Dev
+                IdentityModelEventSource.ShowPII = true;
+            }
 
             if (IsRunningInAzure() &&
                 (frontEndAppSettings.UseMocksForLocalDevelopment ||
