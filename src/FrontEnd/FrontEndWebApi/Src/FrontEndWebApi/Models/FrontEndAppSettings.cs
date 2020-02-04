@@ -80,16 +80,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public string RedisConnectionString { get; set; }
 
         /// <summary>
-        /// Gets or sets the RPSaaS ApplicationID.
-        /// This appid claim will be present for all api calls coming from RPSaaS.
+        /// Gets or sets the RP SaaS settings.
         /// </summary>
-        public string RPSaaSAppIdString { get; set; }
-
-        /// <summary>
-        /// Gets or sets the Authority URL used to valided RPSaaS
-        /// signing signature.
-        /// </summary>
-        public string RPSaaSAuthorityString { get; set; }
+        public RPSaaSSettings RPSaaSSettings { get; set; }
 
         /// <summary>
         /// Gets or sets the Environment Manager Settings.

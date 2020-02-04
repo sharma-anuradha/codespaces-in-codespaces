@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using StackExchange.Redis;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -37,23 +38,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <param name="services">The service collection.</param>
         /// <param name="hostEnvironment">The aspnet host environment.</param>
         /// <param name="redisCacheOptions">The redis cache options.</param>
-        /// <param name="rpSaasAuthority">The RPSaaS Signature Authority URL.</param>
+        /// <param name="settings">The RPSaaS settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddCustomFrontEndAuthentication(
             this IServiceCollection services,
             IWebHostEnvironment hostEnvironment,
             RedisCacheOptions redisCacheOptions,
-            string rpSaasAuthority)
+            RPSaaSSettings settings)
         {
             Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
             Requires.NotNull(redisCacheOptions, nameof(redisCacheOptions));
-            Requires.NotNull(rpSaasAuthority, nameof(rpSaasAuthority));
+            Requires.NotNull(settings, nameof(settings));
 
             services.AddVsSaaSCoreDataProtection(hostEnvironment, redisCacheOptions.RedisConnectionString);
 
             services
                 .AddAuthentication()
-                .AddRPSaaSJwtBearer(rpSaasAuthority)
+                .AddRPSaaSJwtBearer(settings)
                 .AddVMTokenJwtBearer()
                 .AddVsSaaSCookieBearer();
 

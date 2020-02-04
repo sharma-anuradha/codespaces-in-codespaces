@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// The VSO Plan api called by RPSaaS.
     /// </summary>
     [ApiController]
-    [Authorize(Policy = "RPSaaSIdentity", AuthenticationSchemes = AuthenticationBuilderRPSaasExtensions.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = AuthenticationBuilderRPSaasExtensions.AuthenticationScheme)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName(LoggingBaseName)]

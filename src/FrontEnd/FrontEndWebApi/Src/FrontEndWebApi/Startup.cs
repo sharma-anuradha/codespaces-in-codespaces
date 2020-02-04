@@ -226,7 +226,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     // TODO: make this required -- but it isn't configured yet.
                     RedisConnectionString = frontEndAppSettings.RedisConnectionString,
                 },
-                ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSAuthorityString, nameof(frontEndAppSettings.RPSaaSAuthorityString)))
+                ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSSettings, nameof(frontEndAppSettings.RPSaaSSettings)))
                 .AddCertificateCredentialCacheFactory();
 
             services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>
@@ -236,13 +236,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 options.AccountKey = accountKey;
             });
 
-            services.AddAuthorization(options =>
-            {
-                // Verify RPSaaS appid exists in bearer claims and is valid
-                options.AddPolicy("RPSaaSIdentity", policy => policy.RequireClaim(
-                    "appid",
-                    new[] { ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSAppIdString, nameof(frontEndAppSettings.RPSaaSAppIdString)) }));
-            });
+            services.AddAuthorization();
 
             // Adding developer personal stamp settings and resource name builder.
             var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp);

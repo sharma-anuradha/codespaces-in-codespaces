@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -41,10 +42,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         private const string SignedUserHeaderKey = "x-ms-arm-signed-user-token";
 
-        private static readonly string TenantClaimType = "http://schemas.microsoft.com/identity/claims/tenantid";
-
-        private static string Issuer { get; } = "https://sts.windows.net/";
-
         private static IEnumerable<string> DefaultAudiences { get; } = new string[]
         {
             "https://management.core.windows.net/",
@@ -58,9 +55,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// Add RPSaaS specific Jwt Bearer.
         /// </summary>
         /// <param name="builder">The application builder.</param>
-        /// <param name="authority">The RPSaaS Authority URL.</param>
+        /// <param name="settings">The RPSaaS settings.</param>
         /// <returns>the instance of builder.</returns>
-        public static AuthenticationBuilder AddRPSaaSJwtBearer(this AuthenticationBuilder builder, string authority)
+        public static AuthenticationBuilder AddRPSaaSJwtBearer(this AuthenticationBuilder builder, RPSaaSSettings settings)
         {
             builder
                 .AddJwtBearer(AuthenticationScheme, options =>
@@ -79,17 +76,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                         armTokenReader.AddAudience(audience);
                     }
 
+                    armTokenReader.AddIssuer(settings.IssuerHostname.TrimEnd('/') + "/{tenantid}/");
+
                     var armTokenValidationParameters = armTokenReader.GetValidationParameters(logger, resolveIssuerSigningKeys: false);
-                    armTokenValidationParameters.ValidateIssuer = false;
 
                     options.TokenValidationParameters = armTokenValidationParameters;
 
-                    options.Authority = authority;
+                    options.Authority = settings.Authority;
 
                     options.Events = new JwtBearerEvents
                     {
                         OnAuthenticationFailed = AuthenticationFailedAsync,
-                        OnTokenValidated = OnTokenValidated,
+                        OnTokenValidated = BuildOnTokenValidated(settings),
                     };
                 })
                 .Services
@@ -97,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 {
                     var logger = serviceProvider.GetRequiredService<IDiagnosticsLogger>();
 
-                    SignedUserCertCache = new RPSaaSCertifcateCache(logger);
+                    SignedUserCertCache = new RPSaaSCertifcateCache(settings.SignedUserTokenCertUrl, logger);
 
                     return SignedUserCertCache;
                 });
@@ -129,61 +127,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         }
 
         /// <summary>
-        /// Method to be called after security token is validated.
+        /// Builds the callback method to be used after security token is validated.
         /// </summary>
-        /// <param name="context">TokenValidate context.</param>
-        /// <returns>Task.</returns>
-        private static async Task OnTokenValidated(TokenValidatedContext context)
+        /// <param name="settings">The RP SaaS settings.</param>
+        /// <returns>The callback.</returns>
+        private static Func<TokenValidatedContext, Task> BuildOnTokenValidated(RPSaaSSettings settings)
         {
-            await Task.CompletedTask;
-
-            var identity = context.Principal;
-            var tenantClaim = identity.FindFirstValue(TenantClaimType);
-            var issuerClaim = identity.FindFirstValue("iss");
-
-            var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
-
-            logger
-                .FluentAddValue("Scheme", context.Scheme.Name)
-                .FluentAddValue("Audience", context.Options.Audience)
-                .FluentAddValue("Authority", context.Options.Authority)
-                .FluentAddValue("RequestUri", context.Request.GetDisplayUrl())
-                .FluentAddValue("PrincipalIdentityName", identity.Identity.Name)
-                .FluentAddValue("PrincipalIsAuthenticationType", identity.Identity.AuthenticationType)
-                .FluentAddValue("PrincipalIsAuthenticated", identity.Identity.IsAuthenticated.ToString())
-                .FluentAddValue("ArmAppId", identity.FindFirstValue("appid"));
-
-            // Construct the fully tenant qualified issuer url.
-            var issuerFull = Issuer + tenantClaim + "/";
-
-            // TODO - remove this, add above add Issuer = "https://sts.windows.net/{tenantid}", and remove ValidateIssuer = false above
-            if (issuerClaim != issuerFull)
+            return async (context) =>
             {
-                logger.LogInfo("jwt_issuer_notmatched");
-                context.Fail("Issuer claim did not match expected claim");
-                return;
-            }
+                await Task.CompletedTask;
 
-            context.HttpContext.Items[SourceArmTokenClaims] = identity;
+                var identity = context.Principal;
+                var issuerClaim = identity.FindFirstValue("iss");
+                var appIdClaim = identity.FindFirstValue("appid");
 
-            var signedUserHeader = context.HttpContext.Request.Headers[SignedUserHeaderKey].FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(signedUserHeader))
-            {
-                logger.LogInfo("jwt_armsigneduser_notprovided");
-                context.Fail("ARM signed user token header not provided");
-                return;
-            }
+                var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
 
-            var claimsPrincipal = TryGetSignedUserClaimsPrincipal(signedUserHeader, issuerFull, logger);
-            if (claimsPrincipal == null)
-            {
-                logger.LogInfo("jwt_armsigneduser_novtvalid");
-                context.Fail("Failed to extract ClaimsPrincipal from ARM signed user token header");
-                return;
-            }
+                logger
+                    .FluentAddValue("Scheme", context.Scheme.Name)
+                    .FluentAddValue("Audience", context.Options.Audience)
+                    .FluentAddValue("Authority", context.Options.Authority)
+                    .FluentAddValue("RequestUri", context.Request.GetDisplayUrl())
+                    .FluentAddValue("PrincipalIdentityName", identity.Identity.Name)
+                    .FluentAddValue("PrincipalIsAuthenticationType", identity.Identity.AuthenticationType)
+                    .FluentAddValue("PrincipalIsAuthenticated", identity.Identity.IsAuthenticated.ToString())
+                    .FluentAddValue("ArmAppId", appIdClaim);
 
-            logger.LogInfo("jwt_aadrpsaas_success");
-            context.Principal = claimsPrincipal;
+                if (appIdClaim != settings.AppId)
+                {
+                    logger.LogInfo("jwt_appid_notmatched");
+                    context.Fail("AppId claim did not match expected claim");
+                    return;
+                }
+
+                context.HttpContext.Items[SourceArmTokenClaims] = identity;
+
+                var signedUserHeader = context.HttpContext.Request.Headers[SignedUserHeaderKey].FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(signedUserHeader))
+                {
+                    logger.LogInfo("jwt_armsigneduser_notprovided");
+                    context.Fail("ARM signed user token header not provided");
+                    return;
+                }
+
+                var claimsPrincipal = TryGetSignedUserClaimsPrincipal(signedUserHeader, issuerClaim, logger);
+                if (claimsPrincipal == null)
+                {
+                    logger.LogInfo("jwt_armsigneduser_novtvalid");
+                    context.Fail("Failed to extract ClaimsPrincipal from ARM signed user token header");
+                    return;
+                }
+
+                logger.LogInfo("jwt_aadrpsaas_success");
+                context.Principal = claimsPrincipal;
+            };
         }
 
         private static ClaimsPrincipal TryGetSignedUserClaimsPrincipal(string token, string tenant, IDiagnosticsLogger logger)
@@ -220,12 +217,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         // Based on the docs here: https://armwiki.azurewebsites.net/authorization/AuthenticateBetweenARMandRP.html?q=certificate
         private class RPSaaSCertifcateCache : JwtCertificateCredentialsHttpCache<RPSaaSCertifcateCache.ArmCertificateSet>
         {
-            private static readonly Uri CertificateUri = new Uri("https://management.azure.com:24582/metadata/authentication?api-version=2015-01-01");
-
             private static readonly TimeSpan RefreshInterval = TimeSpan.FromHours(1);
 
-            public RPSaaSCertifcateCache(IDiagnosticsLogger logger)
-                : base(CertificateUri, logger)
+            public RPSaaSCertifcateCache(string uri, IDiagnosticsLogger logger)
+                : base(new Uri(uri), logger)
             {
                 StartPeriodicRefresh(RefreshInterval);
             }
