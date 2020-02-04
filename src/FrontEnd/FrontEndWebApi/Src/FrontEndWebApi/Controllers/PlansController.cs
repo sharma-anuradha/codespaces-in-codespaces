@@ -108,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
             var plans = await PlanManager.ListAsync(
-                currentUserIdSet, subscriptionId: null, resourceGroup: null, logger);
+                currentUserIdSet, subscriptionId: null, resourceGroup: null, name: null, logger);
 
             var result = plans.Select((a) => MapAccountToResult(a, logger))
                 .Where((a) => a != null).ToArray();

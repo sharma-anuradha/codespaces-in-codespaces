@@ -178,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 return;
             }
 
-            context.HttpContext.User = claimsPrincipal;
+            context.Principal = claimsPrincipal;
         }
 
         private static ClaimsPrincipal TryGetSignedUserClaimsPrincipal(string token, string tenant, IDiagnosticsLogger logger)

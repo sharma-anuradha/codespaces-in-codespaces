@@ -334,7 +334,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
                     var plans = await this.planManager.ListAsync(
-                        userIdSet: null, subscriptionId, resourceGroup, logger);
+                        userIdSet: null, subscriptionId, resourceGroup, name: null, logger);
 
                     logger.LogInfo("plan_list_by_resourcegroup_success");
 
@@ -369,7 +369,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
                     var plans = await this.planManager.ListAsync(
-                        userIdSet: null, subscriptionId, resourceGroup: null, logger);
+                        userIdSet: null, subscriptionId, resourceGroup: null, name: null, logger);
 
                     logger.LogInfo("plan_list_by_subscription_success");
 
@@ -478,7 +478,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromQuery]DateTime? expiration)
         {
             return await HttpContext.HttpScopeAsync<IActionResult>(
-                $"{LoggingBaseName}_read_environments",
+                $"{LoggingBaseName}_read_all_environments",
                 async (logger) =>
                 {
                     ValidationUtil.IsRequired(subscriptionId);
@@ -489,20 +489,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                    var planInfo = new VsoPlanInfo
-                    {
-                        Name = resourceName,
-                        ResourceGroup = resourceGroup,
-                        Subscription = subscriptionId,
-                    };
+                    var result = await planManager.ListAsync(userIdSet: null, subscriptionId, resourceGroup, resourceName, logger);
 
-                    var result = await planManager.GetAsync(planInfo, logger);
-                    if (result.ErrorCode == Plans.Contracts.ErrorCodes.PlanDoesNotExist || result.VsoPlan == null)
+                    var plan = result.SingleOrDefault();
+                    if (plan == null)
                     {
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
-
-                    var plan = result.VsoPlan;
 
                     var token = tokenProvider.GenerateVsSaaSToken(
                         plan,
@@ -518,7 +511,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
                 },
-                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed")),
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed", "GetTokenFailed", HttpStatusCode.InternalServerError)),
                 swallowException: true);
         }
 
@@ -554,20 +547,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                    var planInfo = new VsoPlanInfo
-                    {
-                        Name = resourceName,
-                        ResourceGroup = resourceGroup,
-                        Subscription = subscriptionId,
-                    };
+                    var result = await planManager.ListAsync(userIdSet: null, subscriptionId, resourceGroup, resourceName, logger);
 
-                    var result = await planManager.GetAsync(planInfo, logger);
-                    if (result.ErrorCode == Plans.Contracts.ErrorCodes.PlanDoesNotExist || result.VsoPlan == null)
+                    var plan = result.SingleOrDefault();
+                    if (plan == null)
                     {
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
-
-                    var plan = result.VsoPlan;
 
                     var token = tokenProvider.GenerateVsSaaSToken(
                         plan,
@@ -583,7 +569,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
                 },
-                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed")),
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed", "GetTokenFailed", HttpStatusCode.InternalServerError)),
                 swallowException: true);
         }
 
@@ -619,20 +605,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                    var planInfo = new VsoPlanInfo
-                    {
-                        Name = resourceName,
-                        ResourceGroup = resourceGroup,
-                        Subscription = subscriptionId,
-                    };
+                    var result = await planManager.ListAsync(userIdSet: null, subscriptionId, resourceGroup, resourceName, logger);
 
-                    var result = await planManager.GetAsync(planInfo, logger);
-                    if (result.ErrorCode == Plans.Contracts.ErrorCodes.PlanDoesNotExist || result.VsoPlan == null)
+                    var plan = result.SingleOrDefault();
+                    if (plan == null)
                     {
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
-
-                    var plan = result.VsoPlan;
 
                     var token = tokenProvider.GenerateVsSaaSToken(
                         plan,
@@ -648,7 +627,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
                 },
-                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed")),
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed", "GetTokenFailed", HttpStatusCode.InternalServerError)),
                 swallowException: true);
         }
 
@@ -713,20 +692,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     Requires.NotNull(requestBody.Identity, nameof(requestBody.Identity));
                     Requires.NotNull(requestBody.Scope, nameof(requestBody.Scope));
 
-                    var planInfo = new VsoPlanInfo
-                    {
-                        Name = resourceName,
-                        ResourceGroup = resourceGroup,
-                        Subscription = subscriptionId,
-                    };
+                    var result = await planManager.ListAsync(userIdSet: null, subscriptionId, resourceGroup, resourceName, logger);
 
-                    var result = await planManager.GetAsync(planInfo, logger);
-                    if (result.ErrorCode == Plans.Contracts.ErrorCodes.PlanDoesNotExist || result.VsoPlan == null)
+                    var plan = result.SingleOrDefault();
+                    if (plan == null)
                     {
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
-
-                    var plan = result.VsoPlan;
 
                     var scopesArray = string.IsNullOrWhiteSpace(requestBody.Scope)
                         ? Array.Empty<string>()
@@ -760,7 +732,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
                 },
-                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed")),
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed", "GetTokenFailed", HttpStatusCode.InternalServerError)),
                 swallowException: true);
         }
 

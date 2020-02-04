@@ -44,9 +44,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         {
             Requires.NotNull(userClaims, nameof(userClaims));
 
-            var tid = userClaims.FirstOrDefault((c) => c.Type == CustomClaims.TenantId)?.Value;
-            var oid = userClaims.FirstOrDefault((c) => c.Type == CustomClaims.OId)?.Value;
-            var username = userClaims.FirstOrDefault((c) => c.Type == CustomClaims.Username)?.Value;
+            var tid =
+                userClaims.FirstOrDefault((c) => c.Type == CustomClaims.TenantId)?.Value ??
+                userClaims.FirstOrDefault((c) => c.Type == "http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+
+            var oid =
+                userClaims.FirstOrDefault((c) => c.Type == CustomClaims.OId)?.Value ??
+                userClaims.FirstOrDefault((c) => c.Type == "http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
+
+            var username =
+                userClaims.FirstOrDefault((c) => c.Type == CustomClaims.Username)?.Value ??
+                userClaims.FirstOrDefault((c) => c.Type == CustomClaims.UniqueName)?.Value;
+
             var displayName = userClaims.FirstOrDefault((c) => c.Type == CustomClaims.DisplayName)?.Value;
 
             var expiration = userClaims.FirstOrDefault((c) => c.Type == JwtRegisteredClaimNames.Exp)?.Value;

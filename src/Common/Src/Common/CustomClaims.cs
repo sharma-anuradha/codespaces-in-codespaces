@@ -30,6 +30,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public const string Username = "preferred_username";
 
         /// <summary>
+        /// The user's unique name.
+        /// </summary>
+        public const string UniqueName = "unique_name";
+
+        /// <summary>
         /// The user's display name.
         /// </summary>
         public const string DisplayName = "name";

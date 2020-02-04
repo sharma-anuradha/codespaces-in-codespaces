@@ -30,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         Task<bool> DeleteAsync(VsoPlanInfo plan, IDiagnosticsLogger logger);
 
         Task<IEnumerable<VsoPlan>> ListAsync(
-            UserIdSet userIdSet, string subscriptionId, string resourceGroup, IDiagnosticsLogger logger, bool includeDeleted = false);
+            UserIdSet userIdSet, string subscriptionId, string resourceGroup, string name, IDiagnosticsLogger logger, bool includeDeleted = false);
 
         Task<IEnumerable<VsoPlan>> GetPlansByShardAsync(IEnumerable<AzureLocation> list, string planShard, IDiagnosticsLogger childlogger);
 

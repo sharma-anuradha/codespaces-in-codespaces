@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockPlanManager = new Mock<IPlanManager>();
 
             mockPlanManager
-                .Setup(obj => obj.ListAsync(It.IsAny<UserIdSet>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), false))
+                .Setup(obj => obj.ListAsync(It.IsAny<UserIdSet>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), false))
                 .Returns(Task.FromResult(plans));
 
             mockPlanManager
