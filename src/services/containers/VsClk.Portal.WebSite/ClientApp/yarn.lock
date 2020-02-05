@@ -1224,10 +1224,10 @@
     "@microsoft/applicationinsights-dependencies-js" "2.2.2"
     "@microsoft/applicationinsights-properties-js" "2.2.2"
 
-"@microsoft/load-themed-styles@^1.7.13":
-  version "1.10.26"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/load-themed-styles/-/load-themed-styles-1.10.26.tgz#95673415103564e5427ca0d43f41da5cc44f29dc"
-  integrity sha1-lWc0FRA1ZOVCfKDUP0HaXMRPKdw=
+"@microsoft/load-themed-styles@^1.10.26", "@microsoft/load-themed-styles@^1.7.13":
+  version "1.10.37"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@microsoft/load-themed-styles/-/load-themed-styles-1.10.37.tgz#1ccac00b7b13448aa2a5cfdbc03baa0422f421d9"
+  integrity sha1-HMrAC3sTRIqipc/bwDuqBCL0Idk=
 
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
@@ -1640,7 +1640,7 @@
     office-ui-fabric-react "^7.11.0"
     tslib "^1.7.1"
 
-"@uifabric/foundation@^7.0.3", "@uifabric/foundation@^7.5.0":
+"@uifabric/foundation@^7.0.3":
   version "7.5.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/foundation/-/foundation-7.5.0.tgz#d36f15ef59edeaa8219f2b7d34f74c6d756f6622"
   integrity sha1-028V71nt6qghnyt9NPdMbXVvZiI=
@@ -1651,7 +1651,18 @@
     "@uifabric/utilities" "^7.5.0"
     tslib "^1.7.1"
 
-"@uifabric/icons@^7.1.1", "@uifabric/icons@^7.3.0":
+"@uifabric/foundation@^7.5.5":
+  version "7.5.5"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/foundation/-/foundation-7.5.5.tgz#849807edbf28cdc7f45bcf498ea708744bc27926"
+  integrity sha1-hJgH7b8ozcf0W89JjqcIdEvCeSY=
+  dependencies:
+    "@uifabric/merge-styles" "^7.8.5"
+    "@uifabric/set-version" "^7.0.4"
+    "@uifabric/styling" "^7.10.4"
+    "@uifabric/utilities" "^7.11.5"
+    tslib "^1.10.0"
+
+"@uifabric/icons@^7.1.1":
   version "7.3.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/icons/-/icons-7.3.0.tgz#db5b418d1db1e3f05e92d71f2dc829aa6e239bdb"
   integrity sha1-21tBjR2x4/BektcfLcgpqm4jm9s=
@@ -1660,7 +1671,16 @@
     "@uifabric/styling" "^7.7.1"
     tslib "^1.7.1"
 
-"@uifabric/merge-styles@^7.2.0", "@uifabric/merge-styles@^7.8.0", "@uifabric/merge-styles@^7.8.1":
+"@uifabric/icons@^7.3.4":
+  version "7.3.4"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/icons/-/icons-7.3.4.tgz#cf7c8827d7b599654ced9be1abcf13c3f49a3771"
+  integrity sha1-z3yIJ9e1mWVM7Zvhq88Tw/SaN3E=
+  dependencies:
+    "@uifabric/set-version" "^7.0.4"
+    "@uifabric/styling" "^7.10.4"
+    tslib "^1.10.0"
+
+"@uifabric/merge-styles@^7.2.0":
   version "7.8.1"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/merge-styles/-/merge-styles-7.8.1.tgz#b3973eb6942bf5fd1653fb8c2ae349343bacd30d"
   integrity sha1-s5c+tpQr9f0WU/uMKuNJNDus0w0=
@@ -1668,23 +1688,49 @@
     "@uifabric/set-version" "^7.0.2"
     tslib "^1.7.1"
 
-"@uifabric/react-hooks@^7.0.1":
-  version "7.0.1"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/react-hooks/-/react-hooks-7.0.1.tgz#aa0e9f17e13def6763de7671bd82210261222591"
-  integrity sha1-qg6fF+E972dj3nZxvYIhAmEiJZE=
+"@uifabric/merge-styles@^7.8.0", "@uifabric/merge-styles@^7.8.1", "@uifabric/merge-styles@^7.8.5":
+  version "7.8.5"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/merge-styles/-/merge-styles-7.8.5.tgz#e19fc9f17cc5934989c05f4bb06d80c7e898ccf6"
+  integrity sha1-4Z/J8XzFk0mJwF9LsG2Ax+iYzPY=
   dependencies:
-    "@uifabric/set-version" "^7.0.2"
-    "@uifabric/utilities" "^7.0.10"
-    tslib "^1.7.1"
+    "@uifabric/set-version" "^7.0.4"
+    tslib "^1.10.0"
 
-"@uifabric/set-version@^7.0.1", "@uifabric/set-version@^7.0.2":
+"@uifabric/react-hooks@^7.0.5":
+  version "7.0.5"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/react-hooks/-/react-hooks-7.0.5.tgz#d8b54ed816c9ec49a125cfef37a6bdc52cfcaeae"
+  integrity sha1-2LVO2BbJ7EmhJc/vN6a9xSz8rq4=
+  dependencies:
+    "@uifabric/set-version" "^7.0.4"
+    "@uifabric/utilities" "^7.11.5"
+    tslib "^1.10.0"
+
+"@uifabric/set-version@^7.0.1":
   version "7.0.2"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/set-version/-/set-version-7.0.2.tgz#9e2aede95e5cad58151e6ab0f94cc6efaef68c13"
   integrity sha1-nirt6V5crVgVHmqw+UzG7672jBM=
   dependencies:
     tslib "^1.7.1"
 
-"@uifabric/styling@^7.2.1", "@uifabric/styling@^7.4.0", "@uifabric/styling@^7.7.1", "@uifabric/styling@^7.7.2", "@uifabric/styling@^7.8.1":
+"@uifabric/set-version@^7.0.2", "@uifabric/set-version@^7.0.4":
+  version "7.0.4"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/set-version/-/set-version-7.0.4.tgz#f55c4be47218868c725052c31951beed7d530794"
+  integrity sha1-9VxL5HIYhoxyUFLDGVG+7X1TB5Q=
+  dependencies:
+    tslib "^1.10.0"
+
+"@uifabric/styling@^7.10.4", "@uifabric/styling@^7.7.1", "@uifabric/styling@^7.7.2":
+  version "7.10.4"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/styling/-/styling-7.10.4.tgz#4c0efe4ed2dfddc17df448f7674c695d17e4d6d4"
+  integrity sha1-TA7+TtLf3cF99Ej3Z0xpXRfk1tQ=
+  dependencies:
+    "@microsoft/load-themed-styles" "^1.10.26"
+    "@uifabric/merge-styles" "^7.8.5"
+    "@uifabric/set-version" "^7.0.4"
+    "@uifabric/utilities" "^7.11.5"
+    tslib "^1.10.0"
+
+"@uifabric/styling@^7.2.1", "@uifabric/styling@^7.4.0":
   version "7.8.1"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/styling/-/styling-7.8.1.tgz#4cd85a273ff479785b14a97510472bf22b2cedd7"
   integrity sha1-TNhaJz/0eXhbFKl1EEcr8iss7dc=
@@ -1695,7 +1741,17 @@
     "@uifabric/utilities" "^7.8.0"
     tslib "^1.7.1"
 
-"@uifabric/utilities@^7.0.10", "@uifabric/utilities@^7.0.7", "@uifabric/utilities@^7.5.0", "@uifabric/utilities@^7.8.0", "@uifabric/utilities@^7.9.0":
+"@uifabric/utilities@7.8.0":
+  version "7.8.0"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/utilities/-/utilities-7.8.0.tgz#02933aae8121571cb072a0e1c04770f29bbc6ca8"
+  integrity sha1-ApM6roEhVxywcqDhwEdw8pu8bKg=
+  dependencies:
+    "@uifabric/merge-styles" "^7.8.1"
+    "@uifabric/set-version" "^7.0.2"
+    prop-types "^15.5.10"
+    tslib "^1.7.1"
+
+"@uifabric/utilities@^7.0.7":
   version "7.9.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/utilities/-/utilities-7.9.0.tgz#2ada7b4a5e333e5a01371d2af56a4c7692382ebb"
   integrity sha1-Ktp7Sl4zPloBNx0q9WpMdpI4Lrs=
@@ -1704,6 +1760,16 @@
     "@uifabric/set-version" "^7.0.2"
     prop-types "^15.5.10"
     tslib "^1.7.1"
+
+"@uifabric/utilities@^7.11.5", "@uifabric/utilities@^7.5.0", "@uifabric/utilities@^7.8.0":
+  version "7.11.5"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@uifabric/utilities/-/utilities-7.11.5.tgz#1a23ad565808b11716f26d00107db3ec538f952c"
+  integrity sha1-GiOtVlgIsRcW8m0AEH2z7FOPlSw=
+  dependencies:
+    "@uifabric/merge-styles" "^7.8.5"
+    "@uifabric/set-version" "^7.0.4"
+    prop-types "^15.5.10"
+    tslib "^1.10.0"
 
 "@uifabric/variants@^7.0.3":
   version "7.0.3"
@@ -7827,6 +7893,22 @@ obuf@^1.0.0, obuf@^1.1.2:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/obuf/-/obuf-1.1.2.tgz#09bea3343d41859ebd446292d11c9d4db619084e"
   integrity sha1-Cb6jND1BhZ69RGKS0RydTbYZCE4=
 
+office-ui-fabric-react@7.88.0:
+  version "7.88.0"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/office-ui-fabric-react/-/office-ui-fabric-react-7.88.0.tgz#354b5908a4c0a2418078a604185a429395dbccc4"
+  integrity sha1-NUtZCKTAokGAeKYEGFpCk5XbzMQ=
+  dependencies:
+    "@microsoft/load-themed-styles" "^1.10.26"
+    "@uifabric/foundation" "^7.5.5"
+    "@uifabric/icons" "^7.3.4"
+    "@uifabric/merge-styles" "^7.8.5"
+    "@uifabric/react-hooks" "^7.0.5"
+    "@uifabric/set-version" "^7.0.4"
+    "@uifabric/styling" "^7.10.4"
+    "@uifabric/utilities" "^7.11.5"
+    prop-types "^15.5.10"
+    tslib "^1.10.0"
+
 office-ui-fabric-react@^7.11.0:
   version "7.20.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/office-ui-fabric-react/-/office-ui-fabric-react-7.20.0.tgz#aefae63039153cb3e5abf79f57cfc60a17080a97"
@@ -7839,22 +7921,6 @@ office-ui-fabric-react@^7.11.0:
     "@uifabric/set-version" "^7.0.1"
     "@uifabric/styling" "^7.4.0"
     "@uifabric/utilities" "^7.0.7"
-    prop-types "^15.5.10"
-    tslib "^1.7.1"
-
-office-ui-fabric-react@^7.14.1:
-  version "7.78.2"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/office-ui-fabric-react/-/office-ui-fabric-react-7.78.2.tgz#668a777bae1d34fcf00a758535578fe673335125"
-  integrity sha1-Zop3e64dNPzwCnWFNVeP5nMzUSU=
-  dependencies:
-    "@microsoft/load-themed-styles" "^1.7.13"
-    "@uifabric/foundation" "^7.5.0"
-    "@uifabric/icons" "^7.3.0"
-    "@uifabric/merge-styles" "^7.8.1"
-    "@uifabric/react-hooks" "^7.0.1"
-    "@uifabric/set-version" "^7.0.2"
-    "@uifabric/styling" "^7.8.1"
-    "@uifabric/utilities" "^7.9.0"
     prop-types "^15.5.10"
     tslib "^1.7.1"
 

@@ -303,7 +303,7 @@ const errorTextfieldClassname = 'create-environment-panel__errorTextField';
 function createLabelRenderCallback(title: string, onClickUrl: string) {
     return (props: IDropdownProps) => {
         return (
-            <Stack horizontal verticalAlign='center'>
+            <Stack id={title} horizontal verticalAlign='center'>
                 <span style={{ fontWeight: 600 }}>{props.label}</span>
                 <IconButton
                     iconProps={{ iconName: 'Info' }}
@@ -424,8 +424,9 @@ export class CreateEnvironmentPanelView extends Component<
             'View suspend behavior details',
             'https://aka.ms/vso-docs/how-to/suspend'
         );
+        const dotFilesTitle = 'View dotfiles details';
         const onDotfilesRenderLabel = createLabelRenderCallback(
-            'View dotfiles details',
+            dotFilesTitle,
             'https://aka.ms/vso-docs/reference/personalizing'
         );
         const errorMessageBar = isDefined(this.state.friendlyName.errorMessage) ? (
@@ -497,8 +498,7 @@ export class CreateEnvironmentPanelView extends Component<
                 <Collapsible tokens={{ childrenGap: 4 }} title={'Dotfiles (optional)'}>
                     <TextField
                         autoFocus
-                        label='Dotfiles Repository'
-                        ariaLabel='Dotfiles Repository'
+                        ariaLabel={dotFilesTitle}
                         className={this.state.dotfilesRepository.style}
                         placeholder=''
                         onKeyDown={this.submitForm}
@@ -554,6 +554,7 @@ export class CreateEnvironmentPanelView extends Component<
             key: SKU_SHOW_PRICING_KEY,
             text: SKU_PRICING_LABEL,
             data: { icon: 'OpenInNewTab', url: SKU_PRICING_URL },
+            ariaLabel: `${SKU_PRICING_LABEL}, ${SKU_PRICING_URL}`,
         });
 
         const onSkuLabelRender = createLabelRenderCallback(SKU_PRICING_LABEL, SKU_PRICING_URL);
