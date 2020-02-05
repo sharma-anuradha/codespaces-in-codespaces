@@ -117,6 +117,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         // TODO: Validate that the user profile exists.
                     }
 
+                    var plan = new VsoPlanInfo
+                    {
+                        Name = resourceName,
+                        ResourceGroup = resourceGroup,
+                        Subscription = subscriptionId,
+                    };
+
+                    var vsoPlan = mapper.Map<VsoPlan>(resource);
+                    vsoPlan.Plan = plan;
+
+                    var arePropertiesValid = await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger);
+                    if (!arePropertiesValid)
+                    {
+                        return CreateErrorResponse("ValidateResourceFailed");
+                    }
+
                     logger.LogInfo("plan_create_validate_success");
 
                     // Required response format in case validation pass with empty body.
@@ -172,7 +188,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         },
                         UserId = resource.Properties.UserId,
                     };
-
                     var result = await planManager.CreateAsync(plan, logger);
 
                     logger.AddVsoPlan(plan.Plan);
@@ -187,6 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // It will only be saved internally by the plan manager.
                     resource.Properties.UserId = null;
 
+                    logger.AddVsoPlan(plan.Plan);
                     return CreateResponse(HttpStatusCode.OK, resource);
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("CreateResourceFailed")),
@@ -269,21 +285,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                             _ = Task.Run(async () =>
                                 {
-                                      try
-                                      {
-                                          var result = await environmentManager.DeleteAsync(environment, childLogger);
-                                          if (!result)
-                                          {
-                                              childLogger.AddCloudEnvironment(environment)
-                                                .LogError("plan_delete_environment_delete_error");
-                                          }
-                                      }
-                                      catch (Exception ex)
-                                      {
-                                          childLogger.LogErrorWithDetail("plan_delete_environment_delete_error", ex.Message);
-                                      }
+                                    try
+                                    {
+                                        var result = await environmentManager.DeleteAsync(environment, childLogger);
+                                        if (!result)
+                                        {
+                                            childLogger.AddCloudEnvironment(environment)
+                                              .LogError("plan_delete_environment_delete_error");
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        childLogger.LogErrorWithDetail("plan_delete_environment_delete_error", ex.Message);
+                                    }
                                 });
-                            }
+                        }
 
                         logger.AddVsoPlan(plan)
                             .FluentAddValue("Count", $"{nonDeletedEnvironments.Count()}")
@@ -367,7 +383,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                    var plans = await this.planManager.ListAsync(
+                    var plans = await planManager.ListAsync(
                         userIdSet: null, subscriptionId, resourceGroup: null, name: null, logger);
 
                     logger.LogInfo("plan_list_by_subscription_success");
@@ -414,6 +430,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="resource">The plan resource.</param>
         /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchValidate")]
         public Task<IActionResult> PlanPatchValidateAsync(
@@ -421,14 +438,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string resourceGroup,
             string providerNamespace,
             string resourceType,
-            string resourceName)
+            string resourceName,
+            [FromBody] PlanResourceUpdateBody resource)
         {
             return HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_patch_validate",
-                (logger) =>
+                async (logger) =>
                 {
-                    return Task.FromResult<IActionResult>(Ok());
-                });
+                    ValidationUtil.IsRequired(subscriptionId);
+                    ValidationUtil.IsRequired(resourceGroup);
+                    ValidationUtil.IsRequired(providerNamespace);
+                    ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceName);
+                    ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
+                    var plan = new VsoPlanInfo
+                    {
+                        Name = resourceName,
+                        ResourceGroup = resourceGroup,
+                        Subscription = subscriptionId,
+                    };
+
+                    var vsoPlan = mapper.Map<VsoPlan>(resource);
+                    vsoPlan.Plan = plan;
+
+                    var arePropertiesValid = await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger);
+                    if (!arePropertiesValid)
+                    {
+                        return CreateErrorResponse("PatchValidateResourceFailed");
+                    }
+
+                    return Ok();
+                },
+                (ex, logger) =>
+                {
+                    var result = (IActionResult)CreateErrorResponse("PatchFailed");
+                    return Task.FromResult(result);
+                },
+                swallowException: true);
         }
 
         /// <summary>
@@ -439,6 +487,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="resource">The plan settings resource.</param>
         /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchCompleted")]
         public Task<IActionResult> PlanPatchCompletedAsync(
@@ -446,14 +495,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string resourceGroup,
             string providerNamespace,
             string resourceType,
-            string resourceName)
+            string resourceName,
+            [FromBody] PlanResourceUpdateBody resource)
         {
             return HttpContext.HttpScopeAsync<IActionResult>(
-                $"{LoggingBaseName}_patch_completed",
-                (logger) =>
+                $"{LoggingBaseName}_plan_patch_completed",
+                async (logger) =>
                 {
-                    return Task.FromResult<IActionResult>(Ok());
-                });
+                    ValidationUtil.IsRequired(subscriptionId);
+                    ValidationUtil.IsRequired(resourceGroup);
+                    ValidationUtil.IsRequired(providerNamespace);
+                    ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceName);
+                    ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
+                    var planInfo = new VsoPlanInfo
+                    {
+                        Name = resourceName,
+                        ResourceGroup = resourceGroup,
+                        Subscription = subscriptionId,
+                    };
+
+                    var vsoPlan = mapper.Map<VsoPlan>(resource);
+                    vsoPlan.Plan = planInfo;
+
+                    if (!await planManager.ApplyPlanPropertiesChangesAsync(vsoPlan, logger))
+                    {
+                        logger.AddVsoPlan(planInfo).LogError($"plan_update_settings_error_{nameof(IPlanManager.ApplyPlanPropertiesChangesAsync)}");
+                    }
+
+                    var response = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
+                    if (response.VsoPlan == null)
+                    {
+                        logger.AddVsoPlan(planInfo).LogError($"plan_update_settings_error_{response.ErrorCode}");
+                        return Ok();
+                    }
+
+                    logger.LogInfo($"plan_update_settings_success");
+                    return Ok();
+                },
+                (ex, logger) =>
+                {
+                    var result = (IActionResult)CreateErrorResponse("PatchFailed");
+                    return Task.FromResult(result);
+                },
+                swallowException: true);
         }
 
         /// <summary>

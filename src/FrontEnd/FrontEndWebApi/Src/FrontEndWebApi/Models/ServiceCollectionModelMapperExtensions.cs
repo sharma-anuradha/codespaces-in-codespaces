@@ -39,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                     cfg.CreateMap<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>();
                     cfg.CreateMap<EnvironmentRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
                     cfg.CreateMap<PlanResource, VsoPlan>();
+                    cfg.CreateMap<PlanResourceUpdateBody, VsoPlan>();
                     cfg.CreateMap<UpdateCloudEnvironmentBody, CloudEnvironmentUpdate>();
                     cfg.CreateMap<PlanAccessToken, PlanAccessTokenResult>();
                 });

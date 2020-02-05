@@ -12,11 +12,9 @@
   "schemes": ["https"],
   "consumes": ["application/json"],
   "produces": ["application/json"],
-  "security": [
-    {
-      "azure_auth": ["user_impersonation"]
-    }
-  ],
+  "security": [{
+    "azure_auth": ["user_impersonation"]
+  }],
   "securityDefinitions": {
     "azure_auth": {
       "type": "oauth2",
@@ -35,11 +33,9 @@
         "operationId": "Operations_List",
         "description": "Retrieves a list of available API operations",
         "summary": "Retrieves a list of available API operations under this Resource Provider.",
-        "parameters": [
-          {
-            "$ref": "#/parameters/ApiVersionParameter"
-          }
-        ],
+        "parameters": [{
+          "$ref": "#/parameters/ApiVersionParameter"
+        }],
         "responses": {
           "200": {
             "description": "The request was successful; response contains the list of operations under Microsoft.VSOnline resource provider.",
@@ -72,8 +68,7 @@
         "summary": "Retrieves information about a VS Online Account resource.",
         "description": "Retrieves the properties of a VS Online Account.",
         "operationId": "Account_Get",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -113,8 +108,7 @@
         "summary": "Deletes a VS Online Account resource.",
         "description": "Deletes an existing VS Online Account.",
         "operationId": "Account_Delete",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -155,8 +149,7 @@
         "summary": "Creates a VS Online Account.",
         "description": "Creates a VS Online Account with the specified create parameters.",
         "operationId": "Account_Create",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -206,8 +199,7 @@
         "summary": "Updates a VS Online Account.",
         "description": "Updates the properties of an existing VS Online Account with the specified update parameters.",
         "operationId": "Account_Update",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -259,8 +251,7 @@
         "summary": "Retrieves information about all VS Online Account resources under the given subscription and resource group",
         "description": "Retrieves the properties of all VS Online Accounts.",
         "operationId": "Account_ListByResourceGroup",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -302,8 +293,7 @@
         "summary": "Retrieves information about all VS Online Account resources under the given subscription",
         "description": "Retrieves the properties of all VS Online Accounts.",
         "operationId": "Account_ListBySubscription",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -342,8 +332,7 @@
         "summary": "Retrieves information about a VS Online Plan resource.",
         "description": "Retrieves the properties of a VS Online Plan.",
         "operationId": "Plan_Get",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -383,8 +372,7 @@
         "summary": "Deletes a VS Online Plan resource.",
         "description": "Deletes an existing VS Online Plan.",
         "operationId": "Plan_Delete",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -425,8 +413,7 @@
         "summary": "Creates a VS Online Plan.",
         "description": "Creates a VS Online Plan with the specified create parameters.",
         "operationId": "Plan_Create",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -476,8 +463,7 @@
         "summary": "Updates a VS Online Plan.",
         "description": "Updates the properties of an existing VS Online Plan with the specified update parameters.",
         "operationId": "Plan_Update",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -723,8 +709,7 @@
         "summary": "Retrieves information about all VS Online Plan resources under the given subscription and resource group",
         "description": "Retrieves the properties of all VS Online Plans.",
         "operationId": "Plan_ListByResourceGroup",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -766,8 +751,7 @@
         "summary": "Retrieves information about all VS Online Plan resources under the given subscription",
         "description": "Retrieves the properties of all VS Online Plans.",
         "operationId": "Plan_ListBySubscription",
-        "parameters": [
-          {
+        "parameters": [{
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -866,7 +850,7 @@
           "type": "string",
           "readOnly": true
         },
-        "tags":{
+        "tags": {
           "description": "Tags for the VS Online Account",
           "type": "object",
           "additionalProperties": {
@@ -895,8 +879,7 @@
       "required": [
         "location"
       ],
-      "allOf": [
-        {
+      "allOf": [{
           "$ref": "#/definitions/Resource"
         },
         {
@@ -904,7 +887,7 @@
         }
       ],
       "properties": {
-        "properties":{
+        "properties": {
           "type": "object",
           "description": "Additional VS Online Account properties.",
           "title": "VS Online Additional properties",
@@ -1033,16 +1016,15 @@
     "VSOPlanUpdateParameters": {
       "type": "object",
       "description": "Parameters for updating a VS Online Plan.",
+      "allOf": [{
+        "$ref": "#/definitions/VSOnlinePlanInfo"
+      }],
       "properties": {
         "tags": {
           "description": "Tags for the VS Online Plan.",
           "additionalProperties": {
             "type": "string"
           }
-        },
-        "sku": {
-          "$ref": "#/definitions/Sku",
-          "description": "SKU of the service."
         }
       }
     },
@@ -1061,8 +1043,7 @@
       "required": [
         "location"
       ],
-      "allOf": [
-        {
+      "allOf": [{
           "$ref": "#/definitions/Resource"
         },
         {
@@ -1070,7 +1051,7 @@
         }
       ],
       "properties": {
-        "properties":{
+        "properties": {
           "type": "object",
           "description": "Additional VS Online Plan properties.",
           "title": "VS Online Additional properties",
@@ -1094,6 +1075,19 @@
         "sku": {
           "$ref": "#/definitions/Sku",
           "description": "SKU of the service."
+        },
+        "properties": {
+          "type": "object",
+          "description": "Additional VS Online Plan properties.",
+          "title": "VS Online Additional properties",
+          "defaultAutoSuspendDelayMinutes": {
+            "description": "Specifies auto suspend interval for environments in this plan.",
+            "type": "integer"
+          },
+          "defaultEnvironmentSku": {
+            "description": "Specifies the default environment sku name for this plan.",
+            "type": "string"
+          }
         }
       }
     },

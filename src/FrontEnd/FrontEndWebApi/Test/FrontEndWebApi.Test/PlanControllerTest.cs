@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             planSettings.Init(mockSystemConfiguration.Object);
 
             accountRepository = new MockPlanRepository();
-            accountManager = new PlanManager(accountRepository, planSettings);
+            accountManager = new PlanManager(accountRepository, planSettings, new Mock<ISkuCatalog>().Object);
         }
 
         public static TheoryData<IEnumerable<VsoPlan>, bool, Type> CapacityWarningTests = new TheoryData<IEnumerable<VsoPlan>, bool, Type>

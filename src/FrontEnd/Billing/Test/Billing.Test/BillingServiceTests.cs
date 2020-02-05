@@ -17,10 +17,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
     {
         private static readonly DateTime TestTimeNow = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0, DateTimeKind.Utc);
         private readonly BillingService billingService;
-        private readonly decimal standardLinuxComputeUnitPerHr = 125;
-        private readonly decimal premiumLinuxComputeUnitPerHr = 242;
-        private readonly decimal standardLinuxStorageUnitPerHr = 2;
-        private readonly decimal premiumLinuxStorageUnitPerHr = 3;
         private static readonly string WestUs2MeterId = "5f3afa79-01ad-4d7e-b691-73feca4ea350";
 
 
@@ -1718,27 +1714,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var usageTotal = resultSummary.Usage.Values.First();
             Assert.Equal(expectedUsage, usageTotal, 4);
             Assert.Equal(BillingSubmissionState.None, resultSummary.SubmissionState);
-        }
-
-
-        private Mock<ISkuCatalog> GetMockSKuCatalog()
-        {
-            var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
-            mockStandardLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(standardLinuxComputeUnitPerHr);
-            mockStandardLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(standardLinuxStorageUnitPerHr);
-
-            var mockPremiumLinux = new Mock<ICloudEnvironmentSku>();
-            mockPremiumLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(premiumLinuxComputeUnitPerHr);
-            mockPremiumLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(premiumLinuxStorageUnitPerHr);
-
-            var skus = new Dictionary<string, ICloudEnvironmentSku>
-            {
-                [standardLinuxSkuName] = mockStandardLinux.Object,
-                [premiumLinuxSkuName] = mockPremiumLinux.Object,
-            };
-            var mockSkuCatelog = new Mock<ISkuCatalog>();
-            mockSkuCatelog.Setup(cat => cat.CloudEnvironmentSkus).Returns(skus);
-            return mockSkuCatelog;
         }
     }
 }

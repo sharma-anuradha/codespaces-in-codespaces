@@ -49,7 +49,7 @@
               "ResourceCreationValidate",
               "ResourceCreationBegin",
               "ResourceCreationCompleted",
-	      "ResourceDeletionValidate"
+	            "ResourceDeletionValidate"
             ]
         }]
 }], 

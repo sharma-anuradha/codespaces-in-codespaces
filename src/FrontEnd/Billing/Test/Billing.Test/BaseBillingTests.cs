@@ -1,14 +1,22 @@
 ﻿using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Moq;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 {
     public class BaseBillingTests
     {
+        private readonly decimal standardLinuxComputeUnitPerHr = 125;
+        private readonly decimal premiumLinuxComputeUnitPerHr = 242;
+        private readonly decimal standardLinuxStorageUnitPerHr = 2;
+        private readonly decimal premiumLinuxStorageUnitPerHr = 3;
+
         public static readonly string subscription = Guid.NewGuid().ToString();
         public static readonly string standardLinuxSkuName = "standardLinuxSku";
         public static readonly string premiumLinuxSkuName = "premiumLinuxSku";
@@ -82,10 +90,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Setting up the plan manager
             planRepository = new MockPlanRepository();
             planManagerSettings = new PlanManagerSettings();
-            planManager = new PlanManager(planRepository, planManagerSettings);
+            planManager = new PlanManager(planRepository, planManagerSettings, GetMockSKuCatalog().Object);
             
             serializer = JsonSerializer.CreateDefault();
         }
 
+        protected Mock<ISkuCatalog> GetMockSKuCatalog()
+        {
+            var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
+            mockStandardLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(standardLinuxComputeUnitPerHr);
+            mockStandardLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(standardLinuxStorageUnitPerHr);
+
+            var mockPremiumLinux = new Mock<ICloudEnvironmentSku>();
+            mockPremiumLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(premiumLinuxComputeUnitPerHr);
+            mockPremiumLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(premiumLinuxStorageUnitPerHr);
+
+            var skus = new Dictionary<string, ICloudEnvironmentSku>
+            {
+                [standardLinuxSkuName] = mockStandardLinux.Object,
+                [premiumLinuxSkuName] = mockPremiumLinux.Object,
+            };
+            var mockSkuCatelog = new Mock<ISkuCatalog>();
+            mockSkuCatelog.Setup(cat => cat.CloudEnvironmentSkus).Returns(skus);
+            return mockSkuCatelog;
+        }
     }
 }

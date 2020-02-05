@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             planSettings.Init(mockSystemConfiguration.Object);
 
             accountRepository = new MockPlanRepository();
-            accountManager = new PlanManager(accountRepository, planSettings);
+            accountManager = new PlanManager(accountRepository, planSettings, MockSkuCatalog());
         }
 
         [Fact]

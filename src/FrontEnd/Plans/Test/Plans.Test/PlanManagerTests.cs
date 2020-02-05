@@ -18,9 +18,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
     {
         private readonly IPlanRepository planRepository;
         private readonly PlanManager planManager;
+        private readonly ISkuCatalog skuCatalog;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger;
         private static readonly string subscription = Guid.NewGuid().ToString();
+        private readonly decimal standardLinuxComputeUnitPerHr = 125;
+        private readonly decimal premiumLinuxComputeUnitPerHr = 242;
+        private readonly decimal standardLinuxStorageUnitPerHr = 2;
+        private readonly decimal premiumLinuxStorageUnitPerHr = 3;
+        private static readonly string standardLinuxSkuName = "standardLinuxSku";
+        private static readonly string premiumLinuxSkuName = "premiumLinuxSku";
 
         public PlanManagerTests()
         {
@@ -36,8 +43,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
 
             settings.Init(mockSystemConfiguration.Object);
 
+            skuCatalog = GetMockSKuCatalog().Object;
+
             planRepository = new MockPlanRepository();
-            planManager = new PlanManager(planRepository, settings);
+            planManager = new PlanManager(planRepository, settings, skuCatalog);
+        }
+
+        private Mock<ISkuCatalog> GetMockSKuCatalog()
+        {
+            var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
+            mockStandardLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(standardLinuxComputeUnitPerHr);
+            mockStandardLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(standardLinuxStorageUnitPerHr);
+
+            var mockPremiumLinux = new Mock<ICloudEnvironmentSku>();
+            mockPremiumLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(premiumLinuxComputeUnitPerHr);
+            mockPremiumLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(premiumLinuxStorageUnitPerHr);
+
+            var skus = new Dictionary<string, ICloudEnvironmentSku>
+            {
+                [standardLinuxSkuName] = mockStandardLinux.Object,
+                [premiumLinuxSkuName] = mockPremiumLinux.Object,
+            };
+            var mockSkuCatelog = new Mock<ISkuCatalog>();
+            mockSkuCatelog.Setup(cat => cat.CloudEnvironmentSkus).Returns(skus);
+            return mockSkuCatelog;
         }
 
         private VsoPlan GeneratePlan(string name, string subscriptionOption = null, string userId = null)
@@ -262,7 +291,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
                 .Returns(Task.FromResult(settings.DefaultMaxPlansPerSubscription));
             settings.Init(mockSystemConfiguration.Object);
 
-            var planManager = new PlanManager(planRepository, settings);
+            var planManager = new PlanManager(planRepository, settings, skuCatalog);
 
             var whiteListedUser = new Profile() { Programs = new Dictionary<string, object> { { "vs.cloudenvironements.previewuser", true }, } };
             var normalUser = new Profile() { Programs = new Dictionary<string, object> { } };
@@ -279,6 +308,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
 
             Assert.True(await planManager.IsPlanCreationAllowedForUserAsync(whiteListedUser, logger));
             Assert.False(await planManager.IsPlanCreationAllowedForUserAsync(normalUser, logger));
+        }
+
+        [Fact]
+        public async Task PlanProperties_PatchTest()
+        {
+            var createResult = await planManager.CreateAsync(new VsoPlan
+            {
+                Plan = new VsoPlanInfo
+                {
+                    Location = AzureLocation.WestUs2,
+                    Name = nameof(PlanProperties_PatchTest),
+                    ResourceGroup = "resourceGroup",
+                    Subscription = "subscription",
+                }
+            }, logger);
+
+            Assert.NotNull(createResult.VsoPlan);
+
+            var vsoPlan = createResult.VsoPlan;
+
+            // Null properties are valid.
+            Assert.True(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            var planProperties = new VsoPlanProperties
+            {
+                DefaultAutoSuspendDelayMinutes = 15,
+                DefaultEnvironmentSku = "unknownsku"
+            };
+
+            // Unknown sku names are invalid.
+            vsoPlan.Properties = planProperties;
+            Assert.False(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            // Known sku names are valid.
+            vsoPlan.Properties.DefaultEnvironmentSku = premiumLinuxSkuName;
+            Assert.True(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            Assert.True(await planManager.ApplyPlanPropertiesChangesAsync(vsoPlan, logger));
+
+            // Update succeeds.
+            var updateResult = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
+            Assert.NotNull(updateResult.VsoPlan);
+            Assert.Equal(planProperties, updateResult.VsoPlan.Properties);
+
+            // Updating a deleted plan fails.
+            Assert.True(await planManager.DeleteAsync(vsoPlan.Plan, logger));
+            var deletedUpdateResult = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
+            Assert.Null(deletedUpdateResult.VsoPlan);
+            Assert.Equal(ErrorCodes.PlanDoesNotExist, deletedUpdateResult.ErrorCode);
         }
     }
 }

@@ -3,12 +3,29 @@
 // </copyright>
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
+    /// <summary>
+    /// Plan resource properties bag from RPSaaS.
+    /// </summary>
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class PlanResourceProperties
     {
-       [JsonProperty(Required = Required.Default, PropertyName = "userId")]
-       public string UserId { get; set; }
+        /// <summary>
+        /// Gets or sets the user id.
+        /// </summary>
+        public string UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the auto suspend timeout of environments under the plan.
+        /// </summary>
+        public int? DefaultAutoSuspendDelayMinutes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the environment sku name under the plan.
+        /// </summary>
+        public string DefaultEnvironmentSku { get; set; }
     }
 }

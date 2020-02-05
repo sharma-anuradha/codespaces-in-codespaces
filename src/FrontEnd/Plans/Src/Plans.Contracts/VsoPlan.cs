@@ -12,17 +12,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     /// </summary>
     public class VsoPlan : TaggedEntity
     {
+        /// <summary>
+        /// Gets or sets the plan info.
+        /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "plan")]
         public VsoPlanInfo Plan { get; set; }
 
         /// <summary>
-        /// ID of the user who created the plan.
+        /// Gets or sets the ID of the user who created the plan.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "userId")]
         public string UserId { get; set; }
 
         /// <summary>
-        /// The billing plan selected for this plan. This corresponds to the "SKU"
+        /// Gets or sets the billing plan selected for this plan. This corresponds to the "SKU"
         /// property on the plan resource.
         /// </summary>
         /// <remarks>
@@ -33,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         public Sku SkuPlan { get; set; }
 
         /// <summary>
-        /// Current state of the subscription, which may impact what operations and billing are allowed.
+        /// Gets or sets the current state of the subscription, which may impact what operations and billing are allowed.
         /// </summary>
         /// <seealso cref="SubscriptionStates" />
         /// <remarks>
@@ -51,5 +54,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "isDeleted")]
         public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default properties for this plan.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "properties")]
+        public VsoPlanProperties Properties { get; set; }
     }
 }
