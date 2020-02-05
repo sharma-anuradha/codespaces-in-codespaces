@@ -4,6 +4,7 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Fakes;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
@@ -39,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             services.Configure(configureOptions)
                 .AddSingleton<ICurrentUserHttpClientProvider<BackEndHttpClientProviderOptions>, BackEndHttpClientProvider>()
                 .AddResourceBrokerClient(useMocks, useFakes, dockerImageName, publishedCLIPath)
+                .AddImagesClient(useMocks, useFakes)
                 .AddHeartBeatClient();
 
             return services;
@@ -58,6 +60,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             else
             {
                 return services.AddSingleton<IResourceBrokerResourcesHttpContract, HttpResourceBrokerClient>();
+            }
+        }
+
+        private static IServiceCollection AddImagesClient(this IServiceCollection services, bool useMocks, bool useFakes)
+        {
+            // No distinction between fakes/mocks for this controller -- it just acts like no overrides are present in both cases.
+            if (useFakes || useMocks)
+            {
+                return services.AddSingleton<IImagesHttpClient, MockImagesHttpClient>();
+            }
+            else
+            {
+                return services.AddSingleton<IImagesHttpClient, ImagesHttpClient>();
             }
         }
 

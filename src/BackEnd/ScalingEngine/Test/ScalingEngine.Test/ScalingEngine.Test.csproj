@@ -5,7 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\ScalingEngine.Abstractions\ScalingEngine.Abstractions.csproj" />
     <ProjectReference Include="..\..\Src\ScalingEngine\ScalingEngine.csproj" />
   </ItemGroup>
 

@@ -8,48 +8,32 @@ using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
-    public partial class LocationsControllerTest
+    public class LocationsControllerTest
     {
-        private readonly IPlanRepository accountRepository;
-        private readonly PlanManager accountManager;
-        private readonly IDiagnosticsLoggerFactory loggerFactory;
-        private readonly IDiagnosticsLogger logger;
-
-        public LocationsControllerTest()
-        {
-            loggerFactory = new DefaultLoggerFactory();
-            logger = loggerFactory.New();
-
-            var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20 };
-
-            var mockSystemConfiguration = new Mock<ISystemConfiguration>();
-            mockSystemConfiguration
-                .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), planSettings.DefaultMaxPlansPerSubscription))
-                .Returns(Task.FromResult(planSettings.DefaultMaxPlansPerSubscription));
-
-            planSettings.Init(mockSystemConfiguration.Object);
-
-            accountRepository = new MockPlanRepository();
-            accountManager = new PlanManager(accountRepository, planSettings);
-        }
-
         [Fact]
         public void GetLocationInfo()
         {
             ICloudEnvironmentSku createMockSku(string name, ComputeOS os, decimal storageUnits, decimal computeUnits)
             {
-                return new CloudEnvironmentSku(                
+                var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
+                currentImageInfoProvider
+                    .Setup(x => x.GetImageNameAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                    .Returns((ImageFamilyType familyType, string family, string defaultName, IDiagnosticsLogger logger) => Task.FromResult(defaultName));
+                currentImageInfoProvider
+                    .Setup(x => x.GetImageVersionAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                    .Returns((ImageFamilyType familyType, string family, string defaultVersion, IDiagnosticsLogger logger) => Task.FromResult(defaultVersion));
+
+                return new CloudEnvironmentSku(
                     name,
                     SkuTier.Standard,
                     "Test SKU Name",
@@ -61,19 +45,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     4,
                     os,
                     new BuildArtifactImageFamily(
+                        ImageFamilyType.VmAgent,
                         "agentImageFamily",
-                        "agentImageName"),
+                        "agentImageName",
+                        currentImageInfoProvider.Object),
                     new VmImageFamily(
                         MockControlPlaneInfo().Stamp,
                         "vmImageFamilyName",
                         VmImageKind.Canonical,
                         "vmImageName",
                         "vmImageVersion",
-                        "vmImageSubscriptionId"),
+                        "vmImageSubscriptionId",
+                        currentImageInfoProvider.Object),
                     "storageSkuName",
                     new BuildArtifactImageFamily(
+                        ImageFamilyType.Storage,
                         "storageImageFamily",
-                        "storageImageName"),
+                        "storageImageName",
+                        currentImageInfoProvider.Object),
                     64,
                     storageUnits,
                     computeUnits,

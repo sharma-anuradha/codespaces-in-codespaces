@@ -15,6 +15,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
     [ApiController]
     public class HealthController : Controller
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HealthController"/> class.
+        /// </summary>
+        /// <param name="healthProvider">The health provider that determines whether the service
+        /// is currently healthy at any point in time.</param>
         public HealthController(
              IHealthProvider healthProvider)
         {
@@ -23,6 +28,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
         private IHealthProvider HealthProvider { get; set; }
 
+        /// <summary>
+        /// Gets the current health status.
+        /// </summary>
+        /// <returns>200 if the service is healthy, otherwise 500.</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

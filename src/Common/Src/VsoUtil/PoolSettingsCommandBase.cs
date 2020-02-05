@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {

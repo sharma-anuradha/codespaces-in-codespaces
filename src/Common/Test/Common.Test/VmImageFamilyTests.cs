@@ -1,16 +1,19 @@
-﻿using Moq;
-using Xunit;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Moq;
+using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 {
     public class VmImageFamilyTests
     {
         [Fact]
-        public void GetCurrentImageUrl_DoesNotExceedLengthLimit_ForWindowsImages()
+        public async Task GetCurrentImageUrl_DoesNotExceedLengthLimit_ForWindowsImages()
         {
             var locations = new List<AzureLocation>
             {
@@ -34,6 +37,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 
             var subscriptionId = Guid.NewGuid().ToString();
 
+            var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
+            currentImageInfoProvider
+                .Setup(x => x.GetImageVersionAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultVersion, IDiagnosticsLogger logger) => Task.FromResult(defaultVersion));
+
             foreach (var location in locations)
             {
                 var stampInfo = new Mock<ControlPlaneStampInfo>(planeInfo.Object, location, "Z", stampSettings);
@@ -44,10 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     VmImageKind.Custom,
                     "NexusWindowsImage",
                     "2019.1111.001",
-                    subscriptionId
+                    subscriptionId,
+                    currentImageInfoProvider.Object
                     );
 
-                var url = imageFamily.GetCurrentImageUrl(location);
+                var url = await imageFamily.GetCurrentImageUrlAsync(location, logger: null);
 
                 Assert.True(url.Length < 256, $"Expected length for {url} to be < 256");
             }

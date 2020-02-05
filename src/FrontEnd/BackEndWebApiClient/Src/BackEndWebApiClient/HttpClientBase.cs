@@ -31,10 +31,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
         }
 
         /// <summary>
-        /// Http client provider.
+        /// Gets the http client provider.
         /// </summary>
         protected IHttpClientProvider HttpClientProvider { get; }
 
+        /// <summary>
+        /// Sends an HTTP request and deserializes the response into the
+        /// <typeparamref name="TResult"/> type.
+        /// </summary>
+        /// <typeparam name="TInput">The type of the input object in the request body.</typeparam>
+        /// <typeparam name="TResult">The type of the output object from the response body.</typeparam>
+        /// <param name="method">The HTTP method to use for the request.</param>
+        /// <param name="requestUri">The request uri.</param>
+        /// <param name="input">The input object that will be serialized as JSON for the request body.</param>
+        /// <param name="logger">The logger to use to log the request/response details.</param>
+        /// <returns>The deserialized object from the response body.</returns>
         protected async Task<TResult> SendAsync<TInput, TResult>(
             HttpMethod method,
             string requestUri,
@@ -56,6 +67,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             }
         }
 
+        /// <summary>
+        /// Sends an HTTP request and returns the raw response as a string.
+        /// </summary>
+        /// <typeparam name="TInput">The type of the input object in the request body.</typeparam>
+        /// <param name="method">The HTTP method to use for the request.</param>
+        /// <param name="requestUri">The request uri.</param>
+        /// <param name="input">The input object that will be serialized as JSON for the request body.</param>
+        /// <param name="logger">The logger to use to log the request/response details.</param>
+        /// <returns>The response body as a string.</returns>
         protected async Task<string> SendRawAsync<TInput>(
             HttpMethod method,
             string requestUri,

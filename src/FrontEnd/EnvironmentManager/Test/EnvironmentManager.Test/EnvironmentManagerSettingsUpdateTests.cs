@@ -3,20 +3,21 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
-using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
-using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
-using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
-using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Moq;
 using Xunit;
 
@@ -265,6 +266,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             skuTransitions = skuTransitions ?? new List<string>();
 
+            var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
+            currentImageInfoProvider
+                .Setup(x => x.GetImageNameAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultName, IDiagnosticsLogger logger) => Task.FromResult(defaultName));
+            currentImageInfoProvider
+                .Setup(x => x.GetImageVersionAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultVersion, IDiagnosticsLogger logger) => Task.FromResult(defaultVersion));
+
             return new CloudEnvironmentSku(
                 skuName,
                 SkuTier.Standard,
@@ -277,19 +286,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 4,
                 computeOs,
                 new BuildArtifactImageFamily(
+                    ImageFamilyType.VmAgent,
                     "agentImageFamily",
-                    "agentImageName"),
+                    "agentImageName",
+                    currentImageInfoProvider.Object),
                 new VmImageFamily(
                     MockControlPlaneStampInfo(),
                     "vmImageFamilyName",
                     VmImageKind.Canonical,
                     "vmImageName",
                     "vmImageVersion",
-                    "vmImageSubscriptionId"),
+                    "vmImageSubscriptionId",
+                    currentImageInfoProvider.Object),
                 "storageSkuName",
                 new BuildArtifactImageFamily(
+                    ImageFamilyType.Storage,
                     "storageImageFamily",
-                    "storageImageName"),
+                    "storageImageName",
+                    currentImageInfoProvider.Object),
                 64,
                 storageUnits,
                 computeUnits,

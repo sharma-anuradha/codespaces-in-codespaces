@@ -2,6 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -12,23 +15,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <summary>
         /// Initializes a new instance of the <see cref="BuildArtifactImageFamily"/> class.
         /// </summary>
+        /// <param name="imageFamilyType">The type of image family that is being referenced.</param>
         /// <param name="imageFamilyName">The image family name.</param>
-        /// <param name="imageName">The full image url.</param>
+        /// <param name="defaultImageName">The default full image url.</param>
+        /// <param name="currentImageInfoProvider">The current image info provider.</param>
         public BuildArtifactImageFamily(
+            ImageFamilyType imageFamilyType,
             string imageFamilyName,
-            string imageName)
+            string defaultImageName,
+            ICurrentImageInfoProvider currentImageInfoProvider)
         {
             Requires.NotNullOrEmpty(imageFamilyName, nameof(imageFamilyName));
-            Requires.NotNullOrEmpty(imageName, nameof(imageName));
+            Requires.NotNullOrEmpty(defaultImageName, nameof(defaultImageName));
+            Requires.NotNull(currentImageInfoProvider, nameof(currentImageInfoProvider));
 
+            ImageFamilyType = imageFamilyType;
             ImageFamilyName = imageFamilyName;
-            ImageName = imageName;
+            DefaultImageName = defaultImageName;
+            CurrentImageInfoProvider = currentImageInfoProvider;
         }
+
+        /// <inheritdoc/>
+        public ImageFamilyType ImageFamilyType { get; }
 
         /// <inheritdoc/>
         public string ImageFamilyName { get; }
 
+        private string DefaultImageName { get; }
+
+        private ICurrentImageInfoProvider CurrentImageInfoProvider { get; }
+
         /// <inheritdoc/>
-        public string ImageName { get; }
+        public Task<string> GetCurrentImageNameAsync(IDiagnosticsLogger logger)
+        {
+            return CurrentImageInfoProvider.GetImageNameAsync(ImageFamilyType, ImageFamilyName, DefaultImageName, logger);
+        }
     }
 }

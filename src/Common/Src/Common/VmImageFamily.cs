@@ -3,7 +3,10 @@
 // </copyright>
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -17,62 +20,86 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="stampInfo">An IControlPlaneStampInfo.</param>
         /// <param name="imageFamilyName">The image family name.</param>
         /// <param name="imageKind">The image kind.</param>
-        /// <param name="imageName">The full image url.</param>
-        /// <param name="imageVersion">The image version.</param>
+        /// <param name="defaultImageName">The default full image url.</param>
+        /// <param name="defaultImageVersion">The default image version.</param>
         /// <param name="vmImageSubscriptionId">The vm image subscription id.</param>
+        /// <param name="currentImageInfoProvider">The current image info provider.</param>
         public VmImageFamily(
             IControlPlaneStampInfo stampInfo,
             string imageFamilyName,
             VmImageKind imageKind,
-            string imageName,
-            string imageVersion,
-            string vmImageSubscriptionId)
+            string defaultImageName,
+            string defaultImageVersion,
+            string vmImageSubscriptionId,
+            ICurrentImageInfoProvider currentImageInfoProvider)
         {
             Requires.NotNull(stampInfo, nameof(stampInfo));
             Requires.NotNullOrEmpty(imageFamilyName, nameof(imageFamilyName));
-            Requires.NotNullOrEmpty(imageName, nameof(imageName));
-            Requires.NotNullOrEmpty(imageVersion, nameof(imageVersion));
+            Requires.NotNullOrEmpty(defaultImageName, nameof(defaultImageName));
+            Requires.NotNullOrEmpty(defaultImageVersion, nameof(defaultImageVersion));
+
             if (imageKind == VmImageKind.Custom)
             {
                 Requires.NotNullOrEmpty(vmImageSubscriptionId, nameof(vmImageSubscriptionId));
             }
 
+            Requires.NotNull(currentImageInfoProvider, nameof(currentImageInfoProvider));
+
             ImageFamilyName = imageFamilyName;
             ImageKind = imageKind;
-            ImageName = imageName;
-            ImageVersion = imageVersion;
+            DefaultImageName = defaultImageName;
+            DefaultImageVersion = defaultImageVersion;
             VmImageSubscriptionId = vmImageSubscriptionId;
             StampInfo = stampInfo;
+            CurrentImageInfoProvider = currentImageInfoProvider;
         }
 
         /// <inheritdoc/>
         public string ImageFamilyName { get; }
 
         /// <inheritdoc/>
+        public ImageFamilyType ImageFamilyType { get; } = ImageFamilyType.Compute;
+
+        /// <inheritdoc/>
         public VmImageKind ImageKind { get; }
 
-        private string ImageName { get; }
+        private string DefaultImageName { get; }
 
-        private string ImageVersion { get; }
+        private string DefaultImageVersion { get; }
 
         private string VmImageSubscriptionId { get; }
 
         private IControlPlaneStampInfo StampInfo { get; }
 
+        private ICurrentImageInfoProvider CurrentImageInfoProvider { get; }
+
         /// <inheritdoc/>
-        public string GetCurrentImageUrl(AzureLocation location)
+        public async Task<string> GetCurrentImageUrlAsync(AzureLocation location, IDiagnosticsLogger logger)
         {
+            var imageName = await GetCurrentImageNameAsync(logger);
+            var imageVersion = await GetCurrentImageVersionAsync(logger);
+
             switch (ImageKind)
             {
                 case VmImageKind.Canonical:
-                    return $"{ImageName}:{ImageVersion}";
+                    return $"{imageName}:{imageVersion}";
 
                 case VmImageKind.Custom:
-                    return $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{StampInfo.GetResourceGroupNameForWindowsImages(location)}/providers/Microsoft.Compute/galleries/{StampInfo.GetImageGalleryNameForWindowsImages(location)}/images/windows/versions/{ImageVersion}";
+                    return $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{StampInfo.GetResourceGroupNameForWindowsImages(location)}/providers/Microsoft.Compute/galleries/{StampInfo.GetImageGalleryNameForWindowsImages(location)}/images/windows/versions/{imageVersion}";
 
                 default:
                     throw new NotSupportedException($"Image kind '{ImageKind}' is not supported.");
             }
+        }
+
+        private Task<string> GetCurrentImageNameAsync(IDiagnosticsLogger logger)
+        {
+            return CurrentImageInfoProvider.GetImageNameAsync(ImageFamilyType, ImageFamilyName, DefaultImageName, logger);
+        }
+
+        private Task<string> GetCurrentImageVersionAsync(IDiagnosticsLogger logger)
+        {
+            return CurrentImageInfoProvider.GetImageVersionAsync(ImageFamilyType, ImageFamilyName, DefaultImageVersion, logger);
         }
     }
 }

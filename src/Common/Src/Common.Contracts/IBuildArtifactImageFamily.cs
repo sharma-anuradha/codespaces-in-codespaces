@@ -2,6 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
@@ -10,8 +13,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public interface IBuildArtifactImageFamily : IImageFamily
     {
         /// <summary>
-        /// Gets the image name for the storage image.
+        /// Gets the current image name that should be used for this image family.
         /// </summary>
-        string ImageName { get; }
+        /// <param name="logger">The logger to use for this operation.</param>
+        /// <returns>The name of the image to use.</returns>
+        Task<string> GetCurrentImageNameAsync(IDiagnosticsLogger logger);
     }
 }

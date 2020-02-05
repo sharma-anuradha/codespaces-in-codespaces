@@ -18,12 +18,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IList<ResourcePool> ResourceScaleLevels { get; set; }
 
         /// <inheritdoc/>
-        public Task<ScalingResult> UpdateResourceScaleLevels(ScalingInput scalingInputs)
+        public Task UpdateResourceScaleLevels(ScalingInput scalingInputs)
         {
             // Persist the result
             ResourceScaleLevels = scalingInputs.Pools;
 
-            return Task.FromResult(new ScalingResult());
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc/>

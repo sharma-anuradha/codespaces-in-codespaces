@@ -1,4 +1,4 @@
-﻿// <copyright file="InitializeScaleLevelCache.cs" company="Microsoft">
+﻿// <copyright file="RefreshPoolScaleTargetsJob.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,44 +8,72 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
 {
     /// <summary>
-    /// Initializes Scale Level Cache.
+    /// Background job that refreshes the pool scale target sizes and configurations.
+    /// If the configuration changes while the service is running (either target size or count),
+    /// then this job will pick it up and set the pool scale levels accordingly.
     /// </summary>
-    public class InitializeScaleLevelCache : IAsyncWarmup
+    public class RefreshPoolScaleTargetsJob : IAsyncWarmup
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="InitializeScaleLevelCache"/> class.
+        /// Initializes a new instance of the <see cref="RefreshPoolScaleTargetsJob"/> class.
         /// </summary>
         /// <param name="systemCatalog">System Catalog that refines all the current resource.</param>
         /// <param name="resourceScalingBroker">Resource Scaling Broker that will be notified
         /// once scaling levels have been computed.</param>
-        public InitializeScaleLevelCache(
+        /// <param name="resourcePoolSettingsRepository">The settings repository where current settings
+        /// overrides can be configured.</param>
+        /// <param name="taskHelper">The task helper for triggering background jobs.</param>
+        public RefreshPoolScaleTargetsJob(
             ISystemCatalog systemCatalog,
-            IResourceScalingHandler resourceScalingBroker)
+            IResourceScalingHandler resourceScalingBroker,
+            IResourcePoolSettingsRepository resourcePoolSettingsRepository,
+            ITaskHelper taskHelper)
         {
             SystemCatalog = systemCatalog;
             ResourceScalingBroker = resourceScalingBroker;
+            ResourcePoolSettingsRepository = resourcePoolSettingsRepository;
+            TaskHelper = taskHelper;
         }
 
         private ISystemCatalog SystemCatalog { get; }
 
         private IResourceScalingHandler ResourceScalingBroker { get; }
 
-        /// <inheritdoc/>
-        public async Task WarmupCompletedAsync()
-        {
-            var resourceSkus = FlattenResourceSkus(SystemCatalog.SkuCatalog.CloudEnvironmentSkus.Values);
+        private IResourcePoolSettingsRepository ResourcePoolSettingsRepository { get; }
 
-            await ResourceScalingBroker.UpdateResourceScaleLevels(new ScalingInput() { Pools = resourceSkus });
+        private ITaskHelper TaskHelper { get; }
+
+        /// <inheritdoc/>
+        public Task WarmupCompletedAsync()
+        {
+            // Kick off background job that re-evaluates the catalog every minute
+            return TaskHelper.RunBackgroundLoopAsync(
+                $"{nameof(RefreshPoolScaleTargetsJob)}_run",
+                (childLogger) => UpdateScaleLevelsAsync(childLogger),
+                TimeSpan.FromMinutes(1));
         }
 
-        private IList<ResourcePool> FlattenResourceSkus(IEnumerable<ICloudEnvironmentSku> cloudEnvironmentSku)
+        private async Task<bool> UpdateScaleLevelsAsync(IDiagnosticsLogger logger)
+        {
+            var resourceSkus = await FlattenResourceSkusAsync(SystemCatalog.SkuCatalog.CloudEnvironmentSkus.Values, logger);
+            await ResourceScalingBroker.UpdateResourceScaleLevels(new ScalingInput() { Pools = resourceSkus });
+            return true;
+        }
+
+        private async Task<IList<ResourcePool>> FlattenResourceSkusAsync(
+            IEnumerable<ICloudEnvironmentSku> cloudEnvironmentSku,
+            IDiagnosticsLogger logger)
         {
             /*
             Phase 0 (input):
@@ -169,10 +197,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             */
 
             // Flatten out list so we have one sku per target region
-            var flatEnvironmentSkus = cloudEnvironmentSku
+            var flatEnvironmentSkus = await Task.WhenAll(cloudEnvironmentSku
                 .Where(s => !s.IsExternalHardware)
                 .SelectMany(x => x.SkuLocations
-                    .Select(y => new FlatComputeItem
+                    .Select(async y => new FlatComputeItem
                     {
                         Location = y,
                         Environment = x,
@@ -180,8 +208,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                         {
                             OS = x.ComputeOS,
                             ImageFamilyName = x.ComputeImage.ImageFamilyName,
-                            ImageName = x.ComputeImage.GetCurrentImageUrl(y),
-                            VmAgentImageName = x.VmAgentImage.ImageName,
+                            ImageName = await x.ComputeImage.GetCurrentImageUrlAsync(y, logger.NewChildLogger()),
+                            VmAgentImageName = await x.VmAgentImage.GetCurrentImageNameAsync(logger.NewChildLogger()),
                             VmAgentImageFamilyName = x.VmAgentImage.ImageFamilyName,
                             Location = y,
                             SkuName = x.ComputeSkuName,
@@ -192,11 +220,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                         {
                             SizeInGB = x.StorageSizeInGB,
                             ImageFamilyName = x.StorageImage.ImageFamilyName,
-                            ImageName = x.StorageImage.ImageName,
+                            ImageName = await x.StorageImage.GetCurrentImageNameAsync(logger.NewChildLogger()),
                             Location = y,
                             SkuName = x.StorageSkuName,
                         },
-                    }));
+                    })));
 
             // Calculate the distinct storage skus that are needed in each region
             var storageSkusGroup = flatEnvironmentSkus
@@ -213,7 +241,63 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             // Merge lists back together
             var resourceSkus = new List<ResourcePool>(storageSkus).Concat(computeSkus).ToList();
 
+            // Check for some pool settings overrides in the database
+            // TODO: Migrate these to SystemConfiguration, similar to how the image name/versions are overridden
+            await OverridePoolSettingsAsync(resourceSkus, logger);
+
             return resourceSkus;
+        }
+
+        private Task OverridePoolSettingsAsync(List<ResourcePool> pools, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{nameof(RefreshPoolScaleTargetsJob)}_override_settings",
+                async (childLogger) =>
+                {
+                    // Pull out core settings records
+                    var settings = (await ResourcePoolSettingsRepository.GetWhereAsync(x => true, childLogger.NewChildLogger()))
+                        .ToDictionary(x => x.Id);
+
+                    childLogger.FluentAddValue("SettingsFoundCount", settings.Count)
+                        .FluentAddValue("SettingsFoundData", JsonConvert.SerializeObject(
+                            settings, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
+
+                    childLogger.FluentAddValue("SettingsFoundPoolDefinitionCount", pools.Count());
+
+                    // Run through each pool item
+                    foreach (var pool in pools)
+                    {
+                        await childLogger.OperationScopeAsync(
+                            $"{nameof(RefreshPoolScaleTargetsJob)}_override_settings_unit_check",
+                            (itemLogger) =>
+                            {
+                                var poolDefinition = pool.Details.GetPoolDefinition();
+
+                                itemLogger.FluentAddValue("SettingsFoundPool", poolDefinition)
+                                    .FluentAddValue("SettingPreOverrideTargetCount", pool.OverrideTargetCount)
+                                    .FluentAddValue("SettingPreOverrideIsEnabled", pool.OverrideIsEnabled);
+
+                                // Overrides the value if we have settings for it
+                                if (settings.TryGetValue(poolDefinition, out var resourceSetting))
+                                {
+                                    pool.OverrideTargetCount = resourceSetting.TargetCount;
+                                    pool.OverrideIsEnabled = resourceSetting.IsEnabled;
+                                }
+                                else
+                                {
+                                    // Clear out any overrides if we don't have matches
+                                    pool.OverrideTargetCount = null;
+                                    pool.OverrideIsEnabled = null;
+                                }
+
+                                itemLogger.FluentAddValue("SettingPostOverrideTargetCount", pool.OverrideTargetCount)
+                                    .FluentAddValue("SettingPostOverrideIsEnabled", pool.OverrideIsEnabled);
+
+                                return Task.CompletedTask;
+                            });
+                    }
+                },
+                swallowException: true);
         }
 
         private ResourcePool BuildScalingInput(

@@ -10,6 +10,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public interface IImageFamily
     {
         /// <summary>
+        /// Gets the image family type.
+        /// </summary>
+        ImageFamilyType ImageFamilyType { get; }
+
+        /// <summary>
         /// Gets the image family name.
         /// </summary>
         string ImageFamilyName { get; }

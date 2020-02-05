@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
@@ -84,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             services.AddDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
                 CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
             services.AddDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
-                CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
+                CosmosDbResourcePoolStateSnapshotRepository.ConfigureOptions);
 
             services.AddSingleton<IHealthProvider, NullHealthProvider>();
             services.AddSingleton<IDiagnosticsLoggerFactory, NullDiagnosticsLoggerFactory>();

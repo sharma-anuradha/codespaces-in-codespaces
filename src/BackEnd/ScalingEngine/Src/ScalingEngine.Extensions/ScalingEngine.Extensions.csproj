@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
-    <ProjectReference Include="..\ScalingEngine.Abstractions\ScalingEngine.Abstractions.csproj" />
     <ProjectReference Include="..\ScalingEngine\ScalingEngine.csproj" />
   </ItemGroup>
 

@@ -172,7 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 CommitId = AppSettings.GitCommit,
             };
 
-            services.AddTransient<IDiagnosticsLogger>(serviceProvider =>
+            services.AddTransient(serviceProvider =>
             {
                 var loggerFactory = serviceProvider.GetService<IDiagnosticsLoggerFactory>();
                 var logValueSet = serviceProvider.GetService<LogValueSet>();
@@ -187,6 +187,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(
                 CachedCosmosDbSystemConfigurationRepository.ConfigureOptions);
             services.AddSingleton<ISystemConfiguration, PersistedSystemConfiguration>();
+
+            // Use TryAddSingleton to allow callers to override this implementation by calling AddSingleton before calling this method
+            services.TryAddSingleton<ICurrentImageInfoProvider, CurrentImageInfoProvider>();
         }
 
         /// <summary>

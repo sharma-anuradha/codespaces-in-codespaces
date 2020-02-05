@@ -20,12 +20,14 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
@@ -82,10 +84,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             if (IsRunningInAzure() &&
                 (frontEndAppSettings.UseMocksForLocalDevelopment ||
-                 frontEndAppSettings.DisableBackgroundTasksForLocalDevelopment))
+                 frontEndAppSettings.DisableBackgroundTasksForLocalDevelopment ||
+                 frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker))
             {
-                throw new InvalidOperationException("Cannot use mocks or disable background tasks outside of local development.");
+                throw new InvalidOperationException("Cannot use mocks, fakes, or disable background tasks outside of local development.");
             }
+
+            // Inject a custom image info provider that delegates calls to the backend.
+            // IMPORTANT: This MUST be placed before the ConfigureCommonServices call below so
+            // that this implementation wins instead of the default implementation.
+            services.AddSingleton<ICurrentImageInfoProvider, DelegatedImageInfoProvider>();
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
             ConfigureCommonServices(services, out var loggingBaseValues);

@@ -6,7 +6,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using CommandLine;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {

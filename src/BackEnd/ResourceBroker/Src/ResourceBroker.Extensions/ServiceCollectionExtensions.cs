@@ -71,7 +71,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
-            services.AddSingleton<IAsyncWarmup>(x => x.GetRequiredService<ResourceRegisterJobs>());
             services.AddSingleton<IAsyncBackgroundWarmup>(x => x.GetRequiredService<ResourceRegisterJobs>());
 
             // Handlers
@@ -96,7 +95,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
             services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
             services.AddSingleton<IWatchPoolStateTask, WatchPoolStateTask>();
-            services.AddSingleton<IWatchPoolSettingsTask, WatchPoolSettingsTask>();
             services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
             services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
@@ -129,8 +127,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                 CosmosDbResourceRepository.ConfigureOptions);
             services.AddDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
                 CosmosDbResourcePoolStateSnapshotRepository.ConfigureOptions);
-            services.AddDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
-                CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
 
             // Register Queue Items
             services.AddSingleton<IContinuationJobQueueRepository, StorageResourceJobQueueRepository>();

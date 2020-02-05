@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Xunit;
@@ -89,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal(decimal.Zero, sku.StorageVsoUnitsPerHour);
                     Assert.Equal(decimal.Zero, sku.ComputeVsoUnitsPerHour);
                 },
-                sku =>
+                async sku =>
                 {
                     Assert.Equal("test-sku-linux-standard", sku.SkuName);
                     Assert.Equal(1.0m, sku.StorageVsoUnitsPerHour);
@@ -106,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal("test-vm-agent-image-family-linux", sku.VmAgentImage.ImageFamilyName);
                     Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
                     Assert.Equal("test-storage-image-family-linux", sku.StorageImage.ImageFamilyName);
-                    Assert.Equal("test-storage-image-url-linux", sku.StorageImage.ImageName);
+                    Assert.Equal("test-storage-image-url-linux", await sku.StorageImage.GetCurrentImageNameAsync(logger: null));
                     // Assert the default pool level
                     Assert.Equal(1, sku.ComputePoolLevel);
                     // Assert the default locations
@@ -115,7 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         loc => Assert.Equal(AzureLocation.WestUs2, loc)
                     );
                 },
-                sku =>
+                async sku =>
                 {
                     Assert.Equal("test-sku-windows-premium", sku.SkuName);
                     Assert.Equal(2.0m, sku.StorageVsoUnitsPerHour);
@@ -132,7 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     Assert.Equal("test-vm-agent-image-family-windows", sku.VmAgentImage.ImageFamilyName);
                     Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
                     Assert.Equal("test-storage-image-family-windows", sku.StorageImage.ImageFamilyName);
-                    Assert.Equal("test-storage-image-url-windows", sku.StorageImage.ImageName);
+                    Assert.Equal("test-storage-image-url-windows", await sku.StorageImage.GetCurrentImageNameAsync(logger: null));
                     // Assert the override pool level
                     Assert.Equal(1, sku.ComputePoolLevel);
                     // Assert the override locations
@@ -224,7 +226,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             };
 
             var azureSubscriptionCatalog = new AzureSubscriptionCatalog(azureSubscriptionCatalogOptions, secretProvider.Object);
-            var skuCatalog = new SkuCatalog(skuCatalogSettings, controlPlaneInfo.Object, controlPlaneResourceAccessor.Object);
+
+            var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
+            currentImageInfoProvider
+                .Setup(x => x.GetImageNameAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultName, IDiagnosticsLogger logger) => Task.FromResult(defaultName));
+            currentImageInfoProvider
+                .Setup(x => x.GetImageVersionAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultVersion, IDiagnosticsLogger logger) => Task.FromResult(defaultVersion));
+
+            var skuCatalog = new SkuCatalog(
+                skuCatalogSettings,
+                controlPlaneInfo.Object,
+                controlPlaneResourceAccessor.Object,
+                currentImageInfoProvider.Object);
             var provider = new SystemCatalogProvider(azureSubscriptionCatalog, skuCatalog);
             return provider;
         }

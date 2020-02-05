@@ -2,9 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="ScalingEngine\ScalingEngine.csproj" />
-    <ProjectReference Include="ScalingEngine.Abstractions\ScalingEngine.Abstractions.csproj" />
     <ProjectReference Include="ScalingEngine.Extensions\ScalingEngine.Extensions.csproj" />
-    <ProjectReference Include="ScalingEngine.Models\ScalingEngine.Models.csproj" />
   </ItemGroup>
 
 </Project>

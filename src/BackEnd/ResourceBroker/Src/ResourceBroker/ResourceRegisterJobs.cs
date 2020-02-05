@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     /// <summary>
     /// Registeres any jobs that need to be run on warmup.
     /// </summary>
-    public class ResourceRegisterJobs : IAsyncWarmup, IAsyncBackgroundWarmup
+    public class ResourceRegisterJobs : IAsyncBackgroundWarmup
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
@@ -25,7 +25,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="watchPoolSizeJob">Target watch pool size job.</param>
         /// <param name="watchPoolVersionTask">Target watch pool version job.</param>
         /// <param name="watchPoolStateTask">Target watch pool state task.</param>
-        /// <param name="watchPoolSettingsTask">Target watch pool settings task.</param>
         /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
         /// <param name="watchOrphanedAzureResourceTask">Target watch orphaned Azure resources job.</param>
         /// <param name="watchOrphanedSystemResourceTask">Target watch orphaned system resources job.</param>
@@ -37,7 +36,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchPoolSizeTask watchPoolSizeJob,
             IWatchPoolVersionTask watchPoolVersionTask,
             IWatchPoolStateTask watchPoolStateTask,
-            IWatchPoolSettingsTask watchPoolSettingsTask,
             IWatchFailedResourcesTask watchFailedResourcesTask,
             IWatchOrphanedAzureResourceTask watchOrphanedAzureResourceTask,
             IWatchOrphanedSystemResourceTask watchOrphanedSystemResourceTask,
@@ -49,7 +47,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             WatchPoolSizeJob = watchPoolSizeJob;
             WatchPoolVersionTask = watchPoolVersionTask;
             WatchPoolStateTask = watchPoolStateTask;
-            WatchPoolSettingsTask = watchPoolSettingsTask;
             WatchFailedResourcesTask = watchFailedResourcesTask;
             WatchOrphanedAzureResourceTask = watchOrphanedAzureResourceTask;
             WatchOrphanedSystemResourceTask = watchOrphanedSystemResourceTask;
@@ -67,8 +64,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IWatchPoolStateTask WatchPoolStateTask { get; }
 
-        private IWatchPoolSettingsTask WatchPoolSettingsTask { get; }
-
         private IWatchFailedResourcesTask WatchFailedResourcesTask { get; }
 
         private IWatchOrphanedAzureResourceTask WatchOrphanedAzureResourceTask { get; }
@@ -82,17 +77,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private ITaskHelper TaskHelper { get; }
 
         private Random Random { get; }
-
-        /// <inheritdoc/>
-        public async Task WarmupCompletedAsync()
-        {
-            // Job: Watch Pool Settings
-            var watchPoolSettingsTaskSpan = TimeSpan.FromMinutes(1);
-            await TaskHelper.RunBackgroundLoopAsync(
-                $"{ResourceLoggingConstants.WatchPoolSettingsTask}_run",
-                (childLogger) => WatchPoolSettingsTask.RunAsync(childLogger),
-                watchPoolSettingsTaskSpan);
-        }
 
         /// <inheritdoc/>
         public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)

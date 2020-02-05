@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.WindowsAzure.Storage.Blob;
 
@@ -42,6 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             AzureLocation location,
             ResourceType resourceType,
             string family,
+            IDiagnosticsLogger logger,
             TimeSpan expiryTime = default)
         {
             var imageFamilies = skuCatalog.BuildArtifactImageFamilies;
@@ -50,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 return (null, null);
             }
 
-            var blobName = imageFamilies[family].ImageName;
+            var blobName = await imageFamilies[family].GetCurrentImageNameAsync(logger);
             var url = await ReadOnlyUrlByImageName(location, resourceType, blobName, expiryTime);
             return (url, blobName);
         }

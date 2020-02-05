@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -23,12 +24,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="skuCatalogOptions">The options instance for the sku catalog.</param>
         /// <param name="controlPlaneInfo">The control-plane info.</param>
         /// <param name="controlPlaneAzureResourceAccessor">The control-plane resource accessor.</param>
+        /// <param name="currentImageInfoProvider">The current image info provider.</param>
         /// <param name="logger">The diagnostics logger.</param>
         public SkuCatalog(
             IOptions<SkuCatalogOptions> skuCatalogOptions,
             IControlPlaneInfo controlPlaneInfo,
-            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
-            : this(skuCatalogOptions.Value.Settings, controlPlaneInfo, controlPlaneAzureResourceAccessor)
+            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
+            ICurrentImageInfoProvider currentImageInfoProvider)
+            : this(
+                  skuCatalogOptions.Value.Settings,
+                  controlPlaneInfo,
+                  controlPlaneAzureResourceAccessor,
+                  currentImageInfoProvider)
         {
         }
 
@@ -36,13 +43,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Initializes a new instance of the <see cref="SkuCatalog"/> class.
         /// </summary>
         /// <param name="skuCatalogSettings">The sku catalog settings.</param>
-        /// <param name="controlPlaneAzureResourceAccessor">The control-plane resource accessor.</param>
         /// <param name="controlPlaneInfo">The control-plane info.</param>
+        /// <param name="controlPlaneAzureResourceAccessor">The control-plane resource accessor.</param>
+        /// <param name="currentImageInfoProvider">The current image info provider.</param>
         /// <param name="logger">The diagnostics logger.</param>
         public SkuCatalog(
             SkuCatalogSettings skuCatalogSettings,
             IControlPlaneInfo controlPlaneInfo,
-            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
+            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
+            ICurrentImageInfoProvider currentImageInfoProvider)
         {
             Requires.NotNull(skuCatalogSettings, nameof(skuCatalogSettings));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
@@ -50,7 +59,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // Get the mapping from family to VM agent.
             BuildArtifactImageFamilies = new ReadOnlyDictionary<string, IBuildArtifactImageFamily>(
-                skuCatalogSettings.VmAgentImageFamilies.ToDictionary(e => e.Key, e => new BuildArtifactImageFamily(e.Key, e.Value.ImageName) as IBuildArtifactImageFamily));
+                skuCatalogSettings.VmAgentImageFamilies.ToDictionary(
+                    e => e.Key,
+                    e => new BuildArtifactImageFamily(
+                        ImageFamilyType.VmAgent,
+                        e.Key,
+                        e.Value.ImageName,
+                        currentImageInfoProvider) as IBuildArtifactImageFamily));
 
             // Get the supported azure locations
             var dataPlaneLocations = new HashSet<AzureLocation>(controlPlaneInfo.Stamp.DataPlaneLocations);
@@ -135,15 +150,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     controlPlaneInfo.Stamp,
                     skuConfiguration.ComputeImageFamily,
                     skuCatalogSettings.ComputeImageFamilies,
-                    subscriptionId);
+                    subscriptionId,
+                    currentImageInfoProvider);
 
                 var vmAgentImageFamily = CreateBuildArtifactImageFamily(
+                    ImageFamilyType.VmAgent,
                     skuConfiguration.VmAgentImageFamily,
-                    skuCatalogSettings.VmAgentImageFamilies);
+                    skuCatalogSettings.VmAgentImageFamilies,
+                    currentImageInfoProvider);
 
                 var storageImageFamily = CreateBuildArtifactImageFamily(
+                    ImageFamilyType.Storage,
                     skuConfiguration.StorageImageFamily,
-                    skuCatalogSettings.StorageImageFamilies);
+                    skuCatalogSettings.StorageImageFamilies,
+                    currentImageInfoProvider);
 
                 var enabled = cloudEnvironmentSettings.Enabled && tierSettings.Enabled && defaultSkuConfiguration.Enabled;
 
@@ -192,7 +212,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IControlPlaneStampInfo stampInfo,
             string imageFamilyName,
             IDictionary<string, VmImageFamilySettings> imageFamilies,
-            string vmImageSubscriptionId)
+            string vmImageSubscriptionId,
+            ICurrentImageInfoProvider currentImageInfoProvider)
         {
             if (!imageFamilies.TryGetValue(imageFamilyName, out var imageFamilySettings))
             {
@@ -205,14 +226,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 imageFamilySettings.ImageKind,
                 imageFamilySettings.ImageName,
                 imageFamilySettings.ImageVersion,
-                vmImageSubscriptionId);
+                vmImageSubscriptionId,
+                currentImageInfoProvider);
 
             return imageFamily;
         }
 
         private static IBuildArtifactImageFamily CreateBuildArtifactImageFamily(
+            ImageFamilyType imageFamilyType,
             string imageFamilyName,
-            IDictionary<string, ImageFamilySettings> imageFamilies)
+            IDictionary<string, ImageFamilySettings> imageFamilies,
+            ICurrentImageInfoProvider currentImageInfoProvider)
         {
             if (!imageFamilies.TryGetValue(imageFamilyName, out var imageFamilySettings))
             {
@@ -220,8 +244,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
 
             var imageFamily = new BuildArtifactImageFamily(
+                imageFamilyType,
                 imageFamilyName,
-                imageFamilySettings.ImageName);
+                imageFamilySettings.ImageName,
+                currentImageInfoProvider);
 
             return imageFamily;
         }

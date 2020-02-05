@@ -5,7 +5,7 @@
 using Microsoft.VsSaaS.Common.Models;
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine
 {
     /// <summary>
     /// Defines the a given resource pools current state.

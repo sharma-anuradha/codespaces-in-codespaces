@@ -1,15 +1,17 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 {
@@ -47,7 +49,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             var subscriptionId = Guid.NewGuid().ToString();
             var controlPlaneAzureResourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
             controlPlaneAzureResourceAccessor.Setup(obj => obj.GetCurrentSubscriptionIdAsync()).Returns(Task.FromResult(subscriptionId));
-            var skuCatalog = new SkuCatalog(appSettings.SkuCatalogSettings, controlPlaneInfo.Object, controlPlaneAzureResourceAccessor.Object);
+
+            var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
+            currentImageInfoProvider
+                .Setup(x => x.GetImageNameAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultName, IDiagnosticsLogger logger) => Task.FromResult(defaultName));
+            currentImageInfoProvider
+                .Setup(x => x.GetImageVersionAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultVersion, IDiagnosticsLogger logger) => Task.FromResult(defaultVersion));
+
+            var skuCatalog = new SkuCatalog(
+                appSettings.SkuCatalogSettings,
+                controlPlaneInfo.Object,
+                controlPlaneAzureResourceAccessor.Object,
+                currentImageInfoProvider.Object);
+
             Assert.NotNull(skuCatalog);
             foreach (var item in skuCatalog.CloudEnvironmentSkus)
             {

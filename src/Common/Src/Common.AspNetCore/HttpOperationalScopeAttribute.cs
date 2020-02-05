@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Setup the logger as an arg for convenence
             context.ActionArguments["logger"] = logger;
 
-            // Execute the delefate action
+            // Execute the delegate action
             var resultContext = await next();
 
             // Process result object

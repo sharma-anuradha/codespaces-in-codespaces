@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// Allows the Scaling Engine to update the current scaling levels.
         /// </summary>
         /// <param name="scalingInput">Target scaling input.</param>
-        /// <returns>Scaling result.</returns>
-        Task<ScalingResult> UpdateResourceScaleLevels(ScalingInput scalingInput);
+        /// <returns>A task representing completion of the update operation.</returns>
+        Task UpdateResourceScaleLevels(ScalingInput scalingInput);
     }
 }

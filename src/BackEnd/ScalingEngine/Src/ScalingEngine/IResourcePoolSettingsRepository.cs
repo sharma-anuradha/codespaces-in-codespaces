@@ -3,9 +3,8 @@
 // </copyright>
 
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine
 {
     /// <summary>
     /// Repository that fronts access to ResourceRecords.

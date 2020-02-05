@@ -138,9 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task<IEnumerable<ResourcePool>> RetrieveResourceSkus()
         {
-            var resourceUnits = (await ResourceScalingStore.RetrieveDefinitions()).Shuffle();
-
-            return resourceUnits;
+            return (await ResourceScalingStore.RetrieveDefinitions()).Shuffle();
         }
 
         private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)

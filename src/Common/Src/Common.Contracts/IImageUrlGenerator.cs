@@ -5,6 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
@@ -19,9 +20,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="location">Azure location of image.</param>
         /// <param name="resourceType">Type of image.</param>
         /// <param name="family">Name of the OS family.</param>
+        /// <param name="logger">The logger to use for this operation.</param>
         /// <param name="expiryTime">Amount of time for which the object should remain accessible.</param>
         /// <returns>(url, filename) or (null, null) if family not found.</returns>
-        Task<(string, string)> ReadOnlyUrlByVMFamily(AzureLocation location, ResourceType resourceType, string family, TimeSpan expiryTime = default);
+        Task<(string, string)> ReadOnlyUrlByVMFamily(AzureLocation location, ResourceType resourceType, string family, IDiagnosticsLogger logger, TimeSpan expiryTime = default);
 
         /// <summary>
         /// Generates a full URL with read access based on the image name.
