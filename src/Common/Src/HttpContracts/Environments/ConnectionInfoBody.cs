@@ -18,9 +18,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         public string ConnectionSessionId { get; set; }
 
         /// <summary>
-        /// Gets or sets the LIve Share session path.
+        /// Gets or sets the Live Share session path.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "sessionPath")]
         public string ConnectionSessionPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Live Share service URI that should be used
+        /// to connect to this environment.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "serviceUri")]
+        public string ConnectionServiceUri { get; set; }
     }
 }

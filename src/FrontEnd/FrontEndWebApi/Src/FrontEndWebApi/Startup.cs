@@ -75,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Configuration
             var appSettings = ConfigureAppSettings(services);
             var frontEndAppSettings = appSettings.FrontEnd;
+            services.AddSingleton(frontEndAppSettings);
 
             if (HostingEnvironment.IsDevelopment())
             {

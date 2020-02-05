@@ -28,10 +28,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         {
             services.AddSingleton(serviceProvider =>
             {
+                var frontEndAppSettings = serviceProvider.GetService<FrontEndAppSettings>();
                 var skuCatalog = serviceProvider.GetService<ISkuCatalog>();
                 var config = new MapperConfiguration(cfg =>
                 {
                     cfg.CreateMap<CloudEnvironment, CloudEnvironmentResult>().ForMember(dest => dest.SkuDisplayName, opt => opt.MapFrom(new SkuDisplayNameMapper(skuCatalog)));
+                    cfg.CreateMap<ConnectionInfo, ConnectionInfoBody>().AfterMap((src, dest) => dest.ConnectionServiceUri = frontEndAppSettings.VSLiveShareApiEndpoint);
                     cfg.CreateMap<CreateCloudEnvironmentBody, CloudEnvironment>();
                     cfg.CreateMap<ConnectionInfoBody, ConnectionInfo>();
                     cfg.CreateMap<SeedInfoBody, SeedInfo>();
