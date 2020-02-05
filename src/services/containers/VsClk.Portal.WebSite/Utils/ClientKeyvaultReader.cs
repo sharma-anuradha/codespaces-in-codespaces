@@ -24,10 +24,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             var secrets = await keyvaultReader.GetSecretVersionsAsync(GetAppKeyVaultName(), SecretName, logger);
             var sortedSecrets = secrets.OrderBy(s => DateTime.Now - s.Attributes.Expires.Value);
 
-            var i = 0;
+            var index = 0;
             foreach (var secret in sortedSecrets.Take(2))
             {
-                await WriteSecret(secret, i);
+                await WriteSecret(secret, index++);
             }
 
             RuntimeSecrets.ResolveKeychainSettingsSignal();
