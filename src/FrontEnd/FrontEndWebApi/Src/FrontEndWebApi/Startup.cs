@@ -343,6 +343,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             var systemConfig = app.ApplicationServices.GetService<ISystemConfiguration>();
             frontEndAppSettings.EnvironmentManagerSettings.Init(systemConfig);
             frontEndAppSettings.PlanManagerSettings.Init(systemConfig);
+            frontEndAppSettings.EnvironmentMonitorSettings.Init(systemConfig);
 
             app.UseEndpoints(x =>
             {

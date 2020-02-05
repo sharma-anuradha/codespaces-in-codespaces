@@ -33,19 +33,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// <summary>
         /// Initializes a new instance of the <see cref="HeartbeatMonitorContinuationHandler"/> class.
         /// </summary>
-        /// <param name="environmentStateManager">Target environment manager.</param>
         /// <param name="environmentRepository">Target environment repository.</param>
         /// <param name="environmentRepairWorkflows">Target environment repair workflows.</param>
         /// <param name="serviceProvider">Target environment service provider.</param>
         /// <param name="environmentMonitorSettings">Environment monitor settings.</param>
         public HeartbeatMonitorContinuationHandler(
-            IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository environmentRepository,
             IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             IServiceProvider serviceProvider,
             EnvironmentMonitorSettings environmentMonitorSettings)
         {
-            EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
             EnvironmentRepository = Requires.NotNull(environmentRepository, nameof(environmentRepository));
             EnvironmentMonitorSettings = Requires.NotNull(environmentMonitorSettings, nameof(environmentMonitorSettings));
             EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
@@ -53,8 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         }
 
         private IServiceProvider ServiceProvider { get; }
-
-        private IEnvironmentStateManager EnvironmentStateManager { get; }
 
         private ICloudEnvironmentRepository EnvironmentRepository { get; }
 
@@ -74,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             var typedInput = input as HeartbeatMonitorInput;
 
             // Check for flighting switch
-            if (!EnvironmentMonitorSettings.EnableEnvironmentHeartbeatMonitor)
+            if (!await EnvironmentMonitorSettings.EnableHeartbeatMonitoring(logger.NewChildLogger()))
             {
                 // Stop environment monitoring
                 return EnvironmentMonitorResultBuilder.CreateFinalResult(OperationState.Cancelled, "EnvironmentMonitoringDisabled");
