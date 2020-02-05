@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Moq;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
@@ -30,6 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
+        public readonly IEnvironmentMonitor environmentMonitor;
         public const string testUserId = "test-user";
         public static readonly UserIdSet testUserIdSet = new UserIdSet(testUserId, testUserId, testUserId);
         public const string testAccessToken = "test-token";
@@ -74,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             workspaceRepository = new MockClientWorkspaceRepository();
             authRepository = new MockClientAuthRepository();
             resourceBroker = new MockResourceBrokerClient();
-
+            this.environmentMonitor = new MockEnvironmentMonitor();
             skuCatalog = new Mock<ISkuCatalog>(MockBehavior.Strict).Object;
 
             this.environmentManager = new EnvironmentManager(
@@ -84,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.authRepository,
                 this.billingEventManager,
                 this.skuCatalog,
+                this.environmentMonitor,
                 environmentSettings);
         }
 

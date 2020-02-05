@@ -90,6 +90,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public EnvironmentManagerSettings EnvironmentManagerSettings { get; set; }
 
         /// <summary>
+        /// Gets or sets the Environment Monitor Settings.
+        /// </summary>
+        public EnvironmentMonitorSettings EnvironmentMonitorSettings { get; set; }
+
+        /// <summary>
         /// Gets or sets the SkuPlan Manager Settings.
         /// </summary>
         public PlanManagerSettings PlanManagerSettings { get; set; }

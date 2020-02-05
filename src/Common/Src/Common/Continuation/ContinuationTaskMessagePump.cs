@@ -24,19 +24,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         /// Initializes a new instance of the <see cref="ContinuationTaskMessagePump"/> class.
         /// </summary>
         /// <param name="continuationTaskWorkerPoolManager">Targer pool manager.</param>
-        /// <param name="resourceJobQueueRepository">Underlying resourcec job queue repository.</param>
+        /// <param name="continuationJobQueueRepository">Underlying resourcec job queue repository.</param>
         public ContinuationTaskMessagePump(
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
-            IContinuationJobQueueRepository resourceJobQueueRepository)
+            IContinuationJobQueueRepository continuationJobQueueRepository)
         {
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
-            ResourceJobQueueRepository = resourceJobQueueRepository;
+            ContinuationJobQueueRepository = continuationJobQueueRepository;
             MessageCache = new ConcurrentQueue<CloudQueueMessage>();
         }
 
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
-        private IContinuationJobQueueRepository ResourceJobQueueRepository { get; }
+        private IContinuationJobQueueRepository ContinuationJobQueueRepository { get; }
 
         private ConcurrentQueue<CloudQueueMessage> MessageCache { get; }
 
@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
                         childLogger.FluentAddValue("PumpFillDidTrigger", true.ToString());
 
                         // Fetch items
-                        var items = await ResourceJobQueueRepository.GetAsync(
+                        var items = await ContinuationJobQueueRepository.GetAsync(
                             targetMessageCacheLength - MessageCache.Count,
                             childLogger.WithValues(new LogValueSet()),
                             defaultTimeout);
@@ -98,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
                     // matter if a cache miss happens here, its a nice to have not a necessity.
                     if (!cacheHit)
                     {
-                        message = await ResourceJobQueueRepository.GetAsync(
+                        message = await ContinuationJobQueueRepository.GetAsync(
                             childLogger.WithValues(new LogValueSet()),
                             defaultTimeout);
                     }
@@ -121,13 +121,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         /// <inheritdoc/>
         public async Task DeleteMessageAsync(CloudQueueMessage message, IDiagnosticsLogger logger)
         {
-            await ResourceJobQueueRepository.DeleteAsync(message, logger);
+            await ContinuationJobQueueRepository.DeleteAsync(message, logger);
         }
 
         /// <inheritdoc/>
         public async Task PushMessageAsync(ContinuationQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
-            await ResourceJobQueueRepository.AddAsync(payload.ToJson(), initialVisibilityDelay, logger);
+            await ContinuationJobQueueRepository.AddAsync(payload.ToJson(), initialVisibilityDelay, logger);
         }
 
         /// <inheritdoc/>

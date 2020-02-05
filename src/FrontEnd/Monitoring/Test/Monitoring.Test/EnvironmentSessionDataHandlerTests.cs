@@ -3,9 +3,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test;
 
 using System;
-using System.Runtime.InteropServices;
 using Xunit;
-using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace HeartBeat.Test

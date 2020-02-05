@@ -23,5 +23,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Log Subscription Statistics Task.
         /// </summary>
         public const string LogSubscriptionStatisticsTask = "log_subscription_statistics_task";
+
+        /// <summary>
+        /// Log Continuation Task Worker Pool Manager name.
+        /// </summary>
+        public const string ContinuationTaskWorkerPoolManager = "continuation_task_worker_pool_manager";
+
+        /// <summary>
+        /// Continuation Task Message Pump.
+        /// </summary>
+        public const string ContinuationTaskMessagePump = "continuation_task_message_pump";
     }
 }

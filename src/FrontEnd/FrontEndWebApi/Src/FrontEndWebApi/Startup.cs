@@ -142,6 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add the environment manager and the cloud environment repository.
             services.AddEnvironmentManager(
                 frontEndAppSettings.EnvironmentManagerSettings,
+                frontEndAppSettings.EnvironmentMonitorSettings,
                 frontEndAppSettings.UseMocksForLocalDevelopment || frontEndAppSettings.UseFakesForCECLIDevelopmentWithLocalDocker,
                 frontEndAppSettings.DisableBackgroundTasksForLocalDevelopment);
 

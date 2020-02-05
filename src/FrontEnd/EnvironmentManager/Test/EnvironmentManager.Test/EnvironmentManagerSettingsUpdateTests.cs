@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
@@ -243,6 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var workspaceRepository = new MockClientWorkspaceRepository();
             var authRepository = new MockClientAuthRepository();
             var resourceBroker = new MockResourceBrokerClient();
+            var environmentMonitor = new MockEnvironmentMonitor();
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
 
@@ -253,6 +255,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 authRepository,
                 billingEventManager,
                 skuCatalog,
+                environmentMonitor,
                 environmentSettings);
         }
 

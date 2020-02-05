@@ -37,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="authRepository">The Live Share authentication repository.</param>
         /// <param name="billingEventManager">The billing event manager.</param>
         /// <param name="skuCatalog">The SKU catalog.</param>
+        /// <param name="environmentMonitor">The environment monitor.</param>
         /// <param name="environmentManagerSettings">The environment manager settings.</param>
         public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -45,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IAuthRepository authRepository,
             IBillingEventManager billingEventManager,
             ISkuCatalog skuCatalog,
+            IEnvironmentMonitor environmentMonitor,
             EnvironmentManagerSettings environmentManagerSettings)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
@@ -53,6 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             AuthRepository = Requires.NotNull(authRepository, nameof(authRepository));
             BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
             SkuCatalog = skuCatalog;
+            EnvironmentMonitor = environmentMonitor;
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
         }
 
@@ -67,6 +70,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IBillingEventManager BillingEventManager { get; }
 
         private ISkuCatalog SkuCatalog { get; }
+
+        private IEnvironmentMonitor EnvironmentMonitor { get; }
 
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
@@ -395,6 +400,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return result;
                     }
 
+                    // Start Environment Monitoring
+                    try
+                    {
+                        await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                    }
+                    catch (Exception ex)
+                    {
+                        childLogger.LogException($"{LogBaseName}_create_monitor_error", ex);
+                        result.MessageCode = MessageCodes.UnableToAllocateResources;
+                        result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
+
+                        // Delete the allocated resources.
+                        if (cloudEnvironment.Compute != null)
+                        {
+                            await ResourceBrokerClient.DeleteAsync(cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                        }
+
+                        if (cloudEnvironment.Storage != null)
+                        {
+                            await ResourceBrokerClient.DeleteAsync(cloudEnvironment.Storage.ResourceId, childLogger.NewChildLogger());
+                        }
+
+                        return result;
+                    }
+
                     // Create the Live Share workspace
                     cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
                     if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
@@ -567,6 +597,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     catch (Exception ex) when (ex is RemoteInvocationException || ex is HttpResponseStatusException)
                     {
                         childLogger.LogException($"{LogBaseName}_resume_allocate_error", ex);
+
+                        return new CloudEnvironmentServiceResult
+                        {
+                            MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
+                            HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
+                        };
+                    }
+
+                    // Start Environment Monitoring
+                    try
+                    {
+                        await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                    }
+                    catch (Exception ex)
+                    {
+                        childLogger.LogException($"{LogBaseName}_create_monitor_error", ex);
+
+                        // Delete the allocated resources.
+                        if (cloudEnvironment.Compute != null)
+                        {
+                            await ResourceBrokerClient.DeleteAsync(cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                        }
 
                         return new CloudEnvironmentServiceResult
                         {

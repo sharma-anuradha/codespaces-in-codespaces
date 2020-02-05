@@ -5,7 +5,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.AzureQueue;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks;
@@ -22,25 +25,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="environmentManagerSettings">Target environment manager settings.</param>
+        /// <param name="environmentMonitorSettings">Target environment monitor settings.</param>
         /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository.</param>
         /// <param name="disableBackgroundTasks">A value indicating whether non-critical background tasks are disabled.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddEnvironmentManager(
             this IServiceCollection services,
             EnvironmentManagerSettings environmentManagerSettings,
+            EnvironmentMonitorSettings environmentMonitorSettings,
             bool useMockCloudEnvironmentRepository,
             bool disableBackgroundTasks)
         {
             services.AddSingleton(environmentManagerSettings);
+            services.AddSingleton(environmentMonitorSettings);
 
             if (useMockCloudEnvironmentRepository)
             {
                 services.AddSingleton<ICloudEnvironmentRepository, MockCloudEnvironmentRepository>();
+                services.AddSingleton<IContinuationJobQueueRepository, MockEnvironmentMonitorQueueRepository>();
             }
             else
             {
                 services.AddDocumentDbCollection<CloudEnvironment, ICloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
+                services.AddSingleton<IContinuationJobQueueRepository, StorageEnvironmentJobQueueRepository>();
+                services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
             }
+
+            services.AddSingleton<IEnvironmentStateManager, EnvironmentStateManager>();
+
+            // Continuation
+            services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();
+            services.AddSingleton<IContinuationTaskMessagePump, ContinuationTaskMessagePump>();
+            services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();
+            services.AddSingleton<IContinuationTaskActivator, ContinuationTaskActivator>();
+            services.AddTransient<IContinuationTaskWorker, ContinuationTaskWorker>();
+            services.AddSingleton<IEnvironmentMonitor, EnvironmentMonitor>();
+
+            // Handlers
+            services.AddSingleton<ForceSuspendEnvironmentWorkflow>();
+            services.AddSingleton<IForceSuspendEnvironmentWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());
+            services.AddSingleton<IEnvironmentRepairWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());
+            services.AddSingleton<HeartbeatMonitorContinuationHandler>();
+            services.AddSingleton<IHeartbeatMonitorContinuationHandler>(x => x.GetRequiredService<HeartbeatMonitorContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<HeartbeatMonitorContinuationHandler>());
 
             // The environment mangaer
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
