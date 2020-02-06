@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { Panel, IPanel } from 'office-ui-fabric-react/lib/Panel';
@@ -13,10 +13,18 @@ import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
 
 import './settings-menu-panel.css';
 import { PlanSelector } from '../planSelector/plan-selector';
-import { Dialog, DialogFooter, DialogType, IDialog, MessageBar, MessageBarType, Dropdown } from 'office-ui-fabric-react';
+import {
+    Dialog,
+    DialogFooter,
+    DialogType,
+    IDialog,
+    MessageBar,
+    MessageBarType,
+    Dropdown,
+} from 'office-ui-fabric-react';
 import { Loader } from '../loader/loader';
 
-interface ISettingsMenuProps extends RouteComponentProps{
+interface ISettingsMenuProps extends RouteComponentProps {
     selectedPlan: ActivePlanInfo | null;
     environmentsInPlan: ILocalCloudEnvironment[];
     hidePanel: () => void;
@@ -34,7 +42,7 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
     public constructor(props: ISettingsMenuProps) {
         super(props);
         let noDelete = true;
-        if(this.props.selectedPlan){
+        if (this.props.selectedPlan) {
             noDelete = false;
         }
 
@@ -43,130 +51,168 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
             isDeletingPlan: false,
             deleteButtonDisabled: noDelete,
             showSuccessMessage: false,
-            failureMessage: undefined
-        }
+            failureMessage: undefined,
+        };
     }
 
     render() {
         let deleteText = <div></div>;
-        let envs = <span><b>{this.props.environmentsInPlan.length}</b> environments</span>
+        let envs = (
+            <span>
+                <b>{this.props.environmentsInPlan.length}</b> environments
+            </span>
+        );
 
-        if(this.props.environmentsInPlan.length === 1){
-            envs=<span><b>1</b> environment</span>
+        if (this.props.environmentsInPlan.length === 1) {
+            envs = (
+                <span>
+                    <b>1</b> environment
+                </span>
+            );
         }
 
-        if(this.props.selectedPlan){
-            deleteText = <div>
-                Deleting <b>{this.props.selectedPlan.name}</b> will also delete the {envs} associated with the plan.
-                <p/>Do you want to proceed?
-            </div>;
+        if (this.props.selectedPlan) {
+            deleteText = (
+                <div>
+                    Deleting <b>{this.props.selectedPlan.name}</b> will also delete the {envs}{' '}
+                    associated with the plan.
+                    <p />
+                    Do you want to proceed?
+                </div>
+            );
         }
-        
+
         return (
-            <Panel
-                isOpen={true}
-                headerText='Settings'
-                onDismiss={this.props.hidePanel}
-                closeButtonAriaLabel='Close'
-            >
-                {this.renderOverlay()}
-                {this.renderSuccessMessage()}
-                {this.renderFailureMessage()}
-                <h3>Insiders channel</h3>
-                <Toggle
-                    defaultChecked={window.localStorage.getItem('vso-featureset') === 'insider'}
-                    onText='On'
-                    offText='Off'
-                    onChange={(e, checked) => {
-                        window.localStorage.setItem(
-                            'vso-featureset',
-                            checked ? 'insider' : 'stable'
-                        );
-                        telemetry.setVscodeConfig();
-                    }}
-                ></Toggle>
-                <div className= 'vsonline-settings-panel__separator'/>
-                <h3>Plans</h3>
-                <div className='vsonline-settings-panel__delete-text'>When a plan is deleted, the associated environments will be deleted as well.</div>
-                {this.getPlanSelector()}
-                <DefaultButton
-                    className='vsonline-settings-panel__delete-button'
-                    onClick={() => this.setState({
-                        hideWarning: false
-                    })}
-                    allowDisabledFocus
-                    disabled={this.state.deleteButtonDisabled}
-                    text="Delete"
-                />
+            <Fragment>
+                <Panel
+                    isOpen={true}
+                    headerText='Settings'
+                    onDismiss={this.props.hidePanel}
+                    closeButtonAriaLabel='Close'
+                    id='settingsPanel'
+                >
+                    {this.renderOverlay()}
+                    {this.renderSuccessMessage()}
+                    {this.renderFailureMessage()}
+                    <h3>Insiders channel</h3>
+                    <Toggle
+                        defaultChecked={window.localStorage.getItem('vso-featureset') === 'insider'}
+                        onText='On'
+                        offText='Off'
+                        onChange={(e, checked) => {
+                            window.localStorage.setItem(
+                                'vso-featureset',
+                                checked ? 'insider' : 'stable'
+                            );
+                            telemetry.setVscodeConfig();
+                        }}
+                    ></Toggle>
+                    <div className='vsonline-settings-panel__separator' />
+                    <h3>Plans</h3>
+                    <div className='vsonline-settings-panel__delete-text'>
+                        When a plan is deleted, the associated environments will be deleted as well.
+                    </div>
+                    {this.getPlanSelector()}
+                    <DefaultButton
+                        className='vsonline-settings-panel__delete-button'
+                        onClick={() =>
+                            this.setState({
+                                hideWarning: false,
+                            })
+                        }
+                        allowDisabledFocus
+                        disabled={this.state.deleteButtonDisabled}
+                        text='Delete'
+                    />
+                    <div className='vsonline-settings-panel__separator' />
+                    <div id='target'></div>
+                </Panel>
                 <Dialog
+                    styles={{
+                        root: {
+                            position: 'absolute',
+                        },
+                    }}
                     hidden={this.state.hideWarning}
-                    onDismiss={() => this.setState({
-                        hideWarning: true
-                    })}
+                    onDismiss={() =>
+                        this.setState({
+                            hideWarning: true,
+                        })
+                    }
                     dialogContentProps={{
                         type: DialogType.normal,
                         title: 'Warning',
                     }}
                     modalProps={{
-                        containerClassName: 'ms-dialogMainOverride'
+                        layerProps: {
+                            hostId: 'target',
+                        },
+                        isBlocking: false,
+                        styles: { main: { maxWidth: 450 } },
+                        containerClassName: 'ms-dialogMainOverride',
                     }}
                 >
                     {deleteText}
                     <DialogFooter>
-                        <PrimaryButton 
+                        <PrimaryButton
                             onClick={() => this.deletePlan(this.props.selectedPlan)}
-                            text="Confirm" 
+                            text='Confirm'
                         />
-                        <DefaultButton 
-                            onClick={() => this.setState({
-                                hideWarning: true
-                            })} 
-                            text="Cancel" 
+                        <DefaultButton
+                            onClick={() =>
+                                this.setState({
+                                    hideWarning: true,
+                                })
+                            }
+                            text='Cancel'
                         />
                     </DialogFooter>
                 </Dialog>
-                <div className= 'vsonline-settings-panel__separator'/>
-            </Panel>
+            </Fragment>
         );
     }
 
     private getPlanSelector() {
-        if(this.state.deleteButtonDisabled){
-            return(
+        if (this.state.deleteButtonDisabled) {
+            return (
                 <Dropdown
                     className='vsonline-settings-panel__plan-selector'
-                    defaultSelectedKey="noPlans"
-                    options={[{key: 'noPlans', text: 'No plans available'}]}
+                    defaultSelectedKey='noPlans'
+                    options={[{ key: 'noPlans', text: 'No plans available' }]}
                     disabled={true}
                 />
-            )
+            );
         }
-        return(
-            <PlanSelector className='vsonline-settings-panel__plan-selector' hasNoCreate={true} {...this.props}/>
-        )     
+        return (
+            <PlanSelector
+                className='vsonline-settings-panel__plan-selector'
+                hasNoCreate={true}
+                {...this.props}
+            />
+        );
     }
 
     private renderOverlay() {
         const { isDeletingPlan } = this.state;
 
-        if (!isDeletingPlan ){
+        if (!isDeletingPlan) {
             return null;
         }
 
-        return(
+        return (
             <div className='settings-panel__overlay'>
                 <Loader message='Deleting the plan...' />
             </div>
-        )
+        );
     }
 
     private renderSuccessMessage() {
         const { showSuccessMessage } = this.state;
-        if(!showSuccessMessage){
+        if (!showSuccessMessage) {
             return null;
         }
 
-        return(
+        return (
             <MessageBar
                 messageBarType={MessageBarType.success}
                 isMultiline={false}
@@ -174,16 +220,16 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
             >
                 Your plan was successfully deleted.
             </MessageBar>
-        )
+        );
     }
 
     private renderFailureMessage() {
-        const { failureMessage } = this.state
-        if(!failureMessage){
+        const { failureMessage } = this.state;
+        if (!failureMessage) {
             return null;
         }
 
-        return(
+        return (
             <MessageBar
                 messageBarType={MessageBarType.error}
                 isMultiline={false}
@@ -191,48 +237,43 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
             >
                 {this.state.failureMessage}
             </MessageBar>
-        )
+        );
     }
 
-    private async deletePlan(selectedPlan: ActivePlanInfo | null){ 
+    private async deletePlan(selectedPlan: ActivePlanInfo | null) {
         this.setState({
-            hideWarning: true
+            hideWarning: true,
         });
 
-        if(selectedPlan){
+        if (selectedPlan) {
             this.setState({ isDeletingPlan: true });
 
             let errorMessage = await deletePlan(selectedPlan.id);
 
-            if(errorMessage){
+            if (errorMessage) {
                 this.setState({
                     failureMessage: errorMessage,
-                    isDeletingPlan: false
-                })
+                    isDeletingPlan: false,
+                });
                 return;
             }
 
             let newPlansList = await getPlans();
 
-            if(newPlansList.length > 0){
+            if (newPlansList.length > 0) {
                 selectPlan(newPlansList[0]);
-            }
-            else{
+            } else {
                 this.setState({ deleteButtonDisabled: true });
             }
-            
-            this.setState({ 
-                showSuccessMessage: true,
-                isDeletingPlan: false 
-            });
 
-        }
-        else{
             this.setState({
-                failureMessage: "No plan selected"
-            })
+                showSuccessMessage: true,
+                isDeletingPlan: false,
+            });
+        } else {
+            this.setState({
+                failureMessage: 'No plan selected',
+            });
         }
-        
     }
 }
-

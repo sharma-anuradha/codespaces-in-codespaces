@@ -33,7 +33,11 @@
     height: 5rem;
 }
 
+#target {
+    position: relative;
+    height: 30rem;
+}
+
 .ms-dialogMainOverride {
-    margin-left: 0;
-    margin-right: 0;
+    margin-bottom: 4rem;
 }
