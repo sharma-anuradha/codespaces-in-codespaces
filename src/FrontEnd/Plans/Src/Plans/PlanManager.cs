@@ -300,7 +300,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             }
 
             if (vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.HasValue &&
-                vsoPlan.Properties.DefaultAutoSuspendDelayMinutes <= 0)
+                vsoPlan.Properties.DefaultAutoSuspendDelayMinutes < 0)
             {
                 return false;
             }
