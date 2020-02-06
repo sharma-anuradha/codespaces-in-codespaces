@@ -23,6 +23,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -51,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="skuCatalog">The sku catalog.</param>
         /// <param name="mapper">The configured auto-mapper.</param>
         /// <param name="serviceUriBuilder">The service uri builder.</param>
+        /// <param name="frontEndAppSettings">Front-end app settings.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -59,7 +61,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ICurrentLocationProvider currentLocationProvider,
             ISkuCatalog skuCatalog,
             IMapper mapper,
-            IServiceUriBuilder serviceUriBuilder)
+            IServiceUriBuilder serviceUriBuilder,
+            FrontEndAppSettings frontEndAppSettings)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -69,6 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
             ServiceUriBuilder = Requires.NotNull(serviceUriBuilder, nameof(serviceUriBuilder));
+            FrontEndAppSettings = Requires.NotNull(frontEndAppSettings, nameof(frontEndAppSettings));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -86,6 +90,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private IMapper Mapper { get; }
 
         private IServiceUriBuilder ServiceUriBuilder { get; }
+
+        private FrontEndAppSettings FrontEndAppSettings { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -648,7 +654,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             return new StartCloudEnvironmentParameters
             {
                 AccessToken = accessToken,
-                ServiceUri = serviceUri,
+                FrontEndServiceUri = serviceUri,
+                ConnectionServiceUri = new Uri(FrontEndAppSettings.VSLiveShareApiEndpoint, UriKind.Absolute),
                 CallbackUriFormat = callbackUriFormat,
             };
         }

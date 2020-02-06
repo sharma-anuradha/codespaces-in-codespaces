@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public string Resolve(CloudEnvironment source, CloudEnvironmentResult destination, string destMember, ResolutionContext context)
         {
             var skuName = source.SkuName;
-            if (skuCatalog.CloudEnvironmentSkus.ContainsKey(skuName))
+            if (skuName != null && skuCatalog.CloudEnvironmentSkus.ContainsKey(skuName))
             {
                 return skuCatalog.CloudEnvironmentSkus[skuName].DisplayName;
             }

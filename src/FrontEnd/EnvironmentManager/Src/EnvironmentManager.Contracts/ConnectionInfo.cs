@@ -24,6 +24,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public string ConnectionSessionPath { get; set; }
 
         /// <summary>
+        /// Gets or sets the Live Share service URI that should be used
+        /// to connect to this environment.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "serviceUri")]
+        public string ConnectionServiceUri { get; set; }
+
+        /// <summary>
         /// Gets or sets the connection compute id.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "computeId")]

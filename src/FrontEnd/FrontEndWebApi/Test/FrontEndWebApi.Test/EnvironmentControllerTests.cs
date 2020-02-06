@@ -7,6 +7,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -16,9 +17,11 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
@@ -66,6 +69,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         }
 
         [Fact]
+        public async Task EnvironmentController_GetAsync()
+        {
+            var mockEnv = MockCloudEnvironment();
+            var expectedEnvId = mockEnv.Id;
+
+            var mockEnvManager = MockCloudEnvironmentManager(mockEnv);
+            var environmentController = CreateTestEnvironmentsController(
+                environmentManager: mockEnvManager);
+
+            var actionResult = await environmentController.GetAsync(expectedEnvId, logger);
+            Assert.IsType<OkObjectResult>(actionResult);
+
+            Assert.IsType<CloudEnvironmentResult>(((ObjectResult)actionResult).Value);
+            var environment = (CloudEnvironmentResult)((ObjectResult)actionResult).Value;
+            Assert.Equal(expectedEnvId, environment.Id);
+            Assert.NotNull(environment.Connection);
+            Assert.Equal(MockServiceUri, environment.Connection.ConnectionServiceUri);
+        }
+
+        [Fact]
         public async Task EnvironmentController_CloudEnvironmentAsync()
         {
             var logger = new Mock<IDiagnosticsLogger>().Object;
@@ -83,6 +106,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<CreatedResult>(actionResult);
+
+            Assert.IsType<CloudEnvironmentResult>(((ObjectResult)actionResult).Value);
+            var environment = (CloudEnvironmentResult)((ObjectResult)actionResult).Value;
+            Assert.NotNull(environment.Connection);
+            Assert.Equal(MockServiceUri, environment.Connection.ConnectionServiceUri);
         }
 
         public static TheoryData<Uri> CreateEnvironmentUrls = new TheoryData<Uri>
@@ -454,6 +482,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             skuCatalog ??= MockSkuCatalog();
             var mapper = MockMapper();
             serviceUriBuilder ??= MockServiceUriBuilder();
+            var settings = new FrontEndAppSettings
+            {
+                VSLiveShareApiEndpoint = MockServiceUri,
+            };
 
             var environmentController = new EnvironmentsController(
                 environmentManager,
@@ -463,7 +495,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 currentLocationProvider,
                 skuCatalog,
                 mapper,
-                serviceUriBuilder);
+                serviceUriBuilder,
+                settings);
 
             httpContext ??= MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;
@@ -485,6 +518,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 Id = Guid.NewGuid().ToString(),
                 Location = AzureLocation.WestUs2,
                 OwnerId = ownerId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,
+                Connection = new EnvironmentManager.ConnectionInfo(),
             };
         }
 
@@ -517,19 +551,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         private IMapper MockMapper()
         {
-            var config = new MapperConfiguration(cfg =>
+            // Use a temporary service provider to construct and get the FrontEnd model mapper.
+            var factory = new DefaultServiceProviderFactory();
+            var serviceCollection = factory.CreateBuilder(new ServiceCollection());
+
+            serviceCollection.AddSingleton(new FrontEndAppSettings
             {
-                cfg.CreateMap<CloudEnvironment, CloudEnvironmentResult>();
-                cfg.CreateMap<CreateCloudEnvironmentBody, CloudEnvironment>();
-                cfg.CreateMap<SeedInfoBody, SeedInfo>();
-                cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();
-                cfg.CreateMap<EnvironmentRegistrationCallbackBody, EnvironmentRegistrationCallbackOptions>();
-                cfg.CreateMap<EnvironmentRegistrationCallbackPayloadBody, EnvironmentRegistrationCallbackPayloadOptions>();
+                VSLiveShareApiEndpoint = MockServiceUri,
             });
+            serviceCollection.AddSingleton(MockSkuCatalog());
+            serviceCollection.AddModelMapper();
 
-            var mapper = new Mapper(config);
-
-            return mapper;
+            var serviceProvider = factory.CreateServiceProvider(serviceCollection);
+            return serviceProvider.GetService<IMapper>();
         }
 
         private ISkuCatalog LoadSkuCatalog(string environmentName)
@@ -761,8 +795,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     VsoPlanInfo plan,
                     IDiagnosticsLogger logger) =>
                 {
-                    Assert.Equal(MockServiceUri, startParams.ServiceUri.ToString());
+                    Assert.Equal(MockServiceUri, startParams.FrontEndServiceUri.ToString());
                     Assert.Equal(MockCallbackUriFormat, startParams.CallbackUriFormat);
+
+                    env.Connection = new EnvironmentManager.ConnectionInfo
+                    {
+                        ConnectionServiceUri = startParams.ConnectionServiceUri.AbsoluteUri,
+                    };
 
                     return new CloudEnvironmentServiceResult
                     {
@@ -782,7 +821,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     StartCloudEnvironmentParameters startParams,
                     IDiagnosticsLogger logger) =>
                 {
-                    Assert.Equal(MockServiceUri, startParams.ServiceUri.ToString());
+                    Assert.Equal(MockServiceUri, startParams.FrontEndServiceUri.ToString());
                     Assert.Equal(MockCallbackUriFormat, startParams.CallbackUriFormat);
 
                     return new CloudEnvironmentServiceResult

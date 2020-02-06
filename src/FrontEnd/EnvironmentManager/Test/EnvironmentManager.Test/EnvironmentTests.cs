@@ -22,5 +22,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.True(deleteResult);
 
         }
+
+        [Fact]
+        public async Task EnvironmentServiceUri()
+        {
+            var result = await CreateTestEnvironmentAsync("ABC");
+
+            Assert.NotNull(result.CloudEnvironment.Connection);
+            Assert.Equal(testServiceUri.AbsoluteUri, result.CloudEnvironment.Connection.ConnectionServiceUri);
+
+            var environment2 = await this.environmentManager.GetAsync(result.CloudEnvironment.Id, logger);
+            Assert.NotNull(environment2.Connection);
+            Assert.Equal(testServiceUri.AbsoluteUri, result.CloudEnvironment.Connection.ConnectionServiceUri);
+        }
     }
 }

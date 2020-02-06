@@ -105,7 +105,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 new StartCloudEnvironmentParameters
                 {
                     AccessToken = testAccessToken,
-                    ServiceUri = testServiceUri,
+                    FrontEndServiceUri = testServiceUri,
+                    ConnectionServiceUri = testServiceUri,
                     CallbackUriFormat = testCallbackUriFormat,
                 },
                 testPlan,

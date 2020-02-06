@@ -24,6 +24,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <summary>
         /// Gets or sets the service uri.
         /// </summary>
-        public Uri ServiceUri { get; set; }
+        public Uri FrontEndServiceUri { get; set; }
+
+        /// <summary>
+        /// Gets or sets the connection service (Live Share) uri.
+        /// </summary>
+        public Uri ConnectionServiceUri { get; set; }
     }
 }

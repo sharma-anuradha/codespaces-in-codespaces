@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
     /// <summary>
     /// <see cref="IServiceCollection"/> extensions for <see cref="IMapper"/>.
     /// </summary>
-    internal static class ServiceCollectionModelMapperExtensions
+    public static class ServiceCollectionModelMapperExtensions
     {
         /// <summary>
         /// Configure and add <see cref="IMapper"/> for environment registration models.
@@ -32,8 +32,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                 var skuCatalog = serviceProvider.GetService<ISkuCatalog>();
                 var config = new MapperConfiguration(cfg =>
                 {
-                    cfg.CreateMap<CloudEnvironment, CloudEnvironmentResult>().ForMember(dest => dest.SkuDisplayName, opt => opt.MapFrom(new SkuDisplayNameMapper(skuCatalog)));
-                    cfg.CreateMap<ConnectionInfo, ConnectionInfoBody>().AfterMap((src, dest) => dest.ConnectionServiceUri = frontEndAppSettings.VSLiveShareApiEndpoint);
+                    cfg.CreateMap<CloudEnvironment, CloudEnvironmentResult>()
+                        .ForMember(dest => dest.SkuDisplayName, opt => opt.MapFrom(new SkuDisplayNameMapper(skuCatalog)));
+                    cfg.CreateMap<ConnectionInfo, ConnectionInfoBody>()
+                        .ForMember(dest => dest.ConnectionServiceUri, opt => opt.NullSubstitute(frontEndAppSettings.VSLiveShareApiEndpoint));
                     cfg.CreateMap<CreateCloudEnvironmentBody, CloudEnvironment>();
                     cfg.CreateMap<ConnectionInfoBody, ConnectionInfo>();
                     cfg.CreateMap<SeedInfoBody, SeedInfo>();

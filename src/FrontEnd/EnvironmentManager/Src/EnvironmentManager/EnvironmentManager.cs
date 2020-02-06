@@ -361,7 +361,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                         if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                         {
-                            cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.StaticEnvironment, cloudEnvironment.Id, Guid.Empty, childLogger.NewChildLogger());
+                            cloudEnvironment.Connection = await CreateWorkspace(
+                                CloudEnvironmentType.StaticEnvironment,
+                                cloudEnvironment.Id,
+                                Guid.Empty,
+                                startCloudEnvironmentParameters.ConnectionServiceUri,
+                                childLogger.NewChildLogger());
                         }
 
                         if (cloudEnvironment.Seed == default || cloudEnvironment.Seed.SeedType != SeedType.StaticEnvironment)
@@ -426,7 +431,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     // Create the Live Share workspace
-                    cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                    cloudEnvironment.Connection = await CreateWorkspace(
+                        CloudEnvironmentType.CloudEnvironment,
+                        cloudEnvironment.Id,
+                        cloudEnvironment.Compute.ResourceId,
+                        startCloudEnvironmentParameters.ConnectionServiceUri,
+                        childLogger.NewChildLogger());
                     if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                     {
                         childLogger.LogErrorWithDetail($"{LogBaseName}_create_workspace_error", "Could not create the cloud environment workspace session.");
@@ -628,7 +638,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     // Create the Live Share workspace
-                    cloudEnvironment.Connection = await CreateWorkspace(CloudEnvironmentType.CloudEnvironment, cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                    cloudEnvironment.Connection = await CreateWorkspace(
+                        CloudEnvironmentType.CloudEnvironment,
+                        cloudEnvironment.Id,
+                        cloudEnvironment.Compute.ResourceId,
+                        startCloudEnvironmentParameters.ConnectionServiceUri,
+                        childLogger.NewChildLogger());
                     if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                     {
                         childLogger.LogErrorWithDetail($"{LogBaseName}_resume_workspace_error", "Could not create the cloud environment workspace session.");
@@ -962,11 +977,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentType type,
             string cloudEnvironmentId,
             Guid computeIdToken,
+            Uri connectionServiceUri,
             IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
 
             Requires.NotNullOrEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
+            Requires.NotNull(connectionServiceUri, nameof(connectionServiceUri));
 
             var workspaceRequest = new WorkspaceRequest()
             {
@@ -987,6 +1004,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             return new ConnectionInfo
             {
+                ConnectionServiceUri = connectionServiceUri.AbsoluteUri,
                 ConnectionComputeId = computeIdToken.ToString(),
                 ConnectionComputeTargetId = type.ToString(),
                 ConnectionSessionId = workspaceResponse.Id,
@@ -1093,7 +1111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
             Requires.NotNullOrEmpty(startCloudEnvironmentParameters.CallbackUriFormat, nameof(startCloudEnvironmentParameters.CallbackUriFormat));
-            Requires.NotNull(startCloudEnvironmentParameters.ServiceUri, nameof(startCloudEnvironmentParameters.ServiceUri));
+            Requires.NotNull(startCloudEnvironmentParameters.FrontEndServiceUri, nameof(startCloudEnvironmentParameters.FrontEndServiceUri));
             UnauthorizedUtil.IsRequired(startCloudEnvironmentParameters.AccessToken);
 
             var callbackUri = new Uri(string.Format(startCloudEnvironmentParameters.CallbackUriFormat, cloudEnvironment.Id));
@@ -1105,7 +1123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Construct the start-compute environment variables
             var environmentVariables = EnvironmentVariableGenerator.Generate(
                 cloudEnvironment,
-                startCloudEnvironmentParameters.ServiceUri,
+                startCloudEnvironmentParameters.FrontEndServiceUri,
                 callbackUri,
                 startCloudEnvironmentParameters.AccessToken,
                 cascadeToken,
