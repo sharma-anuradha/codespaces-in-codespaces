@@ -278,14 +278,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public Task<bool> ArePlanPropertiesValidAsync(VsoPlan vsoPlan, IDiagnosticsLogger logger)
+        public async Task<bool> ArePlanPropertiesValidAsync(VsoPlan vsoPlan, IDiagnosticsLogger logger)
         {
+            await Task.CompletedTask;
+
             Requires.NotNull(vsoPlan, nameof(vsoPlan));
             Requires.NotNull(logger, nameof(logger));
 
             if (vsoPlan.Properties == null)
             {
-                return Task.FromResult(true);
+                return true;
             }
 
             if (!string.IsNullOrWhiteSpace(vsoPlan.Properties.DefaultEnvironmentSku))
@@ -293,17 +295,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 if (!skuCatalog.CloudEnvironmentSkus.TryGetValue(vsoPlan.Properties.DefaultEnvironmentSku, out var environmentSku))
                 {
                     logger.LogErrorWithDetail("plan_property_validate_error", "Environment sku not supported.");
-                    return Task.FromResult(false);
+                    return false;
                 }
             }
 
             if (vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.HasValue &&
                 vsoPlan.Properties.DefaultAutoSuspendDelayMinutes <= 0)
             {
-                return Task.FromResult(false);
+                return false;
             }
 
-            return Task.FromResult(true);
+            return true;
         }
 
         /// <inheritdoc/>

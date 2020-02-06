@@ -464,9 +464,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     var vsoPlan = mapper.Map<VsoPlan>(resource);
                     vsoPlan.Plan = plan;
 
+                    // Check if plan exists
+                    var currentPlan = (await planManager.ListAsync(null, subscriptionId, resourceGroup, resourceName, logger))?.SingleOrDefault();
+                    if (currentPlan == null)
+                    {
+                        logger.LogErrorWithDetail("plan_patch_failed", "Plan does not exist.");
+                        return CreateErrorResponse("PatchValidateResourceFailed");
+                    }
+
                     var arePropertiesValid = await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger);
                     if (!arePropertiesValid)
                     {
+                        logger.LogErrorWithDetail("plan_patch_failed", "Plan properties are not valid.");
                         return CreateErrorResponse("PatchValidateResourceFailed");
                     }
 
