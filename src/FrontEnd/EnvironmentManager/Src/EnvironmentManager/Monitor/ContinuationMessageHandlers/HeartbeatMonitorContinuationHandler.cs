@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             if (StateToProcess.Contains(envRecord.State))
             {
                 // Check heartbeat timeout
-                if (envRecord.Compute.KeepAlive?.ResourceAlive == null || envRecord.Compute.KeepAlive.ResourceAlive < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes))
+                if (envRecord.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes))
                 {
                     // Compute is not healthy, kick off force shutdown
                     await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(envRecord, logger.NewChildLogger());

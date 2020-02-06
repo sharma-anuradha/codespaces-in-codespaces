@@ -52,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                 $"{LogBaseName}_force_suspend",
                 async (childLogger) =>
                 {
-                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown, null, logger);
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.EnvironmentMonitor, "EnvironmentRepair", logger.NewChildLogger());
 
                     var computeIdToken = cloudEnvironment.Compute?.ResourceId;
                     cloudEnvironment.Compute = null;

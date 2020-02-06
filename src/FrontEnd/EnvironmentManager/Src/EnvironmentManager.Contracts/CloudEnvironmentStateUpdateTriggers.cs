@@ -10,6 +10,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     public static class CloudEnvironmentStateUpdateTriggers
     {
         /// <summary>
+        /// Environment Monitor triggered state change.
+        /// </summary>
+        public const string EnvironmentMonitor = "EnvironmentMonitor";
+
+        /// <summary>
         /// Start environment failed.
         /// </summary>
         public const string ForceEnvironmentShutdown = "ForceEnvironmentShutdown";
