@@ -5,14 +5,14 @@
     "subscriptionId": "0000000-0000-0000-0000-000000000000",
     "resourceGroupName": "resourceGroup",
     "location": "eastus",
-    "vsoPlanUpdateParameters": {
+    "vsonlinePlanUpdateParameters": {
       "tags": {
         "key1": "value1",
         "key2": "value2"
       },
       "sku": { "name": "Preview" },
       "properties": {
-        "defaultAutoSuspendDelayMinutes": "5",
+        "defaultAutoSuspendDelayMinutes": 5,
         "defaultEnvironmentSku": "linux"
       }
     }
