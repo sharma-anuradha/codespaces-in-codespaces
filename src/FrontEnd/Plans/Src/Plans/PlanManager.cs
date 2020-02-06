@@ -278,25 +278,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public async Task<bool> ArePlanPropertiesValidAsync(VsoPlan vsoPlan, IDiagnosticsLogger logger)
+        public Task<bool> ArePlanPropertiesValidAsync(VsoPlan vsoPlan, IDiagnosticsLogger logger)
         {
             Requires.NotNull(vsoPlan, nameof(vsoPlan));
             Requires.NotNull(logger, nameof(logger));
 
-            var currentPlan = (await planRepository.GetWhereAsync(
-                (model) => model.Plan.Name == vsoPlan.Plan.Name &&
-                           model.Plan.Subscription == vsoPlan.Plan.Subscription &&
-                           model.Plan.ResourceGroup == vsoPlan.Plan.ResourceGroup,
-                logger,
-                null)).Where(x => x.IsDeleted != true).SingleOrDefault();
-            if (currentPlan == null || currentPlan.Plan == null)
-            {
-                return false;
-            }
-
             if (vsoPlan.Properties == null)
             {
-                return true;
+                return Task.FromResult(true);
             }
 
             if (!string.IsNullOrWhiteSpace(vsoPlan.Properties.DefaultEnvironmentSku))
@@ -304,17 +293,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 if (!skuCatalog.CloudEnvironmentSkus.TryGetValue(vsoPlan.Properties.DefaultEnvironmentSku, out var environmentSku))
                 {
                     logger.LogErrorWithDetail("plan_property_validate_error", "Environment sku not supported.");
-                    return false;
+                    return Task.FromResult(false);
                 }
             }
 
             if (vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.HasValue &&
                 vsoPlan.Properties.DefaultAutoSuspendDelayMinutes <= 0)
             {
-                return false;
+                return Task.FromResult(false);
             }
 
-            return true;
+            return Task.FromResult(true);
         }
 
         /// <inheritdoc/>

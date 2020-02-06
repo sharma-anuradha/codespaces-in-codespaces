@@ -130,6 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     var arePropertiesValid = await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger);
                     if (!arePropertiesValid)
                     {
+                        logger.LogErrorWithDetail("plan_create_validate_error", "Plan properties are not valid.");
                         return CreateErrorResponse("ValidateResourceFailed");
                     }
 
