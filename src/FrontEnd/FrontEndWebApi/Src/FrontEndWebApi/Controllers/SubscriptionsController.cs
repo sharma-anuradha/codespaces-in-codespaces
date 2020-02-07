@@ -90,12 +90,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     try
                     {
+                        var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
+                            ? resource.Properties.UserId
+                            : GetUserIdFromClaims();
+
                         ValidationUtil.IsRequired(subscriptionId);
                         ValidationUtil.IsRequired(resourceGroup);
                         ValidationUtil.IsRequired(providerNamespace);
                         ValidationUtil.IsRequired(resourceType);
                         ValidationUtil.IsRequired(resourceName);
-                        ValidationUtil.IsRequired(resource.Properties?.UserId);
+                        ValidationUtil.IsRequired(userId);
                         ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                         ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
                     }
@@ -109,12 +113,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     {
                         logger.LogErrorWithDetail("plan_create_validate_error", "Plan creation is not allowed.");
                         return CreateErrorResponse("ValidateResourceFailed");
-                    }
-
-                    if (resource.Properties?.UserId != null)
-                    {
-                        // TODO: Validate that the user id is valid (may require checking Live Share profile.)
-                        // TODO: Validate that the user profile exists.
                     }
 
                     var plan = new VsoPlanInfo
@@ -164,6 +162,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 $"{LoggingBaseName}_plan_create",
                 async (logger) =>
                 {
+                    var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
+                        ? resource.Properties.UserId
+                        : GetUserIdFromClaims();
+
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
                     ValidationUtil.IsRequired(providerNamespace);
@@ -174,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(
                         Enum.TryParse(nospacesLocation, true, out AzureLocation location),
                         $"Invalid location: ${resource.Location}");
-                    ValidationUtil.IsRequired(resource.Properties?.UserId);
+                    ValidationUtil.IsRequired(userId);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
@@ -187,7 +189,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                             ResourceGroup = resourceGroup,
                             Subscription = subscriptionId,
                         },
-                        UserId = resource.Properties.UserId,
+                        UserId = userId,
                     };
                     var result = await planManager.CreateAsync(plan, logger);
 
@@ -916,6 +918,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 StatusCode = (int)statusCode,
             };
+        }
+
+        private string GetUserIdFromClaims()
+        {
+            var tid = HttpContext.User.FindFirstValue(CustomClaims.TenantId);
+            var oid = HttpContext.User.FindFirstValue(CustomClaims.OId);
+
+            if (string.IsNullOrEmpty(tid) || string.IsNullOrEmpty(oid))
+            {
+                return null;
+            }
+
+            return $"{tid}_{oid}";
         }
     }
 }
