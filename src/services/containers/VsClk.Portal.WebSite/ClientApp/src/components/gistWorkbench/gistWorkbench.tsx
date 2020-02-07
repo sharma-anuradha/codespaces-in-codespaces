@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
@@ -56,4 +56,4 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
     };
 };
 
-export const GistWorkbench = connect(getProps)(GistWorkbenchView);
+export const GistWorkbench = withRouter(connect(getProps)(GistWorkbenchView));

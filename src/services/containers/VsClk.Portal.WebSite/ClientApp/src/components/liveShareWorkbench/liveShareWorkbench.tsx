@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { URI } from 'vscode-web';
 import { LiveShareExternalUriProvider } from '../../providers/externalUriProvider';
@@ -63,4 +63,4 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
     };
 };
 
-export const LiveShareWorkbench = connect(getProps)(LiveShareWorkbenchView);
+export const LiveShareWorkbench = withRouter(connect(getProps)(LiveShareWorkbenchView));
