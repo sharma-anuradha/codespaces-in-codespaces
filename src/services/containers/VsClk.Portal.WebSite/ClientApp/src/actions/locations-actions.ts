@@ -64,14 +64,8 @@ export async function getLocation(location: string) {
 
         const locationInfo = await doApiGetRequest<ILocation>(`/locations/${location}`);
 
-        // TODO: filtering windows on the client side for now to hide the option - later this filter will be move to the server (#983757)
-        const skuFilteredLocationInfo = {
-            ...locationInfo,
-            skus: locationInfo.skus.filter((s) => s.os.toLowerCase() !== 'windows'),
-        };
-
-        dispatch(getLocationSuccessAction(skuFilteredLocationInfo));
-        return skuFilteredLocationInfo;
+        dispatch(getLocationSuccessAction(locationInfo));
+        return locationInfo;
     } catch (err) {
         return dispatch(getLocationFailureAction(err));
     }
