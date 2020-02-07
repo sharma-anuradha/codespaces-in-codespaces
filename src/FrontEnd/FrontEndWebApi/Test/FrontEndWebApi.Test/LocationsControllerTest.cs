@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
@@ -20,6 +21,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
     public class LocationsControllerTest
     {
+        private static readonly int[] DefaultAutoSuspendDelayMinutes = new int[] { 0, 5, 30, 120 };
+
         [Fact]
         public void GetLocationInfo()
         {
@@ -94,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             });
 
             var controller = CreateTestLocationsController(
-                skuCatalog: skuCatalog.Object, 
+                skuCatalog: skuCatalog.Object,
                 currentUserProvider: currentUserProvider);
 
             var result = controller.Get(AzureLocation.WestUs2.ToString(), logger);
@@ -108,6 +111,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.Equal("cheapLinux", locationInfo.Skus[0].Name);
             Assert.Equal("premiumLinux", locationInfo.Skus[1].Name);
             Assert.Equal("windows", locationInfo.Skus[2].Name);
+
+            Assert.Equal(DefaultAutoSuspendDelayMinutes, locationInfo.DefaultAutoSuspendDelayMinutes);
         }
 
         private LocationsController CreateTestLocationsController(ISkuCatalog skuCatalog, ICurrentUserProvider currentUserProvider = null)
@@ -116,7 +121,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 MockCurrentLocationProvider(),
                 MockControlPlaneInfo(),
                 skuCatalog,
-                currentUserProvider ?? MockCurrentUserProvider());
+                currentUserProvider ?? MockCurrentUserProvider(),
+                new PlanManagerSettings
+                {
+                    DefaultAutoSuspendDelayMinutesOptions = DefaultAutoSuspendDelayMinutes,
+                });
 
             var httpContext = MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;

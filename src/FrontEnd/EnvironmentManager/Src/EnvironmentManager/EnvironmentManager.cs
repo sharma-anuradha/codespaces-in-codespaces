@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -39,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="skuCatalog">The SKU catalog.</param>
         /// <param name="environmentMonitor">The environment monitor.</param>
         /// <param name="environmentManagerSettings">The environment manager settings.</param>
+        /// <param name="planManagerSettings">The plan manager settings.</param>
         public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
@@ -47,7 +49,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IBillingEventManager billingEventManager,
             ISkuCatalog skuCatalog,
             IEnvironmentMonitor environmentMonitor,
-            EnvironmentManagerSettings environmentManagerSettings)
+            EnvironmentManagerSettings environmentManagerSettings,
+            PlanManagerSettings planManagerSettings)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
@@ -57,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             SkuCatalog = skuCatalog;
             EnvironmentMonitor = environmentMonitor;
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
+            PlanManagerSettings = Requires.NotNull(planManagerSettings, nameof(PlanManagerSettings));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -74,6 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IEnvironmentMonitor EnvironmentMonitor { get; }
 
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
+
+        private PlanManagerSettings PlanManagerSettings { get; }
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> GetAsync(
@@ -883,8 +889,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     var result = new CloudEnvironmentAvailableSettingsUpdates();
 
-                    result.AllowedAutoShutdownDelayMinutes =
-                        EnvironmentManagerSettings.DefaultAutoShutdownDelayMinutesOptions?.ToArray() ?? Array.Empty<int>();
+                    result.AllowedAutoShutdownDelayMinutes = PlanManagerSettings.DefaultAutoSuspendDelayMinutesOptions;
 
                     if (SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var currentSku) &&
                         currentSku.SupportedSkuTransitions != null &&

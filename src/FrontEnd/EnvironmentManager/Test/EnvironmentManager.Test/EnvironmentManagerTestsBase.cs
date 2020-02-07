@@ -57,7 +57,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             logger = loggerFactory.New();
 
             var defaultCount = 20;
-            var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = defaultCount };
+            var planSettings = new PlanManagerSettings()
+            {
+                DefaultMaxPlansPerSubscription = defaultCount,
+                DefaultAutoSuspendDelayMinutesOptions = new int[] { 0, 5, 30, 120 },
+            };
             var environmentSettings = new EnvironmentManagerSettings() { DefaultMaxEnvironmentsPerPlan = defaultCount };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
@@ -87,7 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.billingEventManager,
                 this.skuCatalog,
                 this.environmentMonitor,
-                environmentSettings);
+                environmentSettings,
+                planSettings);
         }
 
         public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")
@@ -111,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 },
                 testPlan,
                 this.logger);
-            
+
             return serviceResult;
         }
 

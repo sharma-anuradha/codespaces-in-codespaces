@@ -5,6 +5,7 @@
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
 {
@@ -22,6 +23,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
         /// Gets or sets the global Plan Quota.
         /// </summary>
         public int DefaultGlobalPlanLimit { get; set; }
+
+        /// <summary>
+        /// Gets or sets the options for auto suspend delay minutes.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public int[] DefaultAutoSuspendDelayMinutesOptions { get; set; }
 
         private ISystemConfiguration SystemConfiguration { get; set; }
 

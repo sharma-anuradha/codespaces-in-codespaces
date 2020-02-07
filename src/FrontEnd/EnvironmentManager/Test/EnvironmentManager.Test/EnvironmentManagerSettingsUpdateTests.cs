@@ -226,7 +226,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environmentSettings = new EnvironmentManagerSettings() 
             {
                 DefaultMaxEnvironmentsPerPlan = defaultCount,
-                DefaultAutoShutdownDelayMinutesOptions = autoShutdownDelayOptions ?? defaultAutoShutdownOptions,
             };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
@@ -256,7 +255,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 billingEventManager,
                 skuCatalog,
                 environmentMonitor,
-                environmentSettings);
+                environmentSettings,
+                new PlanManagerSettings
+                {
+                    DefaultAutoSuspendDelayMinutesOptions = autoShutdownDelayOptions ?? defaultAutoShutdownOptions,
+                });
         }
 
         private static ICloudEnvironmentSku MockSku(

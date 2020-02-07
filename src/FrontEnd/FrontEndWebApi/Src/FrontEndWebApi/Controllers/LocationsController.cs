@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 
@@ -40,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private readonly IControlPlaneInfo controlPlaneInfo;
         private readonly ISkuCatalog skuCatalog;
         private readonly ICurrentUserProvider currentUserProvider;
+        private readonly PlanManagerSettings planManagerSettings;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LocationsController"/> class.
@@ -48,16 +50,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="controlPlaneInfo">Control plane information.</param>
         /// <param name="skuCatalog">SKU catalog for the current location.</param>
         /// <param name="currentUserProvider">The current user's profile.</param>
+        /// <param name="planManagerSettings">The default plan settings.</param>
         public LocationsController(
             ICurrentLocationProvider locationProvider,
             IControlPlaneInfo controlPlaneInfo,
             ISkuCatalog skuCatalog,
-            ICurrentUserProvider currentUserProvider)
+            ICurrentUserProvider currentUserProvider,
+            PlanManagerSettings planManagerSettings)
         {
             this.locationProvider = locationProvider;
             this.controlPlaneInfo = controlPlaneInfo;
             this.skuCatalog = skuCatalog;
             this.currentUserProvider = currentUserProvider;
+            this.planManagerSettings = planManagerSettings;
         }
 
         /// <summary>
@@ -140,6 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var result = new LocationInfoResult
             {
                 Skus = outputSkus,
+                DefaultAutoSuspendDelayMinutes = planManagerSettings.DefaultAutoSuspendDelayMinutesOptions,
             };
 
             return Ok(result);
