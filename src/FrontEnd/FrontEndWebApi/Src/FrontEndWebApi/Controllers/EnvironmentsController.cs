@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Audit;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
@@ -41,6 +42,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [LoggingBaseName("environments_controller")]
     public class EnvironmentsController : ControllerBase /* TODO add this later IEnvironmentsHttpContract */
     {
+        private const string LoggingBaseName = "environments_controller";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentsController"/> class.
         /// </summary>
@@ -192,6 +195,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             logger.AddCloudEnvironment(result.CloudEnvironment);
 
+            try
+            {
+                var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+                var targetResource = new TargetResource("environment", result.CloudEnvironment.Id);
+                logger.Audit(
+                    AuditScope.Application,
+                    "EnvironmentShutdown",
+                    AuditEventCategory.ObjectManagement,
+                    new CallerIdentity(CallerIdentityType.ObjectID, userId),
+                    targetResource,
+                    OperationResult.Success);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException($"{LoggingBaseName}_audit_error", ex);
+            }
+
             return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result.CloudEnvironment));
         }
 
@@ -237,6 +257,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             logger.AddCloudEnvironment(result.CloudEnvironment);
+
+            try
+            {
+                var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+                var targetResource = new TargetResource("environment", result.CloudEnvironment.Id);
+                logger.Audit(
+                    AuditScope.Application,
+                    "EnvironmentStart",
+                    AuditEventCategory.ObjectManagement,
+                    new CallerIdentity(CallerIdentityType.ObjectID, userId),
+                    targetResource,
+                    OperationResult.Success);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException($"{LoggingBaseName}_audit_error", ex);
+            }
 
             return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result.CloudEnvironment));
         }
@@ -385,6 +422,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             logger.AddCloudEnvironment(createCloudEnvironmentResult.CloudEnvironment);
 
+            try
+            {
+                var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+                var targetResource = new TargetResource("environment", createCloudEnvironmentResult.CloudEnvironment.Id);
+                logger.Audit(
+                    AuditScope.Application,
+                    "EnvironmentCreate",
+                    AuditEventCategory.ObjectManagement,
+                    new CallerIdentity(CallerIdentityType.ObjectID, userId),
+                    targetResource,
+                    OperationResult.Success);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException($"{LoggingBaseName}_audit_error", ex);
+            }
+
             return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(createCloudEnvironmentResult.CloudEnvironment));
         }
 
@@ -424,6 +478,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             if (!result)
             {
                 return NotFound();
+            }
+
+            try
+            {
+                var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+                var targetResource = new TargetResource("environment", environment.Id);
+                logger.Audit(
+                    AuditScope.Application,
+                    "EnvironmentDelete",
+                    AuditEventCategory.ObjectManagement,
+                    new CallerIdentity(CallerIdentityType.ObjectID, userId),
+                    targetResource,
+                    OperationResult.Success);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException($"{LoggingBaseName}_audit_error", ex);
             }
 
             return NoContent();
@@ -526,6 +597,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             if (result.IsSuccess)
             {
+                try
+                {
+                    var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+                    var targetResource = new TargetResource("environment", environment.Id);
+                    logger.Audit(
+                        AuditScope.Application,
+                        "EnvironmentUpdate",
+                        AuditEventCategory.ObjectManagement,
+                        new CallerIdentity(CallerIdentityType.ObjectID, userId),
+                        targetResource,
+                        OperationResult.Success);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogException($"{LoggingBaseName}_audit_error", ex);
+                }
+
                 return Ok(Mapper.Map<CloudEnvironmentResult>(result.CloudEnvironment));
             }
             else
