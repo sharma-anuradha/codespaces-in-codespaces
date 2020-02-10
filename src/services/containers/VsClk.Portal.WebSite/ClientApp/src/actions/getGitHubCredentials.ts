@@ -48,10 +48,10 @@ export async function getGitHubCredentials() {
     }
 }
 
-export function tryGetGitHubCredentialsLocal() {
+export async function tryGetGitHubCredentialsLocal() {
     const dispatch = useDispatch();
 
-    const accessToken = getStoredGitHubToken();
+    const accessToken = await getStoredGitHubToken();
     if (!accessToken) {
         return;
     }

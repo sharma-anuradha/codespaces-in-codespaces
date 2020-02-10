@@ -1,11 +1,14 @@
+import { Disposable } from 'vscode-jsonrpc';
+
 import { createUniqueId } from '../dependencies';
 import { createTrace } from '../utils/createTrace';
 import { Signal } from '../utils/signal';
-import { Disposable } from 'vscode-jsonrpc';
+import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
 
 export const trace = createTrace('GitHubCredentialService');
 
-export const gitHubLocalStorageKey = 'githubAccessToken';
+const unencryptedLocalStorageKey = 'githubAccessToken';
+const gitHubLocalStorageKey = 'githubAccessTokenEncrypted';
 
 type GitHubAccessTokenResponse = {
     readonly accessToken: string;
@@ -13,21 +16,35 @@ type GitHubAccessTokenResponse = {
     readonly scope?: string;
 };
 
-export function storeGitHubAccessTokenResponse({
+export function isGitHubTokenUpdate(event: StorageEvent) {
+    return event.key === gitHubLocalStorageKey;
+}
+
+export async function storeGitHubAccessTokenResponse({
     accessToken,
     state,
     scope,
 }: GitHubAccessTokenResponse) {
-    localStorage.setItem(gitHubLocalStorageKey, JSON.stringify({ accessToken, state, scope }));
+    await localStorageKeychain.set(
+        gitHubLocalStorageKey,
+        JSON.stringify({ accessToken, state, scope })
+    );
 }
 
-function clearGitHubAccessTokenResponse() {
-    localStorage.removeItem(gitHubLocalStorageKey);
+async function clearGitHubAccessTokenResponse() {
+    await localStorageKeychain.delete(gitHubLocalStorageKey);
 }
 
-function getStoredGitHubAccessTokenResponse(): GitHubAccessTokenResponse | null {
-    const storedTokenString = localStorage.getItem(gitHubLocalStorageKey);
+async function getStoredGitHubAccessTokenResponse(): Promise<GitHubAccessTokenResponse | null> {
+    // We migrate the existing token first for background compatibility
+    const unencryptedToken = localStorage.getItem(unencryptedLocalStorageKey);
+    if (unencryptedToken) {
+        localStorage.removeItem(unencryptedLocalStorageKey);
+        await localStorageKeychain.set(gitHubLocalStorageKey, unencryptedToken);
+    }
 
+    const storedTokenString =
+        unencryptedToken || (await localStorageKeychain.get(gitHubLocalStorageKey));
     if (!storedTokenString) {
         return null;
     }
@@ -35,11 +52,11 @@ function getStoredGitHubAccessTokenResponse(): GitHubAccessTokenResponse | null 
     try {
         const parsedToken = JSON.parse(storedTokenString);
         if (typeof parsedToken.accessToken !== 'string') {
-            localStorage.removeItem(gitHubLocalStorageKey);
+            await localStorageKeychain.delete(gitHubLocalStorageKey);
             return null;
         }
         if (typeof parsedToken.state !== 'string') {
-            localStorage.removeItem(gitHubLocalStorageKey);
+            await localStorageKeychain.delete(gitHubLocalStorageKey);
             return null;
         }
 
@@ -49,8 +66,8 @@ function getStoredGitHubAccessTokenResponse(): GitHubAccessTokenResponse | null 
     }
 }
 
-export function getStoredGitHubToken(scope: string | null = null): string | null {
-    const storedToken = getStoredGitHubAccessTokenResponse();
+export async function getStoredGitHubToken(scope: string | null = null): Promise<string | null> {
+    const storedToken = await getStoredGitHubAccessTokenResponse();
 
     if (scope) {
         return storedToken && storedToken.scope && storedToken.scope.includes(scope)
@@ -90,14 +107,14 @@ export class GithubAuthenticationAttempt implements Disposable {
 
     constructor(private readonly state = createUniqueId()) {}
 
-    authenticate(): Promise<string | null> {
+    async authenticate(): Promise<string | null> {
         if (this.tokenRequest) {
             return this.tokenRequest.promise;
         }
 
-        const storedToken = getStoredGitHubToken();
+        const storedToken = await getStoredGitHubToken();
         if (storedToken) {
-            return Promise.resolve(storedToken);
+            return storedToken;
         }
 
         this.tokenRequest = new Signal();
@@ -116,21 +133,21 @@ export class GithubAuthenticationAttempt implements Disposable {
             clearTimeout(timeout);
         });
 
-        const resolveWithToken = (event: StorageEvent) => {
-            if (event.key === gitHubLocalStorageKey) {
+        const resolveWithToken = async (event: StorageEvent) => {
+            if (isGitHubTokenUpdate(event)) {
                 window.removeEventListener('storage', resolveWithToken);
 
                 clearTimeout(timeout);
 
                 this.tokenRequest = undefined;
-                const response = getStoredGitHubAccessTokenResponse();
+                const response = await getStoredGitHubAccessTokenResponse();
                 if (!response) {
                     currentTokenRequest.complete(null);
                     return;
                 }
                 if (response.state !== this.state) {
                     currentTokenRequest.complete(null);
-                    clearGitHubAccessTokenResponse();
+                    await clearGitHubAccessTokenResponse();
 
                     currentTokenRequest.reject(
                         new Error('Nonce from the GitHub request does not match.')

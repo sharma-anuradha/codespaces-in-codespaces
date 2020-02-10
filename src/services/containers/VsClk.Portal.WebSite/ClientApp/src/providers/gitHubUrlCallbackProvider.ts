@@ -1,8 +1,5 @@
 import { vscode } from '../utils/vscode';
-import {
-    getStoredGitHubToken,
-    gitHubLocalStorageKey,
-} from '../services/gitHubAuthenticationService';
+import { getStoredGitHubToken, isGitHubTokenUpdate } from '../services/gitHubAuthenticationService';
 import { createUniqueId } from '../dependencies';
 import { UrlCallbackProvider, callbackSymbol } from './urlCallbackProvider';
 
@@ -21,7 +18,7 @@ export class GitHubUrlCallbackProvider extends UrlCallbackProvider {
             return;
         }
 
-        if (key !== gitHubLocalStorageKey) {
+        if (isGitHubTokenUpdate(e)) {
             return;
         }
 

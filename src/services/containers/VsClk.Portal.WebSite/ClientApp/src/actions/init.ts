@@ -42,9 +42,10 @@ export async function init(getAuthTokenAction: () => Promise<ITokenWithMsalAccou
 
         await Promise.all([dispatch(configurationPromise), dispatch(tokenPromise)]);
         await Promise.all([dispatch(getPlans()), dispatch(getUserInfo())]);
-        await Promise.all([dispatch(fetchEnvironments())]);
-
-        dispatch(tryGetGitHubCredentialsLocal());
+        await Promise.all([
+            dispatch(fetchEnvironments()),
+            dispatch(tryGetGitHubCredentialsLocal()),
+        ]);
 
         dispatch(action(initActionSuccessType));
     } catch (err) {
