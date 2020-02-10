@@ -14,6 +14,7 @@ type SendTelemetryProps =
     | ['vsonline/portal/ls-connection-initializing', IVSCodeConnectProperties]
     | ['vsonline/portal/ls-connection-opened', IVSCodeConnectWithDurationProperties]
     | ['vsonline/portal/ls-connection-failed', IVSCodeConnectionFailedProperties]
+    | ['vsonline/portal/ls-connection-page-reload', IVSCodeConnectPageReloadProperties]
     | ['vsonline/portal/ls-connection-close', IVSCodeConnectProperties]
     | ['vsonline/request', IResponseProperties]
     | ['vsonline/extensionload/error', Error];
@@ -60,6 +61,10 @@ interface IVSCodeConnectProperties {
 
 interface IVSCodeConnectWithDurationProperties extends IVSCodeConnectProperties {
     duration: number;
+}
+
+interface IVSCodeConnectPageReloadProperties extends IVSCodeConnectProperties {
+    retry: number;
 }
 
 interface IVSCodeConnectionFailedProperties extends IVSCodeConnectWithDurationProperties {

@@ -23,42 +23,43 @@ export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProp
                 <Stack.Item>
                     <Text>{props.message}</Text>
                 </Stack.Item>
-                <Stack.Item>
-                    {props.children}
-                </Stack.Item>
+                <Stack.Item>{props.children}</Stack.Item>
                 <Stack.Item>
                     <BackToEnvironmentsLink />
                 </Stack.Item>
             </Stack>
         </PortalLayout>
     );
-}
+};
 
 export const WorkbenchSplashScreen = (props: IWorkbenchSplashScreenProps) => {
-    const {
-        environment,
-        connectError,
-        onRetry
-    } = props;
+    const { showPrompt, environment, connectError, onRetry, onConnect } = props;
 
     const { friendlyName } = environment;
 
     if (connectError !== null) {
         return (
-            <RenderSplashScreen message={`Connecting to environment ${friendlyName} failed. ${connectError}`}>
+            <RenderSplashScreen
+                message={`Connecting to environment ${friendlyName} failed. ${connectError}`}
+            >
                 <PrimaryButton onClick={onRetry}>Retry</PrimaryButton>
             </RenderSplashScreen>
         );
     }
 
     const envState = stateToDisplayName(environment.state).toLocaleLowerCase();
+
+    if (showPrompt) {
+        return (
+            <RenderSplashScreen message={`Environment "${friendlyName}" is ${envState}.`}>
+                <PrimaryButton onClick={onConnect}>Connect</PrimaryButton>
+            </RenderSplashScreen>
+        );
+    }
+
     return (
         <RenderSplashScreen message={`Environment "${friendlyName}" is ${envState}.`}>
-            {
-                isActivating(environment)
-                    ? <Loader />
-                    : null
-            }
+            {isActivating(environment) ? <Loader /> : null}
         </RenderSplashScreen>
     );
-}
+};

@@ -165,6 +165,7 @@ export class EnvConnector {
                 },
             });
             const workspaceClient = new WorkspaceClient(webClient);
+            this.disposables.push(workspaceClient);
 
             await workspaceClient.connect(sessionId);
 
@@ -329,6 +330,38 @@ export class EnvConnector {
     }
 
     dispose() {
+        if (this.workspaceClient) {
+            if (!this.workspaceClient.isFulfilled) {
+                this.workspaceClient.cancel();
+            }
+
+            this.workspaceClient = undefined;
+        }
+
+        if (this.vscodeServerPort) {
+            if (!this.vscodeServerPort.isFulfilled) {
+                this.vscodeServerPort.cancel();
+            }
+
+            this.vscodeServerPort = undefined;
+        }
+
+        if (this.vscodeServer) {
+            if (!this.vscodeServer.isFulfilled) {
+                this.vscodeServer.cancel();
+            }
+
+            this.vscodeServer = undefined;
+        }
+
+        if (this.initializeConnectionSignal) {
+            if (!this.initializeConnectionSignal.isFulfilled) {
+                this.initializeConnectionSignal.cancel();
+            }
+
+            this.initializeConnectionSignal = undefined;
+        }
+
         this.disposables.forEach((d) => d.dispose());
         this.disposables = [];
     }

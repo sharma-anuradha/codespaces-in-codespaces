@@ -36,7 +36,7 @@ import { createUniqueId } from '../../dependencies';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { pollActivatingEnvironment } from '../../actions/pollEnvironment';
 import { useActionContext } from '../../actions/middleware/useActionContext';
-import { IWorkbenchSplashScreenProps } from "../../interfaces/IWorkbenchSplashScreenProps";
+import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 
 import './workbench.css';
 
@@ -47,6 +47,7 @@ export interface IWokbenchState {
 export interface WorkbenchProps {
     connectingFavicon: string;
     workbenchFavicon: string;
+    autoStart: boolean;
     SplashScreenComponent: React.JSXElementConstructor<IWorkbenchSplashScreenProps>;
     PageNotFoundComponent: React.JSXElementConstructor<{}>;
     liveShareEndpoint: string;
@@ -67,7 +68,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     constructor(props: WorkbenchProps, state: IWokbenchState) {
         super(props, state);
         this.state = {
-            connectError: null
+            connectError: null,
         };
     }
     // Since we have external scripts running outside of react scope,
@@ -93,10 +94,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     }
 
     componentDidMount() {
-        const {
-            connectingFavicon,
-            workbenchFavicon
-        } = this.props;
+        const { connectingFavicon, workbenchFavicon } = this.props;
 
         updateFavicon(workbenchFavicon);
         if (!this.correlationId) {
@@ -120,6 +118,10 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
         }
 
         if (this.state && this.state.connectError) {
+            return;
+        }
+
+        if (!this.props.autoStart) {
             return;
         }
 
@@ -153,10 +155,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     }
 
     componentWillUnmount() {
-        const {
-            connectingFavicon,
-            workbenchFavicon
-        } = this.props;
+        const { connectingFavicon, workbenchFavicon } = this.props;
 
         updateFavicon(connectingFavicon);
         this.cancelPolling();
@@ -170,8 +169,16 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
 
     handleClickToRetry = () => {
         this.setState({ connectError: null });
-    }
+    };
 
+    handleOnSplashScreenConnect = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('autoStart');
+
+        window.location.replace(url.toString());
+    };
+
+    // tslint:disable-next-line: max-func-body-length
     async mountWorkbench(environmentInfo: ICloudEnvironment) {
         if (this.workbenchMounted) {
             return;
@@ -279,16 +286,15 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     private workbenchRef: HTMLDivElement | null = null;
 
     private renderWorkbench() {
-        const {
-            environmentInfo,
-            SplashScreenComponent,
-        } = this.props;
-        
+        const { environmentInfo, SplashScreenComponent } = this.props;
+
         if (environmentInfo && isNotAvailable(environmentInfo)) {
             return (
                 <SplashScreenComponent
                     onRetry={this.handleClickToRetry}
+                    onConnect={this.handleOnSplashScreenConnect}
                     environment={environmentInfo}
+                    showPrompt={!this.props.autoStart}
                     connectError={this.state.connectError}
                 />
             );
@@ -309,13 +315,14 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     }
 
     render() {
-        const {
-            PageNotFoundComponent,
-        } = this.props;
+        const { PageNotFoundComponent } = this.props;
 
-        const content = (this.props.isValidEnvironmentFound === false)
-            ? <PageNotFoundComponent />
-            : this.renderWorkbench();
+        const content =
+            this.props.isValidEnvironmentFound === false ? (
+                <PageNotFoundComponent />
+            ) : (
+                this.renderWorkbench()
+            );
 
         return <div className='connect-to-environment'>{content}</div>;
     }
@@ -330,9 +337,8 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
 
     const params = new URLSearchParams(props.location.search);
 
-    const isValidEnvironmentFound = (!environmentInfo && state.environments.isLoading === false)
-        ? false
-        : true;
+    const isValidEnvironmentFound =
+        !environmentInfo && state.environments.isLoading === false ? false : true;
 
     return {
         ...props,
@@ -341,6 +347,7 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         params,
         liveShareEndpoint,
         correlationId: params.get('correlationId'),
+        autoStart: params.get('autoStart') !== 'false',
         isValidEnvironmentFound,
     };
 };

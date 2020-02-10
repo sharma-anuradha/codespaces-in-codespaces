@@ -9,8 +9,9 @@ import { bufferToArrayBuffer } from '../utils/bufferToArrayBuffer';
 import { trace as baseTrace } from '../utils/trace';
 import { createTrace } from '../utils/createTrace';
 
-import { ICloudEnvironment } from '../interfaces/cloudenvironment';
+import { ICloudEnvironment, StateInfo } from '../interfaces/cloudenvironment';
 import { sendTelemetry } from '../utils/telemetry';
+import * as envRegService from '../services/envRegService';
 
 const TRACE_NAME = 'vsls-web-socket';
 const { verbose, info, error } = createTrace(TRACE_NAME);
@@ -87,6 +88,7 @@ export class VSLSWebSocket implements IWebSocket {
         this.initializeChannel(url);
     }
 
+    // tslint:disable-next-line: max-func-body-length
     private async initializeChannel(url: string, retry = 3) {
         window.performance.mark(
             `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
@@ -102,17 +104,50 @@ export class VSLSWebSocket implements IWebSocket {
 
         let disposables = [];
 
-        try {
-            await envConnector.ensureConnection(
-                this.environmentInfo,
-                this.accessToken,
-                this.liveShareEndpoint,
-                this.quality
-            );
+        const timeout = new Promise((_, reject) => {
+            // tslint:disable-next-line: no-string-based-set-timeout
+            setTimeout(reject, 20 * 1000, new Error('VSLSSocketTimeout'));
+        });
 
-            const channel = await envConnector.sendHandshakeRequest(
-                this.createHandshakeRequest(url)
-            );
+        const environmentCheck = envRegService.getEnvironment(this.environmentInfo.id).then(
+            (environment) => {
+                if (environment && environment.state !== StateInfo.Available) {
+                    throw new Error('EnvironmentNotAvailable');
+                }
+            },
+            (err) => {
+                // noop
+            }
+        );
+
+        // In case the environment is suspended, we want to know as soon as possible in the process.
+        //
+        // We don't want to delay the connection/reconnection by the time
+        // it takes to check the environment status.
+        //
+        // Both timeout and environment check reject and send us on error handling path
+        // of connection process.
+        // In case of failure, we are interested in the earliest failure.
+        // In case successful environment check we want to keep watching for the timeout.
+        const combinedTimeoutEnvCheck = Promise.race([timeout, environmentCheck]).then(
+            () => timeout
+        );
+
+        try {
+            await Promise.race([
+                envConnector.ensureConnection(
+                    this.environmentInfo,
+                    this.accessToken,
+                    this.liveShareEndpoint,
+                    this.quality
+                ),
+                combinedTimeoutEnvCheck,
+            ]);
+
+            const channel = await Promise.race([
+                envConnector.sendHandshakeRequest(this.createHandshakeRequest(url)),
+                combinedTimeoutEnvCheck as Promise<SshChannel>,
+            ]);
             disposables.push(channel);
 
             disposables.push(
@@ -176,6 +211,21 @@ export class VSLSWebSocket implements IWebSocket {
                 this._onError.fire(err);
 
                 return;
+            }
+
+            if (err.message === 'EnvironmentNotAvailable') {
+                sendTelemetry('vsonline/portal/ls-connection-page-reload', {
+                    connectionCorrelationId: this.correlationId,
+                    isFirstConnection: this.id === 0,
+                    connectionNumber: this.id,
+                    environmentType: this.environmentInfo.type,
+                    retry,
+                });
+
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('autoStart', 'false');
+
+                window.location.replace(currentUrl.toString());
             }
 
             envConnector.cleanCachedConnection();
