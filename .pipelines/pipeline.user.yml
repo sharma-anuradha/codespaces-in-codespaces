@@ -36,6 +36,8 @@ static_analysis_options:
           - 'scripts\vscode\fileUtils.js'
           - 'scripts\vscode\get-current-vscode-assets-version.js'
           - 'src\setupProxy.js'
+          - 'src\uitest\uitest.js'
+          - 'src\uitest\prepTestJson.js'
           - 'config-overrides.js'
           - 'webpack.config.worker.js'
           - 'port-forwarding-dev-server.js'
