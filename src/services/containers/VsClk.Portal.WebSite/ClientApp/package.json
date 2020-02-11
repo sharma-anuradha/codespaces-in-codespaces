@@ -79,6 +79,7 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.3.0",
+    "@playwright/playwright-studio": "^0.9.14",
     "@types/classnames": "^2.2.9",
     "@types/debug": "^4.1.4",
     "@types/express": "^4.17.0",
@@ -132,6 +133,8 @@
     "build": "run-s build:client",
     "prebuild:client": "cross-env NODE_ENV=production node scripts/npm/generate-version-file.js",
     "build:client": "node scripts/build",
+    "test:ui" : "node src/uitest/uitest.js",
+    "test:ui-prep-json": "node src/uitest/prepTestJson.js",
     "pretest": "cross-env NODE_ENV=test node scripts/npm/generate-version-file.js",
     "test": "node scripts/test",
     "pretest:ci": "cross-env NODE_ENV=test node scripts/npm/generate-version-file.js",

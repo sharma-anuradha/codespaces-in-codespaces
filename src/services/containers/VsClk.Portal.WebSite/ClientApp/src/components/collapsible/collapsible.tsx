@@ -1,8 +1,8 @@
-import React, { useState, useCallback, MouseEventHandler, useMemo, FC } from 'react';
+import React, { useState, useCallback, MouseEventHandler, FC } from 'react';
 import classnames from 'classnames';
 
 import { Stack, IStackProps, StackItem } from 'office-ui-fabric-react/lib/Stack';
-import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { DefaultButton, BaseButton, Button } from 'office-ui-fabric-react/lib/Button';
 
 import './collapsible.css';
 import { isDefined } from '../../utils/isDefined';
@@ -10,7 +10,14 @@ import { isDefined } from '../../utils/isDefined';
 type Props = {
     title: string;
     collapsed?: boolean;
-    onCollapsedChanged?: MouseEventHandler<HTMLButtonElement>;
+    onCollapsedChanged?: MouseEventHandler<
+        | HTMLDivElement
+        | HTMLAnchorElement
+        | HTMLButtonElement
+        | BaseButton
+        | Button
+        | HTMLSpanElement
+    >;
 } & IStackProps;
 
 export const Collapsible: FC<Props> = ({
@@ -23,7 +30,14 @@ export const Collapsible: FC<Props> = ({
     const [internalCollapsed, setInternalCollapsed] = useState(true);
 
     const collapsed = isDefined(controlledCollapsed) ? controlledCollapsed : internalCollapsed;
-    const toggle: MouseEventHandler<HTMLButtonElement> = useCallback(
+    const toggle: MouseEventHandler<
+        | HTMLDivElement
+        | HTMLAnchorElement
+        | HTMLButtonElement
+        | BaseButton
+        | Button
+        | HTMLSpanElement
+    > = useCallback(
         (event) => {
             if (onCollapsedChanged) {
                 onCollapsedChanged(event);

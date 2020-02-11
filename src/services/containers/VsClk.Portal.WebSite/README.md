@@ -22,7 +22,7 @@ Prerequisite:
       - Run the auth helper commands
 
 Required Software:
-- Node.js (v10.15.3) (https://nodejs.org/en/)
+- Node.js (v10.17.0) (https://nodejs.org/en/)
 - Yarn (https://yarnpkg.com/lang/en/)
 - .NET Core (https://dotnet.microsoft.com/download/dotnet-core/3.1)
 - (https://github.com/Microsoft/artifacts-credprovider#readmecd%20)

@@ -12,7 +12,7 @@ set DOTNET_VERSION=3.1.100
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
 :: Install node
-set NODE_VERSION=v10.15.3
+set NODE_VERSION=v10.17.0
 call ".pipelines\install-node.cmd" %NODE_VERSION%
 
 :: Install yarn
