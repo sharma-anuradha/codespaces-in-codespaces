@@ -13,12 +13,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public class EnvironmentSessionData : CollectedData
     {
         /// <summary>
-        /// Gets or sets the environment id.
-        /// </summary>
-        [DataMember]
-        public string EnvironmentId { get; set; }
-
-        /// <summary>
         /// Gets or sets the connected session count.
         /// </summary>
         [DataMember]

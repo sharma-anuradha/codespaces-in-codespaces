@@ -23,12 +23,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public string Id { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating the environment id.
-        /// </summary>
-        [DataMember(IsRequired = false, EmitDefaultValue = false)]
-        public string EnvironmentId { get; set; }
-
-        /// <summary>
         /// Gets or sets the job state.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]

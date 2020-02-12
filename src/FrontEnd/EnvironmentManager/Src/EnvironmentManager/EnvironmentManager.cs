@@ -746,7 +746,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public Task SuspendCallbackAsync(
+        public Task<CloudEnvironmentServiceResult> SuspendCallbackAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
         {
@@ -762,23 +762,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Static Environment
                     if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
                     {
-                        return;
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = cloudEnvironment,
+                            HttpStatusCode = StatusCodes.Status200OK,
+                        };
                     }
 
                     if (cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
                     {
-                        await ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
+                        return await ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
                     }
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
                 });
         }
 
         /// <inheritdoc/>
-        public async Task ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        public async Task<CloudEnvironmentServiceResult> ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
             Requires.NotNull(logger, nameof(logger));
 
-            await logger.OperationScopeAsync(
+            return await logger.OperationScopeAsync(
                 $"{LogBaseName}_force_suspend",
                 async (childLogger) =>
                 {
@@ -788,13 +798,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     cloudEnvironment.Compute = null;
 
                     // Update the database state.
-                    await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
                     // Delete the allocated resources.
                     if (computeIdToken != null)
                     {
                         await ResourceBrokerClient.DeleteAsync(computeIdToken.Value, childLogger.NewChildLogger());
                     }
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
                 },
                 swallowException: true);
         }

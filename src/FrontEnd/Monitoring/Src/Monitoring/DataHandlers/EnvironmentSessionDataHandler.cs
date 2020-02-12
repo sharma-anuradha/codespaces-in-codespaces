@@ -19,19 +19,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
     /// </summary>
     public class EnvironmentSessionDataHandler : IDataHandler
     {
-        private readonly IEnvironmentManager environmentManager;
         private readonly ILatestHeartbeatMonitor latestHeartbeatMonitor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentSessionDataHandler"/> class.
         /// </summary>
-        /// <param name="environmentManager">Environment Manager.</param>
         /// <param name="latestHeartbeatMonitor">Latest Heartbeat Monitor.</param>
         public EnvironmentSessionDataHandler(
-            IEnvironmentManager environmentManager,
             ILatestHeartbeatMonitor latestHeartbeatMonitor)
         {
-            this.environmentManager = environmentManager;
             this.latestHeartbeatMonitor = latestHeartbeatMonitor;
         }
 
@@ -42,16 +38,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         }
 
         /// <inheritdoc />
-        public async Task ProcessAsync(CollectedData data, Guid vmResourceId, IDiagnosticsLogger logger)
+        public async Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             if (!CanProcess(data))
             {
                 throw new InvalidOperationException($"Collected data of type {data?.GetType().Name} cannot be processed by {nameof(EnvironmentSessionDataHandler)}.");
             }
 
-            await logger.OperationScopeAsync(
+            return await logger.OperationScopeAsync(
                "environment_session_data_handler_process",
-               async (childLogger) =>
+               (childLogger) =>
                {
                    var environmentSessionData = (EnvironmentSessionData)data;
 
@@ -60,23 +56,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    // No-op if the environmentId is empty.
                    if (string.IsNullOrWhiteSpace(environmentSessionData.EnvironmentId))
                    {
-                       return;
+                       return Task.FromResult(handlerContext);
                    }
 
                    childLogger.FluentAddBaseValue("CloudEnvironmentId", environmentSessionData.EnvironmentId);
 
-                   var cloudEnvironment = await environmentManager.GetAsync(environmentSessionData.EnvironmentId, childLogger);
+                   var cloudEnvironment = handlerContext.CloudEnvironment;
                    ValidateCloudEnvironment(cloudEnvironment, environmentSessionData.EnvironmentId);
 
                    cloudEnvironment.LastUpdatedByHeartBeat = environmentSessionData.Timestamp;
                    latestHeartbeatMonitor.UpdateHeartbeat(environmentSessionData.Timestamp);
 
-                   if (environmentSessionData.ConnectedSessionCount > 0 && cloudEnvironment.LastUsed < environmentSessionData.Timestamp)
+                   if (environmentSessionData.ConnectedSessionCount > 0 && (cloudEnvironment.LastUsed == null || cloudEnvironment.LastUsed < environmentSessionData.Timestamp))
                    {
                        cloudEnvironment.LastUsed = environmentSessionData.Timestamp;
                    }
 
-                   cloudEnvironment = await environmentManager.UpdateAsync(cloudEnvironment, CloudEnvironmentState.None, CloudEnvironmentStateUpdateTriggers.Heartbeat, string.Empty, childLogger);
+                   return Task.FromResult(handlerContext);
                });
         }
 

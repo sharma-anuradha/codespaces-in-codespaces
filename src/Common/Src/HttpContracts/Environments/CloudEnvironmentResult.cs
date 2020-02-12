@@ -103,6 +103,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         public string LastStateUpdateReason { get; set; }
 
         /// <summary>
+        /// Gets or sets the last used time.
+        /// </summary>
+        public DateTime? LastUsed { get; set; }
+
+        /// <summary>
         /// Gets or sets the features.
         /// </summary>
         public Dictionary<string, string> Features { get; set; }

@@ -14,11 +14,14 @@ using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers;
 using Newtonsoft.Json;
 using static Microsoft.VsSaaS.Diagnostics.Extensions.DiagnosticsLoggerExtensions;
@@ -35,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [LoggingBaseName("frontend_heartbeat_controller")]
     public class HeartBeatController : ControllerBase
     {
+        private readonly IEnvironmentManager environmentManager;
         private IEnumerable<IDataHandler> handlers;
 
         /// <summary>
@@ -42,12 +46,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </summary>
         /// <param name="handlers">List of handlers to process the collected data from VSOAgent.</param>
         /// <param name="backendHeartBeatClient">Backend HeartBeat Client.</param>
+        /// <param name="environmentManager">Environment Manager.</param>
         public HeartBeatController(
             IEnumerable<IDataHandler> handlers,
-            IResourceHeartBeatHttpContract backendHeartBeatClient)
+            IResourceHeartBeatHttpContract backendHeartBeatClient,
+            IEnvironmentManager environmentManager)
         {
             this.handlers = handlers;
             BackendHeartBeatClient = backendHeartBeatClient;
+            this.environmentManager = environmentManager;
         }
 
         private IResourceHeartBeatHttpContract BackendHeartBeatClient { get; }
@@ -85,31 +92,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             if (heartBeat.CollectedDataList != null && heartBeat.CollectedDataList.Count() > 0)
             {
                 var processingExceptions = new List<Exception>();
-                foreach (var data in heartBeat.CollectedDataList)
-                {
-                    var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
 
-                    if (handler != null)
-                    {
-                        try
-                        {
-                            await handler.ProcessAsync(data, heartBeat.ResourceId, logger.NewChildLogger());
-                        }
-                        catch (Exception e)
-                        {
-                            LogHeartBeatException(e, $"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", logger, duration, heartBeat);
+                await logger.OperationScopeAsync(
+                   "process_heartbeat_collected_data",
+                   async (childLogger) =>
+                   {
+                       CloudEnvironment cloudEnvironment = null;
 
-                            // Collect exceptions inorder to give a chance to every CollectedData object to go through processing before throwing
-                            processingExceptions.Add(e);
-                        }
-                    }
-                    else
-                    {
-                        logger.AddDuration(duration)
-                            .FluentAddValue("HeartbeatMessage", JsonConvert.SerializeObject(heartBeat))
-                            .LogWarning($"No handlers found for processing the data {data?.Name} received from Virtual Machine {heartBeat.ResourceId}");
-                    }
-                }
+                       var environmentId = heartBeat.CollectedDataList.FirstOrDefault(c => c.EnvironmentId != default)?.EnvironmentId;
+                       if (!string.IsNullOrWhiteSpace(environmentId))
+                       {
+                           cloudEnvironment = await environmentManager.GetAsync(environmentId, childLogger);
+                       }
+
+                       var handlerContext = new CollectedDataHandlerContext(cloudEnvironment);
+
+                       foreach (var data in heartBeat.CollectedDataList)
+                       {
+                           var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
+
+                           if (handler != null)
+                           {
+                               try
+                               {
+                                   handlerContext = await handler.ProcessAsync(data, handlerContext, heartBeat.ResourceId, logger.NewChildLogger());
+                               }
+                               catch (Exception e)
+                               {
+                                   LogHeartBeatException(e, $"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", logger, duration, heartBeat);
+
+                                   // Collect exceptions inorder to give a chance to every CollectedData object to go through processing before throwing
+                                   processingExceptions.Add(e);
+                               }
+                           }
+                           else
+                           {
+                               logger.AddDuration(duration)
+                                   .FluentAddValue("HeartbeatMessage", JsonConvert.SerializeObject(heartBeat))
+                                   .LogWarning($"No handlers found for processing the data {data?.Name} received from Virtual Machine {heartBeat.ResourceId}");
+                           }
+                       }
+
+                       await UpdateCloudEnvironment(handlerContext, logger);
+                   });
 
                 if (processingExceptions.Any())
                 {
@@ -151,6 +176,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 .LogInfo(GetType().FormatLogMessage(nameof(ProcessHeartBeatAsync)));
 
             return NoContent();
+        }
+
+        private async Task UpdateCloudEnvironment(CollectedDataHandlerContext handlerContext, IDiagnosticsLogger logger)
+        {
+            if (handlerContext.CloudEnvironment == null)
+            {
+                return;
+            }
+
+            await environmentManager.UpdateAsync(handlerContext.CloudEnvironment, handlerContext.CloudEnvironmentState, handlerContext.Trigger ?? CloudEnvironmentStateUpdateTriggers.Heartbeat, handlerContext.Reason ?? string.Empty, logger);
         }
 
         private IActionResult InternalServerError() => StatusCode(StatusCodes.Status500InternalServerError);

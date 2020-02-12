@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        public Task<CloudEnvironmentServiceResult> ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -82,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task SuspendCallbackAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        public Task<CloudEnvironmentServiceResult> SuspendCallbackAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

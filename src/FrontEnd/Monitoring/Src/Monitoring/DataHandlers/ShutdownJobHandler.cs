@@ -23,10 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         /// <summary>
         /// Initializes a new instance of the <see cref="ShutdownJobHandler"/> class.
         /// </summary>
-        /// <param name="environmentManager"><see cref="IEnvironmentManager"/>.</param>
-        public ShutdownJobHandler(IEnvironmentManager environmentManager)
+        /// <param name="cloudEnvironmentManager"><see cref="ICloudEnvironmentManager"/>.</param>
+        public ShutdownJobHandler(IEnvironmentManager cloudEnvironmentManager)
         {
-            this.environmentManager = environmentManager;
+            this.environmentManager = cloudEnvironmentManager;
         }
 
         /// <inheritdoc/>
@@ -37,14 +37,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         }
 
         /// <inheritdoc/>
-        public async Task ProcessAsync(CollectedData data, Guid vmResourceId, IDiagnosticsLogger logger)
+        public async Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             if (!CanProcess(data))
             {
                 throw new ArgumentException($"Cannot process {data.Name} by {nameof(ShutdownJobHandler)}");
             }
 
-            await logger.OperationScopeAsync(
+            return await logger.OperationScopeAsync(
                 "shutdown_job_handler_process",
                 async (childLogger) =>
                {
@@ -53,13 +53,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(jobResult))
                         .FluentAddBaseValue("CloudEnvironmentId", jobResult.EnvironmentId);
 
-                   var environment = await this.environmentManager.GetAsync(jobResult.Id, logger);
-                   if (environment == null)
+                   var cloudEnvironment = handlerContext.CloudEnvironment;
+                   if (cloudEnvironment == null)
                    {
-                       return;
+                       return handlerContext;
                    }
 
-                   await this.environmentManager.SuspendCallbackAsync(environment, logger);
+                   var environmentServiceResult = await this.environmentManager.SuspendCallbackAsync(cloudEnvironment, logger);
+                   return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
                });
         }
     }

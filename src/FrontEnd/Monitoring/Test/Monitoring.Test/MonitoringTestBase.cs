@@ -3,7 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test
@@ -13,6 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly IEnvironmentManager environmentManager;
+        public readonly ILatestHeartbeatMonitor latestHeartbeatMonitor;
         public readonly EnvironmentSessionDataHandler environmentSessionDataHandler;
 
         public MonitoringTestBase()
@@ -20,7 +23,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
             environmentManager = new MockEnvironmentManager();
-            environmentSessionDataHandler = new EnvironmentSessionDataHandler(environmentManager);
+            latestHeartbeatMonitor = new LatestHeartbeatMonitor();
+            environmentSessionDataHandler = new EnvironmentSessionDataHandler(latestHeartbeatMonitor);
         }
 
         protected async void UpdateCloudEnvironmentForTest(CloudEnvironment cloudEnvironment)
@@ -32,6 +36,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test
         {
             return await environmentManager.GetAsync(string.Empty, logger);
         }
+
+        protected async Task<CollectedDataHandlerContext> GetHandlerContext()
+        {
+            var cloudEnvironment = await GetCloudEnvironment();
+            return new CollectedDataHandlerContext(cloudEnvironment);
+        } 
 
         public static readonly EnvironmentData testEnvironmentData = new EnvironmentData
         {

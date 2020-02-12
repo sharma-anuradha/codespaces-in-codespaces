@@ -27,5 +27,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// </summary>
         [DataMember(IsRequired = true, EmitDefaultValue = false)]
         public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the environment id.
+        /// </summary>
+        [DataMember]
+        public string EnvironmentId { get; set; }
     }
 }

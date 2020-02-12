@@ -112,16 +112,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="cloudEnvironment">The environment.</param>
         /// <param name="logger">Diagnostics logger.</param>
-        /// <returns>A task.</returns>
-        Task SuspendCallbackAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger);
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironmentServiceResult> SuspendCallbackAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Force suspends an environment.
         /// </summary>
         /// <param name="cloudEnvironment">The environment.</param>
         /// <param name="logger">The logger.</param>
-        /// <returns>A task.</returns>
-        Task ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger);
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironmentServiceResult> ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Updates the given environment's settings according to the given update request.

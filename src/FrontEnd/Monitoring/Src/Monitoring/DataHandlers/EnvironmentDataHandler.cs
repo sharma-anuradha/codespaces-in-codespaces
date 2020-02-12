@@ -37,14 +37,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         }
 
         /// <inheritdoc />
-        public async Task ProcessAsync(CollectedData data, Guid vmResourceId, IDiagnosticsLogger logger)
+        public async Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             if (!CanProcess(data))
             {
                 throw new InvalidOperationException($"Collected data of type {data?.GetType().Name} cannot be processed by {nameof(EnvironmentDataHandler)}.");
             }
 
-            await logger.OperationScopeAsync(
+            return await logger.OperationScopeAsync(
                "environment_data_handler_process",
                async (childLogger) =>
                {
@@ -55,25 +55,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    // No-op if the environmentId is empty.
                    if (string.IsNullOrEmpty(environmentData.EnvironmentId))
                    {
-                       return;
+                       return handlerContext;
                    }
 
                    childLogger.FluentAddBaseValue("CloudEnvironmentId", environmentData.EnvironmentId);
 
-                   var cloudEnvironment = await environmentManager.GetAsync(environmentData.EnvironmentId, childLogger);
+                   var cloudEnvironment = handlerContext.CloudEnvironment;
                    ValidateCloudEnvironment(cloudEnvironment, environmentData.EnvironmentId);
 
                    cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
                    cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
                    var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
-
-                   cloudEnvironment = await environmentManager.UpdateAsync(cloudEnvironment, newState.state, CloudEnvironmentStateUpdateTriggers.Heartbeat, newState.reason.ToString(), childLogger);
+                   handlerContext.CloudEnvironmentState = newState.state;
+                   handlerContext.Reason = newState.reason.ToString();
 
                    // Shutdown if the environment is idle
                    if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
                    {
-                       await environmentManager.SuspendAsync(cloudEnvironment, childLogger);
+                       var environmentServiceResult = await environmentManager.SuspendAsync(cloudEnvironment, childLogger);
+                       return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
                    }
+
+                   return handlerContext;
                });
         }
 

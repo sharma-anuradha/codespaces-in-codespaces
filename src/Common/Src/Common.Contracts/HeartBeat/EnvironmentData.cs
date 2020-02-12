@@ -22,12 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public VsoEnvironmentState State { get; set; }
 
         /// <summary>
-        /// Gets or Sets the environment id.
-        /// </summary>
-        [DataMember]
-        public string EnvironmentId { get; set; }
-
-        /// <summary>
         /// Gets or Sets the Session Path.
         /// </summary>
         [DataMember]
