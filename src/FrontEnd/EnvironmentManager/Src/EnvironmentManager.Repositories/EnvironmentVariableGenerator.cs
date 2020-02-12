@@ -62,6 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 new EnvVarSessionToken(accessToken),
                 new EnvVarSessionCascadeToken(cascadeToken),
                 new EnvVarSessionId(cloudEnvironment),
+                new EnvVarLiveshareServiceEndpoint(cloudEnvironment, cloudEnvironment.Connection.ConnectionServiceUri),
 
                 // Variables for personalization
                 new EnvDotfilesRepoUrl(cloudEnvironment),
@@ -262,6 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// Initializes a new instance of the <see cref="EnvVarServiceEndpoint"/> class.
         /// </summary>
         /// <param name="cloudEnvironment">The cloud environment.</param>
+        /// <param name="serviceUri">The service uri.</param>
         public EnvVarServiceEndpoint(CloudEnvironment cloudEnvironment, Uri serviceUri)
             : base(cloudEnvironment)
         {
@@ -276,6 +278,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public override Tuple<string, string> GetEnvironmentVariable()
         {
             return new Tuple<string, string>(EnvironmentVariableConstants.ServiceEndpoint, ServiceUri.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Generate the liveshare service url.
+    /// </summary>
+    public class EnvVarLiveshareServiceEndpoint : EnvironmentVariableStrategy
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnvVarLiveshareServiceEndpoint"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        /// <param name="serviceUrl">The service uri.</param>
+        public EnvVarLiveshareServiceEndpoint(CloudEnvironment cloudEnvironment, string serviceUrl)
+            : base(cloudEnvironment)
+        {
+            Requires.NotNull(serviceUrl, nameof(serviceUrl));
+
+            var serviceUri = new Uri(serviceUrl);
+
+            ServiceEndpoint = serviceUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped);
+        }
+
+        private string ServiceEndpoint { get; }
+
+        /// <inheritdoc/>
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            return new Tuple<string, string>(EnvironmentVariableConstants.LiveShareServiceUrl, ServiceEndpoint);
         }
     }
 

@@ -19,6 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public const string SessionCallback = "SESSION_CALLBACK";
         public const string SessionToken = "SESSION_TOKEN";
         public const string SessionCascadeToken = "SESSION_CASCADE_TOKEN";
+        public const string LiveShareServiceUrl = "LIVESHARE_SERVICE_URL";
         public const string SessionId = "SESSION_ID";
         public const string DotfilesRepository = "DOTFILES_REPOSITORY";
         public const string DotfilesTargetPath = "DOTFILES_REPOSITORY_TARGET";
