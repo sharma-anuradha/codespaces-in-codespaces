@@ -133,7 +133,7 @@
     "build": "run-s build:client",
     "prebuild:client": "cross-env NODE_ENV=production node scripts/npm/generate-version-file.js",
     "build:client": "node scripts/build",
-    "test:ui" : "node test/uitest/uitest.js",
+    "test:ui": "node test/uitest/uitest.js",
     "test:ui-prep-json": "node test/uitest/prepTestJson.js",
     "pretest": "cross-env NODE_ENV=test node scripts/npm/generate-version-file.js",
     "test": "node scripts/test",
@@ -161,7 +161,7 @@
   ],
   "vscodeCommit": {
     "stable": "ae08d5460b5a45169385ff3fd44208f431992451",
-    "insider": "beaf391bc53136912e4f0bbdfb7844ad954247db"
+    "insider": "f4c95d5b9cfb2265f1730d564df1709533eff55e"
   },
   "jest": {
     "collectCoverageFrom": [
