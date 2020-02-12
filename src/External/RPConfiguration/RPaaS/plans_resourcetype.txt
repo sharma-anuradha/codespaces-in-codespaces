@@ -15,7 +15,10 @@
               "ResourceCreationValidate",
               "ResourceCreationBegin",
               "ResourceCreationCompleted",
-              "ResourceDeletionValidate"
+              "ResourceDeletionValidate",
+              "ResourcePatchValidate",
+              "ResourcePatchCompleted",
+              "ResourcePostAction"
             ]
         }]
 },
@@ -49,7 +52,10 @@
               "ResourceCreationValidate",
               "ResourceCreationBegin",
               "ResourceCreationCompleted",
-	            "ResourceDeletionValidate"
+	            "ResourceDeletionValidate",
+              "ResourcePatchValidate",
+              "ResourcePatchCompleted",
+              "ResourcePostAction"
             ]
         }]
 }], 
