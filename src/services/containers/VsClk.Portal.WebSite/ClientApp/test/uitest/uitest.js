@@ -18,13 +18,19 @@ const DEV_URL = 'https://online.dev.core.vsengsaas.visualstudio.com';
 const PPE_URL = 'https://online-ppe.core.vsengsaas.visualstudio.com';
 const isLocal = env && env.toLowerCase() === 'local' ? true : false;
 const url = env ? getURL(env) : DEV_URL;
-const TEST_DIR = path.join('src', 'portal', 'test', 'actions');
+const TEST_DIR = path.join('test', 'uitest', 'actions');
 let TEMP_DIR = isLocal
     ? path.join(process.env.TEMP, 'vso-ui-test')
     : path.join(process.env.AGENT_TEMP_DIR, 'vso-ui-test');
 const ERROR_DIR = path.join(TEMP_DIR, 'errors');
 const ERROR_FILE_NAME = path.join(ERROR_DIR, 'vso-ui-test-errors.log');
+const CHROMIUIM_USER_DATA_DIR = path.join(TEMP_DIR, 'chromium-user-data');
 console.log(args);
+
+//create user data directory to avoid repeated login during test execution.
+if (!fs.existsSync(CHROMIUIM_USER_DATA_DIR)) {
+    fs.mkdirSync(CHROMIUIM_USER_DATA_DIR);
+}
 
 // Check if the file has all the mandatory arguments passed.
 if (!user) {
@@ -98,9 +104,9 @@ function logErrorContent(error) {
 }
 
 function getCommand() {
-    let cmd = 'npx playwright-cli --verbose';
+    let cmd = `npx playwright-cli --verbose --user-data-dir=${userDataDir}`;
     if (isLocal) {
-        cmd = 'npx playwright-cli --debug --verbose';
+        cmd = `npx playwright-cli --debug --verbose' --user-data-dir=${userDataDir}`;
         console.log('running in debug mode.');
     } else {
         console.log('running in headless mode.');
