@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor
         /// Gets buffer time.
         /// </summary>
         public const int BufferInMinutes = 1;
+
+        /// <summary>
+        /// Maximum Interval between heartbeats sent from VSO Agent.
+        /// </summary>
+        public const int HeartbeatIntervalInSeconds = 70;
     }
 }

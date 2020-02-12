@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
@@ -35,19 +36,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// </summary>
         /// <param name="environmentRepository">Target environment repository.</param>
         /// <param name="environmentRepairWorkflows">Target environment repair workflows.</param>
+        /// <param name="latestHeartbeatMonitor">Target latest Heartbeat Monitor.</param>
         /// <param name="serviceProvider">Target environment service provider.</param>
         /// <param name="environmentMonitorSettings">Environment monitor settings.</param>
         public HeartbeatMonitorContinuationHandler(
             ICloudEnvironmentRepository environmentRepository,
             IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
+            ILatestHeartbeatMonitor latestHeartbeatMonitor,
             IServiceProvider serviceProvider,
             EnvironmentMonitorSettings environmentMonitorSettings)
         {
             EnvironmentRepository = Requires.NotNull(environmentRepository, nameof(environmentRepository));
             EnvironmentMonitorSettings = Requires.NotNull(environmentMonitorSettings, nameof(environmentMonitorSettings));
             EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
+            LatestHeartbeatMonitor = latestHeartbeatMonitor;
             ServiceProvider = serviceProvider;
         }
+
+        private ILatestHeartbeatMonitor LatestHeartbeatMonitor { get; }
 
         private IServiceProvider ServiceProvider { get; }
 
@@ -113,7 +119,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             if (StateToProcess.Contains(envRecord.State))
             {
                 // Check heartbeat timeout
-                if (envRecord.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes))
+                if (LatestHeartbeatMonitor.LastHeartbeatReceived != null
+                    && LatestHeartbeatMonitor.LastHeartbeatReceived > envRecord.LastUpdatedByHeartBeat + TimeSpan.FromSeconds(EnvironmentMonitorConstants.HeartbeatIntervalInSeconds)
+                    && envRecord.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes))
                 {
                     // Compute is not healthy, kick off force shutdown
                     await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(envRecord, logger.NewChildLogger());

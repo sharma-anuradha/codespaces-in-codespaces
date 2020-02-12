@@ -20,14 +20,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
     public class EnvironmentSessionDataHandler : IDataHandler
     {
         private readonly IEnvironmentManager environmentManager;
+        private readonly ILatestHeartbeatMonitor latestHeartbeatMonitor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentSessionDataHandler"/> class.
         /// </summary>
         /// <param name="environmentManager">Environment Manager.</param>
-        public EnvironmentSessionDataHandler(IEnvironmentManager environmentManager)
+        /// <param name="latestHeartbeatMonitor">Latest Heartbeat Monitor.</param>
+        public EnvironmentSessionDataHandler(
+            IEnvironmentManager environmentManager,
+            ILatestHeartbeatMonitor latestHeartbeatMonitor)
         {
             this.environmentManager = environmentManager;
+            this.latestHeartbeatMonitor = latestHeartbeatMonitor;
         }
 
         /// <inheritdoc />
@@ -64,6 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    ValidateCloudEnvironment(cloudEnvironment, environmentSessionData.EnvironmentId);
 
                    cloudEnvironment.LastUpdatedByHeartBeat = environmentSessionData.Timestamp;
+                   latestHeartbeatMonitor.UpdateHeartbeat(environmentSessionData.Timestamp);
 
                    if (environmentSessionData.ConnectedSessionCount > 0 && cloudEnvironment.LastUsed < environmentSessionData.Timestamp)
                    {
