@@ -226,7 +226,7 @@ const Actions = ({
             <IconButton
                 iconProps={{}}
                 title='More'
-                menuIconProps={{ iconName: 'CollapseMenu', style: { fontSize: '1.6rem' } }}
+                menuIconProps={{ iconName: 'MoreVertical', style: { fontSize: '1.6rem' } }}
                 menuProps={{
                     isBeakVisible: false,
                     items: [

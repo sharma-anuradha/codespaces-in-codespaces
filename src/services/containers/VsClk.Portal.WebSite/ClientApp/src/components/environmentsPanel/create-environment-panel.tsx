@@ -300,11 +300,11 @@ const openExternalUrl = (url: string) => {
 
 const errorTextfieldClassname = 'create-environment-panel__errorTextField';
 
-function createLabelRenderCallback(title: string, onClickUrl: string) {
+function createLabelRenderCallback(title: string, onClickUrl: string, customLabel?: string) {
     return (props: IDropdownProps) => {
         return (
             <Stack id={title} horizontal verticalAlign='center'>
-                <span style={{ fontWeight: 600 }}>{props.label}</span>
+                <span style={{ fontWeight: 600 }}>{props.label || customLabel}</span>
                 <IconButton
                     iconProps={{ iconName: 'Info' }}
                     title={title}
@@ -424,10 +424,12 @@ export class CreateEnvironmentPanelView extends Component<
             'View suspend behavior details',
             'https://aka.ms/vso-docs/how-to/suspend'
         );
-        const dotFilesTitle = 'View dotfiles details';
+        const dotFilesDetailsTitle = 'View dotfiles details';
+        const dotFilesRepositoryTitle = 'Dotfiles Repository';
         const onDotfilesRenderLabel = createLabelRenderCallback(
-            dotFilesTitle,
-            'https://aka.ms/vso-docs/reference/personalizing'
+            dotFilesDetailsTitle,
+            'https://aka.ms/vso-docs/reference/personalizing',
+            dotFilesRepositoryTitle
         );
         const errorMessageBar = isDefined(this.state.friendlyName.errorMessage) ? (
             <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
@@ -498,7 +500,7 @@ export class CreateEnvironmentPanelView extends Component<
                 <Collapsible tokens={{ childrenGap: 4 }} title={'Dotfiles (optional)'}>
                     <TextField
                         autoFocus
-                        ariaLabel={dotFilesTitle}
+                        ariaLabel={dotFilesRepositoryTitle} // Omitting label due to office-ui's onRenderLabel accessibility conflict 
                         className={this.state.dotfilesRepository.style}
                         placeholder=''
                         onKeyDown={this.submitForm}
