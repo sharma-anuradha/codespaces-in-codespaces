@@ -9,7 +9,6 @@ import {
     EnvironmentConfigurationService,
     environmentConfigurationService,
 } from './contracts/services';
-import { GitCredentialService } from './services/gitCredentialService';
 import versionFile from '../version.json';
 
 const info = baseTrace.extend('workspace-client:info');
@@ -192,6 +191,14 @@ export class WorkspaceClient implements rpc.Disposable {
         });
     }
 
+    public getCurrentWorkspaceClient() {
+        return this.workspaceClient;
+    }
+
+    public getCurrentRpcConnection() {
+        return this.rpcConnection;
+    }
+
     public async invokeEnvironmentConfiguration() {
         const environmentConfiguration = await this.getServiceProxy<
             EnvironmentConfigurationService
@@ -201,15 +208,6 @@ export class WorkspaceClient implements rpc.Disposable {
         } catch (e) {
             info('Configure Environments failed to respond. ', e);
         }
-    }
-
-    public async registerGitCredentialService() {
-        // Expose credential service
-        const gitCredentialService = new GitCredentialService(
-            this.workspaceClient!,
-            this.rpcConnection!
-        );
-        await gitCredentialService.shareService();
     }
 
     public async disconnect(): Promise<void> {

@@ -38,3 +38,6 @@ package-lock.json
 
 # test output
 junit.xml
+
+service-worker-graph.svg
+main-graph.svg

@@ -144,7 +144,9 @@
     "get-service-principal": "node scripts/npm/get-service-principal.js",
     "get-dev-cert": "node scripts/npm/get-dev-ssl-cert.js",
     "lint": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json && npm run circular-dependencies",
-    "circular-dependencies": "node ./scripts/circular-dependencies.js"
+    "circular-dependencies": "node ./scripts/circular-dependencies.js",
+    "dep-graph:main": "npx madge --layout dot --warning --image main-graph.svg src/index.tsx",
+    "dep-graph:service-worker": "npx madge --layout dot --warning --image service-worker-graph.svg src/service-worker/service-worker.ts"
   },
   "eslintConfig": {
     "extends": "react-app"

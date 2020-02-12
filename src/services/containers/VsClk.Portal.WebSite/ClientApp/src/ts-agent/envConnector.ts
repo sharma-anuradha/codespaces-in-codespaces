@@ -1,5 +1,5 @@
 import { SshChannel } from '@vs/vs-ssh';
-import { Disposable, Emitter, Event } from 'vscode-jsonrpc';
+import { Disposable, Emitter, Event, MessageConnection } from 'vscode-jsonrpc';
 
 import { WebClient } from './client/webClient';
 import { WorkspaceClient } from './workspaceClient';
@@ -25,6 +25,7 @@ import {
     tryAuthenticateMessageType,
 } from '../common/service-worker-messages';
 import { PromiseCompletionSource } from '@vs/vs-ssh';
+import { GitCredentialService } from './services/gitCredentialService';
 
 export type RemoteVSCodeServerDescription = {
     readonly port: number;
@@ -182,7 +183,10 @@ export class EnvConnector {
             await workspaceClient.authenticate(clientAuthCompletion);
             await Promise.all([clientAuthCompletion.promise, workspaceClient.join()]);
             await workspaceClient.invokeEnvironmentConfiguration();
-            await workspaceClient.registerGitCredentialService();
+            await this.registerGitCredentialService(
+                workspaceClient.getCurrentWorkspaceClient()!,
+                workspaceClient.getCurrentRpcConnection()!
+            );
 
             const browserSyncService = new BrowserSyncService(workspaceClient);
             await browserSyncService.init();
@@ -193,6 +197,15 @@ export class EnvConnector {
         }
 
         return this.workspaceClient.promise;
+    }
+
+    private async registerGitCredentialService(
+        workspaceClient: vsls.WorkspaceService,
+        rpcConnection: MessageConnection
+    ) {
+        // Expose credential service
+        const gitCredentialService = new GitCredentialService(workspaceClient, rpcConnection);
+        await gitCredentialService.shareService();
     }
 
     private async getSharedVscodeServer(

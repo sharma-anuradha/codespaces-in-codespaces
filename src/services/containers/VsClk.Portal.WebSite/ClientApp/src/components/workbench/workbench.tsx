@@ -21,7 +21,7 @@ import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { credentialsProvider } from '../../providers/credentialsProvider';
 import { WorkspaceProvider } from '../../providers/workspaceProvider';
 import { EnvironmentsExternalUriProvider } from '../../providers/externalUriProvider';
-import { resourceUriProviderFactory } from '../../common/url-utils';
+import { resourceUriProviderFactory } from '../../providers/resourceUriProviderFactory';
 import { postServiceWorkerMessage } from '../../common/post-message';
 import { disconnectCloudEnv } from '../../common/service-worker-messages';
 import { UserDataProvider } from '../../utils/userDataProvider';
