@@ -3,6 +3,8 @@
 //  *  Licensed under the MIT License. See License.txt in the project root for license information.
 //  *--------------------------------------------------------------------------------------------*/
 
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const args = require('minimist')(process.argv.slice(2));

@@ -3,6 +3,8 @@
 //  *  Licensed under the MIT License. See License.txt in the project root for license information.
 //  *--------------------------------------------------------------------------------------------*/
 
+'use strict';
+
 var execSync = require('child_process').execSync;
 var fs = require('fs');
 const path = require('path');
@@ -28,6 +30,11 @@ const CHROMIUIM_USER_DATA_DIR = path.join(TEMP_DIR, 'chromium-user-data');
 console.log(args);
 
 //create user data directory to avoid repeated login during test execution.
+
+if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR);
+}
+
 if (!fs.existsSync(CHROMIUIM_USER_DATA_DIR)) {
     fs.mkdirSync(CHROMIUIM_USER_DATA_DIR);
 }
@@ -104,9 +111,9 @@ function logErrorContent(error) {
 }
 
 function getCommand() {
-    let cmd = `npx playwright-cli --verbose --user-data-dir=${userDataDir}`;
+    let cmd = `npx playwright-cli --verbose --user-data-dir=${CHROMIUIM_USER_DATA_DIR}`;
     if (isLocal) {
-        cmd = `npx playwright-cli --debug --verbose' --user-data-dir=${userDataDir}`;
+        cmd = `npx playwright-cli --debug --verbose' --user-data-dir=${CHROMIUIM_USER_DATA_DIR}`;
         console.log('running in debug mode.');
     } else {
         console.log('running in headless mode.');
