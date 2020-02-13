@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="AzureCosmosManagementHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.CosmosDB.Fluent;
@@ -11,7 +15,6 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     internal static class AzureCosmosManagementHelpers
     {
-
         public static bool IsAzureCosmosConnectionDefined(
             this ApplicationServicePrincipal applicationServicePrincipal,
             AppSettingsBase appSettings)

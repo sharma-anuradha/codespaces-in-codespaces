@@ -1,3 +1,7 @@
+// <copyright file="CallbackFeedObserver.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,6 +13,9 @@ using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+#pragma warning disable SA1402 // File may only contain a single type
+#pragma warning disable SA1649 // File name should match first type name
+
     /// <summary>
     /// Implements Azure documents feed observer factory
     /// </summary>
@@ -36,15 +43,15 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     internal class CallbackFeedObserver : IChangeFeedObserver
     {
-        private readonly string feedName;
-        private readonly Func<IReadOnlyList<Document>, Task> onDocumentsChanged;
-        private readonly ILogger logger;
-
         // Logger method scopes
         private const string MethodClose = "CallbackFeedObserver.Close";
         private const string MethodOpen = "CallbackFeedObserver.Open";
 
-        public CallbackFeedObserver(string feedName,Func<IReadOnlyList<Document>, Task> onDcoumentsChanged, ILogger logger)
+        private readonly string feedName;
+        private readonly Func<IReadOnlyList<Document>, Task> onDocumentsChanged;
+        private readonly ILogger logger;
+
+        public CallbackFeedObserver(string feedName, Func<IReadOnlyList<Document>, Task> onDcoumentsChanged, ILogger logger)
         {
             this.feedName = feedName;
             this.onDocumentsChanged = onDcoumentsChanged;
@@ -78,4 +85,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return this.onDocumentsChanged(docs);
         }
     }
+
+#pragma warning restore SA1402 // File may only contain a single type
+#pragma warning restore SA1649 // File name should match first type name
 }

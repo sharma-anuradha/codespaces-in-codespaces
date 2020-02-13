@@ -1,7 +1,9 @@
+// <copyright file="AzureRedisProviderService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -21,35 +23,32 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string MethodConnectionFailed = "ConnectionFailed";
         private const string MethodConnectionRestored = "ConnectionRestored";
 
+        private readonly IStartupBase startup;
         private readonly IOptions<AppSettingsBase> appSettingsProvider;
         private readonly ApplicationServicePrincipal applicationServicePrincipal;
-        private readonly ILogger<AzureRedisProvider> logger;
-        private readonly IDataFormatProvider formatProvider;
-        private readonly IContactBackplaneManager backplaneManager;
-        private readonly IStartupBase startup;
+        private readonly ILogger logger;
+        private IEnumerable<IAzureRedisProviderServiceFactory> azureRedisProviderServiceFactories;
 
         public AzureRedisProviderService(
             IList<IAsyncWarmup> warmupServices,
             IList<IHealthStatusProvider> healthStatusProviders,
+            IStartupBase startup,
+            IEnumerable<IAzureRedisProviderServiceFactory> azureRedisProviderServiceFactories,
             IOptions<AppSettingsBase> appSettingsProvider,
             ApplicationServicePrincipal applicationServicePrincipal,
-            IContactBackplaneManager backplaneManager,
-            IStartupBase startup,
-            ILogger<AzureRedisProvider> logger,
-            IDataFormatProvider formatProvider = null)
+            ILogger<AzureRedisProviderService> logger)
             : base(warmupServices, healthStatusProviders)
         {
+            this.startup = startup;
+            this.azureRedisProviderServiceFactories = azureRedisProviderServiceFactories;
             this.appSettingsProvider = appSettingsProvider;
             this.applicationServicePrincipal = applicationServicePrincipal;
-            this.backplaneManager = backplaneManager;
-            this.startup = startup;
             this.logger = logger;
-            this.formatProvider = formatProvider;
         }
 
-        private AppSettingsBase AppSettings => this.appSettingsProvider.Value;
-
         private (string ServiceId, string Stamp) ServiceInfo => (this.startup.ServiceId, this.startup.Stamp);
+
+        private AppSettingsBase AppSettings => this.appSettingsProvider.Value;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -66,6 +65,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                             stoppingToken) : AppSettings.AzureRedisConnection;
 
                     var options = ConfigurationOptions.Parse(redisConfiguration);
+
                     // define redis options here
                     options.AbortOnConnectFail = false;
 
@@ -75,19 +75,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                         connections.Add(await CreateConnectionMultiplexerAsync(options, n));
                     }
 
-                    var backplaneProvider = await AzureRedisProvider.CreateAsync(
-                        ServiceInfo,
-                        connections.ToArray(),
-                        this.logger,
-                        this.formatProvider);
-                    this.backplaneManager.RegisterProvider(
-                        backplaneProvider,
-                        // Note: the redis provider does not support an optimized 'GetContacts' capability
-                        // so when used with another provider with better support it will be discarded
-                        new ContactBackplaneProviderSupportLevel()
-                        { 
-                            GetContacts = ContactBackplaneProviderSupportLevel.MinimumSupportThreshold
-                        });
+                    var redisConnectionPool = new RedisConnectionPool(connections.ToArray());
+                    foreach (var factory in this.azureRedisProviderServiceFactories)
+                    {
+                        this.logger.LogInformation($"Creating Azure Redis provider with factory:'{factory.GetType().Name}'");
+                        await factory.CreateAsync(ServiceInfo, redisConnectionPool, stoppingToken);
+                    }
                 }
                 catch (Exception error)
                 {

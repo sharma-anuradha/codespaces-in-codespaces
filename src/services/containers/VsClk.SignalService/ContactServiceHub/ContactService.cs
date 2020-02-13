@@ -1,3 +1,7 @@
+// <copyright file="ContactService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,12 +13,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.VsCloudKernel.SignalService.Common;
+using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
+using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    using ConnectionProperties = IDictionary<string, PropertyValue>;
-    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
-
     /// <summary>
     /// The non Hub Service class instance that manage all the registered contacts
     /// </summary>
@@ -47,6 +50,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public IContactBackplaneManager BackplaneManager { get; }
 
+        internal ConcurrentDictionary<string, Contact> Contacts { get; } = new ConcurrentDictionary<string, Contact>();
+
         public ContactServiceMetrics GetMetrics()
         {
             return new ContactServiceMetrics(
@@ -55,8 +60,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Contacts.Sum(kvp => kvp.Value.SelfConnectionsCount),
                 this.stubContacts.Count);
         }
-
-        internal ConcurrentDictionary<string, Contact> Contacts { get; } = new ConcurrentDictionary<string, Contact>();
 
         public async Task<Dictionary<string, ConnectionProperties>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken)
         {
@@ -86,7 +89,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 Logger.LogInformation($"initialProperties:{initialProperties?.ConvertToString(FormatProvider)}");
             }
-
         }
 
         public async Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(
@@ -154,7 +156,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                 Assumes.Equals(backplaneMatchingContacts.Length, nonMatchingProps.Count);
 
-                for(int next = 0; next < backplaneMatchingContacts.Length; ++next)
+                for (int next = 0; next < backplaneMatchingContacts.Length; ++next)
                 {
                     var resultIndex = nonMatchingProps[next].Item1;
                     var matchProperties = nonMatchingProps[next].Item2;
@@ -311,7 +313,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 await targetContact.SendReceiveMessageAsync(contactReference, messageType, body, targetContactReference.ConnectionId, cancellationToken);
             }
 
-            // always attempt to notify trough the backplane 
+            // always attempt to notify trough the backplane
             var messageData = new MessageData(
                 Guid.NewGuid().ToString(),
                 contactReference,
@@ -434,13 +436,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             return Task.FromResult(result);
         }
 
-        protected virtual bool MatchContactProperties(
-            Dictionary<string, object> matchingPropertes,
-            Dictionary<string, object> contactProperties)
-        {
-            return matchingPropertes.MatchProperties(contactProperties);
-        }
-
         internal string FormatContactId(string s)
         {
             return Format("{0:T}", s);
@@ -451,6 +446,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             var contact = new Contact(this, contactId);
             contact.Changed += OnContactChangedAsync;
             return contact;
+        }
+
+        protected virtual bool MatchContactProperties(
+            Dictionary<string, object> matchingPropertes,
+            Dictionary<string, object> contactProperties)
+        {
+            return matchingPropertes.MatchProperties(contactProperties);
         }
 
         private Contact GetOrCreateContact(string contactId)
@@ -515,7 +517,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             Logger.LogDebug($"StubContact removed -> contactId:{stubContact.ContactId}");
 
-            this.stubContacts.TryRemove(stubContact.ContactId, out var __);
+            this.stubContacts.TryRemove(stubContact.ContactId, out var removed__);
             foreach (var stubContacts in this.resolvedContacts.Values)
             {
                 stubContacts.TryRemove(stubContact);
@@ -535,18 +537,21 @@ namespace Microsoft.VsCloudKernel.SignalService
                     var selfContact = selfContactFactory();
                     stubContact.ResolvedContact = selfContact;
                     this.resolvedContacts.AddOrUpdate(selfContact.ContactId, (key) =>
-                    {
-                        var set = new ConcurrentHashSet<StubContact>(new StubContactComparer());
-                        set.Add(stubContact);
-                        return set;
-                    },
-                    (key, value) =>
-                    {
-                        value.Add(stubContact);
-                        return value;
-                    });
+                        {
+                            var set = new ConcurrentHashSet<StubContact>(new StubContactComparer());
+                            set.Add(stubContact);
+                            return set;
+                        },
+#pragma warning disable SA1117 // Parameters should be on same line or separate lines
+                        (key, value) =>
+                        {
+                            value.Add(stubContact);
+                            return value;
+                        });
+#pragma warning restore SA1117 // Parameters should be on same line or separate lines
 
-                    await stubContact.SendUpdatePropertiesAsync(connectionId,
+                    await stubContact.SendUpdatePropertiesAsync(
+                        connectionId,
                         ContactDataProvider.CreateContactDataProvider(initialProperties),
                         initialProperties.Keys,
                         cancellationToken);
@@ -607,7 +612,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                 await ResolveStubContacts(
                     contactDataChanged.ConnectionId,
                     contactDataProvider.Properties,
-                    () => lazySelfContactFactory.Value, cancellationToken);
+                    () => lazySelfContactFactory.Value,
+                    cancellationToken);
             }
             else
             {

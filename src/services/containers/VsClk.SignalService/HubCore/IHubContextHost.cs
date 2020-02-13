@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="IHubContextHost.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Microsoft.VsCloudKernel.SignalService
@@ -9,27 +13,27 @@ namespace Microsoft.VsCloudKernel.SignalService
     public interface IHubContextHost
     {
         /// <summary>
-        /// Target hub type definition
+        /// Target hub type definition.
         /// </summary>
         Type HubType { get; }
 
         /// <summary>
-        /// Return the hub underlying clients
+        /// Return the hub underlying clients.
         /// </summary>
         IHubClients Clients { get; }
 
         /// <summary>
-        /// Return the hub underlying groups
+        /// Return the hub underlying groups.
         /// </summary>
         IGroupManager Groups { get; }
     }
 
     /// <summary>
-    /// Simple IHubContextHost implementation from a standard hub being defined
+    /// Simple IHubContextHost implementation from a standard hub being defined.
     /// </summary>
     /// <typeparam name="THubType"></typeparam>
     /// <typeparam name="THub"></typeparam>
-    public class HubContextHost<THubType ,THub> : IHubContextHost
+    public class HubContextHost<THubType, THub> : IHubContextHost
         where THub : Hub
         where THubType : Hub
     {
@@ -39,12 +43,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             Groups = hubContext.Groups;
         }
 
-        #region IHubContextHost
-
         public Type HubType => typeof(THubType);
-        public IHubClients Clients { get; }
-        public IGroupManager Groups { get; }
 
-        #endregion
+        public IHubClients Clients { get; }
+
+        public IGroupManager Groups { get; }
     }
 }

@@ -11,7 +11,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// <summary>
     /// The client relay service proxy.
     /// </summary>
-    public interface IRelayServiceProxy
+    public interface IRelayServiceProxy : IServiceProxyBase
     {
         /// <summary>
         /// Create a hub.
@@ -20,6 +20,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>The hub created identifier.</returns>
         Task<string> CreateHubAsync(string hubId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Delete a hub that was previously created.
+        /// </summary>
+        /// <param name="hubId">The hub unique identifier.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Task completion.</returns>
+        Task DeleteHubAsync(string hubId, CancellationToken cancellationToken);
 
         /// <summary>
         /// Join an existing hub.

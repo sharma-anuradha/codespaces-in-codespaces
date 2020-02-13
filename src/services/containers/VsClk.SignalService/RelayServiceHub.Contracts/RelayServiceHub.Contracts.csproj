@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.RelayServiceHub.Contracts</AssemblyName>
+    <RootNamespace>Microsoft.VsCloudKernel.SignalService.RelayServiceHub</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common.Contracts\Common.Contracts.SignalR.csproj" />
+  </ItemGroup>
+</Project>

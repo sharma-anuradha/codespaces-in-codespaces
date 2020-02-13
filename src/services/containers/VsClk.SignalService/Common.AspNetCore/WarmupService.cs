@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// <copyright file="WarmupService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common.Warmup;

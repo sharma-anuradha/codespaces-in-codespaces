@@ -2,13 +2,17 @@ import {
     HubClient,
     ContactServiceProxy,
     RelayServiceProxy,
-    IRelayHubProxy
-} from '@vs/signalr-client';
+    IRelayHubProxy,
+    SendOption
+} from '@vs/vso-signalr-client';
+
+import { RpcMessageStream, RelayDataChannel } from '@vs/vso-signalr-client-jsonrpc';
 
 import * as signalR from '@microsoft/signalr';
 import * as process from 'process';
 import * as yargs from 'yargs';
 import * as readline from 'readline';
+import * as rpc from 'vscode-jsonrpc';
 
 import { StringDecoder } from 'string_decoder';
 const decoder = new StringDecoder('utf8');
@@ -75,7 +79,7 @@ async function main() {
 }
 
 function main_presence(hubClient: HubClient, logger: signalR.ILogger): (key: any) => Promise<void> {  
-    const contactServiceProxy = new ContactServiceProxy(hubClient.hubConnection, logger, true );
+    const contactServiceProxy = new ContactServiceProxy(hubClient.hubProxy, logger, true );
 
     contactServiceProxy.onUpdateProperties((contact, properties, targetConnectionId) => {
         // our ILogger will already send this to the console
@@ -119,20 +123,62 @@ function main_presence(hubClient: HubClient, logger: signalR.ILogger): (key: any
 }
 
 function main_relay(hubClient: HubClient, logger: signalR.ILogger): (key: any) => Promise<void> {  
-    const relayServiceProxy = new RelayServiceProxy(hubClient.hubConnection, logger, true);
+    const relayServiceProxy = new RelayServiceProxy(hubClient.hubProxy, logger, true);
 
+    let rpcConnection: rpc.MessageConnection;
     let relayHubProxy: IRelayHubProxy;
     return async (key: any): Promise<void> => {
         if (key === 'j') {
             relayHubProxy = await relayServiceProxy.joinHub('test', { 'app': 'node', 'userId': 'none'}, true);
-            console.log(`Participants: ${JSON.stringify(relayHubProxy.participants)}`);
+            console.log(`Joined-> serviceId:${relayHubProxy.serviceId} stamp:${relayHubProxy.stamp} Participants: ${JSON.stringify(relayHubProxy.participants)}`);
             relayHubProxy.onReceiveData((receivedData): Promise<void> =>  {
                 if (receivedData.type === 'test') {
-                    const msg = decoder.write(<Buffer>receivedData.data);
+                    const buf = Buffer.from(receivedData.data);
+                    const msg = decoder.write(buf);
                     console.log(`received message:${msg}`);
                 }
                 return Promise.resolve();
             });
+        } else if (key === 's') {
+            if (!relayHubProxy) {
+                console.log(`you need to join to a hub first`);
+            } else {
+                const buf: Uint8Array = Buffer.from('Hi from node', 'utf8');
+                await relayHubProxy.sendData(SendOption.None, null, 'test', buf);
+            }
+        } else if (key === 'd') {
+            if (!relayHubProxy) {
+                console.log(`you need to join to a hub first`);
+            } else {
+                await relayServiceProxy.deleteHub(relayHubProxy.id);
+            }
+        } else if (key === 'r') {
+            if (!relayHubProxy) {
+                console.log(`you need to join to a hub first`);
+            } else {
+                const participants = relayHubProxy.participants.filter(p => !p.isSelf);
+                if (participants.length > 0) {
+                    const relayDataChannel = new RelayDataChannel(relayHubProxy, 'jsonRpc', participants[0].id);
+                    const rpcMessageStream = new RpcMessageStream(relayDataChannel);
+
+                    rpcConnection = rpc.createMessageConnection(
+                        rpcMessageStream.reader,
+                        rpcMessageStream.writer);
+            
+                    rpcConnection.onNotification('notify1', (value1) => {
+                        console.log(`notify1 received:${value1}`);
+                    });
+                    rpcConnection.listen();
+                    console.log(`json rpc started on participant:${participants[0].id}`);
+                }
+            }
+        } else if (key === 'm') {
+            if (!rpcConnection) {
+                console.log(`mo rpc setup`);
+            } else {
+                const result = await rpcConnection.sendRequest<string>('method1', 10, 'hi from typescript');
+                console.log(`json rpc result:${result}`);
+            }
         }
     };
 }

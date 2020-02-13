@@ -1,3 +1,7 @@
+// <copyright file="Startup.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,40 +12,44 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.Services.Backplane.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+    /// <summary>
+    /// Our main Startup class.
+    /// </summary>
     public class Startup : StartupBase<AppSettings>
     {
         /// <summary>
-        /// Map to the universal hub signalR
+        /// Map to the health hub signalR.
+        /// </summary>
+        internal const string HealthHubMap = "/healthhub";
+
+        /// <summary>
+        /// Map to the universal hub signalR.
         /// </summary>
         private const string SignalRHubMap = "/signalrhub";
 
         /// <summary>
-        /// Map to the universal hub signalR
+        /// Map to the universal hub signalR.
         /// </summary>
         private const string SignalRHubDevMap = "/signalrhub-dev";
 
         /// <summary>
-        /// Map to the presence hub signalR
+        /// Map to the presence hub signalR.
         /// </summary>
         private const string PresenceHubMap = "/presencehub";
 
         /// <summary>
-        /// Map to dev presence service space hub
+        /// Map to dev presence service space hub.
         /// </summary>
         private const string PresenceHubDevMap = "/presencehub-dev";
 
         /// <summary>
-        /// CORS policy name
+        /// CORS policy name.
         /// </summary>
         private const string VsoCorsPolicy = "vsoCORSPolicy";
-
-        /// <summary>
-        /// Map to the health hub signalR
-        /// </summary>
-        internal const string HealthHubMap = "/healthhub";
 
         public Startup(ILoggerFactory loggerFactory, IWebHostEnvironment env)
             : base(loggerFactory, env)
@@ -69,15 +77,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             services.AddCors(options =>
             {
                 // define VSO Cors policy
-                options.AddPolicy(VsoCorsPolicy,
-                builder =>
-                {
-                    builder
-                        .WithOrigins(corsOrigins.ToArray())
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials();
-                });
+                options.AddPolicy(
+                    VsoCorsPolicy,
+                    builder =>
+                    {
+                        builder
+                            .WithOrigins(corsOrigins.ToArray())
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .AllowCredentials();
+                    });
             });
 
             // Frameworks
@@ -95,26 +104,26 @@ namespace Microsoft.VsCloudKernel.SignalService
                 EnableAuthentication = true;
                 services.AddProfileServiceJwtBearer(
                     authenticateProfileServiceUri,
-                    CreateLoggerInstance(typeof(Authenticate)),
+                    CreateLoggerInstance(typeof(AuthenticateProfileServiceExtension)),
                     $"signlr-{ServiceId}-{Stamp}");
             }
 
-            if (!string.IsNullOrEmpty(AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.BackplaneJsonRpcServer))))
+            var backplaneHostName = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.BackplaneHostName));
+            if (!string.IsNullOrEmpty(backplaneHostName))
             {
                 // add json Rpc backplane support
-                services.AddHostedService<JsonRpcContactBackplaneServiceProviderService>();
-            }
-            else if (!string.IsNullOrEmpty(AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.BackplaneServiceUri))))
-            {
-                // will signalR backplane support
-                services.AddHostedService<HubContactBackplaneServiceProviderService>();
+                services.AddHostedService<JsonRpcBackplaneServiceProviderService<IContactBackplaneManager, ContactBackplaneServiceProvider>>();
+                services.AddHostedService<JsonRpcBackplaneServiceProviderService<IRelayBackplaneManager, RelayBackplaneServiceProvider>>();
             }
             else
             {
                 // Create the Azure Cosmos backplane provider service
+                services.AddSingleton<IAzureDocumentsProviderServiceFactory, AzureDocumentsProviderFactory>();
                 services.AddHostedService<AzureDocumentsProviderService>();
 
                 // Create the Azure Redis backplane provider service
+                services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisContactsProviderFactory>();
+                services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisRelayProviderFactory>();
                 services.AddHostedService<AzureRedisProviderService>();
             }
 
@@ -129,6 +138,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var signalRService = services.AddSignalR().AddNewtonsoftJsonProtocol();
 
             var keyVaultName = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.KeyVaultName));
+
             // if we can eventually retrieve signalR endpoints from the key vault
             var canRetrieveKeyVaultSignalREndpoints =
                 !string.IsNullOrEmpty(ServicePrincipal?.ClientId) &&
@@ -137,6 +147,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 !string.IsNullOrEmpty(Stamp);
 
             var serviceEndpoints = new List<ServiceEndpoint>();
+
             // inject the list of available endpoints
             services.AddSingleton<IList<ServiceEndpoint>>((srvcProvider) => serviceEndpoints);
 
@@ -163,6 +174,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                         // add the endpoints being configured by the env vars
                         var appSettingEndpoints = Configuration.GetAzureSignalRServiceEndpoints();
                         serviceEndpoints.AddRange(appSettingEndpoints.Where(e => serviceEndpoints.FindIndex(se => se.ConnectionString == e.ConnectionString) == -1).ToArray());
+
                         // now define the combined endpoints
                         serviceOptions.Endpoints = serviceEndpoints.ToArray();
                     });
@@ -183,8 +195,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 services.AddSingleton<IHubContextHost, SignalRHubContextHost<ContactServiceHub, AuthorizedSignalRHub>>();
                 services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub, AuthorizedSignalRHub>>();
             }
-
-            if (IsDevelopmentEnv || !EnableAuthentication)
+            else
             {
                 services.AddSingleton<IHubContextHost, HubContextHost<ContactServiceHub, ContactServiceHub>>();
 
@@ -194,7 +205,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             // backplane manager support
             services.AddSingleton<IContactBackplaneManager, ContactBackplaneManager>();
-            services.AddHostedService<ContactBackplaneManagerHostedService<ContactService>>();
+            services.AddHostedService<BackplaneManagerHostedService<ContactService, IContactBackplaneManager>>();
+            services.AddSingleton<IRelayBackplaneManager, RelayBackplaneManager>();
 
             // define long running health echo provider
             services.AddHostedService<SignalRHealthStatusProvider>();
@@ -230,11 +242,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         routes.MapHub<AuthorizedSignalRHub>(SignalRHubMap);
                         routes.MapHub<AuthorizedContactServiceHub>(PresenceHubMap);
-                        if (IsDevelopmentEnv)
-                        {
-                            routes.MapHub<ContactServiceHub>(PresenceHubDevMap);
-                            routes.MapHub<SignalRHub>(SignalRHubDevMap);
-                        }
                     }
                     else
                     {
@@ -254,11 +261,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         routes.MapHub<AuthorizedSignalRHub>(SignalRHubMap);
                         routes.MapHub<AuthorizedContactServiceHub>(PresenceHubMap);
-                        if (IsDevelopmentEnv)
-                        {
-                            routes.MapHub<ContactServiceHub>(PresenceHubDevMap);
-                            routes.MapHub<SignalRHub>(SignalRHubDevMap);
-                        }
                     }
                     else
                     {

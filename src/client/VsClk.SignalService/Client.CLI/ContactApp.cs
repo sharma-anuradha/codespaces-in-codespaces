@@ -46,7 +46,7 @@ namespace SignalService.Client.CLI
 
         protected override void OnHubCreated()
         {
-            this.presenceServiceProxy = HubProxy.CreateHubProxy<ContactServiceProxy>(HubClient.Connection, TraceSource, !this.usePresenceHubNameOption.HasValue());
+            this.presenceServiceProxy = HubProxy.CreateHubProxy<ContactServiceProxy>(HubClient, TraceSource, !this.usePresenceHubNameOption.HasValue());
 
             this.presenceServiceProxy.UpdateProperties += (s, e) =>
             {

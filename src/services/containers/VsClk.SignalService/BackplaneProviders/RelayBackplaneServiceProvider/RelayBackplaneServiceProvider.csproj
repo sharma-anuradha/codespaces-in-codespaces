@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.RealyBackplaneServiceProvider</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\RelayServiceHub.Contracts\RelayServiceHub.Contracts.csproj" />
+    <ProjectReference Include="..\BackplaneServiceProvider.Common\BackplaneServiceProvider.Common.csproj" />
+  </ItemGroup>
+
+
+</Project>

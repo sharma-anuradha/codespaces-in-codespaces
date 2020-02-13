@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="JsonHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using Newtonsoft.Json.Linq;
@@ -6,15 +10,15 @@ using Newtonsoft.Json.Linq;
 namespace Microsoft.VsCloudKernel.SignalService.Common
 {
     /// <summary>
-    /// Helpers for the System.Text.Json namespace
+    /// Helpers for the System.Text.Json namespace.
     /// </summary>
     public static class JsonHelpers
     {
-        private static Type TypeGenericDictionary = typeof(IDictionary<string, object>);
+        private static Type typeGenericDictionary = typeof(IDictionary<string, object>);
 
-        private static JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions()
+        private static JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
         /// <summary>
@@ -98,7 +102,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
 
         private static bool IsDictionaryType(Type type)
         {
-            return TypeGenericDictionary == type || TypeGenericDictionary.IsAssignableFrom(type);
+            return typeGenericDictionary == type || typeGenericDictionary.IsAssignableFrom(type);
         }
 
         private static Dictionary<string, object> ToDictionary(JsonElement jsonElement)
@@ -157,7 +161,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             {
                 return jsonElement.GetInt16();
             }
-            if (argumentType == typeof(uint))
+            else if (argumentType == typeof(uint))
             {
                 return jsonElement.GetUInt32();
             }
@@ -185,7 +189,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             }
 
             var json = jsonElement.ToString();
-            return JsonSerializer.Deserialize(json, argumentType, JsonSerializerOptions);
+            return JsonSerializer.Deserialize(json, argumentType, jsonSerializerOptions);
         }
     }
 }

@@ -27,8 +27,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common.AspNetCore\Common.SignalR.AspNetCore.csproj" />
     <ProjectReference Include="..\AzureDocumentsProvider.AspNetCore\AzureDocumentsProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\AzureDocumentsProvider\AzureDocumentsProvider.csproj" />
+    <ProjectReference Include="..\AzureRedisContactsProvider\AzureRedisContactsProvider.csproj" />
     <ProjectReference Include="..\AzureRedisProvider.AspNetCore\AzureRedisProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\AzureRedisRelayProvider\AzureRedisRelayProvider.csproj" />
     <ProjectReference Include="..\ContactBackplane.Common\ContactBackplane.Common.csproj" />
+    <ProjectReference Include="..\RelayBackplane.Common\RelayBackplane.Common.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="$(Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version)" />
   </ItemGroup>
 

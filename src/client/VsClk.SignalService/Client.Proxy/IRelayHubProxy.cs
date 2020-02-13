@@ -26,6 +26,26 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         event EventHandler<ParticipantChangedEventArgs> ParticipantChanged;
 
         /// <summary>
+        /// When the hub is deleted
+        /// </summary>
+        event EventHandler Deleted;
+
+        /// <summary>
+        /// Gets the parent relay service proxy.
+        /// </summary>
+        IRelayServiceProxy RelayServiceProxy { get; }
+
+        /// <summary>
+        /// Gets the service id where this hub is hosted.
+        /// </summary>
+        string ServiceId { get; }
+
+        /// <summary>
+        /// Gets the stamp where this hub is hosted.
+        /// </summary>
+        string Stamp { get; }
+
+        /// <summary>
         /// Gets unique id of the hub.
         /// </summary>
         string Id { get; }
@@ -50,5 +70,15 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             string type,
             byte[] data,
             CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Update the joined participants properties.
+        /// </summary>
+        /// <param name="properties">new updated properties.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Task compeltion.</returns>
+        Task UpdateAsync(
+                Dictionary<string, object> properties,
+                CancellationToken cancellationToken);
     }
 }

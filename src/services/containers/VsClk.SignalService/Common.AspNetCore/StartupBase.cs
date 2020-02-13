@@ -1,3 +1,7 @@
+// <copyright file="StartupBase.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Hosting;
@@ -10,16 +14,8 @@ using Microsoft.VsSaaS.Common.Warmup;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    public interface IStartupBase
-    {
-        string Environment { get; }
-        bool IsDevelopmentEnv { get; }
-        string ServiceId { get; }
-        string Stamp { get; }
-    }
-
-    public abstract class StartupBase<AppSettings> : IStartupBase
-        where AppSettings : AppSettingsBase
+    public abstract class StartupBase<TAppSettings> : IStartupBase
+        where TAppSettings : AppSettingsBase
     {
         private const string ServiceValue = "signlr";
 
@@ -28,15 +24,15 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string ServiceTypeProperty = "ServiceType";
         private const string StampProperty = "Stamp";
 
-        private Func<Type, ILogger> loggerFactory;
+        private readonly IWebHostEnvironment hostEnvironment;
 
-        private readonly IWebHostEnvironment _hostEnvironment;
+        private Func<Type, ILogger> loggerFactory;
 
         public StartupBase(ILoggerFactory loggerFactory, IWebHostEnvironment env)
         {
             this.loggerFactory = (t) => loggerFactory.CreateLogger(t.FullName);
 
-            this._hostEnvironment = env;
+            this.hostEnvironment = env;
 
             // Build configuration
             var builder = new ConfigurationBuilder()
@@ -55,16 +51,22 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public IConfigurationRoot Configuration { get; }
 
-        public string Environment => this._hostEnvironment.EnvironmentName;
-        public bool IsDevelopmentEnv => !this._hostEnvironment.IsProduction();
+        public string Environment => this.hostEnvironment.EnvironmentName;
+
+        public bool IsDevelopmentEnv => this.hostEnvironment.IsDevelopment();
+
         public string ServiceId { get; private set; }
+
         public string Stamp { get; private set; }
 
         protected abstract string ServiceType { get; }
+
         protected abstract Type AppType { get; }
 
         protected ILogger Logger { get; private set; }
+
         protected IConfigurationSection AppSettingsConfiguration { get; private set; }
+
         protected ApplicationServicePrincipal ServicePrincipal { get; private set; }
 
         protected ILogger CreateLoggerInstance(Type type)
@@ -79,7 +81,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             // Configuration
             AppSettingsConfiguration = Configuration.GetSection("AppSettings");
             services.Configure<AppSettingsBase>(AppSettingsConfiguration);
-            services.Configure<AppSettings>(AppSettingsConfiguration);
+            services.Configure<TAppSettings>(AppSettingsConfiguration);
 
             // create a unique service Id
             ServiceId = Guid.NewGuid().ToString();
@@ -99,7 +101,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                         { ServiceProperty, ServiceValue },
                         { ServiceIdProperty, ServiceId },
                         { ServiceTypeProperty, ServiceType },
-                        { StampProperty, Stamp }
+                        { StampProperty, Stamp },
                     };
                 });
 
@@ -108,12 +110,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             Logger = CreateLoggerInstance(AppType);
-            Logger.LogInformation($"ConfigureServices -> env:{this._hostEnvironment.EnvironmentName}");
+            Logger.LogInformation($"ConfigureServices -> env:{this.hostEnvironment.EnvironmentName}");
 
             // If privacy is enabled
             if (AppSettingsConfiguration.GetValue<bool>(nameof(AppSettingsBase.IsPrivacyEnabled)))
             {
                 Logger.LogInformation("Privacy enabled...");
+
                 // define our IServiceFormatProvider
                 services.AddSingleton<IDataFormatProvider, DataFormatter>();
             }

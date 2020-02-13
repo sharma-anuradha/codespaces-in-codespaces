@@ -12,7 +12,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// <summary>
     /// The client presence service proxy.
     /// </summary>
-    public interface IContactServiceProxy
+    public interface IContactServiceProxy : IServiceProxyBase
     {
         /// <summary>
         /// When update properties changed

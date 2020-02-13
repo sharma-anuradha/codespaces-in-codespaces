@@ -1,4 +1,8 @@
-﻿using Microsoft.Azure.Management.ResourceManager.Fluent;
+﻿// <copyright file="AzureManagementHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 
 namespace Microsoft.VsCloudKernel.SignalService
@@ -12,8 +16,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this ApplicationServicePrincipal applicationServicePrincipal)
         {
             return applicationServicePrincipal != null &&
-                !
-                (string.IsNullOrEmpty(applicationServicePrincipal.ClientId) ||
+                !(string.IsNullOrEmpty(applicationServicePrincipal.ClientId) ||
                 string.IsNullOrEmpty(applicationServicePrincipal.ClientPassword) ||
                 string.IsNullOrEmpty(applicationServicePrincipal.TenantId));
         }

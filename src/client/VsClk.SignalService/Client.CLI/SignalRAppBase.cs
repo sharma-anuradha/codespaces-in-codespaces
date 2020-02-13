@@ -23,7 +23,7 @@ namespace SignalService.Client.CLI
 
         private CancellationTokenSource disposeCts = new CancellationTokenSource();
 
-        private Func<HubConnection> hubConnectionFactory;
+        private Func<string, HubConnection> hubConnectionFactory;
 
         protected CancellationToken DisposeToken => this.disposeCts.Token;
 
@@ -39,16 +39,21 @@ namespace SignalService.Client.CLI
                 serviceEndpoint = DefaultServiceEndpointBase + HubName;
             }
 
-            this.hubConnectionFactory = () =>
+            this.hubConnectionFactory = (serviceUri) =>
             {
+                if (string.IsNullOrEmpty(serviceUri))
+                {
+                    serviceUri = serviceEndpoint;
+                }
+
                 IHubConnectionBuilder hubConnectionBuilder;
                 if (cli.AccessTokenOption.HasValue())
                 {
-                    hubConnectionBuilder = HubConnectionHelpers.FromUrlAndAccessToken(serviceEndpoint, cli.AccessTokenOption.Value());
+                    hubConnectionBuilder = HubConnectionHelpers.FromUrlAndAccessToken(serviceUri, cli.AccessTokenOption.Value());
                 }
                 else
                 {
-                    hubConnectionBuilder = HubConnectionHelpers.FromUrl(serviceEndpoint);
+                    hubConnectionBuilder = HubConnectionHelpers.FromUrl(serviceUri);
                 }
 
                 if (cli.DebugSignalROption.HasValue())
@@ -97,7 +102,7 @@ namespace SignalService.Client.CLI
             return 0;
         }
 
-        protected HubConnection CreateHubConnection() => this.hubConnectionFactory();
+        protected HubConnection CreateHubConnection(string serviceUri = null) => this.hubConnectionFactory(serviceUri);
 
         protected virtual Task OnStartedAsync()
         {

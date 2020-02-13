@@ -1,35 +1,43 @@
-﻿using System;
+﻿// <copyright file="JsonRpcServerService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using StreamJsonRpc;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
 {
     /// <summary>
-    /// Long running service that will accept json rpc connections
+    /// Long running service that will accept json rpc connections.
     /// </summary>
     public class JsonRpcServerService : BackgroundService
     {
-        private const int JsonPort = 3150;
+        private const int Port = 3150;
+        private const string RegisterServiceMethod = "RegisterService";
+
+        private readonly IEnumerable<IJsonRpcSessionFactory> jsonRpcSessionFactories;
 
         public JsonRpcServerService(
-            JsonRpcSessionManager JjonRpcSessionManager,
+            IEnumerable<IJsonRpcSessionFactory> jsonRpcSessionFactories,
             ILogger<JsonRpcServerService> logger)
         {
-            JsonRpcSessionManager = Requires.NotNull(JjonRpcSessionManager, nameof(JjonRpcSessionManager));
+            this.jsonRpcSessionFactories = Requires.NotNull(jsonRpcSessionFactories, nameof(jsonRpcSessionFactories));
             Logger = Requires.NotNull(logger, nameof(logger));
         }
 
-        private JsonRpcSessionManager JsonRpcSessionManager { get; }
-
-        private ILogger<JsonRpcServerService> Logger { get; }
+        private ILogger Logger { get; }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var listener = CreateListener(JsonPort);
+            var listener = CreateListener(Port);
             listener.Start();
 
             while (true)
@@ -50,7 +58,22 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 var tcpStream = client.GetStream();
                 Logger.LogInformation(
                     $"Accepted incoming connection from {((IPEndPoint)client.Client.RemoteEndPoint).Address}");
-                JsonRpcSessionManager.StartSession(tcpStream);
+                var jsonRpc = new JsonRpc(tcpStream);
+
+                Action<string, string> registerCallback = (serviceType, serviceId) =>
+                {
+                    var factory = this.jsonRpcSessionFactories.FirstOrDefault(f => f.ServiceType == serviceType);
+                    if (factory == null)
+                    {
+                        throw new InvalidOperationException($"service type:{serviceType} not found on the registered factories");
+                    }
+
+                    factory.StartRpcSession(jsonRpc, serviceId);
+                };
+
+                jsonRpc.AddLocalRpcMethod(RegisterServiceMethod, registerCallback);
+                jsonRpc.AllowModificationWhileListening = true;
+                jsonRpc.StartListening();
             }
         }
 
@@ -73,6 +96,5 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 return listener;
             }
         }
-
     }
 }

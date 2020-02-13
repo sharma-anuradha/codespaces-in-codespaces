@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\AzureDocumentsProvider\AzureDocumentsProvider.csproj" />
-    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\AzureRedisProvider\AzureRedisProvider.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\AzureRedisContactsProvider\AzureRedisContactsProvider.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\ContactBackplane.Common\ContactBackplane.Common.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\ContactServiceHub\ContactServiceHub.csproj" />
   </ItemGroup>

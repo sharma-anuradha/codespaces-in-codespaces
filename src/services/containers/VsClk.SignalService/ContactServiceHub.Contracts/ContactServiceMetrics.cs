@@ -1,3 +1,7 @@
+// <copyright file="ContactServiceMetrics.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
@@ -33,7 +37,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public int TotalSelfCount { get; }
 
         /// <summary>
-        /// Number of 'stub' being created that were asked during subscription but were not found 
+        /// Number of 'stub' being created that were asked during subscription but were not found
         /// and are waiting to be resolved
         /// </summary>
         public int StubCount { get; }

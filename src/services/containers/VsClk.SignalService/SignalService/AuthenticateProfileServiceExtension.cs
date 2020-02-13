@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="AuthenticateProfileServiceExtension.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -14,13 +18,6 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    /// <summary>
-    /// Authenticate tag class used for ILogger<T>
-    /// </summary>
-    internal class Authenticate
-    {
-    }
-
     /// <summary>
     /// Helper class to enable authentication based on an external profile service Uri
     /// The service Uri will reject non authroized token but also return the proper normalized userId
@@ -47,7 +44,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     options.Events = new JwtBearerEvents
                     {
-                        OnMessageReceived = (msgCtxt) => OnMessageReceivedAsync(msgCtxt, authenticateProfileServiceUri, logger, agentId, tokenCache)
+                        OnMessageReceived = (msgCtxt) => OnMessageReceivedAsync(msgCtxt, authenticateProfileServiceUri, logger, agentId, tokenCache),
                     };
                 });
         }
@@ -135,7 +132,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                     logger.LogDebug($"Successfully authorized userId:{userId} email:{email}");
                 }
 
-                var claims = new Claim[] {
+                var claims = new Claim[]
+                {
                     new Claim("userId", userId, ClaimValueTypes.String),
                     new Claim(ClaimTypes.Email, email, ClaimValueTypes.String),
                 };
@@ -174,25 +172,25 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                 context.Fail(error);
             }
-            }
+        }
 
-            private static bool IsTokenExpired(HttpResponseMessage response)
-            {
-                const string ExpiredParameter = "The token is expired";
-                return response.Headers.WwwAuthenticate.Any(h => h.Scheme == "Bearer" && h.Parameter?.Contains(ExpiredParameter) == true);
-            }
+        private static bool IsTokenExpired(HttpResponseMessage response)
+        {
+            const string ExpiredParameter = "The token is expired";
+            return response.Headers.WwwAuthenticate.Any(h => h.Scheme == "Bearer" && h.Parameter?.Contains(ExpiredParameter) == true);
+        }
 
-            private static JwtSecurityToken GetSecurityToken(string token)
+        private static JwtSecurityToken GetSecurityToken(string token)
+        {
+            try
             {
-                try
-                {
-                    var tokenDecoder = new JwtSecurityTokenHandler();
-                    return (JwtSecurityToken)tokenDecoder.ReadToken(token);
-                }
-                catch
-                {
-                    return null;
-                }
+                var tokenDecoder = new JwtSecurityTokenHandler();
+                return (JwtSecurityToken)tokenDecoder.ReadToken(token);
+            }
+            catch
+            {
+                return null;
             }
         }
     }
+}

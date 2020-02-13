@@ -1,3 +1,7 @@
+// <copyright file="ConcurrentHashSet.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -28,6 +32,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         }
 
         public int Count => this.dictionary.Count;
+
+        public ICollection<T> Values => this.dictionary.Keys;
 
         public void Add(T value)
         {
@@ -64,7 +70,5 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         {
             this.dictionary.Clear();
         }
-
-        public ICollection<T> Values => this.dictionary.Keys;
     }
 }

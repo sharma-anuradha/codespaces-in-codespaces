@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="MemoryBackplaneDataProvider.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,22 +11,16 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Common;
+using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
+using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
 {
-    using ConnectionProperties = IDictionary<string, PropertyValue>;
-    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
-
     /// <summary>
     /// Implements IBackplaneServiceDataProvider interface using memory storage types
     /// </summary>
     public class MemoryBackplaneDataProvider : IBackplaneServiceDataProvider
     {
-        /// <summary>
-        /// Store a dictionary with contact data info
-        /// </summary>
-        private ConcurrentDictionary<string, ContactDataInfoHolder> Contacts { get; } = new ConcurrentDictionary<string, ContactDataInfoHolder>();
-
         private readonly IDataFormatProvider formatProvider;
 
         public MemoryBackplaneDataProvider(ILogger<MemoryBackplaneDataProvider> logger, IDataFormatProvider formatProvider = null)
@@ -31,6 +29,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             this.formatProvider = formatProvider;
         }
 
+        public string[] ActiveServices { get; set; } = Array.Empty<string>();
+
+        /// <summary>
+        /// Store a dictionary with contact data info
+        /// </summary>
+        private ConcurrentDictionary<string, ContactDataInfoHolder> Contacts { get; } = new ConcurrentDictionary<string, ContactDataInfoHolder>();
+
         private ILogger Logger { get; }
 
         /// <summary>
@@ -38,14 +43,12 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// </summary>
         private ConcurrentDictionary<string, string> Emails { get; } = new ConcurrentDictionary<string, string>();
 
-        public string[] ActiveServices { get; set; } = Array.Empty<string>();
-
         public Task<bool> ContainsContactAsync(string contactId, CancellationToken cancellationToken)
         {
             return Task.FromResult(Contacts.ContainsKey(contactId));
         }
 
-        public Task UpdateContactDataInfoAsync(string contactId,ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
+        public Task UpdateContactDataInfoAsync(string contactId, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
         {
             var contactdDataInfoHolder = new ContactDataInfoHolder(contactDataInfo);
             Contacts.AddOrUpdate(
@@ -127,7 +130,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// </summary>
         private class ContactDataInfoHolder
         {
-            private readonly object lock_ = new object();
+            private readonly object lockDataInfo = new object();
             private readonly ContactDataInfo contactDataInfo;
 
             public ContactDataInfoHolder()
@@ -141,9 +144,20 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 this.contactDataInfo = contactDataInfo.Clone();
             }
 
+            public ContactDataInfo Data
+            {
+                get
+                {
+                    lock (this.lockDataInfo)
+                    {
+                        return this.contactDataInfo.Clone();
+                    }
+                }
+            }
+
             public void Update(ContactDataChanged<ConnectionProperties> contactDataChanged, string[] activeServices)
             {
-                lock(this.lock_)
+                lock (this.lockDataInfo)
                 {
                     this.contactDataInfo.UpdateConnectionProperties(contactDataChanged);
                     if (activeServices != null)
@@ -153,17 +167,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                         {
                             contactDataInfo.Remove(serviceId);
                         }
-                    }
-                }
-            }
-
-            public ContactDataInfo Data
-            {
-                get
-                {
-                    lock (this.lock_)
-                    {
-                        return this.contactDataInfo.Clone();
                     }
                 }
             }

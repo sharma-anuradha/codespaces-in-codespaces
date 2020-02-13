@@ -1,18 +1,20 @@
+// <copyright file="ContactDataProvider.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
-
     /// <summary>
-    /// Class to provide properties values from a source
+    /// Class to provide properties values from a source.
     /// </summary>
     internal abstract class ContactDataProvider
     {
         public abstract Dictionary<string, object> Properties { get; }
-        public abstract object GetConnectionPropertyValue(string propertyName, string connectionId);
 
         public static ContactDataProvider CreateContactDataProvider(ContactDataInfo contactDataInfo)
         {
@@ -28,6 +30,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             return new ContactPropertiesProvider(valueFactory);
         }
+
+        public abstract object GetConnectionPropertyValue(string propertyName, string connectionId);
 
         /// <summary>
         /// Implementation based on a property bag

@@ -1,3 +1,7 @@
+// <copyright file="ContactServiceScopes.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
@@ -35,8 +39,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             var allScopes = new List<(string, object)>()
             {
                 (LoggerScopeHelpers.MethodScope, method),
-                (ContactScope, string.Format(formatProvider,"{0:T}", contactId)),
-                (ConnectionScope, connectionId)
+                (ContactScope, string.Format(formatProvider, "{0:T}", contactId)),
+                (ConnectionScope, connectionId),
             };
 
             if (scopes != null)

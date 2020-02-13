@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="DataFormatter.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -12,14 +16,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const int KeySizeInBytes = 256 / 8; // 256-bit key
         private const string Null = "<null>";
 
-        private static byte[] KeyBytes;
-        private static KeyedHashAlgorithm Hash;
         private static readonly object Lock = new object();
+        private static byte[] keyBytes;
+        private static KeyedHashAlgorithm hash;
 
         static DataFormatter()
         {
-            KeyBytes = GenerateKey();
-            Hash = new HMACSHA256(KeyBytes);
+            keyBytes = GenerateKey();
+            hash = new HMACSHA256(keyBytes);
         }
 
         string IDataFormatProvider.GetPropertyFormat(string propertyName)
@@ -46,7 +50,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 dataFormat = format[0];
             }
 
-            switch(dataFormat)
+            switch (dataFormat)
             {
                 case 'T':
                     return FormatText(value.ToString());
@@ -72,14 +76,13 @@ namespace Microsoft.VsCloudKernel.SignalService
         private static string GetShortHash(byte[] value)
         {
             byte[] hash;
-            lock (Hash)
+            lock (DataFormatter.hash)
             {
-                hash = Hash.ComputeHash(value);
+                hash = DataFormatter.hash.ComputeHash(value);
             }
 
             return (hash[0] << 24 | hash[1] << 16 | hash[2] << 8 | hash[3]).ToString("x8");
         }
-
 
         private static byte[] GenerateKey()
         {
@@ -88,6 +91,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 rng.GetBytes(key);
             }
+
             return key;
         }
 

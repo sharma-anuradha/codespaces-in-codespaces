@@ -1,5 +1,5 @@
 {
-  "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
+  "rulesDirectory": ["./node_modules/tslint-microsoft-contrib"],
   "rules": {
     /*
      * SECURITY RULES: The following rules should be turned on because they find security issues

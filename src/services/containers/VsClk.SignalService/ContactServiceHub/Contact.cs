@@ -1,3 +1,7 @@
+// <copyright file="Contact.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,15 +11,18 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Common;
+using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    using ConnectionProperties = IDictionary<string, PropertyValue>;
-
     /// <summary>
-    /// Event to send when the contact has been changed
+    /// Event to send when the contact has been changed.
     /// </summary>
+#pragma warning disable SA1402 // File may only contain a single type
+#pragma warning disable SA1649 // File name should match first type name
     internal class ContactChangedEventArgs : EventArgs
+#pragma warning restore SA1649 // File name should match first type name
+#pragma warning restore SA1402 // File may only contain a single type
     {
         internal ContactChangedEventArgs(
             string connectionId,
@@ -30,6 +37,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public string ConectionId { get; }
 
         public ConnectionProperties Properties { get; }
+
         public ContactUpdateType ChangeType { get; }
     }
 
@@ -55,6 +63,17 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// </summary>
         private Dictionary<string, ConnectionProperties> otherConnectionProperties = new Dictionary<string, ConnectionProperties>();
 
+        public Contact(ContactService service, string contactId)
+            : base(service, contactId)
+        {
+            Logger.LogDebug($"Contact -> contactId:{service.FormatContactId(contactId)}");
+        }
+
+        /// <summary>
+        /// Report changes
+        /// </summary>
+        public event AsyncEventHandler<ContactChangedEventArgs> Changed;
+
         /// <summary>
         /// If this contact does not have any self connection
         /// </summary>
@@ -69,17 +88,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Return the self connection ids maintained by this entity
         /// </summary>
         private ICollection<string> SelfConnectionIds => this.selfConnectionProperties.Keys;
-
-        public Contact(ContactService service, string contactId)
-            : base(service, contactId)
-        {
-            Logger.LogDebug($"Contact -> contactId:{service.FormatContactId(contactId)}");
-        }
-
-        /// <summary>
-        /// Report changes
-        /// </summary>
-        public event AsyncEventHandler<ContactChangedEventArgs> Changed;
 
         /// <summary>
         /// Register a new self connection
@@ -322,7 +330,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                 .Union(otherConnectionProperties).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-
         internal void SetOtherConnectionProperties(Dictionary<string, ConnectionProperties> otherConnectionProperties)
         {
             this.otherConnectionProperties = otherConnectionProperties;
@@ -440,7 +447,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (changedType != ContactUpdateType.None)
             {
-                // fire 
+                // fire
                 await FireChangeAsync(
                     connectionId,
                     updateProperties.ToDictionary(kvp => kvp.Key, kvp => new PropertyValue(kvp.Value, lastUpdated)),
@@ -514,7 +521,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     return properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
                 }
-                else if(this.otherConnectionProperties.TryGetValue(connectionId, out var connProperties))
+                else if (this.otherConnectionProperties.TryGetValue(connectionId, out var connProperties))
                 {
                     return connProperties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
                 }

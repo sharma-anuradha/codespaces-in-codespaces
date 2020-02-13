@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.AzureRedisContactsProvider</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AzureRedisProvider.AspNetCore\AzureRedisProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\DocumentDatabaseProvider\DocumentDatabaseProvider.csproj" />
+  </ItemGroup>
+</Project>

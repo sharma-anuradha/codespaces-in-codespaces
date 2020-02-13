@@ -1,3 +1,7 @@
+// <copyright file="RelayServiceHub.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,20 +19,25 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly RelayService relayService;
         private readonly ILogger logger;
 
-        /// <summary>
-        /// Hub context name when used in a SignalRHubContextHost
-        /// </summary>
-        public static string HubContextName = "relayServiceHub";
-
         public RelayServiceHub(RelayService relayService, ILogger<RelayServiceHub> logger)
         {
             this.relayService = relayService ?? throw new ArgumentNullException(nameof(relayService));
             this.logger = logger;
         }
 
+        /// <summary>
+        /// Hub context name when used in a SignalRHubContextHost.
+        /// </summary>
+        public static string HubContextName => "relayServiceHub";
+
         public Task<string> CreateHubAsync(string hubId)
         {
             return this.relayService.CreateHubAsync(hubId, Context.ConnectionAborted);
+        }
+
+        public Task DeleteHubAsync(string hubId)
+        {
+            return this.relayService.DeleteHubAsync(hubId, Context.ConnectionAborted);
         }
 
         public async Task<JoinHubInfo> JoinHubAsync(string hubId, Dictionary<string, object> properties, bool createIfNotExists)
@@ -37,8 +46,14 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             return new JoinHubInfo()
             {
+                ServiceId = this.relayService.Options.Id,
+                Stamp = this.relayService.Options.Stamp,
                 ParticipantId = Context.ConnectionId,
-                Participants = participants.Select(kvp => new HubParticipant() { Id = kvp.Key, Properties = kvp.Value }).ToArray()
+                Participants = participants.Select(kvp => new HubParticipant()
+                {
+                    Id = kvp.Key,
+                    Properties = kvp.Value,
+                }).ToArray(),
             };
         }
 
@@ -55,6 +70,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             byte[] data)
         {
             return this.relayService.SendDataHubAsync(Context.ConnectionId, hubId, sendOption, targetParticipantIds, type, data, Context.ConnectionAborted);
+        }
+
+        public Task UpdateAsync(string hubId, Dictionary<string, object> properties)
+        {
+            return this.relayService.UpdateAsync(Context.ConnectionId, hubId, properties, Context.ConnectionAborted);
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)

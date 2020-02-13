@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
 
-namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
+namespace Microsoft.VsCloudKernel.SignalService.ServiceHubTests
 {
     internal static class MockUtils
     {

@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿// <copyright file="HealthController.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -33,6 +37,5 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
 
             return Ok();
         }
-
     }
 }

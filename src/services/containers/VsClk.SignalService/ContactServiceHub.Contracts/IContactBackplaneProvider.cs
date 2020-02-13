@@ -1,31 +1,22 @@
+// <copyright file="IContactBackplaneProvider.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
+using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    using ConnectionProperties = IDictionary<string, PropertyValue>;
-    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
+#pragma warning disable SA1201 // Elements should appear in the correct order
+#pragma warning disable SA1649 // File name should match first type name
+#pragma warning disable SA1402 // File may only contain a single type
 
     /// <summary>
-    /// Base class for our data changed structures
-    /// </summary>
-    public class DataChanged
-    {
-        protected DataChanged(string changeId)
-        {
-            ChangeId = changeId;
-        }
-
-        /// <summary>
-        /// Unique change id
-        /// </summary>
-        public string ChangeId { get; }
-    }
-
-    /// <summary>
-    /// Class to describe a contact change
+    /// Class to describe a contact change.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public sealed class ContactDataChanged<T> : DataChanged
@@ -45,21 +36,27 @@ namespace Microsoft.VsCloudKernel.SignalService
             Data = Requires.NotNull(data, nameof(data));
         }
 
+#pragma warning disable SA1314 // Type parameter names should begin with T
         public ContactDataChanged<U> Clone<U>(U data)
+#pragma warning restore SA1314 // Type parameter names should begin with T
             where U : class
         {
             return new ContactDataChanged<U>(ChangeId, ServiceId, ConnectionId, ContactId, ChangeType, data);
         }
 
         public string ServiceId { get; }
+
         public string ConnectionId { get; }
+
         public string ContactId { get; }
+
         public ContactUpdateType ChangeType { get; }
+
         public T Data { get; }
     }
 
     /// <summary>
-    /// The message data entity
+    /// The message data entity.
     /// </summary>
     public class MessageData : DataChanged
     {
@@ -77,30 +74,29 @@ namespace Microsoft.VsCloudKernel.SignalService
             Body = body;
         }
 
-
         /// <summary>
-        /// The contact who want to send the message
+        /// The contact who want to send the message.
         /// </summary>
         public ContactReference FromContact { get; }
 
         /// <summary>
-        /// The target contact to send the message
+        /// The target contact to send the message.
         /// </summary>
         public ContactReference TargetContact { get; }
 
         /// <summary>
-        /// Type of the message
+        /// Type of the message.
         /// </summary>
         public string Type { get; }
 
         /// <summary>
-        /// Body content of the message
+        /// Body content of the message.
         /// </summary>
         public object Body { get; }
     }
 
     /// <summary>
-    /// Backplane data provider interface 
+    /// Backplane data provider interface.
     /// </summary>
     public interface IContactBackplaneDataProvider
     {
@@ -111,7 +107,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="cancellationToken"></param>
         /// <returns>Array of contact data entities that match the criteria</returns>
         Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken);
-        
+
         /// <summary>
         /// Get the contact data info
         /// </summary>
@@ -154,13 +150,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Interface to surface a backplane provider
+    /// Contacts backplane provider base
     /// </summary>
-    public interface IContactBackplaneProvider : IContactBackplaneDataProvider
+    public interface IContactBackplaneProviderBase : IContactBackplaneDataProvider
     {
-        OnContactChangedAsync ContactChangedAsync { get;set;}
-        OnMessageReceivedAsync MessageReceivedAsync { get; set; }
-
         /// <summary>
         /// Send a message using the backplane provider
         /// </summary>
@@ -169,30 +162,19 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Update the metrics of a service instance
-        /// </summary>
-        /// <param name="serviceInfo">Service Info</param>
-        /// <param name="metrics">Metrics instance </param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Dispose a set of data changes that may have been notified by this provider
-        /// </summary>
-        /// <param name="dataChanges"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task DisposeDataChangesAsync(DataChanged[] dataChanges, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Invoked when an exception happen on some of the methods being invoked
-        /// </summary>
-        /// <param name="methodName"></param>
-        /// <param name="error"></param>
-        /// <returns>True if the backplane handle the exception by logging into telemetry or throwing a critical exception</returns>
-        bool HandleException(string methodName, Exception error);
     }
+
+    /// <summary>
+    /// Interface to surface a backplane provider.
+    /// </summary>
+    public interface IContactBackplaneProvider : IContactBackplaneProviderBase, IBackplaneProviderBase<ContactServiceMetrics>
+    {
+        OnContactChangedAsync ContactChangedAsync { get; set; }
+
+        OnMessageReceivedAsync MessageReceivedAsync { get; set; }
+    }
+
+#pragma warning restore SA1201 // Elements should appear in the correct order
+#pragma warning restore SA1649 // File name should match first type name
+#pragma warning restore SA1402 // File may only contain a single type
 }

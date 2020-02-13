@@ -1,0 +1,24 @@
+{
+  "name": "@vs/vso-signalr-client-jsonrpc",
+  "version": "0.0.0-placeholder",
+  "description": "SignalR Client json-rpc support for vsclk-core signalR service",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "compile": "tsc -b ./",
+    "watch": "tsc -b -watch ./",
+    "build:lint": "node ../node_modules/tslint/bin/tslint -c ../tslint.json -p ./tsconfig.json",
+    "build:pack": "gulp pack-pre-publish",
+    "build:pack-publish": "gulp pack-publish"
+  },
+  "keywords": [],
+  "author": "Microsoft",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@vs/signalr-client": "link:../signalr-client",
+    "vscode-jsonrpc": "^4.0.0"
+  },
+  "files": [
+    "dist/**/*"
+  ]
+}

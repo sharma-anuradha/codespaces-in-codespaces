@@ -1,3 +1,7 @@
+// <copyright file="DocumentDatabaseProvider.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,14 +10,13 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VsCloudKernel.SignalService.Common;
 using Newtonsoft.Json.Linq;
+using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
+using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    using ConnectionProperties = IDictionary<string, PropertyValue>;
-    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
-
     /// <summary>
-    /// Base class to all our backplane providers that are based on a document database 
+    /// Base class to all our backplane providers that are based on a document database
     /// </summary>
     public abstract class DocumentDatabaseProvider : VisualStudio.Threading.IAsyncDisposable, IContactBackplaneProvider
     {
@@ -30,9 +33,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.formatProvider = formatProvider;
         }
 
-        protected ILogger Logger { get; }
+        public OnContactChangedAsync ContactChangedAsync { get; set; }
 
-        #region IAsyncDisposable
+        public OnMessageReceivedAsync MessageReceivedAsync { get; set; }
+
+        protected ILogger Logger { get; }
 
         public async Task DisposeAsync()
         {
@@ -41,14 +46,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             await DisposeInternalAsync();
         }
 
-        #endregion
-
-        #region IBackplaneProvider
-
-        public OnContactChangedAsync ContactChangedAsync { get; set; }
-
-        public OnMessageReceivedAsync MessageReceivedAsync { get; set; }
-
         public async Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
         {
             var serviceDocument = new ServiceDocument()
@@ -56,7 +53,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Id = serviceInfo.ServiceId,
                 Stamp = serviceInfo.Stamp,
                 Metrics = metrics,
-                LastUpdate = DateTime.UtcNow
+                LastUpdate = DateTime.UtcNow,
             };
 
             await UpsertServiceDocumentAsync(serviceDocument, cancellationToken);
@@ -74,7 +71,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     return new Dictionary<string, ContactDataInfo>();
                 }
+
                 emailResults.Add((next++, emailPropertyValue));
+
                 // result will come later
                 return null;
             }).ToArray();
@@ -82,7 +81,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var matchContacts = await GetContactsDataByEmailAsync(emailResults.Select(i => i.Item2).ToArray(), cancellationToken);
             if (matchContacts?.Length == emailResults.Count)
             {
-                for(next = 0;next < matchContacts.Length; ++next)
+                for (next = 0; next < matchContacts.Length; ++next)
                 {
                     results[emailResults[next].Item1] = matchContacts[next].ToDictionary(d => d.Id, d => ToContactData(d));
                 }
@@ -93,7 +92,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
-            var contactDataCoument = (await GetContactDataDocumentAsync(contactId, cancellationToken));
+            var contactDataCoument = await GetContactDataDocumentAsync(contactId, cancellationToken);
             return contactDataCoument != null ? ToContactData(contactDataCoument) : null;
         }
 
@@ -108,7 +107,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Type = messageData.Type,
                 Body = messageData.Body,
                 SourceId = sourceId,
-                LastUpdate = DateTime.UtcNow
+                LastUpdate = DateTime.UtcNow,
             };
 
             await InsertMessageDocumentAsync(messageDocument, cancellationToken);
@@ -139,7 +138,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Properties = contactDataChanged.Data.Keys.ToArray(),
                 Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant() ?? contactDataDocument?.Email,
                 ServiceConnections = JObject.FromObject(contactDataInfo),
-                LastUpdate = DateTime.UtcNow
+                LastUpdate = DateTime.UtcNow,
             };
 
             await UpsertContactDocumentAsync(updateContactDataDocument, cancellationToken);
@@ -158,25 +157,28 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public virtual bool HandleException(string methodName, Exception error) => false;
 
-        #endregion
-
-        #region abstract Methods
-
         protected abstract Task DisposeInternalAsync();
-        protected abstract Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken);
-        protected abstract Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken);
-        protected abstract Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken);
-        protected abstract Task<List<ContactDocument>[]> GetContactsDataByEmailAsync(string[] emails, CancellationToken cancellationToken);
-        protected abstract Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken);
-        protected abstract Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken);
-        protected abstract Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken);
-        protected abstract Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken);
 
-        #endregion
+        protected abstract Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken);
+
+        protected abstract Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken);
+
+        protected abstract Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken);
+
+        protected abstract Task<List<ContactDocument>[]> GetContactsDataByEmailAsync(string[] emails, CancellationToken cancellationToken);
+
+        protected abstract Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken);
+
+        protected abstract Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken);
+
+        protected abstract Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken);
+
+        protected abstract Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken);
 
         protected async Task InitializeServiceIdAsync((string ServiceId, string Stamp) serviceInfo)
         {
             await UpdateMetricsAsync(serviceInfo, default, CancellationToken.None);
+
             // load initial services
             await LoadActiveServicesAsync(default);
         }
@@ -216,7 +218,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                     catch (Exception error)
                     {
                         Logger.LogError(error, $"Failed when processing contact document:{doc.Id}");
-
                     }
                 }
             }
@@ -234,17 +235,16 @@ namespace Microsoft.VsCloudKernel.SignalService
                         await MessageReceivedAsync(
                             messageDoc.SourceId,
                             new MessageData(
-                                messageDoc.Id,
-                                new ContactReference(messageDoc.ContactId, null),
-                                new ContactReference(messageDoc.TargetContactId, messageDoc.TargetConnectionId),
-                                messageDoc.Type,
-                                JToken.FromObject(messageDoc.Body)),
-                                default(CancellationToken));
+                            messageDoc.Id,
+                            new ContactReference(messageDoc.ContactId, null),
+                            new ContactReference(messageDoc.TargetContactId, messageDoc.TargetConnectionId),
+                            messageDoc.Type,
+                            JToken.FromObject(messageDoc.Body)),
+                            default(CancellationToken));
                     }
                     catch (Exception error)
                     {
                         Logger.LogError(error, $"Failed when processing message document:{doc.Id}");
-
                     }
                 }
             }
@@ -253,7 +253,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         private async Task LoadActiveServicesAsync(CancellationToken cancellationToken)
         {
             var allServices = await GetServiceDocuments(cancellationToken);
-            Logger.LogMethodScope(LogLevel.Debug,$"services:{string.Join(",", allServices.Select(s => $"[{s.Id}-{s.Stamp}]"))}", MethodLoadActiveServices);
+            Logger.LogMethodScope(
+                LogLevel.Debug,
+                $"services:{string.Join(",", allServices.Select(s => $"[{s.Id}-{s.Stamp}]"))}",
+                MethodLoadActiveServices);
 
             var utcNow = DateTime.UtcNow;
             var nonStaleServices = new HashSet<string>(allServices.Where(i => (utcNow - i.LastUpdate).TotalSeconds < BackplaneManagerConst.StaleServiceSeconds).Select(d => d.Id));
@@ -268,7 +271,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                         Logger.LogDebug($"Delete stale service id:{doc.Id}");
                         await DeleteServiceDocumentById(doc.Id, cancellationToken);
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
             }
 
@@ -289,15 +294,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             return contactDataInfo;
         }
 
-
         private string ToTraceText(string s)
         {
             return string.Format(this.formatProvider, "{0:T}", s);
         }
 
+#pragma warning disable SA1201 // Elements should appear in the correct order
         protected interface IDocument
+#pragma warning restore SA1201 // Elements should appear in the correct order
         {
             string Id { get; }
+
             Task<T> ReadAsAsync<T>();
         }
     }

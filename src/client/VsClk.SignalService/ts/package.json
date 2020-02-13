@@ -1,31 +1,15 @@
 {
-  "name": "@vs/vso-signalr-client",
-  "version": "0.0.0-placeholder",
-  "description": "SignalR Client for vsclk-core signalR service",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
-  "scripts": {
-    "compile": "tsc -b ./",
-    "watch": "tsc -b -watch ./",
-    "build:lint": "node ./node_modules/tslint/bin/tslint -c ./tslint.json -p ./tsconfig.json",
-    "build:pack": "gulp pack-pre-publish",
-    "build:pack-publish": "gulp pack-publish"
-  },
-  "keywords": [],
-  "author": "Microsoft",
-  "license": "Apache-2.0",
-  "dependencies": {
-    "@microsoft/signalr": "^3.1.0",
-    "@types/node": "^12.6.2"
-  },
-  "devDependencies": {
-    "tslint": "^5.13.1",
-    "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.7.4",
-    "gulp": "^4.0.2",
-    "nerdbank-gitversioning": "^2.3.183"
-  },
-  "files": [
-    "dist/**/*"
-  ]
-}
+    "private": true,
+    "devDependencies": {
+        "tslint": "^5.13.1",
+        "tslint-microsoft-contrib": "^6.0.0",
+        "typescript": "^3.7.4",
+        "gulp": "^4.0.2",
+        "nerdbank-gitversioning": "^2.3.183"
+    },
+    "workspaces": [
+        "./signalr-client",
+        "./jsonrpc",
+        "./cli"
+    ]
+  }

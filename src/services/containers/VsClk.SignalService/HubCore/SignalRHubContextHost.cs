@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="SignalRHubContextHost.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +23,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public SignalRHubContextHost(IHubContext<TSignalRHub> hubContext)
         {
-            var hubName = HubType.GetField(HubContextFieldName).GetValue(null).ToString();
+            var hubName = HubType.GetProperty(HubContextFieldName).GetValue(null).ToString();
             Clients = new HubClientsProxy(hubContext.Clients, hubName);
             Groups = hubContext.Groups;
         }
@@ -27,6 +31,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public Type HubType => typeof(THub);
 
         public IHubClients Clients { get; }
+
         public IGroupManager Groups { get; }
 
         /// <summary>
@@ -43,8 +48,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Requires.NotNullOrEmpty(hubName, nameof(hubName));
                 this.hubName = hubName;
             }
-
-            #region IHubClients
 
             public IClientProxy All => ToClientProxy(this.hubClients.All);
 
@@ -88,8 +91,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                 return ToClientProxy(this.hubClients.Users(userIds));
             }
 
-            #endregion
-
             private IClientProxy ToClientProxy(IClientProxy clientProxy)
             {
                 return new ClientProxy(clientProxy, this.hubName);
@@ -108,15 +109,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                 this.hubName = hubName;
             }
 
-            #region IClientProxy
-
             public Task SendCoreAsync(string method, object[] args, CancellationToken cancellationToken = default)
             {
                 return this.clientProxy.SendCoreAsync($"{this.hubName}.{method}", args, cancellationToken);
             }
-
-            #endregion
         }
     }
-
 }

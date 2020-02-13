@@ -1,3 +1,7 @@
+// <copyright file="ContactBase.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -12,7 +16,7 @@ using Microsoft.VsCloudKernel.SignalService.Common;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Contact base class 
+    /// Contact base class
     /// </summary>
     internal class ContactBase
     {
@@ -41,8 +45,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected ContactService Service { get; }
 
+        protected ILogger Logger => Service.Logger;
+
         /// <summary>
-        /// Add a subscription properties to this instance
+        /// Add a subscription properties to this instance.
         /// </summary>
         /// <param name="connectionId">The connection id to track</param>
         /// <param name="selfConnectionId">Optional self connection id</param>
@@ -54,7 +60,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             this.connectionSubscriptions[new Tuple<string, string>(connectionId, selfConnectionId)] = new ConcurrentHashSet<string>(propertyNames);
         }
-
 
         /// <summary>
         /// Remove a subscription being mantained by this contact
@@ -77,8 +82,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                 this.connectionSubscriptions.TryRemove(key, out var properties);
             }
         }
-
-        protected ILogger Logger => Service.Logger;
 
         /// <summary>
         /// Return all client proxies from a connection id
@@ -109,7 +112,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             string selfConnectionId,
             CancellationToken cancellationToken)
         {
-
             using (Logger.BeginSingleScope(
                 (LoggerScopeHelpers.MethodScope, ContactHubMethods.UpdateValues)))
             {

@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="HubDispatcher.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -27,6 +31,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         public string HubName { get; }
+
         public Type HubType { get; }
 
         public bool TryGetMethod(string methodName, out MethodInfo methodInfo)

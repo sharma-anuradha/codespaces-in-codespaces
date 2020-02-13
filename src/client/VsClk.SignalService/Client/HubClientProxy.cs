@@ -33,7 +33,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         public HubClientProxy(HubConnection hubConnection, TraceSource trace, bool useSignalRHub = false)
             : base(hubConnection, trace)
         {
-            Proxy = HubProxy.CreateHubProxy<T>(hubConnection, trace, useSignalRHub);
+            Proxy = HubProxy.CreateHubProxy<T>(this, trace, useSignalRHub);
         }
 
         /// <summary>

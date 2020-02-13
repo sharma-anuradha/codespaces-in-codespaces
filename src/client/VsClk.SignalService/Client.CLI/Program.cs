@@ -93,6 +93,10 @@ namespace SignalService.Client.CLI
                 app.OnExecute(() => new ContactStressApp(contactsFilePathOption).RunAsync(cli));
             });
 
+            cli.Command("run-relay-stress", app =>
+            {
+                app.OnExecute(() => new RelayStressApp().RunAsync(cli));
+            });
             try
             {
                 return cli.Execute(args);

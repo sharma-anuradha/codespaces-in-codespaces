@@ -1,3 +1,7 @@
+// <copyright file="ConcurrentHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Concurrent;
 
@@ -48,6 +52,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             }
         }
 
+#pragma warning disable SA1314 // Type parameter names should begin with T
         public static V AddOrUpdate<T, U, V>(
             this ConcurrentDictionary<T, U> dictionary,
             T key,
@@ -55,10 +60,12 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             Func<T, V, V> updateValueFactory)
             where U : Lazy<V>
         {
-            U lazy = dictionary.AddOrUpdate(key,
-                        (U)new Lazy<V>(() => addValueFactory(key)),
-                        (k, oldValue) => (U)new Lazy<V>(() => updateValueFactory(k, oldValue.Value)));
+            U lazy = dictionary.AddOrUpdate(
+                key,
+                (U)new Lazy<V>(() => addValueFactory(key)),
+                (k, oldValue) => (U)new Lazy<V>(() => updateValueFactory(k, oldValue.Value)));
             return lazy.Value;
         }
     }
+#pragma warning restore SA1314 // Type parameter names should begin with T
 }

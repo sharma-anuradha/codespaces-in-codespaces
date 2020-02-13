@@ -14,7 +14,7 @@
 
     <ServiceRoot>..\..\..\services\containers\VsClk.SignalService</ServiceRoot>
     <ContactServiceContracts>$(ServiceRoot)\ContactServiceHub.Contracts</ContactServiceContracts>
-    <RelayServiceHubContracts>$(ServiceRoot)\RelayServiceHub\Contracts</RelayServiceHubContracts>
+    <RelayServiceHubContracts>$(ServiceRoot)\RelayServiceHub.Contracts</RelayServiceHubContracts>
   </PropertyGroup>
   
   <ItemGroup>
@@ -28,8 +28,7 @@
     <Compile Include="$(ContactServiceContracts)\PropertyValue.cs" Link="ContactServiceHub.Contracts\PropertyValue.cs" />
     <Compile Include="$(ContactServiceContracts)\SearchProperty.cs" Link="ContactServiceHub.Contracts\SearchProperty.cs" />
 
-    
-    <Compile Include="$(RelayServiceHubContracts)\*.cs" Exclude="**\IRelayServiceClientHub.cs;**\RelayServiceMetrics.cs">
+    <Compile Include="$(RelayServiceHubContracts)\*.cs" Exclude="**\IRelayServiceClientHub.cs;**\RelayServiceMetrics.cs;**\IRelayBackplaneProvider.cs;**\RelayBackplaneProviderSupportLevel.cs;**\IRelayBackplaneManager.cs">
       <Link>RelayServiceHub.Contracts\%(Filename)%(Extension)</Link>
     </Compile>
 
@@ -41,5 +40,6 @@
   
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Threading" Version="$(VisualStudioThreadingVersion)" />
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.11.0" />
   </ItemGroup>
   </Project>

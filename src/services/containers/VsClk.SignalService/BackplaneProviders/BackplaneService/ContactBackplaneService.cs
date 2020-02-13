@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="ContactBackplaneService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,26 +15,22 @@ using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Common;
+using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
+using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
 {
-    using ConnectionProperties = IDictionary<string, PropertyValue>;
-    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
-
     /// <summary>
     /// Our backplane service that will handle multiple contact service request
     /// </summary>
-    public class ContactBackplaneService
+    public class ContactBackplaneService : BackplaneService<IContactBackplaneManager, IContactBackplaneServiceNotification>, IHostedBackplaneService
     {
         private readonly ConcurrentDictionary<string, (DateTime, ContactServiceMetrics)> activeServices = new ConcurrentDictionary<string, (DateTime, ContactServiceMetrics)>();
         private readonly IStartupBase startupBase;
         private readonly IDataFormatProvider formatProvider;
-        private int numOfConnections;
-        private List<IContactBackplaneServiceNotification> contactBackplaneServiceNotifications = new List<IContactBackplaneServiceNotification>();
 
         private readonly ActionBlock<(Stopwatch, ContactDataChanged<ConnectionProperties>)> updateContactActionBlock;
         private readonly ActionBlock<(Stopwatch, string, MessageData)> sendMessageActionBlock;
-        private readonly CancellationTokenSource disposeTokenSource = new CancellationTokenSource();
 
         private int updateContactPerfCounter;
 
@@ -42,12 +42,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             IStartupBase startupBase,
             IOptions<AppSettings> appSettingsProvider,
             IDataFormatProvider formatProvider = null)
+            : base(backplaneManager, contactBackplaneServiceNotifications, logger)
         {
-            Logger = Requires.NotNull(logger, nameof(logger));
-            this.contactBackplaneServiceNotifications.AddRange(contactBackplaneServiceNotifications);
-
             ServiceDataProvider = Requires.NotNull(serviceDataProvider, nameof(serviceDataProvider));
-            BackplaneManager = Requires.NotNull(backplaneManager, nameof(backplaneManager));
             this.startupBase = Requires.NotNull(startupBase, nameof(startupBase));
             this.formatProvider = formatProvider;
 
@@ -56,10 +53,11 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
             var blockOptions = new ExecutionDataflowBlockOptions()
             {
-                MaxDegreeOfParallelism = 32
+                MaxDegreeOfParallelism = 32,
             };
 
-            this.updateContactActionBlock = new ActionBlock<(Stopwatch, ContactDataChanged<ConnectionProperties>)>(async (updateContactInfo) =>
+            this.updateContactActionBlock = new ActionBlock<(Stopwatch, ContactDataChanged<ConnectionProperties>)>(
+                async (updateContactInfo) =>
             {
                 try
                 {
@@ -67,13 +65,14 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                     Logger.LogMethodScope(LogLevel.Debug, $"input count:{this.updateContactActionBlock.InputCount}", nameof(this.updateContactActionBlock), updateContactInfo.Item1.ElapsedMilliseconds);
                     Interlocked.Increment(ref updateContactPerfCounter);
                 }
-                catch(Exception error)
+                catch (Exception error)
                 {
-                    Logger.LogWarning(error,$"Failed to update contact change id:{updateContactInfo.Item2.ChangeId} contact Id:{updateContactInfo.Item2}");
+                    Logger.LogWarning(error, $"Failed to update contact change id:{updateContactInfo.Item2.ChangeId} contact Id:{updateContactInfo.Item2}");
                 }
             }, blockOptions);
 
-            this.sendMessageActionBlock = new ActionBlock<(Stopwatch, string, MessageData)>(async (sendMessageInfo) =>
+            this.sendMessageActionBlock = new ActionBlock<(Stopwatch, string, MessageData)>(
+                async (sendMessageInfo) =>
             {
                 try
                 {
@@ -98,12 +97,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             Logger.LogInformation($"BackplaneService created succeeded:{succeeded} workerThreads:{workerThreads}:{oldWorkerThreads} completionPortThreads:{completionPortThreads}:{oldCompletionPortThreads}");
         }
 
-        private CancellationToken DisposeToken => this.disposeTokenSource.Token;
-
-        private ILogger Logger { get; }
-
-        private IContactBackplaneManager BackplaneManager { get; }
-
         private IBackplaneServiceDataProvider ServiceDataProvider { get; }
 
         public async Task RunAsync(CancellationToken stoppingToken)
@@ -122,7 +115,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                     (LoggerScopeHelpers.MemorySizeProperty, memoryInfo.memorySize),
                     (LoggerScopeHelpers.TotalMemoryProperty, memoryInfo.totalMemory)))
                 {
-                    Logger.LogInformation($"Contact perf:{this.updateContactPerfCounter/ TimespanUpdateMin}");
+                    Logger.LogInformation($"Contact perf:{this.updateContactPerfCounter / TimespanUpdateMin}");
                 }
 
                 this.updateContactPerfCounter = 0;
@@ -133,25 +126,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         {
             await CompleteActionBlock(this.updateContactActionBlock, nameof(this.updateContactActionBlock));
             await CompleteActionBlock(this.sendMessageActionBlock, nameof(this.sendMessageActionBlock));
-        }
-
-        public void AddContactBackplaneServiceNotification(IContactBackplaneServiceNotification contactBackplaneServiceNotification)
-        {
-            this.contactBackplaneServiceNotifications.Add(contactBackplaneServiceNotification);
-        }
-
-        #region Hub methods
-
-        public void RegisterService(string serviceId)
-        {
-            Interlocked.Increment(ref this.numOfConnections);
-            Logger.LogMethodScope(LogLevel.Information, $"serviceId:{serviceId} numOfConnections:{this.numOfConnections}", nameof(RegisterService));
-        }
-
-        public void OnDisconnected(string serviceId, Exception exception)
-        {
-            Interlocked.Decrement(ref this.numOfConnections);
-            Logger.LogMethodScope(LogLevel.Error, exception, $"OnDisconnectedAsync -> serviceId:{serviceId} numOfConnections:{this.numOfConnections}", nameof(OnDisconnected));
         }
 
         public Task UpdateMetricsAsync(
@@ -205,10 +179,10 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             }
             else
             {
-                // first get the global data for this contact 
+                // first get the global data for this contact
                 contactDataInfo = (await BackplaneManager.GetContactDataAsync(contactDataChanged.ContactId, cancellationToken)) ??
                     new Dictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>();
-                
+
                 // merge the data
                 contactDataInfo.UpdateConnectionProperties(contactDataChanged);
                 await ServiceDataProvider.UpdateContactDataInfoAsync(contactDataChanged.ContactId, contactDataInfo, cancellationToken);
@@ -240,13 +214,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         {
             using (Logger.BeginMethodScope(nameof(GetContactsDataAsync)))
             {
-                Logger.LogDebug($"emails:{string.Join(",", matchProperties.Select(i => Format("{0:E}",i.TryGetProperty<string>(ContactProperties.Email))))}");
+                Logger.LogDebug($"emails:{string.Join(",", matchProperties.Select(i => Format("{0:E}", i.TryGetProperty<string>(ContactProperties.Email))))}");
             }
 
             var results = await ServiceDataProvider.GetContactsDataAsync(matchProperties, cancellationToken);
             var nonMatchResults = new List<int>();
 
-            for(int index = 0; index < matchProperties.Length;++index)
+            for (int index = 0; index < matchProperties.Length; ++index)
             {
                 if (results[index] == null)
                 {
@@ -281,8 +255,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             // route to global providers
             await this.sendMessageActionBlock.SendAsync((Stopwatch.StartNew(), sourceId, messageData), cancellationToken);
         }
-
-        #endregion
 
         private string ToString(ContactDataChanged<ConnectionProperties> contactDataChanged)
         {
@@ -355,10 +327,11 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         private async Task FireOnUpdateContactAsync(ContactDataChanged<ContactDataInfo> contactDataChanged, string[] affectedProperties, CancellationToken cancellationToken)
         {
-            Logger.LogMethodScope(LogLevel.Debug,
+            Logger.LogMethodScope(
+                LogLevel.Debug,
                 $"contactId:{Format("{0:T}", contactDataChanged.ContactId)} affectedProperties:{(affectedProperties != null ? string.Join(",", affectedProperties) : "<null>")}",
                 nameof(FireOnUpdateContactAsync));
-            foreach (var notify in this.contactBackplaneServiceNotifications)
+            foreach (var notify in BackplaneServiceNotifications)
             {
                 await notify.FireOnUpdateContactAsync(contactDataChanged, affectedProperties, cancellationToken);
             }
@@ -370,7 +343,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                LogLevel.Debug,
                $"serviceId:{sourceId} from:{Format("{0:T}", messageData.FromContact.Id)} to:{Format("{0:T}", messageData.TargetContact.Id)}",
                nameof(FireOnSendMessageAsync));
-            foreach (var notify in this.contactBackplaneServiceNotifications)
+            foreach (var notify in BackplaneServiceNotifications)
             {
                 await notify.FireOnSendMessageAsync(sourceId, messageData, cancellationToken);
             }

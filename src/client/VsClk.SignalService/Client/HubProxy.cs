@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.VisualStudio.Threading;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
@@ -22,44 +23,63 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <summary>
         /// Initializes a new instance of the <see cref="HubProxy"/> class.
         /// </summary>
-        /// <param name="connection">The hub connection</param>
+        /// <param name="hubClient">The hub client.</param>
         /// <param name="hubName">Optional name of the hub.</param>
-        public HubProxy(HubConnection connection, string hubName)
+        public HubProxy(HubClient hubClient, string hubName)
         {
-            Connection = Requires.NotNull(connection, nameof(connection));
+            Client = Requires.NotNull(hubClient, nameof(hubClient));
             this.hubName = hubName;
+        }
+
+        /// <inheritdoc/>
+        public event AsyncEventHandler ConnectionStateChanged
+        {
+            add
+            {
+                Client.ConnectionStateChanged += value;
+            }
+
+            remove
+            {
+                Client.ConnectionStateChanged -= value;
+            }
         }
 
         /// <summary>
         /// Gets the underlying hub connection.
         /// </summary>
-        public HubConnection Connection { get; }
+        public HubConnection Connection => Client.Connection;
+
+        /// <inheritdoc/>
+        public bool IsConnected => Client.IsConnected;
+
+        private HubClient Client { get; }
 
         /// <summary>
         /// Create a hub proxy of a type.
         /// </summary>
         /// <typeparam name="T">Type of the proxy to create.</typeparam>
-        /// <param name="hubConnection">The hub connection instance.</param>
+        /// <param name="hubClient">The hub client.</param>
         /// <param name="trace">Trace instance.</param>
-        /// <param name="useSignalRHub">If using the signalR hub</param>
-        /// <returns>Instance of the proxy</returns>
-        public static T CreateHubProxy<T>(HubConnection hubConnection, TraceSource trace, bool useSignalRHub = false)
+        /// <param name="useSignalRHub">If using the signalR hub.</param>
+        /// <returns>Instance of the proxy.</returns>
+        public static T CreateHubProxy<T>(HubClient hubClient, TraceSource trace, bool useSignalRHub = false)
         {
-            return CreateHubProxy<T>(hubConnection, trace, null, useSignalRHub);
+            return CreateHubProxy<T>(hubClient, trace, null, useSignalRHub);
         }
 
         /// <summary>
         /// Create a hub proxy of a type.
         /// </summary>
         /// <typeparam name="T">Type of the proxy to create.</typeparam>
-        /// <param name="hubConnection">The hub connection instance.</param>
+        /// <param name="hubClient">The hub client.</param>
         /// <param name="trace">Trace instance.</param>
         /// <param name="formatProvider">Optional format provider.</param>
-        /// <param name="useSignalRHub">If using the signalR hub</param>
-        /// <returns>Instance of the proxy</returns>
-        public static T CreateHubProxy<T>(HubConnection hubConnection, TraceSource trace, IFormatProvider formatProvider, bool useSignalRHub = false)
+        /// <param name="useSignalRHub">If using the signalR hub.</param>
+        /// <returns>Instance of the proxy.</returns>
+        public static T CreateHubProxy<T>(HubClient hubClient, TraceSource trace, IFormatProvider formatProvider, bool useSignalRHub = false)
         {
-            var hubProxy = new HubProxy(hubConnection, useSignalRHub ? (string)typeof(T).GetField("HubName").GetValue(null) : null);
+            var hubProxy = new HubProxy(hubClient, useSignalRHub ? (string)typeof(T).GetField("HubName").GetValue(null) : null);
             return (T)Activator.CreateInstance(typeof(T), hubProxy, trace, formatProvider);
         }
 

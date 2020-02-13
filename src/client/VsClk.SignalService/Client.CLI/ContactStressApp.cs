@@ -87,16 +87,16 @@ namespace SignalService.Client.CLI
             }
             else if (key == '+')
             {
-                ReadIntValue("Enter batch count:", ref this.batchRequests);
+                Utils.ReadIntValue("Enter batch count:", ref this.batchRequests);
                 await CreateEndpointsAsync(Enumerable.Range(0, this.batchRequests).Select(i => Guid.NewGuid().ToString()));
             }
             else if (key == 'x')
             {
-                ReadIntValue("Enter number of contacts per batch:", ref this.numberOfContactsPerBatch);
-                ReadIntValue("Enter batch delay in millisecs:", ref this.sendBatchDelayMillsecs);
-                ReadIntValue("Enter number of total messages:", ref this.numberOfTotalMessage);
+                Utils.ReadIntValue("Enter number of contacts per batch:", ref this.numberOfContactsPerBatch);
+                Utils.ReadIntValue("Enter batch delay in millisecs:", ref this.sendBatchDelayMillsecs);
+                Utils.ReadIntValue("Enter number of total messages:", ref this.numberOfTotalMessage);
                 bool enforceCrossService = false;
-                ReadBoolValue("Enforce cross region:", ref enforceCrossService);
+                Utils.ReadBoolValue("Enforce cross region:", ref enforceCrossService);
                 this.receivedMessages = 0;
                 this.totalCloudTime = default;
 
@@ -108,7 +108,7 @@ namespace SignalService.Client.CLI
             }
             else if (key == 'r')
             {
-                ReadIntValue("Enter number of emails to request:", ref this.numberOfEmailRequests);
+                Utils.ReadIntValue("Enter number of emails to request:", ref this.numberOfEmailRequests);
                 var contactId = Guid.NewGuid().ToString();
                 TraceSource.Verbose($"Creating endpoint:{contactId}...");
                 var endpoint = await PresenceEndpoint.CreateAsync(contactId, CreateHubConnection(), TraceSource, DisposeToken);
@@ -119,68 +119,6 @@ namespace SignalService.Client.CLI
                     true,
                     DisposeToken);
                 TraceSource.Verbose($"Finished time->{start.ElapsedMilliseconds}");
-            }
-        }
-
-        private static void ReadIntValue(string message, ref int value)
-        {
-            Console.Write($"{message}({value}):");
-            var line = Console.ReadLine();
-            if (!string.IsNullOrEmpty(line))
-            {
-                value = int.Parse(line);
-            }
-        }
-
-        private static void ReadBoolValue(string message, ref bool value)
-        {
-            Console.Write($"{message}({value}):");
-            var line = Console.ReadLine();
-            if (!string.IsNullOrEmpty(line))
-            {
-                value = bool.Parse(line);
-            }
-        }
-
-        private static async Task WaitAllAsync<TResult>(
-            List<Task<TResult>> tasks,
-            Action<TResult> onResult,
-            TraceSource traceSource,
-            CancellationToken cancellationToken)
-        {
-            while (tasks.Count > 0 && !cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    var task = await Task.WhenAny(tasks);
-                    tasks.Remove(task);
-                    var result = await task;
-                    onResult(result);
-                }
-                catch (Exception error)
-                {
-                    traceSource.Error($"Failed to complete task with error:{error.Message}");
-                }
-            }
-        }
-
-        private static async Task WaitAllAsync(
-            List<Task> tasks,
-            TraceSource traceSource,
-            CancellationToken cancellationToken)
-        {
-            while (tasks.Count > 0 && !cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    var task = await Task.WhenAny(tasks);
-                    tasks.Remove(task);
-                    await task;
-                }
-                catch (Exception error)
-                {
-                    traceSource.Error($"Failed to complete task with error:{error.Message}");
-                }
             }
         }
 
@@ -228,7 +166,7 @@ namespace SignalService.Client.CLI
                     cancellationToken));
             }
 
-            await WaitAllAsync(tasks, traceSource, cancellationToken);
+            await Utils.WaitAllAsync(tasks, traceSource, cancellationToken);
         }
 
         private static IEnumerable<KeyValuePair<string, PresenceEndpoint>> GetRandomItems(Dictionary<string, PresenceEndpoint> connections)
@@ -319,7 +257,7 @@ namespace SignalService.Client.CLI
             }
 
             var batchConnections = new Dictionary<string, PresenceEndpoint>();
-            await WaitAllAsync(
+            await Utils.WaitAllAsync(
                 tasks,
                 (result) =>
                 {
@@ -342,61 +280,34 @@ namespace SignalService.Client.CLI
             public DateTime SentTimestamp { get; set; }
         }
 
-        private class PresenceEndpoint
+        private class PresenceEndpoint : EndpointBase<ContactServiceProxy>
         {
-            private readonly TraceSource traceSource;
-
             internal PresenceEndpoint(string contactId, HubClient hubClient, TraceSource traceSource)
+                : base(hubClient, traceSource)
             {
                 ContactId = contactId;
-                HubClient = hubClient;
-                this.traceSource = traceSource;
-                Proxy = HubProxy.CreateHubProxy<ContactServiceProxy>(hubClient.Connection, traceSource, true);
-                HubClient.ConnectionStateChanged += OnConnectionStateChangedAsync;
             }
 
-            public HubClient HubClient { get; private set; }
-
-            public ContactServiceProxy Proxy { get; }
-
             public string ContactId { get; }
-
-            public string ServiceId { get; private set; }
-
-            public string Stamp { get; private set; }
 
             public static async Task<PresenceEndpoint> CreateAsync(string contactId, HubConnection hubConnection, TraceSource traceSource, CancellationToken cancellationToken)
             {
                 traceSource.Verbose($"Creating endpoint for contactId:{contactId}");
 
-                // try once
-                await hubConnection.StartAsync(cancellationToken);
-
-                var hubClient = new HubClient(hubConnection, traceSource);
-
-                // next call will make sure the HubClinet is in running state
-                await hubClient.StartAsync(CancellationToken.None);
-
-                var endpoint = new PresenceEndpoint(contactId, hubClient, traceSource);
-                await endpoint.RegisterAsync(cancellationToken);
-                return endpoint;
+                return await CreateAsync(
+                    (hubClient) => new PresenceEndpoint(contactId, hubClient, traceSource),
+                    hubConnection,
+                    traceSource,
+                    cancellationToken);
             }
 
-            public async Task DisposeAsync()
+            public override async Task DisposeAsync()
             {
                 await Proxy.UnregisterSelfContactAsync(CancellationToken.None);
-                await HubClient.StopAsync(CancellationToken.None);
+                await base.DisposeAsync();
             }
 
-            private async Task OnConnectionStateChangedAsync(object sender, EventArgs args)
-            {
-                if (HubClient.State == HubConnectionState.Connected)
-                {
-                    await RegisterAsync(CancellationToken.None);
-                }
-            }
-
-            private async Task RegisterAsync(CancellationToken cancellationToken)
+            protected override async Task<(string, string)> OnConnectedAsync(CancellationToken cancellationToken)
             {
                 var publishedProperties = new Dictionary<string, object>()
                 {
@@ -404,9 +315,10 @@ namespace SignalService.Client.CLI
                 };
 
                 var factoryProperties = await Proxy.RegisterSelfContactAsync(ContactId, publishedProperties, cancellationToken);
-                ServiceId = factoryProperties[ContactProperties.ServiceId].ToString();
-                Stamp = factoryProperties[ContactProperties.Stamp].ToString();
-                this.traceSource.Verbose($"registration completed for contactId:{ContactId} on serviceId:{ServiceId} stamp:{Stamp}");
+                var serviceId = factoryProperties[ContactProperties.ServiceId].ToString();
+                var stamp = factoryProperties[ContactProperties.Stamp].ToString();
+                TraceSource.Verbose($"registration completed for contactId:{ContactId} on serviceId:{serviceId} stamp:{stamp}");
+                return (serviceId, stamp);
             }
         }
     }

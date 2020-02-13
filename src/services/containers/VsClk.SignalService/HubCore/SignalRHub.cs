@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="SignalRHub.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -19,7 +23,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly IServiceScopeFactory serviceScopeFactory;
 
         public SignalRHub(
-            IServiceScopeFactory serviceScopeFactory, 
+            IServiceScopeFactory serviceScopeFactory,
             IEnumerable<HubDispatcher> hubDispatchers)
         {
             this.serviceScopeFactory = serviceScopeFactory;
@@ -28,7 +32,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public override async Task OnConnectedAsync()
         {
-            foreach(var hubDispatcher in hubDispatchers.Values)
+            foreach (var hubDispatcher in hubDispatchers.Values)
             {
                 await HubCallbackAsync(hubDispatcher, async (hub) =>
                 {
@@ -77,7 +81,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
 
                 // convert argument types
-                for (int index = 0; index < arguments.Length; ++index )
+                for (int index = 0; index < arguments.Length; ++index)
                 {
                     arguments[index] = ToArgumentType(arguments[index], methodInfo.GetParameters()[index].ParameterType);
                 }
@@ -103,6 +107,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 throw new ArgumentException($"Method:{hubMethodName} not found");
             }
+        }
+
+        private static ValueTask DisposeAsync(IDisposable disposable)
+        {
+            if (disposable is IAsyncDisposable asyncDisposable)
+            {
+                return asyncDisposable.DisposeAsync();
+            }
+
+            disposable.Dispose();
+            return default;
         }
 
         private static object ToArgumentType(object value, Type argumentType)
@@ -143,7 +158,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return value;
         }
 
-        private async Task HubCallbackAsync(HubDispatcher hubDispatcher, Func<Hub, Task> hubCallback )
+        private async Task HubCallbackAsync(HubDispatcher hubDispatcher, Func<Hub, Task> hubCallback)
         {
             IServiceScope scope = null;
             try
@@ -178,17 +193,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             hub.Clients = this.Clients;
             hub.Context = this.Context;
             hub.Groups = this.Groups;
-        }
-
-        private static ValueTask DisposeAsync(IDisposable disposable)
-        {
-            if (disposable is IAsyncDisposable asyncDisposable)
-            {
-                return asyncDisposable.DisposeAsync();
-            }
-
-            disposable.Dispose();
-            return default;
         }
     }
 }

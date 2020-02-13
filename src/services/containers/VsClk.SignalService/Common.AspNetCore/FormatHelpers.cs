@@ -13,11 +13,16 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             switch (propertyName)
             {
-                case ContactProperties.Email:
+                // ContactProperties.Email
+                case "email":
                     return "E";
-                case ContactProperties.ContactId:
-                case ContactProperties.IdReserved:
+
+                // ContactProperties.ContactId
+                case "contactId":
+                // ContactProperties.IdReserved
+                case "_Id":
                     return "T";
+
                 default:
                     return null;
             }

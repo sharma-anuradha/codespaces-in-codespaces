@@ -1,3 +1,7 @@
+// <copyright file="AzureDocumentsProviderService.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -13,35 +17,33 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     public class AzureDocumentsProviderService : WarmupServiceBase
     {
+        private readonly IStartupBase startup;
+        private readonly IEnumerable<IAzureDocumentsProviderServiceFactory> azureDocumentsProviderServiceFactories;
         private readonly IOptions<AppSettingsBase> appSettingsProvider;
         private readonly ApplicationServicePrincipal applicationServicePrincipal;
-        private readonly IContactBackplaneManager backplaneManager;
-        private readonly IStartupBase startup;
-        private readonly ILogger<AzureDocumentsProvider> logger;
-        private readonly IDataFormatProvider formatProvider;
+        private readonly ILogger logger;
 
         public AzureDocumentsProviderService(
             IList<IAsyncWarmup> warmupServices,
             IList<IHealthStatusProvider> healthStatusProviders,
+            IStartupBase startup,
+            IEnumerable<IAzureDocumentsProviderServiceFactory> azureDocumentsProviderServiceFactories,
             IOptions<AppSettingsBase> appSettingsProvider,
             ApplicationServicePrincipal applicationServicePrincipal,
-            IContactBackplaneManager backplaneManager,
-            IStartupBase startup,
-            ILogger<AzureDocumentsProvider> logger,
+            ILogger<AzureDocumentsProviderService> logger,
             IDataFormatProvider formatProvider = null)
             : base(warmupServices, healthStatusProviders)
         {
+            this.startup = startup;
+            this.azureDocumentsProviderServiceFactories = azureDocumentsProviderServiceFactories;
             this.appSettingsProvider = appSettingsProvider;
             this.applicationServicePrincipal = applicationServicePrincipal;
-            this.backplaneManager = backplaneManager;
-            this.startup = startup;
             this.logger = logger;
-            this.formatProvider = formatProvider;
         }
 
-        private AppSettingsBase AppSettings => this.appSettingsProvider.Value;
-
         private (string ServiceId, string Stamp) ServiceInfo => (this.startup.ServiceId, this.startup.Stamp);
+
+        private AppSettingsBase AppSettings => this.appSettingsProvider.Value;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -62,17 +64,18 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                     this.logger.LogInformation($"Creating Azure Cosmos provider with Url:'{cosmosConfiguration.Item1}'");
 
-                    var backplaneProvider = await AzureDocumentsProvider.CreateAsync(
-                        ServiceInfo,
-                        new DatabaseSettings()
-                        {
-                            EndpointUrl = cosmosConfiguration.Item1,
-                            AuthorizationKey = cosmosConfiguration.Item2,
-                            IsProduction = !this.startup.IsDevelopmentEnv
-                        },
-                        this.logger,
-                        this.formatProvider);
-                    this.backplaneManager.RegisterProvider(backplaneProvider);
+                    var databaseSettings = new DatabaseSettings()
+                    {
+                        EndpointUrl = cosmosConfiguration.Item1,
+                        AuthorizationKey = cosmosConfiguration.Item2,
+                        IsProduction = !this.startup.IsDevelopmentEnv,
+                    };
+
+                    foreach (var factory in this.azureDocumentsProviderServiceFactories)
+                    {
+                        this.logger.LogInformation($"Creating Azure Documents provider with factory:'{factory.GetType().Name}'");
+                        await factory.CreateAsync(ServiceInfo, databaseSettings, stoppingToken);
+                    }
                 }
                 catch (Exception error)
                 {

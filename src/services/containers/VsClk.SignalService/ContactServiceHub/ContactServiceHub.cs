@@ -1,3 +1,7 @@
+// <copyright file="ContactServiceHub.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,12 +16,8 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     public class ContactServiceHub : Hub<IContactServiceClientHub>, IContactServiceHub
     {
-        /// <summary>
-        /// Hub context name when used in a SignalRHubContextHost
-        /// </summary>
-        public static string HubContextName = "presenceServiceHub";
-
         private const int ContactIdKey = 1;
+
         /// <summary>
         /// Note: this is the delay we used to avoid glitches when a disconnection happen but
         /// later another connection is established and so we should not notify prematurly
@@ -35,6 +35,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.formatProvider = formatProvider;
         }
 
+        /// <summary>
+        /// Hub context name when used in a SignalRHubContextHost
+        /// </summary>
+        public static string HubContextName => "presenceServiceHub";
+
         public Task<Dictionary<string, IDictionary<string, PropertyValue>>> GetSelfConnectionsAsync(string contactId)
         {
             return this.presenceService.GetSelfConnectionsAsync(contactId, Context.ConnectionAborted);
@@ -49,7 +54,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var contactReference = new ContactReference(contactId, Context.ConnectionId);
             await this.presenceService.RegisterSelfContactAsync(
                 contactReference,
-                initialProperties, 
+                initialProperties,
                 Context.ConnectionAborted);
             return new Dictionary<string, object>
             {
@@ -64,7 +69,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             return this.presenceService.UpdatePropertiesAsync(GetContextContactReference(), updateProperties, Context.ConnectionAborted);
         }
-     
+
         public Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(Dictionary<string, object>[] targetContactProperties, string[] propertyNames, bool useStubContact)
         {
             return this.presenceService.RequestSubcriptionsAsync(GetContextContactReference(), targetContactProperties, propertyNames, useStubContact, Context.ConnectionAborted);

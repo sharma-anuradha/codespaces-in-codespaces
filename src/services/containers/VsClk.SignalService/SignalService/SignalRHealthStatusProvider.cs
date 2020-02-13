@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="SignalRHealthStatusProvider.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,11 +59,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             State = true;
         }
 
-        private string HealthHubUrl => $"{appSettings.BaseUri}{Startup.HealthHubMap}";
-
         public bool State { get; private set; }
 
-        #region BackgroundService Override
+        private string HealthHubUrl => $"{appSettings.BaseUri}{Startup.HealthHubMap}";
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
@@ -113,7 +115,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                             }
                             else
                             {
-                                this.logger.LogError(error, HealthFailedConnectMessage,HealthHubUrl, this.errorCount);
+                                this.logger.LogError(error, HealthFailedConnectMessage, HealthHubUrl, this.errorCount);
                             }
                         }
                     }
@@ -123,8 +125,6 @@ namespace Microsoft.VsCloudKernel.SignalService
                 await Task.Delay(State ? TimeSpan.FromMinutes(EchoMinutesSucceed) : TimeSpan.FromSeconds(EchoSecsFailure), cancellationToken);
             }
         }
-
-        #endregion
 
         private async Task<EchoResult> EchoHealthHub(CancellationToken cancellationToken)
         {

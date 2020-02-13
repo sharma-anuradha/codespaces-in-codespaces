@@ -1,3 +1,7 @@
+// <copyright file="AzureSignalRHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,8 +45,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         public static IEnumerable<KeyValuePair<string, string>> GetAllAzureSignalRConnections(IConfiguration configuration)
         {
             return
-                GetAzureSignalRConnections(configuration, ConnectionStringDefaultKey, ConnectionStringKeyPrefix).Union
-                (GetAzureSignalRConnections(configuration, ConnectionStringSecondaryKey, ConnectionStringSecondaryKeyPrefix)).Distinct();
+                GetAzureSignalRConnections(configuration, ConnectionStringDefaultKey, ConnectionStringKeyPrefix)
+                .Union(GetAzureSignalRConnections(configuration, ConnectionStringSecondaryKey, ConnectionStringSecondaryKeyPrefix)).Distinct();
         }
 
         public static ServiceEndpoint[] GetAzureSignalRServiceEndpoints(this IConfiguration configuration)
@@ -72,13 +76,14 @@ namespace Microsoft.VsCloudKernel.SignalService
                                 kvp.Key)).ToArray();
         }
 
-        private static IEnumerable<KeyValuePair<string,string>> GetAzureSignalRConnections(IConfiguration configuration, string defaultKey, string keyPrefix)
+        private static IEnumerable<KeyValuePair<string, string>> GetAzureSignalRConnections(IConfiguration configuration, string defaultKey, string keyPrefix)
         {
             return configuration.AsEnumerable().Where(pair =>
             {
                 var key = pair.Key;
-                return ((key == defaultKey && !string.IsNullOrEmpty(pair.Value)) ||
-                    (key.StartsWith(keyPrefix) && !string.IsNullOrEmpty(pair.Value)));
+                return
+                    (key == defaultKey && !string.IsNullOrEmpty(pair.Value)) ||
+                    (key.StartsWith(keyPrefix) && !string.IsNullOrEmpty(pair.Value));
             });
         }
 

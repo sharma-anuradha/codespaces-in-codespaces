@@ -1,3 +1,7 @@
+// <copyright file="StubContact.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +22,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// The mathing properties being used 
+        /// The mathing properties being used
         /// </summary>
         public Dictionary<string, object> MatchProperties { get; }
 
@@ -43,6 +47,5 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             await Task.WhenAll(GetSendUpdateProperties(selfConnectionId, affectedProperties, contactDataProvider, cancellationToken));
         }
-
     }
 }

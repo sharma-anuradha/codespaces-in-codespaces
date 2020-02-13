@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.Common.Contracts</AssemblyName>
+    <RootNamespace>Microsoft.VsCloudKernel.SignalService</RootNamespace>
+  </PropertyGroup>
+</Project>

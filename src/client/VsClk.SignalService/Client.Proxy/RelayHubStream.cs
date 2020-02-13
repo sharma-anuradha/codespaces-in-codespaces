@@ -3,11 +3,9 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Threading;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
@@ -17,12 +15,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     public class RelayHubStream : Stream
     {
         private readonly IRelayHubProxy relayHubProxy;
-        private readonly string participantId;
-        private readonly string streamId;
-        private readonly TaskCompletionSource<byte[]> firstDataTcs = new TaskCompletionSource<byte[]>();
-        private SequenceDataReader<byte[]> sequenceDataReader;
-        private int writeSequence;
-
         private CancellationTokenSource closeCts = new CancellationTokenSource();
         private byte[] overflowData;
         private bool isClosed;
@@ -31,19 +23,41 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// Initializes a new instance of the <see cref="RelayHubStream"/> class.
         /// </summary>
         /// <param name="relayHubProxy">A relay hub proxy instance.</param>
-        /// <param name="participantId">The participant Id.</param>
+        /// <param name="targetParticipantId">The participant Id.</param>
         /// <param name="streamId">The stream Id.</param>
-        public RelayHubStream(IRelayHubProxy relayHubProxy, string participantId, string streamId)
+        /// <param name="relayStreamProvider">The relay stream provider.</param>
+        public RelayHubStream(IRelayHubProxy relayHubProxy, string targetParticipantId, string streamId, IRelayStreamProvider relayStreamProvider)
         {
             this.relayHubProxy = Requires.NotNull(relayHubProxy, nameof(relayHubProxy));
-            Requires.NotNullOrEmpty(participantId, nameof(participantId));
+            Requires.NotNullOrEmpty(targetParticipantId, nameof(targetParticipantId));
             Requires.NotNullOrEmpty(streamId, nameof(streamId));
 
-            this.participantId = participantId;
-            this.streamId = streamId;
+            TargetParticipantId = targetParticipantId;
+            StreamId = streamId;
+            RelayStreamProvider = Requires.NotNull(relayStreamProvider, nameof(relayStreamProvider));
 
             relayHubProxy.ReceiveData += OnReceiveData;
             relayHubProxy.ParticipantChanged += OnParticipantChanged;
+            relayHubProxy.RelayServiceProxy.HubProxy.ConnectionStateChanged += (s, e) =>
+            {
+                if (!relayHubProxy.RelayServiceProxy.HubProxy.IsConnected)
+                {
+                    CloseIfInternal();
+                }
+
+                return Task.CompletedTask;
+            };
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RelayHubStream"/> class.
+        /// </summary>
+        /// <param name="relayHubProxy">A relay hub proxy instance.</param>
+        /// <param name="targetParticipantId">The participant Id.</param>
+        /// <param name="streamId">The stream Id.</param>
+        public RelayHubStream(IRelayHubProxy relayHubProxy, string targetParticipantId, string streamId)
+            : this(relayHubProxy, targetParticipantId, streamId, new DefaultRelayStreamProvider())
+        {
         }
 
         /// <inheritdoc/>
@@ -78,7 +92,13 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }
         }
 
-        private CancellationToken CloseToken => closeCts.Token;
+        private IRelayStreamProvider RelayStreamProvider { get; }
+
+        private string StreamId { get; }
+
+        private string TargetParticipantId { get; }
+
+        private CancellationToken CloseToken => this.closeCts.Token;
 
         /// <inheritdoc/>
         public override void Flush()
@@ -143,12 +163,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             var data = new byte[count];
             Buffer.BlockCopy(buffer, offset, data, 0, count);
 
-            var nextSequence = Interlocked.Increment(ref this.writeSequence);
             return relayHubProxy.SendDataAsync(
                 SendOption.None,
-                new string[] { participantId },
-                streamId,
-                EncodeHubData(nextSequence, data),
+                new string[] { TargetParticipantId },
+                StreamId,
+                RelayStreamProvider.EncodeHubData(data),
                 cancellationToken);
         }
 
@@ -166,7 +185,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 {
                     try
                     {
-                        var data = this.sequenceDataReader != null ? await this.sequenceDataReader.ReadNextMessageAsync(cancellationToken) : await SequenceDataReader<byte[]>.GetValueAsync(this.firstDataTcs, cancellationToken);
+                        var data = await RelayStreamProvider.ReadDataAsync(cts.Token);
                         overflowData = ReturnData(data, buffer, offset, count, out totalBytes);
                     }
                     catch (OperationCanceledException ex)
@@ -201,51 +220,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             return null;
         }
 
-        private static byte[] EncodeHubData(int sequence, byte[] data)
-        {
-            using (var ms = new MemoryStream())
-            {
-                var bw = new BinaryWriter(ms);
-                bw.Write(sequence);
-                bw.Write(data);
-                bw.Flush();
-                return ms.ToArray();
-            }
-        }
-
-        private static (int, byte[]) DecodeHubData(byte[] hubData)
-        {
-            using (var ms = new MemoryStream(hubData))
-            {
-                var br = new BinaryReader(ms);
-                var sequence = br.ReadInt32();
-                return (sequence, br.ReadBytes(hubData.Length - (int)ms.Position));
-            }
-        }
-
         private void OnReceiveData(object sender, ReceiveDataEventArgs e)
         {
-            if (e.FromParticipant.Id == participantId && e.Type == streamId)
+            if (e.FromParticipant.Id == TargetParticipantId && e.Type == StreamId)
             {
-                var messageInfo = DecodeHubData(e.Data);
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"->RelayHubStream.OnReceiveData uniqueId:{e.UniqueId} sequence:{messageInfo.Item1} data-length:{messageInfo.Item2.Length}");
-#endif
-                if (this.sequenceDataReader == null)
-                {
-                    this.sequenceDataReader = new SequenceDataReader<byte[]>(messageInfo.Item1);
-                    this.firstDataTcs.TrySetResult(messageInfo.Item2);
-                }
-                else
-                {
-                    this.sequenceDataReader.NextMessage(messageInfo.Item1, messageInfo.Item2);
-                }
+                RelayStreamProvider.HandleReceivedData(e.Data);
             }
         }
 
         private void OnParticipantChanged(object sender, ParticipantChangedEventArgs e)
         {
-            if (e.ChangeType == ParticipantChangeType.Removed && e.Participant.Id == participantId)
+            if (e.ChangeType == ParticipantChangeType.Removed && e.Participant.Id == TargetParticipantId)
             {
                 CloseIfInternal();
             }
@@ -265,43 +250,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             this.relayHubProxy.ReceiveData -= OnReceiveData;
             this.relayHubProxy.ParticipantChanged -= OnParticipantChanged;
             this.closeCts.Cancel();
-        }
-
-        /// <summary>
-        /// Class to retrieve messages that comes without a sequence
-        /// </summary>
-        /// <typeparam name="TValue">Type of data to read in sequence</typeparam>
-        private class SequenceDataReader<TValue>
-        {
-            private readonly ConcurrentDictionary<int, TaskCompletionSource<TValue>> messages = new ConcurrentDictionary<int, TaskCompletionSource<TValue>>();
-            private int readSequence;
-
-            public SequenceDataReader(int readSequence)
-            {
-                this.readSequence = readSequence;
-            }
-
-            public static Task<TValue> GetValueAsync(TaskCompletionSource<TValue> tcs, CancellationToken cancellationToken)
-            {
-                using (cancellationToken.Register(() => tcs.TrySetCanceled()))
-                {
-                    return tcs.Task;
-                }
-            }
-
-            public void NextMessage(int sequenceId, TValue value)
-            {
-                messages.GetOrAdd(sequenceId, (key) => new TaskCompletionSource<TValue>()).TrySetResult(value);
-            }
-
-            public async Task<TValue> ReadNextMessageAsync(CancellationToken cancellationToken)
-            {
-                var nextReadSequence = Interlocked.Increment(ref this.readSequence);
-                var tcs = messages.GetOrAdd(nextReadSequence, (key) => new TaskCompletionSource<TValue>());
-                var value = await GetValueAsync(tcs, cancellationToken);
-                messages.TryRemove(nextReadSequence, out tcs);
-                return value;
-            }
         }
     }
 }

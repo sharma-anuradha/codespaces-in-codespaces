@@ -11,4 +11,8 @@
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
 
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common.Contracts\Common.Contracts.SignalR.csproj" />
+  </ItemGroup>
 </Project>

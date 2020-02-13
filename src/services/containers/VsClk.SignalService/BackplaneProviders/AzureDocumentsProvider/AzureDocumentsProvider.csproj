@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AzureDocumentsProvider.AspNetCore\AzureDocumentsProvider.AspNetCore.csproj" />
     <ProjectReference Include="..\DocumentDatabaseProvider\DocumentDatabaseProvider.csproj" />
   </ItemGroup>
 

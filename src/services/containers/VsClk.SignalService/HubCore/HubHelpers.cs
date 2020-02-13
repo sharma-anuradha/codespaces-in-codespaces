@@ -1,4 +1,8 @@
-﻿namespace Microsoft.VsCloudKernel.SignalService
+﻿// <copyright file="HubHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
     /// Hub helpers

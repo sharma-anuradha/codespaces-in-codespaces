@@ -11,7 +11,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// <summary>
     /// Definition of a hub proxy.
     /// </summary>
-    public interface IHubProxy
+    public interface IHubProxy : IHubProxyConnection
     {
         /// <summary>
         /// To receive notifications.

@@ -4,14 +4,15 @@
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <AssemblyName>Microsoft.VsCloudKernel.SignalService.AzureRedisProvider.AspNetCore</AssemblyName>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
     <PackageReference Include="Microsoft.Azure.Management.Redis.Fluent" Version="1.27.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Common.AspNetCore\Common.SignalR.AspNetCore.csproj" />
-    <ProjectReference Include="..\AzureRedisProvider\AzureRedisProvider.csproj" />
+    <!--<ProjectReference Include="..\AzureRedisProvider\AzureRedisProvider.csproj" />-->
   </ItemGroup>
 </Project>

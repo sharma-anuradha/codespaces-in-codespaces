@@ -1,5 +1,8 @@
 
-module.exports = function(gulp, rootDir) {
+module.exports = function(gulp, rootDir, options) {
+    if (!options) {
+        options = {};
+    }
     const utils = require('./utils');
     const nbgv = require('./node_modules/nerdbank-gitversioning');
     const fs = require('fs');
@@ -7,9 +10,12 @@ module.exports = function(gulp, rootDir) {
     const util = require('util');
     
     const packageJsonFile = path.join(rootDir, 'package.json');
-    const packagesDir = path.join(rootDir, 'pkgs');
+    const packagesDir = path.join(rootDir, '..', 'pkgs');
+    const packageJsonFileCopy = path.join(packagesDir, 'package.json');
 
     const readFile = util.promisify(fs.readFile);
+    const copyFile = util.promisify(fs.copyFile);
+    const unlink = util.promisify(fs.unlink);
     const mkdir = util.promisify(fs.mkdir);
 
     function getPackageFileName(packageJson, buildVersion) {
@@ -34,12 +40,25 @@ module.exports = function(gulp, rootDir) {
         return path.join(rootDir, packageFileName);
     }
 
-    gulp.task('setPackageVersion', function() {
-        return nbgv.setPackageVersion(rootDir);
+    gulp.task('setPackageVersion', async function() {
+        await nbgv.setPackageVersion(rootDir);
+        await mkdirp(packagesDir);
+        await copyFile(packageJsonFile, packageJsonFileCopy);
+        if (options.versionDependencies) {
+            let version = (await nbgv.getVersion(rootDir)).npmPackageVersion;
+            utils.replaceFileContent(packageJsonFile, function(content) {
+                options.versionDependencies.forEach(s => {
+                    content = content.replace(s, '^' + version);
+                });
+                return content;
+            });
+        }
     });
     
-    gulp.task('resetPackageVersion', function() {
-        return nbgv.resetPackageVersionPlaceholder(rootDir);
+    gulp.task('resetPackageVersion', async function() {
+        await copyFile(packageJsonFileCopy, packageJsonFile);
+        await unlink(packageJsonFileCopy);
+        await nbgv.resetPackageVersionPlaceholder(rootDir);
     });
 
     gulp.task('compile', function() {
@@ -51,7 +70,6 @@ module.exports = function(gulp, rootDir) {
     });
     
     gulp.task('copyPackage', async function() {
-        await mkdirp(packagesDir);
         const packageFilePath = await getPackageFilePath();
         return gulp.src([packageFilePath]).pipe(gulp.dest(packagesDir));      
     });

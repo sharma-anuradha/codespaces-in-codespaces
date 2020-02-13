@@ -1,7 +1,11 @@
+// <copyright file="AuthorizedRelayServiceHub.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {

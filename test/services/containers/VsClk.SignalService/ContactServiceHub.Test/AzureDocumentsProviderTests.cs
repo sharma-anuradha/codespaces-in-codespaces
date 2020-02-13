@@ -1,4 +1,4 @@
-#define _HAS_AZURE_COSMOS_EMULATOR
+//#define _HAS_AZURE_COSMOS_EMULATOR
 
 using System;
 using System.Threading.Tasks;
@@ -10,7 +10,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 {
 #if _HAS_AZURE_COSMOS_EMULATOR
 
-    public class AzureDocumentsProviderTests : BackplaneProviderTests
+    public class AzureDocumentsProviderTests : ContactBackplaneProviderTests
     {
         private const string Uri = "https://localhost:8081";
         private const string PrimaryKey = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";

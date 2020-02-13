@@ -1,3 +1,6 @@
+// <copyright file="AppSettings.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -7,9 +10,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public string AuthenticateProfileServiceUri { get; set; }
 
-        public string BackplaneServiceUri { get; set; }
-
-        public string BackplaneJsonRpcServer { get; set; }
+        public string BackplaneHostName { get; set; }
 
         public string KeyVaultName { get; set; }
 

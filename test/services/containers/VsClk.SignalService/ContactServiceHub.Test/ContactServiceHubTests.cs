@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.ServiceHubTests;
 using Moq;
 using Xunit;
 

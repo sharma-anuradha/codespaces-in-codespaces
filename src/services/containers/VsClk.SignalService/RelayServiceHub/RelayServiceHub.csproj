@@ -18,5 +18,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\HubCore\HubCore.csproj" />
+    <ProjectReference Include="..\RelayServiceHub.Contracts\RelayServiceHub.Contracts.csproj" />
   </ItemGroup>
 </Project>

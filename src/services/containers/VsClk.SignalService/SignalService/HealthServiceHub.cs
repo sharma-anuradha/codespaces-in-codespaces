@@ -1,15 +1,24 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿// <copyright file="HealthServiceHub.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+#pragma warning disable SA1402 // File may only contain a single type
+#pragma warning disable SA1649 // File name should match first type name
+
     /// <summary>
     /// Echo result type with additional info on the hub that perform the echo
     /// </summary>
     public class EchoResult
     {
         public string Stamp { get; set; }
+
         public string ServiceId { get; set; }
+
         public string Message { get; set; }
     }
 
@@ -35,8 +44,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 Stamp = this.appSettings.Stamp,
                 ServiceId = this.presenceService.ServiceId,
-                Message = message
+                Message = message,
             };
         }
     }
+
+#pragma warning restore SA1402 // File may only contain a single type
+#pragma warning restore SA1649 // File name should match first type name
 }

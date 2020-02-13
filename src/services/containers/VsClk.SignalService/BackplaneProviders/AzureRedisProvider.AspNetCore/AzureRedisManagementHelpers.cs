@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="AzureRedisManagementHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Redis.Fluent;
@@ -12,8 +16,8 @@ namespace Microsoft.VsCloudKernel.SignalService
     internal static class AzureRedisManagementHelpers
     {
         public static bool IsAzureRedisConnectionDefined(
-    this ApplicationServicePrincipal applicationServicePrincipal,
-    AppSettingsBase appSettings)
+            this ApplicationServicePrincipal applicationServicePrincipal,
+            AppSettingsBase appSettings)
         {
             Requires.NotNull(appSettings, nameof(appSettings));
 

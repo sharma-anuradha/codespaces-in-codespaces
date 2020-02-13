@@ -1,14 +1,17 @@
+// <copyright file="ContactDataHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System.Collections.Generic;
 using System.Linq;
+using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
+using ConnectionsProperties = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>;
+using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    using ConnectionProperties = IDictionary<string, PropertyValue>;
-    using ConnectionsProperties = IDictionary<string, IDictionary<string, PropertyValue>>;
-    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
-
     /// <summary>
-    /// Contact data helpers 
+    /// Contact data helpers.
     /// </summary>
     public static class ContactDataHelpers
     {
@@ -73,7 +76,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
 
             // Note: next block will eliminate the empty buckets for a service that no connections
-            foreach(var kvp in contactDataInfo.Where(kvp => kvp.Value.Count == 0).ToArray())
+            foreach (var kvp in contactDataInfo.Where(kvp => kvp.Value.Count == 0).ToArray())
             {
                 contactDataInfo.Remove(kvp.Key);
             }

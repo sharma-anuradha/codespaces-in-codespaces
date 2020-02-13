@@ -1,50 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+﻿// <copyright file="IContactBackplaneManager.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
-    using ConnectionProperties = IDictionary<string, PropertyValue>;
-    using ContactDataInfo = IDictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>;
-
-    /// <summary>
-    /// Class to expose supported capability level of a provider
-    /// </summary>
-    public class ContactBackplaneProviderSupportLevel
-    {
-        public const int DefaultSupportThreshold = 10;
-        public const int MinimumSupportThreshold = 1;
-        public const int NoSupportThreshold = 0;
-
-        public int? GetContact { get; set; }
-        public int? GetContacts { get; set; }
-        public int? UpdateMetrics { get; set; }
-        public int? SendMessage { get; set; }
-        public int? UpdateContact { get; set; }
-        public int? DisposeDataChanges { get; set; }
-    }
-
-    /// <summary>
-    /// Const for the backplane manager implementation
-    /// </summary>
-    public static class BackplaneManagerConst
-    {
-        /// <summary>
-        /// Number of secons to push new service metrics.
-        /// </summary>
-        public const int UpdateMetricsSecs = 45;
-
-        /// <summary>
-        /// Number of seconds to consider a service to be 'stale'
-        /// </summary>
-        public const int StaleServiceSeconds = UpdateMetricsSecs * 3;
-    }
-
     /// <summary>
     /// IBackplaneManager interface to manage multiple provider registration
     /// </summary>
-    public interface IContactBackplaneManager
+    public interface IContactBackplaneManager : IContactBackplaneProviderBase, IBackplaneManagerBase<IContactBackplaneProvider, ContactBackplaneProviderSupportLevel, ContactServiceMetrics>
     {
         /// <summary>
         /// Event to report contact changed notification from a provider
@@ -55,88 +18,19 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Event to report a received message from a provider
         /// </summary>
         event OnMessageReceivedAsync MessageReceivedAsync;
+    }
 
-        /// <summary>
-        /// Run a long running task to update metrics and purge
-        /// </summary>
-        /// <param name="stoppingToken"></param>
-        /// <returns></returns>
-        Task RunAsync(CancellationToken stoppingToken);
+    /// <summary>
+    /// Class to expose supported capability level of the contact provider.
+    /// </summary>
+    public class ContactBackplaneProviderSupportLevel : BackplaneProviderSupportLevelBase
+    {
+        public int? GetContact { get; set; }
 
-        /// <summary>
-        /// Dispose of the backplane manager
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task DisposeAsync(CancellationToken cancellationToken);
+        public int? GetContacts { get; set; }
 
-        /// <summary>
-        /// Gets or Sets the metrics factory callback.
-        /// </summary>
-        Func<((string ServiceId, string Stamp), ContactServiceMetrics)> MetricsFactory { get; set; }
+        public int? SendMessage { get; set; }
 
-        /// <summary>
-        /// Gets the backplane providers.
-        /// </summary>
-        IReadOnlyCollection<IContactBackplaneProvider> BackplaneProviders { get; }
-
-        /// <summary>
-        /// Register a new provider
-        /// </summary>
-        /// <param name="backplaneProvider"></param>
-        /// <param name="supportCapabilities">Optional supported capabilities.</param>
-        void RegisterProvider(IContactBackplaneProvider backplaneProvider, ContactBackplaneProviderSupportLevel supportCapabilities = null);
-
-        /// <summary>
-        /// Update metrics reported by a contact service
-        /// </summary>
-        /// <param name="serviceInfo">Info on the service being reported</param>
-        /// <param name="metrics">Metrics to report</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task UpdateBackplaneMetrics(
-            (string ServiceId, string Stamp) serviceInfo,
-            ContactServiceMetrics metrics,
-            CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Start tracking a data change that later will be purged
-        /// </summary>
-        /// <param name="dataChanged"></param>
-        /// <returns></returns>
-        bool TrackDataChanged(DataChanged dataChanged);
-
-        /// <summary>
-        /// Return the contacts that match a set of property conditions
-        /// </summary>
-        /// <param name="matchProperties"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Return the contact data
-        /// </summary>
-        /// <param name="contactId"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Update a contact into all the hosted providers
-        /// </summary>
-        /// <param name="contactDataChanged"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Send a message using all the backplane providers
-        /// </summary>
-        /// <param name="serviceId"></param>
-        /// <param name="messageData"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task SendMessageAsync(string serviceId, MessageData messageData, CancellationToken cancellationToken);
+        public int? UpdateContact { get; set; }
     }
 }

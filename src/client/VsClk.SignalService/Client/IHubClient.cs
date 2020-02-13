@@ -12,13 +12,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// <summary>
     /// The hub client interface.
     /// </summary>
-    public interface IHubClient : IAsyncDisposable
+    public interface IHubClient : IAsyncDisposable, IHubProxyConnection
     {
-        /// <summary>
-        /// When a connection state changed.
-        /// </summary>
-        event AsyncEventHandler ConnectionStateChanged;
-
         /// <summary>
         /// When an attempt to connect is being done.
         /// </summary>
@@ -28,11 +23,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// Gets the current hub connection state.
         /// </summary>
         HubConnectionState State { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether if the hub is connected.
-        /// </summary>
-        bool IsConnected { get; }
 
         /// <summary>
         /// Gets a value indicating whether if the hub connection is running.

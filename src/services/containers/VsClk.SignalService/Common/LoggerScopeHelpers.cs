@@ -1,3 +1,7 @@
+// <copyright file="LoggerScopeHelpers.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;

@@ -1,4 +1,8 @@
-﻿namespace Microsoft.VsCloudKernel.SignalService
+﻿// <copyright file="HubServiceOptions.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
     /// Options defined for the presence Service

@@ -88,5 +88,4 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             this.loggerCallback(eventType, message);
         }
     }
-
 }

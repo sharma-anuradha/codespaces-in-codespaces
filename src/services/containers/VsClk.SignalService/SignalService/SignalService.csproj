@@ -22,9 +22,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BackplaneProviders\AzureDocumentsProvider.AspNetCore\AzureDocumentsProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\AzureDocumentsProvider\AzureDocumentsProvider.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\AzureRedisContactsProvider\AzureRedisContactsProvider.csproj" />
     <ProjectReference Include="..\BackplaneProviders\AzureRedisProvider.AspNetCore\AzureRedisProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\AzureRedisRelayProvider\AzureRedisRelayProvider.csproj" />
     <ProjectReference Include="..\BackplaneProviders\ContactBackplane.Common\ContactBackplane.Common.csproj" />
     <ProjectReference Include="..\BackplaneProviders\ContactBackplaneServiceProvider\ContactBackplaneServiceProvider.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\RelayBackplane.Common\RelayBackplane.Common.csproj" />
+    <ProjectReference Include="..\BackplaneProviders\RelayBackplaneServiceProvider\RelayBackplaneServiceProvider.csproj" />
     <ProjectReference Include="..\Common.AspNetCore\Common.SignalR.AspNetCore.csproj" />
     <ProjectReference Include="..\ContactServiceHub\ContactServiceHub.csproj" />
     <ProjectReference Include="..\RelayServiceHub\RelayServiceHub.csproj" />

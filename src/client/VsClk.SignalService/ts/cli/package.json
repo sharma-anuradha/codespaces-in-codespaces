@@ -5,15 +5,15 @@
     "main": "out/app.js",
     "description": "CLI test sample for the signalR client package",
     "scripts": {
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./"
+        "compile": "tsc -b ./",
+        "watch": "tsc -watch -b ./"
     },
     "dependencies": {
-        "@vs/signalr-client": "link:..",
+        "@vs/vso-signalr-client": "link:../signalr-client",
+        "@vs/vso-signalr-client-jsonrpc": "link:../jsonrpc",
         "@types/yargs": "^13.0.0",
         "yargs": "^13.2.4"
     },
     "devDependencies": {
-        "typescript": "^3.7.4"
     }
 }

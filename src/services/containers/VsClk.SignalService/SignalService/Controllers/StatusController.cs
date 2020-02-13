@@ -1,3 +1,7 @@
+// <copyright file="StatusController.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +25,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         private readonly Startup startup;
         private readonly IList<ServiceEndpoint> serviceEndpoints;
 
-        private IConfigurationRoot Configuration => this.startup.Configuration;
-        private ApplicationServicePrincipal ApplicationServicePrincipal => Configuration.GetSection(nameof(ApplicationServicePrincipal)).Get<ApplicationServicePrincipal>();
-
         public StatusController(
             IOptions<AppSettings> appSettingsProvider,
             ContactService presenceService,
@@ -40,6 +41,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             this.serviceEndpoints = serviceEndpoints;
         }
 
+        private IConfigurationRoot Configuration => this.startup.Configuration;
+
+        private ApplicationServicePrincipal ApplicationServicePrincipal => Configuration.GetSection(nameof(ApplicationServicePrincipal)).Get<ApplicationServicePrincipal>();
+
         // GET: version
         [HttpGet]
         public object Get()
@@ -54,7 +59,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                 Health = new
                 {
                     this.healthService.State,
-                    Providers = GetProvidersStatus()
+                    Providers = GetProvidersStatus(),
                 },
                 AppSettings = new
                 {
@@ -80,6 +85,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             return versionObj;
         }
 
+        private static string GetUriFromAzureConnectionString(string azureConnectionString)
+        {
+            return azureConnectionString.Split(';')[0].Substring(EndpointPrefix.Length);
+        }
+
         private dynamic GetProvidersStatus()
         {
             var dynObject = new System.Dynamic.ExpandoObject();
@@ -97,13 +107,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             {
                 Name = se.Name,
                 Endpoint = se.Endpoint,
-                Type = se.EndpointType.ToString()
+                Type = se.EndpointType.ToString(),
             }).ToArray();
-        }
-
-        private static string GetUriFromAzureConnectionString(string azureConnectionString)
-        {
-            return azureConnectionString.Split(';')[0].Substring(EndpointPrefix.Length);
         }
     }
 }

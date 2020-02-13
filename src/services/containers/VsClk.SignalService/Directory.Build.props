@@ -1,6 +1,6 @@
 <Project>
 
-  <Import Project="$(ThisFileDirectory)../../../../Directory.Build.props" />
+  <Import Project="$(ThisFileDirectory)../../../Directory.Build.props" />
   <!-- NuGet Package Versions -->
   <PropertyGroup>
     <SignalRVersion>1.2.3</SignalRVersion>
