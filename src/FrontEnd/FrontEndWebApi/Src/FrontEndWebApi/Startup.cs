@@ -109,8 +109,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
                     var currentOrigins = ControlPlaneAzureResourceAccessor.GetStampOrigins();
 
-                    // prod GitHub endpoints
-                    currentOrigins.Add("https://code.github.com");
+                    // GitHub endpoints that should have access to all VSO service instances (including prod)
+                    currentOrigins.Add("https://github.com");
+                    currentOrigins.Add("https://githubworkspaces.com");
+                    currentOrigins.Add("https://github.localhost");
+                    currentOrigins.Add("http://github.localhost");
 
                     options.AddPolicy(
                         "ProdCORSPolicy",
@@ -124,11 +127,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
                     // Port forwarding proxy server.
                     currentOriginsDev.Add("https://localhost:4000");
-
-                    // non-prod GitHub endpoints
-                    currentOriginsDev.Add("https://local.code.github.com");
-                    currentOriginsDev.Add("https://dev.code.github.com");
-                    currentOriginsDev.Add("https://ppe.code.github.com");
 
                     options.AddPolicy(
                         "NonProdCORSPolicy",
