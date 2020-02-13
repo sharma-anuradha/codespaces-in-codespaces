@@ -1,4 +1,4 @@
-﻿// <copyright file="JwtBearerUtility.cs" company="Microsoft">
+// <copyright file="JwtBearerUtility.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +14,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
 {
@@ -23,15 +27,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
     public static class JwtBearerUtility
     {
         /// <summary>
-        /// The JWT authentication scheme.
+        /// The JWT authentication scheme for AAD tokens.
         /// </summary>
-        public const string AuthenticationScheme = "aad";
+        public const string AadAuthenticationScheme = "aad";
 
         /// <summary>
-        /// Configure the <see cref="JwtBearerAuthenticationOptions2"/> object.
+        /// The JWT authentication scheme for VSO tokens.
+        /// </summary>
+        public const string VsoAuthenticationScheme = "vso";
+
+        /// <summary>
+        /// List of supported schemes for authenticating users.
+        /// </summary>
+        public const string UserAuthenticationSchemes =
+            AadAuthenticationScheme + "," + VsoAuthenticationScheme;
+
+        /// <summary>
+        /// Configure the <see cref="JwtBearerAuthenticationOptions2"/> object for AAD auth.
         /// </summary>
         /// <param name="jwtBearerOptions">The options instance.</param>
-        internal static void ConfigureOptions(JwtBearerAuthenticationOptions2 jwtBearerOptions)
+        internal static void ConfigureAadOptions(JwtBearerAuthenticationOptions2 jwtBearerOptions)
         {
             jwtBearerOptions.IsEmailClaimRequired = AuthenticationConstants.IsEmailClaimRequired;
 
@@ -63,6 +78,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 OnTokenValidated = TokenValidatedAsync,
                 OnAuthenticationFailed = AuthenticationFailedAsync,
             };
+        }
+
+        /// <summary>
+        /// Add VSO (Cascade token) JWT bearer authentication.
+        /// </summary>
+        /// <param name="builder">Authentication builder.</param>
+        internal static void AddVsoJwtBearerAuthentication(this AuthenticationBuilder builder)
+        {
+            var jwtReader = new JwtReader();
+
+            builder
+                .AddJwtBearer(VsoAuthenticationScheme, options =>
+                {
+                    var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
+
+                    options.TokenValidationParameters = jwtReader.GetValidationParameters(logger);
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnAuthenticationFailed = AuthenticationFailedAsync,
+                        OnTokenValidated = TokenValidatedAsync,
+                    };
+                })
+                .Services
+                .AddTokenSettingsToJwtReader(jwtReader, (authSettings) => authSettings.VsSaaSTokenSettings);
         }
 
         /// <summary>

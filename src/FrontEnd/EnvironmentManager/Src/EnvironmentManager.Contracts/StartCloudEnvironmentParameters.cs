@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
@@ -12,9 +13,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     public class StartCloudEnvironmentParameters
     {
         /// <summary>
-        /// Gets or sets the access token.
+        /// Gets or sets the user claims to store in the environment connection token.
         /// </summary>
-        public string AccessToken { get; set; }
+        public Profile UserProfile { get; set; }
 
         /// <summary>
         /// Gets or sets the callback uri format.

@@ -1,4 +1,4 @@
-﻿// <copyright file="ValidatedPrincipalIdentityHandler.cs" company="Microsoft">
+// <copyright file="ValidatedPrincipalIdentityHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using CommonAuthenticationConstants = Microsoft.VsSaaS.Common.Identity.AuthenticationConstants;
@@ -69,6 +70,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <inheritdoc/>
         public async Task ValidatedPrincipalAsync(ClaimsPrincipal principal, JwtSecurityToken jwtToken)
         {
+            Requires.NotNull(principal, nameof(principal));
+            Requires.NotNull(jwtToken, nameof(jwtToken));
+
             var identity = principal.Identities.First();
 
             if (System.Diagnostics.Debugger.IsAttached)
@@ -85,6 +89,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             var httpContext = HttpContextAccessor.HttpContext;
             var logger = httpContext.GetLogger()?.NewChildLogger() ?? DiagnosticsLoggerFactory.New(LogValues);
+
+            // Extract and save some claims on the HTTP context for use with further authorization checks.
+            var plan = identity.FindFirst(CustomClaims.PlanResourceId)?.Value;
+            const string altScopeClaimName = "http://schemas.microsoft.com/identity/claims/scope";
+            var scope = identity.FindFirst(CustomClaims.Scope)?.Value ?? identity.FindFirst(altScopeClaimName)?.Value;
+            var scopes = scope == null ? null : scope.Length == 0 ? Array.Empty<string>() :
+                scope.Split(' ');
+            if (scopes != null && scopes.Contains("all", StringComparer.OrdinalIgnoreCase))
+            {
+                // Having an "all" scope is equivalent to an unscoped token.
+                scopes = null;
+            }
+
+            httpContext.SetPlan(plan);
+            httpContext.SetScopes(scopes);
 
             // Handle the Live Share profile. We always do this for now.
             // In the future, we can eliminate calls to profile during authentication,

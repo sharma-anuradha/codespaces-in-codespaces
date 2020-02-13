@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +22,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
@@ -34,10 +31,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
     public class EnvironmentControllerTests
     {
-        private const string MockUserProviderId = "mock-provider-id";
-        private const string MockServiceUri = "https://testhost/test-service-uri/";
-        private const string MockCallbackUriFormat = "https://testhost/test-callback-uri/";
-
         private readonly IPlanRepository accountRepository;
         private readonly PlanManager accountManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
@@ -58,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             planSettings.Init(mockSystemConfiguration.Object);
 
             accountRepository = new MockPlanRepository();
-            accountManager = new PlanManager(accountRepository, planSettings, MockSkuCatalog());
+            accountManager = new PlanManager(accountRepository, planSettings, MockUtil.MockSkuCatalog());
         }
 
         [Fact]
@@ -71,10 +64,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_GetAsync()
         {
-            var mockEnv = MockCloudEnvironment();
+            var mockEnv = MockUtil.MockCloudEnvironment();
             var expectedEnvId = mockEnv.Id;
 
-            var mockEnvManager = MockCloudEnvironmentManager(mockEnv);
+            var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
             var environmentController = CreateTestEnvironmentsController(
                 environmentManager: mockEnvManager);
 
@@ -85,17 +78,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var environment = (CloudEnvironmentResult)((ObjectResult)actionResult).Value;
             Assert.Equal(expectedEnvId, environment.Id);
             Assert.NotNull(environment.Connection);
-            Assert.Equal(MockServiceUri, environment.Connection.ConnectionServiceUri);
+            Assert.Equal(MockUtil.MockServiceUri, environment.Connection.ConnectionServiceUri);
         }
 
         [Fact]
         public async Task EnvironmentController_CloudEnvironmentAsync()
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
             var body = new CreateCloudEnvironmentBody
             {
                 FriendlyName = "test-environment",
-                PlanId = (await GeneratePlan()).Plan.ResourceId,
+                PlanId = (await MockUtil.GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
                 SkuName = "testSkuName",
@@ -110,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.IsType<CloudEnvironmentResult>(((ObjectResult)actionResult).Value);
             var environment = (CloudEnvironmentResult)((ObjectResult)actionResult).Value;
             Assert.NotNull(environment.Connection);
-            Assert.Equal(MockServiceUri, environment.Connection.ConnectionServiceUri);
+            Assert.Equal(MockUtil.MockServiceUri, environment.Connection.ConnectionServiceUri);
         }
 
         public static TheoryData<Uri> CreateEnvironmentUrls = new TheoryData<Uri>
@@ -123,20 +115,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(CreateEnvironmentUrls))]
         public async Task EnvironmentController_CloudEnvironmentAsync_StartEnvironmentUrls(Uri uri)
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
             var body = new CreateCloudEnvironmentBody
             {
                 FriendlyName = "test-environment",
-                PlanId = (await GeneratePlan()).Plan.ResourceId,
+                PlanId = (await MockUtil.GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
                 SkuName = "testSkuName",
                 Location = "WestUs2",
             };
 
-            var mockHttpContext = MockHttpContextFromUri(uri);
+            var mockHttpContext = MockUtil.MockHttpContextFromUri(uri);
 
-            var mockServiceUriBuilder = MockServiceUriBuilder(uri.ToString());
+            var mockServiceUriBuilder = MockUtil.MockServiceUriBuilder(uri.ToString());
 
             var environmentController = CreateTestEnvironmentsController(
                 httpContext: mockHttpContext,
@@ -149,18 +140,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_StartAsync()
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
-
-            var mockEnv = MockCloudEnvironment();
+            var mockEnv = MockUtil.MockCloudEnvironment();
 
             var expectedRequestUri = "https://testhost/api/v1/environments/";
             var expectedEnvId = mockEnv.Id;
 
-            var mockHttpContext = MockHttpContextFromUri(new Uri($"{expectedRequestUri}{expectedEnvId}"));
+            var mockHttpContext = MockUtil.MockHttpContextFromUri(new Uri($"{expectedRequestUri}{expectedEnvId}"));
 
-            var mockServiceUriBuilder = MockServiceUriBuilder(expectedRequestUri);
+            var mockServiceUriBuilder = MockUtil.MockServiceUriBuilder(expectedRequestUri);
 
-            var mockEnvManager = MockCloudEnvironmentManager(mockEnv);
+            var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
 
             var environmentController = CreateTestEnvironmentsController(
                 environmentManager: mockEnvManager,
@@ -182,14 +171,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(Environments))]
         public async Task EnvironmentController_CloudEnvironmentAsync_SkuCatalog(string environment)
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
             var skuCatalog = LoadSkuCatalog(environment);
 
-            var currentUser = MockCurrentUserProvider(new Dictionary<string, object>
-                                {
-                                    { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
-                                },
-                                "test@microsoft.com");
+            var currentUser = MockUtil.MockCurrentUserProvider(
+                new Dictionary<string, object>
+                {
+                    { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
+                },
+                "test@microsoft.com");
 
             var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog, currentUserProvider: currentUser);
 
@@ -209,7 +198,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(Environments))]
         public async Task EnvironmentController_CloudEnvironmentAsync_SkuCatalog_BadRequest(string environment)
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
             var skuCatalog = LoadSkuCatalog(environment);
             var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog);
 
@@ -228,10 +216,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_CloudEnvironmentAsync_BadResult()
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
             var skuCatalog = LoadSkuCatalog("prod-rel");
 
-            var currentUser = MockCurrentUserProvider(new Dictionary<string, object>
+            var currentUser = MockUtil.MockCurrentUserProvider(new Dictionary<string, object>
             {
                 { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
             });
@@ -289,7 +276,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         AllowedAutoShutdownDelayMinutes = new int[0],
                         AllowedSkus = new ICloudEnvironmentSku[]
                         {
-                            MockSku("MockSkuName", "MockSku", ComputeOS.Linux, 0, 0, new string[0]),
+                            MockUtil.MockSku("MockSkuName", "MockSku", ComputeOS.Linux, 0, 0, new string[0]),
                         },
                     },
                     new CloudEnvironmentAvailableUpdatesResult
@@ -309,9 +296,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             CloudEnvironmentAvailableSettingsUpdates allowedUpdates,
             CloudEnvironmentAvailableUpdatesResult expectedResponse)
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
-
-            var mockEnvironment = MockCloudEnvironment();
+            var mockEnvironment = MockUtil.MockCloudEnvironment();
 
             var mockEnvironmentManager = new Mock<IEnvironmentManager>();
             
@@ -352,9 +337,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_UpdateSettingsAsync()
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
-
-            var mockEnvironment = MockCloudEnvironment();
+            var mockEnvironment = MockUtil.MockCloudEnvironment();
 
             var updateRequest = new UpdateCloudEnvironmentBody
             {
@@ -400,9 +383,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_UpdateSettingsAsync_BadRequest()
         {
-            var logger = new Mock<IDiagnosticsLogger>().Object;
-
-            var mockEnvironment = MockCloudEnvironment();
+            var mockEnvironment = MockUtil.MockCloudEnvironment();
 
             var updateRequest = new UpdateCloudEnvironmentBody
             {
@@ -459,7 +440,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return new CreateCloudEnvironmentBody
             {
                 FriendlyName = "test-environment",
-                PlanId = (await GeneratePlan()).Plan.ResourceId,
+                PlanId = (await MockUtil.GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
                 SkuName = skuName,
@@ -467,24 +448,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
         }
 
-        private EnvironmentsController CreateTestEnvironmentsController(
+        internal static EnvironmentsController CreateTestEnvironmentsController(
             ISkuCatalog skuCatalog = null, 
             ICurrentUserProvider currentUserProvider = null,
             IEnvironmentManager environmentManager = null,
+            IPlanManager planManager = null,
             HttpContext httpContext = null,
             IServiceUriBuilder serviceUriBuilder = null)
         {
-            environmentManager ??= MockCloudEnvironmentManager();
-            var planManager = MockPlanManager();
-            currentUserProvider ??= MockCurrentUserProvider();
-            var controlPlaneInfo = MockControlPlaneInfo();
-            var currentLocationProvider = MockCurrentLocationProvider();
-            skuCatalog ??= MockSkuCatalog();
-            var mapper = MockMapper();
-            serviceUriBuilder ??= MockServiceUriBuilder();
+            environmentManager ??= MockUtil.MockEnvironmentManager();
+            planManager ??= MockUtil.MockPlanManager(() => MockUtil.GeneratePlan());
+            currentUserProvider ??= MockUtil.MockCurrentUserProvider();
+            var controlPlaneInfo = MockUtil.MockControlPlaneInfo();
+            var currentLocationProvider = MockUtil.MockCurrentLocationProvider();
+            skuCatalog ??= MockUtil.MockSkuCatalog();
+            var mapper = MockUtil.MockMapper();
+            serviceUriBuilder ??= MockUtil.MockServiceUriBuilder();
             var settings = new FrontEndAppSettings
             {
-                VSLiveShareApiEndpoint = MockServiceUri,
+                VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
             };
 
             var environmentController = new EnvironmentsController(
@@ -508,62 +490,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
 
             return environmentController;
-        }
-
-        private CloudEnvironment MockCloudEnvironment(
-            string ownerId = null)
-        {
-            return new CloudEnvironment
-            {
-                Id = Guid.NewGuid().ToString(),
-                Location = AzureLocation.WestUs2,
-                OwnerId = ownerId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,
-                Connection = new EnvironmentManager.ConnectionInfo(),
-            };
-        }
-
-        private IServiceUriBuilder MockServiceUriBuilder(string expectedRequestUri = null)
-        {
-            var moq = new Mock<IServiceUriBuilder>();
-            moq
-                .Setup(obj => obj.GetServiceUri(It.IsAny<string>(), It.IsAny<IControlPlaneStampInfo>()))
-                .Returns(new Uri(MockServiceUri))
-                .Callback((string requestUri, IControlPlaneStampInfo ctrlPlane) =>
-                {
-                    if (expectedRequestUri != null)
-                    {
-                        Assert.Equal(expectedRequestUri, requestUri);
-                    }
-                });
-            moq
-                .Setup(obj => obj.GetCallbackUriFormat(It.IsAny<string>(), It.IsAny<IControlPlaneStampInfo>()))
-                .Returns(new Uri(MockCallbackUriFormat))
-                .Callback((string requestUri, IControlPlaneStampInfo ctrlPlane) =>
-                {
-                    if (expectedRequestUri != null)
-                    {
-                        Assert.Equal(expectedRequestUri, requestUri);
-                    }
-                });
-
-            return moq.Object;
-        }
-
-        private IMapper MockMapper()
-        {
-            // Use a temporary service provider to construct and get the FrontEnd model mapper.
-            var factory = new DefaultServiceProviderFactory();
-            var serviceCollection = factory.CreateBuilder(new ServiceCollection());
-
-            serviceCollection.AddSingleton(new FrontEndAppSettings
-            {
-                VSLiveShareApiEndpoint = MockServiceUri,
-            });
-            serviceCollection.AddSingleton(MockSkuCatalog());
-            serviceCollection.AddModelMapper();
-
-            var serviceProvider = factory.CreateServiceProvider(serviceCollection);
-            return serviceProvider.GetService<IMapper>();
         }
 
         private ISkuCatalog LoadSkuCatalog(string environmentName)
@@ -603,274 +529,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return skuCatalog;
         }
 
-        private static ICloudEnvironmentSku MockSku(
-            string skuName, 
-            string displayName, 
-            ComputeOS computeOs,
-            decimal storageUnits, 
-            decimal computeUnits, 
-            IEnumerable<string> skuTransitions)
-        {
-            var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
-            currentImageInfoProvider
-                .Setup(x => x.GetImageNameAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns((ImageFamilyType familyType, string family, string defaultName, IDiagnosticsLogger logger) => Task.FromResult(defaultName));
-            currentImageInfoProvider
-                .Setup(x => x.GetImageVersionAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns((ImageFamilyType familyType, string family, string defaultVersion, IDiagnosticsLogger logger) => Task.FromResult(defaultVersion));
-
-            return new CloudEnvironmentSku(
-                skuName,
-                SkuTier.Standard,
-                displayName,
-                true,
-                new[] { AzureLocation.WestUs2 },
-                "computeSkuFamily",
-                "computeSkuName",
-                "computeSkuSize",
-                4,
-                computeOs,
-                new BuildArtifactImageFamily(
-                    ImageFamilyType.VmAgent,
-                    "agentImageFamily",
-                    "agentImageName",
-                    currentImageInfoProvider.Object),
-                new VmImageFamily(
-                    MockControlPlaneInfo().Stamp,
-                    "vmImageFamilyName",
-                    VmImageKind.Canonical,
-                    "vmImageName",
-                    "vmImageVersion",
-                    "vmImageSubscriptionId",
-                    currentImageInfoProvider.Object),
-                "storageSkuName",
-                new BuildArtifactImageFamily(
-                    ImageFamilyType.Storage,
-                    "storageImageFamily",
-                    "storageImageName",
-                    currentImageInfoProvider.Object),
-                64,
-                storageUnits,
-                computeUnits,
-                5,
-                5,
-                new ReadOnlyCollection<string>(skuTransitions.ToList()));
-        }
-
-        private ISkuCatalog MockSkuCatalog()
-        {
-            var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
-            currentImageInfoProvider
-                .Setup(x => x.GetImageNameAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns((ImageFamilyType familyType, string family, string defaultName, IDiagnosticsLogger logger) => Task.FromResult(defaultName));
-            currentImageInfoProvider
-                .Setup(x => x.GetImageVersionAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns((ImageFamilyType familyType, string family, string defaultVersion, IDiagnosticsLogger logger) => Task.FromResult(defaultVersion));
-
-            return MockSkuCatalog(new CloudEnvironmentSku(
-                "testSkuName",
-                SkuTier.Standard,
-                "Test SKU Name",
-                true,
-                new[] { AzureLocation.WestUs2 },
-                "computeSkuFamily",
-                "computeSkuName",
-                "computeSkuSize",
-                4,
-                ComputeOS.Linux,
-                new BuildArtifactImageFamily(
-                    ImageFamilyType.VmAgent,
-                    "agentImageFamily",
-                    "agentImageName",
-                    currentImageInfoProvider.Object),
-                new VmImageFamily(
-                    MockControlPlaneInfo().Stamp,
-                    "vmImageFamilyName",
-                    VmImageKind.Canonical,
-                    "vmImageName",
-                    "vmImageVersion",
-                    "vmImageSubscriptionId",
-                    currentImageInfoProvider.Object),
-                "storageSkuName",
-                new BuildArtifactImageFamily(
-                    ImageFamilyType.Storage,
-                    "storageImageFamily",
-                    "storageImageName",
-                    currentImageInfoProvider.Object),
-                64,
-                2.0m,
-                125.0m,
-                5,
-                5,
-                new ReadOnlyCollection<string>(new string[0])));
-        }
-
-        private ISkuCatalog MockSkuCatalog(params ICloudEnvironmentSku[] skus)
-        {
-            var skuDict = new ReadOnlyDictionary<string, ICloudEnvironmentSku>(skus.ToDictionary((s) => s.SkuName));
-
-            var moq = new Mock<ISkuCatalog>();
-            moq
-                .Setup(obj => obj.CloudEnvironmentSkus)
-                .Returns(skuDict);
-
-            return moq.Object;
-        }
-
-        private ICurrentLocationProvider MockCurrentLocationProvider()
-        {
-            var moq = new Mock<ICurrentLocationProvider>();
-            moq
-                .Setup(obj => obj.CurrentLocation)
-                .Returns(AzureLocation.WestUs2);
-
-            return moq.Object;
-        }
-
-        private static IControlPlaneInfo MockControlPlaneInfo()
-        {
-            var moq = new Mock<IControlPlaneInfo>();
-            var moq2 = new Mock<IControlPlaneStampInfo>();
-            moq
-                .Setup(obj => obj.GetOwningControlPlaneStamp(It.IsAny<AzureLocation>()))
-                .Returns((AzureLocation location) =>
-                {
-                    if (location == AzureLocation.WestUs2 || location == AzureLocation.EastUs)
-                    {
-                        moq2
-                            .Setup(obj2 => obj2.Location)
-                            .Returns(location);
-                        return moq2.Object;
-                    }
-
-                    throw new NotSupportedException();
-                });
-            moq
-                .Setup(obj => obj.Stamp)
-                .Returns(moq2.Object);
-
-            return moq.Object;
-
-        }
-
-        private ICurrentUserProvider MockCurrentUserProvider(Dictionary<string, object> programs = null, string email = default )
-        {
-            var moq = new Mock<ICurrentUserProvider>();
-            moq
-                .Setup(obj => obj.GetCurrentUserIdSet())
-                .Returns(new UserIdSet("mock-profile-id"));
-            moq
-                .Setup(obj => obj.GetBearerToken())
-                .Returns("mock-bearer-token");
-            moq
-                .Setup(obj => obj.GetProfile())
-                .Returns(() =>
-                {
-                    return new UserProfile.Profile
-                    {
-                        ProviderId = MockUserProviderId,
-                        Programs = programs,
-                        Email = email
-                    };
-                });
-
-            return moq.Object;
-        }
-
-        private IEnvironmentManager MockCloudEnvironmentManager(CloudEnvironment environment = null)
-        {
-            var moq = new Mock<IEnvironmentManager>();
-
-            moq
-                .Setup(obj => obj.CreateAsync(
-                    It.IsAny<CloudEnvironment>(),
-                    It.IsAny<CloudEnvironmentOptions>(),
-                    It.IsAny<StartCloudEnvironmentParameters>(),
-                    It.IsAny<VsoPlanInfo>(),
-                    It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync((
-                    CloudEnvironment env,
-                    CloudEnvironmentOptions options,
-                    StartCloudEnvironmentParameters startParams,
-                    VsoPlanInfo plan,
-                    IDiagnosticsLogger logger) =>
-                {
-                    Assert.Equal(MockServiceUri, startParams.FrontEndServiceUri.ToString());
-                    Assert.Equal(MockCallbackUriFormat, startParams.CallbackUriFormat);
-
-                    env.Connection = new EnvironmentManager.ConnectionInfo
-                    {
-                        ConnectionServiceUri = startParams.ConnectionServiceUri.AbsoluteUri,
-                    };
-
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = env,
-                        MessageCode = 0,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
-                });
-
-            moq
-                .Setup(obj => obj.ResumeAsync(
-                    It.IsAny<CloudEnvironment>(),
-                    It.IsAny<StartCloudEnvironmentParameters>(),
-                    It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync((
-                    CloudEnvironment env,
-                    StartCloudEnvironmentParameters startParams,
-                    IDiagnosticsLogger logger) =>
-                {
-                    Assert.Equal(MockServiceUri, startParams.FrontEndServiceUri.ToString());
-                    Assert.Equal(MockCallbackUriFormat, startParams.CallbackUriFormat);
-
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = env,
-                        MessageCode = 0,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
-                });
-
-            if (environment != null)
-            {
-                moq
-                    .Setup(obj => obj.GetAndStateRefreshAsync(
-                        It.Is<string>((id) => id == environment.Id),
-                        It.IsAny<IDiagnosticsLogger>()))
-                    .Returns(Task.FromResult(environment));
-            }
-
-            return moq.Object;
-        }
-
-        private IPlanManager MockPlanManager(VsoPlan plan = null)
-        {
-            var moq = new Mock<IPlanManager>();
-
-            moq
-                .Setup(obj => obj.GetAsync(It.IsAny<VsoPlanInfo>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
-                .Returns(async () => new PlanManagerServiceResult
-                {
-                    VsoPlan = plan ?? await GeneratePlan(),
-                });
-
-            return moq.Object;
-        }
-
-        private HttpContext MockHttpContextFromUri(Uri uri)
-        {
-            var mockHttpContext = new DefaultHttpContext();
-            mockHttpContext.Request.Path = uri.PathAndQuery;
-            mockHttpContext.Request.Host = new HostString(uri.Host);
-            mockHttpContext.Request.Method = "POST";
-            mockHttpContext.Request.Scheme = uri.Scheme;
-            mockHttpContext.Request.PathBase = new PathString(string.Empty);
-            mockHttpContext.Request.QueryString = new QueryString(string.Empty);
-
-            return mockHttpContext;
-        }
-
         public static AppSettingsBase LoadAppSettings(string environmentName, string overrideName = null)
         {
             var builder = new ConfigurationBuilder()
@@ -888,29 +546,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var appSettingsConfiguration = configuration.GetSection("AppSettings");
             var appSettings = appSettingsConfiguration.Get<AppSettingsBase>();
             return appSettings;
-        }
-
-        private async Task<VsoPlan> GeneratePlan(
-            string planName = "Test",
-            string userId = null)
-        {
-            var model = new VsoPlan
-            {
-                Plan = new VsoPlanInfo
-                {
-                    Name = planName,
-                    ResourceGroup = "myRG",
-                    Subscription = Guid.NewGuid().ToString(),
-                    Location = AzureLocation.WestUs2
-                },
-                UserId = userId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,              
-            };
-
-            var serviceResult = await accountManager.CreateAsync(model, logger);
-            Assert.Equal(Plans.Contracts.ErrorCodes.Unknown, serviceResult.ErrorCode);
-            Assert.NotNull(serviceResult.VsoPlan);
-
-            return serviceResult.VsoPlan;
         }
     }
 }

@@ -31,7 +31,7 @@ config:
   portalEndpoint: https://online-ppe.core.vsengsaas.visualstudio.com
   environmentRegistrationEndpoint: https://online-ppe.core.vsengsaas.visualstudio.com/api/v1/environments
   apiEndpoint: https://online-ppe.core.vsengsaas.visualstudio.com/api/v1
-  liveShareEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com
+  liveShareEndpoint: https://ppe.liveshare.vsengsaas.visualstudio.com
   liveShareWebExtensionEndpoint: https://vslsppe.blob.core.windows.net/webextension
   githubClientId: f9230262d5d51925eb34
 

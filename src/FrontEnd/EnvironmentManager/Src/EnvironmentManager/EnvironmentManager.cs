@@ -9,14 +9,15 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
-using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
         /// <param name="authRepository">The Live Share authentication repository.</param>
+        /// <param name="tokenProvider">Provider capable of issuing access tokens.</param>
         /// <param name="billingEventManager">The billing event manager.</param>
         /// <param name="skuCatalog">The SKU catalog.</param>
         /// <param name="environmentMonitor">The environment monitor.</param>
@@ -45,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
             IWorkspaceRepository workspaceRepository,
-            IAuthRepository authRepository,
+            ITokenProvider tokenProvider,
             IBillingEventManager billingEventManager,
             ISkuCatalog skuCatalog,
             IEnvironmentMonitor environmentMonitor,
@@ -55,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
-            AuthRepository = Requires.NotNull(authRepository, nameof(authRepository));
+            TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
             BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
             SkuCatalog = skuCatalog;
             EnvironmentMonitor = environmentMonitor;
@@ -67,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IWorkspaceRepository WorkspaceRepository { get; }
 
-        private IAuthRepository AuthRepository { get; }
+        private ITokenProvider TokenProvider { get; }
 
         private IResourceBrokerResourcesHttpContract ResourceBrokerClient { get; }
 
@@ -1133,21 +1135,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
             Requires.NotNullOrEmpty(startCloudEnvironmentParameters.CallbackUriFormat, nameof(startCloudEnvironmentParameters.CallbackUriFormat));
             Requires.NotNull(startCloudEnvironmentParameters.FrontEndServiceUri, nameof(startCloudEnvironmentParameters.FrontEndServiceUri));
-            UnauthorizedUtil.IsRequired(startCloudEnvironmentParameters.AccessToken);
 
             var callbackUri = new Uri(string.Format(startCloudEnvironmentParameters.CallbackUriFormat, cloudEnvironment.Id));
             Requires.Argument(callbackUri.IsAbsoluteUri, nameof(callbackUri), "Must be an absolute URI.");
 
-            var cascadeToken = await AuthRepository.ExchangeToken(startCloudEnvironmentParameters.AccessToken);
-            UnauthorizedUtil.IsRequired(cascadeToken);
+            var connectionToken = TokenProvider.GenerateEnvironmentConnectionToken(
+                cloudEnvironment, startCloudEnvironmentParameters.UserProfile, logger);
 
             // Construct the start-compute environment variables
             var environmentVariables = EnvironmentVariableGenerator.Generate(
                 cloudEnvironment,
                 startCloudEnvironmentParameters.FrontEndServiceUri,
                 callbackUri,
-                startCloudEnvironmentParameters.AccessToken,
-                cascadeToken,
+                connectionToken,
                 cloudEnvironmentOptions);
 
             await ResourceBrokerClient.StartAsync(

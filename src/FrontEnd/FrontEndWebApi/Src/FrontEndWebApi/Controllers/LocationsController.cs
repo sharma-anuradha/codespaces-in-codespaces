@@ -24,15 +24,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// <summary>
     /// The cloud environment locations API controller.
     /// </summary>
-    /// <remarks>
-    /// Note this controller intentionally does NOT require requests to be authenticated,
-    /// because it does not return any sensitive information, only general information about
-    /// the availability of services in different locations.
-    /// </remarks>
     [ApiController]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName("locations_controller")]
-    [Authorize(AuthenticationSchemes = JwtBearerUtility.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerUtility.UserAuthenticationSchemes)]
     public class LocationsController : ControllerBase
     {
         private static readonly IComparer<ICloudEnvironmentSku> DisplaySkuComparer = new SkuComparer();

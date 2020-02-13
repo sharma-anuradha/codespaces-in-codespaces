@@ -25,13 +25,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
         public const string DeleteEnvironments = "delete:allenvironments";
 
         /// <summary>
+        /// A scope allowing the user to share a Live Share session.
+        /// </summary>
+        public const string ShareSession = "share:session";
+
+        /// <summary>
+        /// A scope allowing the user to join a Live Share session.
+        /// </summary>
+        public const string JoinSession = "join:session";
+
+        /// <summary>
         /// The set of all valid plan access token scopes.
         /// </summary>
-        public static readonly string[] ValidScopes = new[]
+        public static readonly string[] ValidPlanScopes = new[]
         {
             ReadEnvironments,
             WriteEnvironments,
             DeleteEnvironments,
+        };
+
+        /// <summary>
+        /// The set of all valid Live Share session access token scopes.
+        /// </summary>
+        public static readonly string[] ValidSessionScopes = new[]
+        {
+            ShareSession,
+            JoinSession,
         };
     }
 }

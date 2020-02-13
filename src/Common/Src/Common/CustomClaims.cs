@@ -10,6 +10,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     public class CustomClaims
     {
         /// <summary>
+        /// The userId claim.
+        /// </summary>
+        public const string UserId = "userId";
+
+        /// <summary>
         /// The idp claim.
         /// </summary>
         public const string Provider = "idp";
@@ -53,5 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// The scope of the token.
         /// </summary>
         public const string Scope = "scp";
+
+        /// <summary>
+        /// Live share session ID.
+        /// </summary>
+        public const string Session = "session";
     }
 }

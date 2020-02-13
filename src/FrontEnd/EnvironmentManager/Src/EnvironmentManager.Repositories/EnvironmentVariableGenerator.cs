@@ -21,7 +21,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <param name="cloudEnvironment">The cloud environment.</param>
         /// <param name="serviceUri">The service uri.</param>
         /// <param name="callbackUri">The callback uri.</param>
-        /// <param name="accessToken">The user access token.</param>
         /// <param name="cascadeToken">The cascade token for the environment.</param>
         /// <param name="cloudEnvironmentOptions">The cloud environment options.</param>
         /// <returns>A dictionary of environment variables.</returns>
@@ -29,7 +28,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             CloudEnvironment cloudEnvironment,
             Uri serviceUri,
             Uri callbackUri,
-            string accessToken,
             string cascadeToken,
             CloudEnvironmentOptions cloudEnvironmentOptions)
         {
@@ -59,7 +57,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
 
                 // Variables for session bootstrap
                 new EnvVarSessionCallback(cloudEnvironment, callbackUri),
-                new EnvVarSessionToken(accessToken),
                 new EnvVarSessionCascadeToken(cascadeToken),
                 new EnvVarSessionId(cloudEnvironment),
                 new EnvVarLiveshareServiceEndpoint(cloudEnvironment, cloudEnvironment.Connection.ConnectionServiceUri),

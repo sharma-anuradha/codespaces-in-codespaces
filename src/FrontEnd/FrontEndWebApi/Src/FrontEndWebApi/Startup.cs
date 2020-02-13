@@ -183,12 +183,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     {
                         options.BaseAddress = ValidationUtil.IsRequired(frontEndAppSettings.VSLiveShareApiEndpoint, nameof(frontEndAppSettings.VSLiveShareApiEndpoint));
                     },
-                    appSettings.FrontEnd.UseMocksForLocalDevelopment && !appSettings.FrontEnd.UseFakesForCECLIDevelopmentWithLocalDocker)
-                .AddLiveshareAuthProvider(
-                    options =>
-                    {
-                        options.BaseAddress = ValidationUtil.IsRequired(frontEndAppSettings.VSLiveShareApiEndpoint, nameof(frontEndAppSettings.VSLiveShareApiEndpoint));
-                    });
+                    appSettings.FrontEnd.UseMocksForLocalDevelopment && !appSettings.FrontEnd.UseFakesForCECLIDevelopmentWithLocalDocker);
 
             // Add the back-end http client and specific http rest clients.
             services.AddBackEndHttpClient(
@@ -214,7 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddVsSaaSHostingWithJwtBearerAuthentication2(
                 HostingEnvironment,
                 loggingBaseValues,
-                JwtBearerUtility.ConfigureOptions,
+                JwtBearerUtility.ConfigureAadOptions,
                 keyVaultSecretOptions =>
                 {
                     var servicePrincipal = ApplicationServicesProvider.GetRequiredService<IServicePrincipal>();
@@ -223,10 +218,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 },
                 null,
                 true,
-                JwtBearerUtility.AuthenticationScheme,
-                JwtBearerUtility.AuthenticationScheme)
+                JwtBearerUtility.AadAuthenticationScheme,
+                JwtBearerUtility.AadAuthenticationScheme)
                 .AddValidatedPrincipalIdentityHandler() // handle validated user principal
                 .AddIdentityMap();                      // map user IDs for the validated user principal
+
+            // Add user authentication using VSO (Cascade) tokens.
+            services.AddAuthentication().AddVsoJwtBearerAuthentication();
 
             // Add custom authentication (rpsaas, VM tokens) and VM token validator.
             services.AddCustomFrontEndAuthentication(

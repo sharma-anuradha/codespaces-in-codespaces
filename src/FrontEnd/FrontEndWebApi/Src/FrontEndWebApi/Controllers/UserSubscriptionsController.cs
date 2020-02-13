@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// Api for adding new users to vsonline.
     /// </summary>
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerUtility.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerUtility.UserAuthenticationSchemes)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName("user_subscriptions_controller")]

@@ -15,8 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
     /// </summary>
     public static class TokenProviderExtensions
     {
-        private const int VmTokenDaysTillExpiry = 365;
-        private static readonly TimeSpan VmTokenExpiration = TimeSpan.FromDays(VmTokenDaysTillExpiry);
+        private static readonly TimeSpan DefaultVmTokenLifetime = TimeSpan.FromDays(365);
 
         /// <summary>
         /// Generates a VM token.
@@ -25,12 +24,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// <param name="identifier">Id of the resource.</param>
         /// <param name="logger">logger.</param>
         /// <returns>security token.</returns>
-        public static Task<string> GenerateVmTokenAsync(this ITokenProvider provider, string identifier, IDiagnosticsLogger logger)
+        public static Task<string> GenerateVmTokenAsync(
+            this ITokenProvider provider,
+            string identifier,
+            IDiagnosticsLogger logger)
         {
             Requires.NotNullOrWhiteSpace(identifier, nameof(identifier));
             Requires.NotNull(logger, nameof(logger));
 
-            var expiresAt = DateTime.UtcNow.Add(VmTokenExpiration);
+            var expiresAt = DateTime.UtcNow.Add(
+                provider.Settings.VmTokenSettings.Lifetime ?? DefaultVmTokenLifetime);
 
             logger.AddValue("jwt_sub", identifier);
 

@@ -15,6 +15,13 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Moq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.VsSaaS.Tokens;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using System.Collections.Generic;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
@@ -25,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly MockBillingEventRepository billingEventRepository;
         public readonly MockClientWorkspaceRepository workspaceRepository;
         public readonly IBillingEventManager billingEventManager;
-        public readonly MockClientAuthRepository authRepository;
+        public readonly ITokenProvider tokenProvider;
         public readonly IResourceBrokerResourcesHttpContract resourceBroker;
         public readonly EnvironmentManager environmentManager;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
@@ -78,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.billingEventManager = new BillingEventManager(this.billingEventRepository,
                                                                 new MockBillingOverrideRepository());
             workspaceRepository = new MockClientWorkspaceRepository();
-            authRepository = new MockClientAuthRepository();
+            tokenProvider = MockTokenProvider();
             resourceBroker = new MockResourceBrokerClient();
             this.environmentMonitor = new MockEnvironmentMonitor();
             skuCatalog = new Mock<ISkuCatalog>(MockBehavior.Strict).Object;
@@ -87,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.environmentRepository,
                 this.resourceBroker,
                 this.workspaceRepository,
-                this.authRepository,
+                this.tokenProvider,
                 this.billingEventManager,
                 this.skuCatalog,
                 this.environmentMonitor,
@@ -109,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 new CloudEnvironmentOptions(),
                 new StartCloudEnvironmentParameters
                 {
-                    AccessToken = testAccessToken,
+                    UserProfile = MockProfile(),
                     FrontEndServiceUri = testServiceUri,
                     ConnectionServiceUri = testServiceUri,
                     CallbackUriFormat = testCallbackUriFormat,
@@ -133,6 +140,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     },
                 },
                 this.logger);
+        }
+
+
+        public static ITokenProvider MockTokenProvider()
+        {
+            var moq = new Mock<ITokenProvider>();
+
+            const string issuer = "test-issuer";
+            const string audience = "test-audience";
+
+            var key = new SymmetricSecurityKey(JwtTokenUtilities.GenerateKeyBytes(256));
+            key.KeyId = Guid.NewGuid().ToString();
+            var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            moq.Setup(obj => obj.JwtWriter)
+                .Returns(() =>
+                {
+                    var writer = new JwtWriter();
+                    writer.AddIssuer(issuer, signingCredentials);
+                    writer.AddAudience(audience);
+                    return writer;
+                });
+
+            moq.Setup(obj => obj.Settings)
+                .Returns(() => new AuthenticationSettings
+                {
+                    VsSaaSTokenSettings = new TokenSettings
+                    {
+                        Issuer = issuer,
+                        Audience = audience,
+                    },
+                    ConnectionTokenSettings = new TokenSettings
+                    {
+                        Issuer = issuer,
+                        Audience = audience,
+                    },
+                });
+
+            return moq.Object;
+        }
+
+        public static Profile MockProfile(
+            string provider = "mock-provider",
+            string id = "mock-id",
+            Dictionary<string, object> programs = null,
+            string email = default)
+        {            
+            return new Profile
+            {
+                Provider = provider,
+                Id = id,
+                Programs = programs,
+                Email = email
+            };
         }
     }
 }

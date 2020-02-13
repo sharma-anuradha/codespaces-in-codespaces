@@ -802,7 +802,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ? Array.Empty<string>()
                         : requestBody.Scope.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-                    if (scopesArray.Any((scope) => !PlanAccessTokenScopes.ValidScopes.Contains(scope)))
+                    if (scopesArray.Any((scope) => !PlanAccessTokenScopes.ValidPlanScopes.Contains(scope)))
                     {
                         return CreateErrorResponse("InvalidScope", "InvalidScope", HttpStatusCode.BadRequest);
                     }

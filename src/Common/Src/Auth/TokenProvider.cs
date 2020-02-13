@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
 
             ValidateTokenSettings(authenticationSettings.VmTokenSettings, nameof(authenticationSettings.VmTokenSettings));
             ValidateTokenSettings(authenticationSettings.VsSaaSTokenSettings, nameof(authenticationSettings.VsSaaSTokenSettings));
+            ValidateTokenSettings(authenticationSettings.ConnectionTokenSettings, nameof(authenticationSettings.ConnectionTokenSettings));
 
             this.Settings = authenticationSettings;
             this.JwtWriter = jwtWriter;

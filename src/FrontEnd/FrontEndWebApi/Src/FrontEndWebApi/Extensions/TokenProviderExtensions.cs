@@ -4,9 +4,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -21,11 +21,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
     /// </summary>
     public static class TokenProviderExtensions
     {
-        private const int VsSaaSTokenDaysTillExpiry = 25;
-        private static readonly TimeSpan VsSaaSTokenExpiration = TimeSpan.FromDays(VsSaaSTokenDaysTillExpiry);
+        private static readonly TimeSpan DefaultVsSaaSTokenLifetime = TimeSpan.FromDays(25);
 
         /// <summary>
-        /// Generates a VsSaaS token.
+        /// Generates a token that grants the caller access to VSO environment services.
         /// </summary>
         /// <param name="provider">The token provider.</param>
         /// <param name="plan">The plan the token applies to.</param>
@@ -80,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         }
 
         /// <summary>
-        /// Generates a delegated VsSaaS token.
+        /// Generates a token that grants a caller's delegate access to VSO environment services.
         /// </summary>
         /// <param name="provider">The token provider.</param>
         /// <param name="plan">The plan the token applies to.</param>
@@ -139,7 +138,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
 
             sourceTokenExpiration = null; // TODO - respect this setting, ignoring now to unblock
 
-            var expiresAt = requestedExpiration ?? DateTime.UtcNow.Add(VsSaaSTokenExpiration);
+            var expiresAt = requestedExpiration ?? DateTime.UtcNow.Add(
+                provider.Settings.VsSaaSTokenSettings.Lifetime ?? DefaultVsSaaSTokenLifetime);
             if (sourceTokenExpiration.HasValue && sourceTokenExpiration.Value < expiresAt)
             {
                 expiresAt = sourceTokenExpiration.Value;

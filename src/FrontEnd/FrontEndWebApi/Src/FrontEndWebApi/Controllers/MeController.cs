@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// The cloud environment API controller.
     /// </summary>
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerUtility.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerUtility.UserAuthenticationSchemes)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName("me_controller")]

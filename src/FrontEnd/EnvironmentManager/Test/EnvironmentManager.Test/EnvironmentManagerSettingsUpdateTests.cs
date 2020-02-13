@@ -241,7 +241,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var billingEventRepository = new MockBillingEventRepository();
             var billingEventManager = new BillingEventManager(billingEventRepository, new MockBillingOverrideRepository());
             var workspaceRepository = new MockClientWorkspaceRepository();
-            var authRepository = new MockClientAuthRepository();
+            var tokenProvider = EnvironmentManagerTestsBase.MockTokenProvider();
             var resourceBroker = new MockResourceBrokerClient();
             var environmentMonitor = new MockEnvironmentMonitor();
 
@@ -251,7 +251,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentRepository,
                 resourceBroker,
                 workspaceRepository,
-                authRepository,
+                tokenProvider,
                 billingEventManager,
                 skuCatalog,
                 environmentMonitor,

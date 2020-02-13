@@ -31,5 +31,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public TokenSettings VsSaaSTokenSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the settings for environment connection tokens.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public TokenSettings ConnectionTokenSettings { get; set; }
     }
 }

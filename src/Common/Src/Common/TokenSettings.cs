@@ -43,5 +43,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public string KeyVaultName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum lifetime of issued tokens.
+        /// </summary>
+        /// <remarks>
+        /// This must be specified in a form supported by TimeSpan.Parse(). Examples:
+        ///   "0:15" = 15 minutes
+        ///   "2:00" = 2 hours
+        ///   "30" = 30 days
+        /// Unfortunately ISO-8601 format is not supported:
+        /// https://github.com/JamesNK/Newtonsoft.Json/issues/863
+        /// https://github.com/dotnet/runtime/issues/28862
+        /// .</remarks>
+        [JsonProperty(Required = Required.Default)]
+        public TimeSpan? Lifetime { get; set; }
     }
 }

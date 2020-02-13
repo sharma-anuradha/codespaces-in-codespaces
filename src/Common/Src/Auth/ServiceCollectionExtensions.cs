@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
             return services
                 .AddTokenSettingsToJwtWriter(writer, authSettings.VmTokenSettings)
                 .AddTokenSettingsToJwtWriter(writer, authSettings.VsSaaSTokenSettings)
+                .AddTokenSettingsToJwtWriter(writer, authSettings.ConnectionTokenSettings)
                 .AddSingleton<IJwtWriter>(writer)
                 .AddSingleton<ITokenProvider, TokenProvider>();
         }
@@ -135,7 +136,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
         {
             if (string.IsNullOrWhiteSpace(tokenSettings.AudienceCertificateName))
             {
-                // Is this valid?
+                // For unencrypted tokens, add a valid audience with no decryption credentials.
                 reader.AddAudience(tokenSettings.Audience);
                 return NoOpAsyncWarmup.Instance;
             }
