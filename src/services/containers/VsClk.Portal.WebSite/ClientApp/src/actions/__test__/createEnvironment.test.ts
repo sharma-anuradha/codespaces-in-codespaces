@@ -13,7 +13,6 @@ import {
     createEnvironmentActionType,
     createEnvironmentSuccessActionType,
     createEnvironmentFailureActionType,
-    CreateEnvironmentFailureAction,
 } from '../createEnvironment';
 
 import { defaultConfig } from '../../services/configurationService';
@@ -25,7 +24,7 @@ jest.mock('../../services/authService', () => {
         authService: {
             getCachedToken: async () => {
                 return 'AAD token value';
-            }
+            },
         },
     };
 });

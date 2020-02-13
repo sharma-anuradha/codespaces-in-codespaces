@@ -42,7 +42,7 @@ import {
     environmentChangedActionType,
 } from '../actions/environmentChanged';
 
-type EnvironmentsState = {
+export type EnvironmentsState = {
     environments: ILocalCloudEnvironment[];
     deletedEnvironments: ILocalCloudEnvironment[];
     activatingEnvironments: string[];

@@ -38,17 +38,18 @@ export async function pollActivatingEnvironment(id: string) {
     const dispatch = useDispatch();
     const activatingEnvironments = useActionContext().state.environments.environments;
     try {
-        dispatch(pollActivatingEnvironmentAction(id));
-
+        const context = useActionContext();
         const envWithOldState = activatingEnvironments.find((item) => item.id === id);
         const oldState = envWithOldState && envWithOldState.state;
+
+        dispatch(pollActivatingEnvironmentAction(id));
         const environment = await envRegService.getEnvironment(id);
 
         if (!environment) {
             return;
         }
         if (oldState !== environment.state) {
-            stateChangeEnvironmentAction(id, environment.state, oldState);
+            dispatch(stateChangeEnvironmentAction(id, environment.state, oldState, context));
         }
         dispatch(environmentChangedAction(environment));
     } catch {

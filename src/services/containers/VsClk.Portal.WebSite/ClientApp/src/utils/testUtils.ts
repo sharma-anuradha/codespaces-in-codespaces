@@ -195,7 +195,7 @@ export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {
             ok = responseDefaults.ok,
             status = responseDefaults.status,
             shouldFailConnection = responseDefaults.shouldFailConnection ||
-                options.shouldFailConnection === true,
+            options.shouldFailConnection === true,
             ...rest
         } = responses.shift() || {};
 
@@ -266,8 +266,8 @@ export type MockStore = ReturnType<typeof configureStore> & {
     dispatchedActions: WithMetadata<BaseAction>[];
 };
 
-export function createMockStore(): MockStore {
-    const store = configureStore();
+export function createMockStore(preloadedState?: Partial<ApplicationState>): MockStore {
+    const store = configureStore(preloadedState);
 
     setContextFactory(() => {
         const context = new Context();

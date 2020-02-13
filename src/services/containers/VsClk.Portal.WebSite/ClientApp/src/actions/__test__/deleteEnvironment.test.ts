@@ -5,7 +5,6 @@ import {
     createMockMakeRequestFactory,
     test_setApplicationState,
     authenticated,
-    getDispatchedAction,
 } from '../../utils/testUtils';
 
 import {
@@ -20,7 +19,7 @@ jest.mock('../../services/authService', () => {
         authService: {
             getCachedToken: async () => {
                 return 'AAD token value';
-            }
+            },
         },
     };
 });

@@ -8,9 +8,9 @@ export const stateChangeEnvironmentActionType = 'async.environments.stateChange'
 export const stateChangeEnvironmentAction = (
     id: string,
     environmentState: StateInfo,
-    oldState?: StateInfo
+    oldState?: StateInfo,
+    context = useActionContext()
 ) => {
-    const context = useActionContext();
     context.setContextTelemetryProperty('environmentid', id);
     context.setContextTelemetryProperty('state', environmentState);
     context.setContextTelemetryProperty('oldState', oldState);
