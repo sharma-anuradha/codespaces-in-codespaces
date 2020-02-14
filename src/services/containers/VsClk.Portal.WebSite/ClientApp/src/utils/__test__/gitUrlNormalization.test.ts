@@ -46,8 +46,8 @@ describe('git url utils', () => {
             ${'https://github.com/vso/test/tree/dev'}
             ${'https://github.com/vso/test/tree/V1.0'}
             ${'https://github.com/vso/test/commit/0abd362eb99c696a74fec56a766ee1910c7598e1'}
-        `('Currently unsupported urls (will be in the future): "$url"', ({ url }) => {
-            expect(isRecognizedGitUrl(url)).toBe(false);
+        `('Valid tree and commit url: "$url"', ({ url }) => {
+            expect(isRecognizedGitUrl(url)).toBe(true);
         });
 
         test.each`
@@ -128,7 +128,6 @@ describe('git url utils', () => {
             ${'🌈 & 🦄'}
             ${'@yoda/thinking'}
             ${'https://some-random-service.com/vso/test.git'}
-            ${'https://github.com/vso/test/tree/dev'}
         `('returns undefined for invalid "$repositoryName"', ({ repositoryName }) => {
             expect(normalizeGitUrl(repositoryName)).toBeUndefined();
         });
@@ -161,7 +160,6 @@ describe('git url utils', () => {
             ${'🌈 & 🦄'}
             ${'@yoda/thinking'}
             ${'https://some-random-service.com/vso/test.git'}
-            ${'https://github.com/vso/test/tree/dev'}
         `('returns undefined for invalid "$repositoryName"', ({ repositoryName }) => {
             expect(getQueryableUrl(repositoryName)).toBeUndefined();
         });

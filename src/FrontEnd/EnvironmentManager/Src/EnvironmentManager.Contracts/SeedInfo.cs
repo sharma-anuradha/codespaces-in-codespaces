@@ -24,6 +24,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public string SeedMoniker { get; set; }
 
         /// <summary>
+        /// Gets or sets the seed checkout.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "commit")]
+        public string SeedCommit { get; set; }
+
+        /// <summary>
         /// Gets or sets the Git configuration options.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "gitConfig")]

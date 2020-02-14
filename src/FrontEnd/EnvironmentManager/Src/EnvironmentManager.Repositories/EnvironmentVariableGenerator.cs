@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
 
                 // Variables for repository seed
                 new EnvVarGitRepoUrl(cloudEnvironment),
-                new EnvVarGitPullPRNumber(cloudEnvironment),
+                new EnvVarGitRepoCommit(cloudEnvironment),
                 new EnvVarGitConfigUserName(cloudEnvironment),
                 new EnvVarGitConfigUserEmail(cloudEnvironment),
 
@@ -214,16 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             {
                 var moniker = CloudEnvironment.Seed.SeedMoniker;
 
-                /* Just supporting /pull/ case for now */
-                if (moniker.Contains("/pull/"))
-                {
-                    var repoUrl = moniker.Split("/pull/");
-                    return new Tuple<string, string>(EnvironmentVariableConstants.GitRepoUrl, repoUrl[0]);
-                }
-                else
-                {
-                    return new Tuple<string, string>(EnvironmentVariableConstants.GitRepoUrl, moniker);
-                }
+                return new Tuple<string, string>(EnvironmentVariableConstants.GitRepoUrl, moniker);
             }
 
             return null;
@@ -260,7 +251,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// Initializes a new instance of the <see cref="EnvVarServiceEndpoint"/> class.
         /// </summary>
         /// <param name="cloudEnvironment">The cloud environment.</param>
-        /// <param name="serviceUri">The service uri.</param>
+        /// <param name="serviceUri">The service Uri.</param>
         public EnvVarServiceEndpoint(CloudEnvironment cloudEnvironment, Uri serviceUri)
             : base(cloudEnvironment)
         {
@@ -310,13 +301,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// <summary>
     /// Generate the git pull PR number environment variable.
     /// </summary>
-    public class EnvVarGitPullPRNumber : EnvironmentVariableStrategy
+    public class EnvVarGitRepoCommit : EnvironmentVariableStrategy
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EnvVarGitPullPRNumber"/> class.
+        /// Initializes a new instance of the <see cref="EnvVarGitRepoCommit"/> class.
         /// </summary>
         /// <param name="cloudEnvironment">The cloud environment.</param>
-        public EnvVarGitPullPRNumber(CloudEnvironment cloudEnvironment)
+        public EnvVarGitRepoCommit(CloudEnvironment cloudEnvironment)
             : base(cloudEnvironment)
         {
         }
@@ -326,16 +317,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         {
             if (CloudEnvironment.Seed != null
                 && CloudEnvironment.Seed.SeedType == SeedType.Git
-                && IsValidGitUrl(CloudEnvironment.Seed.SeedMoniker))
+                && !string.IsNullOrEmpty(CloudEnvironment.Seed.SeedCommit))
             {
-                var moniker = CloudEnvironment.Seed.SeedMoniker;
+                var checkout = CloudEnvironment.Seed.SeedCommit;
 
-                /* Just supporting /pull/ case for now */
-                if (moniker.Contains("/pull/"))
-                {
-                    var repoUrl = moniker.Split("/pull/");
-                    return new Tuple<string, string>(EnvironmentVariableConstants.GitPRNumber, Regex.Match(repoUrl[1], "(\\d+)").ToString());
-                }
+                return new Tuple<string, string>(EnvironmentVariableConstants.GitRepoCommit, checkout);
             }
 
             return null;

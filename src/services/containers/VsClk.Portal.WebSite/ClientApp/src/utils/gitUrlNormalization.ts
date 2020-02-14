@@ -93,20 +93,32 @@ export function isRecognizedGitUrl(maybeUrl: string): boolean {
             return true;
         }
 
-        // Pull requests are in the form of
-        //
+        // Commit urls are in the form of:
+        //      https://github.com/owner/repository/commit/AAAAAAAAAAAAAAAAAA
+        // Tree urls are branches in the form of:
+        //      https://github.com/owner/repository/tree/name/of/branch
+        // Pull requests are in the form of:
         //      https://github.com/vsls-contrib/test/pull/18
-        //
-        const [org, repository, pull, id, ...rest] = path.split('/');
-        const pullRequestNumber = Number.parseInt(id, 10);
-        if (
-            isGitHubRepositoryName(`${org}/${repository}`) &&
-            rest.length === 0 &&
-            pull === 'pull' &&
-            pullRequestNumber &&
-            pullRequestNumber > 0
-        ) {
-            return true;
+        const [org, repository, type, ...rest] = path.split('/');
+        if (type === 'commit' || type === 'tree')
+        {
+            if (
+                isGitHubRepositoryName(`${org}/${repository}`) &&
+                rest.length >= 1
+            ) {
+                return true;
+            }
+        }
+
+        if (type === 'pull' && rest.length === 1) {
+            const pullRequestNumber = Number.parseInt(rest[0], 10);
+            if (
+                isGitHubRepositoryName(`${org}/${repository}`) &&
+                pullRequestNumber &&
+                pullRequestNumber > 0
+            ) {
+                return true;
+            }
         }
 
         return false;

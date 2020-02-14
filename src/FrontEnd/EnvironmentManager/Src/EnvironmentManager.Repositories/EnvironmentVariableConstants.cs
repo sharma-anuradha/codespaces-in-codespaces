@@ -13,6 +13,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public const string EnvironmentId = "CLOUDENV_ENVIRONMENT_ID";
         public const string ServiceEndpoint = "CLOUDENV_SERVICE_ENDPOINT";
         public const string GitRepoUrl = "GIT_REPO_URL";
+        public const string GitRepoCommit = "GIT_REPO_COMMIT";
         public const string GitPRNumber = "GIT_PR_NUM";
         public const string GitConfigUsername = "GIT_CONFIG_USER_NAME";
         public const string GitConfigUserEmail = "GIT_CONFIG_USER_EMAIL";
