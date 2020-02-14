@@ -18,6 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     public class ControlPlaneStampInfo : IControlPlaneStampInfo
     {
         private const int AzureStorageOrBatchAccountNameLengthMax = 24;
+        private const int AzureServiceBusNamespaceNameLengthMax = 50;
         private const int ShortUniquePrefixLengthMax = AzureStorageOrBatchAccountNameLengthMax - 10;
         private const string ComputeQueueKind = "cq";
         private const string StorageImageKind = "si";
@@ -70,6 +71,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public string StampStorageAccountName =>
             $"{StampResourceGroupName}-sa".Replace("-", string.Empty).ToLowerInvariant();
+
+        /// <inheritdoc/>
+        public string StampServiceBusNamespaceName =>
+            $"{StampResourceGroupName}-service-bus";
 
         /// <remarks>
         /// This map will need to grow as we add new supported data-plane locations.

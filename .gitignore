@@ -335,6 +335,10 @@ appsettings.secrets.json
 # ASP.NET Core test
 appsettings.test.json
 
+# Helm Chart secrets
+app.secrets.yaml
+
+
 .DS_Store
 
 /.pipelines/node

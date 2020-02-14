@@ -103,5 +103,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             throw new NotImplementedException();
         }
+
+        public Task<string> GetStampServiceBusConnectionStringAsync(IDiagnosticsLogger logger) 
+        {
+            throw new NotImplementedException();
+        }
     }
 }

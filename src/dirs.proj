@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <BuildFrontendBackend Condition="'$(BuildFrontendBackend)' == ''">true</BuildFrontendBackend>
+    <BuildPortForwarding Condition="'$(BuildPortForwarding)' == ''">true</BuildPortForwarding>
     <BuildPortal Condition="'$(BuildPortal)' == ''">true</BuildPortal>
     <BuildOtherServices Condition="'$(BuildOtherServices)' == ''">true</BuildOtherServices>
   </PropertyGroup>
@@ -12,6 +13,7 @@
     <ProjectReference Include="Deploy/Deploy.csproj" Condition="'$(BuildFrontendBackend)' == 'true'" />
     <ProjectReference Include="FrontEnd/dirs.proj" Condition="'$(BuildFrontendBackend)' == 'true'" />
     <ProjectReference Include="Portal/dirs.proj" Condition="'$(BuildPortal)' == 'true'" />
+    <ProjectReference Include="PortForwarding/dirs.proj" Condition="'$(BuildPortForwarding)' == 'true'" />
     <ProjectReference Include="services/dirs.proj" Condition="'$(BuildOtherServices)' == 'true' AND '$(NOSERVICES)' == ''" />
   </ItemGroup>
 

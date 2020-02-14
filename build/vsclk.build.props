@@ -44,6 +44,7 @@
     <AzureDocumentDBCorePackageVersion>2.8.1</AzureDocumentDBCorePackageVersion>
     <AzureMgmtFluentPackageVersion>1.26.1</AzureMgmtFluentPackageVersion>
     <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
+    <AzureServiceBusPackageVersion>4.1.1</AzureServiceBusPackageVersion>
     <FluentAssertionsVersion>5.4.1</FluentAssertionsVersion>
     <MicroBuildCoreVersion>0.3.0</MicroBuildCoreVersion>
     <MicrosoftIdentityModelTokensPackageVersion>5.6.0</MicrosoftIdentityModelTokensPackageVersion>

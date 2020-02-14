@@ -91,6 +91,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         Task<(string, string, string)> GetStampBatchAccountAsync(AzureLocation location, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Gets the stamp-level service bus namespace connection string.
+        /// </summary>
+        /// <param name="logger">The logger instance.</param>
+        /// <returns>A service bus namespace connection string.</returns>
+        Task<string> GetStampServiceBusConnectionStringAsync(IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Gets the stamp-level storage account used for billing submission.
         /// </summary>
         /// <param name="billingSubmissionLocation">The azure location of the billing submission data.</param>

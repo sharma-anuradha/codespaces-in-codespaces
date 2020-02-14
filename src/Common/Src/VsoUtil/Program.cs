@@ -23,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             try
             {
                 return Parser.Default.ParseArguments<
+                    CreatePortForwardingConnection,
                     ShowSkusCommand,
                     ShowSubscriptionCommand,
                     ShowControlPlaneCommand,
@@ -33,6 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     DeletePoolSettingsCommand,
                     PrepareDevCLICommand>(args)
                     .MapResult(
+                        (CreatePortForwardingConnection command) => command.Execute(Console.Out, Console.Error),
                         (ShowSkusCommand command) => command.Execute(Console.Out, Console.Error),
                         (ShowSubscriptionCommand command) => command.Execute(Console.Out, Console.Error),
                         (ShowControlPlaneCommand command) => command.Execute(Console.Out, Console.Error),

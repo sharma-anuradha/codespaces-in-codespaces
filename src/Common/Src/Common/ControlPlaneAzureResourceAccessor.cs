@@ -14,6 +14,7 @@ using Microsoft.Azure.Management.CosmosDB.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
+using Microsoft.Azure.Management.ServiceBus.Fluent;
 using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.VsSaaS.Caching;
@@ -72,6 +73,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private IStorageManagementClient StorageManagementClient { get; set; }
 
         private IBatchManagementClient BatchManagementClient { get; set; }
+
+        private IServiceBusManagementClient ServiceBusManagementClient { get; set; }
 
         private TimeSpan CacheExpiration { get; } = TimeSpan.FromHours(1);
 
@@ -258,6 +261,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
+        public async Task<string> GetStampServiceBusConnectionStringAsync(IDiagnosticsLogger logger)
+        {
+            var resourceGroup = ControlPlaneInfo.Stamp.StampResourceGroupName;
+            var namespaceName = ControlPlaneInfo.Stamp.StampServiceBusNamespaceName;
+
+            var cacheKey = $"serviceBusPrimaryKey:{resourceGroup}:{namespaceName}";
+
+            string primaryKey = await Cache.GetAsync<string>(cacheKey, logger);
+
+            if (primaryKey == null)
+            {
+                try
+                {
+                    var serviceBusManagementClient = await GetServiceBusManagementClientAsync();
+                    var keys = await serviceBusManagementClient.Namespaces.ListKeysAsync(
+                        resourceGroup,
+                        namespaceName,
+                        "RootManageSharedAccessKey");
+
+                    primaryKey = keys.PrimaryConnectionString;
+                }
+                catch (Exception)
+                {
+                    logger.FluentAddValue(nameof(namespaceName), namespaceName)
+                        .FluentAddValue(nameof(resourceGroup), resourceGroup)
+                        .LogError("get_service_bus_connection_string_error");
+                    throw;
+                }
+
+                await Cache.SetAsync(cacheKey, primaryKey, CacheExpiration, logger);
+            }
+
+            return primaryKey;
+        }
+
+        /// <inheritdoc/>
         public async Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation)
         {
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForBillingSubmission(billingSubmissionLocation);
@@ -374,6 +413,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             };
 
             return BatchManagementClient;
+        }
+
+        private async Task<IServiceBusManagementClient> GetServiceBusManagementClientAsync()
+        {
+            if (ServiceBusManagementClient != null)
+            {
+                return ServiceBusManagementClient;
+            }
+
+            var subscriptionId = await GetCurrentSubscriptionIdAsync();
+            var azureCredentials = await GetAzureCredentialsAsync();
+            ServiceBusManagementClient = new ServiceBusManagementClient(ConfigureRestClient(azureCredentials))
+            {
+                SubscriptionId = subscriptionId,
+            };
+
+            return ServiceBusManagementClient;
         }
 
         private RestClient ConfigureRestClient(AzureCredentials creds)

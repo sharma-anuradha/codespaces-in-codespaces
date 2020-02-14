@@ -146,6 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("westus2-ci-online.dev.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-dev-ci-usw2", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-dev-ci-usw2-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-dev-ci-usw2-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Equal("vsclkonlinedevciusw2sa", s.StampStorageAccountName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.WestUs2, l));
@@ -183,6 +184,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("eastus-ppe-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-ppe-rel-use", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-ppe-rel-use-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-ppe-rel-use-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Equal("vsclkonlinepperelusesa", s.StampStorageAccountName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.EastUs, l));
@@ -201,6 +203,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("vsclk-online-ppe-rel-usw2", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-ppe-rel-usw2-db", s.StampCosmosDbAccountName);
                 Assert.Equal("vsclkonlinepperelusw2sa", s.StampStorageAccountName);
+                Assert.Equal("vsclk-online-ppe-rel-usw2-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.WestUs2, l));
                 Assert.Equal("vsopperelusw2cqusw2", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestUs2));
@@ -219,6 +222,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("westeurope-ppe-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-ppe-rel-euw", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-ppe-rel-euw-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-ppe-rel-euw-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Equal("vsclkonlineppereleuwsa", s.StampStorageAccountName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.WestEurope, l));
@@ -236,6 +240,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("southeastasia-ppe-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-ppe-rel-asse", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-ppe-rel-asse-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-ppe-rel-asse-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Equal("vsclkonlinepperelassesa", s.StampStorageAccountName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.SouthEastAsia, l));
@@ -276,6 +281,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("eastus.online.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-prod-rel-use", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-prod-rel-use-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-prod-rel-use-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Equal("vsclkonlineprodrelusesa", s.StampStorageAccountName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.EastUs, l));
@@ -295,6 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("westeurope.online.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-prod-rel-euw", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-prod-rel-euw-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-prod-rel-euw-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Equal("vsclkonlineprodreleuwsa", s.StampStorageAccountName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.WestEurope, l));
@@ -314,6 +321,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("westus2.online.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-prod-rel-usw2", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-prod-rel-usw2-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-prod-rel-usw2-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Equal("vsclkonlineprodrelusw2sa", s.StampStorageAccountName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.WestUs2, l));
@@ -333,6 +341,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Equal("southeastasia.online.visualstudio.com", s.DnsHostName);
                 Assert.Equal("vsclk-online-prod-rel-asse", s.StampResourceGroupName);
                 Assert.Equal("vsclk-online-prod-rel-asse-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-prod-rel-asse-service-bus", s.StampServiceBusNamespaceName);
                 Assert.Equal("vsclkonlineprodrelassesa", s.StampStorageAccountName);
                 Assert.Collection(s.DataPlaneLocations,
                     l => Assert.Equal(AzureLocation.SouthEastAsia, l));

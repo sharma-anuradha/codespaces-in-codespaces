@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\..\BackEnd\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj" />
     <ProjectReference Include="..\..\..\BackEnd\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj" />
     <ProjectReference Include="..\..\..\BackEnd\ScalingEngine\Src\ScalingEngine\ScalingEngine.csproj" />
+    <ProjectReference Include="..\..\..\PortForwarding\Connections.Contracts\Src\Connections.Contracts\Connections.Contracts.csproj" />
   </ItemGroup>
 
  <ItemGroup>

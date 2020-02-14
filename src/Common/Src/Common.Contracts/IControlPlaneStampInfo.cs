@@ -28,9 +28,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string StampCosmosDbAccountName { get; }
 
         /// <summary>
-        /// Gets the control-plane stamp storage  account name.
+        /// Gets the control-plane stamp storage account name.
         /// </summary>
         string StampStorageAccountName { get; }
+
+        /// <summary>
+        /// Gets the control-plane stamp service bus namespace name.
+        /// </summary>
+        string StampServiceBusNamespaceName { get; }
 
         /// <summary>
         /// Gets the control-plane stamp DNS host name.
@@ -87,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets the control-plane stamp storage account name for storing billing submissions.
         /// </summary>
-        /// <param name="billingLocation">The billing submisisonlocation.</param>
+        /// <param name="billingLocation">The billing submission location.</param>
         /// <returns>The storage account name.</returns>
         string GetStampStorageAccountNameForBillingSubmission(AzureLocation billingLocation);
     }
