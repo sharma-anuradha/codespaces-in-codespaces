@@ -8,6 +8,7 @@ import { tokenFromTokenResponse } from '../services/tokenFromTokenResponse';
 import { clientApplication } from '../services/msalConfig';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
 import { getAuthToken } from './getAuthToken';
+import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
 
 export const loginActionType = 'async.authentication.login';
 export const loginSuccessActionType = 'async.authentication.login.success';
@@ -68,8 +69,10 @@ export const complete2FA = async () => {
 
     const token = tokenFromTokenResponse(tokenResponse);
 
-    const dispatch = useDispatch();
+    await authService.getKeychainKeys();
+    await localStorageKeychain.rehash();
 
+    const dispatch = useDispatch();
     dispatch(loginSuccessAction(token));
     dispatch(init(getAuthToken));
 

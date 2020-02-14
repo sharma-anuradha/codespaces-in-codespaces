@@ -129,7 +129,7 @@ class AuthService {
         this.keepUserAuthenticated();
     }
 
-    private async getKeychainKeys() {
+    public async getKeychainKeys() {
         const keys = await createKeys();
         setKeychainKeys(keys);
     }
