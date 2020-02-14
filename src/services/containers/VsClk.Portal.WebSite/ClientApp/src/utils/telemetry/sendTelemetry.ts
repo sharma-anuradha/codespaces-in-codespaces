@@ -17,7 +17,8 @@ type SendTelemetryProps =
     | ['vsonline/portal/ls-connection-page-reload', IVSCodeConnectPageReloadProperties]
     | ['vsonline/portal/ls-connection-close', IVSCodeConnectProperties]
     | ['vsonline/request', IResponseProperties]
-    | ['vsonline/extensionload/error', Error];
+    | ['vsonline/extensionload/error', Error]
+    | ['vsonline/portal/connect-with-retry', IEnvConnector];
 
 export function sendTelemetry(...args: SendTelemetryProps): void;
 export function sendTelemetry(telemetryEventName: any, properties: any) {
@@ -70,4 +71,12 @@ interface IVSCodeConnectPageReloadProperties extends IVSCodeConnectProperties {
 interface IVSCodeConnectionFailedProperties extends IVSCodeConnectWithDurationProperties {
     retry: number;
     error: Error;
+}
+
+interface ITimedEvent {
+    duration: number;
+}
+
+interface IEnvConnector extends ITimedEvent {
+    correlationId: string;
 }

@@ -113,7 +113,7 @@ export async function getEnvironment(id: string): Promise<ICloudEnvironment | un
     const { environmentRegistrationEndpoint } = configuration;
     const webClient = useWebClient();
 
-    return await webClient.get(`${environmentRegistrationEndpoint}/${id}`, {
+    return await webClient.get(`${environmentRegistrationEndpoint}/${id}?t=${Date.now()}`, {
         retryCount: 2,
     });
 }

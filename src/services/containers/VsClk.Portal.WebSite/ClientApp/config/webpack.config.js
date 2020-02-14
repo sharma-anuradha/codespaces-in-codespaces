@@ -436,7 +436,9 @@ module.exports = function(webpackEnv) {
         },
 
         module,
-
+        externals: {
+            vscode: "vscode", // the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed, 📖 -> https://webpack.js.org/configuration/externals/
+        },
         // Some libraries import Node modules but don't use them in the browser.
         // Tell Webpack to provide empty mocks for them so importing them works.
         node: {

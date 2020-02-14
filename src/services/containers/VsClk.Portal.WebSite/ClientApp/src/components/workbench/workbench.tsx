@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-web';
 
-import { trace } from '../../utils/trace';
+import { createTrace } from '../../utils/createTrace';
 import { getVSCodeVersion } from '../../constants';
 
 import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
@@ -12,9 +12,10 @@ import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 import { ApplicationState } from '../../reducers/rootReducer';
 import {
     isEnvironmentAvailable,
-    isNotAvailable,
     isActivating,
     isSuspended,
+    isCreating,
+    isNotAvailable,
 } from '../../utils/environmentUtils';
 
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
@@ -28,7 +29,10 @@ import { UserDataProvider } from '../../utils/userDataProvider';
 
 import { vscode } from '../../utils/vscode';
 
-import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
+import {
+    ILocalCloudEnvironment,
+    ICloudEnvironment,
+} from '../../interfaces/cloudenvironment';
 import { telemetry } from '../../utils/telemetry';
 import { updateFavicon } from '../../utils/updateFavicon';
 import { defaultConfig } from '../../services/configurationService';
@@ -36,12 +40,21 @@ import { createUniqueId } from '../../dependencies';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { pollActivatingEnvironment } from '../../actions/pollEnvironment';
 import { useActionContext } from '../../actions/middleware/useActionContext';
-import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
-
 import './workbench.css';
+import { CommunicationAdapter } from '../../services/communicationAdapter';
+import { SplashCommunicationProvider } from '../../providers/splashCommunicationProvider';
+import {
+    IWorkbenchSplashScreenProps,
+    SplashScreenType,
+} from '../../interfaces/IWorkbenchSplashScreenProps';
+import { Loader } from '../loader/loader';
 
 export interface IWokbenchState {
     connectError: string | null;
+    connectRequested: boolean;
+    isEnvironmentInfoReady: boolean;
+    isEnvironmentFinalizing: boolean;
+    isCreating?: boolean;
 }
 
 export interface WorkbenchProps {
@@ -64,13 +77,25 @@ export interface WorkbenchProps {
     ) => ReturnType<typeof pollActivatingEnvironment>;
 }
 
+const logger = createTrace("WorkbenchView");
+
 class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     constructor(props: WorkbenchProps, state: IWokbenchState) {
         super(props, state);
         this.state = {
             connectError: null,
+            connectRequested: false,
+            isEnvironmentInfoReady: false,
+            isEnvironmentFinalizing: false,
+            isCreating: undefined,
         };
     }
+
+    // Communication provider for creation splash screen
+    private communicationProvider?: SplashCommunicationProvider;
+    // We need to stablish a liveshare connection until the environment
+    // info is available.
+    private hasConnectionStarted: boolean = false;
     // Since we have external scripts running outside of react scope,
     // we'll mange the instantiation flag outside of state as well.
     private workbenchMounted: boolean = false;
@@ -105,12 +130,60 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
         this.checkForEnvironmentStatus(environmentInfo);
     }
 
+    onCommandReceived = (command: any) => {
+        logger.info("Command received", command);
+
+        if (command.data.command) {
+            switch (command.data.command) {
+                case 'connect':
+                    this.setState({ connectRequested: true });
+                    break;
+            }
+        }
+    };
+
+    // tslint:disable-next-line: max-func-body-length
     checkForEnvironmentStatus(environmentInfo: ILocalCloudEnvironment | undefined) {
         if (!environmentInfo) {
             return;
         }
 
+        if (this.state.isCreating === undefined) {
+            if (isCreating(environmentInfo)) {
+                if (!this.communicationProvider) {
+                    this.setState({ isCreating: true });
+                }
+            } else {
+                this.setState({ isCreating: false });
+            }
+        }
+
+        // We create the custom splash screen on creation only.
+        if (this.communicationProvider && !this.state.isEnvironmentInfoReady) {
+            this.communicationProvider.updateStep({
+                name: 'configuration',
+                status: 'locating',
+            });
+            this.setState({ isEnvironmentInfoReady: true });
+        }
+
+        // Got environment record
+        if (this.communicationProvider && !this.hasConnectionStarted) {
+            this.communicationProvider.updateStep({
+                name: 'configuration',
+                status: 'found',
+            });
+        }
+
         if (isEnvironmentAvailable(environmentInfo)) {
+            if (this.communicationProvider) {
+                this.communicationProvider.updateStep({
+                    name: 'environmentCreated',
+                    status: 'completed',
+                });
+                this.communicationProvider.postEnvironmentId(environmentInfo.id);
+            }
+
             this.cancelPolling();
             this.mountWorkbench(environmentInfo);
 
@@ -119,6 +192,26 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
 
         if (this.state && this.state.connectError) {
             return;
+        }
+
+        if (!this.hasConnectionStarted && this.communicationProvider && this.state.isCreating) {
+            // if (!this.hasConnectionStarted && this.communicationProvider && !this.isConnecting) {
+            this.hasConnectionStarted = true;
+            const communicationAdapter = new CommunicationAdapter(
+                this.communicationProvider,
+                this.props.liveShareEndpoint,
+                this.correlationId || createUniqueId()
+            );
+            if (environmentInfo.connection) {
+                if (environmentInfo.seed.moniker.length > 0) {
+                    communicationAdapter.connect(environmentInfo.connection.sessionId);
+                } else {
+                    this.communicationProvider.updateStep({
+                        name: 'containerSetup',
+                        status: 'skipped',
+                    });
+                }
+            }
         }
 
         if (!this.props.autoStart) {
@@ -143,11 +236,20 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     }
 
     pollForActivatingEnvironment(environmentInfo: ILocalCloudEnvironment) {
-        if (this.interval) {
-            return;
-        }
-
         if (isActivating(environmentInfo)) {
+            if (this.communicationProvider && !this.state.isEnvironmentFinalizing) {
+                const stepStatus = this.communicationProvider.getStepStatus('containerSetup');
+                if (stepStatus && (stepStatus === 'completed' || stepStatus === 'skipped')) {
+                    this.communicationProvider.updateStep({
+                        name: 'environmentCreated',
+                        status: 'finalizing',
+                    });
+                    this.setState({ isEnvironmentFinalizing: true });
+                }
+            }
+            if (this.interval) {
+                return;
+            }
             this.interval = setInterval(() => {
                 this.props.pollEnvironment(environmentInfo.id!);
             }, 2000);
@@ -279,7 +381,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
             resolveCommonTelemetryProperties,
         };
 
-        trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
+        logger.info(`Creating workbench on #${this.workbenchRef}, with config: `, config);
         vscode.create(this.workbenchRef, config);
     }
 
@@ -288,30 +390,45 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     private renderWorkbench() {
         const { environmentInfo, SplashScreenComponent } = this.props;
 
-        if (environmentInfo && isNotAvailable(environmentInfo)) {
-            return (
-                <SplashScreenComponent
-                    onRetry={this.handleClickToRetry}
-                    onConnect={this.handleOnSplashScreenConnect}
-                    environment={environmentInfo}
-                    showPrompt={!this.props.autoStart}
-                    connectError={this.state.connectError}
-                />
-            );
+        if ( this.state.isCreating === undefined || !environmentInfo) {
+            return <Loader></Loader>;
+        } else {
+            if (
+                !isNotAvailable(environmentInfo!) &&
+                (!this.state.isCreating || this.state.connectRequested)
+            ) {
+                return (
+                    <div className='vsonline-workbench'>
+                        <div
+                            id='workbench'
+                            style={{ height: '100%' }}
+                            ref={
+                                // tslint:disable-next-line: react-this-binding-issue
+                                (el) => (this.workbenchRef = el)
+                            }
+                        />
+                    </div>
+                );
+            } else {
+                this.communicationProvider =
+                    this.communicationProvider ||
+                    new SplashCommunicationProvider(this.onCommandReceived);
+                return (
+                    <SplashScreenComponent
+                        screentype={
+                            this.state.isCreating
+                                ? SplashScreenType.Creation
+                                : SplashScreenType.Starting
+                        }
+                        onRetry={this.handleClickToRetry}
+                        onConnect={this.handleOnSplashScreenConnect}
+                        environment={environmentInfo}
+                        showPrompt={!this.props.autoStart}
+                        connectError={this.state.connectError}
+                    />
+                );
+            }
         }
-
-        return (
-            <div className='vsonline-workbench'>
-                <div
-                    id='workbench'
-                    style={{ height: '100%' }}
-                    ref={
-                        // tslint:disable-next-line: react-this-binding-issue
-                        (el) => (this.workbenchRef = el)
-                    }
-                />
-            </div>
-        );
     }
 
     render() {

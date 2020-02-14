@@ -12,6 +12,7 @@
     "@uifabric/utilities": "7.8.0",
     "@vs/msal": "^1.2.1",
     "@vs/vs-ssh": "^2.0.10",
+    "@vs/vso-splash-screen": "^1.0.1646",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "9.0.0",
     "babel-loader": "8.0.5",
@@ -75,7 +76,9 @@
     "webpack": "4.28.3",
     "webpack-dev-server": "3.1.14",
     "webpack-manifest-plugin": "2.0.4",
-    "workbox-webpack-plugin": "3.6.3"
+    "workbox-webpack-plugin": "3.6.3",
+    "xterm": "^4.3.0",
+    "xterm-addon-fit": "^0.3.0"
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.3.0",

@@ -95,6 +95,7 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
         // 3. Try to create the environment
         const environment = await createCloudEnvironment(environmentParameters);
         dispatch(createEnvironmentSuccessAction(lieId, environment));
+        return environment.id;
     } catch (err) {
         if (err instanceof ServiceResponseError) {
             const code = (await err.response.json()) as EnvironmentErrorCodes;

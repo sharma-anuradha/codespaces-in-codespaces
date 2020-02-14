@@ -55,6 +55,10 @@ export function isSuspended(cloudenvironment: ILocalCloudEnvironment): boolean {
     return cloudenvironment.state === StateInfo.Shutdown;
 }
 
+export function isCreating(cloudenvironment: ILocalCloudEnvironment): boolean {
+    return cloudenvironment.state === StateInfo.Provisioning;
+}
+
 export function isActivating({ state }: Pick<ILocalCloudEnvironment | ICloudEnvironment, 'state'>) {
     switch (state) {
         case StateInfo.ShuttingDown:

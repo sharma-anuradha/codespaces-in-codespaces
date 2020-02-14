@@ -1,9 +1,9 @@
 
 export const customContainers = 'customContainers';
 
-const stableFeatures: string[] = [];
+const stableFeatures: string[] = [customContainers];
 
-const insiderFeatures = [customContainers];
+const insiderFeatures: string[] = [];
 
 export function getFeatureSet() : string
 {

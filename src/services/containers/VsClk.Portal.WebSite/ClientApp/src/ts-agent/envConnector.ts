@@ -25,6 +25,8 @@ import {
     tryAuthenticateMessageType,
 } from '../common/service-worker-messages';
 import { PromiseCompletionSource } from '@vs/vs-ssh';
+import { wait } from '../dependencies';
+import { sendTelemetry } from '../utils/telemetry';
 import { GitCredentialService } from './services/gitCredentialService';
 
 export type RemoteVSCodeServerDescription = {
@@ -141,7 +143,78 @@ export class EnvConnector {
         return this.vscodeServer.promise;
     }
 
-    private async connectWorkspaceClient(
+    public async connectWithRetry(
+        sessionId: string,
+        accessToken: string,
+        liveShareEndpoint: string,
+        correlationId: string): Promise<WorkspaceClient | undefined> {
+
+        window.performance.mark(
+            `EnvConnector.connectWithRetry ${correlationId}`
+        );
+        
+        const webClient = new WebClient(liveShareEndpoint, {
+            getToken() {
+                return accessToken;
+            },
+        });
+        const workspaceClient = new WorkspaceClient(webClient);
+
+
+        // Poll to connect to environment once its available.
+        let endPoll = Date.now() + 5 * 60 * 1000; // minutes.
+        let timeout = true;
+        while (Date.now() < endPoll) {
+            try {
+                await workspaceClient.connect(sessionId);
+                timeout = false;
+                break;
+            } catch {
+                await wait(500);
+            }
+        }
+
+        if (!timeout) {
+            try {
+                await workspaceClient.authenticate();
+            } catch (e) {
+                trace('Error authenticating to liveshare.', e);
+                return undefined;
+            }
+            // Poll to join, this waits till liveshare agent is available.
+            endPoll = Date.now() + 10 * 1000; // seconds
+            timeout = true;
+            while (Date.now() < endPoll) {
+                try {
+                    await workspaceClient.join();
+                    timeout = false;
+                    break;
+                } catch {
+                    await wait(500);
+                }
+            }
+        }
+
+        if (timeout) {
+            trace('Timed out trying to connect');
+            return undefined;
+        }
+
+        window.performance.measure(
+            `EnvConnector.connectWithRetry ${correlationId}`
+        );
+        const [measure] = window.performance.getEntriesByName(
+            `EnvConnector.connectWithRetry ${correlationId}`
+        );
+
+        sendTelemetry('vsonline/portal/connect-with-retry', {
+            correlationId: correlationId || '',
+            duration: measure.duration,
+        });
+        return workspaceClient;
+    }
+
+    public async connectWorkspaceClient(
         sessionId: string,
         accessToken: string,
         liveShareEndpoint: string
