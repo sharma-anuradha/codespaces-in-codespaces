@@ -71,7 +71,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         public async Task ValidatedPrincipalAsync(ClaimsPrincipal principal, JwtSecurityToken jwtToken)
         {
             Requires.NotNull(principal, nameof(principal));
-            Requires.NotNull(jwtToken, nameof(jwtToken));
 
             var identity = principal.Identities.First();
 
