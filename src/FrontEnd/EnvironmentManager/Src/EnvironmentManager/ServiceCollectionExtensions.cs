@@ -64,12 +64,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // Handlers
             services.AddSingleton<ILatestHeartbeatMonitor, LatestHeartbeatMonitor>();
+
             services.AddSingleton<ForceSuspendEnvironmentWorkflow>();
             services.AddSingleton<IForceSuspendEnvironmentWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());
             services.AddSingleton<IEnvironmentRepairWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());
+
             services.AddSingleton<HeartbeatMonitorContinuationHandler>();
             services.AddSingleton<IHeartbeatMonitorContinuationHandler>(x => x.GetRequiredService<HeartbeatMonitorContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<HeartbeatMonitorContinuationHandler>());
+
+            services.AddSingleton<EnvironmentStateTransitionMonitorContinuationHandler>();
+            services.AddSingleton<IEnvironmentStateTransitionMonitorContinuationHandler>(x => x.GetRequiredService<EnvironmentStateTransitionMonitorContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<EnvironmentStateTransitionMonitorContinuationHandler>());
 
             // The environment mangaer
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();

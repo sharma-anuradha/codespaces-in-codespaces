@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor.ContinuationMessageHandlers
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor
 {
     /// <summary>
     /// Environment Monitor Constants.
@@ -23,5 +23,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor
         /// Maximum Interval between heartbeats sent from VSO Agent.
         /// </summary>
         public const int HeartbeatIntervalInSeconds = 70;
+
+        /// <summary>
+        /// Gets Resume Environment Timeout In Seconds.
+        /// </summary>
+        public const int ResumeEnvironmentTimeoutInSeconds = 600;
+
+        /// <summary>
+        /// Gets Unavailable Environment Timeout In Seconds.
+        /// </summary>
+        public const int UnavailableEnvironmentTimeoutInSeconds = 60;
     }
 }

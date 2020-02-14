@@ -4,12 +4,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -61,6 +64,58 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (result.Status != OperationState.InProgress)
             {
                 throw new EnvironmentMonitorInitializationException(environmentId);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task MonitorResumeStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            var input = new EnvironmentStateTransitionInput()
+            {
+                EnvironmentId = environmentId,
+                ComputeResourceId = computeId,
+                ContinuationToken = string.Empty,
+                CurrentState = CloudEnvironmentState.Starting,
+                TargetState = CloudEnvironmentState.Available,
+                TransitionTimeout = TimeSpan.FromSeconds(EnvironmentMonitorConstants.ResumeEnvironmentTimeoutInSeconds),
+            };
+
+            await MonitorStateTransitionAsync(input, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task MonitorUnavailableStateTransition(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            var input = new EnvironmentStateTransitionInput()
+            {
+                EnvironmentId = environmentId,
+                ComputeResourceId = computeId,
+                ContinuationToken = string.Empty,
+                CurrentState = CloudEnvironmentState.Unavailable,
+                TargetState = CloudEnvironmentState.Available,
+                TransitionTimeout = TimeSpan.FromSeconds(EnvironmentMonitorConstants.UnavailableEnvironmentTimeoutInSeconds),
+            };
+
+            await MonitorStateTransitionAsync(input, logger);
+        }
+
+        private async Task MonitorStateTransitionAsync(EnvironmentStateTransitionInput input, IDiagnosticsLogger logger)
+        {
+            // Check for flighting switch
+            if (!await EnvironmentMonitorSettings.EnableStateTransitionMonitoring(logger.NewChildLogger()))
+            {
+                // Stop environment monitoring
+                return;
+            }
+
+            var loggingProperties = new Dictionary<string, string>();
+
+            var target = EnvironmentStateTransitionMonitorContinuationHandler.DefaultQueueTarget;
+
+            var result = await Activator.Execute(target, input, logger, null, loggingProperties);
+            if (result.Status != OperationState.InProgress)
+            {
+                throw new EnvironmentMonitorInitializationException(input.EnvironmentId);
             }
         }
     }

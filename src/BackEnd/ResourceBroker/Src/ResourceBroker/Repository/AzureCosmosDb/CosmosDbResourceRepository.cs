@@ -63,6 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             options.PartitioningStrategy = PartitioningStrategy.IdOnly;
         }
 
+        /// <inheritdoc/>
         public async Task<ResourceRecord> GetPoolReadyUnassignedAsync(string poolCode, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(

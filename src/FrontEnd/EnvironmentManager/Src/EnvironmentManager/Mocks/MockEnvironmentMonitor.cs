@@ -5,6 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
 {
@@ -15,6 +16,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
     {
         /// <inheritdoc/>
         public Task MonitorHeartbeatAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task MonitorResumeStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task MonitorUnavailableStateTransition(string environmentId, Guid computeId, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }

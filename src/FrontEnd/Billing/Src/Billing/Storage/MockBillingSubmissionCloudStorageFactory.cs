@@ -9,6 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     public class MockBillingSubmissionCloudStorageFactory : IBillingSubmissionCloudStorageFactory
     {
+        /// <inheritdoc/>
         public Task<IBillingSubmissionCloudStorageClient> CreateBillingSubmissionCloudStorage(AzureLocation location)
         {
             return Task.FromResult(new MockBillingSubmissionCloudStorageClient() as IBillingSubmissionCloudStorageClient);

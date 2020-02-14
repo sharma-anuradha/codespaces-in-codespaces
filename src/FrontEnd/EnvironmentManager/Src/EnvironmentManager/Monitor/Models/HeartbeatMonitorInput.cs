@@ -11,9 +11,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
     /// </summary>
     public class HeartbeatMonitorInput : EnvironmentMonitorContinuationInput
     {
-        /// <summary>
-        /// Gets or sets the compute resource id.
-        /// </summary>
-        public Guid ComputeResourceId { get; set; }
     }
 }

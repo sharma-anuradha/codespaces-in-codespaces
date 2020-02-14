@@ -12,7 +12,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor.ContinuationMessageHandlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers
@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
     /// <summary>
     /// Delete Orphaned Resource Handler.
     /// </summary>
-    public class HeartbeatMonitorContinuationHandler : IHeartbeatMonitorContinuationHandler
+    public class HeartbeatMonitorContinuationHandler : BaseEnvironmentMonitorContinuationHandler<HeartbeatMonitorInput>, IHeartbeatMonitorContinuationHandler
     {
         /// <summary>
         /// Gets default target name for item on queue.
@@ -45,89 +45,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             ILatestHeartbeatMonitor latestHeartbeatMonitor,
             IServiceProvider serviceProvider,
             EnvironmentMonitorSettings environmentMonitorSettings)
+            : base(environmentRepository, environmentRepairWorkflows, latestHeartbeatMonitor, serviceProvider, environmentMonitorSettings)
         {
-            EnvironmentRepository = Requires.NotNull(environmentRepository, nameof(environmentRepository));
-            EnvironmentMonitorSettings = Requires.NotNull(environmentMonitorSettings, nameof(environmentMonitorSettings));
-            EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
-            LatestHeartbeatMonitor = latestHeartbeatMonitor;
-            ServiceProvider = serviceProvider;
-        }
-
-        private ILatestHeartbeatMonitor LatestHeartbeatMonitor { get; }
-
-        private IServiceProvider ServiceProvider { get; }
-
-        private ICloudEnvironmentRepository EnvironmentRepository { get; }
-
-        private EnvironmentMonitorSettings EnvironmentMonitorSettings { get; }
-
-        private Dictionary<EnvironmentRepairActions, IEnvironmentRepairWorkflow> EnvironmentRepairWorkflows { get; }
-
-        /// <inheritdoc/>
-        public bool CanHandle(ContinuationQueuePayload payload)
-        {
-            return payload.Target == DefaultQueueTarget;
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> Continue(ContinuationInput input, IDiagnosticsLogger logger)
+        protected override string LogBaseName => DefaultQueueTarget;
+
+        /// <inheritdoc/>
+        protected override string DefaultTarget => DefaultQueueTarget;
+
+        /// <inheritdoc/>
+        protected override ContinuationResult CreateContinuationResult(HeartbeatMonitorInput typedInput, IDiagnosticsLogger logger)
         {
-            var typedInput = input as HeartbeatMonitorInput;
-
-            // Check for flighting switch
-            if (!await EnvironmentMonitorSettings.EnableHeartbeatMonitoring(logger.NewChildLogger()))
+            // push message to monitor heartbeat for new environment.
+            return new ContinuationResult
             {
-                // Stop environment monitoring
-                return EnvironmentMonitorResultBuilder.CreateFinalResult(OperationState.Cancelled, "EnvironmentMonitoringDisabled");
-            }
+                Status = OperationState.InProgress,
+                RetryAfter = TimeSpan.FromMinutes(EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes + EnvironmentMonitorConstants.BufferInMinutes),
+                NextInput = typedInput,
+            };
+        }
 
-            // Start Environment Hearbeat monitoring
-            if (string.IsNullOrEmpty(typedInput.ContinuationToken))
-            {
-                typedInput.ContinuationToken = typedInput.EnvironmentId;
+        /// <inheritdoc/>
+        protected override async Task<bool> IsEnabledAsync(IDiagnosticsLogger logger)
+        {
+            return await EnvironmentMonitorSettings.EnableHeartbeatMonitoring(logger.NewChildLogger());
+        }
 
-                // push message to monitor heartbeat for new environment.
-                return EnvironmentMonitorResultBuilder.CreateHeartbeatContinuationResult(typedInput, DateTime.UtcNow);
-            }
-
-            // Get env record
-            var envRecord = await EnvironmentRepository.GetAsync(typedInput.EnvironmentId, logger.NewChildLogger());
-
-            if (envRecord == null)
-            {
-                logger.FluentAddValue("HandlerFailedToFindResource", true);
-
-                // return result with null next input
-                return EnvironmentMonitorResultBuilder.CreateFinalResult(OperationState.Cancelled, "EnvironmentRecordNotFound");
-            }
-
+        /// <inheritdoc/>
+        protected override async Task<ContinuationResult> RunOperationCoreAsync(HeartbeatMonitorInput input, CloudEnvironment environment, IDiagnosticsLogger logger)
+        {
             // Check the Environment state is valid.
-            if (StateToStopTracking.Contains(envRecord.State))
+            if (StateToStopTracking.Contains(environment.State) || environment.Compute?.ResourceId == null)
             {
                 // return result with null next input
-                return EnvironmentMonitorResultBuilder.CreateFinalResult(OperationState.Cancelled, "StopHeartbeatMonitoringState");
-            }
-
-            // Check Compute Id matches with message
-            if (envRecord.Compute?.ResourceId != null && envRecord.Compute.ResourceId != typedInput.ComputeResourceId)
-            {
-                // return result with null next input
-                return EnvironmentMonitorResultBuilder.CreateFinalResult(OperationState.Cancelled, "EnvironmentResourceChanged");
+                return CreateFinalResult(OperationState.Cancelled, "StopHeartbeatMonitoringState");
             }
 
             // Check environment state
-            if (StateToProcess.Contains(envRecord.State))
+            if (StateToProcess.Contains(environment.State))
             {
                 // Check heartbeat timeout
                 if (LatestHeartbeatMonitor.LastHeartbeatReceived != null
-                    && LatestHeartbeatMonitor.LastHeartbeatReceived > envRecord.LastUpdatedByHeartBeat + TimeSpan.FromSeconds(EnvironmentMonitorConstants.HeartbeatIntervalInSeconds)
-                    && envRecord.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes))
+                    && LatestHeartbeatMonitor.LastHeartbeatReceived > environment.LastUpdatedByHeartBeat + TimeSpan.FromSeconds(EnvironmentMonitorConstants.HeartbeatIntervalInSeconds)
+                    && environment.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes))
                 {
                     // Compute is not healthy, kick off force shutdown
-                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(envRecord, logger.NewChildLogger());
+                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
 
                     // return null next input
-                    return EnvironmentMonitorResultBuilder.CreateFinalResult(OperationState.Failed, "NoHeartbeat");
+                    return CreateFinalResult(OperationState.Failed, "NoHeartbeat");
                 }
             }
 
@@ -136,10 +104,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             var environmentMonitor = ServiceProvider.GetService<IEnvironmentMonitor>();
 
             // Starts the delete workflow on the resource
-            await environmentMonitor.MonitorHeartbeatAsync(envRecord.Id, envRecord.Compute.ResourceId, logger.NewChildLogger());
+            await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute.ResourceId, logger.NewChildLogger());
 
-            // compute has healthy hearbeat, return next input
-            return EnvironmentMonitorResultBuilder.CreateFinalResult(OperationState.Succeeded, "HealthyHeartbeat");
+            // compute has healthy heartbeat, return next input
+            return CreateFinalResult(OperationState.Succeeded, "HealthyHeartbeat");
         }
     }
 }

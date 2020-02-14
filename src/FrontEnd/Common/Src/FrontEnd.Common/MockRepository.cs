@@ -26,14 +26,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private readonly ConcurrentDictionary<string, T> store = new ConcurrentDictionary<string, T>();
         private readonly JsonSerializer jsonSerializer = new JsonSerializer();
 
+        /// <inheritdoc/>
         public IEnumerable<string> Keys => store.Keys;
 
+        /// <inheritdoc/>
         public IEnumerable<T> Values => store.Values;
 
+        /// <inheritdoc/>
         public int Count => store.Count;
 
+        /// <inheritdoc/>
         public T this[string key] => store[key];
 
+        /// <inheritdoc/>
         public Task<T> CreateAsync(T document, IDiagnosticsLogger logger)
         {
             Requires.NotNullAllowStructs(document, nameof(document));
@@ -48,6 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return Task.FromResult<T>(document);
         }
 
+        /// <inheritdoc/>
         public Task<T> CreateOrUpdateAsync(T document, IDiagnosticsLogger logger)
         {
             Requires.NotNullAllowStructs(document, nameof(document));
@@ -57,31 +63,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return Task.FromResult<T>(store.AddOrUpdate(document.Id, document, (id, oldDocument) => document));
         }
 
+        /// <inheritdoc/>
         public Task<bool> DeleteAsync(DocumentDbKey key, IDiagnosticsLogger logger)
         {
             return Task.FromResult(store.TryRemove(key.Id, out _));
         }
 
+        /// <inheritdoc/>
         public Task<T> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)
         {
             return Task.FromResult<T>(store[key.Id]);
         }
 
+        /// <inheritdoc/>
         public Task<IEnumerable<T>> GetWhereAsync(Expression<Func<T, bool>> where, IDiagnosticsLogger logger, Func<IEnumerable<T>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             return Task.FromResult<IEnumerable<T>>(store.Values.Where(where.Compile()));
         }
 
+        /// <inheritdoc/>
         public Task<IEnumerable<TR>> QueryAsync<TR>(Func<IOrderedQueryable<T>, IQueryable<TR>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             return Task.FromResult<IEnumerable<TR>>(queryBuilder(store.Values.AsQueryable().OrderBy(s => 1)).AsEnumerable());
         }
 
+        /// <inheritdoc/>
         public Task<IEnumerable<TR>> QueryAsync<TR>(Func<IDocumentClient, Uri, FeedOptions, IDocumentQuery<TR>> queryBuilder, IDiagnosticsLogger logger, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
         public Task<T> UpdateAsync(T document, IDiagnosticsLogger logger)
         {
             Requires.NotNullAllowStructs(document, nameof(document));
@@ -103,11 +115,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
         }
 
+        /// <inheritdoc/>
         public Task ForEachAsync(Expression<Func<T, bool>> where, IDiagnosticsLogger logger, Func<T, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<T>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
         public Task ForEachAsync<TR>(Func<IOrderedQueryable<T>, IQueryable<TR>> queryBuilder, IDiagnosticsLogger logger, Func<TR, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<TR>, IDiagnosticsLogger, Task> pageResultsCallback = null)
         {
             throw new NotImplementedException();
@@ -118,12 +132,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             store.Clear();
         }
 
+        /// <inheritdoc/>
         public bool ContainsKey(string key) => store.ContainsKey(key);
 
+        /// <inheritdoc/>
         public bool TryGetValue(string key, out T value) => store.TryGetValue(key, out value);
 
+        /// <inheritdoc/>
         public IEnumerator<KeyValuePair<string, T>> GetEnumerator() => store.GetEnumerator();
 
+        /// <inheritdoc/>
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)store).GetEnumerator();
 
         /// <summary>

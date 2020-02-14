@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core.DAG;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -626,7 +627,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Start Environment Monitoring
                     try
                     {
-                        await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                        await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
                     }
                     catch (Exception ex)
                     {
@@ -669,6 +670,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Kick off start-compute before returning.
                     await StartComputeAsync(cloudEnvironment, null, startCloudEnvironmentParameters, childLogger.NewChildLogger());
+
+                    // Kick off state transition monitoring.
+                    try
+                    {
+                        await EnvironmentMonitor.MonitorResumeStateTransitionAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                    }
+                    catch (Exception ex)
+                    {
+                        childLogger.LogException($"{LogBaseName}_create_state_transition_monitor_error", ex);
+
+                        // Delete the allocated resources.
+                        if (cloudEnvironment.Compute != null)
+                        {
+                            await ResourceBrokerClient.DeleteAsync(cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                        }
+
+                        return new CloudEnvironmentServiceResult
+                        {
+                            MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
+                            HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
+                        };
+                    }
 
                     return new CloudEnvironmentServiceResult
                     {

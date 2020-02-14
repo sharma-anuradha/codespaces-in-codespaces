@@ -20,14 +20,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
     public class EnvironmentDataHandler : IDataHandler
     {
         private readonly IEnvironmentManager environmentManager;
+        private readonly IEnvironmentMonitor environmentMonitor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentDataHandler"/> class.
         /// </summary>
         /// <param name="environmentManager">Environment Manager.</param>
-        public EnvironmentDataHandler(IEnvironmentManager environmentManager)
+        /// <param name="environmentMonitor">Environment Monitor.</param>
+        public EnvironmentDataHandler(
+            IEnvironmentManager environmentManager,
+            IEnvironmentMonitor environmentMonitor)
         {
             this.environmentManager = environmentManager;
+            this.environmentMonitor = environmentMonitor;
         }
 
         /// <inheritdoc />
@@ -74,6 +79,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    {
                        var environmentServiceResult = await environmentManager.SuspendAsync(cloudEnvironment, childLogger);
                        return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
+                   }
+                   else if (newState.state == CloudEnvironmentState.Unavailable)
+                   {
+                       // Check that environment state has transitioned back to avaiable within defined timeout, if not force suspend the environment.
+                       await this.environmentMonitor.MonitorUnavailableStateTransition(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
                    }
 
                    return handlerContext;

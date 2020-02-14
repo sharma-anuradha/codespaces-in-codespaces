@@ -10,10 +10,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     public class BillingEventArgsConverter : JsonConverter
     {
+        /// <inheritdoc/>
         public override bool CanRead => true;
 
+        /// <inheritdoc/>
         public override bool CanWrite => false;
 
+        /// <inheritdoc/>
         public override object ReadJson(
             JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
@@ -37,8 +40,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             return token;
         }
 
+        /// <inheritdoc/>
         public override bool CanConvert(Type objectType) => throw new NotSupportedException();
 
+        /// <inheritdoc/>
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) =>
             throw new NotSupportedException();
     }

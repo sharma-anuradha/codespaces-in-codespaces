@@ -13,16 +13,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// </summary>
     public class MockCloudEnvironmentRepository : MockRepository<CloudEnvironment>, ICloudEnvironmentRepository
     {
+        /// <inheritdoc/>
         public Task<int> GetCloudEnvironmentCountAsync(string location, string state, string skuName, IDiagnosticsLogger logger)
         {
             throw new System.NotImplementedException();
         }
 
+        /// <inheritdoc/>
         public Task<int> GetCloudEnvironmentPlanCountAsync(IDiagnosticsLogger logger)
         {
             throw new System.NotImplementedException();
         }
 
+        /// <inheritdoc/>
         public Task<int> GetCloudEnvironmentSubscriptionCountAsync(IDiagnosticsLogger logger)
         {
             throw new System.NotImplementedException();

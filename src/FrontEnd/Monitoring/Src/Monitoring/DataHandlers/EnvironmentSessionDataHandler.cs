@@ -25,8 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         /// Initializes a new instance of the <see cref="EnvironmentSessionDataHandler"/> class.
         /// </summary>
         /// <param name="latestHeartbeatMonitor">Latest Heartbeat Monitor.</param>
-        public EnvironmentSessionDataHandler(
-            ILatestHeartbeatMonitor latestHeartbeatMonitor)
+        public EnvironmentSessionDataHandler(ILatestHeartbeatMonitor latestHeartbeatMonitor)
         {
             this.latestHeartbeatMonitor = latestHeartbeatMonitor;
         }

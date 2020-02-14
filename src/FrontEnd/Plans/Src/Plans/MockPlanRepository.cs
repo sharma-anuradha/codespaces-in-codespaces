@@ -11,11 +11,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
     public class MockPlanRepository : MockRepository<VsoPlan>, IPlanRepository
     {
+        /// <inheritdoc/>
         public async Task<int> GetCountAsync(IDiagnosticsLogger logger)
         {
             return (await GetWhereAsync((model) => true, logger)).Count();
         }
 
+        /// <inheritdoc/>
         public Task<int> GetPlanSubscriptionCountAsync(IDiagnosticsLogger logger)
         {
             throw new System.NotImplementedException();

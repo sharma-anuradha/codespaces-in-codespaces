@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -18,6 +19,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// </summary>
         public bool EnableEnvironmentHeartbeatMonitor { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether environment state transition monitor is enabled.
+        /// </summary>
+        public bool EnableStateTransitionMonitor { get; set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>
@@ -30,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         }
 
         /// <summary>
-        /// Get current max environments per plan.
+        /// Get current flight switch for heartbeat monitoring.
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
@@ -39,6 +45,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync<bool>("featureflag:enable-environment-heartbeat-monitoring", logger, EnableEnvironmentHeartbeatMonitor);
+        }
+
+        /// <summary>
+        /// Get current flight switch for environment state transition monitoring.
+        /// </summary>
+        /// <param name="logger">target logger.</param>
+        /// <returns>target value.</returns>
+        public Task<bool> EnableStateTransitionMonitoring(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<bool>("featureflag:enable-environment-state-transition-monitoring", logger, EnableStateTransitionMonitor);
         }
     }
 }
