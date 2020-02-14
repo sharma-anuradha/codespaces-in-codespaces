@@ -59,14 +59,27 @@ jobs:
   - task: Yarn@3
     displayName: signalR client build & pack
     inputs:
-      projectDirectory: 'src/client/VsClk.SignalService/ts'
+      projectDirectory: 'src/client/VsClk.SignalService/ts/signalr-client'
+      arguments: 'build:pack'
+
+  - task: Yarn@3
+    displayName: signalR jsonrpc build & pack
+    inputs:
+      projectDirectory: 'src/client/VsClk.SignalService/ts/jsonrpc'
       arguments: 'build:pack'
 
   - task: Yarn@3
     displayName: signalR client publish (optional when condition)
     condition: eq(True, ${{ parameters.publishNpmEnabled }})
     inputs:
-      projectDirectory: 'src/client/VsClk.SignalService/ts'
+      projectDirectory: 'src/client/VsClk.SignalService/ts/signalr-client'
+      arguments: 'build:pack-publish'
+
+  - task: Yarn@3
+    displayName: signalR jsonrpc publish (optional when condition)
+    condition: eq(True, ${{ parameters.publishNpmEnabled }})
+    inputs:
+      projectDirectory: 'src/client/VsClk.SignalService/ts/jsonrpc'
       arguments: 'build:pack-publish'
 
   - task: PublishBuildArtifacts@1
