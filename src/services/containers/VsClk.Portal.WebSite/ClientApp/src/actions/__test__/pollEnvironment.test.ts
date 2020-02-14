@@ -11,7 +11,10 @@ import {
 import { defaultConfig } from '../../services/configurationService';
 import { StateInfo, ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
 import { stateChangeEnvironmentActionType } from '../environmentStateChange';
-import { pollActivatingEnvironment, pollActivatingEnvironmentsActionType } from '../pollEnvironment';
+import {
+    pollActivatingEnvironment,
+    pollActivatingEnvironmentsActionType,
+} from '../pollEnvironment';
 import { environmentChangedActionType } from '../environmentChanged';
 import { EnvironmentsState } from '../../reducers/environments';
 
@@ -20,11 +23,10 @@ jest.mock('../../services/authService', () => {
         authService: {
             getCachedToken: async () => {
                 return 'AAD token value';
-            }
+            },
         },
     };
 });
-
 
 describe('pollEnvironment', () => {
     let store: MockStore;
@@ -42,20 +44,17 @@ describe('pollEnvironment', () => {
                 ] as ILocalCloudEnvironment[],
                 activatingEnvironments: [] as string[],
             } as EnvironmentsState,
-
         });
-
     });
 
     it('StateChange action occured during polling environments', async () => {
-
         test_setMockRequestFactory(
             createMockMakeRequestFactory({
                 responses: [
                     {
                         body: {
                             id: 'env-id',
-                            state: StateInfo.ShuttingDown
+                            state: StateInfo.ShuttingDown,
                         },
                     },
                 ],
@@ -67,27 +66,35 @@ describe('pollEnvironment', () => {
             configuration: defaultConfig,
         });
 
-
         await store.dispatch(pollActivatingEnvironment('env-id'));
 
-        const pollAction = getDispatchedAction(store.dispatchedActions, pollActivatingEnvironmentsActionType);
-        const stateChangeAction = getDispatchedAction(store.dispatchedActions, stateChangeEnvironmentActionType);
-        const changeEnvAction = getDispatchedAction(store.dispatchedActions, environmentChangedActionType);
+        const pollAction = getDispatchedAction(
+            store.dispatchedActions,
+            pollActivatingEnvironmentsActionType
+        );
+        const stateChangeAction = getDispatchedAction(
+            store.dispatchedActions,
+            stateChangeEnvironmentActionType
+        );
+        const changeEnvAction = getDispatchedAction(
+            store.dispatchedActions,
+            environmentChangedActionType
+        );
 
         expect(pollAction.metadata.correlationId).toBe(stateChangeAction.metadata.correlationId);
-        expect(stateChangeAction.metadata.correlationId).toBe(changeEnvAction.metadata.correlationId);
-
+        expect(stateChangeAction.metadata.correlationId).toBe(
+            changeEnvAction.metadata.correlationId
+        );
     });
 
     it('StateChange action does not occured during polling environments', async () => {
-
         test_setMockRequestFactory(
             createMockMakeRequestFactory({
                 responses: [
                     {
                         body: {
                             id: 'env-id',
-                            state: StateInfo.Available
+                            state: StateInfo.Available,
                         },
                     },
                 ],
@@ -99,12 +106,13 @@ describe('pollEnvironment', () => {
             configuration: defaultConfig,
         });
 
-
         await store.dispatch(pollActivatingEnvironment('env-id'));
 
-        const stateChangeAction = getDispatchedAction(store.dispatchedActions, stateChangeEnvironmentActionType);
+        const stateChangeAction = getDispatchedAction(
+            store.dispatchedActions,
+            stateChangeEnvironmentActionType
+        );
 
         expect(stateChangeAction).not.toBeDefined;
     });
-
 });
