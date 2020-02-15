@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
 
         /// <inheritdoc/>
         public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
-            IEnumerable<AllocateRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<AllocateRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
 
@@ -66,13 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendAsync(Guid resourceId, Guid environmentId, IDiagnosticsLogger logger)
-        {
-            return Task.FromResult(true);
-        }
-
-        /// <inheritdoc/>
-        public Task<bool> SuspendAsync(IEnumerable<SuspendRequestBody> suspendRequestBody, Guid environmentId, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(Guid environmentId, IEnumerable<SuspendRequestBody> suspendRequestBody, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }

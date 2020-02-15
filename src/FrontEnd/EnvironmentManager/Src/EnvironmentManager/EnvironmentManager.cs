@@ -754,12 +754,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // Update the database state.
                         await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
-#pragma warning disable CS0612 // Type or member is obsolete
-
                         // Start the cleanup operation to shutdown environment.
-                        await ResourceBrokerClient.SuspendAsync(cloudEnvironment.Compute.ResourceId, Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
-
-#pragma warning restore CS0612 // Type or member is obsolete
+                        await ResourceBrokerClient.SuspendAsync(
+                            Guid.Parse(cloudEnvironment.Id), new List<SuspendRequestBody> { new SuspendRequestBody { ResourceId = cloudEnvironment.Compute.ResourceId } }, childLogger.NewChildLogger());
                     }
 
                     return new CloudEnvironmentServiceResult
@@ -1071,7 +1068,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var inputRequest = new List<AllocateRequestBody> { computeRequest };
 
-            var resultResponse = await ResourceBrokerClient.AllocateAsync(inputRequest, logger);
+            var resultResponse = await ResourceBrokerClient.AllocateAsync(Guid.Parse(cloudEnvironment.Id), inputRequest, logger);
 
             if (resultResponse != null && resultResponse.Count() == inputRequest.Count)
             {
@@ -1113,7 +1110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var inputRequest = new List<AllocateRequestBody> { computeRequest, storageRequest };
 
-            var resultResponse = await ResourceBrokerClient.AllocateAsync(inputRequest, logger);
+            var resultResponse = await ResourceBrokerClient.AllocateAsync(Guid.Parse(cloudEnvironment.Id), inputRequest, logger);
 
             if (resultResponse != null && resultResponse.Count() == inputRequest.Count)
             {

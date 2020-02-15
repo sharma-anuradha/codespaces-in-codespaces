@@ -69,6 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// {<see cref="AllocateRequestBody"/>}.
         /// </para>
         /// </summary>
+        /// <param name="environmentId">Target environment id.</param>
         /// <param name="allocateRequestBody">The allocate request body.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>The <see cref="ResourceBrokerResource"/>.</returns>
@@ -77,6 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpOperationalScope("allocate")]
         public async Task<IActionResult> AllocateAsync(
+            [FromQuery] Guid environmentId,
             [FromBody]IEnumerable<AllocateRequestBody> allocateRequestBody,
             [FromServices]IDiagnosticsLogger logger)
         {
@@ -88,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                var result = await ResourceBrokerHttp.AllocateAsync(allocateRequestBody, logger.NewChildLogger());
+                var result = await ResourceBrokerHttp.AllocateAsync(environmentId, allocateRequestBody, logger.NewChildLogger());
                 return Ok(result);
             }
             catch (OutOfCapacityException e)
@@ -204,7 +206,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             logger.AddBaseResourceId(typedResourceId)
                 .AddBaseEnvironmentId(typedEnvironmentId);
 
-            if (!await ResourceBrokerHttp.SuspendAsync(typedResourceId, typedEnvironmentId, logger.NewChildLogger()))
+            if (!await ResourceBrokerHttp.SuspendAsync(
+                typedEnvironmentId, new List<SuspendRequestBody> { new SuspendRequestBody { ResourceId = typedResourceId } }, logger.NewChildLogger()))
             {
                 return NotFound();
             }
@@ -247,7 +250,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             logger.AddBaseEnvironmentId(typedEnvironmentId);
 
-            if (!await ResourceBrokerHttp.SuspendAsync(suspendRequestBody, typedEnvironmentId, logger.NewChildLogger()))
+            if (!await ResourceBrokerHttp.SuspendAsync(typedEnvironmentId, suspendRequestBody, logger.NewChildLogger()))
             {
                 return NotFound();
             }
@@ -401,7 +404,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
         /// <inheritdoc/>
         async Task<IEnumerable<AllocateResponseBody>> IResourceBrokerResourcesHttpContract.AllocateAsync(
-            IEnumerable<AllocateRequestBody> allocateRequestBody, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<AllocateRequestBody> allocateRequestBody, IDiagnosticsLogger logger)
         {
             var brokerInput = new List<AllocateInput>();
             foreach (var body in allocateRequestBody)
@@ -447,18 +450,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <inheritdoc/>
-        [Obsolete]
-        async Task<bool> IResourceBrokerResourcesHttpContract.SuspendAsync(Guid resourceId, Guid environmentId, IDiagnosticsLogger logger)
-        {
-            var input = new SuspendInput
-                { ResourceId = resourceId, Trigger = "FrontEndSuspendResourceService", EnvironmentId = environmentId };
-            return await ResourceBroker.SuspendAsync(
-                input, logger.NewChildLogger());
-        }
-
-        /// <inheritdoc/>
         async Task<bool> IResourceBrokerResourcesHttpContract.SuspendAsync(
-            IEnumerable<SuspendRequestBody> suspendRequestBody, Guid environmentId, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<SuspendRequestBody> suspendRequestBody, IDiagnosticsLogger logger)
         {
             var brokerInput = new List<SuspendInput>();
             foreach (var body in suspendRequestBody)

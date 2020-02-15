@@ -33,18 +33,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetGetResourceUri(resourceId);
-            var result = await SendAsync<string, ResourceBrokerResource>(ResourceBrokerHttpContract.GetResourceMethod, requestUri, null, logger.NewChildLogger());
+            var result = await SendAsync<string, ResourceBrokerResource>(
+                ResourceBrokerHttpContract.GetResourceMethod, requestUri, null, logger.NewChildLogger());
             return result;
         }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
-            IEnumerable<AllocateRequestBody> input, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<AllocateRequestBody> input, IDiagnosticsLogger logger)
         {
-            var requestUri = ResourceBrokerHttpContract.GetCreateResourceUri();
+            var requestUri = ResourceBrokerHttpContract.GetAllocateResourceUri(environmentId);
             var result = await SendAsync<IEnumerable<AllocateRequestBody>, IEnumerable<AllocateResponseBody>>(
                 ResourceBrokerHttpContract.PostResourceMethod, requestUri, input, logger.NewChildLogger());
             return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> StartAsync(
+            Guid computeResourceId, StartResourceRequestBody startResourceSetRequestBody, IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(computeResourceId, nameof(computeResourceId));
+            var requestUri = ResourceBrokerHttpContract.GetStartResourceUri(computeResourceId);
+            _ = await SendAsync<StartResourceRequestBody, string>(
+                ResourceBrokerHttpContract.StartComputeMethod, requestUri, startResourceSetRequestBody, logger.NewChildLogger());
+            return true;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> SuspendAsync(Guid environmentId, IEnumerable<SuspendRequestBody> suspendRequestBody, IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+            var requestUri = ResourceBrokerHttpContract.GetSuspendResourceUri(environmentId);
+            var response = await SendAsync<IEnumerable<SuspendRequestBody>, bool?>(
+                ResourceBrokerHttpContract.PostResourceMethod, requestUri, suspendRequestBody, logger.NewChildLogger());
+            return true;
         }
 
         /// <inheritdoc/>
@@ -52,38 +74,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(resourceId);
-            await SendRawAsync<string>(ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, null, logger.NewChildLogger());
-            return true;
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> SuspendAsync(Guid resourceId, Guid environmentId, IDiagnosticsLogger logger)
-        {
-            Requires.NotEmpty(resourceId, nameof(resourceId));
-            Requires.NotEmpty(environmentId, nameof(environmentId));
-#pragma warning disable CS0612 // Type or member is obsolete
-            var requestUri = ResourceBrokerHttpContract.GetCleanupResourceUri(resourceId, environmentId);
-#pragma warning restore CS0612 // Type or member is obsolete
-            await SendRawAsync<string>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, null, logger.NewChildLogger());
-            return true;
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> SuspendAsync(IEnumerable<SuspendRequestBody> suspendRequestBody, Guid environmentId, IDiagnosticsLogger logger)
-        {
-            Requires.NotEmpty(environmentId, nameof(environmentId));
-            var requestUri = ResourceBrokerHttpContract.GetSuspendResourceUri(environmentId);
-            var response = await SendAsync<IEnumerable<SuspendRequestBody>, bool>(ResourceBrokerHttpContract.PostResourceMethod, requestUri, null, logger.NewChildLogger());
-            return true;
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> StartAsync(Guid computeResourceId, StartResourceRequestBody startResourceSetRequestBody, IDiagnosticsLogger logger)
-        {
-            Requires.NotEmpty(computeResourceId, nameof(computeResourceId));
-            var requestUri = ResourceBrokerHttpContract.GetStartResourceSetUri(computeResourceId);
-            _ = await SendAsync<StartResourceRequestBody, string>(
-                ResourceBrokerHttpContract.StartComputeMethod, requestUri, startResourceSetRequestBody, logger.NewChildLogger());
+            await SendRawAsync<string>(
+                ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, null, logger.NewChildLogger());
             return true;
         }
 
@@ -91,8 +83,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         public async Task<bool> ProcessHeartbeatAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
-            var requestUri = ResourceBrokerHttpContract.GetTriggerEnvironmentHeartbeatUri(resourceId);
-            var result = await SendAsync<string, bool>(ResourceBrokerHttpContract.TriggerEnvironmentHeartbeatMethod, requestUri, null, logger.NewChildLogger());
+            var requestUri = ResourceBrokerHttpContract.GetProcessHeartbeatUri(resourceId);
+            var result = await SendAsync<string, bool>(
+                ResourceBrokerHttpContract.TriggerEnvironmentHeartbeatMethod, requestUri, null, logger.NewChildLogger());
             return result;
         }
     }

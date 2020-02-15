@@ -25,11 +25,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <summary>
         /// Allocate a set of resources.
         /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
         /// <param name="allocateRequestBody">The allocation input properties.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The allocation result.</returns>
         Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
-            IEnumerable<AllocateRequestBody> allocateRequestBody, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<AllocateRequestBody> allocateRequestBody, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Delete a resource from the resource broker.
@@ -42,22 +43,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <summary>
         /// Perform suspend operations on a resource.
         /// </summary>
-        /// <param name="resourceId">The resource id.</param>
         /// <param name="environmentId">Environment id associated with the resource.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the resource has been cleaned.</returns>
-        [Obsolete]
-        Task<bool> SuspendAsync(Guid resourceId, Guid environmentId, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Perform suspend operations on a resource.
-        /// </summary>
         /// <param name="suspendRequestBody">Target resources to suspend.</param>
-        /// <param name="environmentId">Environment id associated with the resource.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource has been suspended.</returns>
         Task<bool> SuspendAsync(
-            IEnumerable<SuspendRequestBody> suspendRequestBody, Guid environmentId, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<SuspendRequestBody> suspendRequestBody, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Start the compute VM instance with the specified storage.

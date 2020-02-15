@@ -28,16 +28,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public const string ResourcesRoute = ResourceBrokerV1Route + "/resources";
 
         /// <summary>
-        /// The allocate http method.
-        /// </summary>
-        public const string StartComputeOperation = "startcompute";
-
-        /// <summary>
-        /// The allocate http method.
-        /// </summary>
-        public const string TriggerEnvironmentHeartbeat = "environmentheartbeat";
-
-        /// <summary>
         /// The create resource http method.
         /// </summary>
         public static readonly HttpMethod PostResourceMethod = HttpMethod.Post;
@@ -68,60 +58,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public static readonly HttpMethod GetComputeStatusMethod = HttpMethod.Get;
 
         /// <summary>
+        /// Get the get resource uri.
+        /// </summary>
+        /// <param name="resourceId">The resource id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetGetResourceUri(Guid resourceId) =>
+            $"{ResourcesRoute}?id={resourceId}";
+
+        /// <summary>
         /// Get the allocate uri.
         /// </summary>
-        /// <returns>Uri.</returns>
-        public static string GetCreateResourceUri() => ResourcesRoute;
-
-        /// <summary>
-        /// Get the get resource uri.
-        /// </summary>
-        /// <param name="resourceId">The resource id token.</param>
-        /// <returns>Uri.</returns>
-        public static string GetGetResourceUri(Guid resourceId) => GetResourceUri(resourceId);
-
-        /// <summary>
-        /// Get the get resource uri.
-        /// </summary>
-        /// <param name="resourceId">The resource id token.</param>
-        /// <returns>Uri.</returns>
-        public static string GetTriggerEnvironmentHeartbeatUri(Guid resourceId) => $"{ResourcesRoute}/{TriggerEnvironmentHeartbeat}?id={resourceId}";
-
-        /// <summary>
-        /// Get the deallocate uri.
-        /// </summary>
-        /// <param name="resourceId">The resource id token.</param>
-        /// <returns>Uri.</returns>
-        public static string GetDeleteResourceUri(Guid resourceId) => GetResourceUri(resourceId);
-
-        /// <summary>
-        /// Get the cleanup uri.
-        /// </summary>
-        /// <param name="resourceId">The resource id token.</param>
         /// <param name="environmentId">The environment id token.</param>
         /// <returns>Uri.</returns>
-        [Obsolete]
-        public static string GetCleanupResourceUri(Guid resourceId, Guid environmentId) => $"{ResourcesRoute}/cleanup?id={resourceId}&environmentId={environmentId}";
-
-        /// <summary>
-        /// Get the suspend uri.
-        /// </summary>
-        /// <param name="environmentId">The environment id token.</param>
-        /// <returns>Uri.</returns>
-        public static string GetSuspendResourceUri(Guid environmentId) => $"{ResourcesRoute}/suspend?environmentId={environmentId}";
-
-        /// <summary>
-        /// Get the resource uri with id.
-        /// </summary>
-        /// <param name="resourceId">The  resource id token.</param>
-        /// <returns>Uri.</returns>
-        public static string GetResourceUri(Guid resourceId) => $"{ResourcesRoute}?id={resourceId}";
+        public static string GetAllocateResourceUri(Guid environmentId) =>
+            $"{ResourcesRoute}?environmentId={environmentId}";
 
         /// <summary>
         /// Get the start compute operation uri.
         /// </summary>
         /// <param name="computeResourceId">The compute resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetStartResourceSetUri(Guid computeResourceId) => $"{ResourcesRoute}/{StartComputeOperation}?id={computeResourceId}";
+        public static string GetStartResourceUri(Guid computeResourceId) =>
+            $"{ResourcesRoute}/obsoletestart?id={computeResourceId}";
+
+        /// <summary>
+        /// Get the suspend uri.
+        /// </summary>
+        /// <param name="environmentId">The environment id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetSuspendResourceUri(Guid environmentId) =>
+            $"{ResourcesRoute}/obsoletesuspend?environmentId={environmentId}";
+
+        /// <summary>
+        /// Get the deallocate uri.
+        /// </summary>
+        /// <param name="resourceId">The resource id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetDeleteResourceUri(Guid resourceId) =>
+            $"{ResourcesRoute}/obsoletedelete?id={resourceId}";
+
+        /// <summary>
+        /// Get the get resource uri.
+        /// </summary>
+        /// <param name="resourceId">The resource id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetProcessHeartbeatUri(Guid resourceId) =>
+            $"{ResourcesRoute}/obsoleteenvironmentheartbeat?id={resourceId}";
     }
 }
