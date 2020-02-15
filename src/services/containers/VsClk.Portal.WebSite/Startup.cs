@@ -146,7 +146,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             });
 
             // VS SaaS Middleware: ApplicationServicesProvider, logging factory, x-content-type-options header, unhandled exception reporter, request ids, diagnostics, authentication
-            app.UseVsSaaS(false, useAuthentication: true);
+            app.UseVsSaaS(env.IsDevelopment(), useAuthentication: true);
                 
             app.UseAuthentication();
             app.UseAuthorization();
