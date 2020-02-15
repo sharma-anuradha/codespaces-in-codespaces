@@ -19,7 +19,7 @@
     <Content Include="$(MSBuildThisFileDirectory)\..\FrontEnd\FrontEndWebApi\Src\FrontEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)\..\PortForwarding\PortForwardingWebApi\Src\PortForwardingWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
+    <Content Include="$(MSBuildThisFileDirectory)\..\PortForwarding\PortForwardingWebApi\Src\PortForwardingWebApi\Charts\**" LinkBase="port-forwarding" >
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
