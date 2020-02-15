@@ -43,6 +43,7 @@ export async function pollActivatingEnvironment(id: string) {
         const oldState = envWithOldState && envWithOldState.state;
 
         dispatch(pollActivatingEnvironmentAction(id));
+
         const environment = await envRegService.getEnvironment(id);
 
         if (!environment) {

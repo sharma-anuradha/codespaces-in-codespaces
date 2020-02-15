@@ -30,18 +30,22 @@ jest.mock('../../services/authService', () => {
 
 describe('pollEnvironment', () => {
     let store: MockStore;
+    const environmentInState = {
+        id: 'env-id',
+        state: StateInfo.Available,
+    };
+
+    const environmentFromService = {
+        id: environmentInState.id,
+        state: StateInfo.ShuttingDown,
+    };
 
     beforeEach(() => {
         store = createMockStore({
             authentication: authenticated,
             configuration: defaultConfig,
             environments: {
-                environments: [
-                    {
-                        id: 'env-id',
-                        state: StateInfo.Available,
-                    },
-                ] as ILocalCloudEnvironment[],
+                environments: [environmentInState] as ILocalCloudEnvironment[],
                 activatingEnvironments: [] as string[],
             } as EnvironmentsState,
         });
@@ -52,10 +56,7 @@ describe('pollEnvironment', () => {
             createMockMakeRequestFactory({
                 responses: [
                     {
-                        body: {
-                            id: 'env-id',
-                            state: StateInfo.ShuttingDown,
-                        },
+                        body: environmentFromService,
                     },
                 ],
             })
@@ -66,7 +67,7 @@ describe('pollEnvironment', () => {
             configuration: defaultConfig,
         });
 
-        await store.dispatch(pollActivatingEnvironment('env-id'));
+        await store.dispatch(pollActivatingEnvironment(environmentInState.id));
 
         const pollAction = getDispatchedAction(
             store.dispatchedActions,
@@ -85,6 +86,18 @@ describe('pollEnvironment', () => {
         expect(stateChangeAction.metadata.correlationId).toBe(
             changeEnvAction.metadata.correlationId
         );
+        expect(stateChangeAction.metadata.correlationId).toBe(
+            changeEnvAction.metadata.correlationId
+        );
+        expect(stateChangeAction.metadata.telemetryProperties['action.context.state']).toBe(
+            environmentFromService.state
+        );
+        expect(stateChangeAction.metadata.telemetryProperties['action.context.oldState']).toBe(
+            environmentInState.state
+        );
+        expect(stateChangeAction.metadata.telemetryProperties['action.context.environmentid']).toBe(
+            environmentFromService.id
+        );
     });
 
     it('StateChange action does not occured during polling environments', async () => {
@@ -92,10 +105,7 @@ describe('pollEnvironment', () => {
             createMockMakeRequestFactory({
                 responses: [
                     {
-                        body: {
-                            id: 'env-id',
-                            state: StateInfo.Available,
-                        },
+                        body: environmentFromService,
                     },
                 ],
             })
@@ -106,7 +116,7 @@ describe('pollEnvironment', () => {
             configuration: defaultConfig,
         });
 
-        await store.dispatch(pollActivatingEnvironment('env-id'));
+        await store.dispatch(pollActivatingEnvironment(environmentInState.id));
 
         const stateChangeAction = getDispatchedAction(
             store.dispatchedActions,

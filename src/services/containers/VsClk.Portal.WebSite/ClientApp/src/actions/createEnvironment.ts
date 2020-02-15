@@ -24,8 +24,11 @@ export const focusCreateEnvironmentButtonActionType = 'async.environments.focus'
 const createEnvironmentAction = (lieId: string, environment: PartialEnvironmentInfo) =>
     action(createEnvironmentActionType, { lieId, environment });
 
-const createEnvironmentSuccessAction = (lieId: string, environment: ICloudEnvironment) => {
-    const context = useActionContext();
+const createEnvironmentSuccessAction = (
+    lieId: string,
+    environment: ICloudEnvironment,
+    context = useActionContext()
+) => {
     context.setContextTelemetryProperty('environmentid', environment.id);
     return action(createEnvironmentSuccessActionType, { lieId, environment });
 };
@@ -78,6 +81,7 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
 
     try {
         // 1. We can start lying immediately.
+        const context = useActionContext();
         dispatch(createEnvironmentAction(lieId, parameters));
 
         // 2. Get details about the user
@@ -94,7 +98,7 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
 
         // 3. Try to create the environment
         const environment = await createCloudEnvironment(environmentParameters);
-        dispatch(createEnvironmentSuccessAction(lieId, environment));
+        dispatch(createEnvironmentSuccessAction(lieId, environment, context));
         return environment.id;
     } catch (err) {
         if (err instanceof ServiceResponseError) {

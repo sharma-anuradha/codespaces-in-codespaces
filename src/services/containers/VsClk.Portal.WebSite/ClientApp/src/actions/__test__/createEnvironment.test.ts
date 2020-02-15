@@ -87,13 +87,23 @@ describe('createEnvironment', () => {
             store.dispatchedActions,
             createEnvironmentActionType
         );
-        expect(createAction.payload.environment).toBe(createEnvironmentRequest);
 
         const successAction = getDispatchedAction(
             store.dispatchedActions,
             createEnvironmentSuccessActionType
         );
+
+        const failAction = getDispatchedAction(
+            store.dispatchedActions,
+            createEnvironmentFailureActionType
+        );
+
+        expect(createAction.payload.environment).toBe(createEnvironmentRequest);
+        expect(failAction).toBeUndefined();
         expect(successAction.payload.environment).toBe(createdEnvironment);
+        expect(successAction.metadata.telemetryProperties['action.context.environmentid']).toBe(
+            createdEnvironment.id
+        );
     });
 
     it('fails with 503 and error status code', async () => {
@@ -128,6 +138,11 @@ describe('createEnvironment', () => {
                 store.dispatchedActions,
                 createEnvironmentFailureActionType
             );
+            const successAction = getDispatchedAction(
+                store.dispatchedActions,
+                createEnvironmentSuccessActionType
+            );
+            expect(successAction).toBeUndefined();
             expect(failAction.error).toBeInstanceOf(ServiceResponseError);
             expect(failAction.payload!.errorMessage).toBe(environmentErrorCodeToString(4));
             expect(store.dispatch);
