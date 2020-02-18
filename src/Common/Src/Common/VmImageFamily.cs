@@ -63,9 +63,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public VmImageKind ImageKind { get; }
 
-        private string DefaultImageName { get; }
+        /// <inheritdoc/>
+        public string DefaultImageName { get; }
 
-        private string DefaultImageVersion { get; }
+        /// <inheritdoc/>
+        public string DefaultImageVersion { get; }
 
         private string VmImageSubscriptionId { get; }
 

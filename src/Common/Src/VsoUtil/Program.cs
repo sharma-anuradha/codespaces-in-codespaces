@@ -32,7 +32,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     ShowPoolSettingsCommand,
                     SetPoolSettingsCommand,
                     DeletePoolSettingsCommand,
-                    PrepareDevCLICommand>(args)
+                    PrepareDevCLICommand,
+                    SetNexusInternalImageCommand>(args)
                     .MapResult(
                         (CreatePortForwardingConnection command) => command.Execute(Console.Out, Console.Error),
                         (ShowSkusCommand command) => command.Execute(Console.Out, Console.Error),
@@ -44,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                         (SetPoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
                         (DeletePoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
                         (PrepareDevCLICommand command) => command.Execute(Console.Out, Console.Error),
+                        (SetNexusInternalImageCommand command) => command.Execute(Console.Out, Console.Error),
                         errs => 1);
             }
             catch (Exception ex)

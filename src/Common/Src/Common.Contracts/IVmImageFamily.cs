@@ -19,6 +19,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         VmImageKind ImageKind { get; }
 
         /// <summary>
+        /// Gets the default image name for this family.
+        /// </summary>
+        string DefaultImageName { get; }
+
+        /// <summary>
+        /// Gets the default image version for this family.
+        /// </summary>
+        string DefaultImageVersion { get; }
+
+        /// <summary>
         /// Gets the image URL for the specified location.
         /// </summary>
         /// <param name="location">The azure location.</param>
