@@ -91,6 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                     && LatestHeartbeatMonitor.LastHeartbeatReceived > environment.LastUpdatedByHeartBeat + TimeSpan.FromSeconds(EnvironmentMonitorConstants.HeartbeatIntervalInSeconds)
                     && environment.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes))
                 {
+                    logger.FluentAddBaseValue(nameof(environment.LastUpdatedByHeartBeat), environment.LastUpdatedByHeartBeat);
+
                     // Compute is not healthy, kick off force shutdown
                     await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
 

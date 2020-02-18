@@ -83,61 +83,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> Continue(ContinuationInput input, IDiagnosticsLogger logger)
+        public Task<ContinuationResult> Continue(ContinuationInput input, IDiagnosticsLogger logger)
         {
-            if (!(await IsEnabledAsync(logger)))
-            {
-                // Stop environment monitoring
-                return CreateFinalResult(OperationState.Cancelled, "EnvironmentMonitoringDisabled");
-            }
-
-            var typedInput = input as TI;
-            if (typedInput == null)
-            {
-                logger.FluentAddValue("HandlerInvalidInputType", true);
-
-                throw new NotSupportedException($"Provided input type does not match target input type - {typeof(TI)}");
-            }
-
-            logger.FluentAddBaseValue("EnvironmentId", typedInput.EnvironmentId)
-               .FluentAddBaseValue("ComputeResourceId", typedInput.ComputeResourceId)
-               .FluentAddValue("HandlerOperationPreContinuationToken", typedInput.ContinuationToken);
-
-            // Start Environment Hearbeat monitoring
-            if (string.IsNullOrEmpty(typedInput.ContinuationToken))
-            {
-                typedInput.ContinuationToken = typedInput.EnvironmentId;
-
-                // push message to monitor heartbeat for new environment.
-                return CreateContinuationResult(typedInput, logger);
-            }
-
-            // Get env record
-            var environment = await EnvironmentRepository.GetAsync(typedInput.EnvironmentId, logger.NewChildLogger());
-
-            if (environment == null)
-            {
-                logger.FluentAddValue("HandlerFailedToFindResource", true);
-
-                // return result with null next input
-                return CreateFinalResult(OperationState.Cancelled, "EnvironmentRecordNotFound");
-            }
-
-            // Check Compute Id matches with message
-            if (environment.Compute?.ResourceId != null && environment.Compute.ResourceId != typedInput.ComputeResourceId)
-            {
-                // return result with null next input
-                return CreateFinalResult(OperationState.Cancelled, "EnvironmentResourceChanged");
-            }
-
-            // Core continue
-            var result = await RunOperationCoreAsync(typedInput, environment, logger);
-
-            logger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken)
-                .FluentAddValue("HandlerBasePostStatus", result.Status)
-                .FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
-
-            return result;
+            return logger.OperationScopeAsync(
+                LogBaseName,
+                (childLogger) => InnerContinue(input, childLogger));
         }
 
         /// <summary>
@@ -180,5 +130,63 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// <param name="logger">target logger.</param>
         /// <returns>result.</returns>
         protected abstract Task<ContinuationResult> RunOperationCoreAsync(TI operationInput, CloudEnvironment record, IDiagnosticsLogger logger);
+
+        private async Task<ContinuationResult> InnerContinue(ContinuationInput input, IDiagnosticsLogger logger)
+        {
+            if (!(await IsEnabledAsync(logger)))
+            {
+                // Stop environment monitoring
+                return CreateFinalResult(OperationState.Cancelled, "EnvironmentMonitoringDisabled");
+            }
+
+            var typedInput = input as TI;
+            if (typedInput == null)
+            {
+                logger.FluentAddValue("HandlerInvalidInputType", true);
+
+                throw new NotSupportedException($"Provided input type does not match target input type - {typeof(TI)}");
+            }
+
+            logger.FluentAddBaseValue("EnvironmentMonitorType", DefaultTarget)
+                .FluentAddBaseValue("EnvironmentId", typedInput.EnvironmentId)
+               .FluentAddBaseValue("ComputeResourceId", typedInput.ComputeResourceId)
+               .FluentAddValue("HandlerOperationPreContinuationToken", typedInput.ContinuationToken);
+
+            // Start Environment Hearbeat monitoring
+            if (string.IsNullOrEmpty(typedInput.ContinuationToken))
+            {
+                typedInput.ContinuationToken = typedInput.EnvironmentId;
+
+                // push message to monitor heartbeat for new environment.
+                return CreateContinuationResult(typedInput, logger);
+            }
+
+            // Get env record
+            var environment = await EnvironmentRepository.GetAsync(typedInput.EnvironmentId, logger.NewChildLogger());
+
+            if (environment == null)
+            {
+                logger.FluentAddValue("HandlerFailedToFindResource", true);
+
+                // return result with null next input
+                return CreateFinalResult(OperationState.Cancelled, "EnvironmentRecordNotFound");
+            }
+
+            // Check Compute Id matches with message
+            if (environment.Compute?.ResourceId != null && environment.Compute.ResourceId != typedInput.ComputeResourceId)
+            {
+                // return result with null next input
+                return CreateFinalResult(OperationState.Cancelled, "EnvironmentResourceChanged");
+            }
+
+            // Core continue
+            var result = await RunOperationCoreAsync(typedInput, environment, logger);
+
+            logger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken)
+                .FluentAddValue("HandlerBasePostStatus", result.Status)
+                .FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
+
+            return result;
+        }
     }
 }
