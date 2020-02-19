@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             ConfigureCommonServices(services, out var loggingBaseValues);
 
             // Adding developer personal stamp settings and resource name builder.
-            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp);
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp, AppSettings.DeveloperAlias);
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 

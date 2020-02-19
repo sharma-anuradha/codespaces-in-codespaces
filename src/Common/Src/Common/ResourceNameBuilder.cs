@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             if (DeveloperPersonalStampSettings.DeveloperStamp)
             {
-                return $"{Environment.UserName}-RG-CEResources";
+                return $"{GetUserName()}-RG-CEResources";
             }
 
             return baseName;
@@ -61,10 +61,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             if (DeveloperPersonalStampSettings.DeveloperStamp)
             {
-                return $"{baseName}-{Environment.UserName}";
+                return $"{baseName}-{GetUserName()}";
             }
 
             return baseName;
+        }
+
+        private string GetUserName()
+        {
+            string userName;
+            if (string.IsNullOrWhiteSpace(DeveloperPersonalStampSettings.DeveloperAlias))
+            {
+                userName = Environment.UserName;
+            }
+            else
+            {
+                userName = DeveloperPersonalStampSettings.DeveloperAlias;
+            }
+
+            if (string.IsNullOrWhiteSpace(userName) || userName.Equals("vsonline", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Username is not valid or is set to vsonline user.");
+            }
+
+            return userName.ToLowerInvariant();
         }
     }
 }

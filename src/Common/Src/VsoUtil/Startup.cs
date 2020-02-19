@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             }
 
             // Adding developer personal stamp settings and resource name builder.
-            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp && HostingEnvironment.IsDevelopment());
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp && HostingEnvironment.IsDevelopment(), AppSettings.DeveloperAlias);
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 

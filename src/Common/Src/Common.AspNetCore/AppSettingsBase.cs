@@ -61,5 +61,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public bool DeveloperPersonalStamp { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the unique identifier for developer for developer stamps.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string DeveloperAlias { get; set; }
     }
 }
