@@ -4,8 +4,6 @@ import { createUniqueId } from '../dependencies';
 import { createTrace } from '../utils/createTrace';
 import { Signal } from '../utils/signal';
 import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
-import { IAuthenticationAttempt } from './authenticationServiceBase';
-import { SupportedGitService } from '../utils/gitUrlNormalization';
 
 export const trace = createTrace('GitHubCredentialService');
 
@@ -96,7 +94,7 @@ export async function getGitHubAccessToken(): Promise<string | null> {
     return await authPromise;
 }
 
-export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
+export class GithubAuthenticationAttempt implements Disposable {
     private tokenRequest?: Signal<string | null>;
 
     get url() {
@@ -105,10 +103,6 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
 
     get target() {
         return '_github_auth_window';
-    }
-    
-    get gitServiceType(): SupportedGitService {
-        return SupportedGitService.GitHub;
     }
 
     constructor(private readonly state = createUniqueId()) {}
@@ -129,8 +123,6 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
         window.open(this.url, this.target);
 
         const timeout = setTimeout(() => {
-            // TODO #1069288: Bug found after timeout the page shows does not show the error.
-            window.removeEventListener('storage', resolveWithToken);
             this.tokenRequest = undefined;
             currentTokenRequest.reject(
                 new Error('Failed to acquire GitHub credentials. Reason: timeout.')

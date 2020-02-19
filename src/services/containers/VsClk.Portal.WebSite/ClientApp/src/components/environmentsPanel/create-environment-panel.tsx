@@ -26,10 +26,8 @@ import { ISelectableOption } from 'office-ui-fabric-react/lib/utilities/selectab
 import { useWebClient, ServiceResponseError } from '../../actions/middleware/useWebClient';
 import { createEnvironment } from '../../actions/createEnvironment';
 import { storeGitHubCredentials } from '../../actions/getGitHubCredentials';
-import { storeAzDevCredentials } from '../../actions/getAzDevCredentials';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { GithubAuthenticationAttempt } from '../../services/gitHubAuthenticationService';
-import { AzDevAuthenticationAttempt } from '../../services/azDevAuthenticationService';
 import { ISku } from '../../interfaces/ISku';
 import { IPlan } from '../../interfaces/IPlan';
 import { ActivePlanInfo } from '../../reducers/plans-reducer';
@@ -50,7 +48,6 @@ import { Loader } from '../loader/loader';
 import { Signal } from '../../utils/signal';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
 import { getSkuSpecLabel } from '../../utils/environmentUtils';
-import { IAuthenticationAttempt } from '../../services/authenticationServiceBase';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
@@ -89,7 +86,6 @@ async function queryGitService(url: string, bearerToken?: string): Promise<boole
 export async function validateGitRepository(
     maybeRepository: string,
     gitHubAccessToken: string | null = null,
-    azDevAccessToken: string | null = null,
     required = false
 ): Promise<string> {
     const valid = '';
@@ -125,12 +121,6 @@ export async function validateGitRepository(
         } catch {
             return validationMessages.testFailed;
         }
-    } else if (gitServiceProvider === SupportedGitService.AzureDevOps && azDevAccessToken) {
-        // ToDo: Check to see if AzDevOpsRepo is a valid Repo
-        return valid;
-    } else if (gitServiceProvider === SupportedGitService.AzureDevOps) {
-        // ToDo: Check if AzureDevOps repo is a public repo. https://docs.microsoft.com/en-us/azure/devops/organizations/public/make-project-public?view=azure-devops
-        return validationMessages.privateRepoNoAuth;
     } else {
         try {
             if (await queryGitService(queryableUrl)) {
@@ -216,7 +206,6 @@ export interface CreateEnvironmentPanelProps {
     defaultDotfilesTarget?: string | null;
 
     gitHubAccessToken: string | null;
-    azDevAccessToken: string | null;
 
     selectedPlan: ActivePlanInfo | null;
     isPlanLoadingFinished?: boolean | null;
@@ -229,7 +218,6 @@ export interface CreateEnvironmentPanelProps {
     hideErrorMessage: () => void;
 
     storeGitHubCredentials: (accessToken: string) => void;
-    storeAzDevCredentials: (accessToken: string) => void;
     hidePanel: () => void;
     onCreateEnvironment: (environmentInfo: CreateEnvironmentParams) => Promise<void>;
 }
@@ -247,7 +235,7 @@ interface FormFields {
 interface CreateEnvironmentPanelState extends FormFields {
     shouldTryToAuthenticateForRepo: boolean;
     shouldTryToAuthenticateForDotfiles: boolean;
-    authenticationAttempt?: IAuthenticationAttempt;
+    authenticationAttempt?: GithubAuthenticationAttempt;
     isCreatingEnvironment?: boolean;
 }
 
@@ -617,18 +605,11 @@ export class CreateEnvironmentPanelView extends Component<
     private onRenderFooterContent = () => {
         let authStatusMessage;
         if (isDefined(this.state.authenticationAttempt)) {
-            let authStatusMessageString;
-            switch (this.state.authenticationAttempt.gitServiceType) {
-                case SupportedGitService.AzureDevOps:
-                    authStatusMessageString = "We've opened a new tab for you to grant permission to the specified Azure DevOps repositories";
-                    break;
-                default:
-                    authStatusMessageString = "We've opened a new tab for you to grant permission to the specified GitHub repositories";
-            }
             authStatusMessage = (
                 <div className='create-environment-panel__auth'>
                     <p>
-                        {authStatusMessageString}
+                        We've opened a new tab for you to grant permission to the specified GitHub
+                        repositories.
                     </p>
 
                     <p>
@@ -743,70 +724,32 @@ export class CreateEnvironmentPanelView extends Component<
         event.persist();
 
         if (
-            (!this.props.gitHubAccessToken ||
-            !this.props.azDevAccessToken) &&
+            !this.props.gitHubAccessToken &&
             (this.state.shouldTryToAuthenticateForDotfiles ||
                 this.state.shouldTryToAuthenticateForRepo)
         ) {
             try {
-                let gitServiceProviders = [];
-                if (this.state.shouldTryToAuthenticateForRepo) {
-                    gitServiceProviders.push(getSupportedGitService(this.state.gitRepositoryUrl.value));
-                }
-                if (this.state.shouldTryToAuthenticateForDotfiles) {
-                    let dotFilesGitServiceProvider = getSupportedGitService(this.state.dotfilesRepository.value);
-                    if (gitServiceProviders.length === 0 || gitServiceProviders[0] !== dotFilesGitServiceProvider) {
-                        gitServiceProviders.push(dotFilesGitServiceProvider);
-                    }
-                }
-
-                for (let gitServiceProvider of gitServiceProviders) {
-                    let authenticationAttempt: IAuthenticationAttempt;
-                    if (this.state.authenticationAttempt) {
-                        authenticationAttempt = this.state.authenticationAttempt;
-                    } else {
-                        switch (gitServiceProvider) {
-                            case SupportedGitService.AzureDevOps:
-                                authenticationAttempt = new AzDevAuthenticationAttempt();
-                                break;
-                            default:
-                                authenticationAttempt = new GithubAuthenticationAttempt();
-                        }
-                        this.setState({
-                            authenticationAttempt,
-                        });
-                    }
-
-                    const accessToken = await authenticationAttempt.authenticate();
-
-                    if (this.state.authenticationAttempt) {
-                        this.state.authenticationAttempt.dispose();
-                    }
+                let authenticationAttempt;
+                if (this.state.authenticationAttempt) {
+                    authenticationAttempt = this.state.authenticationAttempt;
+                } else {
+                    authenticationAttempt = new GithubAuthenticationAttempt();
                     this.setState({
-                        authenticationAttempt: undefined
+                        authenticationAttempt,
                     });
-
-                    if (!accessToken) {
-                        switch (gitServiceProvider) {
-                            case SupportedGitService.AzureDevOps:
-                                throw new Error('Failed to authenticate against Azure DevOps.');
-                            default:
-                                throw new Error('Failed to authenticate against GitHub.');
-                        }
-                    }
-                    switch (gitServiceProvider) {
-                        case SupportedGitService.AzureDevOps:
-                            this.props.storeAzDevCredentials(accessToken);
-                            break;
-                        default:
-                            this.props.storeGitHubCredentials(accessToken);
-                    }
                 }
+
+                const accessToken = await authenticationAttempt.authenticate();
+
+                if (!accessToken) {
+                    throw new Error('Failed to authenticate against GitHub.');
+                }
+
+                this.props.storeGitHubCredentials(accessToken);
 
                 const validationMessage = await validateGitRepository(
                     this.state.gitRepositoryUrl.value,
-                    this.props.gitHubAccessToken,
-                    this.props.azDevAccessToken
+                    this.props.gitHubAccessToken
                 );
                 if (validationMessage !== validationMessages.valid) {
                     this.showRepoError();
@@ -817,8 +760,7 @@ export class CreateEnvironmentPanelView extends Component<
                 }
                 const dotfilesValidationMessage = await validateGitRepository(
                     this.state.dotfilesRepository.value,
-                    this.props.gitHubAccessToken,
-                    this.props.azDevAccessToken
+                    this.props.gitHubAccessToken
                 );
                 if (dotfilesValidationMessage !== validationMessages.valid) {
                     this.showDotfilesError();
@@ -839,9 +781,6 @@ export class CreateEnvironmentPanelView extends Component<
                 this.handleErrorMessage(true);
                 return;
             } catch (err) {
-                if (this.state.authenticationAttempt) {
-                    this.state.authenticationAttempt.dispose();
-                }
                 this.setState({
                     shouldTryToAuthenticateForRepo: false,
                     shouldTryToAuthenticateForDotfiles: false,
@@ -1019,7 +958,7 @@ export class CreateEnvironmentPanelView extends Component<
     };
 
     private onGetErrorMessage = async (value: string, textField: string) => {
-        const validationResult = await validateGitRepository(value, this.props.gitHubAccessToken, this.props.azDevAccessToken);
+        let validationResult = await validateGitRepository(value, this.props.gitHubAccessToken);
         switch (validationResult) {
             case validationMessages.invalidGitUrl:
             case validationMessages.unableToConnect:
@@ -1037,15 +976,9 @@ export class CreateEnvironmentPanelView extends Component<
             }
 
             case validationMessages.privateRepoNoAuth: {
-                if (textField === 'git') {
-                    this.setState({
-                        shouldTryToAuthenticateForRepo: true,
-                    });
-                } else if (textField === 'dotfiles') {
-                    this.setState({
-                        shouldTryToAuthenticateForDotfiles: true,
-                    });
-                }
+                this.setState({
+                    shouldTryToAuthenticateForRepo: true,
+                });
                 return validationMessages.valid;
             }
 
@@ -1145,18 +1078,15 @@ export class CreateEnvironmentPanelView extends Component<
 export const CreateEnvironmentPanel = connect(
     ({
         githubAuthentication: { gitHubAccessToken },
-        azDevAuthentication: { azDevAccessToken },
         plans: { selectedPlan, isLoadingPlan, isMadeInitialPlansRequest },
     }: ApplicationState) => {
         return {
             gitHubAccessToken,
-            azDevAccessToken,
             selectedPlan,
             isPlanLoadingFinished: isMadeInitialPlansRequest && !isLoadingPlan,
         };
     },
     {
         storeGitHubCredentials,
-        storeAzDevCredentials,
     }
 )(CreateEnvironmentPanelView);

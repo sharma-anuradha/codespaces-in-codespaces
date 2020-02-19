@@ -52,5 +52,3 @@ appSettings:
   - PORTAL_AppSettings__GitHubAppClientSecret
   - PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientId
   - PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientSecret
-  - PORTAL_AppSettings__AzDevAppClientId
-  - PORTAL_AppSettings__AzDevAppClientSecret

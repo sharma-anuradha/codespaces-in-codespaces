@@ -33,8 +33,6 @@ config:
   apiEndpoint: https://online-stg.dev.core.vsengsaas.visualstudio.com/api/v1
   liveShareEndpoint: https://ppe.liveshare.vsengsaas.visualstudio.com
   githubClientId: fe42cbbb45cdcb17a106
-  # TODO #1069284: Update the Client ID after registering the app
-  azDevClientId: 5EB63AEF-4598-469B-B019-0B00BAF2757A
 
 azure-secrets:
   # vsclk-core-dev

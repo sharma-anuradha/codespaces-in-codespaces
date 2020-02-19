@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { storeGitHubAccessTokenResponse } from '../../services/gitHubAuthenticationService';
 
-import './OAuthLogin.css';
+import './gitHubLogin.css';
 
 export function GitHubLogin() {
     const url = new URL(window.location.href);
@@ -22,19 +22,19 @@ export function GitHubLogin() {
     });
 
     let content = (
-        <div className='oauth-login__message'>
+        <div className='github-login__message'>
             You are signed in into GitHub now and can close this page.
         </div>
     );
 
     const errorMessageText = url.searchParams.get('errorMessage');
     if (errorMessageText) {
-        content = <div className='oauth-login__message'>GitHub authentication failed.</div>;
+        content = <div className='github-login__message'>GitHub authentication failed.</div>;
     }
 
     return (
         <PortalLayout hideNavigation>
-            <div className='oauth-login'>{content}</div>
+            <div className='github-login'>{content}</div>
         </PortalLayout>
     );
 }

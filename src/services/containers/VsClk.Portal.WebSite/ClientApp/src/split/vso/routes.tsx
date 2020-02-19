@@ -8,7 +8,6 @@ import { LiveShareWorkbench } from '../../components/liveShareWorkbench/liveShar
 import { GitHubWorkbench } from '../../components/gitHubWorkbench/gitHubWorkbench';
 import { GistWorkbench } from '../../components/gistWorkbench/gistWorkbench';
 import { GitHubLogin } from '../../components/gitHubLogin/gitHubLogin';
-import { AzDevLogin } from '../../components/gitHubLogin/azDevLogin';
 import { BlogPost } from '../../BlogPost';
 import { PageNotFound } from '../../components/pageNotFound/pageNotFound';
 import { SettingsMenu } from '../../components/settingsMenu/settings-menu';
@@ -19,7 +18,6 @@ import {
     newPlanPath,
     settingsPath,
     githubLoginPath,
-    azdevLoginPath,
     loginPath,
     rootPath,
     liveShareSessionPath,
@@ -66,12 +64,6 @@ export const routes: IRoute[] = [
         path: githubLoginPath,
         exact: false,
         component: GitHubLogin,
-    },
-    {
-        authenticated: true,
-        path: azdevLoginPath,
-        exact: false,
-        component: AzDevLogin,
     },
     {
         authenticated: false,

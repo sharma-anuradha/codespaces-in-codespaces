@@ -4,8 +4,6 @@ import { SharedServiceImp } from './sharedService';
 import * as vsls from '../contracts/VSLS';
 import { createTrace, maybePii } from '../../utils/createTrace';
 import { getGitHubAccessToken } from '../../services/gitHubAuthenticationService';
-import { getAzDevAccessToken } from '../../services/azDevAuthenticationService';
-import { SupportedGitService } from '../../utils/gitUrlNormalization';
 
 export const trace = createTrace('GitCredentialService');
 
@@ -35,10 +33,10 @@ export class GitCredentialService {
 
             trace.verbose('Received git credential fill request', maybePii(fillRequest));
 
-            if (fillRequest.protocol === 'https' || fillRequest.protocol === 'http') {
-                trace.verbose('Resolving ' + fillRequest.host + ' credential.');
+            if (fillRequest.protocol === 'https' && fillRequest.host === 'github.com') {
+                trace.verbose('Resolving GitHub credential.');
 
-                const token = await this.getTokenByHost(fillRequest.host);
+                const token = await getGitHubAccessToken();
 
                 if (token) {
                     trace.verbose('Filled credential.', maybePii(fillRequest));
@@ -51,17 +49,6 @@ export class GitCredentialService {
 
             return input;
         });
-    }
-
-    private async getTokenByHost(host: string | undefined): Promise<string | null> {
-        switch (host) {
-            case SupportedGitService.GitHub:
-                return await getGitHubAccessToken();
-            case SupportedGitService.AzureDevOps:
-                return await getAzDevAccessToken();
-            default:
-                return null;
-        }
     }
 }
 

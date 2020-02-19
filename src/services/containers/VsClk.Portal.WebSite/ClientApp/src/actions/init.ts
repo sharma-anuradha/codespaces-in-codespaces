@@ -6,7 +6,6 @@ import { fetchEnvironments } from './fetchEnvironments';
 import { getUserInfo } from './getUserInfo';
 import { telemetry } from '../utils/telemetry';
 import { tryGetGitHubCredentialsLocal } from './getGitHubCredentials';
-import { tryGetAzDevCredentialsLocal } from './getAzDevCredentials';
 
 import { register as registerServiceWorker } from '../serviceWorker';
 import { getPlans } from './plans-actions';
@@ -46,7 +45,6 @@ export async function init(getAuthTokenAction: () => Promise<ITokenWithMsalAccou
         await Promise.all([
             dispatch(fetchEnvironments()),
             dispatch(tryGetGitHubCredentialsLocal()),
-            dispatch(tryGetAzDevCredentialsLocal()),
         ]);
 
         dispatch(action(initActionSuccessType));
