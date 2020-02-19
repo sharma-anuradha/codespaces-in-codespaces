@@ -6,7 +6,7 @@ export class HubProxyBase implements IServiceProxyBase {
 
     constructor(
         public readonly hubProxy: IHubProxy,
-        protected readonly logger?: signalR.ILogger,
+        public readonly logger?: signalR.ILogger,
         protected readonly hubName?: string) {
     }
 

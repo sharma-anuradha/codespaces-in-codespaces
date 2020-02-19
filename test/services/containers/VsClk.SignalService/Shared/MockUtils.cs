@@ -32,7 +32,10 @@ namespace Microsoft.VsCloudKernel.SignalService.ServiceHubTests
 
             mockHubClients.Setup(i => i.Group(It.IsAny<string>())).Returns((string groupName) =>
             {
-                var proxies = mockGroupManager.Groups[groupName].Select(connId => clientProxies[connId]);
+                var proxies = mockGroupManager.Groups.ContainsKey(groupName) ?
+                            mockGroupManager.Groups[groupName].Select(connId => clientProxies[connId]) :
+                            Array.Empty<IClientProxy>();
+
                 var mockClient = new Mock<IClientProxy>();
                 mockClient.Setup(e => e.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
                         .Returns((string method, object[] args, CancellationToken cancellationToken) =>

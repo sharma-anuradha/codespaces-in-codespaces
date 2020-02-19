@@ -79,13 +79,18 @@ namespace Microsoft.VsCloudKernel.SignalService
             if (this.relayHubs.TryRemove(hubId, out var relayHub))
             {
                 await relayHub.NotifyHubDeletedAsync(cancellationToken);
-
-                // backplane support
-                await NotifyHubChangedAsync(hubId, RelayHubChangeType.Removed, cancellationToken);
             }
+
+            // backplane support
+            await NotifyHubChangedAsync(hubId, RelayHubChangeType.Removed, cancellationToken);
         }
 
-        public async Task<Dictionary<string, Dictionary<string, object>>> JoinHubAsync(string connectionId, string hubId, Dictionary<string, object> properties, bool createIfNotExists, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, Dictionary<string, object>>> JoinHubAsync(
+            string connectionId,
+            string hubId,
+            Dictionary<string, object> properties,
+            JoinOptions joinOptions,
+            CancellationToken cancellationToken)
         {
             Requires.NotNullOrEmpty(connectionId, nameof(connectionId));
             Requires.NotNullOrEmpty(hubId, nameof(hubId));
@@ -95,7 +100,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Logger.LogDebug($"properties:{properties.ConvertToString(FormatProvider)}");
             }
 
-            var relayHub = await GetOrCreateRelayHubAsync(hubId, createIfNotExists);
+            var relayHub = await GetOrCreateRelayHubAsync(hubId, joinOptions.CreateIfNotExists);
             this.connectionHubs.AddOrUpdate(connectionId, (hubs) => hubs.Add(relayHub));
             await Task.WhenAll(AllGroups.Select(g => g.AddToGroupAsync(connectionId, relayHub.GroupName, cancellationToken)));
             var result = await relayHub.JoinAsync(connectionId, properties, cancellationToken);
@@ -282,6 +287,23 @@ namespace Microsoft.VsCloudKernel.SignalService
                 if (this.relayHubs.TryGetValue(hubId, out var relayHub))
                 {
                     return relayHub;
+                }
+
+                // if we don't locally host yet the hub we will need to look on our backplane
+                // if there is an existing hub with the same id.
+                if (BackplaneManager != null)
+                {
+                    var relayInfo = await BackplaneManager.GetRelayInfoAsync(hubId, default);
+                    if (relayInfo != null)
+                    {
+                        return this.relayHubs.GetOrAdd(hubId, (id) =>
+                        {
+                            var relayHub = new RelayHub(this, id);
+                            relayHub.SetOtherParticipants(relayInfo);
+                            Logger.LogDebug($"Hub created from backplane id:{hubId}");
+                            return relayHub;
+                        });
+                    }
                 }
 
                 throw new HubException($"No relay hub found for:{hubId}");

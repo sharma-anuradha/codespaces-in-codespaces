@@ -30,7 +30,7 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
 
             var hubId = await relayService1.CreateHubAsync(null, default);
 
-            await relayService1.JoinHubAsync("conn1", hubId, null, false, default);
+            await relayService1.JoinHubAsync("conn1", hubId, null, default, default);
 
             Assert.Empty(conn2Proxy);
             AssertParticpantChanged(conn1Proxy, "conn1", ParticipantChangeType.Added);
@@ -38,7 +38,7 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
             conn1Proxy.Clear();
             conn2Proxy.Clear();
 
-            var relayHubInfo = await relayService2.JoinHubAsync("conn2", hubId, null, true, default);
+            var relayHubInfo = await relayService2.JoinHubAsync("conn2", hubId, null, new JoinOptions() { CreateIfNotExists = true }, default);
             Assert.Equal(2, relayHubInfo.Count);
             Assert.True(relayHubInfo.ContainsKey("conn1"));
             Assert.True(relayHubInfo.ContainsKey("conn2"));
@@ -70,13 +70,34 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
             AssertParticpantChanged(conn2Proxy, "conn2", ParticipantChangeType.Removed);
 
             // re-join
-            await relayService2.JoinHubAsync("conn2", hubId, null, false, default);
+            await relayService2.JoinHubAsync("conn2", hubId, null, default, default);
 
             conn1Proxy.Clear();
             conn2Proxy.Clear();
             await relayService1.DeleteHubAsync(hubId, default);
             AssertDeleted(conn1Proxy, hubId);
             AssertDeleted(conn2Proxy, hubId);
+        }
+
+        protected static async Task TestCreateInternal(
+            Dictionary<string, IClientProxy> clientProxies1,
+            Dictionary<string, IClientProxy> clientProxies2,
+            RelayService relayService1,
+            RelayService relayService2)
+        {
+            clientProxies1.Add("conn1", MockUtils.CreateClientProxy((m, _args) =>
+            {
+                return Task.CompletedTask;
+            }));
+            clientProxies2.Add("conn2", MockUtils.CreateClientProxy((m, _args) =>
+            {
+                return Task.CompletedTask;
+            }));
+            var hubId = await relayService1.CreateHubAsync(null, default);
+            var hubInfo = await relayService2.JoinHubAsync("conn2", hubId, null, default, default);
+            Assert.Single(hubInfo);
+            hubInfo = await relayService1.JoinHubAsync("conn1", hubId, null, default, default);
+            Assert.Equal(2, hubInfo.Count);
         }
 
         private static void AssertDataReceived(

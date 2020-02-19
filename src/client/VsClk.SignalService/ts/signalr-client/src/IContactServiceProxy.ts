@@ -1,4 +1,5 @@
 import { IServiceProxyBase } from './IServiceProxyBase';
+import { IDisposable } from './IDisposable';
 
 export interface IContactReference {
     readonly id: string;
@@ -12,11 +13,11 @@ export declare enum ConnectionChangeType {
 }
 
 export interface IContactServiceProxy extends IServiceProxyBase {
-    onUpdateProperties(callback: (contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void): void;
+    onUpdateProperties(callback: (contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void): IDisposable;
 
-    onMessageReceived(callback: (targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void): void;
+    onMessageReceived(callback: (targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void): IDisposable;
 
-    onConnectionChanged(callback: (contact: IContactReference, changeType: ConnectionChangeType) => void): void;
+    onConnectionChanged(callback: (contact: IContactReference, changeType: ConnectionChangeType) => void): IDisposable;
 
     registerSelfContact(contactId: string, initialProperties: { [key: string]: any; }): Promise<{ [key: string]: any; }>;
 

@@ -1,8 +1,10 @@
 
-import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType, SendOption }  from './IRelayServiceProxy';
+import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType, SendOption, JoinOptions }  from './IRelayServiceProxy';
 import { HubProxyBase } from './HubProxyBase';
 import { IHubProxy } from './IHubProxy';
 import { LogLevel } from '@microsoft/signalr';
+import { CallbackContainer } from './CallbackContainer';
+import { IDisposable } from './IDisposable';
 
 export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProxy {
     private relayHubs = new Map<string, RelayHubProxy>();
@@ -13,21 +15,30 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
         useSignalRHub?: boolean) {
         super(hubProxy, logger, useSignalRHub ? 'relayServiceHub' : undefined);
 
+        const isNode = (typeof process !== 'undefined') && (typeof process.release !== 'undefined') && (process.release.name === 'node');
+
+        hubProxy.onConnectionStateChanged(async () => {
+            if (!hubProxy.isConnected) {
+                await Promise.all(Array.from(this.relayHubs.values()).map(r => r._OnDisconnected()));
+                this.relayHubs.clear();
+            }
+        });
+
         hubProxy.on(this.toHubMethodName('receiveData'), async (hubId, fromParticipantId, uniqueId, type, data) => {
             if (this.logger) {
-                this.logger.log(LogLevel.Debug, `RelayServiceProxy.receiveData hubId:${hubId} fromParticipantId:${fromParticipantId} type:${type}`);
+                this.logger.log(LogLevel.Debug, `receiveData -> hubId:${hubId} fromParticipantId:${fromParticipantId} type:${type} length:${data.length}`);
             }
 
             const relayHub = this.relayHubs.get(hubId);
             if (relayHub) {
-                const bufferData = (<any>process).browser ? btoa(data) : Buffer.from(data, 'base64');
+                const bufferData = isNode ? Buffer.from(data, 'base64') : atob(data);
                 await relayHub._OnReceiveData(fromParticipantId, uniqueId, type, <Uint8Array> bufferData);
             }
         });
 
         hubProxy.on(this.toHubMethodName('participantChanged'), async (hubId, participantId, properties, changeType) => {
             if (this.logger) {
-                this.logger.log(LogLevel.Debug, `RelayServiceProxy.participantChanged hubId:${hubId} participantId:${participantId} properties:${JSON.stringify(properties)} changeType:${changeType}`);
+                this.logger.log(LogLevel.Debug, `participantChanged -> hubId:${hubId} participantId:${participantId} properties:${JSON.stringify(properties)} changeType:${changeType}`);
             }
 
             const relayHub = this.relayHubs.get(hubId);
@@ -38,7 +49,7 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
 
         hubProxy.on(this.toHubMethodName('hubDeleted'), async (hubId) => {
             if (this.logger) {
-                this.logger.log(LogLevel.Debug, `RelayServiceProxy.hubDeleted hubId:${hubId}`);
+                this.logger.log(LogLevel.Debug, `hubDeleted -> hubId:${hubId}`);
             }
 
             const relayHub = this.relayHubs.get(hubId);
@@ -53,77 +64,125 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
         return this.invoke<string>('CreateHubAsync', hubId);
     }
 
-    public async joinHub(hubId: string, properties: { [key: string]: any; }, createIfNotExists: boolean): Promise<IRelayHubProxy> {
-        const joinHub = await this.invoke<JoinHubInfo>('JoinHubAsync', hubId, properties, createIfNotExists);
-        const realyHubProxy = new RelayHubProxy(this, hubId, joinHub);
-        this.relayHubs.set(hubId, realyHubProxy);
-
-        return realyHubProxy;
+    public joinHub(hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy> {
+        return this._joinHubInternal(
+            (joinHubInfo) => new RelayHubProxy(this, hubId, joinHubInfo),
+            hubId,
+            properties,
+            joinOptions);
     }
 
     public async deleteHub(hubId: string): Promise<void> {
         await this.invoke('DeleteHubAsync', hubId);
     }
+
+    public async _joinHubInternal( relayHubProxyFactory: (joinHubInfo: JoinHubInfo) => RelayHubProxy, hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy> {
+        const joinHubInfo = await this.invoke<JoinHubInfo>('JoinHubAsync', hubId, properties, joinOptions);
+        const realyHubProxy = relayHubProxyFactory(joinHubInfo);
+        this.relayHubs.set(hubId, realyHubProxy);
+
+        return realyHubProxy;
+    }
 }
 
 class RelayHubProxy implements IRelayHubProxy {
-    private receiveDataCallbacks: Array<(receivedData: IReceivedData) => Promise<void>> = [];
-    private participantChangedCallbacks: Array<(participantChanged: IParticipantChanged) => Promise<void>> = [];
-    private hubDeletedCallbacks: Array<() => Promise<void>> = [];
-
+    private receiveDataCallbacks = new CallbackContainer<(receivedData: IReceivedData) => Promise<void>>();
+    private participantChangedCallbacks = new CallbackContainer<(participantChanged: IParticipantChanged) => Promise<void>>();
+    private hubDeletedCallbacks = new CallbackContainer<() => Promise<void>>();
+    private hubDisconnectedCallbacks = new CallbackContainer<() => Promise<void>>();
+    private joinHubInfo: JoinHubInfo | null = null;
+    private selfParticipantInstance: IRelayHubParticipant | null = null;
+    private isDisconected: boolean = false;
     private hubParticipants = new Map<string, IRelayHubParticipant>();
 
     constructor(
         public readonly relayServiceProxy: RelayServiceProxy,
         public id: string,
-        private readonly joinHub: JoinHubInfo) {
-            joinHub.participants.forEach(p => {
-                const relayHubParticipant: IRelayHubParticipant = {
-                    id: p.id,
-                    properties: p.properties,
-                    isSelf: joinHub.participantId === p.id
-                };
-                this.hubParticipants.set(p.id, relayHubParticipant);
-            });
+        joinHubInfo: JoinHubInfo) {
+        this.setJoinHubInfo(joinHubInfo);
+    }
+
+    private setJoinHubInfo(joinHubInfo: JoinHubInfo) {
+        this.hubParticipants.clear();
+
+        joinHubInfo.participants.forEach(p => {
+            const relayHubParticipant: IRelayHubParticipant = {
+                id: p.id,
+                properties: p.properties,
+            };
+
+            if (joinHubInfo.participantId === p.id) {
+                this.selfParticipantInstance = relayHubParticipant;
+            }
+
+            this.hubParticipants.set(p.id, relayHubParticipant);
+        });
+
+        this.joinHubInfo = joinHubInfo;
     }
 
     public get serviceId(): string {
-        return this.joinHub.serviceId;
+        return this.joinHubInfo!.serviceId;
     }
 
     public get stamp(): string {
-        return this.joinHub.stamp;
+        return this.joinHubInfo!.stamp;
+    }
+
+    public get selfParticipant() {
+        return this.selfParticipantInstance!;
     }
 
     public get participants() {
         return Array.from(this.hubParticipants.values());
     }
 
-    public onReceiveData(callback: (receivedData: IReceivedData) => Promise<void>): void {
-        if (callback) {
-            this.receiveDataCallbacks.push(callback);
-        }
+    public onReceiveData(callback: (receivedData: IReceivedData) => Promise<void>): IDisposable {
+        return this.receiveDataCallbacks.add(callback);
     }
 
-    public onParticipantChanged(callback: (participantChanged: IParticipantChanged) => Promise<void>): void {
-        if (callback) {
-            this.participantChangedCallbacks.push(callback);
-        }
+    public onParticipantChanged(callback: (participantChanged: IParticipantChanged) => Promise<void>): IDisposable {
+        return this.participantChangedCallbacks.add(callback);
     }
 
-    public onDeleted(callback: () => Promise<void>): void {
-        if (callback) {
-            this.hubDeletedCallbacks.push(callback);
+    public onDeleted(callback: () => Promise<void>): IDisposable {
+        return this.hubDeletedCallbacks.add(callback);
+    }
+
+    public onDisconnected(callback: () => Promise<void>): IDisposable {
+        return this.hubDisconnectedCallbacks.add(callback);
+    }  
+
+    public async rejoin(joinOptions?: JoinOptions): Promise<void> {
+        if (!this.isDisconected) {
+            throw new Error(`Relay hub:${this.id} is connected`);
         }
+        
+        await this.relayServiceProxy._joinHubInternal((joinHubInfo) => {
+            this.setJoinHubInfo(joinHubInfo);
+            return this;
+        }, this.id, this.selfParticipant!.properties, joinOptions || {});
     }
 
     public sendData(sendOption: SendOption, targetParticipants: string[] | null, type: string, data: Uint8Array): Promise<void> {
+        const logger = this.relayServiceProxy.logger;
+        if (logger) {
+            logger.log(LogLevel.Debug, `sendData -> hubId:${this.id} option:${sendOption} target:${JSON.stringify(targetParticipants)} type:${type} length:${data.length}`);
+        }
+
         const dataArray = Array.from(data);
         return this.relayServiceProxy.invoke('SendDataHubAsync', this.id, sendOption, targetParticipants, type, dataArray );
     }
 
     public async _OnDeleted(): Promise<void> {      
-        for (const callback of this.hubDeletedCallbacks) {
+        for (const callback of this.hubDeletedCallbacks.items) {
+            await callback();
+        }        
+    }
+
+    public async _OnDisconnected(): Promise<void> {     
+        this.isDisconected = true; 
+        for (const callback of this.hubDisconnectedCallbacks.items) {
             await callback();
         }        
     }
@@ -139,7 +198,7 @@ class RelayHubProxy implements IRelayHubProxy {
                 data
             };
 
-            for (const callback of this.receiveDataCallbacks) {
+            for (const callback of this.receiveDataCallbacks.items) {
                 await callback(receivedData);
             }        
         }
@@ -152,7 +211,6 @@ class RelayHubProxy implements IRelayHubProxy {
             participant = {
                 id: participantId,
                 properties,
-                isSelf: false
             };
 
             this.hubParticipants.set(participantId, participant);
@@ -172,7 +230,7 @@ class RelayHubProxy implements IRelayHubProxy {
                 changeType
             };
 
-            for (const callback of this.participantChangedCallbacks) {
+            for (const callback of this.participantChangedCallbacks.items) {
                 await callback(participantChanged);
             }        
         }

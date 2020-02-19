@@ -2,11 +2,13 @@ import { IContactServiceProxy, ConnectionChangeType, IContactReference }  from '
 import { HubProxyBase } from './HubProxyBase';
 import { IHubProxy } from './IHubProxy';
 import { LogLevel } from '@microsoft/signalr';
+import { CallbackContainer } from './CallbackContainer';
+import { IDisposable } from './IDisposable';
 
 export class ContactServiceProxy extends HubProxyBase implements IContactServiceProxy {
-    private updatePropertiesCallbacks: Array<(contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void>;
-    private receiveMessageCallbacks: Array<(targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void>;
-    private connectionChangedCallbacks: Array<(contact: IContactReference, changeType: ConnectionChangeType) => void>;
+    private updatePropertiesCallbacks = new CallbackContainer<(contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void>();
+    private receiveMessageCallbacks = new CallbackContainer<(targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void>();
+    private connectionChangedCallbacks = new CallbackContainer<(contact: IContactReference, changeType: ConnectionChangeType) => void>();
 
     constructor(
         hubProxy: IHubProxy,
@@ -17,28 +19,18 @@ export class ContactServiceProxy extends HubProxyBase implements IContactService
         hubProxy.on(this.toHubMethodName('updateValues'), (contact, properties, targetConnectionId) => this.updateValues(contact, properties, targetConnectionId));
         hubProxy.on(this.toHubMethodName('receiveMessage'), (targetContact, fromContact, messageType, body) => this.receiveMessage(targetContact, fromContact, messageType, body));
         hubProxy.on(this.toHubMethodName('connectionChanged'), (contact, changeType) => this.connectionChanged(contact, changeType));
-
-        this.updatePropertiesCallbacks = [];
-        this.receiveMessageCallbacks = [];
-        this.connectionChangedCallbacks = [];
     }
 
-    public onUpdateProperties(callback: (contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void): void {
-        if (callback) {
-            this.updatePropertiesCallbacks.push(callback);
-        }
+    public onUpdateProperties(callback: (contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void): IDisposable {
+        return this.updatePropertiesCallbacks.add(callback);
     }
 
-    public onMessageReceived(callback: (targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void): void {
-        if (callback) {
-            this.receiveMessageCallbacks.push(callback);
-        }
+    public onMessageReceived(callback: (targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any) => void): IDisposable {
+        return this.receiveMessageCallbacks.add(callback);
     }
 
-    public onConnectionChanged(callback: (contact: IContactReference, changeType: ConnectionChangeType) => void): void {
-        if (callback) {
-            this.connectionChangedCallbacks.push(callback);
-        }
+    public onConnectionChanged(callback: (contact: IContactReference, changeType: ConnectionChangeType) => void): IDisposable {
+        return this.connectionChangedCallbacks.add(callback);
     }
 
     public async registerSelfContact(contactId: string, initialProperties: { [key: string]: any; }): Promise<{ [key: string]: any; }> {
@@ -75,7 +67,7 @@ export class ContactServiceProxy extends HubProxyBase implements IContactService
             this.logger.log(LogLevel.Debug, `ContactServiceProxy.updateValues contact:${JSON.stringify(contact)} properties:${JSON.stringify(properties)}`);
         }
 
-        this.updatePropertiesCallbacks.forEach(c => c(contact, properties, targetConnectionId));
+        this.updatePropertiesCallbacks.items.forEach(c => c(contact, properties, targetConnectionId));
     }
 
     private receiveMessage(targetContact: IContactReference, fromContact: IContactReference, messageType: string, body: any): void {
@@ -83,7 +75,7 @@ export class ContactServiceProxy extends HubProxyBase implements IContactService
             this.logger.log(LogLevel.Debug, `ContactServiceProxy.receiveMessage targetContact:${JSON.stringify(targetContact)} fromContact:${JSON.stringify(fromContact)} messageType:${messageType} body:${JSON.stringify(body)}`);
         }
 
-        this.receiveMessageCallbacks.forEach(c => c(targetContact, fromContact, messageType, body));
+        this.receiveMessageCallbacks.items.forEach(c => c(targetContact, fromContact, messageType, body));
     }
 
     private connectionChanged(contact: IContactReference, changeType: ConnectionChangeType): void {
@@ -91,6 +83,6 @@ export class ContactServiceProxy extends HubProxyBase implements IContactService
             this.logger.log(LogLevel.Debug, `ContactServiceProxy.connectionChanged contact:${JSON.stringify(contact)} changeType:${changeType}`);
         }
 
-        this.connectionChangedCallbacks.forEach(c => c(contact, changeType));
+        this.connectionChangedCallbacks.items.forEach(c => c(contact, changeType));
     }
 }

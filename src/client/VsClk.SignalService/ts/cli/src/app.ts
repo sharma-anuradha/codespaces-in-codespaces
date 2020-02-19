@@ -127,9 +127,17 @@ function main_relay(hubClient: HubClient, logger: signalR.ILogger): (key: any) =
 
     let rpcConnection: rpc.MessageConnection;
     let relayHubProxy: IRelayHubProxy;
+
+    hubClient.onConnectionStateChanged(async () => {
+        if (relayHubProxy && hubClient.isConnected) {
+            await relayHubProxy.rejoin({ createIfNotExists: true });
+            console.log(`hub:${relayHubProxy.id} rejoined`);
+        }
+    });
+
     return async (key: any): Promise<void> => {
         if (key === 'j') {
-            relayHubProxy = await relayServiceProxy.joinHub('test', { 'app': 'node', 'userId': 'none'}, true);
+            relayHubProxy = await relayServiceProxy.joinHub('test', { 'app': 'node', 'userId': 'none'}, { createIfNotExists: true });
             console.log(`Joined-> serviceId:${relayHubProxy.serviceId} stamp:${relayHubProxy.stamp} Participants: ${JSON.stringify(relayHubProxy.participants)}`);
             relayHubProxy.onReceiveData((receivedData): Promise<void> =>  {
                 if (receivedData.type === 'test') {
@@ -139,6 +147,10 @@ function main_relay(hubClient: HubClient, logger: signalR.ILogger): (key: any) =
                 }
                 return Promise.resolve();
             });
+            relayHubProxy.onDisconnected(async () => {
+                console.log(`hub:${relayHubProxy.id} disconnected`);
+            });
+            
         } else if (key === 's') {
             if (!relayHubProxy) {
                 console.log(`you need to join to a hub first`);
@@ -156,7 +168,7 @@ function main_relay(hubClient: HubClient, logger: signalR.ILogger): (key: any) =
             if (!relayHubProxy) {
                 console.log(`you need to join to a hub first`);
             } else {
-                const participants = relayHubProxy.participants.filter(p => !p.isSelf);
+                const participants = relayHubProxy.participants.filter(p => p.id !== relayHubProxy.selfParticipant.id);
                 if (participants.length > 0) {
                     const relayDataChannel = new RelayDataChannel(relayHubProxy, 'jsonRpc', participants[0].id);
                     const rpcMessageStream = new RpcMessageStream(relayDataChannel);

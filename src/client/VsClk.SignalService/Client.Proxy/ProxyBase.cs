@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
@@ -18,13 +19,27 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// Initializes a new instance of the <see cref="ProxyBase"/> class.
         /// </summary>
         /// <param name="hubProxy">The hub proxy instance.</param>
-        protected ProxyBase(IHubProxy hubProxy)
+        /// <param name="trace">Trace instance.</param>
+        /// <param name="formatProvider">Optional format provider.</param>
+        protected ProxyBase(IHubProxy hubProxy, TraceSource trace, IFormatProvider formatProvider)
         {
             HubProxy = Requires.NotNull(hubProxy, nameof(hubProxy));
+            Trace = Requires.NotNull(trace, nameof(trace));
+            FormatProvider = formatProvider != null ? DataFormatProvider.Create(formatProvider) : null;
         }
 
         /// <inheritdoc/>
         public IHubProxy HubProxy { get; }
+
+        /// <summary>
+        /// Gets the proxy trace.
+        /// </summary>
+        protected TraceSource Trace { get; }
+
+        /// <summary>
+        /// Gets the proxy format provider.
+        /// </summary>
+        protected IDataFormatProvider FormatProvider { get; }
 
         /// <inheritdoc/>
         public void Dispose()
@@ -40,7 +55,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <summary>
         /// Add a hub handler.
         /// </summary>
-        /// <param name="disposable">Disposable handler</param>
+        /// <param name="disposable">Disposable handler.</param>
         protected void AddHubHandler(IDisposable disposable)
         {
             this.onHubHandlers.Add(disposable);

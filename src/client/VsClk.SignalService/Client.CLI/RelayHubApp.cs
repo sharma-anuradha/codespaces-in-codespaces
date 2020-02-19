@@ -62,12 +62,13 @@ namespace SignalService.Client.CLI
                     {
                         { "userId", this.userIdOption.HasValue() ? this.userIdOption.Value() : "none" },
                     },
-                    true,
+                    new JoinOptions() { CreateIfNotExists = true },
                     DisposeToken);
 
                 Console.WriteLine($"Successfully joined on service id:{this.currentRelayHubProxy.ServiceId} stamp:{this.currentRelayHubProxy.Stamp}");
 
-                foreach (var participant in this.currentRelayHubProxy.Participants)
+                Console.WriteLine($"Self -> {ToString(this.currentRelayHubProxy.SelfParticipant)}");
+                foreach (var participant in this.currentRelayHubProxy.Participants.Where(p => p.Id != this.currentRelayHubProxy.SelfParticipant.Id))
                 {
                     Console.WriteLine(ToString(participant));
                 }
@@ -193,11 +194,22 @@ namespace SignalService.Client.CLI
         protected override void OnHubCreated()
         {
             this.relayServiceProxy = HubProxy.CreateHubProxy<RelayServiceProxy>(HubClient, TraceSource, true);
+            this.relayServiceProxy.HubProxy.ConnectionStateChanged += async (s, e) =>
+            {
+                if (this.relayServiceProxy.HubProxy.IsConnected)
+                {
+                    if (currentRelayHubProxy != null)
+                    {
+                        await this.currentRelayHubProxy.ReJoinAsync(new JoinOptions() { CreateIfNotExists = true }, default);
+                        Console.WriteLine($"Hub:{currentRelayHubProxy.Id} rejoined...");
+                    }
+                }
+            };
         }
 
         private static IRelayHubParticipant SelectParticipant(IRelayHubProxy relayHubProxy)
         {
-            var targetParticipants = relayHubProxy.Participants.Where(p => !p.IsSelf).ToArray();
+            var targetParticipants = relayHubProxy.Participants.Where(p => p.Id != relayHubProxy.SelfParticipant.Id).ToArray();
             int index = 1;
             foreach (var participant in targetParticipants)
             {
@@ -217,7 +229,7 @@ namespace SignalService.Client.CLI
 
         private static string ToString(IRelayHubParticipant relayHubParticipant)
         {
-            return $"Participant id:{relayHubParticipant.Id} properties:{relayHubParticipant.Properties.ConvertToString(null)} isSelf:{relayHubParticipant.IsSelf}";
+            return $"Participant id:{relayHubParticipant.Id} properties:{relayHubParticipant.Properties.ConvertToString(null)}";
         }
     }
 }

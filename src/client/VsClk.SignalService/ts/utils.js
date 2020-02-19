@@ -1,5 +1,6 @@
 const cp = require('child_process');
 const mkdirp = require('mkdirp');
+const fs = require('fs').promises;
 
 function executeCommand(cwd, command) {
     console.log(command);
@@ -24,5 +25,12 @@ function ensurePath(path) {
     });
 }
 
+async function replaceFileContent(path, contentCallback) {
+    let fileContent = (await fs.readFile(path)).toString();
+    fileContent = contentCallback(fileContent);
+    await fs.writeFile(path, fileContent);
+}
+
 exports.executeCommand = executeCommand;
 exports.ensurePath = ensurePath;
+exports.replaceFileContent = replaceFileContent;

@@ -28,5 +28,11 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
         {
             await TestInternal(this.clientProxies, this.clientProxies, this.relayService, this.relayService);
         }
+
+        [Fact]
+        public async Task TestCreate()
+        {
+            await TestCreateInternal(this.clientProxies, this.clientProxies, this.relayService, this.relayService);
+        }
     }
 }

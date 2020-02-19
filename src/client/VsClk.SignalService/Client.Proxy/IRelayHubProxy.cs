@@ -26,6 +26,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         event EventHandler<ParticipantChangedEventArgs> ParticipantChanged;
 
         /// <summary>
+        /// When the hub is disconnected due to an unexpected loss of transport.
+        /// </summary>
+        event EventHandler Disconnected;
+
+        /// <summary>
         /// When the hub is deleted
         /// </summary>
         event EventHandler Deleted;
@@ -51,6 +56,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         string Id { get; }
 
         /// <summary>
+        /// Gets the self participant entity.
+        /// </summary>
+        IRelayHubParticipant SelfParticipant { get; }
+
+        /// <summary>
         /// Gets list of active participants.
         /// </summary>
         IEnumerable<IRelayHubParticipant> Participants { get; }
@@ -63,7 +73,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="type">Type of data.</param>
         /// <param name="data">Raw data to send.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
-        /// <returns>Task compeltion.</returns>
+        /// <returns>Task completion.</returns>
         Task SendDataAsync(
             SendOption sendOption,
             string[] targetParticipantIds,
@@ -80,5 +90,13 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         Task UpdateAsync(
                 Dictionary<string, object> properties,
                 CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Rejoin a diposed or disconected hub proxy.
+        /// </summary>
+        /// <param name="joinOptions">Join options.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Task completion.</returns>
+        Task ReJoinAsync(JoinOptions joinOptions, CancellationToken cancellationToken);
     }
 }

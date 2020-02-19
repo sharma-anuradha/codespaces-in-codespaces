@@ -34,9 +34,9 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// </summary>
         /// <param name="hubId">The hub unique identifier.</param>
         /// <param name="properties">Which properties to publish.</param>
-        /// <param name="createIfNotExists">Create the hub if it does not exists.</param>
+        /// <param name="joinOptions">Join relay options.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>A relay hub proxy.</returns>
-        Task<IRelayHubProxy> JoinHubAsync(string hubId, Dictionary<string, object> properties, bool createIfNotExists, CancellationToken cancellationToken);
+        Task<IRelayHubProxy> JoinHubAsync(string hubId, Dictionary<string, object> properties, JoinOptions joinOptions, CancellationToken cancellationToken);
     }
 }

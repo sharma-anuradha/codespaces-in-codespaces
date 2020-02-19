@@ -25,7 +25,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         Task DeleteHubAsync(string hubId);
 
-        Task<JoinHubInfo> JoinHubAsync(string hubId, Dictionary<string, object> properties, bool createIfNotExists);
+        Task<JoinHubInfo> JoinHubAsync(string hubId, Dictionary<string, object> properties, JoinOptions joinOptions);
 
         Task LeaveHubAsync(string hubId);
 
@@ -37,6 +37,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             byte[] data);
 
         Task UpdateAsync(string hubId, Dictionary<string, object> properties);
+    }
+
+    /// <summary>
+    /// Join options.
+    /// </summary>
+    public struct JoinOptions
+    {
+        /// <summary>
+        /// If create the hub when does not yet exists.
+        /// </summary>
+        public bool CreateIfNotExists { get; set; }
     }
 
     /// <summary>

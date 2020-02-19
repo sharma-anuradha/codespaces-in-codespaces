@@ -1,10 +1,9 @@
 import { IServiceProxyBase } from './IServiceProxyBase';
-import { RelayServiceProxy } from './RelayServiceProxy';
+import { IDisposable } from './IDisposable';
 
 export interface IRelayHubParticipant {
     readonly id: string;
     readonly properties: { [key: string]: any; };
-    readonly isSelf: boolean;
 }
 
 export interface IReceivedData {
@@ -35,18 +34,25 @@ export interface IRelayHubProxy {
     readonly serviceId: string;
     readonly stamp: string;
     readonly id: string;
+    readonly selfParticipant: IRelayHubParticipant;
     readonly participants: IRelayHubParticipant[];
     readonly relayServiceProxy: IRelayServiceProxy;
 
-    onReceiveData(callback: (receivedData: IReceivedData) => Promise<void>): void;
-    onParticipantChanged(callback: (participantChanged: IParticipantChanged) => Promise<void>): void;
-    onDeleted(callback: () => Promise<void>): void;
+    onReceiveData(callback: (receivedData: IReceivedData) => Promise<void>): IDisposable;
+    onParticipantChanged(callback: (participantChanged: IParticipantChanged) => Promise<void>): IDisposable;
+    onDeleted(callback: () => Promise<void>): IDisposable;
+    onDisconnected(callback: () => Promise<void>): IDisposable;
 
     sendData(sendOption: SendOption, targetParticipants: string[] | null, type: string, data: Uint8Array): Promise<void>;
+    rejoin(joinOptions?: JoinOptions): Promise<void>;
+}
+
+export interface JoinOptions {
+    readonly createIfNotExists?: boolean;
 }
 
 export interface IRelayServiceProxy extends IServiceProxyBase {
     createHub(hubId?: string): Promise<string>;
-    joinHub(hubId: string, properties: { [key: string]: any; }, createIfNotExists: boolean): Promise<IRelayHubProxy>;
+    joinHub(hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy>;
     deleteHub(hubId: string): Promise<void>;
 }

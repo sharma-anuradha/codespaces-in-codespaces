@@ -40,9 +40,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             return this.relayService.DeleteHubAsync(hubId, Context.ConnectionAborted);
         }
 
-        public async Task<JoinHubInfo> JoinHubAsync(string hubId, Dictionary<string, object> properties, bool createIfNotExists)
+        public async Task<JoinHubInfo> JoinHubAsync(string hubId, Dictionary<string, object> properties, JoinOptions joinOptions)
         {
-            var participants = await this.relayService.JoinHubAsync(Context.ConnectionId, hubId, GetParticipantProperties(properties), createIfNotExists, Context.ConnectionAborted);
+            var participants = await this.relayService.JoinHubAsync(Context.ConnectionId, hubId, GetParticipantProperties(properties), joinOptions, Context.ConnectionAborted);
 
             return new JoinHubInfo()
             {

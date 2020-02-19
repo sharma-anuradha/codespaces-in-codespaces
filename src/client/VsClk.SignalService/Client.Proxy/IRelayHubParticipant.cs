@@ -20,10 +20,5 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// Gets properties publsihed by this participant.
         /// </summary>
         Dictionary<string, object> Properties { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether if participant is self.
-        /// </summary>
-        bool IsSelf { get; }
     }
 }

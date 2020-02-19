@@ -3,18 +3,18 @@ import { connect } from './HubConnectionHelpers';
 import { IHubProxy } from './IHubProxy';
 import { IHubProxyConnection } from './IHubProxyConnection';
 import { HubProxy } from './HubProxy';
+import { CallbackContainer } from './CallbackContainer';
+import { IDisposable } from './IDisposable';
 
 export class HubClient implements IHubProxyConnection {
     private isRunningFlag = false;
-    private attemptConnectionCallbacks: Array<(retries: number, backoffTime?: number, error?: Error) => Promise<void>>;
-    private connectionStateCallbacks: Array<() => Promise<void>>;
+    private attemptConnectionCallbacks = new CallbackContainer<(retries: number, backoffTime?: number, error?: Error) => Promise<void>>();
+    private connectionStateCallbacks = new CallbackContainer<() => Promise<void>>();
     private hubProxyInstance: IHubProxy;
 
     constructor(
         public readonly hubConnection: signalR.HubConnection,
         private readonly logger?: signalR.ILogger) {
-        this.attemptConnectionCallbacks = [];
-        this.connectionStateCallbacks = [];
 
         hubConnection.onclose((error?: Error) => this.onClosed(error));
         this.hubProxyInstance = new HubProxy(this);
@@ -69,16 +69,12 @@ export class HubClient implements IHubProxyConnection {
         return this.isRunningFlag;
     }
 
-    public onAttemtConnection(callback: (retries: number, backoffTime?: number, error?: Error) => Promise<void>) {
-        if (callback) {
-            this.attemptConnectionCallbacks.push(callback);
-        }
+    public onAttemptConnection(callback: (retries: number, backoffTime?: number, error?: Error) => Promise<void>): IDisposable {
+        return this.attemptConnectionCallbacks.add(callback);
     }
 
-    public onConnectionStateChanged(callback: () => Promise<void>) {
-        if (callback) {
-            this.connectionStateCallbacks.push(callback);
-        }
+    public onConnectionStateChanged(callback: () => Promise<void>): IDisposable {
+        return this.connectionStateCallbacks.add(callback);
     }
 
     private async attemptConnect(): Promise<void> {
@@ -118,13 +114,13 @@ export class HubClient implements IHubProxyConnection {
     }
 
     private async fireConnectionStateChanged(): Promise<void> {
-        for (const callback of this.connectionStateCallbacks) {
+        for (const callback of this.connectionStateCallbacks.items) {
             await callback();
         }   
     }
 
     private async fireAttemptConnection(retries: number, backoffTime?: number, error?: Error): Promise<void> {
-        for (const callback of this.attemptConnectionCallbacks) {
+        for (const callback of this.attemptConnectionCallbacks.items) {
             await callback(retries, backoffTime, error);
         }     
     }

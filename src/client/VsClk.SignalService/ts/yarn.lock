@@ -44,15 +44,9 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vs/signalr-client@link:signalr-client":
+"@vs/vso-signalr-client-jsonrpc@link:jsonrpc":
   version "0.0.0"
   uid ""
-
-"@vs/vso-signalr-client-jsonrpc@link:jsonrpc":
-  version "0.0.0-placeholder"
-  dependencies:
-    "@vs/signalr-client" "link:signalr-client"
-    vscode-jsonrpc "^4.0.0"
 
 "@vs/vso-signalr-client@link:signalr-client":
   version "0.0.0-placeholder"

@@ -1,5 +1,5 @@
 {
-  "name": "@vs/vso-signalr-client-jsonrpc",
+  "name": "@vs/vso-signalr-jsonrpc",
   "version": "0.0.0-placeholder",
   "description": "SignalR Client json-rpc support for vsclk-core signalR service",
   "main": "dist/src/index.js",
@@ -15,7 +15,7 @@
   "author": "Microsoft",
   "license": "Apache-2.0",
   "dependencies": {
-    "@vs/signalr-client": "link:../signalr-client",
+    "@vs/vso-signalr-client": "link:../signalr-client",
     "vscode-jsonrpc": "^4.0.0"
   },
   "files": [

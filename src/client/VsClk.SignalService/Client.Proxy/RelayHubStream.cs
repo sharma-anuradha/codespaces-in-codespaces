@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,7 +15,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// </summary>
     public class RelayHubStream : Stream
     {
-        private readonly IRelayHubProxy relayHubProxy;
+        private IRelayHubProxy relayHubProxy;
         private CancellationTokenSource closeCts = new CancellationTokenSource();
         private byte[] overflowData;
         private bool isClosed;
@@ -36,17 +37,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             StreamId = streamId;
             RelayStreamProvider = Requires.NotNull(relayStreamProvider, nameof(relayStreamProvider));
 
-            relayHubProxy.ReceiveData += OnReceiveData;
-            relayHubProxy.ParticipantChanged += OnParticipantChanged;
-            relayHubProxy.RelayServiceProxy.HubProxy.ConnectionStateChanged += (s, e) =>
-            {
-                if (!relayHubProxy.RelayServiceProxy.HubProxy.IsConnected)
-                {
-                    CloseIfInternal();
-                }
-
-                return Task.CompletedTask;
-            };
+            Attach();
         }
 
         /// <summary>
@@ -99,6 +90,22 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         private string TargetParticipantId { get; }
 
         private CancellationToken CloseToken => this.closeCts.Token;
+
+        /// <summary>
+        /// re join the hub to re-open the closed stream.
+        /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Task completion.</returns>
+        public async Task ReJoinAsync(CancellationToken cancellationToken)
+        {
+            if (!this.isClosed)
+            {
+                throw new InvalidOperationException("RelayHubStream hasn't beeen closed");
+            }
+
+            await this.relayHubProxy.ReJoinAsync(default, cancellationToken);
+            Attach();
+        }
 
         /// <inheritdoc/>
         public override void Flush()
@@ -220,6 +227,25 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             return null;
         }
 
+        private void Attach()
+        {
+            this.relayHubProxy.ReceiveData += OnReceiveData;
+            this.relayHubProxy.ParticipantChanged += OnParticipantChanged;
+            this.relayHubProxy.Disconnected += OnDisconnected;
+        }
+
+        private void Detach()
+        {
+            this.relayHubProxy.ReceiveData -= OnReceiveData;
+            this.relayHubProxy.ParticipantChanged -= OnParticipantChanged;
+            this.relayHubProxy.Disconnected -= OnDisconnected;
+        }
+
+        private void OnDisconnected(object sender, EventArgs e)
+        {
+            CloseIfInternal();
+        }
+
         private void OnReceiveData(object sender, ReceiveDataEventArgs e)
         {
             if (e.FromParticipant.Id == TargetParticipantId && e.Type == StreamId)
@@ -247,8 +273,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private void CloseInternal()
         {
-            this.relayHubProxy.ReceiveData -= OnReceiveData;
-            this.relayHubProxy.ParticipantChanged -= OnParticipantChanged;
+            if (this.relayHubProxy != null)
+            {
+                Detach();
+            }
+
             this.closeCts.Cancel();
         }
     }

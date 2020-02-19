@@ -212,7 +212,7 @@ namespace SignalService.Client.CLI
 
             protected override async Task<(string, string)> OnConnectedAsync(CancellationToken cancellationToken)
             {
-                RelayHubProxy = await Proxy.JoinHubAsync(HubId, null, true, cancellationToken);
+                RelayHubProxy = await Proxy.JoinHubAsync(HubId, null, new JoinOptions() { CreateIfNotExists = true }, cancellationToken);
                 var serviceId = RelayHubProxy.ServiceId;
                 var stamp = RelayHubProxy.Stamp;
                 TraceSource.Verbose($"join completed for hub id:{HubId} on serviceId:{serviceId} stamp:{stamp}");

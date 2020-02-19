@@ -48,6 +48,12 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
             await TestInternal(this.clientProxies1, this.clientProxies2, this.relayService1, this.relayService2);
         }
 
+        [Fact]
+        public async Task TestCreate()
+        {
+            await TestCreateInternal(this.clientProxies1, this.clientProxies2, this.relayService1, this.relayService2);
+        }
+
         private class MockBackplaneProvider : IRelayBackplaneProvider
         {
             private readonly List<OnRelayDataChangedAsync<RelayParticipantChanged>> participantChangedAsyncs = new List<OnRelayDataChangedAsync<RelayParticipantChanged>>();

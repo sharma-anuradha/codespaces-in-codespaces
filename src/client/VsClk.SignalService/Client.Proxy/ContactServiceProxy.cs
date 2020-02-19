@@ -23,8 +23,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// </summary>
         public const string HubName = "presenceServiceHub";
 
-        private readonly IDataFormatProvider formatProvider;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ContactServiceProxy"/> class.
         /// </summary>
@@ -42,11 +40,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="trace">Trace instance.</param>
         /// <param name="formatProvider">Optional format provider.</param>
         public ContactServiceProxy(IHubProxy hubProxy, TraceSource trace, IFormatProvider formatProvider)
-            : base(hubProxy)
+            : base(hubProxy, trace, formatProvider)
         {
-            Requires.NotNull(trace, nameof(trace));
-            this.formatProvider = formatProvider != null ? DataFormatProvider.Create(formatProvider) : null;
-
             AddHubHandler(hubProxy.On(
                 ContactHubMethods.UpdateValues,
                 new Type[] { typeof(ContactReference), typeof(Dictionary<string, object>), typeof(string) },
@@ -56,7 +51,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 var properties = (Dictionary<string, object>)args[1];
                 var targetConnectionId = (string)args[2];
 
-                trace.Verbose($"UpdateProperties-> contact:{ToString(contact)} properties:{properties.ConvertToString(this.formatProvider)}");
+                trace.Verbose($"UpdateProperties-> contact:{ToString(contact)} properties:{properties.ConvertToString(FormatProvider)}");
                 UpdateProperties?.Invoke(this, new UpdatePropertiesEventArgs(contact, properties, targetConnectionId));
                 return Task.CompletedTask;
             }));
@@ -178,7 +173,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private string ToString(ContactReference contactReference)
         {
-            return contactReference.ToString(this.formatProvider);
+            return contactReference.ToString(FormatProvider);
         }
     }
 }

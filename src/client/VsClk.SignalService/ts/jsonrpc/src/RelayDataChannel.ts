@@ -1,10 +1,17 @@
 
-import { IRelayHubProxy, SendOption, ParticipantChangeType } from '@vs/signalr-client';
+import { IRelayHubProxy, SendOption, ParticipantChangeType } from '@vs/vso-signalr-client';
 import { IDataChannel, ChannelClosedEventArgs } from './IDataChannel';
 import { Event, Emitter, CancellationToken } from 'vscode-jsonrpc';
 
+export interface IRelayDataProvider {
+    encode(data: Buffer): Buffer;
+    decode(data: Buffer): Buffer;
+}
+
 export class RelayDataChannel implements IDataChannel {
     private readonly dataReceivedEmitter = new Emitter<Buffer>();
+    private relayDataProvider: IRelayDataProvider;
+
     public readonly onDataReceived: Event<Buffer> = this.dataReceivedEmitter.event;
 
     private readonly closedEmitter = new Emitter<ChannelClosedEventArgs>();
@@ -13,10 +20,16 @@ export class RelayDataChannel implements IDataChannel {
     constructor(
         private readonly relayHubProxy: IRelayHubProxy,
         private readonly streamId: string,
-        private readonly targetParticipant: string) {
+        private readonly targetParticipant: string,
+        relayDataProvider?: IRelayDataProvider) {
+
+            this.relayDataProvider = relayDataProvider || {
+                encode: (data) => data,
+                decode: (data) => data
+            };
             relayHubProxy.onReceiveData((e) => {
                 if (e.type === this.streamId && e.fromParticipant.id === this.targetParticipant) {
-                    this.dataReceivedEmitter.fire(Buffer.from(e.data));
+                    this.dataReceivedEmitter.fire(this.relayDataProvider.decode(Buffer.from(e.data)));
                 }
 
                 return Promise.resolve();
@@ -32,12 +45,10 @@ export class RelayDataChannel implements IDataChannel {
                 return Promise.resolve();
             });
 
-            relayHubProxy.relayServiceProxy.hubProxy.onConnectionStateChanged(() => {
-                if (!relayHubProxy.relayServiceProxy.hubProxy.isConnected) {
-                    this.fireClosed({
-                        error: new Error(`hub proxy disconnected`)
-                    });                   
-                }
+            relayHubProxy.onDisconnected(async () => {
+                this.fireClosed({
+                    error: new Error(`hub proxy disconnected`)
+                });
 
                 return Promise.resolve();
             });
@@ -48,7 +59,7 @@ export class RelayDataChannel implements IDataChannel {
             SendOption.ExcludeSelf,
             [ this.targetParticipant ],
             this.streamId,
-            data);
+            this.relayDataProvider.encode(data));
     }
 
     private fireClosed(e: ChannelClosedEventArgs) {
