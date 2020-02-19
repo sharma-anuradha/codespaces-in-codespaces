@@ -67,10 +67,8 @@ const LoginPageSignInForm = (props: LoginProps) => {
             </StackItem>
 
             <Stack.Item>
-                <PrimaryButton
-                    onClick={loginClick}
-                    className='login-page__login-button'>
-                Sign in
+                <PrimaryButton onClick={loginClick} className='login-page__login-button'>
+                    Sign in
                 </PrimaryButton>
             </Stack.Item>
             <Stack.Item className='login-page__learn-more-wrapper'>
@@ -78,10 +76,7 @@ const LoginPageSignInForm = (props: LoginProps) => {
                     <span className='login-page__learn-more'>
                         <span>Learn more</span>
                         <span>
-                            <Icon
-                                iconName='ChevronRight'
-                                className='login-page__learn-more-icon'
-                            />
+                            <Icon iconName='ChevronRight' className='login-page__learn-more-icon' />
                         </span>
                     </span>
                 </Link>
@@ -89,10 +84,7 @@ const LoginPageSignInForm = (props: LoginProps) => {
                     <span className='login-page__learn-more'>
                         <span>Pricing</span>
                         <span>
-                            <Icon
-                                iconName='ChevronRight'
-                                className='login-page__learn-more-icon'
-                            />
+                            <Icon iconName='ChevronRight' className='login-page__learn-more-icon' />
                         </span>
                     </span>
                 </Link>
@@ -105,15 +97,12 @@ const LoginPage2FAStepForm = (props: LoginProps) => {
     return (
         <Fragment>
             <Stack.Item>
-                <PrimaryButton
-                    onClick={props.complete2FA}
-                    className='login-page__login-button'
-                >
+                <PrimaryButton onClick={props.complete2FA} className='login-page__login-button'>
                     Complete 2-factor authentication
                 </PrimaryButton>
             </Stack.Item>
         </Fragment>
-    )
+    );
 };
 
 const LoginForm = (props: LoginProps) => {
@@ -150,13 +139,7 @@ function LoginView(props: LoginProps) {
         };
     }, [setIsAuthCookieSet, props.token]);
 
-    const {
-        isAuthenticated,
-        isAuthenticating,
-        isInteractionRequired,
-        complete2FA,
-        login
-    } = props;
+    const { isAuthenticated, isAuthenticating, isInteractionRequired } = props;
 
     if (!isAuthenticated && isAuthenticating && !isInteractionRequired) {
         return <Loader message='Signing in...' />;
@@ -195,17 +178,14 @@ function LoginView(props: LoginProps) {
 
 const getAuthState = (state: ApplicationState) => ({
     redirectUrl: new URLSearchParams(location.search).get('redirectUrl'),
-    ...state.authentication
+    ...state.authentication,
 });
 const actions = {
     login,
-    complete2FA
+    complete2FA,
 };
 
-export const LoginConnected = connect(
-    getAuthState,
-    actions
-)(LoginView);
+export const LoginConnected = connect(getAuthState, actions)(LoginView);
 
 export function Login() {
     return <LoginConnected />;

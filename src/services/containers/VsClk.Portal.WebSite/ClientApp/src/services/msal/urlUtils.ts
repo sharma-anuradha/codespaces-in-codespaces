@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+ /* tslint:disable */
+
 import { IUri } from './IUri';
 import { Constants, SSOTypes } from './constants';
 import { ServerRequestParameters } from './serverRequestParameters';
@@ -36,12 +38,14 @@ export class UrlUtils {
      * Generate the array of all QueryStringParams to be sent to the server
      * @param scopes
      */
+    // tslint:disable-next-line: prefer-array-literal
     static createNavigationUrlString(serverRequestParams: ServerRequestParameters): Array<string> {
         const scopes = serverRequestParams.scopes;
 
         if (scopes.indexOf(serverRequestParams.clientId) === -1) {
             scopes.push(serverRequestParams.clientId);
         }
+        // tslint:disable-next-line: prefer-array-literal
         const str: Array<string> = [];
         str.push("response_type=" + serverRequestParams.responseType);
 
@@ -80,6 +84,7 @@ export class UrlUtils {
      * append the required scopes: https://openid.net/specs/openid-connect-basic-1_0.html#Scopes
      * @param scopes
      */
+    // tslint:disable-next-line: prefer-array-literal
     private static translateclientIdUsedInScope(scopes: Array<string>, clientId: string): void {
         const clientIdIndex: number = scopes.indexOf(clientId);
         if (clientIdIndex >= 0) {

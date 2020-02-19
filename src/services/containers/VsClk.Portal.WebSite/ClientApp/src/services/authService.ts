@@ -18,7 +18,10 @@ import { clientApplication, initializeMsal } from './msalConfig';
 import { acquireToken, acquireTokenSilent } from './acquireToken';
 
 import { autServiceTrace } from './autServiceTrace';
-import { setKeychainKeys, addRandomKey } from '../cache/localStorageKeychain/localstorageKeychainKeys';
+import {
+    setKeychainKeys,
+    addRandomKey,
+} from '../cache/localStorageKeychain/localstorageKeychainKeys';
 import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
 import { IKeychainKey, IKeychainKeyWithoutMethods } from '../interfaces/IKeychainKey';
 import { Signal } from '../utils/signal';
@@ -41,15 +44,15 @@ const enhanceEncryptionKeys = (keys: IKeychainKeyWithoutMethods[]): IKeychainKey
     });
 
     return keysWithMethods;
-}
+};
 
 const fetchKeychainKeys = async () => {
     try {
         const result = await fetch('/keychain-keys', {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
         });
-    
+
         const keys = await result.json();
 
         return enhanceEncryptionKeys(keys);
@@ -58,7 +61,7 @@ const fetchKeychainKeys = async () => {
     }
 
     return null;
-}
+};
 
 export const createKeys = async () => {
     const token = await authService.getCachedToken();
@@ -71,14 +74,14 @@ export const createKeys = async () => {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token.accessToken}`
-        }
+            Authorization: `Bearer ${token.accessToken}`,
+        },
     });
 
     const keys = await result.json();
 
     return enhanceEncryptionKeys(keys);
-}
+};
 
 interface IAuthCode {
     code: string;
@@ -104,15 +107,12 @@ tokenCache.onTokenChange(({ name, token }) => {
 });
 
 class AuthService {
-
     private initializeSignal = new Signal();
 
     public async init() {
         const keychainKeys = await fetchKeychainKeys();
-        
-        (keychainKeys)
-            ? setKeychainKeys(keychainKeys)
-            : addRandomKey();
+
+        keychainKeys ? setKeychainKeys(keychainKeys) : addRandomKey();
 
         initializeMsal();
 
@@ -207,7 +207,7 @@ class AuthService {
             if (!token) {
                 return;
             }
-            
+
             await tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
             getAuthTokenSuccessAction(token);
 
@@ -216,7 +216,6 @@ class AuthService {
             return;
         }
     }
-
 
     private async acquireTokenInternal(): Promise<ITokenWithMsalAccount | undefined> {
         try {
@@ -259,12 +258,13 @@ class AuthService {
     }
 
     private makeTokenRequest = async () => {
-        const [ _, keys ] = await Promise.all([this.getCachedToken(), fetchKeychainKeys()]);
+        // tslint:disable-next-line
+        const [_, keys] = await Promise.all([this.getCachedToken(), fetchKeychainKeys()]);
 
         if (!keys) {
             this.logout();
         }
-    }
+    };
 
     /**
      * Function to poll the `getCachedToken` which has the side-effect of refreshing the auth token if needed.
@@ -273,7 +273,7 @@ class AuthService {
      */
     private keepUserAuthenticated = debounceInterval(
         this.makeTokenRequest,
-        5 * 60 * 1000 /* 5 minutes */
+        5 * 60 * 1000 // 5 minutes
     );
 
     /**

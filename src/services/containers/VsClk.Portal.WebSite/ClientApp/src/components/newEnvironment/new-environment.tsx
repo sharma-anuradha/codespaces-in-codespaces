@@ -12,7 +12,6 @@ import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
 import { Redirect } from 'react-router';
 import { newPlanPath } from '../../routerPaths';
-import { ICloudEnvironment } from '../../interfaces/cloudenvironment';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
@@ -30,12 +29,17 @@ export function NewEnvironment(props: RouteComponentProps) {
     const repo = query.get('repo');
     const skuName = query.get('instanceType');
 
-    const hidePanel = useCallback((environmentId?: string) => {
-        focusCreateEnvironmentButton();
+    const hidePanel = useCallback(
+        (environmentId?: string) => {
+            focusCreateEnvironmentButton();
 
-        // going back to environments cards (landing page)
-        props.history.replace(environmentId ? `/environment/${environmentId}` : '/environments');
-    }, [props.history]);
+            // going back to environments cards (landing page)
+            props.history.replace(
+                environmentId ? `/environment/${environmentId}` : '/environments'
+            );
+        },
+        [props.history]
+    );
 
     const [errorMessage, setErrorMessage] = useState(undefined as undefined | string);
 

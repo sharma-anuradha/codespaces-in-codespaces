@@ -4,6 +4,8 @@ import { Account } from './account';
 import { Authority } from './authority';
 import { Constants } from './constants';
 
+/* tslint:disable */
+
 /**
  * @hidden
  * SSO Types - generated to populate hints

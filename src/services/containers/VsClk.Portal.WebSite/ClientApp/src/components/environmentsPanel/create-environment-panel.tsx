@@ -1,12 +1,7 @@
 import React, { Component, SyntheticEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
 
-import {
-    PrimaryButton,
-    DefaultButton,
-    IconButton,
-    ActionButton,
-} from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, DefaultButton, IconButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField, ITextFieldProps } from 'office-ui-fabric-react/lib/TextField';
@@ -420,17 +415,6 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     private renderCreateEnvironmentInputs() {
-        const onSuspendRenderLabel = createLabelRenderCallback(
-            'View suspend behavior details',
-            'https://aka.ms/vso-docs/how-to/suspend'
-        );
-        const dotFilesDetailsTitle = 'View dotfiles details';
-        const dotFilesRepositoryTitle = 'Dotfiles Repository';
-        const onDotfilesRenderLabel = createLabelRenderCallback(
-            dotFilesDetailsTitle,
-            'https://aka.ms/vso-docs/reference/personalizing',
-            dotFilesRepositoryTitle
-        );
         const errorMessageBar = isDefined(this.state.friendlyName.errorMessage) ? (
             <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
                 {this.state.friendlyName.errorMessage}
@@ -455,86 +439,111 @@ export class CreateEnvironmentPanelView extends Component<
                     {dotfilesRepoMessageBar}
                 </Stack>
 
-                <Stack tokens={{ childrenGap: 4 }}>
-                    <TextField
-                        label='Environment Name'
-                        ariaLabel='Environment Name'
-                        className={this.state.friendlyName.style}
-                        placeholder=''
-                        onKeyDown={this.submitForm}
-                        value={this.state.friendlyName.value}
-                        iconProps={getValidationIcon(this.state.friendlyName)}
-                        onChange={this.onChangeFriendlyName}
-                        onGetErrorMessage={this.onGetErrorMessageFriendlyName}
-                        onNotifyValidationResult={this.onNotifyValidationResultFriendlyName}
-                        validateOnLoad={isDefined(this.props.defaultName)}
-                        deferredValidationTime={1000}
-                        autoFocus
-                        required
-                    />
-                    <TextField
-                        label='Git Repository'
-                        ariaLabel='Git Repository'
-                        className={this.state.gitRepositoryUrl.style}
-                        placeholder=''
-                        onKeyDown={this.submitForm}
-                        value={this.state.gitRepositoryUrl.value}
-                        iconProps={getValidationIcon(this.state.gitRepositoryUrl)}
-                        onChange={this.onChangeGitRepositoryUrl}
-                        onGetErrorMessage={this.onGetErrorMessageGitRepo}
-                        onNotifyValidationResult={this.onNotifyValidationResultGitRepositoryUrl}
-                        validateOnLoad={isDefined(this.props.defaultRepo)}
-                        deferredValidationTime={1500}
-                    />
-                    {this.renderSkuSelector()}
-                    <Dropdown
-                        label='Suspend idle environment after...'
-                        ariaLabel='Suspend idle environment after...'
-                        options={autoShutdownOptions}
-                        onChange={this.onChangeAutoShutdownDelayMinutes}
-                        selectedKey={this.state.autoShutdownDelayMinutes.value}
-                        onRenderLabel={onSuspendRenderLabel as IRenderFunction<IDropdownProps>}
-                    />
-                </Stack>
+                {this.renderEnvironmentCreation()}
 
-                <Collapsible tokens={{ childrenGap: 4 }} title={'Dotfiles (optional)'}>
-                    <TextField
-                        autoFocus
-                        ariaLabel={dotFilesRepositoryTitle} // Omitting label due to office-ui's onRenderLabel accessibility conflict 
-                        className={this.state.dotfilesRepository.style}
-                        placeholder=''
-                        onKeyDown={this.submitForm}
-                        value={this.state.dotfilesRepository.value}
-                        iconProps={getValidationIcon(this.state.dotfilesRepository)}
-                        onChange={this.onChangeDotfilesRepository}
-                        onGetErrorMessage={this.onGetErrorMessageDotfilesRepo}
-                        onNotifyValidationResult={this.onNotifyValidationResultDotfilesRepository}
-                        validateOnLoad={isDefined(this.state.dotfilesRepository)}
-                        deferredValidationTime={1500}
-                        onRenderLabel={onDotfilesRenderLabel as IRenderFunction<ITextFieldProps>}
-                    />
-                    <TextField
-                        label='Dotfiles Install Command'
-                        ariaLabel='Dotfiles Install Command'
-                        placeholder='./install.sh'
-                        onKeyDown={this.submitForm}
-                        value={this.state.dotfilesInstallCommand.value}
-                        iconProps={getValidationIcon(this.state.dotfilesInstallCommand)}
-                        onChange={this.onChangeDotfilesInstallCommand}
-                        validateOnLoad={false}
-                    />
-                    <TextField
-                        label='Dotfiles Target Path'
-                        ariaLabel='Dotfiles Target Path'
-                        placeholder='~/dotfiles'
-                        onKeyDown={this.submitForm}
-                        value={this.state.dotfilesTargetPath.value}
-                        iconProps={getValidationIcon(this.state.dotfilesTargetPath)}
-                        onChange={this.onChangeDotfilesTargetPath}
-                        validateOnLoad={false}
-                    />
-                </Collapsible>
+                {this.renderDotFiles()}
             </Stack>
+        );
+    }
+
+    private renderEnvironmentCreation() {
+        const onSuspendRenderLabel = createLabelRenderCallback(
+            'View suspend behavior details',
+            'https://aka.ms/vso-docs/how-to/suspend'
+        );
+
+        return (
+            <Stack tokens={{ childrenGap: 4 }}>
+                <TextField
+                    label='Environment Name'
+                    ariaLabel='Environment Name'
+                    className={this.state.friendlyName.style}
+                    placeholder=''
+                    onKeyDown={this.submitForm}
+                    value={this.state.friendlyName.value}
+                    iconProps={getValidationIcon(this.state.friendlyName)}
+                    onChange={this.onChangeFriendlyName}
+                    onGetErrorMessage={this.onGetErrorMessageFriendlyName}
+                    onNotifyValidationResult={this.onNotifyValidationResultFriendlyName}
+                    validateOnLoad={isDefined(this.props.defaultName)}
+                    deferredValidationTime={1000}
+                    autoFocus
+                    required
+                />
+                <TextField
+                    label='Git Repository'
+                    ariaLabel='Git Repository'
+                    className={this.state.gitRepositoryUrl.style}
+                    placeholder=''
+                    onKeyDown={this.submitForm}
+                    value={this.state.gitRepositoryUrl.value}
+                    iconProps={getValidationIcon(this.state.gitRepositoryUrl)}
+                    onChange={this.onChangeGitRepositoryUrl}
+                    onGetErrorMessage={this.onGetErrorMessageGitRepo}
+                    onNotifyValidationResult={this.onNotifyValidationResultGitRepositoryUrl}
+                    validateOnLoad={isDefined(this.props.defaultRepo)}
+                    deferredValidationTime={1500}
+                />
+                {this.renderSkuSelector()}
+                <Dropdown
+                    label='Suspend idle environment after...'
+                    ariaLabel='Suspend idle environment after...'
+                    options={autoShutdownOptions}
+                    onChange={this.onChangeAutoShutdownDelayMinutes}
+                    selectedKey={this.state.autoShutdownDelayMinutes.value}
+                    onRenderLabel={onSuspendRenderLabel as IRenderFunction<IDropdownProps>}
+                />
+            </Stack>
+        );
+    }
+
+    private renderDotFiles() {
+        const dotFilesDetailsTitle = 'View dotfiles details';
+        const dotFilesRepositoryTitle = 'Dotfiles Repository';
+        const onDotfilesRenderLabel = createLabelRenderCallback(
+            dotFilesDetailsTitle,
+            'https://aka.ms/vso-docs/reference/personalizing',
+            dotFilesRepositoryTitle
+        );
+
+        return (
+            <Collapsible tokens={{ childrenGap: 4 }} title={'Dotfiles (optional)'}>
+                <TextField
+                    autoFocus
+                    ariaLabel={dotFilesRepositoryTitle} // Omitting label due to office-ui's onRenderLabel accessibility conflict
+                    className={this.state.dotfilesRepository.style}
+                    placeholder=''
+                    onKeyDown={this.submitForm}
+                    value={this.state.dotfilesRepository.value}
+                    iconProps={getValidationIcon(this.state.dotfilesRepository)}
+                    onChange={this.onChangeDotfilesRepository}
+                    onGetErrorMessage={this.onGetErrorMessageDotfilesRepo}
+                    onNotifyValidationResult={this.onNotifyValidationResultDotfilesRepository}
+                    validateOnLoad={isDefined(this.state.dotfilesRepository)}
+                    deferredValidationTime={1500}
+                    onRenderLabel={onDotfilesRenderLabel as IRenderFunction<ITextFieldProps>}
+                />
+                <TextField
+                    label='Dotfiles Install Command'
+                    ariaLabel='Dotfiles Install Command'
+                    placeholder='./install.sh'
+                    onKeyDown={this.submitForm}
+                    value={this.state.dotfilesInstallCommand.value}
+                    iconProps={getValidationIcon(this.state.dotfilesInstallCommand)}
+                    onChange={this.onChangeDotfilesInstallCommand}
+                    validateOnLoad={false}
+                />
+                <TextField
+                    label='Dotfiles Target Path'
+                    ariaLabel='Dotfiles Target Path'
+                    placeholder='~/dotfiles'
+                    onKeyDown={this.submitForm}
+                    value={this.state.dotfilesTargetPath.value}
+                    iconProps={getValidationIcon(this.state.dotfilesTargetPath)}
+                    onChange={this.onChangeDotfilesTargetPath}
+                    validateOnLoad={false}
+                />
+            </Collapsible>
         );
     }
 

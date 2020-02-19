@@ -3,7 +3,6 @@ import * as vsls from '../../ts-agent/contracts/VSLS';
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
 import { SshDisconnectReason } from '@vs/vs-ssh';
 import { createLogger, Logger } from './logger';
-import { ConfigurationManager } from './configuration-manager';
 import { ILiveShareClient } from '../../ts-agent/client/ILiveShareClient';
 import { CriticalError } from './errors/CriticalError';
 import { PromiseCompletionSource } from '@vs/vs-ssh';

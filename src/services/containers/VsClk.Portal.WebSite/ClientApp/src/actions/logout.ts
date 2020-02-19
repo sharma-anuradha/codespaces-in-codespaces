@@ -39,11 +39,13 @@ export async function logout() {
     } catch {}
 
     // clear cookie and auth cookie
+    // tslint:disable: no-cookies
     var cookies = document.cookie.split(';');
     for (var i = 0; i < cookies.length; i++) {
         const cookieName = cookies[i].split('=')[0];
         document.cookie = cookieName + '=;expires=Thu, 21 Sep 1979 00:00:01 UTC;';
     }
+    // tslint:enable: no-cookies
 
     await deleteAuthCookie();
 }

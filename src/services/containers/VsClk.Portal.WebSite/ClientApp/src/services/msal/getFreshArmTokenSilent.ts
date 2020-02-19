@@ -1,4 +1,6 @@
 		
+/* tslint:disable */
+
 import { ensureRedirectionIframe } from './ensureRedirectionIframe';
 import { renewTokenFactory, IRenewTokenFactoryOptions } from './renewTokenFactory';
 import { randomString } from '../../utils/randomString';

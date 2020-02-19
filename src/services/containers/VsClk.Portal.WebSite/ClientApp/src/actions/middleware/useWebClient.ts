@@ -2,7 +2,7 @@ import { useActionContext } from './useActionContext';
 
 import { trace as baseTrace } from '../../utils/trace';
 import { getTopLevelDomain } from '../../utils/getTopLevelDomain';
-import { wait, createUniqueId } from '../../dependencies';
+import { wait } from '../../dependencies';
 import { authService } from '../../services/authService';
 import { sendTelemetry } from '../../utils/telemetry';
 import { isDefined } from '../../utils/isDefined';
@@ -287,7 +287,6 @@ async function deleteRequest<TResult = void>(
         { skipParsingResponse: true, ...requestOptions }
     );
 }
-
 
 async function patchRequest<TResult = object>(
     url: string,

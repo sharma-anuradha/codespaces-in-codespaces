@@ -7,11 +7,6 @@ import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
 
 const trace = createTrace('credentials-provider:info');
 
-type VSCodeAccountIToken = {
-    accessToken: string;
-    expiresOn: number;
-};
-
 interface IAuthStrategy {
     canHandleService(service: string, account: string): boolean;
 

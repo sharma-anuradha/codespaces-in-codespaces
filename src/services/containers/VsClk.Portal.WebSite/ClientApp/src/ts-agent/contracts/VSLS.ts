@@ -4,6 +4,7 @@
 // </auto-generated>
 //----------------------
 
+ /* tslint:disable */
 
 /* tslint:disable:member-access jsdoc-format */
 

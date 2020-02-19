@@ -45,6 +45,7 @@ export class UnhandledOnErrorTelemetryEvent implements ITelemetryEvent {
     readonly name: string = unhandledOnErrorEventName;
 
     constructor(
+        // tslint:disable-next-line
         private readonly event: Event | string,
         private readonly source?: string,
         private readonly lineno?: number,

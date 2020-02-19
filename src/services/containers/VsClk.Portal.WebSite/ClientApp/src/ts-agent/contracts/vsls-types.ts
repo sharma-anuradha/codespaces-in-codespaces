@@ -95,6 +95,7 @@ export interface SharedServiceResponseError extends Error {
  * to prevent extensions from trivially using the private members to make
  * arbitrary RPC calls.
  */
+// tslint:disable-next-line
 const rpc = {
     connection: <MessageConnection | null>null,
 };

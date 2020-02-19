@@ -1,5 +1,3 @@
-import { string } from 'prop-types';
-
 export const INDEXEDDB_VSONLINE_DB = 'vsonline-web-db';
 export const INDEXEDDB_LOGS_OBJECT_STORE = 'vsonline-logs-store';
 

@@ -2,12 +2,7 @@ import React, { Component } from 'react';
 import './serverlessWorkbench.css';
 
 import { vscode } from '../../utils/vscode';
-import {
-    IWorkbenchConstructionOptions,
-    IWorkspaceProvider,
-    URI,
-    IURLCallbackProvider,
-} from 'vscode-web';
+import { IWorkbenchConstructionOptions, URI, IURLCallbackProvider } from 'vscode-web';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';

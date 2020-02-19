@@ -1,5 +1,4 @@
 import { URI, IWorkbench } from 'vscode-web';
-import * as vscodeTypes from 'vscode-jsonrpc';
 
 let vscodeInternal: IWorkbench;
 

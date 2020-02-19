@@ -1,5 +1,6 @@
 import { trace as baseTrace } from '../utils/trace';
 
+// tslint:disable:no-console
 export const createTrace = (name: string) => {
     const verbose = baseTrace.extend(`${name}:trace`);
     verbose.log =
@@ -30,6 +31,7 @@ export const createTrace = (name: string) => {
         error,
     };
 };
+// tslint:enable:no-console
 
 export function maybePii<T>(val: T | undefined): T | string | undefined {
     if (val === undefined) {

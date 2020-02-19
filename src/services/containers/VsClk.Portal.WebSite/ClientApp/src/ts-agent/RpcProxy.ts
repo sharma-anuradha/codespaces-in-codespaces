@@ -51,7 +51,7 @@ export class RpcProxy {
         // Generate async methods for requests.
         for (let methodName of serviceInfo.methods) {
             const methodPropertyName = `${methodName}Async`;
-            (<any>proxy)[methodPropertyName] = function() {
+            (<any>proxy)[methodPropertyName] = () => {
                 // Detect whether optional cancellation token was supplied, and if so strip from args.
                 let args: any[];
                 let cancellationToken: rpc.CancellationToken | null = arguments[arguments.length - 1];
@@ -95,7 +95,7 @@ export class RpcProxy {
 
         // Generate methods for method-style notifications.
         for (let methodName of serviceInfo.voidMethods || []) {
-            (<any>proxy)[methodName] = function() {
+            (<any>proxy)[methodName] = () => {
                 let args: any[] = Array.prototype.slice.call(arguments, 0, arguments.length);
                 const serviceAndMethodName = proxy.serviceName + '.' + methodName;
                 proxy.connection.sendNotification(serviceAndMethodName, args);

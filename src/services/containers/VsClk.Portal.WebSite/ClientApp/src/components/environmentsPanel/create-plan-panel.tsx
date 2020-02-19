@@ -370,6 +370,7 @@ export class CreatePlanPanelComponent extends Component<
             if (response.status === 200) {
                 return response.json();
             } else {
+                // tslint:disable-next-line:no-console
                 console.error(`Request to ${response.url} failed with status ${response.status}`);
                 return null;
             }

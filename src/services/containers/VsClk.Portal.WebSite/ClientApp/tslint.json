@@ -26,6 +26,7 @@
         "export-name": false,
         "import-name": false,
         "object-literal-shorthand": true,
-        "use-simple-attributes": false
+        "use-simple-attributes": false,
+        "react-this-binding-issue": false
     }
 }

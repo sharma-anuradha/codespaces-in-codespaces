@@ -64,7 +64,7 @@ export const clearRafInterval = (timer: IRafTimer) => {
 export const debounceInterval = <A extends Func>(fn: A, timeout: number): ReplaceReturnType<A, void> & { stop: () => void; }  => {
     let interval: ReturnType<typeof setRafInterval> | undefined;
 
-    const debounced = function (...args: any[]) {
+    const debounced = (...args: any[]) => {
         clearRafInterval(interval!);
 
         interval = setRafInterval(() => {

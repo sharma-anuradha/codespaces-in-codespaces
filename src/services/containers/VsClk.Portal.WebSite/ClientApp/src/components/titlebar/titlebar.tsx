@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 import { withRouter } from 'react-router';
@@ -15,9 +15,7 @@ import { KeyCodes } from 'office-ui-fabric-react/lib/Utilities';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { PlanSelector } from '../planSelector/plan-selector';
-import {SettingsMenuPanel } from '../settingsMenu/settings-menu-panel';
 import { logout } from '../../actions/logout';
-
 
 import './titlebar.css';
 import { isInternalUser } from '../../services/isInternalUserTracker';
@@ -78,7 +76,6 @@ function TitleBarNoRouter(props: RouteComponentProps) {
                         >
                             Settings
                         </DefaultButton>
-                        
                     </div>
                     <div className='vsonline-avatarmenu__item'>
                         <DefaultButton

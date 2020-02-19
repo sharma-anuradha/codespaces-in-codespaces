@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { Panel, IPanel } from 'office-ui-fabric-react/lib/Panel';
+import { Panel } from 'office-ui-fabric-react/lib/Panel';
 import { Toggle } from 'office-ui-fabric-react/lib/Toggle';
 import { DefaultButton, PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 
@@ -17,7 +17,6 @@ import {
     Dialog,
     DialogFooter,
     DialogType,
-    IDialog,
     MessageBar,
     MessageBarType,
     Dropdown,
@@ -55,6 +54,18 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
         };
     }
 
+    private hideWarning = () => {
+        this.setState({
+            hideWarning: true,
+        });
+    };
+
+    private showWarning = () => {
+        this.setState({
+            hideWarning: false,
+        });
+    };
+
     render() {
         let deleteText = <div></div>;
         let envs = (
@@ -62,7 +73,6 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
                 <b>{this.props.environmentsInPlan.length}</b> environments
             </span>
         );
-
         if (this.props.environmentsInPlan.length === 1) {
             envs = (
                 <span>
@@ -70,7 +80,6 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
                 </span>
             );
         }
-
         if (this.props.selectedPlan) {
             deleteText = (
                 <div>
@@ -115,11 +124,7 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
                     {this.getPlanSelector()}
                     <DefaultButton
                         className='vsonline-settings-panel__delete-button'
-                        onClick={() =>
-                            this.setState({
-                                hideWarning: false,
-                            })
-                        }
+                        onClick={this.showWarning}
                         allowDisabledFocus
                         disabled={this.state.deleteButtonDisabled}
                         text='Delete'
@@ -134,11 +139,7 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
                         },
                     }}
                     hidden={this.state.hideWarning}
-                    onDismiss={() =>
-                        this.setState({
-                            hideWarning: true,
-                        })
-                    }
+                    onDismiss={this.hideWarning}
                     dialogContentProps={{
                         type: DialogType.normal,
                         title: 'Warning',
@@ -158,14 +159,7 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
                             onClick={() => this.deletePlan(this.props.selectedPlan)}
                             text='Confirm'
                         />
-                        <DefaultButton
-                            onClick={() =>
-                                this.setState({
-                                    hideWarning: true,
-                                })
-                            }
-                            text='Cancel'
-                        />
+                        <DefaultButton onClick={this.hideWarning} text='Cancel' />
                     </DialogFooter>
                 </Dialog>
             </Fragment>
@@ -206,6 +200,10 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
         );
     }
 
+    private hideSuccessMessage = () => {
+        this.setState({ showSuccessMessage: false });
+    };
+
     private renderSuccessMessage() {
         const { showSuccessMessage } = this.state;
         if (!showSuccessMessage) {
@@ -216,7 +214,7 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
             <MessageBar
                 messageBarType={MessageBarType.success}
                 isMultiline={false}
-                onDismiss={() => this.setState({ showSuccessMessage: false })}
+                onDismiss={this.hideSuccessMessage}
             >
                 Your plan was successfully deleted.
             </MessageBar>
@@ -241,9 +239,7 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
     }
 
     private async deletePlan(selectedPlan: ActivePlanInfo | null) {
-        this.setState({
-            hideWarning: true,
-        });
+        this.hideWarning();
 
         if (selectedPlan) {
             this.setState({ isDeletingPlan: true });

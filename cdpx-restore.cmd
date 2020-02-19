@@ -54,6 +54,16 @@ if "%EX%" neq "0" (
 )
 
 echo.
+echo yarn-lint
+call yarn lint-only
+set EX=%ERRORLEVEL%
+if "%EX%" neq "0" (
+    popd
+    echo Failed to yarn-lint correctly.
+	exit /b %EX%
+)
+
+echo.
 echo yarn-test-project
 call yarn test:ci
 set EX=%ERRORLEVEL%

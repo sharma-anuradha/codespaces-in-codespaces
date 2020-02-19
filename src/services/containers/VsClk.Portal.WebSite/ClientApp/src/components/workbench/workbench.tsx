@@ -119,7 +119,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     }
 
     componentDidMount() {
-        const { connectingFavicon, workbenchFavicon } = this.props;
+        const { workbenchFavicon } = this.props;
 
         updateFavicon(workbenchFavicon);
         if (!this.correlationId) {
@@ -257,7 +257,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     }
 
     componentWillUnmount() {
-        const { connectingFavicon, workbenchFavicon } = this.props;
+        const { connectingFavicon } = this.props;
 
         updateFavicon(connectingFavicon);
         this.cancelPolling();

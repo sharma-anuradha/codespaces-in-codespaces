@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+ /* tslint:disable */
+ 
 export class ScopeSet {
 
     /**

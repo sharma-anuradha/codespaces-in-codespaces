@@ -283,10 +283,6 @@ export class LiveShareHttpClient implements IHttpClient {
         return Buffer.from(concatenatedBuffer);
     }
 
-    private cloneBuffer(buffer: Buffer) {
-        return Buffer.from(buffer);
-    }
-
     private removeChunkFrames(body: Buffer): Buffer | undefined {
         // body contains concatenated chunked content
         const [chunk, rest] = stripFrameFromFirstChunk(body);

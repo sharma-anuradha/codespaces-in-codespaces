@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Switch } from 'react-router-dom';
 import { connect, Provider } from 'react-redux';
 import { configureStore } from './store/configureStore';
 import { ApplicationState } from './reducers/rootReducer';
@@ -39,11 +39,7 @@ class AppRoot extends Component<AppProps, AppState> {
     }
 
     private renderMain() {
-        const {
-            store,
-            configuration,
-            routeConfig
-        } = this.props;
+        const { store, configuration, routeConfig } = this.props;
 
         if (!configuration) {
             return <Loader message='Fetching configuration...' />;
@@ -85,6 +81,4 @@ const getConfig = ({ configuration }: ApplicationState) => ({
     configuration,
 });
 
-export const App = connect(
-    getConfig
-)(AppRoot);
+export const App = connect(getConfig)(AppRoot);

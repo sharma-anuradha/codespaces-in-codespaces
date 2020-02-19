@@ -4,12 +4,7 @@ import moment from 'moment';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import { getTheme } from 'office-ui-fabric-react/lib/Styling';
-import {
-    IconButton,
-    PrimaryButton,
-    DefaultButton,
-    Button,
-} from 'office-ui-fabric-react/lib/Button';
+import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
@@ -36,18 +31,10 @@ import {
 } from '../../utils/environmentUtils';
 import { tryOpeningUrl } from '../../utils/vscodeProtocolUtil';
 import './environment-card.css';
-import { createTrace } from '../../utils/createTrace';
 import { useSelector } from 'react-redux';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ActivePlanInfo } from '../../reducers/plans-reducer';
-import {
-    MessageBar,
-    MessageBarType,
-    Dropdown,
-    IDropdownOption,
-    Spinner,
-    SpinnerSize,
-} from 'office-ui-fabric-react';
+import { MessageBar, MessageBarType, IDropdownOption } from 'office-ui-fabric-react';
 import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader';
 import {
     EnvironmentSettingsAllowedUpdates,
@@ -62,7 +49,6 @@ import { ServiceResponseError } from '../../actions/middleware/useWebClient';
 import { Signal } from '../../utils/signal';
 import { isDefined } from '../../utils/isDefined';
 
-const trace = createTrace('environment-card');
 const friendlyNameDisplayLength = 20;
 export interface EnvironmentCardProps {
     className?: string;
