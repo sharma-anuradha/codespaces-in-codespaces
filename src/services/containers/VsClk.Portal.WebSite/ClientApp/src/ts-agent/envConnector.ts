@@ -200,6 +200,11 @@ export class EnvConnector {
             return undefined;
         }
 
+        await this.registerGitCredentialService(
+            workspaceClient.getCurrentWorkspaceClient()!,
+            workspaceClient.getCurrentRpcConnection()!
+        );
+        
         window.performance.measure(
             `EnvConnector.connectWithRetry ${correlationId}`
         );
