@@ -4,6 +4,7 @@ import { authentication } from './authentication';
 import { configuration } from './configuration';
 import { environments } from './environments';
 import { githubAuthentication } from './githubAuthenticationReducer';
+import { azDevAuthentication } from './azDevAuthenticationReducer';
 import { userInfo } from './userInfo';
 import { plansReducer } from './plans-reducer';
 import { serviceStatus } from './serviceStatus';
@@ -21,6 +22,7 @@ const reducers = {
     configuration,
     environments,
     githubAuthentication,
+    azDevAuthentication,
     userInfo,
     plans: plansReducer,
     serviceStatus,

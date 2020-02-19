@@ -3,25 +3,33 @@ const { existsSync, readFileSync, writeFileSync } = require('fs');
 const { appSecretsPath } = require('./constants');
 
 try {
-    const azureCliResponse = execSync(
-        'az keyvault secret show --name "Local-Config-GitHubAppClientSecret" --vault-name "vsclk-online-dev-kv" --sub "vsclk-core-dev"',
-        {
-            encoding: 'utf-8',
-        }
-    );
+    function getSecret(secretName) {
+        const azureCliResponse = execSync(
+            'az keyvault secret show --name "' + secretName + '" --vault-name "vsclk-online-dev-kv" --sub "vsclk-core-dev" -ojson',
+            {
+                encoding: 'utf-8',
+            }
+        );
+    
+        const { value } = JSON.parse(azureCliResponse);
+        return value;
+    }
 
-    const { value } = JSON.parse(azureCliResponse);
+    const gitHubAppClientSecret = getSecret('Local-Config-GitHubAppClientSecret');
+    const azDevAppClientSecret = getSecret('Local-Config-AzDevAppClientSecret');
 
     if (existsSync(appSecretsPath)) {
         const settings = readFileSync(appSecretsPath, { encoding: 'utf-8' });
-        writeFileSync(appSecretsPath, updateSecret(settings, value));
+        const afterGitHubSecretUpdate = updateSecret('GitHubAppClientSecret', settings, gitHubAppClientSecret);
+        const afterAzDevSecretUpdate = updateSecret('AzDevAppClientSecret', afterGitHubSecretUpdate, azDevAppClientSecret);
+        writeFileSync(appSecretsPath, afterAzDevSecretUpdate);
 
-        function updateSecret(settingsString, newSecret) {
-            let oldSecret = /^(\s+)"GitHubAppClientSecret":\s*".+"(,?)$/m;
+        function updateSecret(secretName, settingsString, newSecret) {
+            let oldSecret = new RegExp('^(\\s+)"' + secretName + '":\\s*".+"(,?)$', 'm');
             if (oldSecret.test(settingsString)) {
                 return settingsString.replace(
                     oldSecret,
-                    `$1"GitHubAppClientSecret": "${newSecret}"$2`
+                    `$1"${secretName}": "${newSecret}"$2`
                 );
             }
 
@@ -29,7 +37,7 @@ try {
             if (appSettingsLine.test(settingsString)) {
                 return settingsString.replace(
                     appSettingsLine,
-                    `$1\n$2$2"GitHubAppClientSecret": "${newSecret}",`
+                    `$1\n$2$2"${secretName}": "${newSecret}",`
                 );
             }
 
@@ -41,7 +49,8 @@ try {
             JSON.stringify(
                 {
                     AppSettings: {
-                        GitHubAppClientSecret: value,
+                        GitHubAppClientSecret: gitHubAppClientSecret,
+                        AzDevAppClientSecret: azDevAppClientSecret,
                     },
                 },
                 null,
@@ -50,5 +59,5 @@ try {
         );
     }
 } catch (err) {
-    console.error('Failed to update the "GitHubAppClientSecret".', err);
+    console.error('Failed to update the "GitHubAppClientSecret" and "AzDevAppClientSecret".', err);
 }

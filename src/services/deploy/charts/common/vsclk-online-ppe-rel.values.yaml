@@ -34,6 +34,8 @@ config:
   liveShareEndpoint: https://ppe.liveshare.vsengsaas.visualstudio.com
   liveShareWebExtensionEndpoint: https://vslsppe.blob.core.windows.net/webextension
   githubClientId: f9230262d5d51925eb34
+  # TODO #1069284: Update the Client ID after registering the app
+  azDevClientId: 5EB63AEF-4598-469B-B019-0B00BAF2757A
 
 azure-secrets:
   # vsclk-core-dev
