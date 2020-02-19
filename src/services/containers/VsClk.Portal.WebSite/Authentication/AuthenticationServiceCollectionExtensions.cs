@@ -29,7 +29,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
             AppSettings appSettings)
         {
             // Add Data protection
-            if ((env.EnvironmentName != "Development") && !appSettings.IsLocal)
+            if (!appSettings.IsLocal)
             {
                 var redis = ConnectionMultiplexer.Connect(appSettings.VsClkRedisConnectionString);
                 services.AddDataProtection()
