@@ -30,13 +30,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="loggerFactory">the logger factory.</param>
         /// <param name="defaultLogValues">the log values.</param>
         public BillingOverrideRepository(
-            IOptions<DocumentDbCollectionOptions> options,
+            IOptionsMonitor<DocumentDbCollectionOptions> options,
             IDocumentDbClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues)
             : base(
-                new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                options,
                 clientProvider,
                 healthProvider,
                 loggerFactory,

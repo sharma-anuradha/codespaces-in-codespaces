@@ -11,7 +11,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -184,7 +183,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddSingleton<IImageUrlGenerator, BlobImageUrlGenerator>();
 
             // Setup configuration
-            services.AddDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(
+            services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(
                 CachedCosmosDbSystemConfigurationRepository.ConfigureOptions);
             services.AddSingleton<ISystemConfiguration, PersistedSystemConfiguration>();
 

@@ -3,8 +3,6 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
-using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
@@ -123,9 +121,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             }
 
             // Register Document Db Items
-            services.AddDocumentDbCollection<ResourceRecord, IResourceRepository, CosmosDbResourceRepository>(
+            services.AddVsoDocumentDbCollection<ResourceRecord, IResourceRepository, CosmosDbResourceRepository>(
                 CosmosDbResourceRepository.ConfigureOptions);
-            services.AddDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
+            services.AddVsoDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
                 CosmosDbResourcePoolStateSnapshotRepository.ConfigureOptions);
 
             // Register Queue Items

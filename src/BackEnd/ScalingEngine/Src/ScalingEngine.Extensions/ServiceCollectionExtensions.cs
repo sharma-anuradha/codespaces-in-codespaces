@@ -3,8 +3,8 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common.Warmup;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions
@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions
             Requires.NotNull(services, nameof(services));
 
             services.AddSingleton<IAsyncWarmup, RefreshPoolScaleTargetsJob>();
-            services.AddDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
+            services.AddVsoDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
                 CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
 
             return services;

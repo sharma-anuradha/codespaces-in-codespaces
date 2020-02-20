@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
         /// <param name="managedCache">The managed cached provider.</param>
         /// <param name="taskHelper">The background task helper.</param>
         public IdentityMapRepository(
-                IOptions<DocumentDbCollectionOptions> options,
+                IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
                 IManagedCache managedCache,
                 ITaskHelper taskHelper)
             : base(
-                  new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                  options,
                   clientProvider,
                   healthProvider,
                   loggerFactory,

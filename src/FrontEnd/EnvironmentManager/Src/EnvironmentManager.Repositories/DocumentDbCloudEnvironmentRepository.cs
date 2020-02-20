@@ -36,13 +36,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <param name="loggerFactory">The diagnostics logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public DocumentDbCloudEnvironmentRepository(
-                IOptions<DocumentDbCollectionOptions> options,
+                IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
             : base(
-                  new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                  options,
                   clientProvider,
                   healthProvider,
                   loggerFactory,

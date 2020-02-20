@@ -30,12 +30,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public CosmosDbResourcePoolStateSnapshotRepository(
-                IOptions<DocumentDbCollectionOptions> options,
+                IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
-            : base(PromoteToOptionSnapshot(options.Value), clientProvider, healthProvider, loggerFactory, defaultLogValues)
+            : base(options, clientProvider, healthProvider, loggerFactory, defaultLogValues)
         {
         }
 
@@ -47,40 +47,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             Requires.NotNull(options, nameof(options));
             options.PartitioningStrategy = PartitioningStrategy.IdOnly;
-        }
-
-        // TEMP: Map backend common and frontend common into src/Common/Src/Common!
-        private static IOptionsSnapshot<TOptions> PromoteToOptionSnapshot<TOptions>(TOptions option)
-            where TOptions : class, new()
-        {
-            ConfigureOptions(option as DocumentDbCollectionOptions);
-            return new DirectOptionsSnapshot<TOptions>(option);
-        }
-
-        // TEMP: Map backend common and frontend common into src/Common/Src/Common!
-        private class DirectOptionsSnapshot<TOptions> : IOptionsSnapshot<TOptions>
-            where TOptions : class, new()
-        {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="DirectOptionsSnapshot{TOptions}"/> class.
-            /// </summary>
-            /// <param name="options">The options instance.</param>
-            public DirectOptionsSnapshot(TOptions options)
-            {
-                Options = options;
-            }
-
-            /// <summary>
-            /// Gets the options value.
-            /// </summary>
-            public TOptions Value => Options;
-
-            private TOptions Options { get; }
-
-            public TOptions Get(string name)
-            {
-                return Options;
-            }
         }
     }
 }

@@ -3,7 +3,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
 {
@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddIdentityMap(this IServiceCollection services)
         {
-            services.AddDocumentDbCollection<IdentityMapEntity, IIdentityMapRepository, IdentityMapRepository>(IdentityMapRepository.ConfigureOptions);
+            services.AddVsoDocumentDbCollection<IdentityMapEntity, IIdentityMapRepository, IdentityMapRepository>(IdentityMapRepository.ConfigureOptions);
             return services;
         }
     }

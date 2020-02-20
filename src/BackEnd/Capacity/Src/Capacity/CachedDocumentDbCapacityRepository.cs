@@ -33,14 +33,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// <param name="defaultLogValues">The default log values.</param>
         /// <param name="managedCache">The managed cache instance.</param>
         public CachedDocumentDbCapacityRepository(
-            IOptions<DocumentDbCollectionOptions> collectionOptions,
+            IOptionsMonitor<DocumentDbCollectionOptions> collectionOptions,
             IDocumentDbClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues,
             IManagedCache managedCache)
             : base(
-                  new DocumentDbCollectionOptionsSnapshot(collectionOptions, ConfigureOptions),
+                  collectionOptions,
                   clientProvider,
                   healthProvider,
                   loggerFactory,

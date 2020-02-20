@@ -30,13 +30,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserSubscriptions
         /// <param name="loggerFactory">The diagnostics logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public UserSubscriptionRepository(
-                IOptions<DocumentDbCollectionOptions> options,
+                IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
             : base(
-                  new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                  options,
                   clientProvider,
                   healthProvider,
                   loggerFactory,

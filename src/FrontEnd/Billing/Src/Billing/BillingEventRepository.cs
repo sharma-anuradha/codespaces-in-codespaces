@@ -31,13 +31,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="loggerFactory">Used to generate a logger for queries.</param>
         /// <param name="defaultLogValues">A set of log values.</param>
         public BillingEventRepository(
-            IOptions<DocumentDbCollectionOptions> options,
+            IOptionsMonitor<DocumentDbCollectionOptions> options,
             IDocumentDbClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues)
             : base(
-                new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                options,
                 clientProvider,
                 healthProvider,
                 loggerFactory,

@@ -13,19 +13,33 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
+    /// <summary>
+    /// The Azure VSO Plan repository.
+    /// </summary>
     [DocumentDbCollectionId(PlanCollectionId)]
     public class PlanRepository : DocumentDbCollection<VsoPlan>, IPlanRepository
     {
+        /// <summary>
+        /// The plans collection id.
+        /// </summary>
         public const string PlanCollectionId = "environment_billing_plans";
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PlanRepository"/> class.
+        /// </summary>
+        /// <param name="collectionOptions">The collection options.</param>
+        /// <param name="clientProvider">The doc db client provider.</param>
+        /// <param name="healthProvider">The health provider.</param>
+        /// <param name="loggerFactory">The diagnostics logging factory.</param>
+        /// <param name="defaultLogValues">The default log values.</param>
         public PlanRepository(
-            IOptions<DocumentDbCollectionOptions> collectionOptions,
+            IOptionsMonitor<DocumentDbCollectionOptions> collectionOptions,
             IDocumentDbClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues)
             : base(
-                new DocumentDbCollectionOptionsSnapshot(collectionOptions, ConfigureOptions),
+                collectionOptions,
                 clientProvider,
                 healthProvider,
                 loggerFactory,

@@ -3,7 +3,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             }
             else
             {
-                services.AddDocumentDbCollection<VsoPlan, IPlanRepository, PlanRepository>(PlanRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<VsoPlan, IPlanRepository, PlanRepository>(PlanRepository.ConfigureOptions);
             }
 
             // The Plan mangaer

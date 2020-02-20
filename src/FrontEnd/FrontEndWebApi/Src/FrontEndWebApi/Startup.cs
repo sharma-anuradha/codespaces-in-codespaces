@@ -265,7 +265,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddHeartBeatDataHandlers();
 
             // Add user-subscriptions
-            services.AddDocumentDbCollection<UserSubscription, IUserSubscriptionRepository, UserSubscriptionRepository>(UserSubscriptionRepository.ConfigureOptions);
+            services.AddVsoDocumentDbCollection<UserSubscription, IUserSubscriptionRepository, UserSubscriptionRepository>(UserSubscriptionRepository.ConfigureOptions);
 
             services
                 .AddCertificateCredentialCacheFactory()

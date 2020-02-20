@@ -3,7 +3,6 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
@@ -47,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
             else
             {
-                services.AddDocumentDbCollection<CloudEnvironment, ICloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<CloudEnvironment, ICloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
                 services.AddSingleton<IContinuationJobQueueRepository, StorageEnvironmentJobQueueRepository>();
                 services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
             }

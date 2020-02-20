@@ -39,13 +39,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public CosmosDbResourceRepository(
-                IOptions<DocumentDbCollectionOptions> options,
+                IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
             : base(
-                  new DocumentDbCollectionOptionsSnapshot(options, ConfigureOptions),
+                  options,
                   clientProvider,
                   healthProvider,
                   loggerFactory,

@@ -3,7 +3,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -29,8 +29,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
             else
             {
-                services.AddDocumentDbCollection<BillingEvent, IBillingEventRepository, BillingEventRepository>(BillingEventRepository.ConfigureOptions);
-                services.AddDocumentDbCollection<BillingOverride, IBillingOverrideRepository, BillingOverrideRepository>(BillingOverrideRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<BillingEvent, IBillingEventRepository, BillingEventRepository>(BillingEventRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<BillingOverride, IBillingOverrideRepository, BillingOverrideRepository>(BillingOverrideRepository.ConfigureOptions);
             }
 
             services.AddSingleton<IBillingEventManager, BillingEventManager>();

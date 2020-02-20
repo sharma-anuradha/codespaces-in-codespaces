@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Mocks;
@@ -49,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             else
             {
                 services.AddSingleton<IAzureSubscriptionCapacityProvider, AzureSubscriptionCapacityProvider>();
-                services.AddDocumentDbCollection<CapacityRecord, ICapacityRepository, CachedDocumentDbCapacityRepository>(
+                services.AddVsoDocumentDbCollection<CapacityRecord, ICapacityRepository, CachedDocumentDbCapacityRepository>(
                     CachedDocumentDbCapacityRepository.ConfigureOptions);
                 services.TryAddSingleton<IManagedCache, InMemoryManagedCache>();
             }

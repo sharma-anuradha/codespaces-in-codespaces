@@ -83,9 +83,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 options.UseMultipleWriteLocations = false;
             });
 
-            services.AddDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
+            services.AddVsoDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
                 CosmosDbResourcePoolSettingsRepository.ConfigureOptions);
-            services.AddDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
+            services.AddVsoDocumentDbCollection<ResourcePoolStateSnapshotRecord, IResourcePoolStateSnapshotRepository, CosmosDbResourcePoolStateSnapshotRepository>(
                 CosmosDbResourcePoolStateSnapshotRepository.ConfigureOptions);
 
             services.AddSingleton<IServiceBusQueueClientProvider, ServiceBusQueueClientProvider>();

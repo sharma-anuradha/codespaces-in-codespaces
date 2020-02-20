@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Moq;
 using Xunit;
 using UsageDictionary = System.Collections.Generic.Dictionary<string, double>;
 
@@ -40,8 +41,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             var collectionOptions = new DocumentDbCollectionOptions();
             BillingEventRepository.ConfigureOptions(collectionOptions);
+            var optionsMonitor = new Mock<IOptionsMonitor<DocumentDbCollectionOptions>>();
+            optionsMonitor.Setup(o => o.Get(It.IsAny<string>())).Returns(collectionOptions);
             return new BillingEventRepository(
-                Options.Create(collectionOptions),
+                optionsMonitor.Object,
                 clientProvider,
                 healthProvider,
                 loggerFactory,
