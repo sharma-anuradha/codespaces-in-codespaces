@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 var userAppSettings = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "CEDev", "appsettings.json");
                 builder.AddJsonFile(AddAppSettingsJsonFile(userAppSettings), optional: true);
 
-                builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.local.json"), optional: false);
+                builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.local.json"), optional: true);
             }
 
             builder.AddEnvironmentVariables();
