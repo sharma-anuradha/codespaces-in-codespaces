@@ -43,7 +43,7 @@ namespace HeartBeat.Test
             var existingLastUpdate = handlerContext.CloudEnvironment.LastUsed;
 
             var environmentSessionData = CreateEnvironmentSessionDataObject();
-            environmentSessionData.Timestamp = existingLastUpdate.Value.AddSeconds(-30);
+            environmentSessionData.Timestamp = existingLastUpdate.AddSeconds(-30);
 
             await environmentSessionDataHandler.ProcessAsync(environmentSessionData, handlerContext, vmResourceId, logger);
             Assert.Equal(handlerContext.CloudEnvironment.LastUsed, existingLastUpdate);

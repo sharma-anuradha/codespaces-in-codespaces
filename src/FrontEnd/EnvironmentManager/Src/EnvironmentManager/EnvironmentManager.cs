@@ -358,7 +358,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Setup
                     cloudEnvironment.Id = Guid.NewGuid().ToString();
-                    cloudEnvironment.Created = cloudEnvironment.Updated = DateTime.UtcNow;
+                    cloudEnvironment.Created = cloudEnvironment.Updated = cloudEnvironment.LastUsed = DateTime.UtcNow;
 
                     // Static Environment
                     if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)

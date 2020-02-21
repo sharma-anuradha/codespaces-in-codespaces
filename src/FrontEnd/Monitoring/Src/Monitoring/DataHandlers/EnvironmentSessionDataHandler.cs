@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    cloudEnvironment.LastUpdatedByHeartBeat = environmentSessionData.Timestamp;
                    latestHeartbeatMonitor.UpdateHeartbeat(environmentSessionData.Timestamp);
 
-                   if (environmentSessionData.ConnectedSessionCount > 0 && (cloudEnvironment.LastUsed == null || cloudEnvironment.LastUsed < environmentSessionData.Timestamp))
+                   if (environmentSessionData.ConnectedSessionCount > 0 && (cloudEnvironment.LastUsed < environmentSessionData.Timestamp))
                    {
                        cloudEnvironment.LastUsed = environmentSessionData.Timestamp;
                    }
