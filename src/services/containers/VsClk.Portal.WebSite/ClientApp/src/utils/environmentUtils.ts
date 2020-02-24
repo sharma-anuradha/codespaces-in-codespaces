@@ -15,6 +15,7 @@ export function isEnvironmentAvailable(
         isDefined(local) &&
         isDefined(local.id) &&
         isDefined(local.connection) &&
+        isDefined(local.connection.sessionPath) &&
         local.state === StateInfo.Available
     );
 }
