@@ -3,7 +3,10 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Caching;
@@ -11,8 +14,9 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
 {
     /// <summary>
     /// A document repository of <see cref="IIdentityMapEntity"/>.
@@ -135,8 +139,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
             return map;
         }
 
+        /// <inheritdoc/>
+        public async Task<IdentityMapEntity> GetByUserIdSet(UserIdSet userIdSet, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                   @"SELECT * FROM c WHERE 
+                        c.profileProviderId = @profileProviderId or 
+                        c.canonicalUserId = @canonicalUserId or 
+                        c.profileId = @profileId",
+                   new SqlParameterCollection
+                   {
+                        new SqlParameter { Name = "@profileProviderId", Value = userIdSet.ProfileProviderId },
+                        new SqlParameter { Name = "@canonicalUserId", Value = userIdSet.CanonicalUserId },
+                        new SqlParameter { Name = "@profileId", Value = userIdSet.ProfileId },
+                   });
+
+            var maps = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<IdentityMapEntity>(uri, query, feedOptions).AsDocumentQuery(), logger);
+            return maps.FirstOrDefault();
+        }
+
         // Because updates can happen during token authentication, we won't wait
-        // for the udpate.
+        // for the update.
         private void RunBackgroundCreateOrUpdate(IIdentityMapEntity map, IDiagnosticsLogger logger)
         {
             // Pass in a copy to be updated, just ensure it is not externally mutated.

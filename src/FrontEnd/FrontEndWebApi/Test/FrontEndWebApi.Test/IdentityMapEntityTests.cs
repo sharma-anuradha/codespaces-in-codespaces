@@ -1,5 +1,5 @@
 ﻿using Microsoft.VsSaaS.Common.Identity;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap;
+using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test

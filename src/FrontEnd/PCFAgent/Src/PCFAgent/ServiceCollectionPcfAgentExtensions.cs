@@ -25,6 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
         public static IServiceCollection AddPcfAgent(this IServiceCollection services, Guid pcfAgentId, bool useMocksForLocalDevelopment)
         {
             services.AddHostedService<PcfAgentWorker>();
+            services.AddSingleton<IPrivacyDataManager, PrivacyDataManager>();
             services.AddSingleton<IPrivacyDataAgent, DataAgent>();
             services.AddTransient<CommandFeedLogger, DiagnosticsCommandFeedLogger>();
 

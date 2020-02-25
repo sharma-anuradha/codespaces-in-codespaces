@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap;
+using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;

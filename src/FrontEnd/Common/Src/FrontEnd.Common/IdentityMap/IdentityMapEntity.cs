@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.VsSaaS.Common.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
 {
     /// <inheritdoc/>
     public class IdentityMapEntity : TaggedEntity, IIdentityMapEntity

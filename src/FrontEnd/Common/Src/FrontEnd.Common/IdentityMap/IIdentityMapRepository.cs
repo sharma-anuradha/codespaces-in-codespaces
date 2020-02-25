@@ -5,8 +5,9 @@
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
 {
     /// <summary>
     /// A repository of <see cref="IIdentityMapEntity"/>.
@@ -41,5 +42,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The updated instance.</returns>
         Task<IIdentityMapEntity> BackgroundUpdateIfChangedAsync(IIdentityMapEntity map, string canonicalUserId, string profileId, string profileProviderId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Get an <see cref="IIdentityMapEntity"/> record by <see cref="UserIdSet"/>.
+        /// </summary>
+        /// <param name="userIdSet">The UserIdSet.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>The instance, or null.</returns>
+        Task<IdentityMapEntity> GetByUserIdSet(UserIdSet userIdSet, IDiagnosticsLogger logger);
     }
 }

@@ -16,7 +16,7 @@ using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap;
+using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using CommonAuthenticationConstants = Microsoft.VsSaaS.Common.Identity.AuthenticationConstants;
 

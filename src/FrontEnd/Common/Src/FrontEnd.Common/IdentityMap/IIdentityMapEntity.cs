@@ -4,7 +4,7 @@
 
 using Microsoft.VsSaaS.Common.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
 {
     /// <summary>
     /// A two-way mapping between the v1 <see cref="ProfileId"/> and the v2 <see cref="CanonicalUserId"/>.

@@ -5,7 +5,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.IdentityMap
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
 {
     /// <summary>
     /// <see cref="IServiceCollection"/> extensions for identity map.
