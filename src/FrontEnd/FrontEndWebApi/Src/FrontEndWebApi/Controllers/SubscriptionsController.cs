@@ -75,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <param name="resource">The PlanResource payload.</param>
         /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateValidateAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate")]
         public Task<IActionResult> PlanCreateValidateAsync(
             string subscriptionId,
@@ -92,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     {
                         var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
                             ? resource.Properties.UserId
-                            : GetUserIdFromClaims();
+                            : HttpContext.User.GetUserIdFromClaims();
 
                         ValidationUtil.IsRequired(subscriptionId);
                         ValidationUtil.IsRequired(resourceGroup);
@@ -149,8 +150,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <param name="resource">The PlanResource payload.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateAsync))]
         [HttpPut("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}")]
-        public Task<IActionResult> PlaneCreateAsync(
+        public Task<IActionResult> PlanCreateAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
@@ -164,7 +166,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
                         ? resource.Properties.UserId
-                        : GetUserIdFromClaims();
+                        : HttpContext.User.GetUserIdFromClaims();
 
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
@@ -222,6 +224,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and message.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateCompleteAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted")]
         public Task<IActionResult> PlanCreateCompleteAsync(
             string subscriptionId,
@@ -249,6 +252,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and message.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteValidateAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate")]
         public Task<IActionResult> PlanDeleteValidateAsync(
             string subscriptionId,
@@ -333,6 +337,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListAsync))]
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}")]
         public Task<IActionResult> PlanListAsync(
             string subscriptionId,
@@ -370,6 +375,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <returns>Returns an Http status code and a list of VSO SkuPlan objects filtering by subscriptionID.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListBySubscriptionAsync))]
         [HttpGet("{subscriptionId}/providers/{providerNamespace}/{resourceType}")]
         public Task<IActionResult> PlanListBySubscriptionAsync(
             string subscriptionId,
@@ -407,6 +413,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanGetValidateAsync))]
         [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate")]
         public Task<IActionResult> PlanGetValidateAsync(
             string subscriptionId,
@@ -435,6 +442,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <param name="resource">The plan resource.</param>
         /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanPatchValidateAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchValidate")]
         public Task<IActionResult> PlanPatchValidateAsync(
             string subscriptionId,
@@ -501,6 +509,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <param name="resource">The plan settings resource.</param>
         /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanPatchCompletedAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchCompleted")]
         public Task<IActionResult> PlanPatchCompletedAsync(
             string subscriptionId,
@@ -566,6 +575,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanReadEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readAllEnvironments")]
         public async Task<IActionResult> PlanReadEnvironmentsAsync(
             string subscriptionId,
@@ -624,6 +634,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanWriteEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeEnvironments")]
         public async Task<IActionResult> PlanWriteEnvironmentsAsync(
             string subscriptionId,
@@ -682,6 +693,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteAllEnvironments")]
         public async Task<IActionResult> PlanDeleteEnvironmentsAsync(
             string subscriptionId,
@@ -738,6 +750,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>A delegates list response object, or an error object indicating failure.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanReadDelegatesAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readDelegates")]
         public Task<IActionResult> PlanReadDelegatesAsync(
             string subscriptionId,
@@ -765,6 +778,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <param name="requestBody">The request body.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanWriteDelegatesAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeDelegates")]
         public async Task<IActionResult> PlanWriteDelegatesAsync(
             string subscriptionId,
@@ -843,6 +857,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteDelegatesAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteDelegates")]
         public Task<IActionResult> PlanDeleteDelegatesAsync(
             string subscriptionId,
@@ -904,33 +919,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>JsonResult.</returns>
         private static IActionResult CreateErrorResponse(string errorCode, string errorMessage = default, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
-            var errorResponse = new ResourceProviderErrorResponse
-            {
-                Error = new ResourceProviderErrorInfo
-                {
-                    Code = errorCode,
-                    Message = errorMessage,
-                },
-                Status = "Failed",
-            };
-
-            return new JsonResult(errorResponse)
-            {
-                StatusCode = (int)statusCode,
-            };
-        }
-
-        private string GetUserIdFromClaims()
-        {
-            var tid = HttpContext.User.FindFirstValue(CustomClaims.TenantId);
-            var oid = HttpContext.User.FindFirstValue(CustomClaims.OId);
-
-            if (string.IsNullOrEmpty(tid) || string.IsNullOrEmpty(oid))
-            {
-                return null;
-            }
-
-            return $"{tid}_{oid}";
+            return ResourceProviderErrorResponse.Create(errorCode, errorMessage, statusCode);
         }
     }
 }
