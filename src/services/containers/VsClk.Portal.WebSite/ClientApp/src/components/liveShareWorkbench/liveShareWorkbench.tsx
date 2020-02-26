@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
-import { URI } from 'vscode-web';
+import { vscode } from '../../utils/vscode';
+import { URI, IApplicationLink } from 'vscode-web';
 import { LiveShareExternalUriProvider } from '../../providers/externalUriProvider';
 
 import { ApplicationState } from '../../reducers/rootReducer';
@@ -16,6 +17,7 @@ export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: strin
 
 class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShareWorkbenchProps> {
     private resolveExternalUri: (uri: URI) => Promise<URI>;
+    private applicationLinksProvider: () => IApplicationLink[];
 
     constructor(props: LiveShareWorkbenchProps) {
         super(props);
@@ -23,6 +25,16 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
         const externalUriProvider = new LiveShareExternalUriProvider(props.sessionId);
         this.resolveExternalUri = (uri: URI): Promise<URI> => {
             return externalUriProvider.resolveExternalUri(uri);
+        };
+
+        this.applicationLinksProvider = () => {
+            const link: IApplicationLink = {
+                uri: vscode.URI.parse(
+                    `vsls:?action=join&workspaceId=${this.props.sessionId}&correlationId=null`
+                ),
+                label: 'Open in Desktop',
+            };
+            return [link];
         };
     }
 
@@ -43,11 +55,21 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
         // This is the folder URI format recognized by the LiveShare file system provider.
         const folderUri = `vsls:///?${this.props.sessionId}`;
 
+        const commands = [
+            {
+                id: '_liveshareweb.gotoSessionPage',
+                handler: () =>
+                    (window.location.href = `https://prod.liveshare.vsengsaas.visualstudio.com/join?${this.props.sessionId}`),
+            },
+        ];
+
         return (
             <ServerlessWorkbench
                 folderUri={folderUri}
                 extensionUrls={extensionUrls}
                 resolveExternalUri={this.resolveExternalUri}
+                applicationLinksProvider={this.applicationLinksProvider}
+                commands={commands}
             />
         );
     }

@@ -407,7 +407,7 @@ declare module 'vscode-web' {
         /**
          * @internal
          */
-        new (
+        new(
             scheme: string,
             authority?: string,
             path?: string,
@@ -419,12 +419,12 @@ declare module 'vscode-web' {
         /**
          * @internal
          */
-        new (components: UriComponents): IURI;
+        new(components: UriComponents): IURI;
 
         /**
          * @internal
          */
-        new (
+        new(
             schemeOrData: string | UriComponents,
             authority?: string,
             path?: string,
@@ -498,6 +498,41 @@ declare module 'vscode-web' {
          * @param options wether to open inside the current window or a new window.
          */
         open(workspace: IWorkspace, options?: { reuse?: boolean }): Promise<void>;
+    }
+
+    interface IApplicationLink {
+
+        /**
+         * A link that is opened in the OS. If you want to open VSCode it must
+         * follow our expected structure of links:
+         *
+         * <vscode|vscode-insiders>://<file|vscode-remote>/<remote-authority>/<path>
+         *
+         * For example:
+         *
+         * vscode://vscode-remote/vsonline+2005711d/home/vsonline/workspace for
+         * a remote folder in VSO or vscode://file/home/workspace for a local folder.
+         */
+        uri: URI;
+
+        /**
+         * A label for the application link to display.
+         */
+        label: string;
+    }
+
+    interface IHostCommand {
+
+        /**
+         * An identifier for the command. Commands can be executed from extensions
+         * using the `vscode.commands.executeCommand` API using that command ID.
+         */
+        id: string,
+
+        /**
+         * A function that is being executed with any arguments passed over.
+         */
+        handler: (...args: any[]) => void;
     }
 
     export interface IWorkbenchConstructionOptions {
@@ -588,6 +623,26 @@ declare module 'vscode-web' {
          * Experimental: Resolves an external uri before it is opened.
          */
         readonly resolveExternalUri?: (uri: URI) => Promise<URI>;
+
+        /**
+         * Provide entries for the "Open in Desktop" feature.
+         *
+         * Depending on the returned elements the behaviour is:
+         * - no elements: there will not be a "Open in Desktop" affordance
+         * - 1 element: there will be a "Open in Desktop" affordance that opens on click
+         *   and it will use the label provided by the link
+         * - N elements: there will be a "Open in Desktop" affordance that opens
+         *   a picker on click to select which application to open.
+         */
+        readonly applicationLinks?: readonly IApplicationLink[];
+
+        /**
+         * A set of optional commands that should be registered with the commands
+         * registry.
+         *
+         * Note: commands can be called from extensions if the identifier is known!
+         */
+        readonly commands?: readonly IHostCommand[];
     }
 
     export interface IWorkbench {

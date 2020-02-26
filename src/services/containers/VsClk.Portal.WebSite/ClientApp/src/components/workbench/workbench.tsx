@@ -1,7 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-import { IWorkbenchConstructionOptions, IWebSocketFactory, URI } from 'vscode-web';
+import {
+    IWorkbenchConstructionOptions,
+    IWebSocketFactory,
+    URI,
+    IApplicationLink,
+} from 'vscode-web';
 
 import { createTrace } from '../../utils/createTrace';
 import { getVSCodeVersion } from '../../constants';
@@ -29,10 +34,7 @@ import { UserDataProvider } from '../../utils/userDataProvider';
 
 import { vscode } from '../../utils/vscode';
 
-import {
-    ILocalCloudEnvironment,
-    ICloudEnvironment,
-} from '../../interfaces/cloudenvironment';
+import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
 import { telemetry } from '../../utils/telemetry';
 import { updateFavicon } from '../../utils/updateFavicon';
 import { defaultConfig } from '../../services/configurationService';
@@ -77,7 +79,7 @@ export interface WorkbenchProps {
     ) => ReturnType<typeof pollActivatingEnvironment>;
 }
 
-const logger = createTrace("WorkbenchView");
+const logger = createTrace('WorkbenchView');
 
 class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     constructor(props: WorkbenchProps, state: IWokbenchState) {
@@ -131,7 +133,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     }
 
     onCommandReceived = (command: any) => {
-        logger.info("Command received", command);
+        logger.info('Command received', command);
 
         if (command.data.command) {
             switch (command.data.command) {
@@ -368,6 +370,13 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
             return externalUriProvider.resolveExternalUri(uri);
         };
 
+        const link: IApplicationLink = {
+            uri: workspaceProvider.getApplicationUri(quality),
+            label: 'Open in Desktop',
+        };
+
+        const applicationLinks = [link];
+
         const config: IWorkbenchConstructionOptions = {
             workspaceProvider,
             remoteAuthority: `vsonline+${environmentInfo.id}`,
@@ -379,6 +388,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
             userDataProvider,
             resolveExternalUri,
             resolveCommonTelemetryProperties,
+            applicationLinks,
         };
 
         logger.info(`Creating workbench on #${this.workbenchRef}, with config: `, config);
@@ -390,7 +400,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     private renderWorkbench() {
         const { environmentInfo, SplashScreenComponent } = this.props;
 
-        if ( this.state.isCreating === undefined || !environmentInfo) {
+        if (this.state.isCreating === undefined || !environmentInfo) {
             return <Loader></Loader>;
         } else {
             if (

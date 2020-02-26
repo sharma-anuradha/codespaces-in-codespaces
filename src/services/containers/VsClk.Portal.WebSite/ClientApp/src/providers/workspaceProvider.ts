@@ -5,7 +5,7 @@ import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 export class WorkspaceProvider implements IWorkspaceProvider {
     public readonly workspace: IWorkspace;
 
-    constructor(params: URLSearchParams, environmentInfo: ICloudEnvironment) {
+    constructor(params: URLSearchParams, private environmentInfo: ICloudEnvironment) {
         const workspace = params.get('workspace');
         const folder = params.get('folder');
         const isEmpty = params.get('ew');
@@ -27,6 +27,22 @@ export class WorkspaceProvider implements IWorkspaceProvider {
             });
             this.workspace = { folderUri };
         }
+    }
+
+    public getApplicationUri(quality: string): URI {
+        const scheme = quality === 'insider' ? 'vscode-insiders' : 'vscode';
+        const uriPrefix = `${scheme}://vscode-remote/vsonline+${this.environmentInfo.id}`;
+        let path = "";
+
+        if (!this.workspace) {
+            path = this.environmentInfo.connection.sessionPath;
+        } else if (this.isFolderToOpen(this.workspace)) {
+            path = this.workspace.folderUri.path;
+        } else if (this.isWorkspaceToOpen(this.workspace)) {
+            path = this.workspace.workspaceUri.path;
+        }
+
+        return vscode.URI.parse(uriPrefix + path);
     }
 
     /**

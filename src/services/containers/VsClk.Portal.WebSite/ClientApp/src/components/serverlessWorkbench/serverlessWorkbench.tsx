@@ -2,7 +2,13 @@ import React, { Component } from 'react';
 import './serverlessWorkbench.css';
 
 import { vscode } from '../../utils/vscode';
-import { IWorkbenchConstructionOptions, URI, IURLCallbackProvider } from 'vscode-web';
+import {
+    IWorkbenchConstructionOptions,
+    URI,
+    IURLCallbackProvider,
+    IHostCommand,
+    IApplicationLink,
+} from 'vscode-web';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
 import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
@@ -20,6 +26,8 @@ export interface ServerlessWorkbenchProps {
     resolveExternalUri?: (uri: URI) => Promise<URI>;
     urlCallbackProvider?: IURLCallbackProvider;
     targetURLFactory?: (folderUri: URI) => URL | undefined;
+    applicationLinksProvider?: () => IApplicationLink[]; // URI cannot be used before initializing vscode and so this needs to be lazy.
+    commands?: IHostCommand[];
 }
 
 const managementFavicon = 'favicon.ico';
@@ -158,6 +166,10 @@ export class ServerlessWorkbench extends Component<
         staticExtensions = staticExtensions.concat(this.getBuiltinStaticExtensions());
 
         const { urlCallbackProvider = new UrlCallbackProvider() } = this.props;
+        const applicationLinks = this.props.applicationLinksProvider
+            ? this.props.applicationLinksProvider()
+            : undefined;
+        const commands = this.props.commands;
 
         const config: IWorkbenchConstructionOptions = {
             workspaceProvider,
@@ -167,6 +179,8 @@ export class ServerlessWorkbench extends Component<
             resolveExternalUri,
             resolveCommonTelemetryProperties,
             staticExtensions,
+            applicationLinks,
+            commands,
         };
 
         trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
