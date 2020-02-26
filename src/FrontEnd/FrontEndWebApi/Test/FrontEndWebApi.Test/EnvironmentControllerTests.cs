@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environme
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
@@ -79,6 +80,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.Equal(expectedEnvId, environment.Id);
             Assert.NotNull(environment.Connection);
             Assert.Equal(MockUtil.MockServiceUri, environment.Connection.ConnectionServiceUri);
+        }
+
+        public static TheoryData<string, string, string, Type> PlanAuthPlanIds = new TheoryData<string, string, string, Type>
+        {
+            { null,    null,   null,    typeof(OkObjectResult) }, // Not using plan access token => always OK
+            { null,    "Plan", "Plan",  typeof(OkObjectResult) }, // Not using plan access token and specifying plan => OK, but should query the plan
+
+            { "Token", null,   "Token", typeof(OkObjectResult) }, // Using plan access token => OK, but query should infer the plan
+            { "Token", "Plan", "Plan",  typeof(ForbidResult) },   // Using plan access token and specifying different plan => Never OK
+        };
+
+        [Theory]
+        [MemberData(nameof(PlanAuthPlanIds))]
+        public async Task EnvironmentController_ListAsync_PlanAuth(string tokenPlan, string queryParamPlan, string expectedPlanId, Type expectedResultType)
+        {
+            var mockEnv = MockUtil.MockCloudEnvironment();
+
+            var mockEnvManager = new Mock<IEnvironmentManager>();
+            mockEnvManager
+                .Setup(x => x.ListAsync(It.IsAny<IDiagnosticsLogger>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UserIdSet>()))
+                .ReturnsAsync(new[] { mockEnv })
+                .Callback((IDiagnosticsLogger logger, string planId, string name, UserIdSet userIdSet) =>
+                {
+                    Assert.Equal(expectedPlanId, planId);
+                });
+
+            var mockHttpContext = MockHttpContext.Create();
+            mockHttpContext.SetPlan(tokenPlan);
+
+            var environmentController = CreateTestEnvironmentsController(
+                environmentManager: mockEnvManager.Object,
+                httpContext: mockHttpContext);
+
+            var actionResult = await environmentController.ListAsync(name: null, planId: queryParamPlan, logger: logger);
+            Assert.IsType(expectedResultType, actionResult);
         }
 
         [Fact]

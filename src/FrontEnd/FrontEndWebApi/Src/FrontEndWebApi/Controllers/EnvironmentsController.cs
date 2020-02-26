@@ -154,6 +154,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromQuery]string planId,
             [FromServices]IDiagnosticsLogger logger)
         {
+            // In the case of a authentication using a plan access token, infer the plan from the token if not set
+            planId ??= HttpContext.GetPlan();
+
             if (HttpContext.IsPlanAuthorized(planId) == false)
             {
                 // Users with explicit access to a different plan do not have access to this plan.
