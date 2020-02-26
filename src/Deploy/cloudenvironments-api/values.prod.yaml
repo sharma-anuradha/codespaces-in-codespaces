@@ -26,3 +26,9 @@ backend-web-api:
   config:
     aspNetEnv: Production
     overrideAppSettingsJson: false
+
+# Config for port-forwarding
+port-forwarding-web-api:
+  config:
+    aspNetEnv: Production
+    overrideAppSettingsJson: false

@@ -20,3 +20,9 @@ backend-web-api:
   config:
     aspNetEnv: Development
     overrideAppSettingsJson: appsettings.dev-stg.json
+
+# Config for port-forwarding
+port-forwarding-web-api:
+  config:
+    aspNetEnv: Development
+    overrideAppSettingsJson: appsettings.dev-stg.json

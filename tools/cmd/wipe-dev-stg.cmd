@@ -24,6 +24,7 @@ REM echo %db_name%
 :delete_aks_deployments
 call :invoke: az aks get-credentials -g %stamp% -n %cluster% --overwrite-existing --subscription %subscription%
 call :invoke kubectl delete deployment "cloudenvironments-api-backend-web-api"
+call :invoke kubectl delete deployment "cloudenvironments-api-port-forwarding-web-api"
 call :invoke: kubectl delete deployment "cloudenvironments-api-frontend-web-api"
 
 :delete_frontend_data

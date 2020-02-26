@@ -24,3 +24,9 @@ backend-web-api:
   config:
     aspNetEnv: Staging
     overrideAppSettingsJson: appsettings.ppe-load.json
+
+# Config for port-forwarding
+port-forwarding-web-api:
+  config:
+    aspNetEnv: Staging
+    overrideAppSettingsJson: appsettings.ppe-load.json
