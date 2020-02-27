@@ -14,7 +14,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         public CookieConsentController() { }
 
         /// <summary>
-        /// Check country based on remote IP address and if necessary, retrieve resources to render on the cookie compliance banner.
+        /// Check locale based on remote IP address and if necessary, retrieve resources to render on the cookie compliance banner.
         /// </summary>
         /// <returns>MSCC cookie consent response</returns>
         [HttpGet("~/cookie-consent")]
