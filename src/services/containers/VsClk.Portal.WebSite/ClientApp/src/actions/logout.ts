@@ -40,10 +40,13 @@ export async function logout() {
 
     // clear cookie and auth cookie
     // tslint:disable: no-cookies
+    const exemptCookieList = ['MSCC'];
     var cookies = document.cookie.split(';');
     for (var i = 0; i < cookies.length; i++) {
         const cookieName = cookies[i].split('=')[0];
-        document.cookie = cookieName + '=;expires=Thu, 21 Sep 1979 00:00:01 UTC;';
+        if (!exemptCookieList.includes(cookieName.trim())) {
+            document.cookie = cookieName + '=;expires=Thu, 21 Sep 1979 00:00:01 UTC;';
+        }
     }
     // tslint:enable: no-cookies
 

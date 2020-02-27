@@ -27,6 +27,16 @@
         "import-name": false,
         "object-literal-shorthand": true,
         "use-simple-attributes": false,
-        "react-this-binding-issue": false
+        "react-this-binding-issue": false,
+        "react-no-dangerous-html": [
+            true,
+            [
+                {
+                    "file": "./src/components/login/login.tsx",
+                    "method": "<unknown>",
+                    "comment": "String comes from trusted source: Microsoft Cookie Consent"
+                }
+            ]
+        ]
     }
 }

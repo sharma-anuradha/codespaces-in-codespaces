@@ -19,7 +19,7 @@ import { Signal } from '../../utils/signal';
 import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
 
 import './login.css';
-import { blogPostUrl, pricingInfoUrl } from '../../constants';
+import { blogPostUrl, pricingInfoUrl, privacyStatementUrl } from '../../constants';
 import { createTrace } from '../../utils/createTrace';
 
 const trace = createTrace('Login');
@@ -44,8 +44,16 @@ function withAllowedSubdomain(targetUrl: URL) {
     return new URL(environmentsPath, location.origin).toString();
 }
 
+function addCookieConsentCookie() {
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const oneYearFromNow = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+    // tslint:disable-next-line:no-cookies
+    document.cookie = `MSCC=${currentTimestamp};expires=${oneYearFromNow.toString()};`;
+}
+
 const LoginPageSignInForm = (props: LoginProps) => {
     const loginClick = useCallback(() => {
+        addCookieConsentCookie(); // Workaround to add MSCC cookie for SPA
         props.login().catch((error) => {
             trace.error('Login failed', { error });
         });
@@ -88,6 +96,14 @@ const LoginPageSignInForm = (props: LoginProps) => {
                         </span>
                     </span>
                 </Link>
+                <Link className='login-page__learn-more' href={privacyStatementUrl}>
+                    <span className='login-page__learn-more'>
+                        <span>Privacy notice</span>
+                        <span>
+                            <Icon iconName='ChevronRight' className='login-page__learn-more-icon' />
+                        </span>
+                    </span>
+                </Link>
             </Stack.Item>
         </Fragment>
     );
@@ -115,6 +131,31 @@ const LoginForm = (props: LoginProps) => {
 
 // tslint:disable-next-line: max-func-body-length
 function LoginView(props: LoginProps) {
+    const [markupHtml, setMarkupHtml] = useState('');
+    useEffect(() => {
+        const cookieConsentSignal = Signal.from(
+            fetch('/cookie-consent', {
+                method: 'GET',
+            })
+        );
+
+        cookieConsentSignal.promise.then(
+            async (response) => {
+                const mscc = await response.json();
+                if (mscc) {
+                    setMarkupHtml(mscc.Markup);
+                }
+            },
+            () => {
+                // noop
+            }
+        );
+
+        return () => {
+            cookieConsentSignal.cancel();
+        };
+    }, [setMarkupHtml]);
+
     const [isAuthCookieSet, setIsAuthCookieSet] = useState(false);
 
     useEffect(() => {
@@ -161,8 +202,11 @@ function LoginView(props: LoginProps) {
         }
     }
 
+    const markup = { __html: markupHtml };
+
     return (
         <PortalLayout hideNavigation>
+            <div className='ms-Grid-row' dangerouslySetInnerHTML={markup}></div>
             <Stack
                 horizontalAlign='center'
                 verticalFill

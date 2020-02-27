@@ -35,3 +35,5 @@ export const expirationTimeBackgroundTokenRefreshThreshold = 3000;
 export const blogPostUrl = 'https://aka.ms/vso-landing';
 
 export const pricingInfoUrl = 'https://aka.ms/vso-pricing';
+
+export const privacyStatementUrl = 'https://aka.ms/privacy';
