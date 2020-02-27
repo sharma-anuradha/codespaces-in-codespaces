@@ -1,6 +1,6 @@
 export interface ICreationStep {
     name: ICreationStepName;
-    status: 'waiting' | 'locating' | 'found' | 'running' | 'skipped' | 'completed' | 'failed' | 'finalizing';
+    status: 'Pending' | 'Running' | 'Succeeded' | 'Failed';
 }
 
-export type ICreationStepName = 'configuration' | 'containerSetup' | 'environmentCreated'
+export type ICreationStepName = 'initializeEnvironment' | 'buildContainer' | 'runContainer'

@@ -6,16 +6,16 @@ export class SplashCommunicationProvider implements ICommunicationChannel {
     constructor(commandCallback:(message: any) => void) {
         this.stepsStatus = [
             {
-                name: 'configuration',
-                status: 'waiting',
+                name: 'initializeEnvironment',
+                status: 'Pending',
             },
             {
-                name: 'containerSetup',
-                status: 'waiting',
+                name: 'buildContainer',
+                status: 'Pending',
             },
             {
-                name: 'environmentCreated',
-                status: 'waiting',
+                name: 'runContainer',
+                status: 'Pending',
             },
         ];
 

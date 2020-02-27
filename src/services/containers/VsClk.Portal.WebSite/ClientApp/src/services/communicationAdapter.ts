@@ -23,8 +23,8 @@ export class CommunicationAdapter {
 
     public async connect(workspaceId: string) {
         this.communicationProvider.updateStep({
-            name: 'containerSetup',
-            status: 'running',
+            name: 'buildContainer',
+            status: 'Running',
         });
         const token = await authService.getCachedToken();
         const workspaceClient = await this.envConnector.connectWithRetry(
@@ -39,8 +39,8 @@ export class CommunicationAdapter {
         } else {
             trace('Workspace client did not initialize correctly');
             this.communicationProvider.updateStep({
-                name: 'containerSetup',
-                status: 'failed',
+                name: 'buildContainer',
+                status: 'Failed',
             });
         }
     }
@@ -59,8 +59,8 @@ export class CommunicationAdapter {
         } catch (error) {
             trace('No running terminals found');
             this.communicationProvider.updateStep({
-                name: 'containerSetup',
-                status: 'failed',
+                name: 'buildContainer',
+                status: 'Failed',
             });
         }
 
@@ -77,15 +77,15 @@ export class CommunicationAdapter {
                 channel.onClosed(() => {
                     trace('Channel closed');
                     this.communicationProvider.updateStep({
-                        name: 'containerSetup',
-                        status: 'completed',
+                        name: 'buildContainer',
+                        status: 'Succeeded',
                     });
                 });
             } catch (e) {
                 trace('Exception on ssh communication');
                 this.communicationProvider.updateStep({
-                    name: 'containerSetup',
-                    status: 'failed',
+                    name: 'buildContainer',
+                    status: 'Failed',
                 });
             }
         }

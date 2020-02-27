@@ -163,25 +163,17 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
         // We create the custom splash screen on creation only.
         if (this.communicationProvider && !this.state.isEnvironmentInfoReady) {
             this.communicationProvider.updateStep({
-                name: 'configuration',
-                status: 'locating',
+                name: 'initializeEnvironment',
+                status: 'Succeeded',
             });
             this.setState({ isEnvironmentInfoReady: true });
-        }
-
-        // Got environment record
-        if (this.communicationProvider && !this.hasConnectionStarted) {
-            this.communicationProvider.updateStep({
-                name: 'configuration',
-                status: 'found',
-            });
         }
 
         if (isEnvironmentAvailable(environmentInfo)) {
             if (this.communicationProvider) {
                 this.communicationProvider.updateStep({
-                    name: 'environmentCreated',
-                    status: 'completed',
+                    name: 'runContainer',
+                    status: 'Succeeded',
                 });
                 this.communicationProvider.postEnvironmentId(environmentInfo.id);
             }
@@ -209,8 +201,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
                     communicationAdapter.connect(environmentInfo.connection.sessionId);
                 } else {
                     this.communicationProvider.updateStep({
-                        name: 'containerSetup',
-                        status: 'skipped',
+                        name: 'buildContainer',
+                        status: 'Succeeded',
                     });
                 }
             }
@@ -240,12 +232,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     pollForActivatingEnvironment(environmentInfo: ILocalCloudEnvironment) {
         if (isActivating(environmentInfo)) {
             if (this.communicationProvider && !this.state.isEnvironmentFinalizing) {
-                const stepStatus = this.communicationProvider.getStepStatus('containerSetup');
+                const stepStatus = this.communicationProvider.getStepStatus('buildContainer');
                 if (stepStatus && (stepStatus === 'completed' || stepStatus === 'skipped')) {
-                    this.communicationProvider.updateStep({
-                        name: 'environmentCreated',
-                        status: 'finalizing',
-                    });
                     this.setState({ isEnvironmentFinalizing: true });
                 }
             }
