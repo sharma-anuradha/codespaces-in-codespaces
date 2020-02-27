@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 Name = resourceName,
             };
 
-            var plan = (await PlanManager.GetAsync(planId, logger)).VsoPlan;
+            var plan = await PlanManager.GetAsync(planId, logger);
             if (plan == null || !currentUserIdSet.EqualsAny(plan.UserId))
             {
                 return NotFound();

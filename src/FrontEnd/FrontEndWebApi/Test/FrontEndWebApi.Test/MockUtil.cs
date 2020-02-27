@@ -334,10 +334,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             moq
                 .Setup(obj => obj.GetAsync(It.IsAny<VsoPlanInfo>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
-                .Returns(async () => new PlanManagerServiceResult
-                {
-                    VsoPlan = await getPlan(),
-                });
+                .Returns(getPlan());
 
             return moq.Object;
         }
@@ -357,7 +354,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         public static async Task<VsoPlan> GeneratePlan(
             string planName = "Test",
-            string userId = null)
+            string userId = null,
+            AzureLocation location = AzureLocation.WestUs2)
         {
             var model = new VsoPlan
             {
@@ -366,7 +364,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Name = planName,
                     ResourceGroup = "myRG",
                     Subscription = Guid.NewGuid().ToString(),
-                    Location = AzureLocation.WestUs2
+                    Location = location,
                 },
                 UserId = userId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,
             };

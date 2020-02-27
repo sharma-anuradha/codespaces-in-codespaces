@@ -51,11 +51,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <summary>
         /// Gets the plan from the database.
         /// </summary>
+        /// <remarks>
+        /// The <see cref="VsoPlanInfo.Location"/> property is not considered in the lookup.
+        /// </remarks>
         /// <param name="plan">The plan identity.</param>
         /// <param name="logger">The IDiagnosticsLogger.</param>
         /// <param name="includeDeleted">If deleted plans need to be included in the result.</param>
-        /// <returns>The requested plan or error code if not found.</returns>
-        Task<PlanManagerServiceResult> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger, bool includeDeleted = false);
+        /// <returns>The requested plan or null if not found.</returns>
+        Task<VsoPlan> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger, bool includeDeleted = false);
 
         /// <summary>
         /// Deletes the plan from the database.
@@ -71,6 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="userIdSet">The user id.</param>
         /// <param name="subscriptionId">The subscription id.</param>
         /// <param name="resourceGroup">The resource group.</param>
+        /// <param name="name">The name.</param>
         /// <param name="logger">The IDiagnosticsLogger.</param>
         /// <param name="includeDeleted">If deleted plans need to be included.</param>
         /// <returns>The list of plans.</returns>

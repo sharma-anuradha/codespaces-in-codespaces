@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 return result;
             }
 
-            var savedModel = (await GetAsync(model.Plan, logger, true)).VsoPlan;
+            var savedModel = await GetAsync(model.Plan, logger, true);
             if (savedModel != null)
             {
                 // Overwritting the original model and re-saving with the old id
@@ -105,30 +105,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public async Task<PlanManagerServiceResult> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger, bool includeDeleted = false)
+        public async Task<VsoPlan> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger, bool includeDeleted = false)
         {
             ValidationUtil.IsRequired(plan, nameof(VsoPlanInfo));
 
-            // TODO: just return the VsoPlan and not the PlanManagerServiceResult
-            // If null then PlanDoesNotExist
-            var innerPlan = (await planRepository.GetWhereAsync(
-                    (model) => model.Plan == plan, logger, null)).SingleOrDefault();
-            if (!includeDeleted && innerPlan?.IsDeleted == true)
-            {
-                innerPlan = null;
-            }
-
-            var result = new PlanManagerServiceResult
-            {
-                VsoPlan = innerPlan,
-            };
-
-            if (result.VsoPlan == null)
-            {
-                result.ErrorCode = Contracts.ErrorCodes.PlanDoesNotExist;
-            }
-
-            return result;
+            return (await ListAsync(
+                userIdSet: null,
+                subscriptionId: plan.Subscription,
+                resourceGroup: plan.ResourceGroup,
+                name: plan.Name,
+                logger,
+                includeDeleted)).SingleOrDefault();
         }
 
         /// <inheritdoc/>

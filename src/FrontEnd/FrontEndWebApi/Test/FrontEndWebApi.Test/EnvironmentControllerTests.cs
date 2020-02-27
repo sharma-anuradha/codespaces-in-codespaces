@@ -120,14 +120,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_CloudEnvironmentAsync()
         {
+            var plan = await MockUtil.GeneratePlan();
+
             var body = new CreateCloudEnvironmentBody
             {
                 FriendlyName = "test-environment",
-                PlanId = (await MockUtil.GeneratePlan()).Plan.ResourceId,
+                PlanId = plan.Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
                 SkuName = "testSkuName",
-                Location = "WestUs2",
             };
 
             var environmentController = CreateTestEnvironmentsController();
@@ -139,6 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var environment = (CloudEnvironmentResult)((ObjectResult)actionResult).Value;
             Assert.NotNull(environment.Connection);
             Assert.Equal(MockUtil.MockServiceUri, environment.Connection.ConnectionServiceUri);
+            Assert.Equal(plan.Plan.Location.ToString(), environment.Location);
         }
 
         public static TheoryData<Uri> CreateEnvironmentUrls = new TheoryData<Uri>
@@ -158,7 +160,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
                 SkuName = "testSkuName",
-                Location = "WestUs2",
             };
 
             var mockHttpContext = MockUtil.MockHttpContextFromUri(uri);
@@ -222,9 +223,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             foreach (var item in skuCatalog.EnabledInternalHardware())
             {
                 var skuName = item.Key;
-                var sku = item.Value;
-                var location = AzureLocation.WestUs2.ToString();
-                var body = await CreateBodyAsync(skuName, location);
+                var body = await CreateBodyAsync(skuName);
                 var actionResult = await environmentController.CreateAsync(body, logger);
                 Assert.IsType<CreatedResult>(actionResult);
             }
@@ -241,12 +240,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             foreach (var item in skuCatalog.EnabledInternalHardware().Where((sku) => sku.Value.ComputeOS == ComputeOS.Windows))
             {
                 var skuName = item.Key;
-                var sku = item.Value;
-                var location = AzureLocation.WestUs2.ToString();
-                var body = await CreateBodyAsync(skuName, location);
+                var body = await CreateBodyAsync(skuName);
                 var actionResult = await environmentController.CreateAsync(body, logger);
                 Assert.IsType<BadRequestObjectResult>(actionResult);
             }
+        }
+
+        [Fact]
+        public async Task EnvironmentController_CloudEnvironmentAsync_RedirectResult()
+        {
+            var skuCatalog = LoadSkuCatalog("prod-rel");
+
+            var planManager = MockUtil.MockPlanManager(() => MockUtil.GeneratePlan(location: AzureLocation.EastUs));
+
+            var environmentController = CreateTestEnvironmentsController(
+                skuCatalog: skuCatalog,
+                planManager: planManager);
+
+            var skuName = skuCatalog.CloudEnvironmentSkus.Keys.FirstOrDefault();
+
+            // Redirect location
+            var body = await CreateBodyAsync(skuName);
+            var actionResult = await environmentController.CreateAsync(body, logger);
+            Assert.IsType<RedirectResult>(actionResult);
         }
 
         [Fact]
@@ -263,18 +279,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var skuName = skuCatalog.CloudEnvironmentSkus.Keys.FirstOrDefault();
 
-            // Redirect location
-            var body = await CreateBodyAsync(skuName, AzureLocation.EastUs.ToString());
-            var actionResult = await environmentController.CreateAsync(body, logger);
-            Assert.IsType<RedirectResult>(actionResult);
-
             // Not supported location
-            body = await CreateBodyAsync(skuName, AzureLocation.AustraliaCentral.ToString());
-            actionResult = await environmentController.CreateAsync(body, logger);
+            var body = await CreateBodyAsync(skuName);
+            var actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<BadRequestObjectResult>(actionResult);
 
             // Not supported SKU
-            body = await CreateBodyAsync("bad-sku", AzureLocation.WestUs2.ToString());
+            body = await CreateBodyAsync("bad-sku");
             actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<BadRequestObjectResult>(actionResult);
         }
@@ -471,7 +482,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             }
         }
 
-        private async Task<CreateCloudEnvironmentBody> CreateBodyAsync(string skuName, string location)
+        private async Task<CreateCloudEnvironmentBody> CreateBodyAsync(string skuName)
         {
             return new CreateCloudEnvironmentBody
             {
@@ -480,7 +491,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
                 SkuName = skuName,
-                Location = location,
             };
         }
 

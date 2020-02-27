@@ -65,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// <summary>
         /// Gets or sets the azure location for this environment.
         /// </summary>
+        [Obsolete("This is now implied by Plan", false)]
         public string Location { get; set; }
 
         /// <summary>
@@ -73,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         public string SkuName { get; set; }
 
         /// <summary>
-        /// Gets or sets the fully-qualified Azure resource id of the Account object.
+        /// Gets or sets the fully-qualified Azure resource id of the Plan object.
         /// </summary>
         public string PlanId { get; set; }
 

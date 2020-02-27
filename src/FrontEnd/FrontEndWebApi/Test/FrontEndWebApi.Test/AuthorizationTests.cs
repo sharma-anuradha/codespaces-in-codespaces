@@ -170,7 +170,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 AutoShutdownDelayMinutes = 5,
                 Type = CloudEnvironmentType.CloudEnvironment.ToString(),
                 SkuName = "testSkuName",
-                Location = "WestUs2",
             };
 
             var uri = new Uri(MockServiceUri);

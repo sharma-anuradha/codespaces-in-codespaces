@@ -150,10 +150,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         public async Task GetPlan()
         {
             var original = (await planManager.CreateAsync(GeneratePlan("GetPlanTest"), logger)).VsoPlan;
-            var savedModel = (await planManager.GetAsync(original.Plan, logger)).VsoPlan;
+            var savedModel = await planManager.GetAsync(original.Plan, logger);
             Assert.NotNull(savedModel);
             Assert.NotNull(savedModel.Id);
             Assert.Equal(original, savedModel);
+        }
+
+        [Fact]
+        public async Task GetPlanWithoutLocationProperty()
+        {
+            var plan = (await planManager.CreateAsync(GeneratePlan("GetPlanTest"), logger)).VsoPlan;
+
+            var lookupPlan = GeneratePlan("GetPlanTest");
+            lookupPlan.Plan.Location = default;
+
+            var savedModel = await planManager.GetAsync(lookupPlan.Plan, logger);
+            Assert.NotNull(savedModel);
+            Assert.NotNull(savedModel.Id);
+            Assert.Equal(plan.Plan.ResourceId, savedModel.Plan.ResourceId);
         }
 
         [Fact]
@@ -161,14 +175,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         {
             var vsoPlan = GeneratePlan("GetPlanTest");
             var getResult = await planManager.GetAsync(vsoPlan.Plan, logger);
-            Assert.Equal(ErrorCodes.PlanDoesNotExist, getResult.ErrorCode);
+            Assert.Null(getResult);
         }
 
         [Fact]
         public async Task UpdatePlan()
         {
             var original = (await planManager.CreateAsync(GeneratePlan("UpdatePlanTest"), logger)).VsoPlan;
-            var savedModel = (await planManager.GetAsync(original.Plan, logger)).VsoPlan;
+            var savedModel = await planManager.GetAsync(original.Plan, logger);
             savedModel.SkuPlan = new Sku { Name = "Private" };
             var updatedModel = await planManager.CreateAsync(savedModel, logger);
             Assert.Equal(savedModel, updatedModel.VsoPlan);
@@ -183,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             Assert.True(result);
 
             var deleted = await planManager.GetAsync(savedModel.Plan, logger);
-            Assert.Null(deleted.VsoPlan);
+            Assert.Null(deleted);
         }
 
         [Fact]
@@ -195,7 +209,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
 
             // If we consider deleted plans, we can still find them.
             var deleted = await planManager.GetAsync(savedModel.Plan, logger, includeDeleted: true);
-            Assert.True(deleted.VsoPlan.IsDeleted);
+            Assert.NotNull(deleted);
+            Assert.True(deleted.IsDeleted);
         }
 
         [Fact]

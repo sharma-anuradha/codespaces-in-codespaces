@@ -352,18 +352,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var regex = new Regex(@"^[-\w\._\(\) ]{1,90}$", RegexOptions.IgnoreCase);
             ValidationUtil.IsTrue(regex.IsMatch(envName));
 
-            // SkuPlan ID required and valid.
-            ValidationUtil.IsRequired(createEnvironmentInput.PlanId, nameof(createEnvironmentInput.PlanId));
-            ValidationUtil.IsTrue(VsoPlanInfo.TryParse(createEnvironmentInput.PlanId, out _), "Invalid plan ID.");
-
             var cloudEnvironment = Mapper.Map<CreateCloudEnvironmentBody, CloudEnvironment>(createEnvironmentInput);
             ValidationUtil.IsRequired(createEnvironmentInput.SkuName, nameof(createEnvironmentInput.SkuName));
 
+            cloudEnvironment.PlanId ??= HttpContext.GetPlan();
+            ValidationUtil.IsRequired(cloudEnvironment.PlanId, nameof(CloudEnvironment.PlanId));
+
+            // Validate that the specified plan ID is well-formed.
+            ValidationUtil.IsTrue(
+                VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out var plan),
+                $"Invalid plan ID: {cloudEnvironment.PlanId}");
+
+            // Validate the plan exists (and lookup the plan details).
+            var planDetails = await PlanManager.GetAsync(plan, logger);
+            ValidationUtil.IsTrue(planDetails != null, $"Plan {cloudEnvironment.PlanId} not found.");
+
+            if (!AuthorizePlanAccess(planDetails, PlanAccessTokenScopes.WriteEnvironments, logger))
+            {
+                return new ForbidResult();
+            }
+
             // Reroute to correct location if needed
-            var owningStamp = default(IControlPlaneStampInfo);
             try
             {
-                owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(cloudEnvironment.Location);
+                var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(planDetails.Plan.Location);
                 if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
                 {
                     return RedirectToLocation(owningStamp);
@@ -371,10 +383,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
             catch (NotSupportedException)
             {
-                var message = $"{HttpStatusCode.BadRequest}: The requested location is not supported: {cloudEnvironment.Location}";
+                var message = $"{HttpStatusCode.BadRequest}: The requested location is not supported: {planDetails.Plan.Location}";
                 logger.AddReason(message);
                 return BadRequest(message);
             }
+
+            cloudEnvironment.Location = planDetails.Plan.Location;
 
             var currentUserProfile = CurrentUserProvider.GetProfile();
             var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
@@ -402,23 +416,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not available in location: {cloudEnvironment.Location}";
                 logger.AddReason(message);
                 return BadRequest(message);
-            }
-
-            ValidationUtil.IsRequired(cloudEnvironment.PlanId, nameof(CloudEnvironment.PlanId));
-
-            // Validate that the specified plan ID is well-formed.
-            ValidationUtil.IsTrue(
-                VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out var plan),
-                $"Invalid plan ID: {cloudEnvironment.PlanId}");
-
-            // Validate the plan exists (and lookup the plan details).
-            plan.Location = cloudEnvironment.Location;
-            var planDetails = (await PlanManager.GetAsync(plan, logger)).VsoPlan;
-            ValidationUtil.IsTrue(planDetails != null, $"Plan {cloudEnvironment.PlanId} not found.");
-
-            if (!AuthorizePlanAccess(planDetails, PlanAccessTokenScopes.WriteEnvironments, logger))
-            {
-                return new ForbidResult();
             }
 
             var cloudEnvironmentOptions = new CloudEnvironmentOptions();
