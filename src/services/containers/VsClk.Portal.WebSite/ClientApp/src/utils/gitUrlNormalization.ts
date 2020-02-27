@@ -1,14 +1,21 @@
+import { evaluateFeatureFlag, azureDevOpsOAuth } from "./featureSet";
+
 export enum SupportedGitService {
     Unknown,
     GitHub = 'github.com',
     BitBucket = 'bitbucket.org',
     GitLab = 'gitlab.com',
+    AzureDevOps = 'dev.azure.com',
 }
 
 export function getSupportedGitService(url: string): SupportedGitService {
     const parsedUrl = new URL(url);
     if (parsedUrl.host.startsWith('www.')) {
         parsedUrl.host = parsedUrl.host.substr('www.'.length);
+    }
+
+    if (parsedUrl.host.endsWith(SupportedGitService.AzureDevOps) || parsedUrl.host.endsWith(".visualstudio.com")) {
+        return SupportedGitService.AzureDevOps;
     }
 
     switch (parsedUrl.host) {
@@ -53,8 +60,11 @@ export function isRecognizedGitUrl(maybeUrl: string): boolean {
         }
 
         const service = getSupportedGitService(maybeUrl);
-        if (service === SupportedGitService.Unknown) {
+        if (service === SupportedGitService.Unknown || (service === SupportedGitService.AzureDevOps && !evaluateFeatureFlag(azureDevOpsOAuth))) {
             return false;
+        }
+        if (service === SupportedGitService.AzureDevOps) {
+            return true;
         }
 
         if (!isMinimalSupportedPath(parsedUrl)) {
@@ -183,6 +193,19 @@ export function getQueryableUrl(maybeUrl: string): string | undefined {
                 // GitLab expects the repository name to be url encoded (or it's ID)
                 `/api/v4/projects/${encodeURIComponent(repositoryName)}`,
                 'https://gitlab.com'
+            );
+            return queryableUrl.toString();
+        }
+
+        // Azure DevOps API docs
+        //
+        //      https://docs.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list?view=azure-devops-rest-5.1
+        //
+        case SupportedGitService.AzureDevOps: {
+            const repositoryName = getRepositoryName(url);
+            const queryableUrl = new URL(
+                `/${encodeURIComponent(repositoryName)}/_apis/git/repositories?api-version=5.1`,
+                'https://dev.azure.com'
             );
             return queryableUrl.toString();
         }

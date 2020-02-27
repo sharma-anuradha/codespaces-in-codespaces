@@ -35,6 +35,7 @@ config:
   liveShareEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com
   liveShareWebExtensionEndpoint: https://vslsprod.blob.core.windows.net/webextension
   githubClientId: 15a84bcaef36dd681c52
+  azDevClientId: 282DE6CF-8729-4112-A472-CFB80960C5CD
 
 azure-secrets:
   # vsclk-core-dev

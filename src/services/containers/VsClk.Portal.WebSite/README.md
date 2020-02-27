@@ -56,18 +56,20 @@ cd ClientApp
 yarn watch:client
 ```
 
-### GitHub Auth working locally.
+### GitHub (or) Azure DevOps Auth working locally.
 
 Run `yarn update-github-secret` from ClientApp folder.
 > You have to be logged in with azure cli for the script to work.
 
 Or manually:
 
-You need to get `Local-Config-GitHubAppClientSecret` from our dev azure keyvault (`vsclk-online-dev-kv` in `vsclk-core-dev` subscription) into `appsettings.secrets.json` file in Portal.
+You need to get `Local-Config-GitHubAppClientSecret` and `Local-Config-AzDevAppClientSecret` from our dev azure keyvault (`vsclk-online-dev-kv` in `vsclk-core-dev` subscription) into `appsettings.secrets.json` file in Portal.
 
 Azure Cli:
 ```sh
 az keyvault secret show --name "Local-Config-GitHubAppClientSecret" --vault-name "vsclk-online-dev-kv" --sub "vsclk-core-dev"
+
+az keyvault secret show --name "Local-Config-AzDevAppClientSecret" --vault-name "vsclk-online-dev-kv" --sub "vsclk-core-dev"
 ```
 
 Once you're done, the `appsettings.secrets.json` file should look something like this.
@@ -75,6 +77,7 @@ Once you're done, the `appsettings.secrets.json` file should look something like
 ```json
 {
   "AppSettings": {
+    "AzDevAppClientSecret":"eyJ0...",
     "GitHubAppClientSecret":"460b..."
   }
 }

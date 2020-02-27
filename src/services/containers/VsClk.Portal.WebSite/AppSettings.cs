@@ -19,6 +19,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         public string GitHubAppClientSecret { get; set; }
 
+        // AzureDevOps application configuration
+        public string AzDevAppClientId { get; set; }
+
+        public string AzDevAppClientSecret { get; set; }
+
         public string LiveShareEndpoint { get; set; }
 
         public string LiveShareWebExtensionEndpoint { get; set; }

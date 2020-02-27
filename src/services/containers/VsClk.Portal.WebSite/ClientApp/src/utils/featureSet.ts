@@ -1,9 +1,10 @@
 
 export const customContainers = 'customContainers';
+export const azureDevOpsOAuth = 'azureDevOpsOAuth';
 
 const stableFeatures: string[] = [customContainers];
 
-const insiderFeatures: string[] = [];
+const insiderFeatures: string[] = [azureDevOpsOAuth];
 
 export function getFeatureSet() : string
 {
