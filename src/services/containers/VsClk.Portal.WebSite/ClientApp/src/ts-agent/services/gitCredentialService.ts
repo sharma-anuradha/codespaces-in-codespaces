@@ -5,7 +5,7 @@ import * as vsls from '../contracts/VSLS';
 import { createTrace, maybePii } from '../../utils/createTrace';
 import { getGitHubAccessToken } from '../../services/gitHubAuthenticationService';
 import { getAzDevAccessToken } from '../../services/azDevAuthenticationService';
-import { SupportedGitService } from '../../utils/gitUrlNormalization';
+import { SupportedGitService, getSupportedGitServiceByHost } from '../../utils/gitUrlNormalization';
 
 export const trace = createTrace('GitCredentialService');
 
@@ -38,7 +38,7 @@ export class GitCredentialService {
             if (fillRequest.protocol === 'https' || fillRequest.protocol === 'http') {
                 trace.verbose('Resolving ' + fillRequest.host + ' credential.');
 
-                const token = await this.getTokenByHost(fillRequest.host);
+                const token = await this.getTokenByHost(getSupportedGitServiceByHost(fillRequest.host));
 
                 if (token) {
                     trace.verbose('Filled credential.', maybePii(fillRequest));
@@ -53,8 +53,8 @@ export class GitCredentialService {
         });
     }
 
-    private async getTokenByHost(host: string | undefined): Promise<string | null> {
-        switch (host) {
+    private async getTokenByHost(supportedGitService: SupportedGitService): Promise<string | null> {
+        switch (supportedGitService) {
             case SupportedGitService.GitHub:
                 return await getGitHubAccessToken();
             case SupportedGitService.AzureDevOps:

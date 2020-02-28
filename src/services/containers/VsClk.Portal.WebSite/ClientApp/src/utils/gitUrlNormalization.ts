@@ -8,17 +8,21 @@ export enum SupportedGitService {
     AzureDevOps = 'dev.azure.com',
 }
 
-export function getSupportedGitService(url: string): SupportedGitService {
-    const parsedUrl = new URL(url);
-    if (parsedUrl.host.startsWith('www.')) {
-        parsedUrl.host = parsedUrl.host.substr('www.'.length);
+export function getSupportedGitServiceByHost(host: string | undefined): SupportedGitService {
+    if (!host) {
+        return SupportedGitService.Unknown;
     }
 
-    if (parsedUrl.host.endsWith(SupportedGitService.AzureDevOps) || parsedUrl.host.endsWith(".visualstudio.com")) {
+    if (host.startsWith('www.')) {
+        host = host.substr('www.'.length);
+    }
+
+    if (host.endsWith(SupportedGitService.AzureDevOps) ||
+        (host.endsWith(".visualstudio.com") && host !== "online.visualstudio.com")) {
         return SupportedGitService.AzureDevOps;
     }
 
-    switch (parsedUrl.host) {
+    switch (host) {
         case SupportedGitService.GitHub:
             return SupportedGitService.GitHub;
 
@@ -31,6 +35,11 @@ export function getSupportedGitService(url: string): SupportedGitService {
         default:
             return SupportedGitService.Unknown;
     }
+}
+
+export function getSupportedGitService(url: string): SupportedGitService {
+    const parsedUrl = new URL(url);
+    return getSupportedGitServiceByHost(parsedUrl.host);
 }
 
 function isGitHubRepositoryName(repositoryName: string) {
@@ -110,8 +119,7 @@ export function isRecognizedGitUrl(maybeUrl: string): boolean {
         // Pull requests are in the form of:
         //      https://github.com/vsls-contrib/test/pull/18
         const [org, repository, type, ...rest] = path.split('/');
-        if (type === 'commit' || type === 'tree')
-        {
+        if (type === 'commit' || type === 'tree') {
             if (
                 isGitHubRepositoryName(`${org}/${repository}`) &&
                 rest.length >= 1
