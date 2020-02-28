@@ -187,6 +187,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
 
             logger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken)
                 .FluentAddValue("HandlerBasePostStatus", result.Status)
+                .FluentAddValue("HandlerBasePostErrorReason", result.ErrorReason)
                 .FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
 
             return result;
