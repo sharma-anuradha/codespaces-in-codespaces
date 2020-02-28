@@ -3,10 +3,12 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Client;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace SignalService.Client.CLI
 {
@@ -20,6 +22,17 @@ namespace SignalService.Client.CLI
         protected override Task OnStartedAsync()
         {
             HubClient = new HubClient(CreateHubConnection(), TraceSource);
+
+            var stopWatch = Stopwatch.StartNew();
+            AsyncEventHandler handler = null;
+            handler = (s, e) =>
+            {
+                TraceSource.Verbose($"Connected in:{stopWatch.ElapsedMilliseconds} (ms)");
+                HubClient.ConnectionStateChanged -= handler;
+                return Task.CompletedTask;
+            };
+
+            HubClient.ConnectionStateChanged += handler;
             HubClient.StartAsync(DisposeToken).Forget();
 
             OnHubCreated();

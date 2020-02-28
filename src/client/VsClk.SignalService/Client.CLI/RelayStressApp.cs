@@ -3,24 +3,31 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Client;
 using Microsoft.VsCloudKernel.SignalService.Common;
+using StreamJsonRpc;
 
 namespace SignalService.Client.CLI
 {
     internal class RelayStressApp : SignalRAppBase
     {
+        private const string TypeJsonRpc = "json-rpc";
+        private const string Method1 = "method1";
+
         private int sizeInKilobytes = 1000;
         private int chunkBytes = 2048;
         private bool useSameService = false;
         private string clientHubServiceUri;
         private string currentHubId;
+        private int jsonRpcCount = 1000;
 
         protected override Task DiposeAsync()
         {
@@ -37,13 +44,13 @@ namespace SignalService.Client.CLI
                 Utils.ReadStringValue("Client Service uri", ref this.clientHubServiceUri);
 
                 var hubId = Guid.NewGuid().ToString();
-                var hubEndpointHost = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(), TraceSource, DisposeToken);
+                var hubEndpointHost = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
                 RelayHubEndpoint hubEndpointClient = null;
 
                 TraceSource.Info($"Creating client hub...");
                 while (!DisposeToken.IsCancellationRequested)
                 {
-                    var hubEndpoint = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(this.clientHubServiceUri), TraceSource, DisposeToken);
+                    var hubEndpoint = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(this.clientHubServiceUri), HubProxyOptions, TraceSource, DisposeToken);
                     if ((this.useSameService && hubEndpointHost.ServiceId == hubEndpoint.ServiceId) ||
                         (!this.useSameService && hubEndpointHost.ServiceId != hubEndpoint.ServiceId))
                     {
@@ -77,7 +84,7 @@ namespace SignalService.Client.CLI
                 Utils.ReadIntValue("Enter size in KB:", ref this.sizeInKilobytes);
                 Utils.ReadIntValue("Enter chunk size:", ref this.chunkBytes);
 
-                var hubEndpoint = await RelayHubEndpoint.CreateAsync(this.currentHubId, CreateHubConnection(), TraceSource, DisposeToken);
+                var hubEndpoint = await RelayHubEndpoint.CreateAsync(this.currentHubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
                 await SendDataAsync(TraceSource, hubEndpoint, this.sizeInKilobytes * 1024, this.chunkBytes, 50, DisposeToken);
             }
             else if (key == 'r')
@@ -89,8 +96,13 @@ namespace SignalService.Client.CLI
                     return;
                 }
 
-                var hubEndpoint = await RelayHubEndpoint.CreateAsync(this.currentHubId, CreateHubConnection(), TraceSource, DisposeToken);
+                var hubEndpoint = await RelayHubEndpoint.CreateAsync(this.currentHubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
                 await ReceiveDataAsync(TraceSource, hubEndpoint, DisposeToken);
+            }
+            else if (key == 'j')
+            {
+                Utils.ReadIntValue("Enter number of json-rpc calls:", ref this.jsonRpcCount);
+                await TestJsonRpcPerfAsync(this.jsonRpcCount);
             }
         }
 
@@ -146,7 +158,7 @@ namespace SignalService.Client.CLI
                 else
                 {
                     var utcTicks = binaryReader.ReadInt64();
-                    var utcTimeSend = new DateTime(utcTicks, DateTimeKind.Utc);
+                    var utcTimeSend = new DateTime(utcTicks);
                     var utcNow = DateTime.UtcNow;
                     TimeSpan time;
                     if (utcNow > utcTimeSend)
@@ -187,10 +199,56 @@ namespace SignalService.Client.CLI
             throw new InvalidOperationException();
         }
 
+        private async Task TestJsonRpcPerfAsync(int count)
+        {
+            var hubId = Guid.NewGuid().ToString();
+            var hubEndpointHost = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
+            var hubEndpointClient = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
+
+            var hostStream = new RelayHubStream(hubEndpointHost.RelayHubProxy, hubEndpointClient.RelayHubProxy.SelfParticipant.Id, TypeJsonRpc);
+            var jsonHostRpc = new JsonRpc(hostStream);
+            Func<int, string, string> method1 = (value, str) =>
+            {
+                return $"value:{value} str:{str}";
+            };
+            jsonHostRpc.AddLocalRpcMethod(Method1, method1);
+            jsonHostRpc.StartListening();
+
+            var clientStream = new RelayHubStream(hubEndpointClient.RelayHubProxy, hubEndpointHost.RelayHubProxy.SelfParticipant.Id, TypeJsonRpc);
+            var jsonClientRpc = new JsonRpc(clientStream);
+            jsonClientRpc.StartListening();
+
+            var elapsedTimes = new List<TimeSpan>();
+            var sb = new StringBuilder();
+
+            long totalTimeTicks = 0;
+            for (int i = 0; i < count; ++i)
+            {
+                var start = DateTime.UtcNow;
+                var result = await jsonClientRpc.InvokeAsync<string>(Method1, 100, "Hello");
+
+                var elasped = DateTime.UtcNow.Subtract(start);
+                elapsedTimes.Add(elasped);
+                sb.Append($"{elasped.Milliseconds}-");
+
+                Console.WriteLine($"json-rpc elapsed ms:{elasped.Milliseconds}");
+                totalTimeTicks += elasped.Ticks;
+                await Task.Delay(100, DisposeToken);
+            }
+
+            Console.WriteLine($"elapsed times:{sb}");
+            var averageElapsed = new DateTime(totalTimeTicks / count);
+            Console.WriteLine($"Average json-rpc:{averageElapsed.Millisecond}");
+
+            await hubEndpointHost.RelayHubProxy.RelayServiceProxy.DeleteHubAsync(hubId, DisposeToken);
+            await hubEndpointHost.DisposeAsync();
+            await hubEndpointClient.DisposeAsync();
+        }
+
         private class RelayHubEndpoint : EndpointBase<RelayServiceProxy>
         {
-            internal RelayHubEndpoint(string hubId, HubClient hubClient, TraceSource traceSource)
-                : base(hubClient, traceSource)
+            internal RelayHubEndpoint(string hubId, HubClient hubClient, HubProxyOptions hubProxyOptions, TraceSource traceSource)
+                : base(hubClient, hubProxyOptions, traceSource)
             {
                 HubId = hubId;
             }
@@ -199,12 +257,12 @@ namespace SignalService.Client.CLI
 
             public IRelayHubProxy RelayHubProxy { get; private set; }
 
-            public static async Task<RelayHubEndpoint> CreateAsync(string hubId, HubConnection hubConnection, TraceSource traceSource, CancellationToken cancellationToken)
+            public static async Task<RelayHubEndpoint> CreateAsync(string hubId, HubConnection hubConnection, HubProxyOptions hubProxyOptions, TraceSource traceSource, CancellationToken cancellationToken)
             {
                 traceSource.Verbose($"Creating endpoint for hub id:{hubId}");
 
                 return await CreateAsync(
-                    (hubClient) => new RelayHubEndpoint(hubId, hubClient, traceSource),
+                    (hubClient) => new RelayHubEndpoint(hubId, hubClient, hubProxyOptions, traceSource),
                     hubConnection,
                     traceSource,
                     cancellationToken);

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -11,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService;
 using StreamJsonRpc;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
@@ -58,7 +60,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 var tcpStream = client.GetStream();
                 Logger.LogInformation(
                     $"Accepted incoming connection from {((IPEndPoint)client.Client.RemoteEndPoint).Address}");
-                var jsonRpc = new JsonRpc(tcpStream);
+                var jsonRpc = CreateJsonRpcWithMessagePack(tcpStream);
 
                 Action<string, string> registerCallback = (serviceType, serviceId) =>
                 {
@@ -95,6 +97,12 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 var listener = new TcpListener(IPAddress.Any, port);
                 return listener;
             }
+        }
+
+        private static JsonRpc CreateJsonRpcWithMessagePack(Stream tcpStream)
+        {
+            var handler = new LengthHeaderMessageHandler(tcpStream, tcpStream, new MessagePackFormatter());
+            return new JsonRpc(handler);
         }
     }
 }

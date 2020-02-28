@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -17,7 +16,7 @@ using StreamJsonRpc;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Implement IBackplaneConnectorProvider based on a json rpc channel
+    /// Implement IBackplaneConnectorProvider based on a json rpc channel.
     /// </summary>
     public class JsonRpcConnectorProvider : IBackplaneConnectorProvider
     {
@@ -34,12 +33,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             Logger = logger;
         }
 
+        /// <inheritdoc/>
         public event EventHandler Disconnected;
 
+        /// <inheritdoc/>
         public bool IsConnected => this.jsonRpc != null;
 
         private ILogger Logger { get; }
 
+        /// <inheritdoc/>
         public async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
             var retries = 0;
@@ -64,11 +66,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
+        /// <inheritdoc/>
         public Task<TResult> InvokeAsync<TResult>(string targetName, object[] arguments, CancellationToken cancellationToken)
         {
             return this.jsonRpc.InvokeWithCancellationAsync<TResult>(targetName, arguments, cancellationToken);
         }
 
+        /// <inheritdoc/>
+        public Task SendAsync(string targetName, object[] arguments, CancellationToken cancellationToken)
+        {
+            return this.jsonRpc.NotifyAsync(targetName, arguments);
+        }
+
+        /// <inheritdoc/>
         public void AddTarget(string methodName, Delegate handler)
         {
             this.targetHandlers.Add(methodName, handler);
@@ -136,9 +146,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             return client.GetStream();
         }
 
+        private static JsonRpc CreateJsonRpcWithMessagePack(Stream tcpStream)
+        {
+            var handler = new LengthHeaderMessageHandler(tcpStream, tcpStream, new MessagePackFormatter());
+            return new JsonRpc(handler);
+        }
+
         private void Attach(Stream tcpStream)
         {
-            this.jsonRpc = new JsonRpc(tcpStream);
+            this.jsonRpc = CreateJsonRpcWithMessagePack(tcpStream);
             foreach (var kvp in this.targetHandlers)
             {
                 this.jsonRpc.AddLocalRpcMethod(kvp.Key, kvp.Value);

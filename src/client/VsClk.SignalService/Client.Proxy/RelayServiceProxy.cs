@@ -124,7 +124,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <inheritdoc/>
         public Task DeleteHubAsync(string hubId, CancellationToken cancellationToken)
         {
-            return HubProxy.InvokeAsync(nameof(IRelayServiceHub.DeleteHubAsync), new object[] { hubId }, cancellationToken);
+            return HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.DeleteHubAsync), new object[] { hubId }, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -178,7 +178,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 {
                     this.isDisposed = true;
                     this.relayServiceProxy.relayHubs.TryRemove(Id, out var _);
-                    await this.relayServiceProxy.HubProxy.InvokeAsync(nameof(IRelayServiceHub.LeaveHubAsync), new object[] { Id }, default(CancellationToken));
+                    await this.relayServiceProxy.HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.LeaveHubAsync), new object[] { Id }, default(CancellationToken));
                 }
             }
 
@@ -193,7 +193,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
                 this.relayServiceProxy.Trace.Verbose($"SendData-> hubId:{Id} type:{type} data-length:{data.Length}");
 
-                return this.relayServiceProxy.HubProxy.InvokeAsync(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data }, cancellationToken);
+                return this.relayServiceProxy.HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data }, cancellationToken);
             }
 
             public Task UpdateAsync(
@@ -202,7 +202,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             {
                 CheckState();
 
-                return this.relayServiceProxy.HubProxy.InvokeAsync(nameof(IRelayServiceHub.UpdateAsync), new object[] { Id, properties }, cancellationToken);
+                return this.relayServiceProxy.HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.UpdateAsync), new object[] { Id, properties }, cancellationToken);
             }
 
             public async Task ReJoinAsync(JoinOptions joinOptions, CancellationToken cancellationToken)

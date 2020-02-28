@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <AssemblyName>Microsoft.VsCloudKernel.BackplaneService</AssemblyName>
-    <LangVersion>7.1</LangVersion>
+    <LangVersion>7.2</LangVersion>
     <Timestamp>$([System.DateTime]::Now.ToString("yyyyMMdd.HHmmss"))</Timestamp>
     <IsPublishable>true</IsPublishable>
   </PropertyGroup>
@@ -13,6 +13,7 @@
     <Compile Include="..\..\Shared\SecondsCounter.cs" Link="Shared\SecondsCounter.cs" />
     <Compile Include="..\..\Shared\ConcurrentHashSet.cs" Link="Shared\ConcurrentHashSet.cs" />
     <Compile Include="..\..\Shared\ConcurrentHelpers.cs" Link="Shared\ConcurrentHelpers.cs" />
+    <Compile Include="..\BackplaneServiceProvider.Common\MessagePackFormatter.cs" Link="MessagePackFormatter.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +23,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="StreamJsonRpc" Version="$(StreamJsonRpcVersion)" />
+    <PackageReference Include="MessagePack" Version="$(MessagePackVersion)" />
   </ItemGroup>
 
   <ItemGroup>

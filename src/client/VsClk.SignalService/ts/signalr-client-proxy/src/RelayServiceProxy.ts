@@ -2,16 +2,16 @@
 import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType, SendOption, JoinOptions }  from './IRelayServiceProxy';
 import { HubProxyBase } from './HubProxyBase';
 import { IHubProxy } from './IHubProxy';
-import { LogLevel } from '@microsoft/signalr';
 import { CallbackContainer } from './CallbackContainer';
 import { IDisposable } from './IDisposable';
+import { ILogger, LogLevel } from './ILogger';
 
 export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProxy {
     private relayHubs = new Map<string, RelayHubProxy>();
 
     constructor(
         hubProxy: IHubProxy,
-        logger?: signalR.ILogger,
+        logger?: ILogger,
         useSignalRHub?: boolean) {
         super(hubProxy, logger, useSignalRHub ? 'relayServiceHub' : undefined);
 
@@ -31,7 +31,12 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
 
             const relayHub = this.relayHubs.get(hubId);
             if (relayHub) {
-                const bufferData = isNode ? Buffer.from(data, 'base64') : atob(data);
+                let bufferData: any;
+                if (typeof data === 'string') {
+                    bufferData = isNode ? Buffer.from(data, 'base64') : atob(data);
+                } else {
+                    bufferData = data;
+                }
                 await relayHub._OnReceiveData(fromParticipantId, uniqueId, type, <Uint8Array> bufferData);
             }
         });
@@ -77,7 +82,7 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
     }
 
     public async _joinHubInternal( relayHubProxyFactory: (joinHubInfo: JoinHubInfo) => RelayHubProxy, hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy> {
-        const joinHubInfo = await this.invoke<JoinHubInfo>('JoinHubAsync', hubId, properties, joinOptions);
+        const joinHubInfo = await this.invokeKeysToCamel<JoinHubInfo>('JoinHubAsync', hubId, properties, joinOptions);
         const realyHubProxy = relayHubProxyFactory(joinHubInfo);
         this.relayHubs.set(hubId, realyHubProxy);
 
@@ -171,7 +176,16 @@ class RelayHubProxy implements IRelayHubProxy {
         }
 
         const dataArray = Array.from(data);
-        return this.relayServiceProxy.invoke('SendDataHubAsync', this.id, sendOption, targetParticipants, type, dataArray );
+        return this.relayServiceProxy.send('SendDataHubAsync', this.id, sendOption, targetParticipants, type, dataArray );
+    }
+
+    public dispose(): Promise<void> {
+        const logger = this.relayServiceProxy.logger;
+        if (logger) {
+            logger.log(LogLevel.Debug, `leaving -> hubId:${this.id}`);
+        }
+
+        return this.relayServiceProxy.send('LeaveHubAsync', this.id);
     }
 
     public async _OnDeleted(): Promise<void> {      

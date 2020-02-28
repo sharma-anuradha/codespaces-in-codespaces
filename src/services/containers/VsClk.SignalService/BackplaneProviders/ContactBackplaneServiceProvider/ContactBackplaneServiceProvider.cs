@@ -4,10 +4,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
 using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
@@ -47,25 +45,24 @@ namespace Microsoft.VsCloudKernel.SignalService
         public async Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
-            var jArray = await BackplaneConnectorProvider.InvokeAsync<JArray>(nameof(GetContactsDataAsync), new object[] { matchProperties }, cancellationToken);
-            return jArray.Select(item =>
-                ((IDictionary<string, JToken>)((JObject)item)).ToDictionary(kvp => kvp.Key, kvp => ToContactDataInfo((JObject)kvp.Value))).ToArray();
+            var result = await BackplaneConnectorProvider.InvokeAsync<Dictionary<string, ContactDataInfo>[]>(nameof(GetContactsDataAsync), new object[] { matchProperties }, cancellationToken);
+            return result;
         }
 
         /// <inheritdoc/>
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
-            var jObject = await BackplaneConnectorProvider.InvokeAsync<JObject>(nameof(GetContactDataAsync), new object[] { contactId }, cancellationToken);
-            return jObject != null ? ToContactDataInfo(jObject) : null;
+            var result = await BackplaneConnectorProvider.InvokeAsync<ContactDataInfo>(nameof(GetContactDataAsync), new object[] { contactId }, cancellationToken);
+            return result;
         }
 
         /// <inheritdoc/>
         public async Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
-            var jObject = await BackplaneConnectorProvider.InvokeAsync<JObject>(nameof(UpdateContactAsync), new object[] { contactDataChanged }, cancellationToken);
-            return jObject != null ? ToContactDataInfo(jObject) : null;
+            var result = await BackplaneConnectorProvider.InvokeAsync<ContactDataInfo>(nameof(UpdateContactAsync), new object[] { contactDataChanged }, cancellationToken);
+            return result;
         }
 
         /// <inheritdoc/>
@@ -99,18 +96,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         public Task FireOnSendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
         {
             return MessageReceivedAsync?.Invoke(sourceId, messageData, cancellationToken);
-        }
-
-        private static IDictionary<string, IDictionary<string, PropertyValue>> ToConnectionProperties(JObject jObject)
-        {
-            return ((IDictionary<string, JToken>)jObject).ToDictionary(
-                kvp => kvp.Key,
-                kvp => (IDictionary<string, PropertyValue>)((IDictionary<string, JToken>)kvp.Value).ToDictionary(kvp2 => kvp2.Key, kvp2 => kvp2.Value.ToObject<PropertyValue>()));
-        }
-
-        private static ContactDataInfo ToContactDataInfo(JObject jObject)
-        {
-            return ((IDictionary<string, JToken>)jObject).ToDictionary(kvp => kvp.Key, kvp => ToConnectionProperties((JObject)kvp.Value));
         }
     }
 }

@@ -16,7 +16,7 @@ export class CallbackContainer<T> {
             dispose: () => {
                 const index = this.callbacks.indexOf(callback);
                 if (index !== -1) {
-                    this.callbacks = this.callbacks.splice(index, 1);
+                    this.callbacks.splice(index, 1);
                 }
             }
         };

@@ -1,7 +1,7 @@
 {
-  "name": "@vs/vso-signalr-client",
+  "name": "@vs/vso-signalr-client-proxy",
   "version": "0.0.0-placeholder",
-  "description": "SignalR Client for vsclk-core signalR service",
+  "description": "SignalR Client/Proxy for vsclk-core signalR service",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "scripts": {
@@ -14,11 +14,10 @@
   "keywords": [],
   "author": "Microsoft",
   "license": "Apache-2.0",
-  "dependencies": {
-    "@vs/vso-signalr-client-proxy": "link:../signalr-client-proxy",
-    "@microsoft/signalr": "^3.1.0"
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^10.9.4"
   },
-  "devDependencies": {},
   "files": [
     "dist/**/*"
   ]

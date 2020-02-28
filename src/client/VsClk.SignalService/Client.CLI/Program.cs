@@ -13,7 +13,13 @@ namespace SignalService.Client.CLI
 
         public CommandOption AccessTokenOption { get; private set; }
 
+        public CommandOption MessagePackOption { get; private set; }
+
         public CommandOption DebugSignalROption { get; private set; }
+
+        public CommandOption HubName { get; private set; }
+
+        public CommandOption SkipNegotiate { get; private set; }
 
         public static int Main(string[] args)
         {
@@ -32,10 +38,25 @@ namespace SignalService.Client.CLI
                 "Access token for authentication",
                 CommandOptionType.SingleValue);
 
+            cli.MessagePackOption = cli.Option(
+                "--messagePack",
+                "If message pack is enabled",
+                CommandOptionType.NoValue);
+
+            cli.SkipNegotiate = cli.Option(
+                "--skipNegotiate",
+                "If skip the signalR negotiate",
+                CommandOptionType.NoValue);
+
             cli.DebugSignalROption = cli.Option(
                 "--debugSignalR",
                 "If SignalR tracing is enabled",
                 CommandOptionType.NoValue);
+
+            cli.HubName = cli.Option(
+                "--hubName",
+                "Name of the hub",
+                CommandOptionType.SingleValue);
 
             cli.Command("run-echo", app =>
             {
@@ -66,12 +87,7 @@ namespace SignalService.Client.CLI
                     "Name to use",
                     CommandOptionType.SingleValue);
 
-                var usePresenceHubNameOption = cli.Option(
-                    "--usePresenceHubName",
-                    "If we want to connect to the presence hub endpoint",
-                    CommandOptionType.NoValue);
-
-                app.OnExecute(() => new ContactApp(contactIdOption, emailOption, nameOption, usePresenceHubNameOption).RunAsync(cli));
+                app.OnExecute(() => new ContactApp(contactIdOption, emailOption, nameOption).RunAsync(cli));
             });
 
             cli.Command("run-relay", app =>

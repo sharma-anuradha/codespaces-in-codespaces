@@ -19,7 +19,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="methodName">The method name.</param>
         /// <param name="parameterTypes">Types of matchig arguments.</param>
         /// <param name="handler">The handler to call when the notification arrives</param>
-        /// <returns>Disposable object</returns>
+        /// <returns>Disposable object.</returns>
         IDisposable On(string methodName, Type[] parameterTypes, Func<object[], Task> handler);
 
         /// <summary>
@@ -39,6 +39,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="args">Arguments for the hub method.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Task to wait.</returns>
-        Task InvokeAsync(string methodName, object[] args, CancellationToken cancellationToken = default(CancellationToken));
+        Task SendAsync(string methodName, object[] args, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

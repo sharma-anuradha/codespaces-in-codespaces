@@ -5,7 +5,7 @@
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Hub helpers
+    /// Hub helpers.
     /// </summary>
     public static class HubHelpers
     {
@@ -15,6 +15,14 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             return name.Length == 0 ? string.Empty :
                 name.Substring(0, 1).ToLowerInvariant() + name.Substring(1);
+        }
+
+        public static string ToPascalCase(this string name)
+        {
+            Requires.NotNull(name, nameof(name));
+
+            return name.Length == 0 ? string.Empty :
+                name.Substring(0, 1).ToUpperInvariant() + name.Substring(1);
         }
     }
 }

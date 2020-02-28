@@ -1,10 +1,7 @@
 import * as signalR from '@microsoft/signalr';
 import { connect } from './HubConnectionHelpers';
-import { IHubProxy } from './IHubProxy';
-import { IHubProxyConnection } from './IHubProxyConnection';
+import { IHubProxy, IHubProxyConnection, CallbackContainer, IDisposable } from '@vs/vso-signalr-client-proxy';
 import { HubProxy } from './HubProxy';
-import { CallbackContainer } from './CallbackContainer';
-import { IDisposable } from './IDisposable';
 
 export class HubClient implements IHubProxyConnection {
     private isRunningFlag = false;

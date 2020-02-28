@@ -1,14 +1,19 @@
 import {
-    HubClient,
+    HubClient
+} from '@vs/vso-signalr-client';
+
+import {
     ContactServiceProxy,
     RelayServiceProxy,
     IRelayHubProxy,
     SendOption
-} from '@vs/vso-signalr-client';
+} from '@vs/vso-signalr-client-proxy';
 
 import { RpcMessageStream, RelayDataChannel } from '@vs/vso-signalr-client-jsonrpc';
 
 import * as signalR from '@microsoft/signalr';
+import * as signalProtocolR from '@microsoft/signalr-protocol-msgpack';
+
 import * as process from 'process';
 import * as yargs from 'yargs';
 import * as readline from 'readline';
@@ -34,9 +39,14 @@ const argv = yargs
     })
     .option('relayHub', {
         alias: 'r',
-        description: 'If releay hub app',
+        description: 'If run relay hub app',
         type: 'boolean',
     }) 
+    .option('messagePack', {
+        alias: 'm',
+        description: 'If use message pack for the hub protocol',
+        type: 'boolean',
+    })
     .demandOption('id')
     .help()
     .alias('help', 'h')
@@ -55,7 +65,12 @@ async function main() {
         httpConnectionOptions.accessTokenFactory = () => argv.token!;
     }
 
-    const hubClient = HubClient.create(serviceUri, httpConnectionOptions);
+    let hubBuilder = new signalR.HubConnectionBuilder().withUrl(serviceUri, httpConnectionOptions);
+    if (argv.messagePack) {
+        hubBuilder = hubBuilder.withHubProtocol(new signalProtocolR.MessagePackHubProtocol());
+    }
+
+    const hubClient = new HubClient(hubBuilder.build(), logger);
 
     const keyPressCallback = argv.relayHub ? main_relay(hubClient, logger) : main_presence(hubClient, logger);
 

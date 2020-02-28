@@ -12,10 +12,28 @@ using Microsoft.VisualStudio.Threading;
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
     /// <summary>
+    /// Hub proxy options.
+    /// </summary>
+    [Flags]
+    public enum HubProxyOptions
+    {
+        /// <summary>
+        /// None.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Indicate to use the universal signalr hub.
+        /// </summary>
+        UseSignalRHub = 1,
+    }
+
+    /// <summary>
     /// Our client proxy base class.
     /// </summary>
     public class HubProxy : IHubProxy
     {
+        private const string HubNameField = "HubName";
         private const string InvokeHubMethodAsync = "InvokeHubMethodAsync";
 
         private readonly string hubName;
@@ -25,6 +43,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// </summary>
         /// <param name="hubClient">The hub client.</param>
         /// <param name="hubName">Optional name of the hub.</param>
+        /// <param name="useHubArguments">If use hub arguments.</param>
         public HubProxy(HubClient hubClient, string hubName)
         {
             Client = Requires.NotNull(hubClient, nameof(hubClient));
@@ -61,11 +80,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <typeparam name="T">Type of the proxy to create.</typeparam>
         /// <param name="hubClient">The hub client.</param>
         /// <param name="trace">Trace instance.</param>
-        /// <param name="useSignalRHub">If using the signalR hub.</param>
+        /// <param name="hubProxyOptions">Hub proxy options.</param>
         /// <returns>Instance of the proxy.</returns>
-        public static T CreateHubProxy<T>(HubClient hubClient, TraceSource trace, bool useSignalRHub = false)
+        public static T CreateHubProxy<T>(HubClient hubClient, TraceSource trace, HubProxyOptions hubProxyOptions = HubProxyOptions.None)
         {
-            return CreateHubProxy<T>(hubClient, trace, null, useSignalRHub);
+            return CreateHubProxy<T>(hubClient, trace, null, hubProxyOptions);
         }
 
         /// <summary>
@@ -75,11 +94,14 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="hubClient">The hub client.</param>
         /// <param name="trace">Trace instance.</param>
         /// <param name="formatProvider">Optional format provider.</param>
-        /// <param name="useSignalRHub">If using the signalR hub.</param>
+        /// <param name="hubProxyOptions">Hub proxy options.</param>
         /// <returns>Instance of the proxy.</returns>
-        public static T CreateHubProxy<T>(HubClient hubClient, TraceSource trace, IFormatProvider formatProvider, bool useSignalRHub = false)
+        public static T CreateHubProxy<T>(HubClient hubClient, TraceSource trace, IFormatProvider formatProvider, HubProxyOptions hubProxyOptions = HubProxyOptions.None)
         {
-            var hubProxy = new HubProxy(hubClient, useSignalRHub ? (string)typeof(T).GetField("HubName").GetValue(null) : null);
+            var hubProxy = new HubProxy(
+                hubClient,
+                hubProxyOptions.HasFlag(HubProxyOptions.UseSignalRHub) ? (string)typeof(T).GetField(HubNameField).GetValue(null) : null);
+
             return (T)Activator.CreateInstance(typeof(T), hubProxy, trace, formatProvider);
         }
 
@@ -98,20 +120,20 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }
             else
             {
-                return (T)(await Connection.InvokeCoreAsync(InvokeHubMethodAsync, typeof(T), new object[] { ToHubMethodName(methodName), args }, cancellationToken));
+                return (T)await Connection.InvokeCoreAsync(InvokeHubMethodAsync, typeof(T), new object[] { ToHubMethodName(methodName), args }, cancellationToken);
             }
         }
 
         /// <inheritdoc/>
-        public Task InvokeAsync(string methodName, object[] args, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SendAsync(string methodName, object[] args, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrEmpty(this.hubName))
             {
-                return Connection.InvokeCoreAsync(methodName, typeof(object), args, cancellationToken);
+                return Connection.SendCoreAsync(methodName, args, cancellationToken);
             }
             else
             {
-                return Connection.InvokeCoreAsync(InvokeHubMethodAsync, typeof(object), new object[] { ToHubMethodName(methodName), args }, cancellationToken);
+                return Connection.SendCoreAsync(InvokeHubMethodAsync, new object[] { ToHubMethodName(methodName), args }, cancellationToken);
             }
         }
 

@@ -49,7 +49,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ContactBackplaneServiceProv
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RelayServiceHub.Contracts", "RelayServiceHub.Contracts\RelayServiceHub.Contracts.csproj", "{836216FC-4BE4-411A-B2F3-D3E9E3462848}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Contracts", "Common.Contracts\Common.Contracts.SignalR.csproj", "{255D10F0-BC59-477A-9969-0D955F0F9A3C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Contracts.SignalR", "Common.Contracts\Common.Contracts.SignalR.csproj", "{255D10F0-BC59-477A-9969-0D955F0F9A3C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backplane.Common", "BackplaneProviders\Backplane.Common\Backplane.Common.csproj", "{9F8760F6-AFE5-46C1-B3CB-800D54EC05C8}"
 EndProject
@@ -62,6 +62,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureRedisContactsProvider", "BackplaneProviders\AzureRedisContactsProvider\AzureRedisContactsProvider.csproj", "{C890FC11-371A-4F28-8C37-1D90378B10C9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureRedisRelayProvider", "BackplaneProviders\AzureRedisRelayProvider\AzureRedisRelayProvider.csproj", "{F3E2B605-F29F-40B3-B807-52C95ED7C640}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RelayService", "RelayService\RelayService.csproj", "{4D7AE430-A753-4752-8488-4548E15B09D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -177,6 +179,10 @@ Global
 		{F3E2B605-F29F-40B3-B807-52C95ED7C640}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3E2B605-F29F-40B3-B807-52C95ED7C640}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F3E2B605-F29F-40B3-B807-52C95ED7C640}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D7AE430-A753-4752-8488-4548E15B09D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D7AE430-A753-4752-8488-4548E15B09D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D7AE430-A753-4752-8488-4548E15B09D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D7AE430-A753-4752-8488-4548E15B09D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

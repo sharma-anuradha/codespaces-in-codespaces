@@ -13,7 +13,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// <summary>
     /// A relay hub proxy.
     /// </summary>
-    public interface IRelayHubProxy : IAsyncDisposable
+    public interface IRelayHubProxy : VisualStudio.Threading.IAsyncDisposable
     {
         /// <summary>
         /// When data is recieved.

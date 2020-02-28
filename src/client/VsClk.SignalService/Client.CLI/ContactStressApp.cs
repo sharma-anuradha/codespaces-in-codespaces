@@ -111,7 +111,7 @@ namespace SignalService.Client.CLI
                 Utils.ReadIntValue("Enter number of emails to request:", ref this.numberOfEmailRequests);
                 var contactId = Guid.NewGuid().ToString();
                 TraceSource.Verbose($"Creating endpoint:{contactId}...");
-                var endpoint = await PresenceEndpoint.CreateAsync(contactId, CreateHubConnection(), TraceSource, DisposeToken);
+                var endpoint = await PresenceEndpoint.CreateAsync(contactId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
                 var start = Stopwatch.StartNew();
                 await endpoint.Proxy.RequestSubcriptionsAsync(
                     Enumerable.Repeat(0, this.numberOfEmailRequests).Select(i => new Dictionary<string, object>() { { ContactProperties.Email, CreateEmail(10) } }).ToArray(),
@@ -252,6 +252,7 @@ namespace SignalService.Client.CLI
                 tasks.Add(PresenceEndpoint.CreateAsync(
                     contactId,
                     CreateHubConnection(),
+                    HubProxyOptions,
                     TraceSource,
                     DisposeToken));
             }
@@ -282,20 +283,20 @@ namespace SignalService.Client.CLI
 
         private class PresenceEndpoint : EndpointBase<ContactServiceProxy>
         {
-            internal PresenceEndpoint(string contactId, HubClient hubClient, TraceSource traceSource)
-                : base(hubClient, traceSource)
+            internal PresenceEndpoint(string contactId, HubClient hubClient, HubProxyOptions hubProxyOptions, TraceSource traceSource)
+                : base(hubClient, hubProxyOptions, traceSource)
             {
                 ContactId = contactId;
             }
 
             public string ContactId { get; }
 
-            public static async Task<PresenceEndpoint> CreateAsync(string contactId, HubConnection hubConnection, TraceSource traceSource, CancellationToken cancellationToken)
+            public static async Task<PresenceEndpoint> CreateAsync(string contactId, HubConnection hubConnection, HubProxyOptions hubProxyOptions, TraceSource traceSource, CancellationToken cancellationToken)
             {
                 traceSource.Verbose($"Creating endpoint for contactId:{contactId}");
 
                 return await CreateAsync(
-                    (hubClient) => new PresenceEndpoint(contactId, hubClient, traceSource),
+                    (hubClient) => new PresenceEndpoint(contactId, hubClient, hubProxyOptions, traceSource),
                     hubConnection,
                     traceSource,
                     cancellationToken);

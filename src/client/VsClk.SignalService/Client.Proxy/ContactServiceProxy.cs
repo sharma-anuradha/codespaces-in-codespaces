@@ -58,13 +58,13 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
             AddHubHandler(hubProxy.On(
                 ContactHubMethods.ReceiveMessage,
-                new Type[] { typeof(ContactReference), typeof(ContactReference), typeof(string), typeof(JToken) },
+                new Type[] { typeof(ContactReference), typeof(ContactReference), typeof(string), typeof(object) },
                 (args) =>
             {
                 var targetContact = (ContactReference)args[0];
                 var fromContact = (ContactReference)args[1];
                 var messageType = (string)args[2];
-                var body = (JToken)args[3];
+                var body = args[3];
                 trace.Verbose($"MessageReceived-> targetContact:{ToString(targetContact)} fromContact:{ToString(fromContact)} messageType:{messageType} body:{body:K}");
                 MessageReceived?.Invoke(this, new ReceiveMessageEventArgs(targetContact, fromContact, messageType, body));
                 return Task.CompletedTask;
@@ -95,8 +95,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <inheritdoc/>
         public async Task<Dictionary<string, Dictionary<string, PropertyValue>>> GetSelfConnectionsAsync(string contactId, CancellationToken cancellationToken)
         {
-            var result = await HubProxy.InvokeAsync<JObject>(nameof(IContactServiceHub.GetSelfConnectionsAsync), new object[] { contactId }, cancellationToken);
-            return ToConnectionsProperties(result);
+            var result = await HubProxy.InvokeAsync<Dictionary<string, Dictionary<string, PropertyValue>>>(nameof(IContactServiceHub.GetSelfConnectionsAsync), new object[] { contactId }, cancellationToken);
+            return result;
         }
 
         /// <inheritdoc/>
@@ -109,66 +109,58 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <inheritdoc/>
         public Task PublishPropertiesAsync(Dictionary<string, object> updateProperties, CancellationToken cancellationToken)
         {
-            return HubProxy.InvokeAsync(nameof(IContactServiceHub.PublishPropertiesAsync), new object[] { updateProperties }, cancellationToken);
+            return HubProxy.InvokeAsync<object>(nameof(IContactServiceHub.PublishPropertiesAsync), new object[] { updateProperties }, cancellationToken);
         }
 
         /// <inheritdoc/>
         public Task SendMessageAsync(ContactReference targetContact, string messageType, object body, CancellationToken cancellationToken)
         {
-            return HubProxy.InvokeAsync(nameof(IContactServiceHub.SendMessageAsync), new object[] { targetContact, messageType, body }, cancellationToken);
+            return HubProxy.InvokeAsync<object>(nameof(IContactServiceHub.SendMessageAsync), new object[] { targetContact, messageType, body }, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task<Dictionary<string, Dictionary<string, object>>> AddSubcriptionsAsync(ContactReference[] targetContacts, string[] propertyNames, CancellationToken cancellationToken)
         {
-            var result = await HubProxy.InvokeAsync<JObject>(nameof(IContactServiceHub.AddSubcriptionsAsync), new object[] { targetContacts, propertyNames }, cancellationToken);
-            return result.ToPropertyDictionary();
+            var result = await HubProxy.InvokeAsync<Dictionary<string, Dictionary<string, object>>>(nameof(IContactServiceHub.AddSubcriptionsAsync), new object[] { targetContacts, propertyNames }, cancellationToken);
+            return result.ToDictionary(kvp => kvp.Key, kvp => UnboxProperties(kvp.Value));
         }
 
         /// <inheritdoc/>
         public async Task<Dictionary<string, object>[]> RequestSubcriptionsAsync(Dictionary<string, object>[] targetContactProperties, string[] propertyNames, bool useStubContact, CancellationToken cancellationToken)
         {
-            var jArray = await HubProxy.InvokeAsync<JArray>(nameof(IContactServiceHub.RequestSubcriptionsAsync), new object[] { targetContactProperties, propertyNames, useStubContact }, cancellationToken);
-            return jArray.Select(item =>
-            {
-                if (item == null || item.Type == JTokenType.Null)
-                {
-                    return null;
-                }
-
-                return ((IDictionary<string, JToken>)item).ToDictionary(kvp => kvp.Key, kvp => NewtonsoftHelpers.ToObject(kvp.Value));
-            }).ToArray();
+            var result = await HubProxy.InvokeAsync<Dictionary<string, object>[]>(nameof(IContactServiceHub.RequestSubcriptionsAsync), new object[] { targetContactProperties, propertyNames, useStubContact }, cancellationToken);
+            return result.Select(i => UnboxProperties(i)).ToArray();
         }
 
         /// <inheritdoc/>
         public Task RemoveSubscriptionAsync(ContactReference[] targetContacts, CancellationToken cancellationToken)
         {
-            return HubProxy.InvokeAsync(nameof(IContactServiceHub.RemoveSubscription), new object[] { targetContacts }, cancellationToken);
+            return HubProxy.InvokeAsync<object>(nameof(IContactServiceHub.RemoveSubscription), new object[] { targetContacts }, cancellationToken);
         }
 
         /// <inheritdoc/>
         public Task UnregisterSelfContactAsync(CancellationToken cancellationToken)
         {
-            return HubProxy.InvokeAsync(nameof(IContactServiceHub.UnregisterSelfContactAsync), new object[] { }, cancellationToken);
+            return HubProxy.InvokeAsync<object>(nameof(IContactServiceHub.UnregisterSelfContactAsync), new object[] { }, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingProperties, CancellationToken cancellationToken)
         {
-            var results = await HubProxy.InvokeAsync<JArray>(nameof(IContactServiceHub.MatchContactsAsync), matchingProperties, cancellationToken);
-            return results.Select(item => ((JObject)item).ToPropertyDictionary()).ToArray();
+            var results = await HubProxy.InvokeAsync<Dictionary<string, Dictionary<string, object>>[]>(nameof(IContactServiceHub.MatchContactsAsync), matchingProperties, cancellationToken);
+            return results.Select(item => item.ToDictionary(kvp => kvp.Key, kvp => UnboxProperties(kvp.Value))).ToArray();
         }
 
         /// <inheritdoc/>
         public async Task<Dictionary<string, Dictionary<string, object>>> SearchContactsAsync(Dictionary<string, SearchProperty> searchProperties, int? maxCount, CancellationToken cancellationToken)
         {
-            var result = await HubProxy.InvokeAsync<JObject>(nameof(IContactServiceHub.SearchContactsAsync), new object[] { searchProperties, maxCount }, cancellationToken);
-            return result.ToPropertyDictionary();
+            var result = await HubProxy.InvokeAsync<Dictionary<string, Dictionary<string, object>>>(nameof(IContactServiceHub.SearchContactsAsync), new object[] { searchProperties, maxCount }, cancellationToken);
+            return result.ToDictionary(kvp => kvp.Key, kvp => UnboxProperties(kvp.Value));
         }
 
-        private static Dictionary<string, Dictionary<string, PropertyValue>> ToConnectionsProperties(JObject jObject)
+        private static Dictionary<string, object> UnboxProperties(Dictionary<string, object> properties)
         {
-            return ((IDictionary<string, JToken>)jObject).ToDictionary(kvp => kvp.Key, kvp => ((IDictionary<string, JToken>)kvp.Value).ToDictionary(kvp2 => kvp2.Key, kvp2 => kvp2.Value.ToObject<PropertyValue>()));
+            return properties.ToDictionary(kvp => kvp.Key, kvp => NewtonsoftHelpers.ToObject(kvp.Value));
         }
 
         private string ToString(ContactReference contactReference)

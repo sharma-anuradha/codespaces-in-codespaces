@@ -13,11 +13,11 @@ namespace SignalService.Client.CLI
 {
     internal abstract class EndpointBase<T>
     {
-        protected EndpointBase(HubClient hubClient, TraceSource traceSource)
+        protected EndpointBase(HubClient hubClient, HubProxyOptions hubProxyOptions, TraceSource traceSource)
         {
             HubClient = hubClient;
             TraceSource = traceSource;
-            Proxy = HubProxy.CreateHubProxy<T>(hubClient, traceSource, true);
+            Proxy = HubProxy.CreateHubProxy<T>(hubClient, traceSource, hubProxyOptions);
             HubClient.ConnectionStateChanged += OnConnectionStateChangedAsync;
         }
 

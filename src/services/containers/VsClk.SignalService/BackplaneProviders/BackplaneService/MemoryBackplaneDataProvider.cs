@@ -87,7 +87,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
             if (contactDataChanged.Data.TryGetValue(ContactProperties.Email, out var pv) && !string.IsNullOrEmpty(pv.Value?.ToString()))
             {
-                Emails.TryAdd(pv.Value?.ToString(), contactDataChanged.ContactId);
+                var email = pv.Value.ToString();
+                Logger.LogDebug($"email:{string.Format(this.formatProvider, "{0:E}", email)} contact id:{string.Format(this.formatProvider, "{0:T}", contactDataChanged.ContactId)}");
+                Emails.TryAdd(email, contactDataChanged.ContactId);
             }
 
             LogUpdateContact(contactDataChanged.ContactId, nameof(UpdateContactAsync));

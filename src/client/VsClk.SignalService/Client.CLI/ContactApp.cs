@@ -21,11 +21,20 @@ namespace SignalService.Client.CLI
     {
         private const string TextMessageType = "typeTest";
 
+        private object messagePayload = new
+        {
+            Text = "Hi !",
+            Metadata = new
+            {
+                Type = "text",
+            },
+        };
+
         private string contactId;
         private string email;
         private ContactServiceProxy presenceServiceProxy;
         private CommandOption nameOption;
-        private CommandOption usePresenceHubNameOption;
+        private string targetContactId;
 
         private string[] subscribeProperties = new string[] { "status", "email" };
         private string publishProperty = "status";
@@ -33,20 +42,16 @@ namespace SignalService.Client.CLI
         public ContactApp(
             CommandOption contactIdOption,
             CommandOption emailOption,
-            CommandOption nameOption,
-            CommandOption usePresenceHubNameOption)
+            CommandOption nameOption)
         {
             this.contactId = contactIdOption.HasValue() ? contactIdOption.Value() : null;
             this.email = emailOption.HasValue() ? emailOption.Value() : null;
             this.nameOption = nameOption;
-            this.usePresenceHubNameOption = usePresenceHubNameOption;
         }
-
-        protected override string HubName => this.usePresenceHubNameOption.HasValue() ? "presencehub" : base.HubName;
 
         protected override void OnHubCreated()
         {
-            this.presenceServiceProxy = HubProxy.CreateHubProxy<ContactServiceProxy>(HubClient, TraceSource, !this.usePresenceHubNameOption.HasValue());
+            this.presenceServiceProxy = HubProxy.CreateHubProxy<ContactServiceProxy>(HubClient, TraceSource, HubProxyOptions);
 
             this.presenceServiceProxy.UpdateProperties += (s, e) =>
             {
@@ -59,8 +64,15 @@ namespace SignalService.Client.CLI
 
                 if (e.Type == TextMessageType)
                 {
-                    var payload = ((JToken)e.Body).ToObject<MessagePayload>();
-                    Console.WriteLine($"->MessagePayload: text:{payload.Text} type:{e.Type} type:{payload.Metadata.Type}");
+                    if (e.Body is JToken jtokenBody)
+                    {
+                        var payload = jtokenBody.ToObject<MessagePayload>();
+                        Console.WriteLine($"->MessagePayload: text:{payload.Text} type:{payload.Metadata.Type}");
+                    }
+                    else if (e.Body is Dictionary<object, object> objectProperties)
+                    {
+                        Console.WriteLine($"->MessagePayload: text:{objectProperties["Text"]} type:{((Dictionary<object, object>)objectProperties["Metadata"])["Type"]}");
+                    }
                 }
             };
 
@@ -125,7 +137,7 @@ namespace SignalService.Client.CLI
                         var jTokenValue = JToken.Parse(line);
                         var updateValues = new Dictionary<string, object>()
                         {
-                            { publishProperty, jTokenValue },
+                            { publishProperty, jTokenValue.ToObject<object>() },
                         };
 
                         await this.presenceServiceProxy.PublishPropertiesAsync(updateValues, CancellationToken.None);
@@ -236,19 +248,13 @@ namespace SignalService.Client.CLI
             else if (key == 'x')
             {
                 Console.WriteLine();
-                Console.Write("Enter target contact id:");
-                var targetContactId = Console.ReadLine();
+                Utils.ReadStringValue("Enter target contact id", ref this.targetContactId);
 
-                var payload = new MessagePayload()
-                {
-                    Text = "Hi !",
-                    Metadata = new Textmetadata()
-                    {
-                        Type = "text",
-                    },
-                };
+                var jsonPayload = JsonConvert.SerializeObject(this.messagePayload);
+                Utils.ReadStringValue("Enter payload to send", ref jsonPayload);
+                this.messagePayload = JsonConvert.DeserializeObject(jsonPayload);
 
-                await this.presenceServiceProxy.SendMessageAsync(new ContactReference(targetContactId, null), TextMessageType, JToken.FromObject(payload), default);
+                await this.presenceServiceProxy.SendMessageAsync(new ContactReference(this.targetContactId, null), TextMessageType, this.messagePayload, default);
             }
             else if (key == 'f')
             {

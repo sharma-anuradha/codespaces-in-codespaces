@@ -1,5 +1,8 @@
 {
     "private": true,
+    "scripts": {
+        "build:pack-publish": "cd signalr-client-proxy && yarn build:pack-publish && cd ../signalr-client && yarn build:pack-publish && cd ../jsonrpc  && yarn build:pack-publish"
+    },
     "devDependencies": {
         "tslint": "^5.13.1",
         "tslint-microsoft-contrib": "^6.0.0",
@@ -8,6 +11,7 @@
         "nerdbank-gitversioning": "^2.3.183"
     },
     "workspaces": [
+        "./signalr-client-proxy",
         "./signalr-client",
         "./jsonrpc",
         "./cli"

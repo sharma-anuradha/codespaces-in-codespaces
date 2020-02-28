@@ -9,11 +9,11 @@
         "watch": "tsc -watch -b ./"
     },
     "dependencies": {
+        "@microsoft/signalr-protocol-msgpack": "^3.1.2",
+        "@types/yargs": "^13.0.0",
         "@vs/vso-signalr-client": "link:../signalr-client",
         "@vs/vso-signalr-client-jsonrpc": "link:../jsonrpc",
-        "@types/yargs": "^13.0.0",
         "yargs": "^13.2.4"
     },
-    "devDependencies": {
-    }
+    "devDependencies": {}
 }

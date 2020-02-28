@@ -27,7 +27,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         byte[] EncodeHubData(byte[] data);
 
         /// <summary>
-        /// Handle the next data received from the realy hub proxy.
+        /// Handle the next data received from the relay hub proxy.
         /// </summary>
         /// <param name="data">Raw data received.</param>
         void HandleReceivedData(byte[] data);

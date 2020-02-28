@@ -45,6 +45,7 @@ export interface IRelayHubProxy {
 
     sendData(sendOption: SendOption, targetParticipants: string[] | null, type: string, data: Uint8Array): Promise<void>;
     rejoin(joinOptions?: JoinOptions): Promise<void>;
+    dispose(): Promise<void>;
 }
 
 export interface JoinOptions {

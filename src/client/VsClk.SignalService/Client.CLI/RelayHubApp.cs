@@ -193,7 +193,7 @@ namespace SignalService.Client.CLI
 
         protected override void OnHubCreated()
         {
-            this.relayServiceProxy = HubProxy.CreateHubProxy<RelayServiceProxy>(HubClient, TraceSource, true);
+            this.relayServiceProxy = HubProxy.CreateHubProxy<RelayServiceProxy>(HubClient, TraceSource, HubProxyOptions);
             this.relayServiceProxy.HubProxy.ConnectionStateChanged += async (s, e) =>
             {
                 if (this.relayServiceProxy.HubProxy.IsConnected)

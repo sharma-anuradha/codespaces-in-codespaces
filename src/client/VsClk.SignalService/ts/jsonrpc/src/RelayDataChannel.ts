@@ -1,5 +1,5 @@
 
-import { IRelayHubProxy, SendOption, ParticipantChangeType } from '@vs/vso-signalr-client';
+import { IRelayHubProxy, SendOption, ParticipantChangeType } from '@vs/vso-signalr-client-proxy';
 import { IDataChannel, ChannelClosedEventArgs } from './IDataChannel';
 import { Event, Emitter, CancellationToken } from 'vscode-jsonrpc';
 

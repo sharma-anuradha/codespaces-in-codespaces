@@ -22,11 +22,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         };
 
         /// <summary>
-        /// Normalize a json element to return a 'raw' object
+        /// Normalize a json element to return a 'raw' object.
         /// </summary>
-        /// <param name="jsonElement">The json element to convert</param>
-        /// <param name="argumentType">The desired type to be converted</param>
-        /// <returns></returns>
+        /// <param name="jsonElement">The json element to convert.</param>
+        /// <param name="argumentType">The desired type to be converted.</param>
+        /// <returns>The unboxed object.</returns>
         public static object ConvertTo(JsonElement jsonElement, Type argumentType)
         {
             Requires.NotNull(argumentType, nameof(argumentType));

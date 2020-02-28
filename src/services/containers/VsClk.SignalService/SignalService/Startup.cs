@@ -135,7 +135,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             services.AddSingleton<RelayService>();
 
-            var signalRService = services.AddSignalR().AddNewtonsoftJsonProtocol();
+            var signalRService = services.AddSignalR()
+                .AddNewtonsoftJsonProtocol()
+                .AddMessagePackProtocol((options) =>
+                {
+                });
 
             var keyVaultName = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.KeyVaultName));
 

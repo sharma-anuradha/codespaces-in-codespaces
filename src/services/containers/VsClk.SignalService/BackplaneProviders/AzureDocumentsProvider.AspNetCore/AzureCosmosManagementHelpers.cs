@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Helpers for the Azure Management Fluent for Cosmos
+    /// Helpers for the Azure Management Fluent for Cosmos.
     /// </summary>
     internal static class AzureCosmosManagementHelpers
     {

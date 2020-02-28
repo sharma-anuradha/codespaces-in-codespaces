@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <AssemblyName>Microsoft.VsCloudKernel.RelayService</AssemblyName>
+    <LangVersion>7.2</LangVersion>
+    <Timestamp>$([System.DateTime]::Now.ToString("yyyyMMdd.HHmmss"))</Timestamp>
+    <IsPublishable>true</IsPublishable>
+  </PropertyGroup>
+
+  <ItemGroup>    
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="$(Microsoft_AspNetCore_SignalR_Protocols_MessagePackVersion_Version)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RelayServiceHub\RelayServiceHub.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DockerFiles Include="Dockerfile" />
+    <DockerFiles Include="docker-compose.yml" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="appsettings.Debug.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  
+  <Target Name="GenerateTags" AfterTargets="build">
+    <Message Text="GitCommitId: $(GitCommitId) version:$(Version) buildtag:$(Timestamp)" />
+
+    <WriteLinesToFile File="$(Outdir)buildtag.txt" Lines="$(Timestamp)" Overwrite="true" />
+    <WriteLinesToFile File="$(Outdir)version.txt" Lines="$(Version)" Overwrite="true" />
+    <WriteLinesToFile File="$(Outdir)gitcommitid.txt" Lines="$(GitCommitId)" Overwrite="true" />
+  </Target>
+  
+  <Target Name="CopyDeploymentFiles" AfterTargets="Publish">
+    <Copy SourceFiles="@(DockerFiles)" DestinationFolder="$(Outdir)\%(RecursiveDir)" SkipUnchangedFiles="false" />
+    <ItemGroup>
+      <FileWrites Include="$(OutDir)\**\*.*" />
+    </ItemGroup>
+  </Target>
+  
+</Project>

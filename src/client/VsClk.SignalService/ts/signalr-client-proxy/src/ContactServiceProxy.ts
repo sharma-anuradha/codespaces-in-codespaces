@@ -1,9 +1,9 @@
 import { IContactServiceProxy, ConnectionChangeType, IContactReference }  from './IContactServiceProxy';
-import { HubProxyBase } from './HubProxyBase';
+import { HubProxyBase, keysToCamel } from './HubProxyBase';
 import { IHubProxy } from './IHubProxy';
-import { LogLevel } from '@microsoft/signalr';
 import { CallbackContainer } from './CallbackContainer';
 import { IDisposable } from './IDisposable';
+import { ILogger, LogLevel } from './ILogger';
 
 export class ContactServiceProxy extends HubProxyBase implements IContactServiceProxy {
     private updatePropertiesCallbacks = new CallbackContainer<(contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void>();
@@ -12,13 +12,13 @@ export class ContactServiceProxy extends HubProxyBase implements IContactService
 
     constructor(
         hubProxy: IHubProxy,
-        logger?: signalR.ILogger,
+        logger?: ILogger,
         useSignalRHub?: boolean) {
         super(hubProxy, logger, useSignalRHub ? 'presenceServiceHub' : undefined);
 
-        hubProxy.on(this.toHubMethodName('updateValues'), (contact, properties, targetConnectionId) => this.updateValues(contact, properties, targetConnectionId));
-        hubProxy.on(this.toHubMethodName('receiveMessage'), (targetContact, fromContact, messageType, body) => this.receiveMessage(targetContact, fromContact, messageType, body));
-        hubProxy.on(this.toHubMethodName('connectionChanged'), (contact, changeType) => this.connectionChanged(contact, changeType));
+        hubProxy.on(this.toHubMethodName('updateValues'), (contact, properties, targetConnectionId) => this.updateValues(keysToCamel(contact), properties, targetConnectionId));
+        hubProxy.on(this.toHubMethodName('receiveMessage'), (targetContact, fromContact, messageType, body) => this.receiveMessage(keysToCamel(targetContact), keysToCamel(fromContact), messageType, body));
+        hubProxy.on(this.toHubMethodName('connectionChanged'), (contact, changeType) => this.connectionChanged(keysToCamel(contact), changeType));
     }
 
     public onUpdateProperties(callback: (contact: IContactReference, properties: { [key: string]: any; }, targetConnectionId: string) => void): IDisposable {

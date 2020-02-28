@@ -3,12 +3,15 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
+using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Client;
 using Microsoft.VsCloudKernel.SignalService.Common;
 
@@ -19,7 +22,9 @@ namespace SignalService.Client.CLI
     /// </summary>
     internal abstract class SignalRAppBase
     {
-        private const string DefaultServiceEndpointBase = "https://localhost:5001/";
+        private const string SignalRHubName = "signalrhub";
+
+        private const string DefaultServiceEndpointBase = "http://localhost:5000/";
 
         private CancellationTokenSource disposeCts = new CancellationTokenSource();
 
@@ -27,12 +32,16 @@ namespace SignalService.Client.CLI
 
         protected CancellationToken DisposeToken => this.disposeCts.Token;
 
-        protected virtual string HubName => "signalrhub";
+        protected string HubName { get; private set; }
 
         protected TraceSource TraceSource { get; private set; }
 
+        protected HubProxyOptions HubProxyOptions { get; private set; }
+
         public async Task<int> RunAsync(Program cli)
         {
+            HubProxyOptions = cli.HubName.HasValue() ? HubProxyOptions.None : HubProxyOptions.UseSignalRHub;
+            HubName = cli.HubName.HasValue() ? cli.HubName.Value() : SignalRHubName;
             string serviceEndpoint = cli.ServiceEndpointOption.Value();
             if (string.IsNullOrEmpty(serviceEndpoint))
             {
@@ -46,14 +55,28 @@ namespace SignalService.Client.CLI
                     serviceUri = serviceEndpoint;
                 }
 
-                IHubConnectionBuilder hubConnectionBuilder;
-                if (cli.AccessTokenOption.HasValue())
+                var hubConnectionBuilder = new HubConnectionBuilder().WithUrl(serviceUri, options =>
                 {
-                    hubConnectionBuilder = HubConnectionHelpers.FromUrlAndAccessToken(serviceUri, cli.AccessTokenOption.Value());
-                }
-                else
+                    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+                    if (cli.AccessTokenOption.HasValue())
+                    {
+                        options.AccessTokenProvider = () =>
+                        {
+                            return Task.FromResult(cli.AccessTokenOption.Value());
+                        };
+                    }
+
+                    if (cli.SkipNegotiate.HasValue())
+                    {
+                        options.SkipNegotiation = true;
+                    }
+               });
+
+                if (cli.MessagePackOption.HasValue())
                 {
-                    hubConnectionBuilder = HubConnectionHelpers.FromUrl(serviceUri);
+                    hubConnectionBuilder.AddMessagePackProtocol((options) =>
+                    {
+                    });
                 }
 
                 if (cli.DebugSignalROption.HasValue())

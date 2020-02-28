@@ -1,8 +1,6 @@
 
-import { IHubProxy } from './IHubProxy';
+import { IHubProxy, IDisposable } from '@vs/vso-signalr-client-proxy';
 import { HubClient } from './HubClient';
-
-import * as signalR from '@microsoft/signalr';
 
 export class HubProxy implements IHubProxy {
 
@@ -17,8 +15,8 @@ export class HubProxy implements IHubProxy {
         return this.hubClient.isConnected;
     }
 
-    public onConnectionStateChanged(callback: () => Promise<void>): void {
-        this.hubClient.onConnectionStateChanged(callback);
+    public onConnectionStateChanged(callback: () => Promise<void>): IDisposable {
+        return this.hubClient.onConnectionStateChanged(callback);
     }
 
     public send(methodName: string, ...args: any[]): Promise<void> {
@@ -29,7 +27,10 @@ export class HubProxy implements IHubProxy {
         return this.hubConnection.invoke<T>(methodName, ...args);
     }
 
-    public on(methodName: string, newMethod: (...args: any[]) => void): void {
+    public on(methodName: string, newMethod: (...args: any[]) => void): IDisposable {
         this.hubConnection.on(methodName, newMethod);
+        return {
+            dispose: () => this.hubConnection.off(methodName)
+        };
     }
 }

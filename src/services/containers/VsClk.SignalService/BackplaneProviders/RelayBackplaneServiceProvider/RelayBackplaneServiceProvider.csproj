@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
-    <AssemblyName>Microsoft.VsCloudKernel.SignalService.RealyBackplaneServiceProvider</AssemblyName>
+    <AssemblyName>Microsoft.VsCloudKernel.SignalService.RelayBackplaneServiceProvider</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

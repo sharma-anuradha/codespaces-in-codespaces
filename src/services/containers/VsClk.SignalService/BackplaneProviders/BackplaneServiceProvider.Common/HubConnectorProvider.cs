@@ -52,8 +52,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             Logger = logger;
         }
 
+        /// <inheritdoc/>
         public event EventHandler Disconnected;
 
+        /// <inheritdoc/>
         public bool IsConnected => HubConnection.State == HubConnectionState.Connected;
 
         private ILogger Logger { get; }
@@ -62,6 +64,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private HubConnection HubConnection { get; }
 
+        /// <inheritdoc/>
         public async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
             await HubConnection.ConnectAsync(
@@ -77,11 +80,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.creatingFlag = false;
         }
 
+        /// <inheritdoc/>
         public Task<TResult> InvokeAsync<TResult>(string targetName, object[] arguments, CancellationToken cancellationToken)
         {
             return HubConnection.InvokeCoreAsync<TResult>(targetName, arguments, cancellationToken);
         }
 
+        /// <inheritdoc/>
+        public Task SendAsync(string targetName, object[] arguments, CancellationToken cancellationToken)
+        {
+            return HubConnection.SendCoreAsync(targetName, arguments, cancellationToken);
+        }
+
+        /// <inheritdoc/>
         public void AddTarget(string methodName, Delegate handler)
         {
             var parameterTypes = handler.GetMethodInfo().GetParameters().Select(p => p.ParameterType).ToArray();

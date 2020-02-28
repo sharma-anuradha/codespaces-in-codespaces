@@ -3,9 +3,12 @@
   <Import Project="$(ThisFileDirectory)../../../Directory.Build.props" />
   <!-- NuGet Package Versions -->
   <PropertyGroup>
+    <UseVsSaaSSdk>false</UseVsSaaSSdk>
     <SignalRVersion>1.2.3</SignalRVersion>
     <VisualStudioThreadingVersion>16.0.102</VisualStudioThreadingVersion>
-    <StreamJsonRpcVersion>2.0.167</StreamJsonRpcVersion>
-    <Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>3.1.1</Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>
+    <StreamJsonRpcVersion>2.1.74</StreamJsonRpcVersion>
+    <MessagePackVersion>1.7.3.7</MessagePackVersion>
+    <Microsoft_AspNetCore_SignalR_Protocols_MessagePackVersion_Version>3.1.2</Microsoft_AspNetCore_SignalR_Protocols_MessagePackVersion_Version>
+    <Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>3.1.2</Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>
   </PropertyGroup>
 </Project>

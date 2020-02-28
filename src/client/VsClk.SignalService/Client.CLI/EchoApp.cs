@@ -20,8 +20,6 @@ namespace SignalService.Client.CLI
             this.echoSecs = echoSecs;
         }
 
-        protected override string HubName => "healthhub";
-
         protected override Task HandleKeyAsync(char key) => Task.CompletedTask;
 
         protected override void OnHubCreated()

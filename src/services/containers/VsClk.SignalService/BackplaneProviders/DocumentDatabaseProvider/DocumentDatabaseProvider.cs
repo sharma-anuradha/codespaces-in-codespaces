@@ -239,7 +239,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                             new ContactReference(messageDoc.ContactId, null),
                             new ContactReference(messageDoc.TargetContactId, messageDoc.TargetConnectionId),
                             messageDoc.Type,
-                            JToken.FromObject(messageDoc.Body)),
+                            NewtonsoftHelpers.ToRawObject(messageDoc.Body)),
                             default(CancellationToken));
                     }
                     catch (Exception error)
