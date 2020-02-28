@@ -6,6 +6,7 @@ export const DEFAULT_EXTENSIONS = [
     'ms-vsliveshare.vsliveshare',
     'visualstudioexptteam.vscodeintellicode',
     'ms-vsonline.vsonline',
+    'GitHub.vscode-pull-request-github',
 ];
 
 const packageJson: IPackageJson = require('../package.json');
