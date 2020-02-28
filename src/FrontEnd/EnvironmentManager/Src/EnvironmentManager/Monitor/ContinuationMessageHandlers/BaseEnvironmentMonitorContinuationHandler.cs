@@ -172,6 +172,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                 return CreateFinalResult(OperationState.Cancelled, "EnvironmentRecordNotFound");
             }
 
+            // Add environment details to telemetry.
+            logger.AddCloudEnvironment(environment);
+
             // Check Compute Id matches with message
             if (environment.Compute?.ResourceId != null && environment.Compute.ResourceId != typedInput.ComputeResourceId)
             {
