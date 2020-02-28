@@ -34,9 +34,11 @@ export function NewEnvironment(props: RouteComponentProps) {
             focusCreateEnvironmentButton();
 
             // going back to environments cards (landing page)
-            props.history.replace(
-                environmentId ? `/environment/${environmentId}` : '/environments'
-            );
+            if (environmentId) {
+                window.location.replace(`/environment/${environmentId}`);
+            } else {
+                props.history.replace('/environments');
+            }
         },
         [props.history]
     );
