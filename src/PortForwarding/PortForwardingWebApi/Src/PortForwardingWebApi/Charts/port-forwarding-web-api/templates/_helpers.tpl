@@ -38,3 +38,36 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "port-forwarding-web-api.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "port-forwarding-web-api.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create the name of the role to use
+*/}}
+{{- define "port-forwarding-web-api.role" -}}
+{{- if .Values.role.create -}}
+    {{ default (include "port-forwarding-web-api.fullname" .) .Values.role.name }}
+{{- else -}}
+    {{ default "default" .Values.role.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create the name of the rolebinding to use
+*/}}
+{{- define "port-forwarding-web-api.rolebinding" -}}
+{{- if .Values.role.create -}}
+    {{ default (include "port-forwarding-web-api.fullname" .) .Values.role.name }}
+{{- else -}}
+    {{ default "default" .Values.role.name }}
+{{- end -}}
+{{- end -}}

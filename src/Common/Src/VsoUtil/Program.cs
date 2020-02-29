@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             {
                 return Parser.Default.ParseArguments<
                     CreatePortForwardingConnection,
+                    PortForwardingConnectionEstablished,
                     ShowSkusCommand,
                     ShowSubscriptionCommand,
                     ShowControlPlaneCommand,
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     SetNexusInternalImageCommand>(args)
                     .MapResult(
                         (CreatePortForwardingConnection command) => command.Execute(Console.Out, Console.Error),
+                        (PortForwardingConnectionEstablished command) => command.Execute(Console.Out, Console.Error),
                         (ShowSkusCommand command) => command.Execute(Console.Out, Console.Error),
                         (ShowSubscriptionCommand command) => command.Execute(Console.Out, Console.Error),
                         (ShowControlPlaneCommand command) => command.Execute(Console.Out, Console.Error),

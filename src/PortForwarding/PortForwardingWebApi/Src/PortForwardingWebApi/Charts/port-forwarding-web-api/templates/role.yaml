@@ -1,0 +1,27 @@
+{{- if .Values.role.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "port-forwarding-web-api.role" . }}
+rules:
+  - apiGroups: 
+        - ""
+    resources:
+        - "pods"
+    verbs:
+        - "patch"
+        - "list"
+  - apiGroups:
+        - ""
+    resources:
+        - "services"
+    verbs:
+        - "create"
+  - apiGroups:
+        - "extensions"
+        - "networking.k8s.io"
+    resources:
+        - "ingresses"
+    verbs:
+        - "create"
+{{- end -}}

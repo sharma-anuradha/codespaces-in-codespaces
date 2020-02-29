@@ -10,17 +10,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
     public class ConnectionRequest
     {
         /// <summary>
-        /// LS Workspace ID
+        /// Gets or sets LS Workspace ID.
         /// </summary>
         public string WorkspaceId { get; set; }
 
         /// <summary>
-        /// Source port
+        /// Gets or sets Source port.
         /// </summary>
         public int Port { get; set; }
 
         /// <summary>
-        /// Cascade / Access token accepted by LS agent.
+        /// Gets or sets Cascade / Access token accepted by LS agent.
         /// </summary>
         public string Token { get; set; }
     }

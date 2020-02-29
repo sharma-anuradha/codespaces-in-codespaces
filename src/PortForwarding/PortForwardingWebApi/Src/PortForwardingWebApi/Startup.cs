@@ -2,11 +2,13 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
@@ -15,7 +17,9 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
@@ -64,13 +68,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
+            services.AddSingleton<IServiceBusQueueClientProvider, ServiceBusQueueClientProvider>();
+
             services.AddSingleton<IManagedCache, InMemoryManagedCache>();
             services.AddSingleton<ISystemCatalog, NullSystemCatalog>();
+
+            if (IsRunningInAzure() && (
+                portForwardingSettings.UseMockKubernetesMappingClientInDevelopment ||
+                portForwardingSettings.DisableBackgroundTasksForLocalDevelopment))
+            {
+                throw new InvalidOperationException("Cannot use mocks, fakes, or disable background tasks outside of local development.");
+            }
 
             if (!portForwardingSettings.DisableBackgroundTasksForLocalDevelopment)
             {
                 services.AddEstablishedConnectionsWorker();
             }
+
+            services.AddAgentMappingClient(portForwardingSettings, IsRunningInAzure());
 
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
 

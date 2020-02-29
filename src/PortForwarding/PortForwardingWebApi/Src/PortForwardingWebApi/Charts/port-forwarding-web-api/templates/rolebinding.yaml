@@ -1,0 +1,13 @@
+{{- if .Values.role.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "port-forwarding-web-api.rolebinding" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "port-forwarding-web-api.serviceAccountName" . }}
+roleRef:
+  kind: Role
+  name: {{ include "port-forwarding-web-api.role" . }}
+  apiGroup: ""
+{{- end -}}

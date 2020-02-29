@@ -27,6 +27,7 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.image.imagePullSecret }}
       {{- end }}
+      serviceAccountName: {{ include "port-forwarding-web-api.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.repositoryName not specified" .Values.image.repositoryName }}:{{ required "Value image.tag not specified" .Values.image.tag }}'
