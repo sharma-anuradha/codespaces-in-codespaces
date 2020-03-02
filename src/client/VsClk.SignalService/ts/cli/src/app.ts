@@ -72,7 +72,8 @@ async function main() {
 
     const hubClient = new HubClient(hubBuilder.build(), logger);
 
-    const keyPressCallback = argv.relayHub ? main_relay(hubClient, logger) : main_presence(hubClient, logger);
+    const useSignalRHub = serviceUri.endsWith('signalrhub');
+    const keyPressCallback = argv.relayHub ? main_relay(hubClient, logger, useSignalRHub) : main_presence(hubClient, logger, useSignalRHub);
 
     await hubClient.start();
     console.log('connected...');
@@ -93,8 +94,8 @@ async function main() {
     });
 }
 
-function main_presence(hubClient: HubClient, logger: signalR.ILogger): (key: any) => Promise<void> {  
-    const contactServiceProxy = new ContactServiceProxy(hubClient.hubProxy, logger, true );
+function main_presence(hubClient: HubClient, logger: signalR.ILogger, useSignalRHub: boolean): (key: any) => Promise<void> {  
+    const contactServiceProxy = new ContactServiceProxy(hubClient.hubProxy, logger, useSignalRHub );
 
     contactServiceProxy.onUpdateProperties((contact, properties, targetConnectionId) => {
         // our ILogger will already send this to the console
@@ -137,8 +138,8 @@ function main_presence(hubClient: HubClient, logger: signalR.ILogger): (key: any
     };
 }
 
-function main_relay(hubClient: HubClient, logger: signalR.ILogger): (key: any) => Promise<void> {  
-    const relayServiceProxy = new RelayServiceProxy(hubClient.hubProxy, logger, true);
+function main_relay(hubClient: HubClient, logger: signalR.ILogger, useSignalRHub: boolean): (key: any) => Promise<void> {  
+    const relayServiceProxy = new RelayServiceProxy(hubClient.hubProxy, logger, useSignalRHub);
 
     let rpcConnection: rpc.MessageConnection;
     let relayHubProxy: IRelayHubProxy;

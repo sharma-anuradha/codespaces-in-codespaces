@@ -5,11 +5,12 @@
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Definition of our scopes for the relay service
+    /// Definition of our scopes for the relay service.
     /// </summary>
     internal static class RelayServiceScopes
     {
         public const string MethodCreateHub = "CreateHub";
+        public const string MethodDeleteHub = "DeleteHub";
         public const string MethodJoinHub = "JoinHub";
         public const string MethodUpdateHub = "UpdateHub";
         public const string MethodLeaveHub = "LeaveHub";

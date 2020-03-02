@@ -76,6 +76,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task DeleteHubAsync(string hubId, CancellationToken cancellationToken)
         {
+            using (Logger.BeginMethodScope(RelayServiceScopes.MethodDeleteHub))
+            {
+                Logger.LogDebug($"hubId:{hubId}");
+            }
+
             if (this.relayHubs.TryRemove(hubId, out var relayHub))
             {
                 await relayHub.NotifyHubDeletedAsync(cancellationToken);
@@ -360,6 +365,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (dataChanged.ChangeType == RelayHubChangeType.Removed && this.relayHubs.TryRemove(dataChanged.HubId, out var relayHub))
             {
+                Logger.LogDebug($"Hub delete from backplane id:{dataChanged.HubId}");
                 await relayHub.NotifyHubDeletedAsync(cancellationToken);
             }
         }

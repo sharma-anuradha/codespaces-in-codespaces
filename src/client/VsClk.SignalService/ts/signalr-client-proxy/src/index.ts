@@ -6,4 +6,4 @@ export { IHubProxyConnection } from './IHubProxyConnection';
 export { IContactServiceProxy, ConnectionChangeType, IContactReference }  from './IContactServiceProxy';
 export { ContactServiceProxy } from './ContactServiceProxy';
 export { RelayServiceProxy } from './RelayServiceProxy';
-export { IRelayHubParticipant, IReceivedData, ParticipantChangeType, SendOption, IParticipantChanged, IRelayHubProxy, IRelayServiceProxy } from './IRelayServiceProxy';
+export { IRelayHubParticipant, IReceivedData, ParticipantChangeType, SendOption, JoinOptions, SendHubData, IParticipantChanged, IRelayHubProxy, IRelayServiceProxy } from './IRelayServiceProxy';

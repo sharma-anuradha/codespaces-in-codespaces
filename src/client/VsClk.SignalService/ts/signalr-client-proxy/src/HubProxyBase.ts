@@ -42,10 +42,22 @@ function toCamel(name: string): string {
     return name.substr(0, 1).toLowerCase() + name.substr(1);
 }
 
+function toPascal(name: string): string {
+    return name.substr(0, 1).toUpperCase() + name.substr(1);
+}
+
 export function keysToCamel(o: any): any {
+    return convertKeys(o, toCamel);
+}
+
+export function keysToPascal(o: any): any {
+    return convertKeys(o, toPascal);
+}
+
+function convertKeys(o: any, keyConverter: (key: string) => string): any {
     if (isArray(o)) {
         return o.map((i) => {
-            return keysToCamel(i);
+            return convertKeys(i, keyConverter);
         });       
     } else if (isObject(o)) {
         const n: any = {};
@@ -53,11 +65,13 @@ export function keysToCamel(o: any): any {
         .forEach((k) => {
             let value = o[k];
             if (isObject(value)) {
-                value = keysToCamel(value);
+                value = convertKeys(value, keyConverter);
             }
-            n[toCamel(k)] = value;
+            n[keyConverter(k)] = value;
         });
 
         return n;
     }
+
+    return o;
 }

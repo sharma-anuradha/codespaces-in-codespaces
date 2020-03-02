@@ -73,4 +73,18 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public HubParticipant[] Participants { get; set; }
     }
+
+    /// <summary>
+    /// Data to pass to the send hub data.
+    /// </summary>
+    public struct SendHubData
+    {
+        public string HubId { get; set; }
+
+        public int SendOption { get; set; }
+
+        public string[] TargetParticipantIds { get; set; }
+
+        public string Type { get; set; }
+    }
 }

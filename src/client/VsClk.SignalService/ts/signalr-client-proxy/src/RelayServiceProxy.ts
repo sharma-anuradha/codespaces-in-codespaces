@@ -1,6 +1,6 @@
 
-import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType, SendOption, JoinOptions }  from './IRelayServiceProxy';
-import { HubProxyBase } from './HubProxyBase';
+import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType, SendOption, JoinOptions, SendHubData }  from './IRelayServiceProxy';
+import { HubProxyBase, keysToPascal } from './HubProxyBase';
 import { IHubProxy } from './IHubProxy';
 import { CallbackContainer } from './CallbackContainer';
 import { IDisposable } from './IDisposable';
@@ -82,7 +82,7 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
     }
 
     public async _joinHubInternal( relayHubProxyFactory: (joinHubInfo: JoinHubInfo) => RelayHubProxy, hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy> {
-        const joinHubInfo = await this.invokeKeysToCamel<JoinHubInfo>('JoinHubAsync', hubId, properties, joinOptions);
+        const joinHubInfo = await this.invokeKeysToCamel<JoinHubInfo>('JoinHubAsync', hubId, properties, keysToPascal(joinOptions));
         const realyHubProxy = relayHubProxyFactory(joinHubInfo);
         this.relayHubs.set(hubId, realyHubProxy);
 
@@ -176,7 +176,14 @@ class RelayHubProxy implements IRelayHubProxy {
         }
 
         const dataArray = Array.from(data);
-        return this.relayServiceProxy.send('SendDataHubAsync', this.id, sendOption, targetParticipants, type, dataArray );
+        const sendHubData: SendHubData = {
+            hubId: this.id,
+            sendOption,
+            targetParticipantIds: targetParticipants || null,
+            type,
+        };
+
+        return this.relayServiceProxy.send('SendDataHubExAsync', keysToPascal(sendHubData), dataArray);
     }
 
     public dispose(): Promise<void> {

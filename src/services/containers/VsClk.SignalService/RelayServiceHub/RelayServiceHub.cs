@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// The SignalR Hub class for the presence service
+    /// The SignalR Hub class for the presence service.
     /// </summary>
     public class RelayServiceHub : Hub<IRelayServiceClientHub>, IRelayServiceHub
     {
@@ -70,6 +70,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             byte[] data)
         {
             return this.relayService.SendDataHubAsync(Context.ConnectionId, hubId, sendOption, targetParticipantIds, type, data, Context.ConnectionAborted);
+        }
+
+        public Task SendDataHubExAsync(SendHubData sendHubData, object[] data)
+        {
+            var dataArray = Array.ConvertAll(data, b => Convert.ToByte(b));
+            return this.relayService.SendDataHubAsync(
+                Context.ConnectionId,
+                sendHubData.HubId,
+                (SendOption)sendHubData.SendOption,
+                sendHubData.TargetParticipantIds,
+                sendHubData.Type,
+                dataArray,
+                Context.ConnectionAborted);
         }
 
         public Task UpdateAsync(string hubId, Dictionary<string, object> properties)

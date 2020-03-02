@@ -173,7 +173,18 @@ namespace Microsoft.VsCloudKernel.SignalService
             else if (argumentType.IsArray && value is object[] objectPropertiesArray)
             {
                 var itemType = argumentType.GetElementType();
+                if (itemType == typeof(object))
+                {
+                    return objectPropertiesArray;
+                }
+
                 var array = Array.CreateInstance(itemType, objectPropertiesArray.Length);
+                if (itemType.IsPrimitive && objectPropertiesArray.Length > 0 && objectPropertiesArray[0].GetType() == itemType)
+                {
+                    Array.Copy(objectPropertiesArray, array, objectPropertiesArray.Length);
+                    return array;
+                }
+
                 int index = 0;
                 foreach (var item in objectPropertiesArray)
                 {

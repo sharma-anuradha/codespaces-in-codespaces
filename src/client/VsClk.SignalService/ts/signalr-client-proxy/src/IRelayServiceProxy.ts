@@ -52,6 +52,13 @@ export interface JoinOptions {
     readonly createIfNotExists?: boolean;
 }
 
+export interface SendHubData {
+    readonly hubId: string;
+    readonly sendOption: number;
+    readonly targetParticipantIds?: string[] | null;
+    readonly type: string;
+}
+
 export interface IRelayServiceProxy extends IServiceProxyBase {
     createHub(hubId?: string): Promise<string>;
     joinHub(hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy>;

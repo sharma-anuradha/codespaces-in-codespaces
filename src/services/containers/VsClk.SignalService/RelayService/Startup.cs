@@ -48,6 +48,7 @@ namespace Microsoft.VsCloudKernel.RelayService
             services.AddSingleton<IHubContextHost, HubContextHost<RelayServiceHub, RelayServiceHub>>();
 
             services.AddSignalR()
+                .AddNewtonsoftJsonProtocol()
                 .AddMessagePackProtocol((options) =>
                 {
                 });
