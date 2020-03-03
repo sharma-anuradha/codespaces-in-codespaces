@@ -13,7 +13,7 @@ interface IRenderSplashScreenProps {
 
 export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProps> = (props) => {
     return (
-        <PortalLayout>
+        <PortalLayout hideNavigation>
             <Stack
                 horizontalAlign='center'
                 verticalFill

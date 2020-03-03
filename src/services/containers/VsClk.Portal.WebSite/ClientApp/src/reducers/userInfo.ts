@@ -4,13 +4,13 @@ import {
     UserInfo,
 } from '../actions/getUserInfo';
 
-type ConfigurationState = UserInfo | null;
+type UserInfoState = UserInfo | null;
 type AcceptedActions = GetUserInfoSuccessAction;
 
 export function userInfo(
-    state: ConfigurationState | undefined = null,
+    state: UserInfoState | undefined = null,
     action: AcceptedActions
-): ConfigurationState {
+): UserInfoState {
     switch (action.type) {
         case getUserInfoSuccessActionType:
             return action.payload.userInfo;

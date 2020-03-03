@@ -1,4 +1,4 @@
-import { isInternalUser } from '../services/isInternalUserTracker';
+import { useActionContext } from '../actions/middleware/useActionContext';
 
 /**
  * Function to replace all paths with [PATH] label.
@@ -34,7 +34,10 @@ export const cleanupPII = (str: string | undefined): string | undefined => {
 }
 
 export const cleanupPIIForExternal = (str?: string): string | undefined => {
-    if (isInternalUser) {
+    const context = useActionContext();
+    const { isInternal } = context.state.authentication;
+
+    if (isInternal) {
         return str;
     }
 

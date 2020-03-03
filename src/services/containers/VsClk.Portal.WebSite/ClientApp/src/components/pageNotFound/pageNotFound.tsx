@@ -6,10 +6,11 @@ import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environm
 import '../portalLayout/portalLayout.css';
 import errorUfo from './error-ufo-404.svg';
 import './pageNotFound.css';
+import { isHostedOnGithub } from '../../utils/isHostedOnGithub';
 
 export function PageNotFound() {
     return (
-        <PortalLayout>
+        <PortalLayout hideNavigation={isHostedOnGithub()}>
             <Stack
                 horizontalAlign='center'
                 verticalFill

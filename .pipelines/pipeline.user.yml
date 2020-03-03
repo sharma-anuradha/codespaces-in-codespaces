@@ -29,6 +29,7 @@ static_analysis_options:
           - 'scripts\npm\postinstall.js'
           - 'scripts\npm\update-vscode.js'
           - 'scripts\npm\update-github-secret.js'
+          - 'scripts\npm\update-github-secret-base.js'
           - 'scripts\npm\utils.js'
           - 'scripts\npm\get-dev-ssl-cert.js'
           - 'scripts\npm\get-service-principal.js'

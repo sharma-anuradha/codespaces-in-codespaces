@@ -2,6 +2,7 @@
 import { createTrace } from '../utils/createTrace';
 import { Signal } from '../utils/signal';
 import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
+import { isHostedOnGithub } from '../utils/isHostedOnGithub';
 import { IAuthenticationAttempt } from './authenticationServiceBase';
 import { SupportedGitService } from '../utils/gitUrlNormalization';
 
@@ -79,13 +80,17 @@ export async function getStoredGitHubToken(scope: string | null = null): Promise
 }
 
 let currentAttempt: GithubAuthenticationAttempt | undefined;
-export async function getGitHubAccessToken(): Promise<string | null> {
+export async function getGitHubAccessToken(isInline = false, redirectPath?: string): Promise<string | null> {
     if (currentAttempt) {
-        return await currentAttempt.authenticate();
+        return await currentAttempt.authenticate(isInline);
     }
+    
+    const state = (redirectPath)
+        ? `${createUniqueId()},${redirectPath}`
+        : undefined;
 
-    currentAttempt = new GithubAuthenticationAttempt();
-    const authPromise = currentAttempt.authenticate();
+    currentAttempt = new GithubAuthenticationAttempt(state);
+    const authPromise = currentAttempt.authenticate(isInline);
 
     authPromise.finally(() => {
         currentAttempt = undefined;
@@ -98,7 +103,22 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
     private tokenRequest?: Signal<string | null>;
 
     get url() {
-        return `${window.location.origin}/github-auth?state=${encodeURIComponent(this.state)}`;
+        /**
+         * For GitHub hosted portal, we have to use the GitHub issued apps.
+         * Since those apps are not OAuth apps that we already use, we have
+         * to split the auth flow on using two differnet apps. The change might
+         * be very disruptive and deserves a dedicated PR.
+         */
+        const client = (isHostedOnGithub())
+            ? 'github'
+            : 'vso';
+
+        const params = new URLSearchParams([
+            ['vso-client', client],
+            ['state', this.state]
+        ]);
+
+        return `${window.location.origin}/github-auth?${params}`;
     }
 
     get target() {
@@ -111,7 +131,7 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
 
     constructor(private readonly state = createUniqueId()) {}
 
-    async authenticate(): Promise<string | null> {
+    async authenticate(isInline = false): Promise<string | null> {
         if (this.tokenRequest) {
             return this.tokenRequest.promise;
         }
@@ -124,7 +144,11 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
         this.tokenRequest = new Signal();
         const currentTokenRequest = this.tokenRequest;
 
-        window.open(this.url, this.target);
+        if (isInline) {
+            location.href = this.url;
+        } else {
+            window.open(this.url, this.target);
+        }
 
         const timeout = setTimeout(() => {
             // TODO #1069288: Bug found after timeout the page shows does not show the error.

@@ -15,13 +15,23 @@ describe('fetchConfiguration', () => {
     });
 
     it('sets auth token', async () => {
+
+        const account = {
+            name: 'test',
+            userName: 'test',
+            idTokenClaims: {
+                email: 'test@test.test',
+                preferred_username: 'test'
+            }
+        } as any;
+
         const logout = jest
             .spyOn(authService, 'getCachedToken')
             .mockReturnValue(
                 Promise.resolve({
                     accessToken: 'token',
                     expiresOn: new Date(),
-                    account: undefined!,
+                    account
                 })
             );
         await store.dispatch(getAuthToken());

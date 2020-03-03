@@ -12,7 +12,6 @@ import { createTrace } from '../../utils/createTrace';
 import { getVSCodeVersion } from '../../constants';
 
 import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
-import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import {
@@ -66,7 +65,7 @@ export interface WorkbenchProps {
     SplashScreenComponent: React.JSXElementConstructor<IWorkbenchSplashScreenProps>;
     PageNotFoundComponent: React.JSXElementConstructor<{}>;
     liveShareEndpoint: string;
-    token: ITokenWithMsalAccount | undefined;
+    token: string | undefined;
     environmentInfo: ILocalCloudEnvironment | undefined;
     params: URLSearchParams;
     correlationId?: string | null;
@@ -288,15 +287,13 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
             throw new Error('No access token present.');
         }
 
-        const { accessToken } = this.props.token;
-
         const quality =
             window.localStorage.getItem('vso-featureset') === 'insider' ? 'insider' : 'stable';
 
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
         envConnector.ensureConnection(
             environmentInfo,
-            accessToken,
+            this.props.token,
             this.props.liveShareEndpoint,
             quality
         );
@@ -329,12 +326,12 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
             throw new Error('correlationId must be set at this point');
         }
 
-        const { liveShareEndpoint } = this.props;
+        const { liveShareEndpoint, token } = this.props;
         const VSLSWebSocketFactory: IWebSocketFactory = {
             create(url: string) {
                 return new VSLSWebSocket(
                     url,
-                    accessToken,
+                    token,
                     environmentInfo,
                     liveShareEndpoint,
                     correlationId,
@@ -349,7 +346,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
 
         const externalUriProvider = new EnvironmentsExternalUriProvider(
             environmentInfo,
-            accessToken,
+            token,
             envConnector,
             liveShareEndpoint
         );

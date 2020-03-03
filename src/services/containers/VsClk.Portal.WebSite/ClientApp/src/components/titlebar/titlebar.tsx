@@ -18,8 +18,8 @@ import { PlanSelector } from '../planSelector/plan-selector';
 import { logout } from '../../actions/logout';
 
 import './titlebar.css';
-import { isInternalUser } from '../../services/isInternalUserTracker';
 import { settingsPath } from '../../routerPaths';
+import { useActionContext } from '../../actions/middleware/useActionContext';
 
 const getDevelopmentEmojiPrefix = () => {
     const isDev = process.env.NODE_ENV === 'development';
@@ -32,7 +32,10 @@ const getDevelopmentEmojiPrefix = () => {
 };
 
 const getIsInternalEmojiPrefix = () => {
-    if (!isInternalUser) {
+    const context = useActionContext();
+    const { isInternal } = context.state.authentication;
+
+    if (!isInternal) {
         return null;
     }
 

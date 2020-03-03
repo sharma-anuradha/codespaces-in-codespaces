@@ -119,10 +119,11 @@
   },
   "scripts": {
     "preinstall": "node scripts/npm/preinstall.js",
-    "postinstall": "node scripts/npm/postinstall.js && yarn get-service-principal",
+    "postinstall": "node scripts/npm/postinstall.js",
     "clean": "run-p clean:vscode clean:build",
     "clean:vscode": "rimraf public/static/web-standalone",
     "clean:build": "rimraf build",
+    "prestart": "yarn get-service-principal",
     "start": "run-p watch:portal watch:client",
     "start:github": "run-p watch:portal:github watch:client",
     "start:portal": "dotnet run --launch-profile Local --project ..",

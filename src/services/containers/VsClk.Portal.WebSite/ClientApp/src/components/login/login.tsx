@@ -26,7 +26,7 @@ const trace = createTrace('Login');
 
 interface LoginProps {
     redirectUrl: string | null;
-    token: ITokenWithMsalAccount | undefined;
+    token?: string;
     isAuthenticated: boolean;
     isAuthenticating: boolean;
     isInteractionRequired: boolean;
@@ -163,7 +163,7 @@ function LoginView(props: LoginProps) {
             return;
         }
 
-        const cookieSignal = Signal.from(setAuthCookie(props.token.accessToken));
+        const cookieSignal = Signal.from(setAuthCookie(props.token));
 
         cookieSignal.promise.then(
             () => {

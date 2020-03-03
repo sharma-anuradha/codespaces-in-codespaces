@@ -13,11 +13,6 @@ using Microsoft.VsSaaS.AspNetCore.Authentication;
 using Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using StackExchange.Redis;
-using Microsoft.VsSaaS.AspNetCore.Http;
-using Microsoft.VsSaaS.Common.Identity;
-using System.Linq;
-using Microsoft.AspNetCore.Http;
-using System.Threading;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
 {
@@ -115,40 +110,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
             var httpContext = context.HttpContext;
             var principal = context.Principal;
 
-            /*
-            // Use the same algorithm with Cookies as with JWT Bearer.
-            const bool isEmailClaimRequired = true;
-            if (!httpContext.SetUserContextFromClaimsPrincipal(principal, isEmailClaimRequired, out _))
-            {
-                context.RejectPrincipal();
-                return;
-            }
-
-            try
-            {
-                await ValidatedPrincipalAsync(principal, null);
-            }
-            catch (Exception ex)
-            {
-                logger.LogException("cookie_authentication_error", ex);
-                context.RejectPrincipal();
-            }
-            */
-
-            // TODO - debug only, remove these
-
-            var logger = httpContext.GetLogger();
-
-            logger.LogInfo("cookie_validated");
-
             if (principal.FindFirstValue("exp") is string value &&
                 int.TryParse(value, out int exp))
             {
                 var expTime = DateTime.UnixEpoch.AddSeconds(exp);
-                logger.FluentAddValue("token_exp", expTime.ToString());
             }
-
-            logger.LogInfo("cookie_claims");
 
             try
             {
@@ -156,16 +122,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                 const bool isEmailClaimRequired = true;
                 if (!httpContext.SetUserContextFromClaimsPrincipal(principal, isEmailClaimRequired, out _))
                 {
-                    logger.LogInfo("cookie_set_user_error");
                     context.RejectPrincipal();
                     return;
                 }
-
-                logger.LogInfo("cookie_set_user_success");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                logger.LogException("cookie_authentication_error", ex);
                 context.RejectPrincipal();
                 return;
             }

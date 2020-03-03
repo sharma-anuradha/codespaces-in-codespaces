@@ -1,6 +1,32 @@
 import { IWorkspace, IWorkspaceProvider, URI } from 'vscode-web';
 import { vscode } from '../utils/vscode';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
+import { isHostedOnGithub } from '../utils/isHostedOnGithub';
+import { PostMessageRepoInfoRetriever } from '../split/github/postMessageRepoInfoRetriever';
+
+const getWorkspaceUrl = (defaultUrl: URL) => {
+    if (!isHostedOnGithub()) {
+        return defaultUrl;
+    }
+
+    const envId = location.pathname.split('/')[2];
+
+    if (!envId) {
+        throw new Error('No environmentId found.'); 
+    }
+    
+    const postMessageInfoRetriever = new PostMessageRepoInfoRetriever(envId);
+
+    const result = postMessageInfoRetriever.getStoredRepoInfo();
+
+    if (!result) {
+        throw new Error('No environmentId info found.'); 
+    }
+
+    const url = new URL(`https://github.com/workspaces/${result.ownerUsername}/${result.workspaceId}`);
+
+    return url;
+}
 
 export class WorkspaceProvider implements IWorkspaceProvider {
     public readonly workspace: IWorkspace;
@@ -68,9 +94,17 @@ export class WorkspaceProvider implements IWorkspaceProvider {
 
     public async open(
         workspace: IWorkspace,
-        options?: { reuse?: boolean | undefined } | undefined
+        options: { reuse?: boolean | undefined, payload?: [string, string][] } = {}
     ): Promise<void> {
-        const targetUrl = new URL(document.location.pathname, document.location.origin);
+        const defaultUrl = new URL(document.location.pathname, document.location.origin);
+        /**
+         * If don't open new tab, use the default url even in GitHub case
+         * since we need to change folder/workspace inside the iframe itself.
+         * If planning to open a new tab, create the embedder URL.
+         */
+        const targetUrl = (!options || options.reuse)
+            ? defaultUrl
+            : getWorkspaceUrl(defaultUrl);
 
         if (!workspace) {
             targetUrl.searchParams.set('ew', 'true');
@@ -81,6 +115,10 @@ export class WorkspaceProvider implements IWorkspaceProvider {
         } else {
             throw new Error('Unsupported workspace type.');
         }
+
+        if (options.payload) {
+            targetUrl.searchParams.set('payload', JSON.stringify(options.payload));
+        } 
 
         if (!options || options.reuse) {
             window.location.href = targetUrl.href;

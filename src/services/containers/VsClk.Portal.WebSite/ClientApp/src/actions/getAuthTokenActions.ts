@@ -1,6 +1,6 @@
 import { action } from './middleware/useActionCreator';
 
-import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
+import { IUser } from '../interfaces/IUser';
 
 export const getAuthTokenActionType = 'async.authentication.getToken';
 export const getAuthTokenSuccessActionType = 'async.authentication.getToken.success';
@@ -8,8 +8,8 @@ export const getAuthTokenFailureActionType = 'async.authentication.getToken.fail
 
 // Basic actions dispatched for reducers
 export const getAuthTokenAction = () => action(getAuthTokenActionType);
-export const getAuthTokenSuccessAction = (token: ITokenWithMsalAccount) =>
-    action(getAuthTokenSuccessActionType, { token });
+export const getAuthTokenSuccessAction = (token: string, user?: IUser) =>
+    action(getAuthTokenSuccessActionType, { token, user });
 export const getAuthTokenFailureAction = (error: Error) => action(getAuthTokenFailureActionType, error);
 
 // Types to register with reducers

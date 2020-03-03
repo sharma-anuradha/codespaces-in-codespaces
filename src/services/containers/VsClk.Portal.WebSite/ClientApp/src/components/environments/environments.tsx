@@ -22,6 +22,7 @@ import { fetchEnvironments } from '../../actions/fetchEnvironments';
 import { pollActivatingEnvironments } from '../../actions/pollEnvironment';
 import { environmentIsALie } from '../../utils/environmentUtils';
 import { blurCreateEnvironmentButton } from '../../actions/createEnvironment';
+import { isHostedOnGithub } from '../../utils/isHostedOnGithub';
 
 interface EnvironmentsPanelProps extends RouteComponentProps {
     deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
@@ -129,7 +130,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
         const content = this.props.isLoading ? this.renderSpinner() : this.renderEnvironments();
 
         return (
-            <PortalLayout>
+            <PortalLayout hideNavigation={isHostedOnGithub()}>
                 <div className='environments-panel'>{content}</div>
             </PortalLayout>
         );

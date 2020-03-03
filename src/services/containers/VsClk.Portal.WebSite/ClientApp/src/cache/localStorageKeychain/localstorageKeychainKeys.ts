@@ -100,6 +100,16 @@ export const addRandomKey = () => {
     });
 }
 
+export const addDefaultGithubKey = () => {
+    keychainKeys.push({
+        id: 'github-keychain-key',
+        key: new Buffer('ABCDEF0123456789'),
+        expiresOn: Date.now() + (31 * 24 * 60 * 60 * 1000),
+        method: 'AES',
+        methodMode: 'CBC',
+    });
+}
+
 /**
  * Function to add random key. If one already present, update its expiration time.
  */

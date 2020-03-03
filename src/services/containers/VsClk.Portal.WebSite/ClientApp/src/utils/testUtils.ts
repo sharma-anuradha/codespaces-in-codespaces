@@ -42,6 +42,16 @@ declare global {
     }
 }
 
+export const testMsalToken = {
+    accessToken: 'token',
+    account: ({
+        name: 'test',
+        userName: 'test',
+        idTokenClaims: { email: 'test@test.com', preferred_username: 'test' },
+    } as unknown) as msal.Account,
+    expiresOn: undefined!,
+};
+
 // prettier-ignore
 export function getDispatchedAction(dispatchedActions: WithMetadata<BaseAction>[], actionType: typeof createEnvironmentActionType): WithMetadata<CreateEnvironmentAction>;
 // prettier-ignore
@@ -155,16 +165,16 @@ export type MockMakeRequestOptions = {
 };
 
 export const authenticated = {
-    token: {
-        accessToken: '',
-        account: ({
-            idTokenClaims: { email: 'test@test.com', preferred_username: 'test' },
-        } as unknown) as msal.Account,
-        expiresOn: undefined!,
+    token: 'token',
+    user: {
+        email: 'test@test.test',
+        name: 'test',
+        username: 'test'
     },
     isAuthenticated: true,
     isAuthenticating: false,
     isInteractionRequired: false,
+    isInternal: true
 };
 
 export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {}): typeof fetch {

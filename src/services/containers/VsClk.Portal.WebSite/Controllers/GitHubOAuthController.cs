@@ -10,19 +10,22 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
     {
         private AppSettings AppSettings { get; set; }
         private GitHubClient GitHubClient { get; set; }
-
+        private GitHubClient GitHubNativeClient { get; set; }
         private const string ClientFlowFeedbackEndpoint = "github/login";
+        private const string ClientQueryParam = "vso-client";
 
         public GitHubOAuthController(AppSettings appSettings)
         {
             AppSettings = appSettings;
             GitHubClient = new GitHubClient(AppSettings.GitHubAppClientId, AppSettings.GitHubAppClientSecret);
+            GitHubNativeClient = new GitHubClient(AppSettings.GitHubNativeAppClientId, AppSettings.GitHubNativeAppClientSecret);
         }
 
         [HttpGet("~/github-auth/")]
         public IActionResult Authenticate(
             [FromQuery(Name = "state")] string state,
-            [FromQuery(Name = "scope")] string scope
+            [FromQuery(Name = "scope")] string scope,
+            [FromQuery(Name = ClientQueryParam)] string client
         )
         {
             if (string.IsNullOrWhiteSpace(state))
@@ -33,8 +36,18 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var redirectUriBuilder = GetUriBuilder();
             redirectUriBuilder.Path = "/github-auth/access-token";
 
+            var isGithubNativeClient = (client == "github");
+
+            var githubClient = (client == "github")
+                ? GitHubNativeClient
+                : GitHubClient;
+
+            if (!string.IsNullOrEmpty(client)) {
+                redirectUriBuilder.Query = $"{ClientQueryParam}={Uri.EscapeDataString(client)}";
+            }
+
             return Redirect(
-                GitHubClient.GetLoginUrl(
+                githubClient.GetLoginUrl(
                     state,
                     scope,
                     redirectUriBuilder.Uri.ToString()));
@@ -43,7 +56,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [HttpGet("~/github-auth/access-token")]
         public async Task<IActionResult> GetAccessTokenAsync(
             [FromQuery(Name = "code")] string code,
-            [FromQuery(Name = "state")] string state
+            [FromQuery(Name = "state")] string state,
+            [FromQuery(Name = ClientQueryParam)] string client
         )
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -58,7 +72,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var responseQuery = HttpUtility.ParseQueryString(string.Empty);
             try
             {
-                var tokenResponse = await GitHubClient.GetAccessTokenResponseAsync(state, code);
+                var githubClient = (client == "github")
+                    ? GitHubNativeClient
+                    : GitHubClient;
+
+                var tokenResponse = await githubClient.GetAccessTokenResponseAsync(state, code);
                 responseQuery.Set("state", state);
                 responseQuery.Set("accessToken", tokenResponse.AccessToken);
                 responseQuery.Set("scope", tokenResponse.Scope);
@@ -169,12 +187,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var parsedData = HttpUtility.ParseQueryString(responseData);
 
             var accessToken = parsedData.Get("access_token");
-            var scope = parsedData.Get("scope");
+            var maybeScope = parsedData.Get("scope");
+            /* Scopes of the Github Apps defined by the app itself and represent a static list
+             * so the scope parameter will not be set in such case, set it to "*" for now. In the
+             * future it might make sense to list all org/user installations and appropriate scopes
+             * in the response.
+             */
+            var scope = string.IsNullOrEmpty(maybeScope)
+                ? "*"
+                : maybeScope;
             var tokenType = parsedData.Get("token_type");
 
             if (
                 string.IsNullOrWhiteSpace(accessToken) ||
-                string.IsNullOrWhiteSpace(scope) ||
                 string.IsNullOrWhiteSpace(tokenType)
             )
             {

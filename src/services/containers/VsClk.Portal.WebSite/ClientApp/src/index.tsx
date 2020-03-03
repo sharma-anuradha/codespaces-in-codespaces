@@ -9,13 +9,13 @@ import { sendTelemetry, telemetry } from './utils/telemetry';
 import { trackUnhandled } from './utils/telemetry/unhandledErrors';
 
 import './index.css';
-import { authService } from './services/authService';
 import { initializeMsal } from './services/msalConfig';
 
 import { getHostingModules } from './getHostingInitModules';
 import { initHostingHtmlTags } from './initHostingHtmlTags';
 
 import { cleanupLegacyMSALCookies } from './utils/cleanupLegacyMSALCookies';
+import { isHostedOnGithub } from './utils/isHostedOnGithub';
 
 async function startApplication() {
     const [ hostingInitModules ] = await Promise.all([
@@ -23,7 +23,7 @@ async function startApplication() {
         initHostingHtmlTags()
     ]);
 
-    const { routeConfig, init } = hostingInitModules;
+    const { routeConfig, init, authService } = hostingInitModules;
     const { matchPath, routes } = routeConfig;
 
     telemetry.initializeTelemetry(matchPath);
@@ -63,9 +63,13 @@ async function startApplication() {
     );
 }
 
-// Don't start application in iframe created by MSAL, but start the MSAL itself.
-if (window.parent === window) {
+if (!isHostedOnGithub()) {
+    // Don't start application in iframe created by MSAL, but start the MSAL itself.
+    if (window.parent === window) {
+        startApplication();
+    } else {
+        initializeMsal();
+    }
+} else {
     startApplication();
- } else {
-    initializeMsal();
 }

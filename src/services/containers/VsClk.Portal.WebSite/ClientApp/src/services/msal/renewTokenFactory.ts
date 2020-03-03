@@ -7,7 +7,7 @@ export const trace = createTrace('RenewTokenFactory');
 
 export class LoginRequiredError extends Error {}
 
-const REDIRECT_POLL_INTERVAL = 50;
+const REDIRECT_POLL_INTERVAL = 25;
 
 export interface IRenewTokenFactoryOptions {
     paramOfInterest: string;

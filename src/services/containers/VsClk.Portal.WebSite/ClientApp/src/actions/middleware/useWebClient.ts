@@ -3,7 +3,6 @@ import { useActionContext } from './useActionContext';
 import { trace as baseTrace } from '../../utils/trace';
 import { getTopLevelDomain } from '../../utils/getTopLevelDomain';
 import { wait } from '../../dependencies';
-import { authService } from '../../services/authService';
 import { sendTelemetry } from '../../utils/telemetry';
 import { isDefined } from '../../utils/isDefined';
 
@@ -75,16 +74,16 @@ async function request<TResult>(
         let { headers, body, ...rest } = options;
 
         if (requestOptions.requiresAuthentication) {
-            // TODO: @Oleg+@Peter converge on single place for token storage
-            // get a fresh token from the auth service
-            const token = await authService.getCachedToken();
+            const context = useActionContext();
+
+            const { token } = context.state.authentication;
 
             if (!token) {
                 throw new ServiceAuthenticationError();
             }
 
             headers = {
-                Authorization: `Bearer ${token!.accessToken}`,
+                Authorization: `Bearer ${token}`,
                 ...headers,
             } as Record<string, string>;
         }

@@ -17,7 +17,7 @@ import { evaluateFeatureFlag, customContainers } from '../utils/featureSet';
 export type CreateEnvironmentParameters = CreateEnvironmentParametersBase;
 
 export async function fetchEnvironments(): Promise<ICloudEnvironment[]> {
-    const configuration = useActionContext().state.configuration;
+    const { configuration } = useActionContext().state;
     if (!configuration) {
         throw new Error('Configuration must be fetched before calling EnvReg service.');
     }

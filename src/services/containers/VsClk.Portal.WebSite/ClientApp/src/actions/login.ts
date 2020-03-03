@@ -2,13 +2,13 @@ import { action } from './middleware/useActionCreator';
 import { init } from './init';
 
 import { authService } from '../services/authService';
-import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 import { useDispatch } from './middleware/useDispatch';
 import { tokenFromTokenResponse } from '../services/tokenFromTokenResponse';
 import { clientApplication } from '../services/msalConfig';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
 import { getAuthToken } from './getAuthToken';
 import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
+import { IUser } from '../interfaces/IUser';
 
 export const loginActionType = 'async.authentication.login';
 export const loginSuccessActionType = 'async.authentication.login.success';
@@ -17,8 +17,8 @@ export const loginInteractionRequiredActionType = 'async.authentication.login.in
 
 // Basic actions dispatched for reducers
 const loginAction = () => action(loginActionType);
-const loginSuccessAction = (token: ITokenWithMsalAccount) =>
-    action(loginSuccessActionType, { token });
+const loginSuccessAction = (token: string, user?: IUser) =>
+    action(loginSuccessActionType, { token, user });
 const loginFailureAction = (error: Error) => action(loginFailureActionType, error);
 const loginInteractionRequiredAction = () => action(loginInteractionRequiredActionType);
 
@@ -40,7 +40,7 @@ export async function login() {
             return undefined;
         }
 
-        dispatch(loginSuccessAction(token));
+        dispatch(loginSuccessAction(token.accessToken));
 
         dispatch(init(getAuthToken));
 
@@ -73,7 +73,7 @@ export const complete2FA = async () => {
     await localStorageKeychain.rehash();
 
     const dispatch = useDispatch();
-    dispatch(loginSuccessAction(token));
+    dispatch(loginSuccessAction(token.accessToken));
     dispatch(init(getAuthToken));
 
     return token;

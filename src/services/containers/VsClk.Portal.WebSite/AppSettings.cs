@@ -19,6 +19,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         public string GitHubAppClientSecret { get; set; }
 
+        // GitHub-created GitHub app to use as an alternative to our 3rd party app,
+        // In the future we want to converge to the single app but switching from
+        // OAuth app to Github app is very disruptive so deserves a separate PR.
+        public string GitHubNativeAppClientId { get; set; }
+
+        public string GitHubNativeAppClientSecret { get; set; }
+        
         // AzureDevOps application configuration
         public string AzDevAppClientId { get; set; }
 

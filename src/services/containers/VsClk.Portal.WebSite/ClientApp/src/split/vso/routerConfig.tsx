@@ -1,9 +1,9 @@
 import { matchPath as routerMatch, match } from 'react-router-dom';
 import React from 'react';
 import { Route as BrowserRoute } from 'react-router-dom';
+import { ProtectedRoute } from '../../ProtectedRoute';
 import { PageNotFound } from '../../components/pageNotFound/pageNotFound';
 import { pageNotFoundPath } from '../../routerPaths';
-import { ProtectedRoute } from '../../ProtectedRoute';
 import { routes } from './routes';
 
 import { IRoute } from "../../interfaces/IRoute";

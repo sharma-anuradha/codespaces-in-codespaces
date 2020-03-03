@@ -12,7 +12,6 @@ import {
 import { getAuthTokenSuccessAction } from '../actions/getAuthTokenActions';
 import { IToken } from '../typings/IToken';
 
-import { setIsInternal } from './isInternalUserTracker';
 import { sendTelemetry } from '../utils/telemetry';
 import { clientApplication, initializeMsal } from './msalConfig';
 import { acquireToken, acquireTokenSilent } from './acquireToken';
@@ -25,6 +24,7 @@ import {
 import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
 import { IKeychainKey, IKeychainKeyWithoutMethods } from '../interfaces/IKeychainKey';
 import { Signal } from '../utils/signal';
+import { getUserFromMsalToken } from '../utils/getUserFromMsalToken';
 
 const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'];
 
@@ -32,7 +32,7 @@ const LOCAL_STORAGE_KEY = 'vsonline.default.account';
 
 const tokenCache = inLocalStorageJWTTokenCacheFactory();
 
-const enhanceEncryptionKeys = (keys: IKeychainKeyWithoutMethods[]): IKeychainKey[] => {
+export const enhanceEncryptionKeys = (keys: IKeychainKeyWithoutMethods[]): IKeychainKey[] => {
     const keysWithMethods = keys.map((key: IKeychainKeyWithoutMethods) => {
         return {
             id: key.id,
@@ -46,7 +46,7 @@ const enhanceEncryptionKeys = (keys: IKeychainKeyWithoutMethods[]): IKeychainKey
     return keysWithMethods;
 };
 
-const fetchKeychainKeys = async () => {
+export const fetchKeychainKeys = async () => {
     try {
         const result = await fetch('/keychain-keys', {
             method: 'GET',
@@ -63,18 +63,12 @@ const fetchKeychainKeys = async () => {
     return null;
 };
 
-export const createKeys = async () => {
-    const token = await authService.getCachedToken();
-
-    if (!token) {
-        throw new Error('Not authorized.');
-    }
-
+export const createKeys = async (token: string) => {
     const result = await fetch('/keychain-keys', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token.accessToken}`,
+            Authorization: `Bearer ${token}`,
         },
     });
 
@@ -87,24 +81,6 @@ interface IAuthCode {
     code: string;
     redirectionUrl: string;
 }
-
-tokenCache.onTokenChange(({ name, token }) => {
-    if (!token) {
-        setIsInternal(false);
-        return;
-    }
-
-    const expirationTime = getTokenExpiration(token);
-    if (expirationTime <= 0) {
-        setIsInternal(false);
-        return;
-    }
-
-    const { email, preferred_username } = (token as ITokenWithMsalAccount).account.idTokenClaims;
-    const userEmail = email || preferred_username;
-
-    setIsInternal(!!(userEmail && userEmail.includes('@microsoft.com')));
-});
 
 class AuthService {
     private initializeSignal = new Signal();
@@ -130,7 +106,13 @@ class AuthService {
     }
 
     public async getKeychainKeys() {
-        const keys = await createKeys();
+        const token = await this.getCachedToken();
+
+        if (!token) {
+            throw new Error('Cannot get access token.');
+        }
+
+        const keys = await createKeys(token.accessToken);
         setKeychainKeys(keys);
     }
 
@@ -209,7 +191,9 @@ class AuthService {
             }
 
             await tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
-            getAuthTokenSuccessAction(token);
+
+            const user = getUserFromMsalToken(token);
+            getAuthTokenSuccessAction(token.accessToken, user);
 
             return token;
         } catch (e) {
@@ -224,8 +208,9 @@ class AuthService {
                 return;
             }
 
+            const user = getUserFromMsalToken(token);
             await tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
-            getAuthTokenSuccessAction(token);
+            getAuthTokenSuccessAction(token.accessToken, user);
 
             return token;
         } catch (e) {

@@ -6,8 +6,14 @@ import { loginPath, environmentsPath } from './routerPaths';
 import { RouteComponentProps } from 'react-router';
 import { blogPostUrl } from './constants';
 
+import { isInsidePopupWindow } from './utils/isInsidePopupWindow';
+
+const blogPostSeenLocaltorageKey = 'vso.marketing.blog.post.seen';
+
 export function BlogPost(props: RouteComponentProps) {
-    if (process.env.NODE_ENV === 'development') {
+    const blogPostKey = localStorage.getItem(blogPostSeenLocaltorageKey);
+
+    if ((process.env.NODE_ENV === 'development') || isInsidePopupWindow() || blogPostKey) {
         return <Redirect to={loginPath} />;
     }
 
@@ -21,6 +27,8 @@ export function BlogPost(props: RouteComponentProps) {
             return;
         }
 
+        localStorage.setItem(blogPostSeenLocaltorageKey, 'true');
+        
         window.location.replace(blogPostUrl);
     });
 

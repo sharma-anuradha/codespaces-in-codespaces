@@ -1,5 +1,3 @@
-import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
-
 import { LogoutAction, logoutActionType } from '../actions/logout';
 import {
     loginAction,
@@ -19,6 +17,7 @@ import {
     getAuthTokenFailureActionType,
     getAuthTokenSuccessActionType,
 } from '../actions/getAuthTokenActions';
+import { IUser } from '../interfaces/IUser';
 
 type AcceptedActions =
     | GetAuthTokenAction
@@ -31,10 +30,12 @@ type AcceptedActions =
     | loginInteractionRequiredAction;
 
 type AuthenticationState = {
-    token: ITokenWithMsalAccount | undefined;
+    token: string | undefined;
     isAuthenticating: boolean;
     isAuthenticated: boolean;
     isInteractionRequired: boolean;
+    isInternal: boolean;
+    user?: IUser;
 };
 
 const defaultState: AuthenticationState = {
@@ -42,6 +43,7 @@ const defaultState: AuthenticationState = {
     isAuthenticated: false,
     isAuthenticating: true,
     isInteractionRequired: false,
+    isInternal: false,
 };
 
 export function authentication(
@@ -69,8 +71,16 @@ export function authentication(
 
         case loginSuccessActionType:
         case getAuthTokenSuccessActionType: {
+            const { token, user } = action.payload;
+
+            const isInternal = (user)
+                ? !!(user.email && user.email.includes('@microsoft.com'))
+                : false;
+
             return {
-                token: action.payload.token,
+                token,
+                user,
+                isInternal,
                 isAuthenticated: true,
                 isAuthenticating: false,
                 isInteractionRequired: false,
@@ -81,7 +91,9 @@ export function authentication(
             return {
                 isAuthenticated: false,
                 isAuthenticating: false,
+                isInternal: false,
                 token: undefined,
+                user: undefined,
                 isInteractionRequired: false,
             };
         }

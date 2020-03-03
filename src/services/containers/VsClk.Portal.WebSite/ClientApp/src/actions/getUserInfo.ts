@@ -34,15 +34,12 @@ export async function getUserInfo() {
 
     try {
         dispatch(getUserInfoAction());
-
+        
         const token = authentication.token;
-        if (token) {
-            const { idTokenClaims } = token.account;
-            const { email, preferred_username } = idTokenClaims;
-
-            const userInfo = {
-                displayName: token.account.name,
-                mail: email || preferred_username,
+        if (token && authentication.user) {
+            const userInfo: UserInfo = {
+                displayName: authentication.user.name,
+                mail: authentication.user.email,
                 photoUrl: await fetchMyPhoto(),
             };
 

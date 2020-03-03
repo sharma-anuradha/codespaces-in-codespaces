@@ -53,7 +53,7 @@ export class BrowserSyncService {
                 if (token === undefined) {
                     return;
                 }
-                await setAuthCookie(token.accessToken);
+                await setAuthCookie(token);
                 return;
         }
     };

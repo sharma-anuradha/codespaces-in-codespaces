@@ -5,7 +5,7 @@ import { getHostingInitModules as getGithubModules } from './split/github/getHos
 import { getHostingInitModules as getVSOModules } from './split/vso/getHostingInitModules';
 
 export const getHostingModules = async () => {
-    const [routesModule, getAuthTokenModule] = (!isHostedOnGithub())
+    const [routesModule, getAuthTokenModule, authServiceModule] = !isHostedOnGithub()
         ? await getVSOModules()
         : await getGithubModules();
 
@@ -13,6 +13,7 @@ export const getHostingModules = async () => {
 
     return {
         routeConfig,
-        init: init.bind(null, getAuthTokenModule.getAuthToken)
+        init: init.bind(null, getAuthTokenModule.getAuthToken),
+        authService: authServiceModule.authService,
     };
 };

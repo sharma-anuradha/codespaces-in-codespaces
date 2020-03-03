@@ -10,24 +10,23 @@ import { tryGetAzDevCredentialsLocal } from './getAzDevCredentials';
 
 import { register as registerServiceWorker } from '../serviceWorker';
 import { getPlans } from './plans-actions';
-import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
+import { useActionContext } from './middleware/useActionContext';
 
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
 export const initActionFailureType = 'async.app.init.failure';
 
-export async function init(getAuthTokenAction: () => Promise<ITokenWithMsalAccount>) {
+export async function init(getAuthTokenAction: () => Promise<string>) {
     const dispatch = useDispatch();
     const action = useActionCreator();
 
     dispatch(action(initActionType));
     try {
         const tokenPromise = getAuthTokenAction().then((token) => {
-            const { email, preferred_username } = token.account.idTokenClaims;
-            const userEmail = email || preferred_username;
-            telemetry.setIsInternal(userEmail.includes('@microsoft.com'));
-
-            return token;
+            const context = useActionContext();
+            const { isInternal } = context.state.authentication;
+            
+            telemetry.setIsInternal(isInternal);
         });
 
         const configurationPromise = fetchConfiguration().then((configuration) => {

@@ -5,6 +5,7 @@ import {
     createMockMakeRequestFactory,
     test_setApplicationState,
     authenticated,
+    testMsalToken,
 } from '../../utils/testUtils';
 
 import { getUserInfo, getUserInfoActionType, getUserInfoSuccessActionType } from '../getUserInfo';
@@ -27,7 +28,7 @@ describe('getUserInfo', () => {
     });
 
     it('gets user info from graph', async () => {
-        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(Promise.resolve(authenticated.token));
+        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(Promise.resolve(testMsalToken));
 
         test_setMockRequestFactory(
             createMockMakeRequestFactory({
