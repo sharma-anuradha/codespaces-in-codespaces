@@ -26,7 +26,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
             IDiagnosticsLogger diagnosticsLogger)
         {
             logger = diagnosticsLogger;
-            logger.AddBaseValue(LoggingConstants.Service, "PcfAgent");
         }
 
         /// <inheritdoc/>

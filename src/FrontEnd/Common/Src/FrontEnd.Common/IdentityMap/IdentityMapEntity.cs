@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.VsSaaS.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
 {
@@ -43,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         }
 
         /// <inheritdoc/>
+        [GDPR(Action = GDPRAction.Export)]
         public string UserName
         {
             get => userName;
@@ -54,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         }
 
         /// <inheritdoc/>
+        [GDPR(Action = GDPRAction.Export)]
         public string TenantId
         {
             get => tenantId;
@@ -65,12 +68,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         }
 
         /// <inheritdoc/>
+        [GDPR(Action = GDPRAction.Export)]
         public string ProfileId { get; set; }
 
         /// <inheritdoc/>
+        [GDPR(Action = GDPRAction.Export)]
         public string ProfileProviderId { get; set; }
 
         /// <inheritdoc/>
+        [GDPR(Action = GDPRAction.Export)]
         public string CanonicalUserId { get; set; }
 
         /// <summary>

@@ -2,13 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
@@ -39,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
             var affectedEntitiesCount = 0;
             await logger.OperationScopeAsync("pcf_perform_delete", async (childLogger) =>
             {
-                var map = await IdentityMapRepository.GetByUserIdSet(userIdSet, logger);
+                var map = await IdentityMapRepository.GetByUserIdSetAsync(userIdSet, logger);
                 userIdSet = new UserIdSet(
                     map?.CanonicalUserId ?? userIdSet.CanonicalUserId,
                     map?.ProfileId ?? userIdSet.ProfileId,
@@ -57,9 +58,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         }
 
         /// <inheritdoc/>
-        public Task<(int, JObject)> PerformExportAsync(UserIdSet userIdSet, IDiagnosticsLogger logger)
+        public async Task<(int, JObject)> PerformExportAsync(UserIdSet userIdSet, IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            var affectedEntitiesCount = 0;
+            var exportObject = new JObject();
+            var map = await IdentityMapRepository.GetByUserIdSetAsync(userIdSet, logger);
+            if (map != null)
+            {
+                userIdSet = new UserIdSet(map.CanonicalUserId ?? userIdSet.CanonicalUserId, map.ProfileId ?? userIdSet.CanonicalUserId, map.ProfileProviderId ?? userIdSet.CanonicalUserId);
+                exportObject.Add("identityMap", CreateExport(map));
+                affectedEntitiesCount += 1;
+            }
+
+            var environments = await EnvironmentManager.ListAsync(logger: logger.NewChildLogger(), userIdSet: userIdSet);
+            if (environments.Any())
+            {
+                exportObject.Add("environments", CreateExport(environments));
+                affectedEntitiesCount += environments.Count();
+            }
+
+            return (affectedEntitiesCount, exportObject);
+        }
+
+        private JToken CreateExport(object data)
+        {
+            return JToken.FromObject(data, new JsonSerializer { ContractResolver = new PcfExportContractResolver() });
         }
 
         private async Task<int> DeleteUserEnvironments(UserIdSet userIdSet, IDiagnosticsLogger logger)
@@ -75,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
             return recordsDeleted;
         }
 
-        private async Task<int> DeleteUserIdentityMap(IdentityMapEntity map, IDiagnosticsLogger logger)
+        private async Task<int> DeleteUserIdentityMap(IIdentityMapEntity map, IDiagnosticsLogger logger)
         {
             var isDeleted = await IdentityMapRepository.DeleteAsync(map.Id, logger);
             return isDeleted ? 1 : 0;

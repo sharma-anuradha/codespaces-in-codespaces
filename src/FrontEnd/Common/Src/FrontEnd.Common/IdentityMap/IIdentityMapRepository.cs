@@ -49,6 +49,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         /// <param name="userIdSet">The UserIdSet.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The instance, or null.</returns>
-        Task<IdentityMapEntity> GetByUserIdSet(UserIdSet userIdSet, IDiagnosticsLogger logger);
+        Task<IIdentityMapEntity> GetByUserIdSetAsync(UserIdSet userIdSet, IDiagnosticsLogger logger);
     }
 }

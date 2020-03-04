@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -29,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the environment friendly name.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Always, PropertyName = "friendlyName")]
         public string FriendlyName
         {
@@ -69,24 +71,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the created date and time.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Always, PropertyName = "created")]
         public DateTime Created { get; set; }
 
         /// <summary>
         /// Gets or sets the updated date and time.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Always, PropertyName = "updated")]
         public DateTime Updated { get; set; }
 
         /// <summary>
         /// Gets or sets the owner id.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Always, PropertyName = "ownerId")]
         public string OwnerId { get; set; }
 
         /// <summary>
         /// Gets or sets the environment state.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Always, PropertyName = "state")]
         [JsonConverter(typeof(StringEnumConverter))]
         public CloudEnvironmentState State { get; set; }
@@ -94,36 +100,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the updated date and time for state change.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "lastStateUpdated")]
         public DateTime LastStateUpdated { get; set; }
 
         /// <summary>
         /// Gets or sets the trigger for the last state change.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "lastUpdateTrigger")]
         public string LastStateUpdateTrigger { get; set; }
 
         /// <summary>
         /// Gets or sets the reason for state change.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "lastStateUpdateReason")]
         public string LastStateUpdateReason { get; set; }
 
         /// <summary>
         /// Gets or sets the continer image name.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "containerImage")]
         public string ContainerImage { get; set; }
 
         /// <summary>
         /// Gets or sets the environment seed info.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "seed")]
         public SeedInfo Seed { get; set; }
 
         /// <summary>
         /// Gets or sets the environment personalization info.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "personalization")]
         public PersonalizationInfo Personalization { get; set; }
 
@@ -136,24 +148,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the last active date and time.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Always, PropertyName = "active")]
         public DateTime Active { get; set; }
 
         /// <summary>
         /// Gets or sets the fully-qualified Azure resource id of the Account object.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "planId")]
         public string PlanId { get; set; }
 
         /// <summary>
         /// Gets or sets the environment sku name.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Always, PropertyName = "skuName")]
         public string SkuName { get; set; }
 
         /// <summary>
         /// Gets or sets the cloud environment Azure location.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Always, PropertyName = "location")]
         [JsonConverter(typeof(StringEnumConverter))]
         public AzureLocation Location { get; set; }
@@ -185,12 +201,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the last time the record is updated based on active sessions on environment.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "lastUsed")]
         public DateTime LastUsed { get; set; }
 
         /// <summary>
         /// Gets or sets the auto shutdown time the user specified.
         /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "autoShutdownDelayMinutes")]
         public int AutoShutdownDelayMinutes { get; set; }
 

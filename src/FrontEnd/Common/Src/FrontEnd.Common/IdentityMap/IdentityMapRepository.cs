@@ -140,12 +140,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         }
 
         /// <inheritdoc/>
-        public async Task<IdentityMapEntity> GetByUserIdSet(UserIdSet userIdSet, IDiagnosticsLogger logger)
+        public async Task<IIdentityMapEntity> GetByUserIdSetAsync(UserIdSet userIdSet, IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
-                   @"SELECT * FROM c WHERE 
-                        c.profileProviderId = @profileProviderId or 
-                        c.canonicalUserId = @canonicalUserId or 
+                   @"SELECT * FROM c WHERE
+                        c.profileProviderId = @profileProviderId or
+                        c.canonicalUserId = @canonicalUserId or
                         c.profileId = @profileId",
                    new SqlParameterCollection
                    {
