@@ -102,6 +102,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             var secretProvider = new Mock<ISecretProvider>().Object;
             var subscriptionCatalog = new AzureSubscriptionCatalog(options, secretProvider);
             Assert.NotNull(subscriptionCatalog);
+            Assert.NotEmpty(subscriptionCatalog.AzureSubscriptions);
+            Assert.NotNull(subscriptionCatalog.InfrastructureSubscription);
 
             foreach (var subscription in subscriptionCatalog.AzureSubscriptions)
             {
@@ -120,7 +122,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         {
             var appSettings = LoadAppSettings(environmentName, overrideName);
             var secretProvider = new Mock<ISecretProvider>().Object;
-            var servicePrincipal = new ServicePrincipal(appSettings.ApplicationServicePrincipal, secretProvider);
+            var servicePrincipal = new ServicePrincipal(
+                appSettings.ApplicationServicePrincipal.ClientId, 
+                appSettings.ApplicationServicePrincipal.ClientSecretName,
+                appSettings.ApplicationServicePrincipal.TenantId,
+                secretProvider);
             Assert.NotNull(servicePrincipal);
         }
 

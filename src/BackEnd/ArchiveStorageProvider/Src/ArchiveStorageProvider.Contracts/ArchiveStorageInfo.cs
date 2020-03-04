@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts
@@ -13,18 +14,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Con
         /// Initializes a new instance of the <see cref="ArchiveStorageInfo"/> class.
         /// </summary>
         /// <param name="azureResourceInfo">The resource info of the storage account.</param>
+        /// <param name="azureLocation">The azure location of the storage account.</param>
         /// <param name="storageAccountKey">The storage account key.</param>
-        public ArchiveStorageInfo(AzureResourceInfo azureResourceInfo, string storageAccountKey)
+        public ArchiveStorageInfo(AzureResourceInfo azureResourceInfo, AzureLocation azureLocation, string storageAccountKey)
         {
             Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
-            Requires.NotNullOrEmpty(storageAccountKey, nameof(storageAccountKey));
+            Requires.NotNull(storageAccountKey, nameof(storageAccountKey));
 
             AzureResourceInfo = azureResourceInfo;
+            AzureLocation = azureLocation;
             StorageAccountKey = storageAccountKey;
         }
 
         /// <inheritdoc/>
         public AzureResourceInfo AzureResourceInfo { get; }
+
+        /// <inheritdoc/>
+        public AzureLocation AzureLocation { get; }
 
         /// <inheritdoc/>
         public string StorageAccountKey { get; }

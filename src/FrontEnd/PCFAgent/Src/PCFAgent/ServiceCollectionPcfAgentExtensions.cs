@@ -5,7 +5,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.PrivacyServices.CommandFeed.Client;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
                     return new CommandFeedClient(
                         agentId: pcfAgentId,
                         aadClientId: servicePrincipal.ClientId,
-                        aadClientSecret: servicePrincipal.GetServicePrincipalClientSecretAsync().Result,
+                        aadClientSecret: servicePrincipal.GetClientSecretAsync().Result,
                         logger: serviceProvider.GetService<CommandFeedLogger>());
                 });
             }

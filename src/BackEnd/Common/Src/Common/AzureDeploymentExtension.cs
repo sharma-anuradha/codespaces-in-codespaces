@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Storage.Fluent;
+using Microsoft.Azure.Management.Storage.Fluent.Models;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.File;
@@ -44,12 +45,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
         /// <param name="resourceGroupName">azure resource group name.</param>
         /// <param name="location">azure region.</param>
         /// <param name="storageAccountName">azure storage account name.</param>
+        /// <param name="storageAccountSkuName">The storage SKU name. Defaults to Standard LRS if not specified.</param>
         /// <returns>Storage account object.</returns>
         public static async Task<IStorageAccount> CreateStorageAccountIfNotExistsAsync(
             this IAzure azure,
             string resourceGroupName,
             string location,
-            string storageAccountName)
+            string storageAccountName,
+            string storageAccountSkuName = null)
         {
             Requires.NotNullOrEmpty(resourceGroupName, nameof(resourceGroupName));
             Requires.NotNullOrEmpty(location, nameof(location));
@@ -61,12 +64,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
                 return storageAccount;
             }
 
+            // Determine the SKU. Default to Standard LRS.
+            var storageAccountSku = StorageAccountSkuType.Standard_LRS;
+            if (!string.IsNullOrEmpty(storageAccountSkuName))
+            {
+                if (!Enum.TryParse<SkuName>(storageAccountSkuName, out var skuName))
+                {
+                    throw new ArgumentException($"Invalid {nameof(SkuName)}: {storageAccountSkuName}", nameof(storageAccountSkuName));
+                }
+
+                storageAccountSku = StorageAccountSkuType.FromSkuName(skuName);
+            }
+
             return await azure.StorageAccounts.Define(storageAccountName)
                  .WithRegion(location)
                  .WithExistingResourceGroup(resourceGroupName)
                  .WithGeneralPurposeAccountKindV2()
                  .WithOnlyHttpsTraffic()
-                 .WithSku(StorageAccountSkuType.Standard_LRS)
+                 .WithSku(storageAccountSku)
                  .CreateAsync();
         }
 

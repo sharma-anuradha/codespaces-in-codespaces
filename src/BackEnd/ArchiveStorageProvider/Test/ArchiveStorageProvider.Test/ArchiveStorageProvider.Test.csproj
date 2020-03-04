@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\ArchiveStorageProvider.Contracts\ArchiveStorageProvider.Contracts.csproj" />
+    <ProjectReference Include="..\..\Src\ArchiveStorageProvider\ArchiveStorageProvider.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Metrics" Version="$(VsSaaSPackageVersion)" />
+  </ItemGroup>
+  
+</Project>

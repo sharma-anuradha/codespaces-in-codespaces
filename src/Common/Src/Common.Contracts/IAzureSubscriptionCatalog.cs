@@ -12,8 +12,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public interface IAzureSubscriptionCatalog
     {
         /// <summary>
-        /// Gets the set of configured Azure subscriptions.
+        /// Gets the set of configured Azure subscriptions used for general data-plane resources.
+        /// Excludes the infrastructure subscription.
         /// </summary>
         IEnumerable<IAzureSubscription> AzureSubscriptions { get; }
+
+        /// <summary>
+        /// Gets the Azure subscription used for data-plane infrastructure resources.
+        /// </summary>
+        IAzureSubscription InfrastructureSubscription { get; }
     }
 }

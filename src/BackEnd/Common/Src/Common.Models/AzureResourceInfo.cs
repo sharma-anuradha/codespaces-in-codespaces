@@ -26,6 +26,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <param name="resourceGroup">The azure resource group.</param>
         /// <param name="name">The resource name.</param>
         public AzureResourceInfo(
+            string subscriptionId,
+            string resourceGroup,
+            string name)
+            : this(Guid.Parse(subscriptionId), resourceGroup, name)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AzureResourceInfo"/> class.
+        /// </summary>
+        /// <param name="subscriptionId">The azure subscription id.</param>
+        /// <param name="resourceGroup">The azure resource group.</param>
+        /// <param name="name">The resource name.</param>
+        public AzureResourceInfo(
             Guid subscriptionId,
             string resourceGroup,
             string name)

@@ -322,7 +322,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 async (authority, resource, scope) =>
                 {
                     var context = new AuthenticationContext(authority);
-                    var clientSecret = await ServicePrincipal.GetServicePrincipalClientSecretAsync();
+                    var clientSecret = await ServicePrincipal.GetClientSecretAsync();
                     var credential = new ClientCredential(ServicePrincipal.ClientId, clientSecret);
                     var authenticationResult = await context.AcquireTokenAsync(resource, credential);
                     return authenticationResult.AccessToken;
@@ -447,7 +447,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             {
                 var sp = ServicePrincipal;
                 var azureAppId = sp.ClientId;
-                var azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
+                var azureAppKey = await sp.GetClientSecretAsync();
                 var azureTenant = sp.TenantId;
                 var creds = new AzureCredentialsFactory()
                     .FromServicePrincipal(

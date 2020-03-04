@@ -45,11 +45,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             SecretProvider = Requires.NotNull(secretProvider, nameof(secretProvider));
 
-            var applicatonServicePrincipal = azureSubscriptionCatalogOptions.ApplicationServicePrincipal;
+            var applicationServicePrincipal = azureSubscriptionCatalogOptions.ApplicationServicePrincipal;
             var dataPlaneSettings = azureSubscriptionCatalogOptions.DataPlaneSettings;
             var defaultQuotas = dataPlaneSettings.DefaultQuotas;
             var defaultLocations = dataPlaneSettings.DefaultLocations;
 
+            // Set up the infrastructure subscription
+            var infrastructureSubscription = dataPlaneSettings.InfrastructureSubscription;
+            InfrastructureSubscription = CreateAzureSubscriptionObject(
+                    infrastructureSubscription,
+                    infrastructureSubscription.SubscriptionName ?? "(infrastructure)",
+                    applicationServicePrincipal,
+                    defaultLocations,
+                    defaultQuotas);
+
+            // Set up the general purpose data-plane subscriptions
             foreach (var item in dataPlaneSettings.Subscriptions)
             {
                 var subscriptionName = item.Key;
@@ -62,41 +72,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     throw new InvalidOperationException($"A subscription with the id '{id}' already exists.");
                 }
 
-                // Create the ordered list of locations.
-                var whichLocations = azureSubscriptionSettings.Locations?.Any() == true ?
-                    azureSubscriptionSettings.Locations : defaultLocations;
-                var locations = new ReadOnlyCollection<AzureLocation>(whichLocations
-                    .Distinct()
-                    .OrderBy(l => Enum.GetName(typeof(AzureLocation), l))
-                    .ToList()
-                    .AsReadOnly());
-
-                // Get the service principal for this subscription, or use the application default.
-                var servicePrincipalSettings = azureSubscriptionSettings.ServicePrincipal ?? applicatonServicePrincipal;
-                if (servicePrincipalSettings is null)
-                {
-                    throw new InvalidOperationException($"A service principal has not been configured for subscription '{id}'");
-                }
-
-                var servicePrincipal = new ServicePrincipal(
-                    servicePrincipalSettings.ClientId,
-                    servicePrincipalSettings.ClientSecretName,
-                    servicePrincipalSettings.TenantId,
-                    SecretProvider);
-
-                var computeQuotas = defaultQuotas.Compute.Combine(azureSubscriptionSettings.Quotas?.Compute);
-                var storageQuotas = defaultQuotas.Storage.Combine(azureSubscriptionSettings.Quotas?.Storage);
-                var networkQuotas = defaultQuotas.Network.Combine(azureSubscriptionSettings.Quotas?.Network);
-
-                var azureSubscription = new AzureSubscription(
-                    azureSubscriptionSettings.SubscriptionId,
+                var azureSubscription = CreateAzureSubscriptionObject(
+                    azureSubscriptionSettings,
                     subscriptionName,
-                    servicePrincipal,
-                    azureSubscriptionSettings.Enabled,
-                    locations,
-                    computeQuotas,
-                    storageQuotas,
-                    networkQuotas);
+                    applicationServicePrincipal,
+                    defaultLocations,
+                    defaultQuotas);
 
                 Subscriptions.Add(id, azureSubscription);
             }
@@ -107,9 +88,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             .OrderBy(item => item.SubscriptionId)
             .ToArray();
 
+        /// <inheritdoc/>
+        public IAzureSubscription InfrastructureSubscription { get; }
+
         private Dictionary<Guid, IAzureSubscription> Subscriptions { get; } = new Dictionary<Guid, IAzureSubscription>();
 
         private ISecretProvider SecretProvider { get; }
+
+        private AzureSubscription CreateAzureSubscriptionObject(
+            AzureSubscriptionSettings azureSubscriptionSettings,
+            string subscriptionName,
+            ServicePrincipalSettings applicatonServicePrincipal,
+            List<AzureLocation> defaultLocations,
+            AzureSubscriptionQuotaSettings defaultQuotas)
+        {
+            // Create the ordered list of locations.
+            var whichLocations = azureSubscriptionSettings.Locations?.Any() == true ?
+                azureSubscriptionSettings.Locations : defaultLocations;
+            var locations = new ReadOnlyCollection<AzureLocation>(whichLocations
+                .Distinct()
+                .OrderBy(l => Enum.GetName(typeof(AzureLocation), l))
+                .ToList()
+                .AsReadOnly());
+
+            // Get the service principal for this subscription, or use the application default.
+            var servicePrincipalSettings = azureSubscriptionSettings.ServicePrincipal ?? applicatonServicePrincipal;
+            if (servicePrincipalSettings is null)
+            {
+                throw new InvalidOperationException($"A service principal has not been configured for subscription '{azureSubscriptionSettings.SubscriptionId}'");
+            }
+
+            var servicePrincipal = new ServicePrincipal(
+                servicePrincipalSettings.ClientId,
+                servicePrincipalSettings.ClientSecretName,
+                servicePrincipalSettings.TenantId,
+                SecretProvider);
+
+            var computeQuotas = defaultQuotas.Compute.Combine(azureSubscriptionSettings.Quotas?.Compute);
+            var storageQuotas = defaultQuotas.Storage.Combine(azureSubscriptionSettings.Quotas?.Storage);
+            var networkQuotas = defaultQuotas.Network.Combine(azureSubscriptionSettings.Quotas?.Network);
+
+            var azureSubscription = new AzureSubscription(
+                azureSubscriptionSettings.SubscriptionId,
+                subscriptionName,
+                servicePrincipal,
+                azureSubscriptionSettings.Enabled,
+                locations,
+                computeQuotas,
+                storageQuotas,
+                networkQuotas);
+            return azureSubscription;
+        }
     }
 
 #pragma warning disable SA1402 // File may only contain a single type

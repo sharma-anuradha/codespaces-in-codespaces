@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
@@ -41,6 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             var provider = CreateTestSystemCatalogProvider();
             Assert.NotNull(provider.AzureSubscriptionCatalog);
             Assert.NotNull(provider.AzureSubscriptionCatalog.AzureSubscriptions);
+            Assert.NotNull(provider.AzureSubscriptionCatalog.InfrastructureSubscription);
             Assert.NotNull(provider.SkuCatalog);
             Assert.NotNull(provider.SkuCatalog.CloudEnvironmentSkus);
         }
@@ -78,6 +80,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         loc => { Assert.Equal(AzureLocation.WestUs2, loc); });
                 }
             );
+
+            var infrastructure = provider.AzureSubscriptionCatalog.InfrastructureSubscription;
+            Assert.Equal("test-subscription-display-name-3", infrastructure.DisplayName);
+            Assert.True(infrastructure.Enabled);
+            Assert.Equal("test-client-id-3", infrastructure.ServicePrincipal.ClientId);
+            Assert.Equal("test-tenant-id-3", infrastructure.ServicePrincipal.TenantId);
+            Assert.Equal("33333333-3333-3333-3333-333333333333", infrastructure.SubscriptionId);
+            Assert.Collection(infrastructure.Locations,
+                loc => { Assert.Equal(AzureLocation.EastUs, loc); },
+                loc => { Assert.Equal(AzureLocation.SouthEastAsia, loc); },
+                loc => { Assert.Equal(AzureLocation.WestUs, loc); },
+                loc => { Assert.Equal(AzureLocation.WestUs2, loc); });
         }
 
         [Fact]
@@ -174,7 +188,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 "test-tenant-id",
                 secretProvider.Object);
 
-            var clientSecret = await servicePrincipal.GetServicePrincipalClientSecretAsync();
+            var clientSecret = await servicePrincipal.GetClientSecretAsync();
             Assert.Equal(expectedValue, clientSecret);
         }
 
@@ -183,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         {
             var provider = CreateTestSystemCatalogProvider();
 
-            var clientSecret = await provider.AzureSubscriptionCatalog.AzureSubscriptions.First().ServicePrincipal.GetServicePrincipalClientSecretAsync();
+            var clientSecret = await provider.AzureSubscriptionCatalog.AzureSubscriptions.First().ServicePrincipal.GetClientSecretAsync();
             Assert.Equal(TestSecretValue, clientSecret);
         }
 
@@ -445,7 +459,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             Locations = locations
                         }
                     }
-                }
+                },
+                InfrastructureSubscription = new AzureSubscriptionSettings
+                {
+                    SubscriptionName = "test-subscription-display-name-3",
+                    SubscriptionId = "33333333-3333-3333-3333-333333333333",
+                    ServicePrincipal = new ServicePrincipalSettings
+                    {
+                        ClientId = "test-client-id-3",
+                        ClientSecretName = "test-client-secret-id-3",
+                        TenantId = "test-tenant-id-3"
+                    },
+                    Locations = locations,
+                },
             };
             return azureSubscriptionCatalogSettings;
         }

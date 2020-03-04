@@ -17,6 +17,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     public class AzureSubscriptionSettings
     {
         /// <summary>
+        /// Gets or sets subscription name (optional when inferred from dictionary name).
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string SubscriptionName { get; set; }
+
+        /// <summary>
         /// Gets or sets the Azure subscription id.
         /// </summary>
         [JsonProperty(Required = Required.Always)]

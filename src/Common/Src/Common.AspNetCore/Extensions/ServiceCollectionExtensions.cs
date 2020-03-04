@@ -28,7 +28,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
 
             services.Configure<ServicePrincipalOptions>(options =>
             {
-                options.ServicePrincipalSettings = servicePrincipalSettings;
+                options.ClientId = servicePrincipalSettings.ClientId;
+                options.TenantId = servicePrincipalSettings.TenantId;
+                options.GetClientSecretAsyncCallback = () =>
+                {
+                    var secretProvider = ApplicationServicesProvider.GetRequiredService<ISecretProvider>();
+                    return secretProvider.GetSecretAsync(servicePrincipalSettings.ClientSecretName);
+                };
             });
             services.AddSingleton<IServicePrincipal, ServicePrincipal>();
 

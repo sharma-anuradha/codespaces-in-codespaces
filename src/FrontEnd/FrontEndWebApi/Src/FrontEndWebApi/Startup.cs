@@ -211,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 {
                     var servicePrincipal = ApplicationServicesProvider.GetRequiredService<IServicePrincipal>();
                     keyVaultSecretOptions.ServicePrincipalClientId = servicePrincipal.ClientId;
-                    keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetServicePrincipalClientSecretAsync;
+                    keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetClientSecretAsync;
                 },
                 null,
                 true,

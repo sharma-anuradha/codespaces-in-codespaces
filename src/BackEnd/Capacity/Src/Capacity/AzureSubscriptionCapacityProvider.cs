@@ -45,9 +45,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         public static readonly TimeSpan UpdateLeaseInterval = TimeSpan.FromMinutes(4);
 
         private const string LoggingPrefix = "azure_subscription_capacity_provider";
-        private const string VirtualNetworksQuota = "VirtualNetworks";
+        private const string VirtualNetworksQuota = AzureResourceQuotaNames.VirtualNetworks;
         private const int VirtualNetworksDefaultLimit = 1000;
-        private const string StorageAccountsQuota = "StorageAccounts";
+        private const string StorageAccountsQuota = AzureResourceQuotaNames.StorageAccounts;
         private const int StorageAccountsDefaultLimit = 250;
 
         /// <summary>
@@ -426,7 +426,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
         private async Task<RestClient> CreateRestClientAsync()
         {
-            var servicePrincipalClientSecret = await ServicePrincipal.GetServicePrincipalClientSecretAsync();
+            var servicePrincipalClientSecret = await ServicePrincipal.GetClientSecretAsync();
             var azureCredentials = new AzureCredentialsFactory()
                 .FromServicePrincipal(
                     ServicePrincipal.ClientId,

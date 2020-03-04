@@ -23,6 +23,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string StampResourceGroupName { get; }
 
         /// <summary>
+        /// Gets the control-plane stamp infrastructure resource group name, e.g., vsclk-online-prod-rel-use-infra.
+        /// </summary>
+        string StampInfrastructureResourceGroupName { get; }
+
+        /// <summary>
         /// Gets the control-plane stamp cosmos db account name.
         /// </summary>
         string StampCosmosDbAccountName { get; }
@@ -95,5 +100,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="billingLocation">The billing submission location.</param>
         /// <returns>The storage account name.</returns>
         string GetStampStorageAccountNameForBillingSubmission(AzureLocation billingLocation);
+
+        /// <summary>
+        /// Gets the data-plane stamp storage account name for archive storage.
+        /// </summary>
+        /// <param name="storageLocation">The storage account location.</param>
+        /// <param name="index">The index of the storage account. If non null, it is appended in the forma "00".</param>
+        /// <returns>The storage account name.</returns>
+        string GetDataPlaneStorageAccountNameForArchiveStorageName(AzureLocation storageLocation, int? index = null);
     }
 }

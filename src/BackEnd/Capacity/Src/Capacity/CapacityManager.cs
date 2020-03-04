@@ -151,7 +151,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             }
 
             var theSubscription = SelectSubscription(subscriptionsWithAllCriteria);
-            var stampResourceGroupName = ControlPlaneInfo.Stamp.StampResourceGroupName;
             var resourceGroupName = GetBaseResourceGroupName();
 
             // We'll used resource group names that match the stamp resource group, so that it will be clear which

@@ -41,12 +41,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             {
                 var azureSub = systemCatalog
                     .AzureSubscriptionCatalog
-                    .AzureSubscriptions
+                    .AzureSubscriptionsIncludingInfrastructure()
                     .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
 
                 var sp = azureSub.ServicePrincipal;
                 var azureAppId = sp.ClientId;
-                var azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
+                var azureAppKey = await sp.GetClientSecretAsync();
                 var azureTenant = sp.TenantId;
 
                 return await GetAzureClientAsync(azureSubscriptionId, azureAppId, azureAppKey, azureTenant);
@@ -57,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
         }
 
+        /// <inheritdoc/>
         public Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId)
         {
             var creds = new AzureCredentialsFactory()
@@ -126,12 +127,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             var azureSub = systemCatalog
                     .AzureSubscriptionCatalog
-                    .AzureSubscriptions
+                    .AzureSubscriptionsIncludingInfrastructure()
                     .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
 
             var sp = azureSub.ServicePrincipal;
             var azureAppId = sp.ClientId;
-            var azureAppKey = await sp.GetServicePrincipalClientSecretAsync();
+            var azureAppKey = await sp.GetClientSecretAsync();
             var azureTenant = sp.TenantId;
             var creds = new AzureCredentialsFactory()
                 .FromServicePrincipal(

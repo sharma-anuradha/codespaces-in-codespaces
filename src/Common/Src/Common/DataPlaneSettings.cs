@@ -32,5 +32,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public Dictionary<string, AzureSubscriptionSettings> Subscriptions { get; set; } = new Dictionary<string, AzureSubscriptionSettings>();
+
+        /// <summary>
+        /// Gets or sets the data-plane subscriptions, indexed by subscription name.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public AzureSubscriptionSettings InfrastructureSubscription { get; set; }
     }
 }

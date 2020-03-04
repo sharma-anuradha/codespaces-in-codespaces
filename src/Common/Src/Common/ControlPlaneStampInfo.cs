@@ -22,6 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private const int ShortUniquePrefixLengthMax = AzureStorageOrBatchAccountNameLengthMax - 10;
         private const string ComputeQueueKind = "cq";
         private const string StorageImageKind = "si";
+        private const string ArchiveStorageKind = "as";
         private const string VmAgentImageKind = "vm";
         private const string BatchAccountKind = "ba";
         private const string BillingStorageImageKind = "bl";
@@ -56,6 +57,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public string StampResourceGroupName =>
             $"{ControlPlaneInfo.InstanceResourceGroupName}-{NotNullOrWhiteSpace(ControlPlaneStampSettings.StampName, nameof(ControlPlaneStampSettings.StampName))}";
+
+        /// <inheritdoc/>
+        public string StampInfrastructureResourceGroupName =>
+            $"{StampResourceGroupName}-infrastructure";
 
         /// <inheritdoc/>
         public string DnsHostName => NotNullOrWhiteSpace(ControlPlaneStampSettings.DnsHostName, nameof(ControlPlaneStampSettings.DnsHostName));
@@ -148,6 +153,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return accountName;
         }
 
+        /// <inheritdoc/>
+        public string GetDataPlaneStorageAccountNameForArchiveStorageName(AzureLocation storageLocation, int? index = null)
+        {
+            return MakeStorageAccountName(ArchiveStorageKind, storageLocation, index);
+        }
+
         private static string NotNullOrWhiteSpace(string value, string propertyName)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -158,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return value;
         }
 
-        private string MakeStorageAccountName(string kind, AzureLocation azureLocation)
+        private string MakeStorageAccountName(string kind, AzureLocation azureLocation, int? index = null)
         {
             Requires.Argument(kind.Length <= 2, nameof(kind), $"The storage kind '{kind}' must not be longer than 2 characters.");
 
@@ -169,6 +180,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             var regionCode = RegionCodes[azureLocation];
             var accountName = $"{AccountShortUniquePrefix}-{ControlPlaneStampSettings.StampName}-{kind}-{regionCode}".Replace("-", string.Empty).ToLowerInvariant();
+            if (index.HasValue)
+            {
+                // careful here not to blow-out the name length
+                accountName += $"{index:00}";
+            }
+
             if (accountName.Length > AzureStorageOrBatchAccountNameLengthMax)
             {
                 throw new InvalidOperationException($"The resulting storage account name '{accountName}' must not be longer than {AzureStorageOrBatchAccountNameLengthMax} characters.");

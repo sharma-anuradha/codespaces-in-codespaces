@@ -11,10 +11,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Azure.KeyVault;
+using Microsoft.VsSaaS.Azure.Management;
+using Microsoft.VsSaaS.Azure.Metrics;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
@@ -141,6 +144,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 appSettings.BackEnd.StorageProviderSettings,
                 appSettings.BackEnd.MocksSettings);
 
+            // Archive Storage Provider
+            services.AddAzureMetrics();
+            services.AddAzureManagement();
+            services.AddArchiveStorageProvider(appSettings.BackEnd.MocksSettings);
+
             // Capacity Manager
             services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);
 
@@ -153,7 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 {
                     var servicePrincipal = ApplicationServicesProvider.GetRequiredService<IServicePrincipal>();
                     keyVaultSecretOptions.ServicePrincipalClientId = servicePrincipal.ClientId;
-                    keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetServicePrincipalClientSecretAsync;
+                    keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetClientSecretAsync;
                 })
                 .AddCertificateCredentialCacheFactory()
                 .AddTokenProvider(appSettings.AuthenticationSettings);

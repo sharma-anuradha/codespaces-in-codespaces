@@ -110,7 +110,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             Assert.True(result.Subscription.Enabled);
         }
 
-
         private CapacityManager CreateTestCapacityManager(double percent = 0.10, bool fillZero = false)
         {
             var catalog = MockAzureSubscriptionCatalog;
@@ -166,11 +165,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
                 }),
                 new ReadOnlyDictionary<string, int>(new Dictionary<string, int>
                 {
-                    { "StorageAccounts", 100 }
+                    { StorageAccountsQuota, 100 }
                 }),
                 new ReadOnlyDictionary<string, int>(new Dictionary<string, int>
                 {
-                    { "VirtualNetworks", 100 }
+                    { VirtualNetworksQuota, 100 }
                 })
             );
         }
@@ -222,7 +221,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             return mockAzureSubscriptionCapacityProvider.Object;
         }
 
-        private const string CoresQuota = "cores";
+        private const string CoresQuota = AzureResourceQuotaNames.Cores;
+        private const string StorageAccountsQuota = AzureResourceQuotaNames.StorageAccounts;
+        private const string VirtualNetworksQuota = AzureResourceQuotaNames.VirtualNetworks;
 
         private static IControlPlaneInfo MockControlPlaneInfo()
         {
@@ -239,7 +240,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
                 {
                     ServiceType = ServiceType.Compute,
                     Quota = CoresQuota,
-                    Required = 4
+                    Required = 4,
+                }
+            };
+        }
+
+        private static IEnumerable<AzureResourceCriterion> StorageCriteria()
+        {
+            return new List<AzureResourceCriterion>
+            {
+                new AzureResourceCriterion
+                {
+                    ServiceType = ServiceType.Storage,
+                    Quota = StorageAccountsQuota,
+                    Required = 1,
                 }
             };
         }
