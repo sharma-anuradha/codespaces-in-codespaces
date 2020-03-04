@@ -12,6 +12,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     public class ResourceNameBuilder : IResourceNameBuilder
     {
         /// <summary>
+        /// Post fix string for resource group.
+        /// </summary>
+        public const string ResourceGroupPostFix = "RG-CEResources";
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ResourceNameBuilder"/> class.
         /// </summary>
         /// <param name="personalStampSettings">Developer personal stamp settings.</param>
@@ -51,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             if (DeveloperPersonalStampSettings.DeveloperStamp)
             {
-                return $"{GetUserName()}-RG-CEResources";
+                return $"{GetUserName()}-{ResourceGroupPostFix}";
             }
 
             return baseName;
