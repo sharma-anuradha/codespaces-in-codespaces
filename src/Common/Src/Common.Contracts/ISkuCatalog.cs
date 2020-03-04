@@ -19,6 +19,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets the VM Image Families.
         /// </summary>
-        IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactImageFamilies { get; }
+        IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactVmAgentImageFamilies { get; }
+
+        /// <summary>
+        /// Gets the storage Image Families.
+        /// </summary>
+        IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactStorageImageFamilies { get; }
     }
 }

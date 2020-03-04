@@ -58,11 +58,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));
 
             // Get the mapping from family to VM agent.
-            BuildArtifactImageFamilies = new ReadOnlyDictionary<string, IBuildArtifactImageFamily>(
+            BuildArtifactVmAgentImageFamilies = new ReadOnlyDictionary<string, IBuildArtifactImageFamily>(
                 skuCatalogSettings.VmAgentImageFamilies.ToDictionary(
                     e => e.Key,
                     e => new BuildArtifactImageFamily(
                         ImageFamilyType.VmAgent,
+                        e.Key,
+                        e.Value.ImageName,
+                        currentImageInfoProvider) as IBuildArtifactImageFamily));
+
+            // Get the mapping from storage family.
+            BuildArtifactStorageImageFamilies = new ReadOnlyDictionary<string, IBuildArtifactImageFamily>(
+                skuCatalogSettings.StorageImageFamilies.ToDictionary(
+                    e => e.Key,
+                    e => new BuildArtifactImageFamily(
+                        ImageFamilyType.Storage,
                         e.Key,
                         e.Value.ImageName,
                         currentImageInfoProvider) as IBuildArtifactImageFamily));
@@ -204,7 +214,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public IReadOnlyDictionary<string, ICloudEnvironmentSku> CloudEnvironmentSkus { get; }
 
         /// <inheritdoc/>
-        public IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactImageFamilies { get; }
+        public IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactVmAgentImageFamilies { get; }
+
+        /// <summary>
+        ///  Gets storage image family info.
+        /// </summary>
+        public IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactStorageImageFamilies { get; }
 
         private Dictionary<string, ICloudEnvironmentSku> Skus { get; } = new Dictionary<string, ICloudEnvironmentSku>();
 

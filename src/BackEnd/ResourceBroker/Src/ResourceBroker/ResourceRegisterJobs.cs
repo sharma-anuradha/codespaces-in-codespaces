@@ -27,6 +27,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="watchPoolStateTask">Target watch pool state task.</param>
         /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
         /// <param name="watchOrphanedAzureResourceTask">Target watch orphaned Azure resources job.</param>
+        /// <param name="watchOrphanedVmAgentImagesTask">Target watch orphaned VM images/blobs job.</param>
+        /// <param name="watchOrphanedStorageImagesTask">Target watch orphaned storage images/blobs job.</param>
         /// <param name="watchOrphanedSystemResourceTask">Target watch orphaned system resources job.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
@@ -38,6 +40,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchPoolStateTask watchPoolStateTask,
             IWatchFailedResourcesTask watchFailedResourcesTask,
             IWatchOrphanedAzureResourceTask watchOrphanedAzureResourceTask,
+            IWatchOrphanedVmAgentImagesTask watchOrphanedVmAgentImagesTask,
+            IWatchOrphanedStorageImagesTask watchOrphanedStorageImagesTask,
             IWatchOrphanedSystemResourceTask watchOrphanedSystemResourceTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
@@ -49,6 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             WatchPoolStateTask = watchPoolStateTask;
             WatchFailedResourcesTask = watchFailedResourcesTask;
             WatchOrphanedAzureResourceTask = watchOrphanedAzureResourceTask;
+            WatchOrphanedVmAgentImagesTask = watchOrphanedVmAgentImagesTask;
+            WatchOrphanedStorageImagesTask = watchOrphanedStorageImagesTask;
             WatchOrphanedSystemResourceTask = watchOrphanedSystemResourceTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
@@ -67,6 +73,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IWatchFailedResourcesTask WatchFailedResourcesTask { get; }
 
         private IWatchOrphanedAzureResourceTask WatchOrphanedAzureResourceTask { get; }
+
+        private IWatchOrphanedVmAgentImagesTask WatchOrphanedVmAgentImagesTask { get; }
+
+        private IWatchOrphanedStorageImagesTask WatchOrphanedStorageImagesTask { get; }
 
         private IWatchOrphanedSystemResourceTask WatchOrphanedSystemResourceTask { get; }
 
@@ -157,6 +167,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{ResourceLoggingConstants.DeleteResourceGroupDeploymentsTask}_run",
                 (childLogger) => DeleteResourceGroupDeploymentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Delete Artifact images
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchOrphanedVmAgentImagesTask}_run",
+                (childLogger) => WatchOrphanedVmAgentImagesTask.RunAsync(TimeSpan.FromDays(1), childLogger),
+                TimeSpan.FromHours(1));
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Delete Artifact storage images
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchOrphanedStorageImagesTask}_run",
+                (childLogger) => WatchOrphanedStorageImagesTask.RunAsync(TimeSpan.FromDays(1), childLogger),
+                TimeSpan.FromHours(1));
         }
     }
 }

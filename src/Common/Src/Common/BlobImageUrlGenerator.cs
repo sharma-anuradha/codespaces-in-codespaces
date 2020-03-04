@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IDiagnosticsLogger logger,
             TimeSpan expiryTime = default)
         {
-            var imageFamilies = skuCatalog.BuildArtifactImageFamilies;
+            var imageFamilies = skuCatalog.BuildArtifactVmAgentImageFamilies;
             if (!imageFamilies.ContainsKey(family))
             {
                 return (null, null);
