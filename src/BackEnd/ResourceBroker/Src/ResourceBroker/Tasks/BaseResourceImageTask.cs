@@ -149,6 +149,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <returns>IEnumerable obj for ImageFamilyType.</returns>
         protected abstract IEnumerable<ImageFamilyType> GetArtifactTypesToCleanup();
 
+        /// <summary>
+        /// Gets the respective container name for storage/VM agent images/blobs.
+        /// </summary>
+        /// <returns>container name.</returns>
+        protected abstract string GetContainerName();
+
         private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return await ClaimedDistributedLease.Obtain(
@@ -172,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             foreach (var account in accounts)
             {
                 // Fetch blob details
-                var containerName = ControlPlaneInfo.FileShareTemplateContainerName;
+                var containerName = GetContainerName();
                 var blobStorageClientOptions = new BlobStorageClientOptions
                 {
                     AccountName = account.StorageAccountName,

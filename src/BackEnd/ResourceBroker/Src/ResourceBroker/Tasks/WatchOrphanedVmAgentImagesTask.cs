@@ -93,5 +93,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
             return activeImages;
         }
+
+        /// <inheritdoc/>
+        protected override string GetContainerName()
+        {
+            return ControlPlaneInfo.VirtualMachineAgentContainerName;
+        }
     }
 }
