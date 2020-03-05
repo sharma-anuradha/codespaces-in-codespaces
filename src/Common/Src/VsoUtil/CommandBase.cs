@@ -8,6 +8,7 @@ using CommandLine;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -124,6 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 
             // Mini-hack. Ends up that Startup.Configure(IApplicationBuilder) is never called.
             Startup.Services = webHost.Services;
+            ApplicationServicesProvider.TrySetServiceProvider(webHost.Services);
 
             return webHost;
         }
