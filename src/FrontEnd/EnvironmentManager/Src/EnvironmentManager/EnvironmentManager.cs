@@ -745,25 +745,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         // If the environment is not in an available state during shutdown,
                         // force clean the environment details, to put it in a recoverable state.
-                        await ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
+                        return await ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
                     }
                     else
                     {
                         await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, childLogger.NewChildLogger());
 
                         // Update the database state.
-                        await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                        cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
                         // Start the cleanup operation to shutdown environment.
                         await ResourceBrokerClient.SuspendAsync(
                             Guid.Parse(cloudEnvironment.Id), new List<SuspendRequestBody> { new SuspendRequestBody { ResourceId = cloudEnvironment.Compute.ResourceId } }, childLogger.NewChildLogger());
-                    }
 
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = cloudEnvironment,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = cloudEnvironment,
+                            HttpStatusCode = StatusCodes.Status200OK,
+                        };
+                    }
                 });
         }
 
@@ -787,7 +787,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return new CloudEnvironmentServiceResult
                         {
                             CloudEnvironment = cloudEnvironment,
-                            HttpStatusCode = StatusCodes.Status200OK,
+                            MessageCode = MessageCodes.ShutdownStaticEnvironment,
+                            HttpStatusCode = StatusCodes.Status400BadRequest,
                         };
                     }
 
