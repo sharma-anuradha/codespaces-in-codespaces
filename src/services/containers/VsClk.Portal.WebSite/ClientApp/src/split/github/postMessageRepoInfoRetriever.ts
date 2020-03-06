@@ -13,8 +13,8 @@ export class PostMessageRepoInfoRetriever {
 
     private localStorageKey: string;
 
-    constructor(workspaceId: string) {
-        this.localStorageKey = `vso-github-repo-info-${workspaceId}`;
+    constructor(environmentId: string) {
+        this.localStorageKey = `vso-github-repo-info-${environmentId}`;
 
         window.addEventListener('message', this.receiveMessage, false);
     }

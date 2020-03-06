@@ -266,8 +266,7 @@ export class EnvConnector {
                 workspaceClient.getCurrentRpcConnection()!
             );
 
-            const browserSyncService = new BrowserSyncService(workspaceClient);
-            await browserSyncService.init();
+            BrowserSyncService.init(workspaceClient);
 
             this.workspaceClient.complete(workspaceClient);
         } catch (err) {

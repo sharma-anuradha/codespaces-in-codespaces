@@ -12,16 +12,21 @@ export enum BrowserConnectorMessages {
     CopyServerUrl = 'VSO_BrowserSync_CopyServerUrl',
     ForwardPort = 'VSO_BrowserSync_ForwardPort',
     SignOut = 'VSO_BrowserSync_SignOut',
+    GetLocalStorageValueRequest = 'VSO_BrowserSync_GetLocalStorageValue_Request',
+    GetLocalStorageValueResponse = 'VSO_BrowserSync_GetLocalStorageValue_Response',
 }
 
 export class BrowserSyncService {
-    constructor(private readonly workspaceClient: WorkspaceClient) {}
+    private constructor(private readonly sourceEventService: SourceEventService) {
+        this.sourceEventService.onEvent(this.onSourceEvent);
+    }
 
-    public async init(): Promise<void> {
-        const sourceEventService = await this.workspaceClient.getServiceProxy<SourceEventService>(
+    public static init(workspaceClient: WorkspaceClient): void {
+        const sourceEventService = workspaceClient.getServiceProxy<SourceEventService>(
             SourceEventService
         );
-        sourceEventService.onEvent(this.onSourceEvent);
+
+        new BrowserSyncService(sourceEventService);
     }
 
     private redirect(url: string) {
@@ -54,6 +59,32 @@ export class BrowserSyncService {
                     return;
                 }
                 await setAuthCookie(token);
+                return;
+
+            case BrowserConnectorMessages.GetLocalStorageValueRequest:
+                const payload = JSON.parse(e.jsonContent);
+                const { key } = payload;                            
+
+                const valueJson = localStorage.getItem(key);
+
+                let value: any = undefined;
+                if (valueJson) {
+                    try {
+                        value = JSON.parse(valueJson);
+                    } catch {
+                        // do nothing, just return undefined
+                    }
+                }
+
+                const repsonse = JSON.stringify({
+                    key,
+                    value,
+                });
+
+                await this.sourceEventService.fireEventAsync(
+                    BrowserConnectorMessages.GetLocalStorageValueResponse, 
+                    repsonse
+                );
                 return;
         }
     };

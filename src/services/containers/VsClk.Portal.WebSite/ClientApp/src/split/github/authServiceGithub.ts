@@ -2,9 +2,7 @@ import {
     getStoredGitHubToken,
     getGitHubAccessToken,
 } from '../../services/gitHubAuthenticationService';
-import {
-    addDefaultGithubKey,
-} from '../../cache/localStorageKeychain/localstorageKeychainKeys';
+import { addDefaultGithubKey } from '../../cache/localStorageKeychain/localstorageKeychainKeys';
 import { Signal } from '../../utils/signal';
 import { localStorageKeychain } from '../../cache/localStorageKeychainInstance';
 import { PostMessageRepoInfoRetriever, IRepoInfo } from './postMessageRepoInfoRetriever';
@@ -51,12 +49,12 @@ export class AuthServiceGithub {
         // }
     };
 
-    private createCascadeTokenKey(owner: string, workspaceId: string) {
-        return `${vsoCascadeTokenKeychainKeyPrefix}_${owner}_${workspaceId}`;
+    private createCascadeTokenKey(environmentId: string) {
+        return `${vsoCascadeTokenKeychainKeyPrefix}_${environmentId}`;
     }
 
-    private createGithubTokenKey(owner: string, workspaceId: string) {
-        return `${vsoGithubTokenKeychainKeyPrefix}_${owner}_${workspaceId}`;
+    private createGithubTokenKey(environmentId: string) {
+        return `${vsoGithubTokenKeychainKeyPrefix}_${environmentId}`;
     }
 
     public getCascadeToken = async () => {
@@ -74,9 +72,9 @@ export class AuthServiceGithub {
         if (!githubToken) {
             return null;
         }
-        const { ownerUsername, workspaceId } = this.repoInfo;
+        const { environmentId } = this.repoInfo;
 
-        const githubKeychainKey = this.createGithubTokenKey(ownerUsername, workspaceId);
+        const githubKeychainKey = this.createGithubTokenKey(environmentId);
         await localStorageKeychain.set(githubKeychainKey, githubToken);
 
         const cascadeToken = await this.getFreshCascadeToken(githubToken);
@@ -89,7 +87,7 @@ export class AuthServiceGithub {
         // const keys = await createKeys(cascadeToken);
         // setKeychainKeys(keys);
 
-        const cascadeKeychainKey = this.createCascadeTokenKey(ownerUsername, workspaceId);
+        const cascadeKeychainKey = this.createCascadeTokenKey(environmentId);
         await localStorageKeychain.set(cascadeKeychainKey, cascadeToken);
 
         return cascadeToken;
@@ -134,9 +132,9 @@ export class AuthServiceGithub {
             throw new Error('No repo info found.');
         }
 
-        const { ownerUsername, workspaceId } = this.repoInfo;
+        const { environmentId } = this.repoInfo;
 
-        const keychainKey = this.createCascadeTokenKey(ownerUsername, workspaceId);
+        const keychainKey = this.createCascadeTokenKey(environmentId);
         const token = await localStorageKeychain.get(keychainKey);
 
         if (!token) {

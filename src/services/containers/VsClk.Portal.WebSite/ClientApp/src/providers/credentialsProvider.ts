@@ -100,6 +100,19 @@ class GistPadStrategy implements IAuthStrategy {
     }
 }
 
+class GitHubStrategy implements IAuthStrategy {
+    canHandleService(service: string, account: string): boolean {
+        return service === 'vso-github' && (
+            account.startsWith('github-token_') ||
+            account.startsWith('cascade-token_')
+        );
+    }
+
+    async getToken(service: string, account: string): Promise<string | null> {
+        return await localStorageKeychain.get(`vso-${account}`) || null;
+    }
+}
+
 const GENERIC_PREFIX = 'vsonline.keytar';
 
 export class CredentialsProvider implements ICredentialsProvider {
@@ -170,4 +183,5 @@ export const credentialsProvider = new CredentialsProvider([
     new AzureAccountStrategy(),
     new LiveShareWebStrategy(),
     new GistPadStrategy(),
+    new GitHubStrategy(),
 ]);
