@@ -63,6 +63,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.AddSingleton(appSettings);
             AppSettings = appSettings;
 
+            if (string.IsNullOrEmpty(AppSettings.AesKey)
+                 || string.IsNullOrEmpty(AppSettings.AesIV)
+                 || string.IsNullOrEmpty(AppSettings.Domain))
+            {
+                throw new Exception("AesKey, AesIV or Domain keys are not found in the app settings.");
+            }
+
             // VS SaaS Authentication
             services.AddPortalWebSiteAuthentication(HostEnvironment, appSettings);
 

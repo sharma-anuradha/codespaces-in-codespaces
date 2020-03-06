@@ -11,6 +11,7 @@ import { tryGetAzDevCredentialsLocal } from './getAzDevCredentials';
 import { register as registerServiceWorker } from '../serviceWorker';
 import { getPlans } from './plans-actions';
 import { useActionContext } from './middleware/useActionContext';
+import { setCommonAuthTokenAction } from './getAuthTokenActionCommon';
 
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
@@ -19,6 +20,8 @@ export const initActionFailureType = 'async.app.init.failure';
 export async function init(getAuthTokenAction: () => Promise<string>) {
     const dispatch = useDispatch();
     const action = useActionCreator();
+
+    setCommonAuthTokenAction(getAuthTokenAction);
 
     dispatch(action(initActionType));
     try {

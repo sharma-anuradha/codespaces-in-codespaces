@@ -17,14 +17,5 @@ export const isHostedOnGithub = () => {
     }
 
     const parentOrigin = ancestorOrigins[0];
-    const url = new URL(parentOrigin);
-
-    const allowedOrigins = [
-        'github.localhost',
-        'github.com'
-    ];
-
-    const result = (allowedOrigins.indexOf(url.hostname) !== -1);
-    
-    return result;
+    return isGithubTLD(parentOrigin);
 };

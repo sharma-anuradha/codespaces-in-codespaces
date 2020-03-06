@@ -113,9 +113,7 @@ export class AuthServiceGithub {
         if (!cascadeToken.ok) {
             return null;
         }
-
         const resultJson = await cascadeToken.json();
-
         const { token } = resultJson;
 
         if (!token) {

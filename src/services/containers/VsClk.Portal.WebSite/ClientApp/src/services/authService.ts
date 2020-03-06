@@ -146,7 +146,6 @@ class AuthService {
         await this.initializeSignal.promise;
 
         const cachedToken = await tokenCache.getCachedToken(LOCAL_STORAGE_KEY, expiration);
-
         if (cachedToken) {
             const expirationTime = getTokenExpiration(cachedToken);
 
@@ -177,7 +176,6 @@ class AuthService {
         }
 
         const token = await this.tokenAcquirePromise;
-
         this.tokenAcquirePromise = undefined;
         return token;
     }

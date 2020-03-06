@@ -1,9 +1,9 @@
 import { SourceEventService, SourceEventArgs } from '../contracts/VSLS';
 import { WorkspaceClient } from '../workspaceClient';
 import { authService } from '../../services/authService';
-import { getAuthToken } from '../../actions/getAuthToken';
 import { setAuthCookie } from '../../utils/setAuthCookie';
 import { loginPath, environmentsPath } from '../../routerPaths';
+import { getAuthTokenAction } from '../../actions/getAuthTokenActionCommon';
 
 export enum BrowserConnectorMessages {
     ConnectToEnvironment = 'VSO_BrowserSync_ConnectToEnvironment',
@@ -54,7 +54,9 @@ export class BrowserSyncService {
             case BrowserConnectorMessages.CopyServerUrl:
             case BrowserConnectorMessages.OpenPortInBrowser:
             case BrowserConnectorMessages.ForwardPort:
+                const getAuthToken = getAuthTokenAction();
                 const token = await getAuthToken();
+
                 if (token === undefined) {
                     return;
                 }

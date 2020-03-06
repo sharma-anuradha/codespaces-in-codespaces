@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
@@ -7,10 +8,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
     public class ConfigurationController : Controller
     {
         private readonly AppSettings appSettings;
+        private IWebHostEnvironment env { get; }
 
-        public ConfigurationController(AppSettings appSettings)
+        public ConfigurationController(AppSettings appSettings, IWebHostEnvironment env)
         {
             this.appSettings = appSettings;
+            this.env = env;
         }
 
         //[Authorize]
@@ -21,6 +24,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             { "liveShareEndpoint", appSettings.LiveShareEndpoint },
             { "portalEndpoint", appSettings.PortalEndpoint },
             { "liveShareWebExtensionEndpoint", appSettings.LiveShareWebExtensionEndpoint},
+            { "environment", this.env.EnvironmentName.ToLower()},
         });
     }
 }

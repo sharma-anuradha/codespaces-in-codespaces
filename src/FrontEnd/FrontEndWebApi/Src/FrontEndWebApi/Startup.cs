@@ -113,6 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     currentOrigins.Add("https://githubworkspaces.com");
                     currentOrigins.Add("https://github.localhost");
                     currentOrigins.Add("http://github.localhost");
+                    currentOrigins.Add("https://*.review-lab.github.com");
 
                     options.AddPolicy(
                         "ProdCORSPolicy",

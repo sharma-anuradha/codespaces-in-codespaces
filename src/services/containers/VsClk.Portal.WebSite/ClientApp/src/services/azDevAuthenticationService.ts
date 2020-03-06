@@ -24,7 +24,6 @@ export async function storeAzDevAccessTokenResponse({
     refreshToken,
     expiresOn,
 }: AzDevAccessTokenResponse) {
-    debugger;
     await localStorageKeychain.set(azDevLocalStorageKey, JSON.stringify({ accessToken, state, scope, refreshToken, expiresOn: expiresOn.getTime() }));
 }
 

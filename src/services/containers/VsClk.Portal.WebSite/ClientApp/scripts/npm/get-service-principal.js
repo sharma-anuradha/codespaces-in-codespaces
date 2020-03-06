@@ -12,8 +12,6 @@ try {
 
     const { value } = JSON.parse(azureCliResponse);
 
-    console.log(value);
-
     if (existsSync(appSecretsPath)) {
         const settings = readFileSync(appSecretsPath, { encoding: 'utf-8' });
         writeFileSync(appSecretsPath, updateSecret(settings, value));

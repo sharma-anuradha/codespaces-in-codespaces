@@ -23,6 +23,7 @@ type RequestOptions = {
     skipParsingResponse: boolean;
     retryCount: number;
     shouldRetry?: (response: Response | undefined, retry: number) => boolean | Promise<boolean>;
+    headers?: { [key: string]: string; }
 };
 
 async function request<TResult>(
@@ -71,8 +72,7 @@ async function request<TResult>(
             ...requestOptions,
         };
 
-        let { headers, body, ...rest } = options;
-
+        let { headers = {}, body, ...rest } = options;
         if (requestOptions.requiresAuthentication) {
             const context = useActionContext();
 
@@ -89,9 +89,10 @@ async function request<TResult>(
         }
 
         let response;
+        const contentType: string | undefined = (headers as Record<string, string>)['Content-Type'] ;
         try {
             headers = {
-                'Content-Type': 'application/json',
+                'Content-Type': contentType || 'application/json',
                 ...headers,
             } as Record<string, string>;
 
@@ -226,7 +227,7 @@ async function postRequest<TResult = object>(
 async function postRequest<TResult = object>(
     url: string,
     requestBody: RequestInit['body'] | {},
-    requestOptions?: Partial<RequestOptions>
+    requestOptions: Partial<RequestOptions> = {}
 ) {
     let body: RequestInit['body'];
     if (!isValidRequestBody(requestBody)) {
@@ -235,18 +236,13 @@ async function postRequest<TResult = object>(
         body = requestBody;
     }
 
-    if (!requestOptions) {
-        return request(url, {
-            method: 'POST',
-            body,
-        });
-    }
-
+    const { headers = {} } = requestOptions;
     return await request<TResult>(
         url,
         {
             method: 'POST',
             body,
+            headers
         },
         requestOptions
     );
@@ -255,7 +251,7 @@ async function postRequest<TResult = object>(
 async function putRequest<TResult = object>(
     url: string,
     requestBody: RequestInit['body'] | {},
-    requestOptions?: Partial<RequestOptions>
+    requestOptions: Partial<RequestOptions> = {}
 ) {
     let body: RequestInit['body'];
     if (!isValidRequestBody(requestBody)) {
@@ -264,11 +260,14 @@ async function putRequest<TResult = object>(
         body = requestBody;
     }
 
+    const { headers = {} } = requestOptions;
+
     return await request<TResult>(
         url,
         {
             method: 'PUT',
             body,
+            headers
         },
         requestOptions || defaultRequestOptions
     );
