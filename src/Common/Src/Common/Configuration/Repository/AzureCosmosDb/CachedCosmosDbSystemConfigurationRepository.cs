@@ -58,6 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
             Requires.NotNull(options, nameof(options));
             options.PartitioningStrategy = PartitioningStrategy.IdOnly;
             options.CacheExpiry = TimeSpan.FromMinutes(1);
+            options.CacheMissingValues = true;
         }
     }
 }
