@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { PrimaryButton, Stack, Text } from 'office-ui-fabric-react';
 import { PortalLayout } from '../../../../components/portalLayout/portalLayout';
-import { BackToEnvironmentsLink } from '../../../../components/back-to-environments/back-to-environments';
 import { Loader } from '../../../../components/loader/loader';
 import { isActivating, stateToDisplayName } from '../../../../utils/environmentUtils';
 import { IWorkbenchSplashScreenProps } from '../../../../interfaces/IWorkbenchSplashScreenProps';
@@ -25,9 +24,6 @@ export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProp
                 </Stack.Item>
                 <Stack.Item>
                     {props.children}
-                </Stack.Item>
-                <Stack.Item>
-                    <BackToEnvironmentsLink />
                 </Stack.Item>
             </Stack>
         </PortalLayout>

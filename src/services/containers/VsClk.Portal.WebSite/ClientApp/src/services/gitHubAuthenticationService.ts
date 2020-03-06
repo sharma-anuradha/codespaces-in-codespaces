@@ -5,6 +5,7 @@ import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
 import { isHostedOnGithub } from '../utils/isHostedOnGithub';
 import { IAuthenticationAttempt } from './authenticationServiceBase';
 import { SupportedGitService } from '../utils/gitUrlNormalization';
+import { IRepoInfo, PostMessageRepoInfoRetriever } from '../split/github/postMessageRepoInfoRetriever';
 
 export const trace = createTrace('GitHubCredentialService');
 
@@ -80,7 +81,10 @@ export async function getStoredGitHubToken(scope: string | null = null): Promise
 }
 
 let currentAttempt: GithubAuthenticationAttempt | undefined;
-export async function getGitHubAccessToken(isInline = false, redirectPath?: string): Promise<string | null> {
+export async function getGitHubAccessToken(
+    isInline = false,
+    redirectPath?: string,
+): Promise<string | null> {
     if (currentAttempt) {
         return await currentAttempt.authenticate(isInline);
     }
@@ -118,6 +122,13 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
             ['state', this.state]
         ]);
 
+        if (isHostedOnGithub()) {
+            if (!this.repoInfo) {
+                throw new Error('No repo info set, please get repo info first.')
+            }
+            params.append('repository_id', this.repoInfo.repositoryId);
+        }
+
         return `${window.location.origin}/github-auth?${params}`;
     }
 
@@ -128,6 +139,8 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
     get gitServiceType(): SupportedGitService {
         return SupportedGitService.GitHub;
     }
+
+    private repoInfo?: IRepoInfo;
 
     constructor(private readonly state = createUniqueId()) {}
 
@@ -143,6 +156,15 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
 
         this.tokenRequest = new Signal();
         const currentTokenRequest = this.tokenRequest;
+
+        if (isHostedOnGithub() && !this.repoInfo) {
+            const postMessageRepoInfoRetriever = new PostMessageRepoInfoRetriever();
+            this.repoInfo = await postMessageRepoInfoRetriever.getRepoInfo();
+
+            if (!this.repoInfo) {
+                throw new Error('Cannot get repo info');
+            }
+        }
 
         if (isInline) {
             location.href = this.url;

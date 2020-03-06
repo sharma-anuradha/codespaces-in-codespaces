@@ -8,14 +8,8 @@ const getWorkspaceUrl = (defaultUrl: URL) => {
     if (!isHostedOnGithub()) {
         return defaultUrl;
     }
-
-    const envId = location.pathname.split('/')[2];
-
-    if (!envId) {
-        throw new Error('No environmentId found.'); 
-    }
     
-    const postMessageInfoRetriever = new PostMessageRepoInfoRetriever(envId);
+    const postMessageInfoRetriever = new PostMessageRepoInfoRetriever();
 
     const result = postMessageInfoRetriever.getStoredRepoInfo();
 

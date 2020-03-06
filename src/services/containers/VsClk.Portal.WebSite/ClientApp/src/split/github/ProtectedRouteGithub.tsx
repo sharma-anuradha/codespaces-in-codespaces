@@ -32,7 +32,7 @@ const ProtectedRouteView = (props: Props) => {
     } = props;
 
     if (isAuthenticating && !isAuthenticated) {
-        return <Loader message='Signing in...' />;
+        return <Loader />;
     }
 
     if (!isAuthenticating && !isAuthenticated) {

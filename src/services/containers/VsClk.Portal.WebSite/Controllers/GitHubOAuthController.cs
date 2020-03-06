@@ -13,6 +13,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         private GitHubClient GitHubNativeClient { get; set; }
         private const string ClientFlowFeedbackEndpoint = "github/login";
         private const string ClientQueryParam = "vso-client";
+        public const string GitHubRepoIdQueryParam = "repository_id";
 
         public GitHubOAuthController(AppSettings appSettings)
         {
@@ -25,6 +26,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         public IActionResult Authenticate(
             [FromQuery(Name = "state")] string state,
             [FromQuery(Name = "scope")] string scope,
+            [FromQuery(Name = GitHubRepoIdQueryParam)] string repoId,
             [FromQuery(Name = ClientQueryParam)] string client
         )
         {
@@ -42,9 +44,17 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 ? GitHubNativeClient
                 : GitHubClient;
 
+            var query = HttpUtility.ParseQueryString(string.Empty);
+
             if (!string.IsNullOrEmpty(client)) {
-                redirectUriBuilder.Query = $"{ClientQueryParam}={Uri.EscapeDataString(client)}";
+                query.Add(ClientQueryParam, client);
             }
+
+            if (!string.IsNullOrEmpty(repoId)) {
+                query.Add(GitHubRepoIdQueryParam, repoId);
+            }
+
+            redirectUriBuilder.Query = query.ToString();
 
             return Redirect(
                 githubClient.GetLoginUrl(
@@ -57,6 +67,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         public async Task<IActionResult> GetAccessTokenAsync(
             [FromQuery(Name = "code")] string code,
             [FromQuery(Name = "state")] string state,
+            [FromQuery(Name = GitHubRepoIdQueryParam)] string repoId,
             [FromQuery(Name = ClientQueryParam)] string client
         )
         {
@@ -76,7 +87,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                     ? GitHubNativeClient
                     : GitHubClient;
 
-                var tokenResponse = await githubClient.GetAccessTokenResponseAsync(state, code);
+                var tokenResponse = await githubClient.GetAccessTokenResponseAsync(state, code, repoId);
                 responseQuery.Set("state", state);
                 responseQuery.Set("accessToken", tokenResponse.AccessToken);
                 responseQuery.Set("scope", tokenResponse.Scope);
@@ -150,12 +161,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             query.Set("scope", string.IsNullOrEmpty(scope) ? DefaultScope : $"{DefaultScope} {scope}");
             query.Set("redirect_uri", redirectUrl);
             query.Set("state", state);
+
             uriBuilder.Query = query.ToString();
 
             return uriBuilder.Uri.ToString();
         }
 
-        public async Task<GitHubAccessTokenResponse> GetAccessTokenResponseAsync(string state, string code)
+        public async Task<GitHubAccessTokenResponse> GetAccessTokenResponseAsync(string state, string code, string repoId)
         {
             if (string.IsNullOrEmpty(state))
             {
@@ -174,6 +186,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             query.Set("client_secret", ClientSecret);
             query.Set("state", state);
             query.Set("code", code);
+
+            if (!string.IsNullOrEmpty(repoId))
+            {
+                query.Set(GitHubOAuthController.GitHubRepoIdQueryParam, repoId);
+            }
+
             uriBuilder.Query = query.ToString();
 
             HttpClient client = new HttpClient();

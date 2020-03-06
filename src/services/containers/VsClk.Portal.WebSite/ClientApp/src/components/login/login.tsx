@@ -181,7 +181,6 @@ function LoginView(props: LoginProps) {
     }, [setIsAuthCookieSet, props.token]);
 
     const { isAuthenticated, isAuthenticating, isInteractionRequired } = props;
-
     if (!isAuthenticated && isAuthenticating && !isInteractionRequired) {
         return <Loader message='Signing in...' />;
     }

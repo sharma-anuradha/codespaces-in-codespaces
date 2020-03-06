@@ -13,8 +13,14 @@ export class PostMessageRepoInfoRetriever {
 
     private localStorageKey: string;
 
-    constructor(environmentId: string) {
-        this.localStorageKey = `vso-github-repo-info-${environmentId}`;
+    constructor() {
+        const envId = location.pathname.split('/')[2];
+
+        if (!envId) {
+            throw new Error('No environmentId found.'); 
+        }
+
+        this.localStorageKey = `vso-github-repo-info-${envId}`;
 
         window.addEventListener('message', this.receiveMessage, false);
     }

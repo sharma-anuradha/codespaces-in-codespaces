@@ -21,15 +21,9 @@ export class AuthServiceGithub {
          * We temporary use static github encryption key
          * until backend supports Cascade token auth.
          */
-        addDefaultGithubKey();
+        addDefaultGithubKey();  
 
-        const envId = location.pathname.split('/')[2];
-
-        if (!envId) {
-            throw new Error('No environmentId found.');
-        }
-
-        const postMessageInfoRetriever = new PostMessageRepoInfoRetriever(envId);
+        const postMessageInfoRetriever = new PostMessageRepoInfoRetriever();
 
         this.repoInfo = postMessageInfoRetriever.getStoredRepoInfo();
         if (this.repoInfo) {
