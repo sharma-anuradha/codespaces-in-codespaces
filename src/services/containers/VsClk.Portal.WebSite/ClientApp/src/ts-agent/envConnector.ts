@@ -16,7 +16,7 @@ import { trace } from '../utils/trace';
 import { Signal } from '../utils/signal';
 import { VSCodeQuality } from '../utils/vscode';
 
-import { DEFAULT_EXTENSIONS, getVSCodeVersion } from '../constants';
+import { DEFAULT_EXTENSIONS, getVSCodeVersion, HOSTED_IN_GITHUB_EXTENSIONS } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { BrowserSyncService } from './services/browserSyncService';
 import { postServiceWorkerMessage } from '../common/post-message';
@@ -28,6 +28,7 @@ import { PromiseCompletionSource } from '@vs/vs-ssh';
 import { wait } from '../dependencies';
 import { sendTelemetry } from '../utils/telemetry';
 import { GitCredentialService } from './services/gitCredentialService';
+import { isHostedOnGithub } from '../utils/isHostedOnGithub';
 
 export type RemoteVSCodeServerDescription = {
     readonly port: number;
@@ -86,10 +87,16 @@ export class EnvConnector {
             );
 
             const vscodeConfig = getVSCodeVersion(quality);
+            let extensions: string[];
+            if (isHostedOnGithub()) {
+                extensions = [...DEFAULT_EXTENSIONS, ...HOSTED_IN_GITHUB_EXTENSIONS];
+            } else {
+                extensions = [...DEFAULT_EXTENSIONS];
+            }
             const options: VSCodeServerOptions = {
                 vsCodeCommit: vscodeConfig.commit,
                 quality: vscodeConfig.quality,
-                extensions: [...DEFAULT_EXTENSIONS],
+                extensions,
                 telemetry: true,
             };
 
@@ -147,19 +154,16 @@ export class EnvConnector {
         sessionId: string,
         accessToken: string,
         liveShareEndpoint: string,
-        correlationId: string): Promise<WorkspaceClient | undefined> {
+        correlationId: string
+    ): Promise<WorkspaceClient | undefined> {
+        window.performance.mark(`EnvConnector.connectWithRetry ${correlationId}`);
 
-        window.performance.mark(
-            `EnvConnector.connectWithRetry ${correlationId}`
-        );
-        
         const webClient = new WebClient(liveShareEndpoint, {
             getToken() {
                 return accessToken;
             },
         });
         const workspaceClient = new WorkspaceClient(webClient);
-
 
         // Poll to connect to environment once its available.
         let endPoll = Date.now() + 5 * 60 * 1000; // minutes.
@@ -204,10 +208,8 @@ export class EnvConnector {
             workspaceClient.getCurrentWorkspaceClient()!,
             workspaceClient.getCurrentRpcConnection()!
         );
-        
-        window.performance.measure(
-            `EnvConnector.connectWithRetry ${correlationId}`
-        );
+
+        window.performance.measure(`EnvConnector.connectWithRetry ${correlationId}`);
         const [measure] = window.performance.getEntriesByName(
             `EnvConnector.connectWithRetry ${correlationId}`
         );

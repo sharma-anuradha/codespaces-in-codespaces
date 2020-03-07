@@ -19,6 +19,7 @@ import {
 } from './vscode';
 import { IndexedDBFS, IAsyncStorage, InMemoryAsyncStorage } from './indexedDBFS';
 import * as path from 'path';
+import { isHostedOnGithub } from './isHostedOnGithub';
 
 const FILE_IS_DIRECTORY_MSG = 'EntryIsADirectory';
 
@@ -33,6 +34,7 @@ export class UserDataProvider implements IFileSystemProvider {
     private readonly onDidChangeFileEmitter: Emitter<IFileChange[]> = new Emitter();
     public readonly onDidChangeFile: Event<IFileChange[]> = this.onDidChangeFileEmitter.event;
     private readonly globalPath = path.join('/', 'User', 'state', 'global.json');
+    private readonly userSettingsPath = path.join('/', 'User', 'settings.json');
     private storageProvider!: IAsyncStorage;
 
     constructor() {}
@@ -54,6 +56,17 @@ export class UserDataProvider implements IFileSystemProvider {
         if (!value) {
             const options = [['workbench.telemetryOptOutShown', 'true']];
             await this.storageProvider.setValue(this.globalPath, JSON.stringify(options));
+            if (isHostedOnGithub()) {
+                const userSettingsValue = await this.storageProvider.getValue(
+                    this.userSettingsPath
+                );
+                if (!userSettingsValue) {
+                    await this.storageProvider.setValue(
+                        this.userSettingsPath,
+                        '{"workbench.colorTheme": "Github"}'
+                    );
+                }
+            }
         }
     }
 
