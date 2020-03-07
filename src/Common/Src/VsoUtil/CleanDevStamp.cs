@@ -57,6 +57,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                     var resourceNameBuilder = new ResourceNameBuilder(settings);
                     await CleanUpAsync(stdout, stderr, resourceNameBuilder, azureSubscriptionCatalog);
                 }
+
+                return;
             }
             else if (!string.IsNullOrWhiteSpace(Alias))
             {
