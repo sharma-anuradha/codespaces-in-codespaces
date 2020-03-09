@@ -62,6 +62,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return baseName;
         }
 
+        /// <inheritdoc/>
+        public string GetArchiveStorageAccountName(string baseName)
+        {
+            if (DeveloperPersonalStampSettings.DeveloperStamp)
+            {
+                return $"{GetUserName()}{ResourceGroupPostFix}as".Replace("-", string.Empty).ToLowerInvariant();
+            }
+
+            return baseName;
+        }
+
         private string CreateResourceName(string baseName)
         {
             if (DeveloperPersonalStampSettings.DeveloperStamp)

@@ -43,5 +43,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="baseName">Base name of the container.</param>
         /// <returns>Name with the stamp.</returns>
         string GetVirtualMachineAgentContainerName(string baseName);
+
+        /// <summary>
+        /// Creates name of the archive storage account.
+        /// </summary>
+        /// <param name="baseName">Base name of the storage account.</param>
+        /// <returns>Storage account name..</returns>
+        string GetArchiveStorageAccountName(string baseName);
     }
 }

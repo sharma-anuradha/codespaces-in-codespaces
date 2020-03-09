@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         {
             var deletionTasks = new List<Task>();
 
-            foreach (var catalog in azureSubscriptionCatalog.AzureSubscriptions)
+            foreach (var catalog in azureSubscriptionCatalog.AzureSubscriptionsIncludingInfrastructure())
             {
                 var name = "ShouldNotMatter"; // The resource group should not depend on the name passed, but instead on the alias.
                 var deletionTask = DeleteResourceGroupAsync(

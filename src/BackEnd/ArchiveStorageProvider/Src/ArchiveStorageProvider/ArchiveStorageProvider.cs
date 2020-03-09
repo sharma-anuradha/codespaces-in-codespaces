@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.Azure.Management.Storage.Fluent.Models;
-using Microsoft.VsSaaS.Azure.Management;
 using Microsoft.VsSaaS.Azure.Metrics;
 using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Common;
@@ -47,6 +46,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
         /// <param name="controlPlaneInfo">The control plane info.</param>
         /// <param name="systemCatalog">The system catalog.</param>
         /// <param name="metricsProvider">The azure metrics provider.</param>
+        /// <param name="resourceNameBuilder">Resource naming for DEV stamps.</param>
+        /// <param name="personalStampSettings">DEV stamp settings.</param>
         /// <param name="diagnosticsLoggerFactory">The diagnostics logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public ArchiveStorageProvider(
@@ -54,6 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
             IControlPlaneInfo controlPlaneInfo,
             ISystemCatalog systemCatalog,
             IMetricsProvider metricsProvider,
+            IResourceNameBuilder resourceNameBuilder,
+            DeveloperPersonalStampSettings personalStampSettings,
             IDiagnosticsLoggerFactory diagnosticsLoggerFactory,
             LogValueSet defaultLogValues)
         {
@@ -61,6 +64,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             Requires.NotNull(systemCatalog, nameof(systemCatalog));
             Requires.NotNull(metricsProvider, nameof(metricsProvider));
+            Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
+            Requires.NotNull(personalStampSettings, nameof(personalStampSettings));
             Requires.NotNull(diagnosticsLoggerFactory, nameof(diagnosticsLoggerFactory));
             Requires.NotNull(defaultLogValues, nameof(defaultLogValues));
 
@@ -68,6 +73,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
             AzureSubscriptionCatalog = systemCatalog.AzureSubscriptionCatalog;
             AzureClientFactory = new AzureClientFactory(systemCatalog);
             MetricsProvider = metricsProvider;
+            ResourceNameBuilder = resourceNameBuilder;
+            IsDeveloperStamp = personalStampSettings.DeveloperStamp;
 
             // Warmup the archive storage by ensuring that all storage accounts exist.
             var logger = diagnosticsLoggerFactory.New(defaultLogValues);
@@ -83,6 +90,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
         private AzureClientFactory AzureClientFactory { get; }
 
         private IMetricsProvider MetricsProvider { get; }
+
+        private IResourceNameBuilder ResourceNameBuilder { get; }
+
+        private bool IsDeveloperStamp { get; }
 
         private Task<IReadOnlyList<ArchiveStorageInfo>> InitializeArchiveStorageInfosTask { get; }
 
@@ -147,13 +158,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
             // Ensure that the resource group exists for this stamp-data-plane
             var infrastructureSubscription = AzureSubscriptionCatalog.InfrastructureSubscription;
             var azure = await GetAzureClientAsync(infrastructureSubscription);
-            var resourceGroupName = ControlPlaneInfo.Stamp.StampInfrastructureResourceGroupName;
+            var resourceGroupName = GetInfrastructureResourceGroupName();
             await EnsureResourceGroupExistsWithRetryAsync(azure, resourceGroupName, ControlPlaneInfo.Stamp.Location);
 
             // Generate the names / resourceInfos for the required storage accounts
             var infosAndLocations = ControlPlaneInfo.Stamp.DataPlaneLocations
-                .SelectMany(location => Enumerable.Range(0, ArchiveStorageAccountsPerRegionPerSubscription)
-                    .Select(index => ControlPlaneInfo.Stamp.GetDataPlaneStorageAccountNameForArchiveStorageName(location, index))
+                .SelectMany(location => Enumerable.Range(0, GetArchiveStorageAccountsPerRegionPerSubscription())
+                    .Select(index => GetArchiveStorageAccountName(location, index))
                     .Select(storageAccountName =>
                         new
                         {
@@ -260,6 +271,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
             {
                 return await storageAccount.GetKeysAsync();
             });
+        }
+
+        private int GetArchiveStorageAccountsPerRegionPerSubscription() => IsDeveloperStamp ? 1 : ArchiveStorageAccountsPerRegionPerSubscription;
+
+        private string GetInfrastructureResourceGroupName()
+        {
+            var stampResourceGroupName = ControlPlaneInfo.Stamp.StampInfrastructureResourceGroupName;
+            var resourceGroupName = ResourceNameBuilder.GetResourceGroupName(stampResourceGroupName);
+            return resourceGroupName;
+        }
+
+        private string GetArchiveStorageAccountName(AzureLocation location, int index)
+        {
+            var storageAccountName = ControlPlaneInfo.Stamp.GetDataPlaneStorageAccountNameForArchiveStorageName(location, index);
+            storageAccountName = ResourceNameBuilder.GetArchiveStorageAccountName(storageAccountName);
+            return storageAccountName;
         }
     }
 }
