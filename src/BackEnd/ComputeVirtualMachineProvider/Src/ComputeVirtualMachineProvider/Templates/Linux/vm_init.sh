@@ -59,6 +59,11 @@ echo "Make copy of vso agent..."
 mkdir -p /.vsonline/vsoagent/mount
 cp -a /.vsonline/vsoagent/bin/. /.vsonline/vsoagent/mount
 
+echo "Install azcopy ..."
+wget -q -O azcopy.tar.gz https://azcopyvnext.azureedge.net/release20200124/azcopy_linux_amd64_10.3.4.tar.gz \
+    && tar -xf azcopy.tar.gz \
+    && mv azcopy_linux_amd64_*/azcopy /.vsonline/azcopy
+
 echo "Create configuration file ..."
 echo "[ENVAGENTSETTINGS]">> /.vsonline/vsoagent/bin/config.ini
 echo "INPUTQUEUENAME=$SCRIPT_PARAM_VM_QUEUE_NAME" >> /.vsonline/vsoagent/bin/config.ini
