@@ -33,7 +33,12 @@
 
             const queryParams = new URLSearchParams(queryParamsString);
 
-            const nonce = queryParams.get('vso-nonce');
+            var nonce = queryParams.get('vso-nonce');
+            
+            // AAD in the web doesn't support dynamic params so the nonce may be stored in the state
+            if (!nonce) {
+                nonce = queryParams.get('state');
+            }
 
             const itemName = `${nonce}::vsonline.redirect.url`;
             localStorage.setItem(itemName, url);

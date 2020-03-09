@@ -11,8 +11,6 @@ import { getVscodeQuality } from '../utils/configurationUtil';
 
 export const callbackSymbol = Symbol('URICallbackSymbol');
 
-const VSO_NONCE_PARAM_NAME = 'vso-nonce';
-
 const LOCAL_STORAGE_KEY = 'vsonline.redirect.url';
 
 interface IExpectedNonceRecord {
@@ -64,7 +62,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         // for the Uri format refrence
         const protocolHandlerUri = vscode.URI.from({
             authority: expectedRedirectRecord.authority,
-            query: this.cleanQueryFromVsoParams(queryParams).toString(),
+            query: queryParams.toString(),
             scheme: this.getVSCodeScheme(),
             path: expectedRedirectRecord.path,
             fragment: '',
@@ -78,22 +76,14 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
         return quality === 'insider' ? 'vscode-insiders' : 'vscode';
     }
 
-    private cleanQueryFromVsoParams(queryParams: URLSearchParams) {
-        const queryParamsWithoutVSOParams = new URLSearchParams(queryParams.toString());
-
-        queryParamsWithoutVSOParams.delete(VSO_NONCE_PARAM_NAME);
-
-        return queryParamsWithoutVSOParams;
-    }
-
     public onCallback: Event<URI> = this[callbackSymbol].event;
 
     protected generateUrlCallbackParams(authority: string, path: string, query: string) {
         const nonce = randomString();
         this.expectedNonceMap.set(nonce, { authority, path });
-
+        
         const params = new URLSearchParams(query);
-        params.append(VSO_NONCE_PARAM_NAME, nonce);
+        params.append('state', nonce);
 
         return params.toString();
     }
