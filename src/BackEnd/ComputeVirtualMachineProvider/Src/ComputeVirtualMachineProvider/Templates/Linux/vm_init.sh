@@ -22,8 +22,7 @@ echo "fs.inotify.max_user_watches=524288" | tee -a /etc/sysctl.conf
 sysctl -p
 
 echo "Install docker ..."
-# Hardcode to a verified version, so that docker upgrades won't break the VM creation.
-apt-get -yq update && apt-get install -y docker.io=18.09.7-0ubuntu1~18.04.4
+apt-get -yq update && apt-get install -y docker.io
 
 # Block Azure Instance Metadata Service IP on host (OUTPUT) and also in containers (DOCKER-USER)
 # This needs to happen after the docker install for DOCKER-USER to exist in iptables.
@@ -35,7 +34,7 @@ echo "Block Azure Instance Metadata Service ..."
 #apt-get -yq update && apt-get install -y iptables-persistent
 INSTANCE_METADATA_IP=169.254.169.254
 iptables -I OUTPUT -d $INSTANCE_METADATA_IP -j DROP
-iptables -I DOCKER-USER -d $INSTANCE_METADATA_IP -j DROP
+# iptables -I DOCKER-USER -d $INSTANCE_METADATA_IP -j DROP
 # iptables-save > /etc/iptables/rules.v4
 
 echo "Install unzip ..."
