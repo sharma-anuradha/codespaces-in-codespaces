@@ -166,7 +166,7 @@
   ],
   "vscodeCommit": {
     "stable": "78a4c91400152c0f27ba4d363eb56d2835f9903a",
-    "insider": "1876b51870e30e9ba8f35dc0dcfaf49a3799a8ef"
+    "insider": "b0791e5236f462fbb785e9a00319705607cefb9d"
   },
   "jest": {
     "collectCoverageFrom": [
