@@ -47,7 +47,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 options.Providers.Add<BrotliCompressionProvider>();
                 options.Providers.Add<GzipCompressionProvider>();
             });
-            services.AddControllersWithViews();
+            services.AddControllersWithViews().AddControllersAsServices();
             services.AddRazorPages();
 
             // In production, the React files will be served from this directory

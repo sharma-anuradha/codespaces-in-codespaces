@@ -36,6 +36,7 @@ config:
   environmentRegistrationEndpoint: https://online-stg.dev.core.vsengsaas.visualstudio.com/api/v1/environments
   apiEndpoint: https://online-stg.dev.core.vsengsaas.visualstudio.com/api/v1
   liveShareEndpoint: https://ppe.liveshare.vsengsaas.visualstudio.com
+  liveShareWebExtensionEndpoint: https://vslsdev.blob.core.windows.net/webextension
   githubClientId: fe42cbbb45cdcb17a106
   githubNativeClientId: Iv1.faf5804e51bc0d8f
   azDevClientId: B4074F41-EC85-4D4E-A3CA-4458F1A904CC

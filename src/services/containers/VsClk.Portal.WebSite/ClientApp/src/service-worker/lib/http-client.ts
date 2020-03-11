@@ -11,6 +11,11 @@ import { CriticalError } from './errors/CriticalError';
 const separator = '\r\n';
 const [crByte, lfByte] = Array.from(new TextEncoder().encode(separator));
 
+const serviceRequestUrls = [
+    '/authenticate-port-forwarder',
+    '/logout-port-forwarder'
+];
+
 export interface IHttpClient {
     fetch(request: Request, preloadResponse?: Promise<any>): Promise<Response>;
 }
@@ -42,7 +47,7 @@ export class LiveShareHttpClient implements IHttpClient {
     async fetch(request: Request): Promise<Response> {
         const routingDetails = getRoutingDetails(request.url);
 
-        if (!routingDetails) {
+        if (!routingDetails || this.shouldPassThroughRequest(request)) {
             return this.basicHttpClient.fetch(request);
         }
 
@@ -336,5 +341,11 @@ export class LiveShareHttpClient implements IHttpClient {
 
             return crIndex;
         }
+    }
+
+    private shouldPassThroughRequest(request: Request): boolean {
+        const url = new URL(request.url);
+
+        return serviceRequestUrls.includes(url.pathname.toLowerCase());
     }
 }

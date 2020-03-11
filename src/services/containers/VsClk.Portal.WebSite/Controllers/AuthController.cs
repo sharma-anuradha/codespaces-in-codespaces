@@ -88,7 +88,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
         [HttpPost("~/authenticate-port-forwarder")]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> AuthenticatePortForwarder(
+        public async Task<IActionResult> AuthenticatePortForwarderAsync(
             [FromForm] string token,
             [FromForm] string cascadeToken
         )

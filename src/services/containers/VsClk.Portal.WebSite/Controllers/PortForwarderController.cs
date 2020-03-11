@@ -1,6 +1,7 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -22,7 +23,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         [HttpGet("~/portforward")]
-        public async Task<ActionResult> Index(
+        public async Task<IActionResult> GetAsync(
             [FromQuery] string path,
             [FromQuery] string devSessionId
         )
@@ -119,6 +120,35 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             return ExceptionView(PortForwardingFailure.NotAuthorized);
+        }
+
+        [HttpPost("~/portforward")]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> PostAsync(
+            [FromQuery] string path,
+            [FromServices] AuthController authController
+        )
+        {
+            // Add this header in case there is any confusion about which service the reponse is coming from
+            Response.Headers.Add("X-Powered-By", "Visual Studio Online Portal");
+
+            if (path == "authenticate-port-fowarder")
+            {
+                this.Request.Form.TryGetValue("token", out var tokenValues);
+                this.Request.Form.TryGetValue("cascadeToken", out var cascadeTokenValues);
+
+                var token = tokenValues.SingleOrDefault();
+                var cascadeToken = cascadeTokenValues.SingleOrDefault();
+
+                return await authController.AuthenticatePortForwarderAsync(token, cascadeToken);
+            }
+            if (path == "logout-port-fowarder")
+            {
+                return authController.LogoutPortForwarder();
+            }
+            
+            // This most likely should have gone to the service worker instead
+            return BadRequest();
         }
 
         private ActionResult ExceptionView(PortForwardingFailure failureReason = PortForwardingFailure.Unknown)
