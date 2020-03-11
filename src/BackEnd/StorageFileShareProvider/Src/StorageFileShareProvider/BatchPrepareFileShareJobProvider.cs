@@ -134,7 +134,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             {
                 var mountableFileName = StorageFileShareProviderHelper.GetStorageMountableFileName(copyItem.StorageType);
                 var destFile = fileShare.GetRootDirectoryReference().GetFileReference(mountableFileName);
+                var destHostName = destFile.Uri.Host;
                 var destFileUriWithSas = destFile.Uri.AbsoluteUri + destFileSas;
+                taskCopyCommands.Add($"host -W 10 '{destHostName}'");
                 taskCopyCommands.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp {jobWorkingDir}{copyItem.SrcBlobFileName} '{destFileUriWithSas}'");
 
                 logger.FluentAddValue($"DestinationStorageFilePath-{copyItem.StorageType}", destFile.Uri.ToString());
@@ -145,7 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var task = new CloudTask(taskId, taskCommandLine)
             {
-                Constraints = new TaskConstraints(maxTaskRetryCount: 3, maxWallClockTime: TimeSpan.FromMinutes(10), retentionTime: TimeSpan.FromDays(1)),
+                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromMinutes(10), retentionTime: TimeSpan.FromDays(1)),
             };
             return task;
         }

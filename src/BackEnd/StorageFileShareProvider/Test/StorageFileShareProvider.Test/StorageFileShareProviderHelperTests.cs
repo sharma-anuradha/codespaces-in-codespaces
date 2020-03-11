@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly string fileShareTemplateStorageAccount = "vsodevciusw2siusw2";
         private static readonly string fileShareTemplateContainerName = "templates";
 
-        private static readonly string fileShareTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.1053-gcb237b7bbdd33bfa6c9fc4aee288e199e1a2b5d2.release160";
+        private static readonly string fileShareTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.1734-gf34369168a44efd2d88c436db6cace160979f9c7.release538";
         // The name of the Windows blob is implied by the name of the Linux blob.
         // This is a limitation of the current schema for appsettings.images.json where only the image name is specified without knowledge of platform.
         // This works because both the Windows and Linux blobs are pushed at the same time with the same version, the Windows blob just has the ".disk.vhdx" postfix.
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
         private static readonly string azureSkuName = "Premium_LRS";
         private static readonly string azureSubscriptionName = "ignorethis";
-        private static readonly int PREPARE_TIMEOUT_MINS = 60;
+        private static readonly int PREPARE_TIMEOUT_MINS = 30;
         private static readonly int STORAGE_SIZE_IN_GB = 64;
         private static readonly int NUM_STORAGE_TO_CREATE = 2;
 
@@ -82,19 +82,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static Mock<ISystemCatalog> GetMockSystemCatalog(IServicePrincipal servicePrincipal)
         {
             var catalogMoq = new Mock<ISystemCatalog>();
+            var testSubscription = new AzureSubscription(
+                azureSubscriptionId,
+                azureSubscriptionName,
+                servicePrincipal,
+                true,
+                new[] {azureLocation},
+                null,
+                null,
+                null);
             catalogMoq
                 .Setup(x => x.AzureSubscriptionCatalog.AzureSubscriptions)
                 .Returns(new[] {
-                    new AzureSubscription(
-                        azureSubscriptionId,
-                        azureSubscriptionName,
-                        servicePrincipal,
-                        true,
-                        new[] {azureLocation},
-                        null,
-                        null,
-                        null)
+                    testSubscription
                 });
+            catalogMoq
+                .Setup(x => x.AzureSubscriptionCatalog.InfrastructureSubscription)
+                .Returns(testSubscription);
             return catalogMoq;
         }
 
@@ -200,7 +204,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 var stopWatch = new Stopwatch();
                 stopWatch.Start();
 
-                while (fileShareStatus.Any(x => x != BatchTaskStatus.Succeeded) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
+                while (fileShareStatus.Any(x => x == BatchTaskStatus.Pending || x == BatchTaskStatus.Running) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
                 {
                     Thread.Sleep(TimeSpan.FromSeconds(60));
                     fileShareStatus = await Task.WhenAll(storageAccounts.Zip(prepareFileShareTaskInfos, (sa, prepareInfo) => batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(sa, prepareInfo, logger)));
