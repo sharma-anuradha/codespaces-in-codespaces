@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +16,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -37,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private readonly ISkuCatalog skuCatalog;
         private readonly ICurrentUserProvider currentUserProvider;
         private readonly PlanManagerSettings planManagerSettings;
+        private readonly ISkuUtils skuUtils;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LocationsController"/> class.
@@ -46,18 +49,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="skuCatalog">SKU catalog for the current location.</param>
         /// <param name="currentUserProvider">The current user's profile.</param>
         /// <param name="planManagerSettings">The default plan settings.</param>
+        /// <param name="skuUtils">skuUtils to find sku eligiblity.</param>
         public LocationsController(
             ICurrentLocationProvider locationProvider,
             IControlPlaneInfo controlPlaneInfo,
             ISkuCatalog skuCatalog,
             ICurrentUserProvider currentUserProvider,
-            PlanManagerSettings planManagerSettings)
+            PlanManagerSettings planManagerSettings,
+            ISkuUtils skuUtils)
         {
             this.locationProvider = locationProvider;
             this.controlPlaneInfo = controlPlaneInfo;
             this.skuCatalog = skuCatalog;
             this.currentUserProvider = currentUserProvider;
             this.planManagerSettings = planManagerSettings;
+            this.skuUtils = skuUtils;
         }
 
         /// <summary>
@@ -93,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(typeof(LocationInfoResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("get")]
-        public IActionResult Get(
+        public async Task<IActionResult> GetAsync(
             [FromRoute]string location,
             [FromServices]IDiagnosticsLogger logger)
         {
@@ -118,11 +124,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return RedirectToLocation(owningStamp);
             }
 
-            var profile = currentUserProvider.GetProfile();
+            var plan = HttpContext.GetPlan();
+            var skus = new List<ICloudEnvironmentSku>();
+            var skusFilteredByLocation = skuCatalog.EnabledInternalHardware().Values
+                                        .Where((skuObj) => skuObj.SkuLocations.Contains(azureLocation));
 
-            var skus = skuCatalog.EnabledInternalHardware().Values
-                .Where((sku) => sku.SkuLocations.Contains(azureLocation))
-                .Where((sku) => ProfileUtils.IsSkuVisibleToProfile(profile, sku));
+            var planInfo = VsoPlanInfo.TryParse(plan);
+
+            foreach (var sku in skusFilteredByLocation)
+            {
+                var isEnabled = await skuUtils.IsVisible(sku, planInfo, currentUserProvider.GetProfile());
+                if (isEnabled)
+                {
+                    skus.Add(sku);
+                }
+            }
 
             // Clients select default SKUs as the first item in this list.  We control the ordering
             // of the returned SKUs so that clients will show the correct default.  Don't change this

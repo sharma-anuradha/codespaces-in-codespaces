@@ -13,15 +13,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts
     /// </summary>
     public class PlanResult
     {
+        /// <summary>
+        /// Gets or Sets the plan Id.
+        /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "id")]
         public string Id { get; set; }
 
+        /// <summary>
+        /// Gets or Sets the Subscription info.
+        /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "subscription")]
         public string Subscription { get; set; }
 
+        /// <summary>
+        /// Gets or Sets the ResourceGroup info.
+        /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "resourceGroup")]
         public string ResourceGroup { get; set; }
 
+        /// <summary>
+        /// Gets or Sets the Plan Name.
+        /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "name")]
         public string Name { get; set; }
 

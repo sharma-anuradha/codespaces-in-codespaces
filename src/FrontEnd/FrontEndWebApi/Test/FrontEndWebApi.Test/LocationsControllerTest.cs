@@ -11,7 +11,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
@@ -24,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private static readonly int[] DefaultAutoSuspendDelayMinutes = new int[] { 0, 5, 30, 120 };
 
         [Fact]
-        public void GetLocationInfo()
+        public async Task GetLocationInfoAsync()
         {
             ICloudEnvironmentSku createMockSku(string name, ComputeOS os, decimal storageUnits, decimal computeUnits)
             {
@@ -71,6 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     computeUnits,
                     5,
                     5,
+                    new ReadOnlyCollection<string>(new string[0]),
                     new ReadOnlyCollection<string>(new string[0]));
             }
 
@@ -81,9 +84,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 {
                     var skus = new[]
                     {
-                        createMockSku("premiumLinux", ComputeOS.Linux, 100.0m, 100.0m),
-                        createMockSku("windows", ComputeOS.Windows, 1.0m, 1.0m),
-                        createMockSku("cheapLinux", ComputeOS.Linux, 1.0m, 1.0m),
+                        createMockSku("StandardLinux", ComputeOS.Linux, 100.0m, 100.0m),
+                        createMockSku("premiumLinux", ComputeOS.Linux, 1.0m, 1.0m),
+                        createMockSku("PremiuimWindows", ComputeOS.Windows, 1.0m, 1.0m),
                     };
 
                     var skuDict = skus.ToDictionary((s) => s.SkuName, (s) => s);
@@ -96,26 +99,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
             });
 
+            var skuUtils = MockUtil.MockSkuUtils(true);
+            var planManager = MockUtil.MockPlanManager(() => MockUtil.GeneratePlan(location: AzureLocation.WestUs));
+
             var controller = CreateTestLocationsController(
                 skuCatalog: skuCatalog.Object,
-                currentUserProvider: currentUserProvider);
+                currentUserProvider: currentUserProvider,
+                skuUtils: skuUtils);
 
-            var result = controller.Get(AzureLocation.WestUs2.ToString(), logger);
-            Assert.NotNull(result as OkObjectResult);
+            var actionResult = await controller.GetAsync(AzureLocation.WestUs2.ToString(), logger);
+            Assert.NotNull(actionResult);
+            Assert.IsType<OkObjectResult>(actionResult);
 
-            var locationInfo = (result as OkObjectResult).Value as LocationInfoResult;
+            var okResult = (OkObjectResult)actionResult as OkObjectResult;
+            var locationInfo = okResult.Value as LocationInfoResult;
+
             Assert.NotNull(locationInfo);
-
             Assert.Equal(3, locationInfo.Skus.Length);
-
-            Assert.Equal("cheapLinux", locationInfo.Skus[0].Name);
-            Assert.Equal("premiumLinux", locationInfo.Skus[1].Name);
-            Assert.Equal("windows", locationInfo.Skus[2].Name);
-
+            Assert.Equal("premiumLinux", locationInfo.Skus[0].Name);
+            Assert.Equal("StandardLinux", locationInfo.Skus[1].Name);
+            Assert.Equal("PremiuimWindows", locationInfo.Skus[2].Name);
             Assert.Equal(DefaultAutoSuspendDelayMinutes, locationInfo.DefaultAutoSuspendDelayMinutes);
         }
 
-        private LocationsController CreateTestLocationsController(ISkuCatalog skuCatalog, ICurrentUserProvider currentUserProvider = null)
+        private LocationsController CreateTestLocationsController(ISkuCatalog skuCatalog, ISkuUtils skuUtils, ICurrentUserProvider currentUserProvider = null)
         {
             var controller = new LocationsController(
                 MockCurrentLocationProvider(),
@@ -125,11 +132,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 new PlanManagerSettings
                 {
                     DefaultAutoSuspendDelayMinutesOptions = DefaultAutoSuspendDelayMinutes,
-                });
+                },
+                skuUtils);
 
             var httpContext = MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             httpContext.SetLogger(logger);
+            httpContext.SetPlan("/subscriptions/8def34ce-053c-43ba-8501-37599fb7f010/resourceGroups/cloudEnvironments/providers/Microsoft.VSOnline/plans/samanoha-dev-stamp-plan");
 
             controller.ControllerContext = new ControllerContext
             {

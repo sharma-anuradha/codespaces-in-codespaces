@@ -20,6 +20,10 @@ using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
+    /// <summary>
+    /// Mock repository for testing purpose.
+    /// </summary>
+    /// <typeparam name="T">IEntity type. </typeparam>
     public class MockRepository<T> : IDocumentDbCollection<T>, IReadOnlyDictionary<string, T>
         where T : IEntity
     {
@@ -127,6 +131,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// To clear.
+        /// </summary>
         public void Clear()
         {
             store.Clear();

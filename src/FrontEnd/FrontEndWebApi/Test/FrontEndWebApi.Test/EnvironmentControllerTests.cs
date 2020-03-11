@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -15,12 +14,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
@@ -43,8 +42,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             logger = loggerFactory.New();
 
             var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20 };
-
+            var mockSkuUtils = new Mock<ISkuUtils>();
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+
             mockSystemConfiguration
                 .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), planSettings.DefaultMaxPlansPerSubscription))
                 .Returns(Task.FromResult(planSettings.DefaultMaxPlansPerSubscription));
@@ -225,24 +225,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 var skuName = item.Key;
                 var body = await CreateBodyAsync(skuName);
                 var actionResult = await environmentController.CreateAsync(body, logger);
+                Assert.NotNull(actionResult);
                 Assert.IsType<CreatedResult>(actionResult);
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(Environments))]
-        public async Task EnvironmentController_CloudEnvironmentAsync_SkuCatalog_BadRequest(string environment)
-        {
-            var skuCatalog = LoadSkuCatalog(environment);
-            var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog);
-
-            // Create each enabled sku in west us 2
-            foreach (var item in skuCatalog.EnabledInternalHardware().Where((sku) => sku.Value.ComputeOS == ComputeOS.Windows))
-            {
-                var skuName = item.Key;
-                var body = await CreateBodyAsync(skuName);
-                var actionResult = await environmentController.CreateAsync(body, logger);
-                Assert.IsType<BadRequestObjectResult>(actionResult);
             }
         }
 
@@ -277,16 +261,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog, currentUserProvider: currentUser);
 
-            var skuName = skuCatalog.CloudEnvironmentSkus.Keys.FirstOrDefault();
-
-            // Not supported location
-            var body = await CreateBodyAsync(skuName);
-            var actionResult = await environmentController.CreateAsync(body, logger);
-            Assert.IsType<BadRequestObjectResult>(actionResult);
-
             // Not supported SKU
-            body = await CreateBodyAsync("bad-sku");
-            actionResult = await environmentController.CreateAsync(body, logger);
+            var body = await CreateBodyAsync("bad-sku");
+            var actionResult = await environmentController.CreateAsync(body, logger);
             Assert.IsType<BadRequestObjectResult>(actionResult);
         }
 
@@ -323,7 +300,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         AllowedAutoShutdownDelayMinutes = new int[0],
                         AllowedSkus = new ICloudEnvironmentSku[]
                         {
-                            MockUtil.MockSku("MockSkuName", "MockSku", ComputeOS.Linux, 0, 0, new string[0]),
+                            MockUtil.MockSku("MockSkuName", SkuTier.Standard, "MockSku", ComputeOS.Linux, 0, 0, new string[0], new string[0]),
                         },
                     },
                     new CloudEnvironmentAvailableUpdatesResult
@@ -500,7 +477,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             IEnvironmentManager environmentManager = null,
             IPlanManager planManager = null,
             HttpContext httpContext = null,
-            IServiceUriBuilder serviceUriBuilder = null)
+            IServiceUriBuilder serviceUriBuilder = null,
+            ISkuUtils skuUtils = null)
         {
             environmentManager ??= MockUtil.MockEnvironmentManager();
             planManager ??= MockUtil.MockPlanManager(() => MockUtil.GeneratePlan());
@@ -510,6 +488,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             skuCatalog ??= MockUtil.MockSkuCatalog();
             var mapper = MockUtil.MockMapper();
             serviceUriBuilder ??= MockUtil.MockServiceUriBuilder();
+            skuUtils ??= MockUtil.MockSkuUtils(true);
+
             var settings = new FrontEndAppSettings
             {
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
@@ -524,10 +504,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 skuCatalog,
                 mapper,
                 serviceUriBuilder,
-                settings);
+                settings,
+                skuUtils);
+            var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();
-            var logger = new Mock<IDiagnosticsLogger>().Object;
             httpContext.SetLogger(logger);
 
             environmentController.ControllerContext = new ControllerContext

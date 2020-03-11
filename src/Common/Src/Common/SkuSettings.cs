@@ -62,5 +62,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public IEnumerable<string> SupportedSkuTransitions { get; set; }
+
+        /// <summary>
+        /// Gets or sets the features flags in the given SKU.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public IEnumerable<string> SupportedFeatureFlags { get; set; }
     }
 }

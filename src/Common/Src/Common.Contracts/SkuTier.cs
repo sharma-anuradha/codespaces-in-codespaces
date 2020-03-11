@@ -32,5 +32,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// A premium tier SKU, 8 vCPU, DSv3 compute.
         /// </summary>
         PremiumDSv3 = 3,
+
+        /// <summary>
+        /// A basic tier SKU, 2 vCPU, FSv2 compute.
+        /// </summary>
+        Basic = 4,
     }
 }

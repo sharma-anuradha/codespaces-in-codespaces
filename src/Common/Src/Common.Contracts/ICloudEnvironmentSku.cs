@@ -116,5 +116,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the set of SKUs which environments using this SKU are allowed to migrate to.
         /// </summary>
         IEnumerable<string> SupportedSkuTransitions { get; }
+
+        /// <summary>
+        /// Gets the set feature flags for the Sku.
+        /// </summary>
+        IEnumerable<string> SupportedFeatureFlags { get; }
     }
 }

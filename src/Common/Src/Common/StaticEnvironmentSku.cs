@@ -81,5 +81,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public IEnumerable<string> SupportedSkuTransitions { get; } = Enumerable.Empty<string>();
+
+        /// <inheritdoc/>
+        public IEnumerable<string> SupportedFeatureFlags { get; } = Enumerable.Empty<string>();
     }
 }

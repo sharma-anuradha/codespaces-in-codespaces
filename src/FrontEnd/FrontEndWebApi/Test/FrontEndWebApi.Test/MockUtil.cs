@@ -14,11 +14,13 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
+using Profile = Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Profile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
@@ -69,6 +71,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return moq.Object;
         }
 
+        public static ISystemConfiguration MockSystemConfiguration()
+        {
+            var moq = new Mock<ISystemConfiguration>();
+            moq.SetReturnsDefault(Task.FromResult(true));
+            return moq.Object;
+        }
+
+        public static IDiagnosticsLogger MockLogger()
+        {
+            var moq = new Mock<IDiagnosticsLogger>();
+            return moq.Object;
+        }
+
+        public static ISkuUtils MockSkuUtils(bool value)
+        {
+            var moq = new Mock<ISkuUtils>();
+             moq.Setup(x => x.IsVisible(It.IsAny<CloudEnvironmentSku>(), It.IsAny<VsoPlanInfo>(), It.IsAny<Profile>()))
+                .Returns((CloudEnvironmentSku sku, VsoPlanInfo planInfo, UserProfile.Profile profile) => Task.FromResult(value));
+            return moq.Object;
+        }
+
         public static IMapper MockMapper()
         {
             // Use a temporary service provider to construct and get the FrontEnd model mapper.
@@ -88,11 +111,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         public static ICloudEnvironmentSku MockSku(
             string skuName,
+            SkuTier skuTier,
             string displayName,
             ComputeOS computeOs,
             decimal storageUnits,
             decimal computeUnits,
-            IEnumerable<string> skuTransitions)
+            IEnumerable<string> skuTransitions,
+            IEnumerable<string> supportedFeatures)
         {
             var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
             currentImageInfoProvider
@@ -104,7 +129,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             return new CloudEnvironmentSku(
                 skuName,
-                SkuTier.Standard,
+                skuTier,
                 displayName,
                 true,
                 new[] { AzureLocation.WestUs2 },
@@ -137,7 +162,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 computeUnits,
                 5,
                 5,
-                new ReadOnlyCollection<string>(skuTransitions.ToList()));
+                new ReadOnlyCollection<string>(skuTransitions.ToList()),
+                new ReadOnlyCollection<string>(supportedFeatures.ToList()));
         }
 
         public static ISkuCatalog MockSkuCatalog()
@@ -185,6 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 125.0m,
                 5,
                 5,
+                new ReadOnlyCollection<string>(new string[0]),
                 new ReadOnlyCollection<string>(new string[0])));
         }
 

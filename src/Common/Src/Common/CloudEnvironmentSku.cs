@@ -37,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="computePoolLevel">The size of the compute pool that should be maintained.</param>
         /// <param name="storagePoolLevel">The size of the storage pool that should be maintained.</param>
         /// <param name="supportedSkuTransitions">The set of SKUs which environments using this SKU are allowed to migrate to.</param>
+        /// <param name="supportedFeatureFlags">The set of feature flags for the SKU.</param>
         public CloudEnvironmentSku(
             string skuName,
             SkuTier tier,
@@ -57,7 +58,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             decimal computeVsoUnitsPerHour,
             int computePoolLevel,
             int storagePoolLevel,
-            IReadOnlyCollection<string> supportedSkuTransitions)
+            IReadOnlyCollection<string> supportedSkuTransitions,
+            IReadOnlyCollection<string> supportedFeatureFlags)
         {
             Requires.NotNullOrEmpty(skuName, nameof(skuName));
             Requires.NotNullOrEmpty(displayName, nameof(displayName));
@@ -77,6 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.Argument(!enabled || computePoolLevel > 0, nameof(computePoolLevel), "The compute pool level must be greater than zero.");
             Requires.Argument(!enabled || storagePoolLevel > 0, nameof(storagePoolLevel), "The storage pool level must be greater than zero.");
             Requires.NotNull(supportedSkuTransitions, nameof(supportedSkuTransitions));
+            Requires.NotNull(supportedFeatureFlags, nameof(supportedFeatureFlags));
 
             SkuName = skuName;
             Tier = tier;
@@ -98,6 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ComputePoolLevel = computePoolLevel;
             StoragePoolLevel = storagePoolLevel;
             SupportedSkuTransitions = supportedSkuTransitions;
+            SupportedFeatureFlags = supportedFeatureFlags;
         }
 
         /// <inheritdoc/>
@@ -163,5 +167,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public IEnumerable<string> SupportedSkuTransitions { get; }
+
+        /// <inheritdoc/>
+        public IEnumerable<string> SupportedFeatureFlags { get; }
     }
 }

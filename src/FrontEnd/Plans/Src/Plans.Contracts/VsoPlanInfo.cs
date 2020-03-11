@@ -132,6 +132,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             return true;
         }
 
+        /// <summary>
+        /// Attempts to parse an Azure resource ID into a `VsoPlanInfo` object.
+        /// </summary>
+        /// <param name="resourceId">String in the same form as the <see cref="ResourceId"/> property.</param>
+        /// <returns>VsoPlanInfo object.</returns>
+        /// <remarks>
+        /// The resulting plan object does not include a location. That may be set separately.
+        /// </remarks>
+        public static VsoPlanInfo TryParse(string resourceId)
+        {
+            if (string.IsNullOrWhiteSpace(resourceId))
+            {
+                return null;
+            }
+
+            var parts = resourceId.Split('/');
+            var plan = new VsoPlanInfo();
+
+            if (parts.Length != 9 ||
+                parts[0].Length != 0 ||
+                parts[1] != Subscriptions ||
+                parts[3] != ResourceGroups ||
+                parts[5] != Providers ||
+                parts[6] != ProviderName ||
+                parts[7] != PlanResourceType)
+            {
+                plan = null;
+            }
+
+            var subscription = parts[2];
+            var resourceGroup = parts[4];
+            var name = parts[8];
+
+            if (!IsValidSubscriptionId(subscription) ||
+                !IsValidResourceGroupName(resourceGroup) ||
+                !IsValidPlanName(name))
+            {
+                plan = null;
+            }
+
+            plan.Subscription = subscription;
+            plan.ResourceGroup = resourceGroup;
+            plan.Name = name;
+            return plan;
+        }
+
         /// <summary> Tests if this plan equals another plan.</summary>
         /// <param name="other">Another plan object.</param>
         /// <returns>True if all plan properties are equal (including location).</returns>

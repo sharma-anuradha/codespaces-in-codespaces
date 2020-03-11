@@ -3,17 +3,16 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Audit;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -27,11 +26,11 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -63,6 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="mapper">The configured auto-mapper.</param>
         /// <param name="serviceUriBuilder">The service uri builder.</param>
         /// <param name="frontEndAppSettings">Front-end app settings.</param>
+        /// <param name="skuUtils">skuUtils to find sku's eligiblity.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -72,7 +72,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ISkuCatalog skuCatalog,
             IMapper mapper,
             IServiceUriBuilder serviceUriBuilder,
-            FrontEndAppSettings frontEndAppSettings)
+            FrontEndAppSettings frontEndAppSettings,
+            ISkuUtils skuUtils)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -83,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             Mapper = Requires.NotNull(mapper, nameof(mapper));
             ServiceUriBuilder = Requires.NotNull(serviceUriBuilder, nameof(serviceUriBuilder));
             FrontEndAppSettings = Requires.NotNull(frontEndAppSettings, nameof(frontEndAppSettings));
+            SkuUtils = Requires.NotNull(skuUtils, nameof(skuUtils));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -102,6 +104,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private IServiceUriBuilder ServiceUriBuilder { get; }
 
         private FrontEndAppSettings FrontEndAppSettings { get; }
+
+        private ISkuUtils SkuUtils { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -390,12 +394,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             cloudEnvironment.Location = planDetails.Plan.Location;
 
+            var planId = HttpContext.GetPlan();
+            var planInfo = VsoPlanInfo.TryParse(planId);
             var currentUserProfile = CurrentUserProvider.GetProfile();
             var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
+            SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku);
 
-            // Validate the requested Sku
-            if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku)
-                || !ProfileUtils.IsSkuVisibleToProfile(currentUserProfile, sku))
+            // Validate the Sku is available
+            if (sku == null)
+            {
+                var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not defined: {cloudEnvironment.SkuName}";
+                logger.AddReason(message);
+                return BadRequest(message);
+            }
+
+            var isSkuVisible = await SkuUtils.IsVisible(sku, planInfo, currentUserProfile);
+
+            // Validate the Sku is visible
+            if (!isSkuVisible)
             {
                 var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not defined: {cloudEnvironment.SkuName}";
                 logger.AddReason(message);
@@ -734,10 +750,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             if (availableUpdates.AllowedSkus != null && availableUpdates.AllowedSkus.Any())
             {
-                var currentUser = CurrentUserProvider.GetProfile();
+                var plan = HttpContext.GetPlan();
+                var planInfo = VsoPlanInfo.TryParse(plan);
+                var visibleSkus = new List<ICloudEnvironmentSku>();
 
-                var visibleSkus = availableUpdates.AllowedSkus
-                    .Where((sku) => ProfileUtils.IsSkuVisibleToProfile(currentUser, sku));
+                foreach (var sku in availableUpdates.AllowedSkus)
+                {
+                    var isVisible = await SkuUtils.IsVisible(sku, planInfo, CurrentUserProvider.GetProfile());
+                    if (isVisible)
+                    {
+                        visibleSkus.Add(sku);
+                    }
+                }
 
                 result.AllowedSkus = visibleSkus
                     .Select((sku) => new SkuInfoResult
