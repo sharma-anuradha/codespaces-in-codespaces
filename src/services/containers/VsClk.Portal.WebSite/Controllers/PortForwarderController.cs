@@ -132,7 +132,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             // Add this header in case there is any confusion about which service the reponse is coming from
             Response.Headers.Add("X-Powered-By", "Visual Studio Online Portal");
 
-            if (path == "authenticate-port-fowarder")
+            if (path == "authenticate-port-forwarder")
             {
                 this.Request.Form.TryGetValue("token", out var tokenValues);
                 this.Request.Form.TryGetValue("cascadeToken", out var cascadeTokenValues);
@@ -142,7 +142,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
                 return await authController.AuthenticatePortForwarderAsync(token, cascadeToken);
             }
-            if (path == "logout-port-fowarder")
+            if (path == "logout-port-forwarder")
             {
                 return authController.LogoutPortForwarder();
             }
