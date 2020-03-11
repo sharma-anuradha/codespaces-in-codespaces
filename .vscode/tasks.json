@@ -9,7 +9,7 @@
                 "build",
                 "${workspaceFolder}/src/dirs.proj"
             ],
-            "problemMatcher": "$tsc",
+            "problemMatcher": "$msCompile",
             "group": {
                 "kind": "build",
                 "isDefault": true

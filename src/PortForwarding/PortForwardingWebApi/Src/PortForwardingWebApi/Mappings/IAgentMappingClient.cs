@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <param name="mapping">Connection mapping description.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Task.</returns>
-        Task CreateAgentConnectionMappingAsync(ConnectionEstablished mapping, IDiagnosticsLogger logger);
+        Task CreateAgentConnectionMappingAsync(ConnectionDetails mapping, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Ensures the agent has all the labels required for routing traffic to it.

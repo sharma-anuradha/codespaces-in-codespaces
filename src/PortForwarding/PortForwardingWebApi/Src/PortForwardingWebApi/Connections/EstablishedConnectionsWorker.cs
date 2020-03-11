@@ -73,11 +73,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
         {
             var logger = LoggerFactory.New();
 
+            // We don't care about establishing connections in case of worker.
+            if (message.Label == MessageLabels.ConnectionEstablishing)
+            {
+                return Task.CompletedTask;
+            }
+
             return logger.OperationScopeAsync(
                 "established_connection_worker_process_connection_established",
                 async (childLogger) =>
                 {
-                    var connection = JsonSerializer.Deserialize<ConnectionEstablished>(message.Body, jsonSerializerOptions);
+                    var connection = JsonSerializer.Deserialize<ConnectionDetails>(message.Body, jsonSerializerOptions);
                     try
                     {
                         await AgentMappingClient.CreateAgentConnectionMappingAsync(connection, childLogger);

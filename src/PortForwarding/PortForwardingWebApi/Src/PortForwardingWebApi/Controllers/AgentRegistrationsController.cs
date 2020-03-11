@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
         [HttpPost("mappings")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpOperationalScope("create_mapping")]
-        public async Task<IActionResult> DeleteAsync(ConnectionEstablished mapping, [FromServices] IDiagnosticsLogger logger)
+        public async Task<IActionResult> CreateMappingAsync(ConnectionDetails mapping, [FromServices] IDiagnosticsLogger logger)
         {
             await AgentMappingClient.CreateAgentConnectionMappingAsync(mapping, logger);
 

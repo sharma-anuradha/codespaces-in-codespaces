@@ -26,3 +26,14 @@ port-forwarding-web-api:
   config:
     aspNetEnv: Staging
     overrideAppSettingsJson: false
+  ingress:
+    hosts:
+      - '*.app.online-ppe.core.vsengsaas.visualstudio.com'
+      - '*.app.westus2-ppe-rel-online.core.vsengsaas.visualstudio.com'
+      - '*.app.southeastasia-ppe-rel-online.core.vsengsaas.visualstudio.com'
+    tls:
+      - hosts:
+        - '*.app.online-ppe.core.vsengsaas.visualstudio.com'
+        - '*.app.westus2-ppe-rel-online.core.vsengsaas.visualstudio.com'
+        - '*.app.southeastasia-ppe-rel-online.core.vsengsaas.visualstudio.com'
+        secretName: ssl-cert

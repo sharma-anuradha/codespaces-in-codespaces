@@ -45,9 +45,21 @@ service:
   containerPort: 80
 
 ingress:
-  enabled: false
+  enabled: true
   annotations:
-  paths:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: "X-VSOnline-Use-Forwarding"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_intercept_errors on;
+      error_page 302 = @handle_error;
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location @handle_error {
+        if ($upstream_http_location ~* "^https?:\/\/(?<pf_session>[0-9a-f]{36}-\d{2,5})\.(?<subdomain>[^\/]+)(?<path>\/.*)$") {
+          proxy_pass 'http://$pf_session.$subdomain';
+        }
+      }
+  paths: ['/']
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

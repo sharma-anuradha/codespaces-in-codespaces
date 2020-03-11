@@ -1,4 +1,4 @@
-﻿// <copyright file="ConnectionEstablished.cs" company="Microsoft">
+﻿// <copyright file="ConnectionDetails.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
     /// <summary>
     /// Connection details passed to port forwarding agent - used to establish LS connection.
     /// </summary>
-    public class ConnectionEstablished
+    public class ConnectionDetails
     {
         /// <summary>
         /// Gets or sets LS Workspace ID.

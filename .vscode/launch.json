@@ -44,28 +44,44 @@
                 "/Views": "${workspaceFolder}/Views"
             }
         },
-         {
-             "name": ".NET Core Launch (Env Service Api)",
-             "type": "coreclr",
-             "request": "launch",
-             "preLaunchTask": "buildServices",
-             // If you have changed target frameworks, make sure to update the program path.
-             "program": "${workspaceFolder}/bin/debug/VsClk.EnvReg.WebApi/Microsoft.VsCloudKernel.Services.VsClk.EnvReg.WebApi.dll",
-             "args": [],
-             "cwd": "${workspaceFolder}/src/services/containers/VsClk.EnvReg.WebApi",
-             "stopAtEntry": false,
-             "env": {
-                 "ASPNETCORE_ENVIRONMENT": "Development"
-             },
-             "sourceFileMap": {
-                 "/Views": "${workspaceFolder}/Views"
-             }
-         },
-         {
-             "name": ".NET Core Attach",
-             "type": "coreclr",
-             "request": "attach",
-             "processId": "${command:pickProcess}"
-         }
-     ]
- }
+        {
+            "name": "PortForwardingWebApi Launch",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "buildServices",
+            "program": "${workspaceFolder}/bin/debug/PortForwardingWebApi/Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/PortForwarding/PortForwardingWebApi/Src/PortForwardingWebApi",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
+            "name": ".NET Core Launch (Env Service Api)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "buildServices",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/bin/debug/VsClk.EnvReg.WebApi/Microsoft.VsCloudKernel.Services.VsClk.EnvReg.WebApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/services/containers/VsClk.EnvReg.WebApi",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}

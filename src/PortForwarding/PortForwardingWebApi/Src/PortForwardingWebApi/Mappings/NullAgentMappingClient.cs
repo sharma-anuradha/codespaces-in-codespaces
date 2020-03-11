@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         }
 
         /// <inheritdoc/>
-        public Task CreateAgentConnectionMappingAsync(ConnectionEstablished mapping, IDiagnosticsLogger logger)
+        public Task CreateAgentConnectionMappingAsync(ConnectionDetails mapping, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }

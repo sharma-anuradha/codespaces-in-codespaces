@@ -18,5 +18,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus
         /// </summary>
         /// <returns>The queue client instance.</returns>
         Task<IQueueClient> GetQueueClientAsync(string queueName, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the session client for service bus queue operations.
+        /// </summary>
+        /// <returns>The queue client instance.</returns>
+        Task<ISessionClient> GetSessionClientAsync(string queueName, IDiagnosticsLogger logger);
     }
 }

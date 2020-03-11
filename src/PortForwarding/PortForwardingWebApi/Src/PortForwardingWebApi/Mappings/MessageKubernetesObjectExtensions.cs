@@ -13,11 +13,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
     public static class MessageKubernetesObjectExtensions
     {
         /// <summary>
-        /// Converts the <see cref="ConnectionEstablished"/> agent to the Kubernetes <see cref="V1OwnerReference"/>.
+        /// Converts the <see cref="ConnectionEstablishing"/> agent to the Kubernetes <see cref="V1OwnerReference"/>.
         /// </summary>
         /// <param name="connection">The connection reference for agent we'll be setting as the owner of service and ingress rule.</param>
         /// <returns>The owner object.</returns>
-        public static V1OwnerReference ToOwnerReference(this ConnectionEstablished connection)
+        public static V1OwnerReference ToOwnerReference(this ConnectionDetails connection)
         {
             return new V1OwnerReference
             {
@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// </summary>
         /// <param name="connection">Connection mapping.</param>
         /// <returns>Kubernetes service name.</returns>
-        public static string GetKubernetesServiceName(this ConnectionEstablished connection)
+        public static string GetKubernetesServiceName(this ConnectionDetails connection)
         {
             return $"{connection.WorkspaceId.ToLower()}-{connection.SourcePort}";
         }

@@ -75,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         }
 
         /// <inheritdoc/>
-        public async Task CreateAgentConnectionMappingAsync(ConnectionEstablished mapping, IDiagnosticsLogger logger)
+        public async Task CreateAgentConnectionMappingAsync(ConnectionDetails mapping, IDiagnosticsLogger logger)
         {
             logger
                 .FluentAddBaseValue("workspace_id", mapping.WorkspaceId)

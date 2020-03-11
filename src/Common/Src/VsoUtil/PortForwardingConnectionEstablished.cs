@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             var destinationPort = int.Parse(ports[0]);
             var sourcePort = int.Parse(ports[1]);
 
-            var connectionInfo = new ConnectionEstablished
+            var connectionInfo = new ConnectionDetails
             {
                 WorkspaceId = WorkspaceId,
                 SourcePort = sourcePort,
@@ -75,6 +75,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }))
             {
                 SessionId = connectionInfo.GetMessagingSessionId(),
+                Label = MessageLabels.ConnectionEstablishing,
+            };
+
+            await client.SendAsync(message);
+
+            await Task.Delay(TimeSpan.FromSeconds(5));
+
+            message = new Message(JsonSerializer.SerializeToUtf8Bytes(
+                connectionInfo,
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }))
+            {
+                SessionId = connectionInfo.GetMessagingSessionId(),
+                Label = MessageLabels.ConnectionEstablished,
             };
 
             await client.SendAsync(message);

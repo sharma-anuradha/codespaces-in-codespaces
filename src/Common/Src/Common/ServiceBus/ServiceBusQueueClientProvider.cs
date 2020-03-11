@@ -32,5 +32,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus
 
             return new QueueClient(connectionString, queueName);
         }
+
+        /// <inheritdoc/>
+        public async Task<ISessionClient> GetSessionClientAsync(string queueName, IDiagnosticsLogger logger)
+        {
+            var connectionString = await controlPlaneAzureResourceAccessor.GetStampServiceBusConnectionStringAsync(logger);
+
+            return new SessionClient(connectionString, queueName);
+        }
     }
 }

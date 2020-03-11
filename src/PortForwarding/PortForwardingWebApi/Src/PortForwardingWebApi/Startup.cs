@@ -6,9 +6,9 @@ using System;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
@@ -20,6 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
@@ -117,10 +118,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseRouting();
-
             // Use VS SaaS middleware.
             app.UseVsSaaS(!isProduction);
+
+            app.MapWhen(Not<HttpContext>(IsUserRequest), HandleInternalRequests);
+            app.MapWhen(IsUserRequest, HandleUserRequests);
+
+            Warmup(app);
+        }
+
+        private Func<T, bool> Not<T>(Func<T, bool> predicate)
+        {
+            return (arg) => !predicate(arg);
+        }
+
+        private bool IsUserRequest(HttpContext context)
+        {
+            return context.Request.Headers.ContainsKey("X-VSOnline-Use-Forwarding");
+        }
+
+        private void HandleUserRequests(IApplicationBuilder app)
+        {
+            app.UseConnectionCreation();
+        }
+
+        private void HandleInternalRequests(IApplicationBuilder app)
+        {
+            app.UseRouting();
 
             app.UseEndpoints(x =>
             {
@@ -155,8 +179,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
                 c.SwaggerEndpoint($"/api/{ServiceConstants.CurrentApiVersion}/swagger", ServiceConstants.EndpointName);
                 c.DisplayRequestDuration();
             });
-
-            Warmup(app);
         }
     }
 }

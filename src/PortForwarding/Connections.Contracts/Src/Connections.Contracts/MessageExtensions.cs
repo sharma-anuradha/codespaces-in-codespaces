@@ -14,9 +14,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// </summary>
         /// <param name="connection">Connection details message.</param>
         /// <returns>Session id to listen to on service bus queue.</returns>
-        public static string GetMessagingSessionId(this ConnectionEstablished connection)
+        public static string GetMessagingSessionId(this ConnectionDetails connection)
         {
             return $"{connection.WorkspaceId.ToLower()}-{connection.SourcePort}";
+        }
+
+        /// <summary>
+        /// Gets messaging session id for established connection.
+        /// </summary>
+        /// <param name="connection">Connection details message.</param>
+        /// <returns>Session id to listen to on service bus queue.</returns>
+        public static string GetMessagingSessionId(this ConnectionRequest connection)
+        {
+            return $"{connection.WorkspaceId.ToLower()}-{connection.Port}";
         }
     }
 }
