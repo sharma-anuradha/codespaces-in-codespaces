@@ -20,7 +20,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [HttpGet("~/cookie-consent")]
         public IActionResult Markup()
         {
-            return Ok(JsonConvert.SerializeObject(CookieConsentClientSingleton.Instance.GetConsentMarkup(Request.HttpContext, GetFirstAcceptLanguage())));
+            var remoteIpAddress = Request.Headers["X-Forwarded-For"].ToString();
+            var acceptLanguage = GetFirstAcceptLanguage();
+            return Ok(JsonConvert.SerializeObject(CookieConsentClientSingleton.Instance.GetConsentMarkup(Request.HttpContext, acceptLanguage, remoteIpAddress)));
         }
 
         /// <summary>
@@ -79,11 +81,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             /// Get consent markup for the current user.
             /// </summary>
             /// <param name="httpContext">Context passed from the HTTP request</param>
+            /// <param name="language">User browser's accept language</param>
+            /// <param name="remoteIpAddress">User's remote ip address</param>
             /// <returns>Required resources to render cookie compliance banner, or empty markup.</returns>
-            public ConsentMarkup GetConsentMarkup(HttpContext httpContext, string language)
+            public ConsentMarkup GetConsentMarkup(HttpContext httpContext, string language, string remoteIpAddress)
             {
                 ConsentMarkup consentMarkup = new ConsentMarkup();
-                var countryCode = GetCountryCode(httpContext);
+                var countryCode = GetCountryCode(remoteIpAddress);
                 if (IsConsentRequired(httpContext, countryCode))
                 {
                     consentMarkup = _cookieConsentClient.GetConsentMarkup(string.IsNullOrEmpty(language) ? countryCode : $"{language}-{countryCode}");
@@ -94,16 +98,15 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             /// <summary>
             /// Uses remote IP address to determine country code. If not found, default to an EU region (use "euregion" per docs).
             /// </summary>
-            /// <param name="httpContext">Context passed from the HTTP request</param>
+            /// <param name="remoteIpAddress">User's remote ip address</param>
             /// <returns>The country code</returns>
-            private string GetCountryCode(HttpContext httpContext)
+            private string GetCountryCode(string remoteIpAddress)
             {
-                var remoteIpAddress = httpContext.Connection.RemoteIpAddress.ToString();
                 string countryCode = _ipResolver.GetCountryCode(remoteIpAddress);
 
                 // If country code is null, set to EU to be safe
                 // Check cookie to enable manual testing in deployed sites.
-                if (string.IsNullOrEmpty(countryCode) || httpContext.Request.Cookies.ContainsKey("AZNB-EU-COOKIE"))
+                if (string.IsNullOrEmpty(countryCode))
                 {
                     countryCode = "euregion";
                 }
