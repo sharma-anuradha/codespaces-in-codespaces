@@ -9,6 +9,7 @@ using System.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.ControllerAccess;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
@@ -17,9 +18,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
     {
         private static AppSettings AppSettings { get; set; }
 
-        public PortForwarderController(AppSettings appSettings)
+        private readonly IControllerProvider controllerProvider;
+
+        public PortForwarderController(
+            AppSettings appSettings,
+            IControllerProvider controllerProvider)
         {
             AppSettings = appSettings;
+            this.controllerProvider = controllerProvider;
         }
 
         [HttpGet("~/portforward")]
@@ -125,8 +131,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [HttpPost("~/portforward")]
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<IActionResult> PostAsync(
-            [FromQuery] string path,
-            [FromServices] AuthController authController
+            [FromQuery] string path
         )
         {
             // Add this header in case there is any confusion about which service the reponse is coming from
@@ -140,10 +145,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 var token = tokenValues.SingleOrDefault();
                 var cascadeToken = cascadeTokenValues.SingleOrDefault();
 
+                var authController = controllerProvider.Create<AuthController>(this.ControllerContext);
                 return await authController.AuthenticatePortForwarderAsync(token, cascadeToken);
             }
             if (path == "logout-port-forwarder")
             {
+                var authController = controllerProvider.Create<AuthController>(this.ControllerContext);
                 return authController.LogoutPortForwarder();
             }
             

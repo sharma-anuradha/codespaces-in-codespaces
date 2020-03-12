@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.ControllerAccess;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -94,6 +95,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
+            services.AddSingleton<IControllerProvider, ControllerProvider>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
