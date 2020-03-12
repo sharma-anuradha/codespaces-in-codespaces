@@ -29,7 +29,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         [HttpGet("~/portforward")]
-        public async Task<IActionResult> GetAsync(
+        public async Task<IActionResult> Index(
             [FromQuery] string path,
             [FromQuery] string devSessionId
         )
