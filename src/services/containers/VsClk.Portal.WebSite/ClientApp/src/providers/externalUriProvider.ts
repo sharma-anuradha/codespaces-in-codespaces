@@ -38,7 +38,7 @@ abstract class BaseExternalUriProvider {
         if (token === undefined) {
             throw new Error('No token available.');
         }
-        await setAuthCookie(token, uri.authority);
+        await setAuthCookie(token, `${uri.scheme}://${uri.authority}`);
 
         return uri;
     }
