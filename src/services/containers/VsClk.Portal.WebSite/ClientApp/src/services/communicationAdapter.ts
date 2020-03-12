@@ -4,7 +4,7 @@ import { EnvConnector } from '../ts-agent/envConnector';
 import { WorkspaceClient } from '../ts-agent/workspaceClient';
 import { openSshChannel } from '../ts-agent/openSshChannel';
 import { SplashCommunicationProvider } from '../providers/splashCommunicationProvider';
-import { trace } from '../utils/trace';
+import { createTrace } from '../utils/createTrace';
 
 export class CommunicationAdapter {
     private envConnector: EnvConnector;
@@ -12,6 +12,13 @@ export class CommunicationAdapter {
     private utf8Decoder: TextDecoder;
     private correlationId: string;
     private liveShareEndpoint: string;
+    private stepIdentifiers: { [key: string]: RegExp } = {};
+    private logger: {
+        verbose: debug.Debugger,
+        info: debug.Debugger,
+        warn: debug.Debugger,
+        error: debug.Debugger,
+    };
 
     constructor(communication: SplashCommunicationProvider, liveShareEndpoint: string, correlationId: string) {
         this.envConnector = new EnvConnector();
@@ -19,13 +26,10 @@ export class CommunicationAdapter {
         this.utf8Decoder = new TextDecoder('utf-8');
         this.correlationId = correlationId;
         this.liveShareEndpoint = liveShareEndpoint;
+        this.logger = createTrace('Communication Adapter');
     }
 
     public async connect(workspaceId: string) {
-        this.communicationProvider.updateStep({
-            name: 'buildContainer',
-            status: 'Running',
-        });
         const token = await authService.getCachedToken();
         const workspaceClient = await this.envConnector.connectWithRetry(
             workspaceId,
@@ -37,11 +41,7 @@ export class CommunicationAdapter {
         if (workspaceClient && workspaceClient.sshSession) {
             this.startStreamingTerminal(workspaceClient);
         } else {
-            trace('Workspace client did not initialize correctly');
-            this.communicationProvider.updateStep({
-                name: 'buildContainer',
-                status: 'Failed',
-            });
+            this.logger.error('Workspace client did not initialize correctly');
         }
     }
 
@@ -57,11 +57,7 @@ export class CommunicationAdapter {
         try {
             runningTerminals = await terminalClient!.getRunningTerminalsAsync();
         } catch (error) {
-            trace('No running terminals found');
-            this.communicationProvider.updateStep({
-                name: 'buildContainer',
-                status: 'Failed',
-            });
+            this.logger.error('No running terminals found');
         }
 
         if (runningTerminals && runningTerminals.length > 0) {
@@ -72,22 +68,66 @@ export class CommunicationAdapter {
                 );
                 const channel = await openSshChannel(workspaceClient.sshSession!, streamId);
                 channel.onDataReceived((data: any) => {
-                    this.communicationProvider.writeToTerminalOutput(this.utf8Decoder.decode(data));
+                    let strData = this.utf8Decoder.decode(data);
+                    const processedData = this.processData(strData);
+                    this.communicationProvider.writeToTerminalOutput(processedData);
+
                 });
                 channel.onClosed(() => {
-                    trace('Channel closed');
-                    this.communicationProvider.updateStep({
-                        name: 'buildContainer',
-                        status: 'Succeeded',
-                    });
+                    this.logger.info('Channel closed');
                 });
             } catch (e) {
-                trace('Exception on ssh communication');
-                this.communicationProvider.updateStep({
-                    name: 'buildContainer',
-                    status: 'Failed',
-                });
+                this.logger.error('Exception on ssh communication');
             }
         }
+        workspaceClient.disconnect();
+        workspaceClient.dispose();
+    }
+
+    private processData(data: string): string {
+        if (Object.keys(this.stepIdentifiers).length === 0) {
+            // Regex to match the log header with the step declarations
+            // Example: ########0-100-InitializeEnvironment-noterminal
+            const headerRegex = /#{8}0-\d+-[A-Za-z]\w+-[A-Za-z]\w+/g;
+            const match = data.match(headerRegex);
+            let steps: {}[] = [];
+            if (match) {
+                for (const step of match) {
+                    const [, code, name, terminal] = step.split('-');
+                    try {
+                        // Regex to match the step codes
+                        // Example: ########100-Running
+                        this.stepIdentifiers[name] = new RegExp(`#{8}${code}-[A-Za-z]\\w+`, 'g');
+                        const entry = {
+                            name,
+                            data: {
+                                status: 'Pending',
+                                terminal: terminal === 'terminal' ? 'true' : 'false',
+                            },
+                        };
+                        steps.push(entry);
+                    } catch (e) {
+                        this.logger.error(e);
+                    }
+                }
+                this.communicationProvider.initializeSteps(steps);
+                data = data.replace(headerRegex, '');
+            }
+        }
+        Object.entries(this.stepIdentifiers).forEach(([name, expr]) => {
+            const regex = expr as RegExp;
+            const match = data.match(regex);
+            if (match && match.length > 0) {
+                const status = match[match.length - 1].split('-');
+                if (status.length > 1) {
+                    this.communicationProvider.updateStep({
+                        name,
+                        status: status[1],
+                    });
+                    data = data.replace(regex, '');
+                }
+            }
+        });
+        return data;
     }
 }

@@ -4,9 +4,9 @@ import { PrimaryButton, Stack, Text } from 'office-ui-fabric-react';
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environments';
 import { VSOSplashScreen, IConnectionAdapter } from '@vs/vso-splash-screen'
-import { Loader } from '../loader/loader';
-import { isActivating, stateToDisplayName } from '../../utils/environmentUtils';
-import { IWorkbenchSplashScreenProps, SplashScreenType } from '../../interfaces/IWorkbenchSplashScreenProps';
+import { stateToDisplayName } from '../../utils/environmentUtils';
+import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
+import './workbenchSplashScreen.css';
 
 interface IRenderSplashScreenProps {
     message: string;
@@ -52,7 +52,7 @@ export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProp
 
 export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (props: IWorkbenchSplashScreenProps) => {
     const connection = React.useMemo(() => { return new CommunicationProvider() }, []);
-    const { screentype, showPrompt, environment, connectError, onRetry, onConnect } = props;
+    const { showPrompt, environment, connectError, onRetry, onConnect } = props;
     const { friendlyName } = environment;
 
     if (connectError !== null) {
@@ -62,8 +62,6 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
             </RenderSplashScreen>
         );
     }
-
-    if (screentype === SplashScreenType.Starting && environment) {
     
         const envState = stateToDisplayName(environment!.state).toLocaleLowerCase();
         if (showPrompt) {
@@ -72,27 +70,23 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
                     <PrimaryButton onClick={onConnect}>Connect</PrimaryButton>
                 </RenderSplashScreen>
             );
+        } else {
+            return (
+                    <div className="vsonline-splash-screen-main">
+                        <div className="vsonline-splash-screen-extensions-pane"></div>
+                        <div className='vsonline-splash-screen-tree-pane'></div>
+                        <div className="vsonline-splash-screen-editor">
+                            <div className='vsonline-splash-screen-titlebar'>
+                                <div className='vsonline-splash-screen-titlebar-tab'></div>
+                            </div>
+                            <div className="vsonline-splash-screen-body">
+                                <div className="vsonline-splash-screen-preparation-container">
+                                    <VSOSplashScreen connection={connection}></VSOSplashScreen>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+            );
         }
-    
-        return (
-            <RenderSplashScreen message={`Environment "${friendlyName}" is ${envState}.`}>
-                {isActivating(environment) ? <Loader /> : null}
-            </RenderSplashScreen>
-        );
-    } else {
-        return (
-            <PortalLayout>
-                <Stack
-                    horizontalAlign='center'
-                    verticalFill
-                    verticalAlign='center'
-                    tokens={{ childrenGap: '20' }}
-                >
-                    <Stack.Item>
-                        <VSOSplashScreen connection={connection} mountedOn='web'></VSOSplashScreen>
-                    </Stack.Item>
-                </Stack>
-            </PortalLayout>
-        );
-    }
 }

@@ -1,24 +1,7 @@
 import { ICommunicationChannel } from '../interfaces/ICommunicationChannel';
-import { ICreationStep, ICreationStepName } from '../interfaces/ICreationStep';
 
 export class SplashCommunicationProvider implements ICommunicationChannel {
-    private stepsStatus: ICreationStep[];
     constructor(commandCallback:(message: any) => void) {
-        this.stepsStatus = [
-            {
-                name: 'initializeEnvironment',
-                status: 'Pending',
-            },
-            {
-                name: 'buildContainer',
-                status: 'Pending',
-            },
-            {
-                name: 'runContainer',
-                status: 'Pending',
-            },
-        ];
-
         window.addEventListener("message", (message) => {
             if (message.origin === window.origin){
                 commandCallback(message);
@@ -30,27 +13,23 @@ export class SplashCommunicationProvider implements ICommunicationChannel {
         window.postMessage({ message }, window.origin);
     }
 
-    private postStep(step: ICreationStep) {
+    private postStep(step: {}) {
         window.postMessage({ step }, window.origin);
     }
 
-    public updateStep(step: ICreationStep): void {
-        const stepToUpdate = this.stepsStatus.find((entry) => entry.name === step.name);
-        if (stepToUpdate) {
-            stepToUpdate.status = step.status;
-        }
+    public updateStep(step: {}): void {
         this.postStep(step);
+    }
+
+    private postSteps(steps: {}) {
+        window.postMessage({ steps }, window.origin);
+    }
+
+    public initializeSteps(steps: {}[]) {
+        this.postSteps(steps);
     }
 
     public postEnvironmentId(environmentId: string) {
         window.postMessage({ environmentId });
-    }
-    
-    public getStepStatus(step: ICreationStepName): string | undefined {
-        const stepToReturn = this.stepsStatus.find((entry) => entry.name === step);
-        if (stepToReturn) {
-            return stepToReturn.status;
-        }
-        return undefined;
     }
 }
