@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core.DAG;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -361,7 +360,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     cloudEnvironment.Created = cloudEnvironment.Updated = cloudEnvironment.LastUsed = DateTime.UtcNow;
 
                     // Static Environment
-                    if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                    if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
                     {
                         if (cloudEnvironment.Connection is null)
                         {
@@ -371,7 +370,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                         {
                             cloudEnvironment.Connection = await CreateWorkspace(
-                                CloudEnvironmentType.StaticEnvironment,
+                                EnvironmentType.StaticEnvironment,
                                 cloudEnvironment.Id,
                                 Guid.Empty,
                                 startCloudEnvironmentParameters.ConnectionServiceUri,
@@ -441,7 +440,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Create the Live Share workspace
                     cloudEnvironment.Connection = await CreateWorkspace(
-                        CloudEnvironmentType.CloudEnvironment,
+                        EnvironmentType.CloudEnvironment,
                         cloudEnvironment.Id,
                         cloudEnvironment.Compute.ResourceId,
                         startCloudEnvironmentParameters.ConnectionServiceUri,
@@ -499,7 +498,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, childLogger.NewChildLogger());
 
-                    if (cloudEnvironment.Type == CloudEnvironmentType.CloudEnvironment)
+                    if (cloudEnvironment.Type == EnvironmentType.CloudEnvironment)
                     {
                         var storageIdToken = cloudEnvironment.Storage?.ResourceId;
                         if (storageIdToken != null)
@@ -569,7 +568,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     childLogger.AddCloudEnvironment(cloudEnvironment);
 
                     // Static Environment
-                    if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                    if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
                     {
                         return new CloudEnvironmentServiceResult
                         {
@@ -648,7 +647,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Create the Live Share workspace
                     cloudEnvironment.Connection = await CreateWorkspace(
-                        CloudEnvironmentType.CloudEnvironment,
+                        EnvironmentType.CloudEnvironment,
                         cloudEnvironment.Id,
                         cloudEnvironment.Compute.ResourceId,
                         startCloudEnvironmentParameters.ConnectionServiceUri,
@@ -722,7 +721,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     childLogger.AddCloudEnvironment(cloudEnvironment);
 
                     // Static Environment
-                    if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                    if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
                     {
                         return new CloudEnvironmentServiceResult
                         {
@@ -782,7 +781,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     childLogger.AddCloudEnvironment(cloudEnvironment);
 
                     // Static Environment
-                    if (cloudEnvironment.Type == CloudEnvironmentType.StaticEnvironment)
+                    if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
                     {
                         return new CloudEnvironmentServiceResult
                         {
@@ -1018,7 +1017,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         private async Task<ConnectionInfo> CreateWorkspace(
-            CloudEnvironmentType type,
+            EnvironmentType type,
             string cloudEnvironmentId,
             Guid computeIdToken,
             Uri connectionServiceUri,

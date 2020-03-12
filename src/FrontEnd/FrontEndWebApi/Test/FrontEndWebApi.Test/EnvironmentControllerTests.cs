@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
@@ -127,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 FriendlyName = "test-environment",
                 PlanId = plan.Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
-                Type = CloudEnvironmentType.CloudEnvironment.ToString(),
+                Type = EnvironmentType.CloudEnvironment.ToString(),
                 SkuName = "testSkuName",
             };
 
@@ -158,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 FriendlyName = "test-environment",
                 PlanId = (await MockUtil.GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
-                Type = CloudEnvironmentType.CloudEnvironment.ToString(),
+                Type = EnvironmentType.CloudEnvironment.ToString(),
                 SkuName = "testSkuName",
             };
 
@@ -466,7 +467,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 FriendlyName = "test-environment",
                 PlanId = (await MockUtil.GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
-                Type = CloudEnvironmentType.CloudEnvironment.ToString(),
+                Type = EnvironmentType.CloudEnvironment.ToString(),
                 SkuName = skuName,
             };
         }
@@ -494,6 +495,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             {
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
             };
+            var tokenProvider = new Mock<ITokenProvider>();
 
             var environmentController = new EnvironmentsController(
                 environmentManager,
@@ -505,7 +507,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 mapper,
                 serviceUriBuilder,
                 settings,
-                skuUtils);
+                skuUtils,
+                tokenProvider.Object);
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();

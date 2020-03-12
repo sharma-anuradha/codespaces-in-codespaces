@@ -5,6 +5,7 @@
 using System;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -108,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="type">The cloud environment type.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
-        public static IDiagnosticsLogger AddCloudEnvironmentType(this IDiagnosticsLogger logger, CloudEnvironmentType type)
+        public static IDiagnosticsLogger AddCloudEnvironmentType(this IDiagnosticsLogger logger, EnvironmentType type)
             => logger.FluentAddBaseValue(LogValueCloudEnvironmentType, type.ToString());
 
         /// <summary>

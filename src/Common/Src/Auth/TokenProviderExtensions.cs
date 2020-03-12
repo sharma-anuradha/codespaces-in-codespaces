@@ -5,10 +5,9 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Tokens;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
 {
     /// <summary>
     /// Extensions adding specific token functionality to <see cref="ITokenProvider"/>.

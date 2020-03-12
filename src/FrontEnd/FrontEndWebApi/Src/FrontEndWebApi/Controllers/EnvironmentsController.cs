@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Audit;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -63,6 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="serviceUriBuilder">The service uri builder.</param>
         /// <param name="frontEndAppSettings">Front-end app settings.</param>
         /// <param name="skuUtils">skuUtils to find sku's eligiblity.</param>
+        /// <param name="tokenProvider">Token Provider.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -73,7 +75,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IMapper mapper,
             IServiceUriBuilder serviceUriBuilder,
             FrontEndAppSettings frontEndAppSettings,
-            ISkuUtils skuUtils)
+            ISkuUtils skuUtils,
+            ITokenProvider tokenProvider)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -85,6 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ServiceUriBuilder = Requires.NotNull(serviceUriBuilder, nameof(serviceUriBuilder));
             FrontEndAppSettings = Requires.NotNull(frontEndAppSettings, nameof(frontEndAppSettings));
             SkuUtils = Requires.NotNull(skuUtils, nameof(skuUtils));
+            TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -106,6 +110,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private FrontEndAppSettings FrontEndAppSettings { get; }
 
         private ISkuUtils SkuUtils { get; }
+
+        private ITokenProvider TokenProvider { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -776,6 +782,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 result.AllowedSkus = Array.Empty<SkuInfoResult>();
             }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Generates a heartbeat token for the specified environment.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>An object result that contains the token.</returns>
+        [HttpGet("{environmentId}/heartbeattoken")]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(GenerateHeartBeatTokenAsync))]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("heartbeat_tokens")]
+        public async Task<IActionResult> GenerateHeartBeatTokenAsync(
+            [FromRoute]string environmentId,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            var environment = await GetEnvironmentAsync(environmentId, logger);
+            if (environment is null)
+            {
+                return NotFound();
+            }
+
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScope: null, logger) ||
+                environment.Type != EnvironmentType.StaticEnvironment)
+            {
+                return new ForbidResult();
+            }
+
+            var result = new HeartbeatTokenResult()
+            {
+                HeartbeatToken = await TokenProvider.GenerateVmTokenAsync(environmentId, logger),
+            };
 
             return Ok(result);
         }

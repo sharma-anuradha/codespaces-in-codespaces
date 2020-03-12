@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Xunit;
 using Scopes = Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts.PlanAccessTokenScopes;
@@ -168,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 FriendlyName = "test-environment",
                 PlanId = (await MockUtil.GeneratePlan()).Plan.ResourceId,
                 AutoShutdownDelayMinutes = 5,
-                Type = CloudEnvironmentType.CloudEnvironment.ToString(),
+                Type = EnvironmentType.CloudEnvironment.ToString(),
                 SkuName = "testSkuName",
             };
 

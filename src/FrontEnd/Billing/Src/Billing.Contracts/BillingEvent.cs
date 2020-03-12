@@ -16,32 +16,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     public class BillingEvent : TaggedEntity
     {
         /// <summary>
-        /// UTC time when the event occurred.
+        /// Gets or sets UTC time when the event occurred.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "time")]
         public DateTime Time { get; set; }
 
         /// <summary>
-        /// Information about the plan that the event relates to.
+        /// Gets or sets information about the plan that the event relates to.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "plan")]
         public VsoPlanInfo Plan { get; set; }
 
         /// <summary>
-        /// Optional environment info. Required for some event types, but may be omitted
+        /// Gets or sets optional environment info. Required for some event types, but may be omitted
         /// if the event type is not associated with a specific environment.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "environment")]
         public EnvironmentBillingInfo Environment { get; set; }
 
         /// <summary>
-        /// One of the <see cref="BillingEventTypes" /> constants.
+        /// Gets or sets one of the <see cref="BillingEventTypes" /> constants.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "type")]
         public string Type { get; set; }
 
         /// <summary>
-        /// The type of object depends on the <see cref="EventType" />.
+        /// Gets or sets the type of object depends on the <see cref="EventType" />.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "args")]
         [JsonConverter(typeof(BillingEventArgsConverter))]

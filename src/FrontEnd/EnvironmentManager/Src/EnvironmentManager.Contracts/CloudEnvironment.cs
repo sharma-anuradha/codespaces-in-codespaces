@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -25,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets the environment type.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "type")]
-        public CloudEnvironmentType Type { get; set; }
+        public EnvironmentType Type { get; set; }
 
         /// <summary>
         /// Gets or sets the environment friendly name.
