@@ -7,17 +7,13 @@ import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Stack, StackItem } from 'office-ui-fabric-react/lib/Stack';
 import { Text } from 'office-ui-fabric-react/lib/Text';
 import { PortalLayout } from '../portalLayout/portalLayout';
-
 import { login, complete2FA } from '../../actions/login';
-
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
 import { environmentsPath } from '../../routerPaths';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
-import { setAuthCookie } from '../../utils/setAuthCookie';
 import { Signal } from '../../utils/signal';
 import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
-
 import './login.css';
 import { blogPostUrl, pricingInfoUrl, privacyStatementUrl } from '../../constants';
 import { createTrace } from '../../utils/createTrace';
@@ -156,29 +152,7 @@ function LoginView(props: LoginProps) {
         };
     }, [setMarkupHtml]);
 
-    const [isAuthCookieSet, setIsAuthCookieSet] = useState(false);
-
-    useEffect(() => {
-        if (!props.token) {
-            return;
-        }
-
-        const cookieSignal = Signal.from(setAuthCookie(props.token));
-
-        cookieSignal.promise.then(
-            () => {
-                setIsAuthCookieSet(true);
-            },
-            () => {
-                // noop
-            }
-        );
-
-        return () => {
-            // The cookie still gets set, but we don't get an error from updating unmounted login screen.
-            cookieSignal.cancel();
-        };
-    }, [setIsAuthCookieSet, props.token]);
+    const [isAuthCookieSet] = useState(false);
 
     const { isAuthenticated, isAuthenticating, isInteractionRequired } = props;
     if (!isAuthenticated && isAuthenticating && !isInteractionRequired) {

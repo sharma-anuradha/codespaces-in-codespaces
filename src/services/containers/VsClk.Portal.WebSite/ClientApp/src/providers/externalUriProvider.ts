@@ -1,7 +1,11 @@
+import { getPFDomain, getCurrentEnvironment } from './../utils/getPortForwardingDomain';
+import { isGithubTLD } from './../utils/isHostedOnGithub';
 import { URI } from 'vscode-web';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { EnvConnector } from '../ts-agent/envConnector';
 import { sendTelemetry } from '../utils/telemetry';
+import { setAuthCookie } from '../utils/setAuthCookie';
+import { getAuthTokenAction } from '../actions/getAuthTokenActionCommon';
 
 abstract class BaseExternalUriProvider {
     protected abstract ensurePortIsForwarded(port: number): Promise<void>;
@@ -18,7 +22,24 @@ abstract class BaseExternalUriProvider {
         await this.ensurePortIsForwarded(port);
 
         uri.scheme = 'https';
-        uri.authority = `${this.sessionId}-${port}.app.${window.location.hostname}`;
+        if (isGithubTLD(window.location.href)) {
+            const environment = getCurrentEnvironment();
+            const pfDomain = getPFDomain(environment)
+                .split('//')
+                .pop();
+            uri.authority = `${this.sessionId}-${port}${pfDomain}`;
+        } else {
+            uri.authority = `${this.sessionId}-${port}.app.${window.location.hostname}`;
+        }
+
+        //set cookie to authenticate PortForwarding
+        const getAuthToken = getAuthTokenAction();
+        const token = await getAuthToken();
+        if (token === undefined) {
+            throw new Error('No token available.');
+        }
+        await setAuthCookie(token, uri.authority);
+
         return uri;
     }
 
@@ -34,7 +55,7 @@ abstract class BaseExternalUriProvider {
         }
 
         if (localhostMatch == undefined) {
-            return uri.scheme == 'http' ? defaultHttpPort : defaultHttpsPort; 
+            return uri.scheme == 'http' ? defaultHttpPort : defaultHttpsPort;
         } else {
             return +localhostMatch[2].substr(1, localhostMatch[2].length);
         }

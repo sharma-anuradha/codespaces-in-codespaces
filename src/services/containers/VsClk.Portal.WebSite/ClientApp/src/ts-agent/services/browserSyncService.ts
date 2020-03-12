@@ -1,9 +1,7 @@
 import { SourceEventService, SourceEventArgs } from '../contracts/VSLS';
 import { WorkspaceClient } from '../workspaceClient';
 import { authService } from '../../services/authService';
-import { setAuthCookie } from '../../utils/setAuthCookie';
 import { loginPath, environmentsPath } from '../../routerPaths';
-import { getAuthTokenAction } from '../../actions/getAuthTokenActionCommon';
 
 export enum BrowserConnectorMessages {
     ConnectToEnvironment = 'VSO_BrowserSync_ConnectToEnvironment',
@@ -54,18 +52,11 @@ export class BrowserSyncService {
             case BrowserConnectorMessages.CopyServerUrl:
             case BrowserConnectorMessages.OpenPortInBrowser:
             case BrowserConnectorMessages.ForwardPort:
-                const getAuthToken = getAuthTokenAction();
-                const token = await getAuthToken();
-
-                if (token === undefined) {
-                    return;
-                }
-                await setAuthCookie(token);
                 return;
 
             case BrowserConnectorMessages.GetLocalStorageValueRequest:
                 const payload = JSON.parse(e.jsonContent);
-                const { key } = payload;                            
+                const { key } = payload;
 
                 const valueJson = localStorage.getItem(key);
 
@@ -84,7 +75,7 @@ export class BrowserSyncService {
                 });
 
                 await this.sourceEventService.fireEventAsync(
-                    BrowserConnectorMessages.GetLocalStorageValueResponse, 
+                    BrowserConnectorMessages.GetLocalStorageValueResponse,
                     repsonse
                 );
                 return;
