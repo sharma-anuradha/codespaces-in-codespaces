@@ -20,6 +20,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
@@ -57,7 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         {
             // Frameworks
             services
-                .AddControllers()
+                .AddControllers(o =>
+                {
+                    o.ModelMetadataDetailsProviders.Add(new RequiredBindingMetadataProvider());
+                })
                 .AddNewtonsoftJson(x =>
                 {
                     x.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Ignore;

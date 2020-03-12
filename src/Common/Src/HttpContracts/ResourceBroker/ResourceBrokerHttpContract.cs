@@ -28,19 +28,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public const string ResourcesRoute = ResourceBrokerV1Route + "/resources";
 
         /// <summary>
-        /// The create resource http method.
+        /// The start operation.
         /// </summary>
-        public static readonly HttpMethod PostResourceMethod = HttpMethod.Post;
+        public const string StartOperation = "start";
 
         /// <summary>
-        /// The create resource http method.
+        /// The suspend operation.
+        /// </summary>
+        public const string SuspendOperation = "suspend";
+
+        /// <summary>
+        /// The status operation.
+        /// </summary>
+        public const string StatusOperation = "status";
+
+        /// <summary>
+        /// The process heartbeat operation.
+        /// </summary>
+        public const string ProcessHeartbeatOperation = "processheartbeat";
+
+        /// <summary>
+        /// The get resource http method.
         /// </summary>
         public static readonly HttpMethod GetResourceMethod = HttpMethod.Get;
 
         /// <summary>
-        /// The create resource http method.
+        /// The allocate resource http method.
         /// </summary>
-        public static readonly HttpMethod TriggerEnvironmentHeartbeatMethod = HttpMethod.Get;
+        public static readonly HttpMethod AllocateResourceMethod = HttpMethod.Post;
+
+        /// <summary>
+        /// The start resource http method.
+        /// </summary>
+        public static readonly HttpMethod StartResourceMethod = HttpMethod.Post;
+
+        /// <summary>
+        /// The suspend resource http method.
+        /// </summary>
+        public static readonly HttpMethod SuspendResourceMethod = HttpMethod.Post;
 
         /// <summary>
         /// The deallocate http method.
@@ -48,14 +73,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         public static readonly HttpMethod DeleteResourceMethod = HttpMethod.Delete;
 
         /// <summary>
-        /// The start compute http method.
+        /// The status resource http method.
         /// </summary>
-        public static readonly HttpMethod StartComputeMethod = HttpMethod.Post;
+        public static readonly HttpMethod StatusResourceMethod = HttpMethod.Get;
 
         /// <summary>
-        /// The get compute status http method.
+        /// The process heartbeat http method.
         /// </summary>
-        public static readonly HttpMethod GetComputeStatusMethod = HttpMethod.Get;
+        public static readonly HttpMethod ProcessHeartbeatMethod = HttpMethod.Get;
 
         /// <summary>
         /// Get the get resource uri.
