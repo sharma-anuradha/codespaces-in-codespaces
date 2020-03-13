@@ -10,6 +10,7 @@ export interface GitHubWorkbenchProps extends RouteComponentProps<{ id: string }
     org: string;
     repoId: string;
     commitId: string;
+    filePath: string;
 }
 
 class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenchProps> {
@@ -27,7 +28,8 @@ class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenc
          const uriQueryObj = {
             org: this.props.org,
             repoId: this.props.repoId,
-            commitId: this.props.commitId
+            commitId: this.props.commitId,
+            filePath: this.props.filePath
         };
         const uriQueryString = JSON.stringify(uriQueryObj);
         const folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
@@ -47,10 +49,14 @@ const getProps = (
     const repoId = props.match.params.repoId;
     const commitId = props.match.params.commitId;
 
+    const fileParam = new URLSearchParams(props.location.search).get("filePath");
+    const filePath = fileParam ? fileParam : "";
+
     return {
         org,
         repoId,
-        commitId
+        commitId,
+        filePath
     };
 };
 
