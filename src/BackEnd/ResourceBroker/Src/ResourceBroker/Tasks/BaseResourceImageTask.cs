@@ -197,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 {
                     var blockBlob = (CloudBlockBlob)blob;
 
-                    // Determine if we should delete (filter it out more than cenrtain days old && not being currently used)
+                    // Determine if we should delete (filter it out more than certain days old && not being currently used)
                     var shouldDelete = blockBlob.Properties.Created < CutOffDate && !activeImage.Any(item => item.Equals(blockBlob.Name, StringComparison.OrdinalIgnoreCase));
 
                     if (shouldDelete)

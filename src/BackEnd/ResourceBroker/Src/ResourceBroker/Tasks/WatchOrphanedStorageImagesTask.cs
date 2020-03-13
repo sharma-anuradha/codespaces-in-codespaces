@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         protected override string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedStorageImagesTask;
 
         /// <inheritdoc/>
-        protected override DateTime CutOffDate => DateTime.Now.AddMonths(-1);
+        protected override DateTime CutOffDate => DateTime.Now.AddMonths(-3);
 
         /// <inheritdoc/>
         protected override IEnumerable<ImageFamilyType> GetArtifactTypesToCleanup()
