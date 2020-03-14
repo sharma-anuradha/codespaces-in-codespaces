@@ -1,5 +1,5 @@
 import { getPFDomain, getCurrentEnvironment } from './../utils/getPortForwardingDomain';
-import { isGithubTLD } from './../utils/isHostedOnGithub';
+import { isHostedOnGithub } from './../utils/isHostedOnGithub';
 import { URI } from 'vscode-web';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { EnvConnector } from '../ts-agent/envConnector';
@@ -22,12 +22,12 @@ abstract class BaseExternalUriProvider {
         await this.ensurePortIsForwarded(port);
 
         uri.scheme = 'https';
-        if (isGithubTLD(window.location.href)) {
+        if (isHostedOnGithub()) {
             const environment = getCurrentEnvironment();
             const pfDomain = getPFDomain(environment)
                 .split('//')
                 .pop();
-            uri.authority = `${this.sessionId}-${port}${pfDomain}`;
+            uri.authority = `${this.sessionId}-${port}.${pfDomain}`;
         } else {
             uri.authority = `${this.sessionId}-${port}.app.${window.location.hostname}`;
         }

@@ -158,7 +158,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             CookieOptions option = new CookieOptions
             {
                 Path = "/",
-                Domain = $"{AppSettings.Domain}",
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Lax
