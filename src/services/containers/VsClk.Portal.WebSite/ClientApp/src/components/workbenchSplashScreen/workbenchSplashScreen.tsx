@@ -52,7 +52,7 @@ export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProp
 
 export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (props: IWorkbenchSplashScreenProps) => {
     const connection = React.useMemo(() => { return new CommunicationProvider() }, []);
-    const { showPrompt, environment, connectError, onRetry, onConnect } = props;
+    const { showPrompt, environment, connectError, onRetry, onConnect, title } = props;
     const { friendlyName } = environment;
 
     if (connectError !== null) {
@@ -81,7 +81,7 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
                             </div>
                             <div className="vsonline-splash-screen-body">
                                 <div className="vsonline-splash-screen-preparation-container">
-                                    <VSOSplashScreen connection={connection}></VSOSplashScreen>
+                                    <VSOSplashScreen connection={connection} title={title}></VSOSplashScreen>
                                 </div>
                             </div>
                         </div>

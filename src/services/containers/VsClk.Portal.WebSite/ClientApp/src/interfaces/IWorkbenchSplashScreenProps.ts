@@ -6,4 +6,5 @@ export interface IWorkbenchSplashScreenProps {
     connectError?: string | null;
     onRetry?: () => void;
     onConnect: () => void;
+    title?: string;
 }

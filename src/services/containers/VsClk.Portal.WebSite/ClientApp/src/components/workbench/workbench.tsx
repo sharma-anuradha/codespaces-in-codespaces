@@ -65,6 +65,7 @@ export interface WorkbenchProps {
     params: URLSearchParams;
     correlationId?: string | null;
     isValidEnvironmentFound: boolean;
+    title?: string;
     connectEnvironment: (
         ...params: Parameters<typeof connectEnvironment>
     ) => ReturnType<typeof connectEnvironment>;
@@ -367,6 +368,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
                     environment={environmentInfo}
                     showPrompt={!this.props.autoStart}
                     connectError={this.state.connectError}
+                    title={this.props.title}
                 />
             );
         }
