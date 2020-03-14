@@ -99,5 +99,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             return ControlPlaneInfo.VirtualMachineAgentContainerName;
         }
+
+        /// <inheritdoc/>
+        protected override int GetMinimumBlobCount() => 30;
     }
 }

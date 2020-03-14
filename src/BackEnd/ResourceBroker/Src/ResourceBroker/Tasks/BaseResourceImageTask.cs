@@ -155,6 +155,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <returns>container name.</returns>
         protected abstract string GetContainerName();
 
+        /// <summary>
+        /// Gets the minumum number of blobs to be retained.
+        /// </summary>
+        /// <returns>container name.</returns>
+        protected abstract int GetMinimumBlobCount();
+
         private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return await ClaimedDistributedLease.Obtain(
@@ -172,46 +178,93 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task ProcessArtifactAsync(IEnumerable<string> activeImage, IDiagnosticsLogger logger)
         {
-            // Fetch accounts with account name and key
-            var accounts = await GetStorageAccountsAsync();
-
-            foreach (var account in accounts)
-            {
-                // Fetch blob details
-                var containerName = GetContainerName();
-                var blobStorageClientOptions = new BlobStorageClientOptions
+            await logger.OperationScopeAsync(
+                $"{LogBaseName}_run_process_accounts",
+                async (childLogger) =>
                 {
-                    AccountName = account.StorageAccountName,
-                    AccountKey = account.StorageAccountKey,
-                };
-                var blobClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
-                var blobContainer = blobClientProvider.GetCloudBlobContainer(containerName);
+                    // Fetch accounts with account name and key
+                    var accounts = await GetStorageAccountsAsync();
+                    foreach (var account in accounts)
+                    {
+                        await ProcessAccountAsync(account, childLogger);
+                    }
+                },
+                swallowException: true);
+        }
 
-                // Fetch list of blobs
-                var blobsList = await blobContainer.ListBlobsSegmentedAsync(default);
-
-                logger.FluentAddValue("ImageTargetResultsFound", blobsList.Results.Count());
-
-                // Run through each item and process
-                foreach (var blob in blobsList.Results)
+        private Task ProcessAccountAsync(ShareConnectionInfo account, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run_artifacts",
+                async (childLogger) =>
                 {
-                    var blockBlob = (CloudBlockBlob)blob;
+                    childLogger
+                        .FluentAddBaseValue("ImageAccountName", account.StorageAccountName)
+                        .FluentAddBaseValue("ImageTaskId", Guid.NewGuid());
 
-                    // Determine if we should delete (filter it out more than certain days old && not being currently used)
-                    var shouldDelete = blockBlob.Properties.Created < CutOffDate && !activeImage.Any(item => item.Equals(blockBlob.Name, StringComparison.OrdinalIgnoreCase));
+                    // Fetch blob details
+                    var containerName = GetContainerName();
+                    var blobStorageClientOptions = new BlobStorageClientOptions
+                    {
+                        AccountName = account.StorageAccountName,
+                        AccountKey = account.StorageAccountKey,
+                    };
+                    var blobClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
+                    var blobContainer = blobClientProvider.GetCloudBlobContainer(containerName);
+
+                    // Fetch list of blobs
+                    var blobsList = await blobContainer.ListBlobsSegmentedAsync(default);
+                    var blobCountToBeRetained = GetMinimumBlobCount();
+
+                    childLogger
+                        .FluentAddValue("ImageResultsFound", blobsList.Results.Count())
+                        .FluentAddValue("ImageCounToBeRetained", blobCountToBeRetained);
+
+                    // Doing this object conversion to access the created date of the blob. Since its is not accessible with IListBlobItem object.
+                    var blobs = blobsList.Results.Cast<CloudBlockBlob>();
+                    blobs = blobs.OrderByDescending((blob) => blob.Properties.Created);
+
+                    for (var index = 0; index < blobs.Count(); index++)
+                    {
+                        await ProcessAccountBlobAsync(blobs.ElementAt(index), index, blobCountToBeRetained, await GetActiveImagesAsync(logger), childLogger);
+                    }
+                });
+        }
+
+        private Task ProcessAccountBlobAsync(CloudBlockBlob blob, int index, int blobCountToBeRetained, IEnumerable<string> activeImage, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run_images",
+                async (childLogger) =>
+                {
+                    var cutOffDateInUtc = CutOffDate.ToUniversalTime();
+                    var blobCreatedTimeInUtc = blob.Properties.Created.Value.UtcDateTime;
+
+                    childLogger
+                        .FluentAddValue("BlobCreatedTime", blobCreatedTimeInUtc)
+                        .FluentAddValue("BlobCutoffTime", cutOffDateInUtc)
+                        .FluentAddValue("BlobName", blob.Name);
+
+                    var isOutsideOfDateRange = DateTime.Compare(blobCreatedTimeInUtc, cutOffDateInUtc) > 0 ? true : false;
+                    var isActiveImage = activeImage.Any(image => image.Equals(blob.Name, StringComparison.OrdinalIgnoreCase));
+                    var isToBeRetained = index < blobCountToBeRetained;
+                    var shouldDelete = !isOutsideOfDateRange && !isActiveImage && !isToBeRetained;
+
+                    childLogger
+                        .FluentAddValue("BlobIsOutsideOfDateRange", isOutsideOfDateRange)
+                        .FluentAddValue("BlobIsActiveImage", isActiveImage)
+                        .FluentAddValue("BlobIsToBeRetained", isToBeRetained)
+                        .FluentAddValue("BlobShouldDelete", shouldDelete);
 
                     if (shouldDelete)
                     {
-                        logger.FluentAddValue("ImageBlobName", blockBlob.Name);
-
                         // Deleting the image blob from Azure storage account.
-                        await blockBlob.DeleteAsync();
+                        await blob.DeleteAsync();
 
                         // Slow down for rate limit & Database RUs
                         await Task.Delay(LoopDelay);
                     }
-                }
-            }
+                });
         }
     }
 }
