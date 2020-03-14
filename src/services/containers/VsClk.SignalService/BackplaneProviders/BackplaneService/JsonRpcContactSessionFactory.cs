@@ -32,13 +32,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// <inheritdoc/>
         Task IContactBackplaneServiceNotification.FireOnUpdateContactAsync(ContactDataChanged<ContactDataInfo> contactDataChanged, string[] affectedProperties, CancellationToken cancellationToken)
         {
-            return NotifyAll(nameof(IContactBackplaneServiceNotification.FireOnUpdateContactAsync), contactDataChanged, affectedProperties);
+            return InvokeAll(nameof(IContactBackplaneServiceNotification.FireOnUpdateContactAsync), contactDataChanged, affectedProperties);
         }
 
         /// <inheritdoc/>
-        Task IContactBackplaneServiceNotification.FireOnSendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
+        Task IContactBackplaneServiceNotification.FireOnSendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
         {
-            return NotifyAll(nameof(IContactBackplaneServiceNotification.FireOnSendMessageAsync), sourceId, messageData);
+            return InvokeAll(nameof(IContactBackplaneServiceNotification.FireOnSendMessageAsync), messageData);
         }
 
         public Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken) =>
@@ -53,7 +53,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken) =>
             BackplaneService.GetContactsDataAsync(matchProperties, cancellationToken);
 
-        public Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken) =>
-            BackplaneService.SendMessageAsync(sourceId, messageData, cancellationToken);
+        public Task SendMessageAsync(MessageData messageData, CancellationToken cancellationToken) =>
+            BackplaneService.SendMessageAsync(messageData, cancellationToken);
     }
 }

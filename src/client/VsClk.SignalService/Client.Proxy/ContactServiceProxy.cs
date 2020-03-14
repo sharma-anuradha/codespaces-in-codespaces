@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsCloudKernel.SignalService.Common;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
@@ -48,7 +47,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 (args) =>
             {
                 var contact = (ContactReference)args[0];
-                var properties = (Dictionary<string, object>)args[1];
+                var properties = ToProxyDictionary(args[1]);
                 var targetConnectionId = (string)args[2];
 
                 trace.Verbose($"UpdateProperties-> contact:{ToString(contact)} properties:{properties.ConvertToString(FormatProvider)}");
@@ -76,7 +75,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 (args) =>
             {
                 var contact = (ContactReference)args[0];
-                var changeType = (ConnectionChangeType)args[1];
+                var changeType = ToProxyEnum<ConnectionChangeType>(args[1]);
                 trace.Verbose($"ConnectionChanged-> contact:{ToString(contact)} changeType:{changeType}");
                 ConnectionChanged?.Invoke(this, new ConnectionChangedEventArgs(contact, changeType));
                 return Task.CompletedTask;

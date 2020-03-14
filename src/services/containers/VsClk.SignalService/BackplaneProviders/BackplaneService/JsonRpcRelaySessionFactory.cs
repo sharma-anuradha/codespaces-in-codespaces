@@ -26,19 +26,19 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// <inheritdoc/>
         Task IRelayBackplaneServiceNotification.FireSendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken)
         {
-            return NotifyAll(nameof(IRelayBackplaneServiceNotification.FireSendDataHubAsync), dataChanged);
+            return InvokeAll(nameof(IRelayBackplaneServiceNotification.FireSendDataHubAsync), dataChanged);
         }
 
         /// <inheritdoc/>
         Task IRelayBackplaneServiceNotification.FireNotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken)
         {
-            return NotifyAll(nameof(IRelayBackplaneServiceNotification.FireNotifyParticipantChangedAsync), dataChanged);
+            return InvokeAll(nameof(IRelayBackplaneServiceNotification.FireNotifyParticipantChangedAsync), dataChanged);
         }
 
         /// <inheritdoc/>
         Task IRelayBackplaneServiceNotification.FireNotifyRelayHubChangedAsync(RelayHubChanged dataChanged, CancellationToken cancellationToken)
         {
-            return NotifyAll(nameof(IRelayBackplaneServiceNotification.FireNotifyRelayHubChangedAsync), dataChanged);
+            return InvokeAll(nameof(IRelayBackplaneServiceNotification.FireNotifyRelayHubChangedAsync), dataChanged);
         }
 
         public Task SendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken) =>

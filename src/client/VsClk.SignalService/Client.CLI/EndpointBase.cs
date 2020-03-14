@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.VsCloudKernel.SignalService.Client;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace SignalService.Client.CLI
 {
@@ -35,11 +36,13 @@ namespace SignalService.Client.CLI
             where TInstance : EndpointBase<T>
         {
             // try once
+            var start = Stopwatch.StartNew();
             await hubConnection.StartAsync(cancellationToken);
+            traceSource.Verbose($"hubConnection finished elapsed:{start.ElapsedMilliseconds}");
 
             var hubClient = new HubClient(hubConnection, traceSource);
 
-            // next call will make sure the HubClinet is in running state
+            // next call will make sure the HubClient is in running state
             await hubClient.StartAsync(CancellationToken.None);
 
             var endpoint = instanceFactory(hubClient);

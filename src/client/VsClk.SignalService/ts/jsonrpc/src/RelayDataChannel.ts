@@ -1,16 +1,12 @@
 
-import { IRelayHubProxy, SendOption, ParticipantChangeType } from '@vs/vso-signalr-client-proxy';
+import { IRelayHubProxy, SendOption, ParticipantChangeType, SequenceRelayDataHubProxy, RelayHubMessageProperties, IDisposable } from '@vs/vso-signalr-client-proxy';
 import { IDataChannel, ChannelClosedEventArgs } from './IDataChannel';
 import { Event, Emitter, CancellationToken } from 'vscode-jsonrpc';
 
-export interface IRelayDataProvider {
-    encode(data: Buffer): Buffer;
-    decode(data: Buffer): Buffer;
-}
-
-export class RelayDataChannel implements IDataChannel {
+export class RelayDataChannel implements IDataChannel, IDisposable {
     private readonly dataReceivedEmitter = new Emitter<Buffer>();
-    private relayDataProvider: IRelayDataProvider;
+    private nextSequence = 0;
+    private disposables: IDisposable[] = [];
 
     public readonly onDataReceived: Event<Buffer> = this.dataReceivedEmitter.event;
 
@@ -20,46 +16,50 @@ export class RelayDataChannel implements IDataChannel {
     constructor(
         private readonly relayHubProxy: IRelayHubProxy,
         private readonly streamId: string,
-        private readonly targetParticipant: string,
-        relayDataProvider?: IRelayDataProvider) {
+        private readonly targetParticipant: string) {
+        
+        const sequenceRelayDataHubProxy = new SequenceRelayDataHubProxy(
+            relayHubProxy,
+            (e) => e.type === this.streamId && e.fromParticipant.id === this.targetParticipant);
+        this.disposables.push(sequenceRelayDataHubProxy);
+        this.disposables.push(sequenceRelayDataHubProxy.onReceiveData((e) => {
 
-            this.relayDataProvider = relayDataProvider || {
-                encode: (data) => data,
-                decode: (data) => data
-            };
-            relayHubProxy.onReceiveData((e) => {
-                if (e.type === this.streamId && e.fromParticipant.id === this.targetParticipant) {
-                    this.dataReceivedEmitter.fire(this.relayDataProvider.decode(Buffer.from(e.data)));
-                }
+            this.dataReceivedEmitter.fire(Buffer.from(e.data));
 
-                return Promise.resolve();
-            });
+            return Promise.resolve();
+        }));
 
-            relayHubProxy.onParticipantChanged((e) => {
-                if (e.changeType === ParticipantChangeType.Removed && e.participant.id === this.targetParticipant) {
-                    this.fireClosed({
-                        error: new Error(`participant id:${e.participant.id} removed`)
-                    });
-                }
-                
-                return Promise.resolve();
-            });
-
-            relayHubProxy.onDisconnected(async () => {
+        this.disposables.push(relayHubProxy.onParticipantChanged((e) => {
+            if (e.changeType === ParticipantChangeType.Removed && e.participant.id === this.targetParticipant) {
                 this.fireClosed({
-                    error: new Error(`hub proxy disconnected`)
+                    error: new Error(`participant id:${e.participant.id} removed`)
                 });
+            }
+            
+            return Promise.resolve();
+        }));
 
-                return Promise.resolve();
+        this.disposables.push(relayHubProxy.onDisconnected(async () => {
+            this.fireClosed({
+                error: new Error(`hub proxy disconnected`)
             });
+
+            return Promise.resolve();
+        }));
     }
 
-    public send(data: Buffer, cancellation?: CancellationToken): Promise<void> {
-        return this.relayHubProxy.sendData(
+    public dispose() {
+        this.disposables.forEach((d) => d.dispose());
+        this.disposables = [];
+    }
+
+    public async send(data: Buffer, cancellation?: CancellationToken): Promise<void> {
+        await this.relayHubProxy.sendData(
             SendOption.ExcludeSelf,
             [ this.targetParticipant ],
             this.streamId,
-            this.relayDataProvider.encode(data));
+            data,
+            RelayHubMessageProperties.createMessageSequence(++this.nextSequence));
     }
 
     private fireClosed(e: ChannelClosedEventArgs) {

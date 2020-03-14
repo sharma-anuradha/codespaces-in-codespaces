@@ -1,10 +1,22 @@
 
 import { IRelayServiceProxy, IRelayHubParticipant, IRelayHubProxy, IReceivedData, IParticipantChanged, ParticipantChangeType, SendOption, JoinOptions, SendHubData }  from './IRelayServiceProxy';
 import { HubProxyBase, keysToPascal } from './HubProxyBase';
-import { IHubProxy } from './IHubProxy';
+import { HubMethodOption, IHubProxy } from './IHubProxy';
 import { CallbackContainer } from './CallbackContainer';
 import { IDisposable } from './IDisposable';
 import { ILogger, LogLevel } from './ILogger';
+
+enum HubMethods {
+    ReceiveData = 'receiveData',
+    ParticipantChanged = 'participantChanged',
+    HubDeleted = 'hubDeleted',
+
+    CreateHub = 'CreateHubAsync',
+    DeleteHub = 'DeleteHubAsync',
+    JoinHub = 'JoinHubAsync',
+    SendDataHubEx = 'SendDataHubExAsync',
+    LeaveHub = 'LeaveHubAsync',
+};
 
 export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProxy {
     private relayHubs = new Map<string, RelayHubProxy>();
@@ -24,24 +36,25 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
             }
         });
 
-        hubProxy.on(this.toHubMethodName('receiveData'), async (hubId, fromParticipantId, uniqueId, type, data) => {
-            if (this.logger) {
-                this.logger.log(LogLevel.Debug, `receiveData -> hubId:${hubId} fromParticipantId:${fromParticipantId} type:${type} length:${data.length}`);
+        hubProxy.on(this.toHubMethodName(HubMethods.ReceiveData), async (hubId, fromParticipantId, uniqueId, type, data, properties) => {
+            let bufferData: Uint8Array;
+            if (typeof data === 'string') {
+                bufferData = isNode ? Buffer.from(data, 'base64') : Base64Binary.decode(data);
+            } else {
+                bufferData = data;
+            }
+
+            if (this.logger && this.traceHubData) {
+                this.logger.log(LogLevel.Debug, `receiveData -> hubId:${hubId} fromParticipantId:${fromParticipantId} type:${type} length:${bufferData ? bufferData.length: 0} properties:${JSON.stringify(properties)}`);
             }
 
             const relayHub = this.relayHubs.get(hubId);
             if (relayHub) {
-                let bufferData: any;
-                if (typeof data === 'string') {
-                    bufferData = isNode ? Buffer.from(data, 'base64') : atob(data);
-                } else {
-                    bufferData = data;
-                }
-                await relayHub._OnReceiveData(fromParticipantId, uniqueId, type, <Uint8Array> bufferData);
+                await relayHub._OnReceiveData(fromParticipantId, uniqueId, type, <Uint8Array> bufferData, properties);
             }
         });
 
-        hubProxy.on(this.toHubMethodName('participantChanged'), async (hubId, participantId, properties, changeType) => {
+        hubProxy.on(this.toHubMethodName(HubMethods.ParticipantChanged), async (hubId, participantId, properties, changeType) => {
             if (this.logger) {
                 this.logger.log(LogLevel.Debug, `participantChanged -> hubId:${hubId} participantId:${participantId} properties:${JSON.stringify(properties)} changeType:${changeType}`);
             }
@@ -52,7 +65,7 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
             }
         });
 
-        hubProxy.on(this.toHubMethodName('hubDeleted'), async (hubId) => {
+        hubProxy.on(this.toHubMethodName(HubMethods.HubDeleted), async (hubId) => {
             if (this.logger) {
                 this.logger.log(LogLevel.Debug, `hubDeleted -> hubId:${hubId}`);
             }
@@ -65,24 +78,36 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
         });
     }
 
+    public traceHubData: boolean = false;
+
     public createHub(hubId?: string): Promise<string> {
-        return this.invoke<string>('CreateHubAsync', hubId);
+        return this.invoke<string>(HubMethods.CreateHub, hubId);
     }
 
-    public joinHub(hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy> {
-        return this._joinHubInternal(
-            (joinHubInfo) => new RelayHubProxy(this, hubId, joinHubInfo),
-            hubId,
-            properties,
-            joinOptions);
+    public async joinHub(hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy> {
+        let relayHub = this.relayHubs.get(hubId);
+
+        if (relayHub) {
+            if (relayHub.isDisconected) {
+                await relayHub.rejoin() 
+            }
+        } else {
+            relayHub = await this._joinHubInternal(
+                (joinHubInfo) => new RelayHubProxy(this, hubId, joinHubInfo),
+                hubId,
+                properties,
+                joinOptions);
+        }
+
+        return relayHub;
     }
 
     public async deleteHub(hubId: string): Promise<void> {
-        await this.invoke('DeleteHubAsync', hubId);
+        await this.invoke(HubMethods.DeleteHub, hubId);
     }
 
-    public async _joinHubInternal( relayHubProxyFactory: (joinHubInfo: JoinHubInfo) => RelayHubProxy, hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy> {
-        const joinHubInfo = await this.invokeKeysToCamel<JoinHubInfo>('JoinHubAsync', hubId, properties, keysToPascal(joinOptions));
+    public async _joinHubInternal( relayHubProxyFactory: (joinHubInfo: JoinHubInfo) => RelayHubProxy, hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<RelayHubProxy> {
+        const joinHubInfo = await this.invokeKeysToCamel<JoinHubInfo>(HubMethods.JoinHub, hubId, properties, keysToPascal(joinOptions));
         const realyHubProxy = relayHubProxyFactory(joinHubInfo);
         this.relayHubs.set(hubId, realyHubProxy);
 
@@ -97,7 +122,6 @@ class RelayHubProxy implements IRelayHubProxy {
     private hubDisconnectedCallbacks = new CallbackContainer<() => Promise<void>>();
     private joinHubInfo: JoinHubInfo | null = null;
     private selfParticipantInstance: IRelayHubParticipant | null = null;
-    private isDisconected: boolean = false;
     private hubParticipants = new Map<string, IRelayHubParticipant>();
 
     constructor(
@@ -106,6 +130,8 @@ class RelayHubProxy implements IRelayHubProxy {
         joinHubInfo: JoinHubInfo) {
         this.setJoinHubInfo(joinHubInfo);
     }
+
+    public isDisconected: boolean = false;
 
     private setJoinHubInfo(joinHubInfo: JoinHubInfo) {
         this.hubParticipants.clear();
@@ -169,13 +195,13 @@ class RelayHubProxy implements IRelayHubProxy {
         }, this.id, this.selfParticipant!.properties, joinOptions || {});
     }
 
-    public sendData(sendOption: SendOption, targetParticipants: string[] | null, type: string, data: Uint8Array): Promise<void> {
+    public async sendData(sendOption: SendOption, targetParticipants: string[] | null, type: string, data: Uint8Array, properties?: { [key: string]: any; }, methodOption?: HubMethodOption): Promise<number> {
         const logger = this.relayServiceProxy.logger;
-        if (logger) {
-            logger.log(LogLevel.Debug, `sendData -> hubId:${this.id} option:${sendOption} target:${JSON.stringify(targetParticipants)} type:${type} length:${data.length}`);
+        if (logger  && this.relayServiceProxy.traceHubData ) {
+            logger.log(LogLevel.Debug, `sendData -> hubId:${this.id} option:${sendOption} target:${JSON.stringify(targetParticipants)} type:${type} length:${data ? data.length : 0} properties:${JSON.stringify(properties)}`);
         }
 
-        const dataArray = Array.from(data);
+        const dataArray = data ? Array.from(data) : null;
         const sendHubData: SendHubData = {
             hubId: this.id,
             sendOption,
@@ -183,7 +209,15 @@ class RelayHubProxy implements IRelayHubProxy {
             type,
         };
 
-        return this.relayServiceProxy.send('SendDataHubExAsync', keysToPascal(sendHubData), dataArray);
+        const sendHubDataParam = keysToPascal(sendHubData);
+        sendHubDataParam.messageProperties = properties;
+
+        if (methodOption === HubMethodOption.Invoke) {
+            return await this.relayServiceProxy.invoke<number>(HubMethods.SendDataHubEx, sendHubDataParam, dataArray);
+        }
+
+        await this.relayServiceProxy.send(HubMethods.SendDataHubEx, sendHubDataParam, dataArray);
+        return 0;
     }
 
     public dispose(): Promise<void> {
@@ -192,7 +226,7 @@ class RelayHubProxy implements IRelayHubProxy {
             logger.log(LogLevel.Debug, `leaving -> hubId:${this.id}`);
         }
 
-        return this.relayServiceProxy.send('LeaveHubAsync', this.id);
+        return this.relayServiceProxy.send(HubMethods.LeaveHub, this.id);
     }
 
     public async _OnDeleted(): Promise<void> {      
@@ -208,7 +242,7 @@ class RelayHubProxy implements IRelayHubProxy {
         }        
     }
 
-    public async _OnReceiveData(fromParticipantId: string, uniqueId: number, type: string , data: Uint8Array ): Promise<void> {
+    public async _OnReceiveData(fromParticipantId: string, uniqueId: number, type: string , data: Uint8Array, properties: { [key: string]: any; } ): Promise<void> {
         
         const participant = this.hubParticipants.get(fromParticipantId);
         if (participant) {
@@ -216,7 +250,8 @@ class RelayHubProxy implements IRelayHubProxy {
                 fromParticipant: participant,
                 uniqueId,
                 type,
-                data
+                data,
+                properties
             };
 
             for (const callback of this.receiveDataCallbacks.items) {
@@ -268,4 +303,64 @@ interface JoinHubInfo {
     readonly stamp: string;
     readonly participantId: string;
     readonly participants: HubParticipant[];
+}
+
+const Base64Binary = {
+	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+	
+	/* will return a  Uint8Array type */
+	decodeArrayBuffer: function(input: string) {
+		var bytes = parseInt(<any>((input.length/4) * 3), 10);
+		var ab = new ArrayBuffer(bytes);
+		this.decode(input, ab);
+		
+		return ab;
+	},
+
+	removePaddingChars: function(input: string){
+		var lkey = this._keyStr.indexOf(input.charAt(input.length - 1));
+		if(lkey == 64){
+			return input.substring(0,input.length - 1);
+		}
+		return input;
+	},
+
+	decode: function (input: string, arrayBuffer?: ArrayBuffer) {
+		//get last chars to see if are valid
+		input = this.removePaddingChars(input);
+		input = this.removePaddingChars(input);
+
+		var bytes = (input.length / 4) * 3;
+		
+		var uarray;
+		var chr1, chr2, chr3;
+		var enc1, enc2, enc3, enc4;
+		var i = 0;
+		var j = 0;
+		
+		if (arrayBuffer)
+			uarray = new Uint8Array(arrayBuffer);
+		else
+			uarray = new Uint8Array(bytes);
+		
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+		
+		for (i=0; i<bytes; i+=3) {	
+			//get the 3 octects in 4 ascii chars
+			enc1 = this._keyStr.indexOf(input.charAt(j++));
+			enc2 = this._keyStr.indexOf(input.charAt(j++));
+			enc3 = this._keyStr.indexOf(input.charAt(j++));
+			enc4 = this._keyStr.indexOf(input.charAt(j++));
+	
+			chr1 = (enc1 << 2) | (enc2 >> 4);
+			chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+			chr3 = ((enc3 & 3) << 6) | enc4;
+	
+			uarray[i] = chr1;			
+			if (enc3 != 64) uarray[i+1] = chr2;
+			if (enc4 != 64) uarray[i+2] = chr3;
+		}
+	
+		return uarray;	
+	}
 }

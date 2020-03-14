@@ -19,7 +19,7 @@ using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Co
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// The non Hub Service class instance that manage all the registered contacts
+    /// The non Hub Service class instance that manage all the registered contacts.
     /// </summary>
     public class ContactService : HubService<ContactServiceHub, HubServiceOptions>
     {
@@ -316,6 +316,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             // always attempt to notify trough the backplane
             var messageData = new MessageData(
                 Guid.NewGuid().ToString(),
+                ServiceId,
                 contactReference,
                 targetContactReference,
                 messageType,
@@ -323,7 +324,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (BackplaneManager != null)
             {
-                await BackplaneManager.SendMessageAsync(ServiceId, messageData, cancellationToken);
+                await BackplaneManager.SendMessageAsync(messageData, cancellationToken);
             }
         }
 
@@ -634,12 +635,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         private async Task OnMessageReceivedAsync(
-            string sourceId,
             MessageData messageData,
             CancellationToken cancellationToken)
         {
             // ignore self notifications
-            if (sourceId == ServiceId)
+            if (messageData.ServiceId == ServiceId)
             {
                 return;
             }

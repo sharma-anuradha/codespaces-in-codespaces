@@ -41,7 +41,11 @@ const argv = yargs
         alias: 'r',
         description: 'If run relay hub app',
         type: 'boolean',
-    }) 
+    })
+    .option('hubId', {
+        description: 'Hub Id to join/create',
+        type: 'string',
+    })
     .option('messagePack', {
         alias: 'm',
         description: 'If use message pack for the hub protocol',
@@ -55,7 +59,6 @@ const argv = yargs
 async function main() {
 
     const serviceUri = argv.service || 'http://localhost:5000/signalrhub';
-
     const logger: signalR.ILogger = {
         log: (level: signalR.LogLevel, msg: string) => console.log(msg)
     };
@@ -73,7 +76,7 @@ async function main() {
     const hubClient = new HubClient(hubBuilder.build(), logger);
 
     const useSignalRHub = serviceUri.endsWith('signalrhub');
-    const keyPressCallback = argv.relayHub ? main_relay(hubClient, logger, useSignalRHub) : main_presence(hubClient, logger, useSignalRHub);
+    const keyPressCallback = argv.relayHub ? main_relay(hubClient, argv.hubId || 'test', logger, useSignalRHub) : main_presence(hubClient, logger, useSignalRHub);
 
     await hubClient.start();
     console.log('connected...');
@@ -138,7 +141,7 @@ function main_presence(hubClient: HubClient, logger: signalR.ILogger, useSignalR
     };
 }
 
-function main_relay(hubClient: HubClient, logger: signalR.ILogger, useSignalRHub: boolean): (key: any) => Promise<void> {  
+function main_relay(hubClient: HubClient, hubId: string, logger: signalR.ILogger, useSignalRHub: boolean): (key: any) => Promise<void> {  
     const relayServiceProxy = new RelayServiceProxy(hubClient.hubProxy, logger, useSignalRHub);
 
     let rpcConnection: rpc.MessageConnection;
@@ -153,7 +156,7 @@ function main_relay(hubClient: HubClient, logger: signalR.ILogger, useSignalRHub
 
     return async (key: any): Promise<void> => {
         if (key === 'j') {
-            relayHubProxy = await relayServiceProxy.joinHub('test', { 'app': 'node', 'userId': 'none'}, { createIfNotExists: true });
+            relayHubProxy = await relayServiceProxy.joinHub(hubId, { 'app': 'node', 'userId': 'none'}, { createIfNotExists: true });
             console.log(`Joined-> serviceId:${relayHubProxy.serviceId} stamp:${relayHubProxy.stamp} Participants: ${JSON.stringify(relayHubProxy.participants)}`);
             relayHubProxy.onReceiveData((receivedData): Promise<void> =>  {
                 if (receivedData.type === 'test') {
@@ -202,7 +205,7 @@ function main_relay(hubClient: HubClient, logger: signalR.ILogger, useSignalRHub
             }
         } else if (key === 'm') {
             if (!rpcConnection) {
-                console.log(`mo rpc setup`);
+                console.log(`no rpc setup`);
             } else {
                 const result = await rpcConnection.sendRequest<string>('method1', 10, 'hi from typescript');
                 console.log(`json rpc result:${result}`);

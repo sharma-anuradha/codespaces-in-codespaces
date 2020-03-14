@@ -43,7 +43,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// </summary>
         /// <param name="hubClient">The hub client.</param>
         /// <param name="hubName">Optional name of the hub.</param>
-        /// <param name="useHubArguments">If use hub arguments.</param>
         public HubProxy(HubClient hubClient, string hubName)
         {
             Client = Requires.NotNull(hubClient, nameof(hubClient));

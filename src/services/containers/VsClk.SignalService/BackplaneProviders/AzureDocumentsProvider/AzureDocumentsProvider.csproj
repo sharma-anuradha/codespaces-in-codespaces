@@ -9,11 +9,11 @@
     <ProjectReference Include="..\AzureDocumentsProvider.AspNetCore\AzureDocumentsProvider.AspNetCore.csproj" />
     <ProjectReference Include="..\DocumentDatabaseProvider\DocumentDatabaseProvider.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="$(AzureDocumentDBChangeFeedProcessorPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="$(AzureDocumentDBCorePackageVersion)" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" />
   </ItemGroup>
 
 </Project>

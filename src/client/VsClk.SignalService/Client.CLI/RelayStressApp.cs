@@ -24,10 +24,19 @@ namespace SignalService.Client.CLI
 
         private int sizeInKilobytes = 1000;
         private int chunkBytes = 2048;
+        private int delaySend = 50;
         private bool useSameService = false;
-        private string clientHubServiceUri;
+        private string serviceEndpointUri;
         private string currentHubId;
         private int jsonRpcCount = 1000;
+        private bool traceHubData;
+        private bool useSequenceProxy;
+
+        public RelayStressApp(string serviceEndpointUri, bool traceHubData)
+        {
+            this.serviceEndpointUri = serviceEndpointUri;
+            this.traceHubData = traceHubData;
+        }
 
         protected override Task DiposeAsync()
         {
@@ -40,18 +49,24 @@ namespace SignalService.Client.CLI
             {
                 Utils.ReadIntValue("Enter size in KB:", ref this.sizeInKilobytes);
                 Utils.ReadIntValue("Enter chunk size:", ref this.chunkBytes);
-                Utils.ReadBoolValue("Use same service:", ref this.useSameService);
-                Utils.ReadStringValue("Client Service uri", ref this.clientHubServiceUri);
+                Utils.ReadIntValue("Enter delay time:", ref this.delaySend);
+                if (string.IsNullOrEmpty(this.serviceEndpointUri))
+                {
+                    Utils.ReadBoolValue("Use same service:", ref this.useSameService);
+                }
+
+                Utils.ReadBoolValue("Use sequence proxy:", ref this.useSequenceProxy);
 
                 var hubId = Guid.NewGuid().ToString();
-                var hubEndpointHost = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
+                var hubEndpointHost = await CreateRelayHubEndpointAsync(hubId, CreateHubConnection());
                 RelayHubEndpoint hubEndpointClient = null;
 
                 TraceSource.Info($"Creating client hub...");
                 while (!DisposeToken.IsCancellationRequested)
                 {
-                    var hubEndpoint = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(this.clientHubServiceUri), HubProxyOptions, TraceSource, DisposeToken);
-                    if ((this.useSameService && hubEndpointHost.ServiceId == hubEndpoint.ServiceId) ||
+                    var hubEndpoint = await CreateRelayHubEndpointAsync(hubId, CreateHubConnection(this.serviceEndpointUri));
+                    if (!string.IsNullOrEmpty(this.serviceEndpointUri) ||
+                        (this.useSameService && hubEndpointHost.ServiceId == hubEndpoint.ServiceId) ||
                         (!this.useSameService && hubEndpointHost.ServiceId != hubEndpoint.ServiceId))
                     {
                         hubEndpointClient = hubEndpoint;
@@ -62,8 +77,8 @@ namespace SignalService.Client.CLI
                     await Task.Delay(100, DisposeToken);
                 }
 
-                var receiveDataInfoTask = ReceiveDataAsync(TraceSource, hubEndpointClient, DisposeToken);
-                await SendDataAsync(TraceSource, hubEndpointHost, this.sizeInKilobytes * 1024, this.chunkBytes, 50, DisposeToken);
+                var receiveDataInfoTask = ReceiveDataAsync(TraceSource, hubEndpointClient, this.useSequenceProxy, DisposeToken);
+                await SendDataAsync(TraceSource, hubEndpointHost, this.sizeInKilobytes * 1024, this.chunkBytes, this.delaySend, DisposeToken);
                 await receiveDataInfoTask;
                 TraceSource.Info($"Host -> serviceId:{hubEndpointHost.ServiceId} stamp:{hubEndpointHost.Stamp}");
                 TraceSource.Info($"Client -> serviceId:{hubEndpointClient.ServiceId} stamp:{hubEndpointClient.Stamp}");
@@ -84,8 +99,15 @@ namespace SignalService.Client.CLI
                 Utils.ReadIntValue("Enter size in KB:", ref this.sizeInKilobytes);
                 Utils.ReadIntValue("Enter chunk size:", ref this.chunkBytes);
 
-                var hubEndpoint = await RelayHubEndpoint.CreateAsync(this.currentHubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
-                await SendDataAsync(TraceSource, hubEndpoint, this.sizeInKilobytes * 1024, this.chunkBytes, 50, DisposeToken);
+                var hubEndpoint = await CreateRelayHubEndpointAsync(this.currentHubId, CreateHubConnection());
+                try
+                {
+                    await SendDataAsync(TraceSource, hubEndpoint, this.sizeInKilobytes * 1024, this.chunkBytes, 50, DisposeToken);
+                }
+                finally
+                {
+                    await hubEndpoint.DisposeAsync();
+                }
             }
             else if (key == 'r')
             {
@@ -96,8 +118,15 @@ namespace SignalService.Client.CLI
                     return;
                 }
 
-                var hubEndpoint = await RelayHubEndpoint.CreateAsync(this.currentHubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
-                await ReceiveDataAsync(TraceSource, hubEndpoint, DisposeToken);
+                var hubEndpoint = await CreateRelayHubEndpointAsync(this.currentHubId, CreateHubConnection());
+                try
+                {
+                    await ReceiveDataAsync(TraceSource, hubEndpoint, false, DisposeToken);
+                }
+                finally
+                {
+                    await hubEndpoint.DisposeAsync();
+                }
             }
             else if (key == 'j')
             {
@@ -108,44 +137,68 @@ namespace SignalService.Client.CLI
 
         private static async Task SendDataAsync(TraceSource traceSource, RelayHubEndpoint relayHubEndpoint, long totalSize, int chunkSize, int delayMillisecs, CancellationToken cancellationToken)
         {
-            Func<Action<BinaryWriter>, Task> sendCallback = async (writer) =>
+            int nextSequence = 0;
+
+            Func<Action<BinaryWriter>, Task<int>> sendCallback = async (writer) =>
             {
                 var bufStream = new MemoryStream();
                 var binaryWriter = new BinaryWriter(bufStream);
                 writer(binaryWriter);
-                await relayHubEndpoint.RelayHubProxy.SendDataAsync(SendOption.ExcludeSelf, null, "rawData", bufStream.GetBuffer(), cancellationToken);
+                return await relayHubEndpoint.RelayHubProxy.SendDataAsync(
+                    SendOption.ExcludeSelf,
+                    null,
+                    "rawData",
+                    bufStream.GetBuffer(),
+                    RelayHubMessageProperties.CreateMessageSequence(Interlocked.Increment(ref nextSequence)),
+                    HubMethodOption.Invoke,
+                    cancellationToken);
             };
 
             var totalChunks = totalSize / chunkSize;
 
-            traceSource.Info($"Send header sequence ->{totalChunks}");
-            await sendCallback((writer) => writer.Write(totalChunks));
+            var uniqueId = await sendCallback((writer) => writer.Write(totalChunks));
+            traceSource.Info($"Send header sequence ->{totalChunks} uniqueId:{uniqueId}");
 
             for (int sequence = 0; sequence < totalChunks; ++sequence)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                traceSource.Info($"Sending sequence:{sequence}");
-                await sendCallback((writer) =>
+                uniqueId = await sendCallback((writer) =>
                 {
                     writer.Write(DateTime.UtcNow.Ticks);
                     writer.Write(sequence);
                     writer.Write(new byte[chunkSize]);
                 });
+                traceSource.Info($"Complete send sequence:{sequence} uniqueId:{uniqueId}");
+
                 await Task.Delay(delayMillisecs, cancellationToken);
             }
 
             traceSource.Info($"Send finished -> total size:{totalSize} total chunks:{totalChunks}");
         }
 
-        private static async Task<(DateTime, int)> ReceiveDataAsync(TraceSource traceSource, RelayHubEndpoint relayHubEndpoint, CancellationToken cancellationToken)
+        private static async Task<(DateTime, int)> ReceiveDataAsync(
+            TraceSource traceSource,
+            RelayHubEndpoint relayHubEndpoint,
+            bool useSequenceProxy,
+            CancellationToken cancellationToken)
         {
             long totalTimeTicks = 0;
             int totalChunks = -1;
             int receivedSequence = 0;
             int numOfSequenceFails = 0;
 
-            relayHubEndpoint.RelayHubProxy.ReceiveData += (s, e) =>
+            IRelayDataHubProxy sequenceReceiver;
+            if (useSequenceProxy)
+            {
+                sequenceReceiver = new SequenceRelayDataHubProxy(relayHubEndpoint.RelayHubProxy, (e) => true);
+            }
+            else
+            {
+                sequenceReceiver = relayHubEndpoint.RelayHubProxy;
+            }
+
+            sequenceReceiver.ReceiveData += (s, e) =>
             {
                 var bufStream = new MemoryStream(e.Data);
                 var binaryReader = new BinaryReader(bufStream);
@@ -173,8 +226,9 @@ namespace SignalService.Client.CLI
 
                     var sequenceReceived = binaryReader.ReadInt32();
                     totalTimeTicks += time.Ticks;
-                    traceSource.Info($"Received sequence:{sequenceReceived} expected:{receivedSequence} time:{time.TotalMilliseconds}");
-                    if (receivedSequence != sequenceReceived)
+                    var sequenceFail = receivedSequence != sequenceReceived;
+                    traceSource.Info($"Received sequence:{sequenceReceived} expected:{receivedSequence} time:{time.TotalMilliseconds} {(sequenceFail ? "**" : string.Empty)}");
+                    if (sequenceFail)
                     {
                         ++numOfSequenceFails;
                     }
@@ -188,7 +242,7 @@ namespace SignalService.Client.CLI
                 if (totalChunks != -1 && receivedSequence >= totalChunks)
                 {
                     var totalTime = new DateTime(totalTimeTicks);
-                    traceSource.Info($"Receive finished -> total time:{totalTime.Second}.{totalTime.Millisecond} numOfSequenceFails:{numOfSequenceFails}");
+                    traceSource.Info($"Receive finished -> total time:{totalTime.Second}.{totalTime.Millisecond} numOfSequenceFails:{numOfSequenceFails} numOfEvents:{(useSequenceProxy ? ((SequenceRelayDataHubProxy)sequenceReceiver).TotalEvents : 0)}");
 
                     return (totalTime, numOfSequenceFails);
                 }
@@ -199,11 +253,22 @@ namespace SignalService.Client.CLI
             throw new InvalidOperationException();
         }
 
+        private async Task<RelayHubEndpoint> CreateRelayHubEndpointAsync(string hubId, HubConnection hubConnection)
+        {
+            var hubEndpointHost = await RelayHubEndpoint.CreateAsync(hubId, hubConnection, HubProxyOptions, TraceSource, DisposeToken);
+            if (this.traceHubData)
+            {
+                hubEndpointHost.RelayHubProxy.RelayServiceProxy.TraceHubData = true;
+            }
+
+            return hubEndpointHost;
+        }
+
         private async Task TestJsonRpcPerfAsync(int count)
         {
             var hubId = Guid.NewGuid().ToString();
-            var hubEndpointHost = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
-            var hubEndpointClient = await RelayHubEndpoint.CreateAsync(hubId, CreateHubConnection(), HubProxyOptions, TraceSource, DisposeToken);
+            var hubEndpointHost = await CreateRelayHubEndpointAsync(hubId, CreateHubConnection());
+            var hubEndpointClient = await CreateRelayHubEndpointAsync(hubId, CreateHubConnection(this.serviceEndpointUri));
 
             var hostStream = new RelayHubStream(hubEndpointHost.RelayHubProxy, hubEndpointClient.RelayHubProxy.SelfParticipant.Id, TypeJsonRpc);
             var jsonHostRpc = new JsonRpc(hostStream);

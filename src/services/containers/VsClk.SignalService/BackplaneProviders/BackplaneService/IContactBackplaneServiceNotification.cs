@@ -16,6 +16,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     {
         Task FireOnUpdateContactAsync(ContactDataChanged<ContactDataInfo> contactDataChanged, string[] affectedProperties, CancellationToken cancellationToken);
 
-        Task FireOnSendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken);
+        Task FireOnSendMessageAsync(MessageData messageData, CancellationToken cancellationToken);
     }
 }

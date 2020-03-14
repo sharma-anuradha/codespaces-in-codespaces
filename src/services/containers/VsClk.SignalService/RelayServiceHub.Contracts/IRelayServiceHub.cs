@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -10,10 +11,23 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Options to send data.
     /// </summary>
+    [Flags]
     public enum SendOption
     {
-        None,
-        ExcludeSelf,
+        /// <summary>
+        /// None option.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Indicate to exclude the self participant to notify the data.
+        /// </summary>
+        ExcludeSelf = 1,
+
+        /// <summary>
+        /// Indicate to send serialized data
+        /// </summary>
+        Serialize = 2,
     }
 
     /// <summary>
@@ -29,12 +43,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         Task LeaveHubAsync(string hubId);
 
-        Task SendDataHubAsync(
+        Task<int> SendDataHubAsync(
             string hubId,
             SendOption sendOption,
             string[] targetParticipantIds,
             string type,
-            byte[] data);
+            byte[] data,
+            Dictionary<string, object> messageProperties);
 
         Task UpdateAsync(string hubId, Dictionary<string, object> properties);
     }
@@ -45,7 +60,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     public struct JoinOptions
     {
         /// <summary>
-        /// If create the hub when does not yet exists.
+        /// Gets or sets a value indicating whether create the hub when does not yet exists.
         /// </summary>
         public bool CreateIfNotExists { get; set; }
     }
@@ -86,5 +101,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public string[] TargetParticipantIds { get; set; }
 
         public string Type { get; set; }
+
+        public Dictionary<string, object> MessageProperties { get; set; }
     }
 }

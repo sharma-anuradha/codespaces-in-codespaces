@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "build:pack-publish": "cd signalr-client-proxy && yarn build:pack-publish && cd ../signalr-client && yarn build:pack-publish && cd ../jsonrpc  && yarn build:pack-publish"
+        "build:pack-publish": "cd signalr-client-proxy && yarn build:pack-publish && cd ../signalr-client && yarn build:pack-publish && cd ../ssh  && yarn build:pack-publish && cd ../jsonrpc  && yarn build:pack-publish"
     },
     "devDependencies": {
         "tslint": "^5.13.1",
@@ -13,6 +13,7 @@
     "workspaces": [
         "./signalr-client-proxy",
         "./signalr-client",
+        "./ssh",
         "./jsonrpc",
         "./cli"
     ]

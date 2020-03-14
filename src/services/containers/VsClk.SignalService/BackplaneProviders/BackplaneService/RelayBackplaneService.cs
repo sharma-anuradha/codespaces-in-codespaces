@@ -2,9 +2,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
 using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Common;
@@ -14,20 +17,39 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     /// <summary>
     /// The relay backplane service that will sync local/global relays.
     /// </summary>
-    public class RelayBackplaneService : BackplaneService<IRelayBackplaneManager, IRelayBackplaneServiceNotification>
+    public class RelayBackplaneService : BackplaneService<IRelayBackplaneManager, IRelayBackplaneServiceNotification>, IHostedService
     {
+        private const string HubIdScope = "HubId";
+        private readonly ActionBlock<(Stopwatch, SendRelayDataHub)> sendDataHubActionBlock;
+
         public RelayBackplaneService(
             IEnumerable<IRelayBackplaneServiceNotification> relayBackplaneServiceNotifications,
             ILogger<RelayBackplaneService> logger,
             IRelayBackplaneManager backplaneManager)
             : base(backplaneManager, relayBackplaneServiceNotifications, logger)
         {
+            this.sendDataHubActionBlock = CreateActionBlock<SendRelayDataHub>(
+                nameof(this.sendDataHubActionBlock),
+                (dataChanged) => BackplaneManager.SendDataHubAsync(dataChanged, DisposeToken),
+                1);
             BackplaneManager.ParticipantChangedAsync += OnParticipantChangedAsync;
             BackplaneManager.RelayHubChangedAsync += OnRelayHubChangedAsync;
             BackplaneManager.SendDataChangedAsync += OnSendDataChangedAsync;
         }
 
         private RelayHubManager RelayHubManager { get; } = new RelayHubManager();
+
+        /// <inheritdoc/>
+        public Task RunAsync(CancellationToken stoppingToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public async Task DisposeAsync()
+        {
+            await CompleteActionBlock(this.sendDataHubActionBlock, nameof(this.sendDataHubActionBlock));
+        }
 
         public async Task<Dictionary<string, Dictionary<string, object>>> GetRelayInfoAsync(string hubId, CancellationToken cancellationToken)
         {
@@ -42,30 +64,30 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         public async Task SendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken)
         {
-            using (Logger.BeginMethodScope(nameof(SendDataHubAsync)))
+            using (BeginHubScope(dataChanged.HubId, nameof(SendDataHubAsync)))
             {
-                Logger.LogDebug($"hub id:{dataChanged.HubId} type:{dataChanged.Type}");
+                Log(dataChanged);
             }
 
-            BackplaneManager.TrackDataChanged(dataChanged);
+            TrackDataChanged(dataChanged);
 
             await FireSendDataHubAsync(dataChanged, cancellationToken);
-            await BackplaneManager.SendDataHubAsync(dataChanged, DisposeToken);
+            await this.sendDataHubActionBlock.SendAsync((Stopwatch.StartNew(), dataChanged));
         }
 
         public async Task NotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken)
         {
-            using (Logger.BeginMethodScope(nameof(NotifyParticipantChangedAsync)))
+            using (BeginHubScope(dataChanged.HubId, nameof(NotifyParticipantChangedAsync)))
             {
-                Logger.LogDebug($"hub id:{dataChanged.HubId} participant:{dataChanged.ParticipantId} change:{dataChanged.ChangeType}");
+                Log(dataChanged);
             }
 
-            if (RelayHubManager.NotifyParticipantChangedAsync(dataChanged, out var relayHubInfo))
+            if (RelayHubManager.NotifyParticipantChanged(dataChanged, out var relayHubInfo))
             {
                 await BackplaneManager.UpdateRelayHubInfo(dataChanged.HubId, relayHubInfo, cancellationToken);
             }
 
-            BackplaneManager.TrackDataChanged(dataChanged);
+            TrackDataChanged(dataChanged);
 
             await FireNotifyParticipantChangedAsync(dataChanged, cancellationToken);
             await BackplaneManager.NotifyParticipantChangedAsync(dataChanged, DisposeToken);
@@ -73,25 +95,43 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         public async Task NotifyRelayHubChangedAsync(RelayHubChanged dataChanged, CancellationToken cancellationToken)
         {
-            using (Logger.BeginMethodScope(nameof(NotifyRelayHubChangedAsync)))
+            using (BeginHubScope(dataChanged.HubId, nameof(NotifyRelayHubChangedAsync)))
             {
-                Logger.LogDebug($"hub id:{dataChanged.HubId} change:{dataChanged.ChangeType}");
+                Log(dataChanged);
             }
 
-            RelayHubManager.NotifyRelayHubChangedAsync(dataChanged);
+            RelayHubManager.NotifyRelayHubChanged(dataChanged);
 
-            BackplaneManager.TrackDataChanged(dataChanged);
+            TrackDataChanged(dataChanged);
 
             await FireNotifyRelayHubChangedAsync(dataChanged, cancellationToken);
             await BackplaneManager.NotifyRelayHubChangedAsync(dataChanged, DisposeToken);
         }
 
+        private IDisposable BeginHubScope(string hubId, string method)
+        {
+            return Logger.BeginScope(
+                    (LoggerScopeHelpers.MethodScope, method),
+                    (HubIdScope, hubId));
+        }
+
+        private void Log(SendRelayDataHub dataChanged, string prefix = null)
+        {
+            Logger.LogDebug($"{prefix ?? string.Empty}uniqueId:{dataChanged.UniqueId} type:{dataChanged.Type} from:{dataChanged.FromParticipantId} length:{dataChanged.Data?.Length}");
+        }
+
+        private void Log(RelayParticipantChanged dataChanged, string prefix = null)
+        {
+            Logger.LogDebug($"{prefix ?? string.Empty}participant:{dataChanged.ParticipantId} change:{dataChanged.ChangeType}");
+        }
+
+        private void Log(RelayHubChanged dataChanged, string prefix = null)
+        {
+            Logger.LogDebug($"{prefix ?? string.Empty}change:{dataChanged.ChangeType}");
+        }
+
         private async Task FireSendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken)
         {
-            Logger.LogMethodScope(
-                LogLevel.Debug,
-                $"hubId:{dataChanged.HubId} type:{dataChanged.Type} size:{dataChanged.Data.Length}",
-                nameof(FireSendDataHubAsync));
             foreach (var notify in BackplaneServiceNotifications)
             {
                 await notify.FireSendDataHubAsync(dataChanged, cancellationToken);
@@ -100,10 +140,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         private async Task FireNotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken)
         {
-            Logger.LogMethodScope(
-                LogLevel.Debug,
-                $"hubId:{dataChanged.HubId} participantId:{dataChanged.ParticipantId} change:{dataChanged.ChangeType}",
-                nameof(FireNotifyParticipantChangedAsync));
             foreach (var notify in BackplaneServiceNotifications)
             {
                 await notify.FireNotifyParticipantChangedAsync(dataChanged, cancellationToken);
@@ -112,10 +148,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         private async Task FireNotifyRelayHubChangedAsync(RelayHubChanged dataChanged, CancellationToken cancellationToken)
         {
-            Logger.LogMethodScope(
-                LogLevel.Debug,
-                $"hubId:{dataChanged.HubId} change:{dataChanged.ChangeType}",
-                nameof(FireNotifyRelayHubChangedAsync));
             foreach (var notify in BackplaneServiceNotifications)
             {
                 await notify.FireNotifyRelayHubChangedAsync(dataChanged, cancellationToken);
@@ -126,9 +158,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             SendRelayDataHub dataChanged,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginMethodScope(nameof(OnSendDataChangedAsync)))
+            using (BeginHubScope(dataChanged.HubId, nameof(OnSendDataChangedAsync)))
             {
-                Logger.LogDebug($"hub id:{dataChanged.HubId} type:{dataChanged.Type} size:{dataChanged.Data.Length}");
+                Log(dataChanged, $"serviceId:{dataChanged.ServiceId}->");
             }
 
             if (RelayHubManager.ContainsHub(dataChanged.HubId))
@@ -141,14 +173,14 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             RelayHubChanged dataChanged,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginMethodScope(nameof(OnRelayHubChangedAsync)))
+            using (BeginHubScope(dataChanged.HubId, nameof(OnRelayHubChangedAsync)))
             {
-                Logger.LogDebug($"hub id:{dataChanged.HubId} change type:{dataChanged.ChangeType} ");
+                Log(dataChanged, $"serviceId:{dataChanged.ServiceId}->");
             }
 
             if (RelayHubManager.ContainsHub(dataChanged.HubId))
             {
-                RelayHubManager.NotifyRelayHubChangedAsync(dataChanged);
+                RelayHubManager.NotifyRelayHubChanged(dataChanged);
                 await FireNotifyRelayHubChangedAsync(dataChanged, cancellationToken);
             }
         }
@@ -157,12 +189,12 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             RelayParticipantChanged dataChanged,
             CancellationToken cancellationToken)
         {
-            using (Logger.BeginMethodScope(nameof(OnParticipantChangedAsync)))
+            using (BeginHubScope(dataChanged.HubId, nameof(OnParticipantChangedAsync)))
             {
-                Logger.LogDebug($"hubid:{dataChanged.HubId} participant id:{dataChanged.ParticipantId} change type:{dataChanged.ChangeType} ");
+                Log(dataChanged, $"serviceId:{dataChanged.ServiceId}->");
             }
 
-            if (RelayHubManager.NotifyParticipantChangedAsync(dataChanged, out var relayHubInfo))
+            if (RelayHubManager.NotifyParticipantChanged(dataChanged, out var relayHubInfo))
             {
                 await FireNotifyParticipantChangedAsync(dataChanged, cancellationToken);
             }

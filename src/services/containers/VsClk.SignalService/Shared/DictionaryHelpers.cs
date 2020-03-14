@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         {
             if (properties == null)
             {
-                return null;
+                return "(null)";
             }
 
             return string.Join("|", properties.Select(i => $"{i.Key}={FormatValue(provider, i.Key, i.Value)}"));
@@ -52,10 +52,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             {
                 if (!(value is IConvertible))
                 {
-                    throw new InvalidCastException($"Failed to cast value for property:{propertyName} and type:{value.GetType().FullName}");
+                    value = value.ToString();
                 }
 
-                return (T)Convert.ChangeType(value, typeof(T));
+                try
+                {
+                    return (T)Convert.ChangeType(value, typeof(T));
+                }
+                catch
+                {
+                    throw new InvalidCastException($"Failed to cast value for property:{propertyName} and type:{value.GetType().FullName}");
+                }
             }
 
             return defaultValue;

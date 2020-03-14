@@ -19,12 +19,13 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         private ConcurrentDictionary<string, Dictionary<string, object>> participants = new ConcurrentDictionary<string, Dictionary<string, object>>();
         private ConcurrentDictionary<string, Dictionary<string, object>> otherParticipants = new ConcurrentDictionary<string, Dictionary<string, object>>();
-        private ConcurrentDictionary<string, int> typeUniqueId = new ConcurrentDictionary<string, int>();
+        private ConcurrentDictionary<string, RelayHubType> typeRelayHub = new ConcurrentDictionary<string, RelayHubType>();
 
-        public RelayHub(RelayService service, string hubId)
+        public RelayHub(RelayService service, string hubId, bool isBackplaneHub)
         {
             Service = Requires.NotNull(service, nameof(service));
             Id = hubId;
+            IsBackplaneHub = isBackplaneHub;
         }
 
         public string Id { get; }
@@ -38,6 +39,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             }
         }
+
+        internal bool IsBackplaneHub { get; }
 
         internal string GroupName => $"{Service.ServiceId}.{Id}";
 
@@ -84,22 +87,24 @@ namespace Microsoft.VsCloudKernel.SignalService
             return NotifyParticipantChangedAsync(participantId, properties, ParticipantChangeType.Updated, cancellationToken);
         }
 
-        public Task SendDataAsync(
+        public async Task<int> SendDataAsync(
             string fromParticipantId,
+            int? messageUniqueId,
             SendOption sendOption,
             string[] targetParticipantIds,
             string type,
             byte[] data,
+            Dictionary<string, object> messageProperties,
             CancellationToken cancellationToken)
         {
-            var uniqueId = this.typeUniqueId.AddOrUpdate(
+            var relayHubType = this.typeRelayHub.GetOrAdd(
                 type,
-                0,
-                (k, v) =>
+                (type) =>
                 {
-                    ++v;
-                    return v;
+                    return new RelayHubType();
                 });
+
+            var uniqueId = messageUniqueId.HasValue ? messageUniqueId.Value : relayHubType.NextUniquId();
 
             Func<IEnumerable<IClientProxy>, Task> sendTaskCallback = (clients) => Task.WhenAll(clients.Select(proxy => proxy.SendAsync(
                    RelayHubMethods.MethodReceiveData,
@@ -108,15 +113,33 @@ namespace Microsoft.VsCloudKernel.SignalService
                    uniqueId,
                    type,
                    data,
+                   messageProperties,
                    cancellationToken)));
 
-            if (targetParticipantIds == null)
+            try
             {
-                return sendTaskCallback(sendOption == SendOption.ExcludeSelf ? AllExcept(fromParticipantId) : All());
+                if (sendOption.HasFlag(SendOption.Serialize))
+                {
+                    await relayHubType.WaitAsync(cancellationToken);
+                }
+
+                if (targetParticipantIds == null)
+                {
+                    await sendTaskCallback(sendOption.HasFlag(SendOption.ExcludeSelf) ? AllExcept(fromParticipantId) : All());
+                }
+                else
+                {
+                    await sendTaskCallback(All(targetParticipantIds));
+                }
+
+                return uniqueId;
             }
-            else
+            finally
             {
-                return sendTaskCallback(All(targetParticipantIds));
+                if (sendOption.HasFlag(SendOption.Serialize))
+                {
+                    relayHubType.Release();
+                }
             }
         }
 
@@ -181,6 +204,27 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             var excludedConnectionIds = this.participants.Keys.Except(connectionIds).ToArray();
             return Service.AllExcept(GroupName, excludedConnectionIds);
+        }
+
+        private class RelayHubType
+        {
+            private int uniqueId;
+            private SemaphoreSlim semaphore = new SemaphoreSlim(1);
+
+            public int NextUniquId()
+            {
+                return Interlocked.Increment(ref this.uniqueId);
+            }
+
+            public Task WaitAsync(CancellationToken cancellationToken)
+            {
+                return this.semaphore.WaitAsync(cancellationToken);
+            }
+
+            public void Release()
+            {
+                this.semaphore.Release();
+            }
         }
     }
 }

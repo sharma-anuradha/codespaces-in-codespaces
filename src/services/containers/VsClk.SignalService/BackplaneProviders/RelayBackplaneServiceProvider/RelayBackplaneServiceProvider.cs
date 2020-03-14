@@ -62,7 +62,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public async Task SendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
-            await BackplaneConnectorProvider.SendAsync(nameof(SendDataHubAsync), new object[] { dataChanged }, cancellationToken);
+            await BackplaneConnectorProvider.InvokeAsync<object>(nameof(SendDataHubAsync), new object[] { dataChanged }, cancellationToken);
         }
 
         /// <inheritdoc/>

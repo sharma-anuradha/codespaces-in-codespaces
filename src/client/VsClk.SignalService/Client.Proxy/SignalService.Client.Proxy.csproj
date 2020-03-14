@@ -34,6 +34,8 @@
 
     <Compile Include="$(ServiceRoot)\Common\IDataFormatProvider.cs" />
     <Compile Include="$(ServiceRoot)\Common.AspNetCore\FormatHelpers.cs" />
+    <Compile Include="$(ServiceRoot)\Common\NewtonsoftHelpers.cs" />
+
     <Compile Include="$(ServiceRoot)\Shared\DictionaryHelpers.cs" Link="Shared\DictionaryHelpers.cs" />
     <Compile Include="..\..\Shared\TraceSourceExtensions.cs" Link="Shared\TraceSourceExtensions.cs" />
   </ItemGroup>

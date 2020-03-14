@@ -252,7 +252,8 @@ namespace SignalService.Client.CLI
 
                 var jsonPayload = JsonConvert.SerializeObject(this.messagePayload);
                 Utils.ReadStringValue("Enter payload to send", ref jsonPayload);
-                this.messagePayload = JsonConvert.DeserializeObject(jsonPayload);
+                var payload = JsonConvert.DeserializeObject(jsonPayload);
+                this.messagePayload = NewtonsoftHelpers.ToRawObject(payload);
 
                 await this.presenceServiceProxy.SendMessageAsync(new ContactReference(this.targetContactId, null), TextMessageType, this.messagePayload, default);
             }

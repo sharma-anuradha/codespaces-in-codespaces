@@ -46,13 +46,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         public async Task SendMessageAsync(
-            string serviceId,
             MessageData messageData,
             CancellationToken cancellationToken)
         {
             await DisposeExpiredDataChangesAsync(100, cancellationToken);
             await WaitAll(
-                GetSupportedProviders(s => s.SendMessage).Select(p => (p.SendMessageAsync(serviceId, messageData, cancellationToken), p)),
+                GetSupportedProviders(s => s.SendMessage).Select(p => (p.SendMessageAsync(messageData, cancellationToken), p)),
                 nameof(IContactBackplaneProvider.SendMessageAsync),
                 $"from:{ToTraceText(messageData.FromContact.Id)} to:{ToTraceText(messageData.TargetContact.Id)}");
         }
@@ -94,7 +93,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected override void OnRegisterProvider(IContactBackplaneProvider backplaneProvider)
         {
             backplaneProvider.ContactChangedAsync = (contactDataChanged, affectedProperties, ct) => OnContactChangedAsync(backplaneProvider, contactDataChanged, affectedProperties, ct);
-            backplaneProvider.MessageReceivedAsync = (sourceId, messageData, ct) => OnMessageReceivedAsync(backplaneProvider, sourceId, messageData, ct);
+            backplaneProvider.MessageReceivedAsync = (messageData, ct) => OnMessageReceivedAsync(backplaneProvider, messageData, ct);
         }
 
         protected override void AddMetricsScope(List<(string, object)> metricsScope, ContactServiceMetrics metrics)
@@ -129,7 +128,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private async Task OnMessageReceivedAsync(
             IContactBackplaneProvider backplaneProvider,
-            string sourceId,
             MessageData messageData,
             CancellationToken cancellationToken)
         {
@@ -141,7 +139,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var stopWatch = Stopwatch.StartNew();
             if (MessageReceivedAsync != null)
             {
-                await MessageReceivedAsync.Invoke(sourceId, messageData, cancellationToken);
+                await MessageReceivedAsync.Invoke(messageData, cancellationToken);
             }
 
             Logger.LogScope(

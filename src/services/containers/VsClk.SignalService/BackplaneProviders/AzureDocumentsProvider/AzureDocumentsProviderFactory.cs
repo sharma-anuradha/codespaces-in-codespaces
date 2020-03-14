@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Factory class for our AzureDocumentsProvider type
+    /// Factory class for our AzureDocumentsProvider type.
     /// </summary>
     public class AzureDocumentsProviderFactory : IAzureDocumentsProviderServiceFactory
     {
@@ -27,6 +27,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.formatProvider = formatProvider;
         }
 
+        /// <inheritdoc/>
         public async Task CreateAsync((string ServiceId, string Stamp) serviceInfo, DatabaseSettings databaseSettings, CancellationToken cancellationToken)
         {
             var backplaneProvider = await AzureDocumentsProvider.CreateAsync(

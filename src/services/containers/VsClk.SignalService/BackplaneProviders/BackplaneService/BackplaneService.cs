@@ -4,8 +4,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
@@ -13,9 +17,10 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     /// <summary>
     /// Backplane service base class.
     /// </summary>
-    /// <typeparam name="TNotify">The notification type</typeparam>
+    /// <typeparam name="TBackplaneManagerType">The backplane manager type.</typeparam>
+    /// <typeparam name="TNotify">The notification type.</typeparam>
     public class BackplaneService<TBackplaneManagerType, TNotify>
-        where TBackplaneManagerType : class
+        where TBackplaneManagerType : class, IBackplaneManagerBase
     {
         private readonly CancellationTokenSource disposeTokenSource = new CancellationTokenSource();
         private readonly List<TNotify> backplaneServiceNotifications = new List<TNotify>();
@@ -52,6 +57,47 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         {
             Interlocked.Decrement(ref this.numOfConnections);
             Logger.LogMethodScope(LogLevel.Error, exception, $"OnDisconnectedAsync -> serviceId:{serviceId} numOfConnections:{this.numOfConnections}", nameof(OnDisconnected));
+        }
+
+        protected bool TrackDataChanged(DataChanged dataChanged)
+        {
+            return BackplaneManager.TrackDataChanged(dataChanged);
+        }
+
+        protected ActionBlock<(Stopwatch, T)> CreateActionBlock<T>(
+            string name,
+            Func<T, Task> callbackItem,
+            int? maxDegreeOfParallelism)
+            where T : DataChanged
+        {
+            var blockOptions = new ExecutionDataflowBlockOptions();
+            if (maxDegreeOfParallelism.HasValue)
+            {
+                blockOptions.MaxDegreeOfParallelism = maxDegreeOfParallelism.Value;
+            }
+
+            ActionBlock<(Stopwatch, T)> actionBlock = null;
+            actionBlock = new ActionBlock<(Stopwatch, T)>(
+                async (item) =>
+                {
+                    try
+                    {
+                        await callbackItem(item.Item2);
+                        Logger.LogMethodScope(LogLevel.Debug, $"input count:{actionBlock.InputCount}", name, item.Item1.ElapsedMilliseconds);
+                    }
+                    catch (Exception error)
+                    {
+                        Logger.LogWarning(error, $"Failed to process change id:{item.Item2.ChangeId} block:{name}");
+                    }
+                }, blockOptions);
+            return actionBlock;
+        }
+
+        protected Task CompleteActionBlock<T>(ActionBlock<T> actionBlock, string name)
+        {
+            Logger.LogDebug($"CompleteActionBlock for:{name} input count:{actionBlock.InputCount}");
+            actionBlock.Complete();
+            return actionBlock.Completion;
         }
     }
 }

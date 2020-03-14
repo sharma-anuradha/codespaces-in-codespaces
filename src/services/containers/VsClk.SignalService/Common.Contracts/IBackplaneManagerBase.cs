@@ -24,6 +24,13 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task DisposeAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Start tracking a data change that later will be purged.
+        /// </summary>
+        /// <param name="dataChanged">The data change being tracked.</param>
+        /// <returns>True if this data changed is already known.</returns>
+        bool TrackDataChanged(DataChanged dataChanged);
     }
 
     public interface IBackplaneManagerBase<TBackplaneProvider, TBackplaneProviderSupportLevel, TServiceMetrics> : IBackplaneManagerBase
@@ -59,12 +66,5 @@ namespace Microsoft.VsCloudKernel.SignalService
             (string ServiceId, string Stamp) serviceInfo,
             TServiceMetrics metrics,
             CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Start tracking a data change that later will be purged.
-        /// </summary>
-        /// <param name="dataChanged"></param>
-        /// <returns></returns>
-        bool TrackDataChanged(DataChanged dataChanged);
     }
 }

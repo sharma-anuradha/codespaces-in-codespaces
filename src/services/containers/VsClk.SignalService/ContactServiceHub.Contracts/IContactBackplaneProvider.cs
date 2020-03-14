@@ -62,17 +62,24 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         public MessageData(
             string changeId,
+            string serviceId,
             ContactReference fromContact,
             ContactReference targetContact,
             string type,
             object body)
             : base(changeId)
         {
+            ServiceId = serviceId;
             FromContact = fromContact;
             TargetContact = targetContact;
             Type = type;
             Body = body;
         }
+
+        /// <summary>
+        /// Gets the service identifier who originate the change.
+        /// </summary>
+        public string ServiceId { get; }
 
         /// <summary>
         /// The contact who want to send the message.
@@ -140,28 +147,25 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Invoked when a message was send from a remote service
     /// </summary>
-    /// <param name="sourceId">Id of the source who generate the notification</param>
     /// <param name="messageData">The message data entity</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public delegate Task OnMessageReceivedAsync(
-        string sourceId,
         MessageData messageData,
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Contacts backplane provider base
+    /// Contacts backplane provider base.
     /// </summary>
     public interface IContactBackplaneProviderBase : IContactBackplaneDataProvider
     {
         /// <summary>
-        /// Send a message using the backplane provider
+        /// Send a message using the backplane provider.
         /// </summary>
-        /// <param name="sourceId">Id of the source who need to send the message</param>
-        /// <param name="messageData">The message data entity</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken);
+        /// <param name="messageData">The message data entity.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Task completion.</returns>
+        Task SendMessageAsync(MessageData messageData, CancellationToken cancellationToken);
     }
 
     /// <summary>

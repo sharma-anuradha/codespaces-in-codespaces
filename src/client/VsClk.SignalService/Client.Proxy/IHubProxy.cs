@@ -9,6 +9,22 @@ using System.Threading.Tasks;
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
     /// <summary>
+    /// Hub method options.
+    /// </summary>
+    public enum HubMethodOption
+    {
+        /// <summary>
+        /// Use send.
+        /// </summary>
+        Send,
+
+        /// <summary>
+        /// Use invoke.
+        /// </summary>
+        Invoke,
+    }
+
+    /// <summary>
     /// Definition of a hub proxy.
     /// </summary>
     public interface IHubProxy : IHubProxyConnection

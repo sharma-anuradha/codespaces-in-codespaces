@@ -542,9 +542,9 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 return Task.FromResult<ContactDataInfo>(null);
             }
 
-            public async Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
+            public async Task SendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
             {
-                await Task.WhenAll(this.messageReceivedAsyncs.Select(c => c.Invoke(sourceId, messageData, cancellationToken)));
+                await Task.WhenAll(this.messageReceivedAsyncs.Select(c => c.Invoke(messageData, cancellationToken)));
             }
 
             public async Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)

@@ -18,7 +18,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Base class to all our backplane providers that are based on a document database
     /// </summary>
-    public abstract class DocumentDatabaseProvider : VisualStudio.Threading.IAsyncDisposable, IContactBackplaneProvider
+    public abstract class DocumentDatabaseProvider : IAsyncDisposable, IContactBackplaneProvider
     {
         // Logger method scopes
         private const string MethodLoadActiveServices = "DocumentDatabaseProvider.LoadActiveServices";
@@ -39,7 +39,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected ILogger Logger { get; }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             Logger.LogDebug($"DocumentDatabaseProvider.Dispose");
 
@@ -96,7 +96,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return contactDataCoument != null ? ToContactData(contactDataCoument) : null;
         }
 
-        public async Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
         {
             var messageDocument = new MessageDocument()
             {
@@ -106,7 +106,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 TargetConnectionId = messageData.TargetContact.ConnectionId,
                 Type = messageData.Type,
                 Body = messageData.Body,
-                SourceId = sourceId,
+                SourceId = messageData.ServiceId,
                 LastUpdate = DateTime.UtcNow,
             };
 
@@ -233,13 +233,13 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         var messageDoc = await doc.ReadAsAsync<MessageDocument>();
                         await MessageReceivedAsync(
-                            messageDoc.SourceId,
                             new MessageData(
-                            messageDoc.Id,
-                            new ContactReference(messageDoc.ContactId, null),
-                            new ContactReference(messageDoc.TargetContactId, messageDoc.TargetConnectionId),
-                            messageDoc.Type,
-                            NewtonsoftHelpers.ToRawObject(messageDoc.Body)),
+                                messageDoc.Id,
+                                messageDoc.SourceId,
+                                new ContactReference(messageDoc.ContactId, null),
+                                new ContactReference(messageDoc.TargetContactId, messageDoc.TargetConnectionId),
+                                messageDoc.Type,
+                                NewtonsoftHelpers.ToRawObject(messageDoc.Body)),
                             default(CancellationToken));
                     }
                     catch (Exception error)

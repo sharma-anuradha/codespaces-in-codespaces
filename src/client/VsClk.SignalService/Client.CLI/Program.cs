@@ -111,7 +111,13 @@ namespace SignalService.Client.CLI
 
             cli.Command("run-relay-stress", app =>
             {
-                app.OnExecute(() => new RelayStressApp().RunAsync(cli));
+                var serviceEndpoint = cli.Option(
+                    "--serviceEndpoint",
+                    "An optional service endpoint to use",
+                    CommandOptionType.SingleValue);
+
+                var tracehubDataOption = cli.CreateTraceHubDataOption();
+                app.OnExecute(() => new RelayStressApp(serviceEndpoint.HasValue() ? serviceEndpoint.Value() : null, tracehubDataOption.HasValue()).RunAsync(cli));
             });
             try
             {
@@ -133,6 +139,14 @@ namespace SignalService.Client.CLI
                 Console.Error.WriteLine(ex);
                 return 2;
             }
+        }
+
+        private CommandOption CreateTraceHubDataOption()
+        {
+            return Option(
+                "--traceHubData",
+                "If trace hub data is enabled",
+                CommandOptionType.NoValue);
         }
     }
 }

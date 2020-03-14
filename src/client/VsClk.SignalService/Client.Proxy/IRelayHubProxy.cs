@@ -6,20 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Threading;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
     /// <summary>
     /// A relay hub proxy.
     /// </summary>
-    public interface IRelayHubProxy : VisualStudio.Threading.IAsyncDisposable
+    public interface IRelayHubProxy : IRelayDataHubProxy, VisualStudio.Threading.IAsyncDisposable
     {
-        /// <summary>
-        /// When data is recieved.
-        /// </summary>
-        event EventHandler<ReceiveDataEventArgs> ReceiveData;
-
         /// <summary>
         /// When participants changed.
         /// </summary>
@@ -72,13 +66,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="targetParticipantIds">Which target participants to send.</param>
         /// <param name="type">Type of data.</param>
         /// <param name="data">Raw data to send.</param>
+        /// <param name="messageProperties">Optional message properties.</param>
+        /// <param name="methodOption">Method option to use.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Task completion.</returns>
-        Task SendDataAsync(
+        Task<int> SendDataAsync(
             SendOption sendOption,
             string[] targetParticipantIds,
             string type,
             byte[] data,
+            Dictionary<string, object> messageProperties,
+            HubMethodOption methodOption,
             CancellationToken cancellationToken);
 
         /// <summary>

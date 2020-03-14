@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Common;
 using StreamJsonRpc;
 
@@ -19,7 +20,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     /// <typeparam name="TNotify">The notify type.</typeparam>
     public abstract class JsonRpcSessionFactory<T, TBackplaneManagerType, TNotify> : IJsonRpcSessionFactory
         where T : BackplaneService<TBackplaneManagerType, TNotify>
-        where TBackplaneManagerType : class
+        where TBackplaneManagerType : class, IBackplaneManagerBase
         where TNotify : class
     {
         private readonly ConcurrentHashSet<JsonRpc> rpcSessions = new ConcurrentHashSet<JsonRpc>();
@@ -58,13 +59,19 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             };
         }
 
-        protected async Task NotifyAll(string targetName, params object[] arguments)
+        /// <summary>
+        /// Invoke all the connected rpc sessions.
+        /// </summary>
+        /// <param name="targetName">The remote target name to invoke.</param>
+        /// <param name="arguments">Arguments expected on the remote rpc host side.</param>
+        /// <returns>Task completion.</returns>
+        protected async Task InvokeAll(string targetName, params object[] arguments)
         {
             foreach (var jsonRpc in this.rpcSessions.Values)
             {
                 try
                 {
-                    await jsonRpc.NotifyAsync(targetName, arguments);
+                    await jsonRpc.InvokeAsync(targetName, arguments);
                 }
                 catch (Exception err)
                 {

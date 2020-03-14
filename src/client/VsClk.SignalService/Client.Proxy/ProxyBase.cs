@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
@@ -50,6 +51,72 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }
 
             this.onHubHandlers.Clear();
+        }
+
+        /// <summary>
+        /// Attempt to cast an expected dictionary from the underlying hub proxy.
+        /// </summary>
+        /// <param name="argument">The raw argument.</param>
+        /// <returns>A dictionary of type (string, object).</returns>
+        protected static Dictionary<string, object> ToProxyDictionary(object argument)
+        {
+            if (argument == null)
+            {
+                return null;
+            }
+
+            if (argument.GetType() == typeof(Dictionary<string, object>))
+            {
+                return (Dictionary<string, object>)argument;
+            }
+            else if (argument.GetType() == typeof(Dictionary<object, object>))
+            {
+                return ((Dictionary<object, object>)argument).ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value);
+            }
+
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Attempt to convert an argument to an enum.
+        /// </summary>
+        /// <typeparam name="T">Type of enum to convert</typeparam>
+        /// <param name="argument">The raw argument.</param>
+        /// <returns>The enum type we expect.</returns>
+        protected static T ToProxyEnum<T>(object argument)
+            where T : struct
+        {
+            if (argument.GetType() == typeof(T))
+            {
+                return (T)argument;
+            }
+            else
+            {
+                if (Enum.TryParse<T>(argument.ToString(), out var value))
+                {
+                    return value;
+                }
+
+                throw new InvalidCastException();
+            }
+        }
+
+        /// <summary>
+        /// Convert the argument to an expected type.
+        /// </summary>
+        /// <typeparam name="T">Type we expect.</typeparam>
+        /// <param name="argument">The raw argument.</param>
+        /// <returns>The type we expected.</returns>
+        protected static T ToProxyType<T>(object argument)
+        {
+            if (argument.GetType() == typeof(T))
+            {
+                return (T)argument;
+            }
+            else
+            {
+                return (T)Convert.ChangeType(argument, typeof(T));
+            }
         }
 
         /// <summary>

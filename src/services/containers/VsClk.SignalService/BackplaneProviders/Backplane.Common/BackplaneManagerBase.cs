@@ -92,7 +92,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
             await DisposeDataChangesAsync(allDataChanges, cancellationToken);
 
             // attempt to dispose all providers
-            foreach (var disposable in BackplaneProviders.OfType<VisualStudio.Threading.IAsyncDisposable>())
+            foreach (var disposable in BackplaneProviders.OfType<IAsyncDisposable>())
             {
                 await disposable.DisposeAsync();
             }

@@ -48,7 +48,7 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
 
             conn1Proxy.Clear();
             conn2Proxy.Clear();
-            await relayService1.SendDataHubAsync("conn1", hubId, SendOption.None, null, "type1", Encoding.UTF8.GetBytes("hi"), default);
+            await relayService1.SendDataHubAsync("conn1", hubId, SendOption.None, null, "type1", Encoding.UTF8.GetBytes("hi"), null, default);
 
             AssertDataReceived(conn1Proxy, hubId, "conn1");
             AssertDataReceived(conn2Proxy, hubId, "conn1");
@@ -110,7 +110,7 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
             var args = connProxy[RelayHubMethods.MethodReceiveData];
             Assert.Equal(hubId, args[0]);
             Assert.Equal(participantId, args[1]);
-            Assert.Equal(0, args[2]);
+            Assert.Equal(1, args[2]);
             Assert.Equal("type1", args[3]);
             Assert.Equal("hi", Encoding.UTF8.GetString((byte[])args[4]));
         }

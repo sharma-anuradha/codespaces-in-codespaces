@@ -1,5 +1,6 @@
 import { IServiceProxyBase } from './IServiceProxyBase';
 import { IDisposable } from './IDisposable';
+import { HubMethodOption } from './IHubProxy';
 
 export interface IRelayHubParticipant {
     readonly id: string;
@@ -11,6 +12,7 @@ export interface IReceivedData {
     readonly uniqueId: number;
     readonly type: string;
     readonly data: Uint8Array;
+    readonly properties: { [key: string]: any; };
 }
 
 export enum ParticipantChangeType {
@@ -30,7 +32,11 @@ export interface IParticipantChanged {
     readonly changeType: ParticipantChangeType;
 }
 
-export interface IRelayHubProxy {
+export interface IRelayDataHubProxy {
+    onReceiveData(callback: (receivedData: IReceivedData) => Promise<void>): IDisposable;
+}
+
+export interface IRelayHubProxy extends IRelayDataHubProxy {
     readonly serviceId: string;
     readonly stamp: string;
     readonly id: string;
@@ -38,12 +44,11 @@ export interface IRelayHubProxy {
     readonly participants: IRelayHubParticipant[];
     readonly relayServiceProxy: IRelayServiceProxy;
 
-    onReceiveData(callback: (receivedData: IReceivedData) => Promise<void>): IDisposable;
     onParticipantChanged(callback: (participantChanged: IParticipantChanged) => Promise<void>): IDisposable;
     onDeleted(callback: () => Promise<void>): IDisposable;
     onDisconnected(callback: () => Promise<void>): IDisposable;
 
-    sendData(sendOption: SendOption, targetParticipants: string[] | null, type: string, data: Uint8Array): Promise<void>;
+    sendData(sendOption: SendOption, targetParticipants: string[] | null, type: string, data: Uint8Array, properties?: { [key: string]: any; }, methodOption?: HubMethodOption): Promise<number>;
     rejoin(joinOptions?: JoinOptions): Promise<void>;
     dispose(): Promise<void>;
 }
@@ -57,9 +62,11 @@ export interface SendHubData {
     readonly sendOption: number;
     readonly targetParticipantIds?: string[] | null;
     readonly type: string;
+    readonly messageProperties?: { [key: string]: any; };
 }
 
 export interface IRelayServiceProxy extends IServiceProxyBase {
+    traceHubData: boolean;
     createHub(hubId?: string): Promise<string>;
     joinHub(hubId: string, properties: { [key: string]: any; }, joinOptions: JoinOptions): Promise<IRelayHubProxy>;
     deleteHub(hubId: string): Promise<void>;

@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// The non Hub Service class instance that manage all the relay hubs.
     /// </summary>
-    public class RelayService : HubService<RelayServiceHub, HubServiceOptions>
+    public class RelayService : HubService<RelayServiceHub, HubServiceOptions>, IAsyncDisposable
     {
         private const string HubIdScope = "HubId";
         private const string ConnectionScope = "Connection";
@@ -48,6 +48,17 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private IEnumerable<IGroupManager> AllGroups => HubContextHosts.Select(hCtxt => hCtxt.Groups);
 
+        /// <inheritdoc/>
+        public async ValueTask DisposeAsync()
+        {
+            Logger.LogDebug($"DisposeAsync");
+            foreach (var relayHub in this.relayHubs.Values.Where(r => !r.IsBackplaneHub))
+            {
+                Logger.LogDebug($"Remove hub id:{relayHub.Id}");
+                await NotifyHubChangedAsync(relayHub.Id, RelayHubChangeType.Removed, default);
+            }
+        }
+
         public RelayServiceMetrics GetMetrics()
         {
             return new RelayServiceMetrics(relayHubs.Count);
@@ -69,7 +80,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 throw new HubException($"Relay hub id:{hubId} already exist");
             }
 
-            await GetOrCreateRelayHubAsync(hubId, true);
+            await GetOrCreateRelayHubAsync(hubId, cancellationToken, true);
 
             return hubId;
         }
@@ -105,7 +116,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Logger.LogDebug($"properties:{properties.ConvertToString(FormatProvider)}");
             }
 
-            var relayHub = await GetOrCreateRelayHubAsync(hubId, joinOptions.CreateIfNotExists);
+            var relayHub = await GetOrCreateRelayHubAsync(hubId, cancellationToken, joinOptions.CreateIfNotExists);
             this.connectionHubs.AddOrUpdate(connectionId, (hubs) => hubs.Add(relayHub));
             await Task.WhenAll(AllGroups.Select(g => g.AddToGroupAsync(connectionId, relayHub.GroupName, cancellationToken)));
             var result = await relayHub.JoinAsync(connectionId, properties, cancellationToken);
@@ -126,34 +137,33 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Logger.LogDebug("Leaving from API");
             }
 
-            var relayHub = await GetOrCreateRelayHubAsync(hubId);
+            var relayHub = await GetOrCreateRelayHubAsync(hubId, cancellationToken);
             this.connectionHubs.AddOrUpdate(connectionId, (hubs) => hubs.TryRemove(relayHub));
 
             await LeaveHubAsync(relayHub, connectionId, cancellationToken);
         }
 
-        public async Task SendDataHubAsync(
+        public async Task<int> SendDataHubAsync(
             string connectionId,
             string hubId,
             SendOption sendOption,
             string[] targetParticipantIds,
             string type,
             byte[] data,
+            Dictionary<string, object> messageProperties,
             CancellationToken cancellationToken)
         {
             Requires.NotNullOrEmpty(connectionId, nameof(connectionId));
             Requires.NotNullOrEmpty(hubId, nameof(hubId));
             Requires.NotNullOrEmpty(type, nameof(type));
-            Requires.NotNull(data, nameof(data));
 
+            var relayHub = await GetOrCreateRelayHubAsync(hubId, cancellationToken);
+            var uniqueId = await relayHub.SendDataAsync(connectionId, null, sendOption, targetParticipantIds, type, data, messageProperties, cancellationToken);
             using (BeginHubScope(RelayServiceScopes.MethodSendDataHub, hubId, connectionId))
             {
                 var targetParticipantIdsStr = targetParticipantIds != null ? string.Join(",", targetParticipantIds) : "*";
-                Logger.LogDebug($"sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data?.Length}");
+                Logger.LogDebug($"uniqueId:{uniqueId} sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data?.Length} messageProperties:{messageProperties?.ConvertToString(FormatProvider)}");
             }
-
-            var relayHub = await GetOrCreateRelayHubAsync(hubId);
-            await relayHub.SendDataAsync(connectionId, sendOption, targetParticipantIds, type, data, cancellationToken);
 
             if (BackplaneManager != null)
             {
@@ -161,13 +171,17 @@ namespace Microsoft.VsCloudKernel.SignalService
                     Guid.NewGuid().ToString(),
                     ServiceId,
                     hubId,
+                    uniqueId,
                     sendOption,
                     connectionId,
                     targetParticipantIds,
                     type,
-                    data);
+                    data,
+                    messageProperties);
                 await BackplaneManager.SendDataHubAsync(relayDataHub, cancellationToken);
             }
+
+            return uniqueId;
         }
 
         public async Task UpdateAsync(string connectionId, string hubId, Dictionary<string, object> properties, CancellationToken cancellationToken)
@@ -180,7 +194,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Logger.LogDebug($"properties:{properties.ConvertToString(FormatProvider)}");
             }
 
-            var relayHub = await GetOrCreateRelayHubAsync(hubId);
+            var relayHub = await GetOrCreateRelayHubAsync(hubId, cancellationToken);
             await relayHub.UpdateAsync(connectionId, properties, cancellationToken);
 
             // backplane support
@@ -211,6 +225,13 @@ namespace Microsoft.VsCloudKernel.SignalService
                     (LoggerScopeHelpers.MethodScope, method),
                     (HubIdScope, hubId),
                     (ConnectionScope, connectionId));
+        }
+
+        private IDisposable BeginHubScope(string method, string hubId)
+        {
+            return Logger.BeginScope(
+                    (LoggerScopeHelpers.MethodScope, method),
+                    (HubIdScope, hubId));
         }
 
         private async Task LeaveHubAsync(RelayHub relayHub, string participantId, CancellationToken cancellationToken)
@@ -258,7 +279,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        private async Task<RelayHub> GetOrCreateRelayHubAsync(string hubId, bool createIfNotExists = false)
+        private async Task<RelayHub> GetOrCreateRelayHubAsync(string hubId, CancellationToken cancellationToken, bool createIfNotExists = false)
         {
             if (createIfNotExists)
             {
@@ -266,7 +287,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 var relayHub = this.relayHubs.GetOrAdd(hubId, (id) =>
                 {
                     isCreated = true;
-                    return new RelayHub(this, id);
+                    return new RelayHub(this, id, false);
                 });
 
                 if (isCreated)
@@ -274,15 +295,19 @@ namespace Microsoft.VsCloudKernel.SignalService
                     // backplane support to sync with 'other' participants
                     if (BackplaneManager != null)
                     {
-                        var relayInfo = await BackplaneManager.GetRelayInfoAsync(hubId, default);
+                        var relayInfo = await BackplaneManager.GetRelayInfoAsync(hubId, cancellationToken);
                         if (relayInfo != null)
                         {
                             relayHub.SetOtherParticipants(relayInfo);
                         }
                     }
 
-                    Logger.LogDebug($"Hub created with id:{hubId}");
-                    await NotifyHubChangedAsync(hubId, RelayHubChangeType.Created, default);
+                    using (BeginHubScope(nameof(GetOrCreateRelayHubAsync), hubId))
+                    {
+                        Logger.LogDebug($"Hub created");
+                    }
+
+                    await NotifyHubChangedAsync(hubId, RelayHubChangeType.Created, cancellationToken);
                 }
 
                 return relayHub;
@@ -298,14 +323,18 @@ namespace Microsoft.VsCloudKernel.SignalService
                 // if there is an existing hub with the same id.
                 if (BackplaneManager != null)
                 {
-                    var relayInfo = await BackplaneManager.GetRelayInfoAsync(hubId, default);
+                    var relayInfo = await BackplaneManager.GetRelayInfoAsync(hubId, cancellationToken);
                     if (relayInfo != null)
                     {
                         return this.relayHubs.GetOrAdd(hubId, (id) =>
                         {
-                            var relayHub = new RelayHub(this, id);
+                            var relayHub = new RelayHub(this, id, true);
                             relayHub.SetOtherParticipants(relayInfo);
-                            Logger.LogDebug($"Hub created from backplane id:{hubId}");
+                            using (BeginHubScope(nameof(GetOrCreateRelayHubAsync), hubId))
+                            {
+                                Logger.LogDebug($"Hub created from backplane");
+                            }
+
                             return relayHub;
                         });
                     }
@@ -327,12 +356,19 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (this.relayHubs.TryGetValue(dataChanged.HubId, out var relayHub))
             {
+                using (BeginHubScope(nameof(OnSendDataChangedAsync), dataChanged.HubId))
+                {
+                    Logger.LogDebug($"serviceId:{dataChanged.ServiceId} uniqueId:{dataChanged.UniqueId} sendOption:{dataChanged.SendOption} type:{dataChanged.Type} data-length:{dataChanged.Data?.Length}");
+                }
+
                 await relayHub.SendDataAsync(
                     dataChanged.FromParticipantId,
+                    dataChanged.UniqueId,
                     SendOption.None,
                     dataChanged.TargetParticipantIds,
                     dataChanged.Type,
                     dataChanged.Data,
+                    dataChanged.MessageProperties,
                     cancellationToken);
             }
         }
@@ -349,6 +385,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (this.relayHubs.TryGetValue(dataChanged.HubId, out var relayHub))
             {
+                using (BeginHubScope(nameof(OnNotifyParticipantChangedAsync), dataChanged.HubId))
+                {
+                    Logger.LogDebug($"serviceId:{dataChanged.ServiceId} participantId:{dataChanged.ParticipantId} change type:{dataChanged.ChangeType}");
+                }
+
                 await relayHub.NotifyParticipantChangedAsync(dataChanged, cancellationToken);
             }
         }
@@ -365,7 +406,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             if (dataChanged.ChangeType == RelayHubChangeType.Removed && this.relayHubs.TryRemove(dataChanged.HubId, out var relayHub))
             {
-                Logger.LogDebug($"Hub delete from backplane id:{dataChanged.HubId}");
+                using (BeginHubScope(nameof(OnRelayHubChangedAsync), dataChanged.HubId))
+                {
+                    Logger.LogDebug($"serviceId:{dataChanged.ServiceId} -> Hub delete from backplane");
+                }
+
                 await relayHub.NotifyHubDeletedAsync(cancellationToken);
             }
         }

@@ -207,6 +207,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub, SignalRHub>>();
             }
 
+            // Host for RelayService
+            services.AddHostedService<DisposableHostedService<RelayService>>();
+
             // backplane manager support
             services.AddSingleton<IContactBackplaneManager, ContactBackplaneManager>();
             services.AddHostedService<BackplaneManagerHostedService<ContactService, IContactBackplaneManager>>();

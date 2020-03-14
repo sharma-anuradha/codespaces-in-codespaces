@@ -6,6 +6,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsCloudKernel.SignalService.Common;
@@ -61,19 +63,28 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
             AddHubHandler(hubProxy.On(
                 RelayHubMethods.MethodReceiveData,
-                new Type[] { typeof(string), typeof(string), typeof(int), typeof(string), typeof(byte[]) },
+                new Type[] { typeof(string), typeof(string), typeof(int), typeof(string), typeof(byte[]), typeof(Dictionary<string, object>) },
                 (args) =>
             {
                 var hubId = (string)args[0];
                 var fromParticipantId = (string)args[1];
-                var uniqueId = (int)args[2];
+                var uniqueId = ToProxyType<int>(args[2]);
                 var type = (string)args[3];
                 var data = (byte[])args[4];
+                var messageProperties = ToProxyDictionary(args[5]);
 
-                trace.Verbose($"ReceiveData-> hubId:{hubId} from:{fromParticipantId:T} uniqueId:{uniqueId} type:{type} data-length:{data.Length}");
+                if (TraceHubData)
+                {
+                    trace.Verbose($"ReceiveData-> hubId:{hubId} from:{fromParticipantId:T} uniqueId:{uniqueId} type:{type} data-length:{data?.Length} properties:{messageProperties.ConvertToString(FormatProvider)}");
+                }
+
                 if (this.relayHubs.TryGetValue(hubId, out var relayHubProxy))
                 {
-                    relayHubProxy.OnReceiveData(fromParticipantId, uniqueId, type, data);
+                    relayHubProxy.OnReceiveData(fromParticipantId, uniqueId, type, data, messageProperties);
+                }
+                else
+                {
+                    trace.Warning($"No relay hub attached for hubId:{hubId}");
                 }
 
                 return Task.CompletedTask;
@@ -86,8 +97,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             {
                 var hubId = (string)args[0];
                 var participantId = (string)args[1];
-                var properties = (Dictionary<string, object>)args[2];
-                var changeType = (ParticipantChangeType)args[3];
+                var properties = ToProxyDictionary(args[2]);
+                var changeType = ToProxyEnum<ParticipantChangeType>(args[3]);
 
                 trace.Verbose($"ParticipantChanged-> hubId:{hubId} participantId:{participantId:T} properties:{properties.ConvertToString(FormatProvider)} changeType:{changeType}");
                 if (this.relayHubs.TryGetValue(hubId, out var relayHubProxy))
@@ -116,6 +127,9 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         }
 
         /// <inheritdoc/>
+        public bool TraceHubData { get; set; }
+
+        /// <inheritdoc/>
         public Task<string> CreateHubAsync(string hubId, CancellationToken cancellationToken)
         {
             return HubProxy.InvokeAsync<string>(nameof(IRelayServiceHub.CreateHubAsync), new object[] { hubId }, cancellationToken);
@@ -130,10 +144,33 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <inheritdoc/>
         public async Task<IRelayHubProxy> JoinHubAsync(string hubId, Dictionary<string, object> properties, JoinOptions joinOptions, CancellationToken cancellationToken)
         {
-            var joinHub = await HubProxy.InvokeAsync<JoinHubInfo>(nameof(IRelayServiceHub.JoinHubAsync), new object[] { hubId, properties, joinOptions }, cancellationToken);
-            var relayHubProxy = new RelayHubProxy(this, hubId, joinHub);
-            this.relayHubs[hubId] = relayHubProxy;
+            RelayHubProxy relayHubProxy;
+            if (this.relayHubs.TryGetValue(hubId, out relayHubProxy))
+            {
+                if (relayHubProxy.IsDisconnected)
+                {
+                    await relayHubProxy.ReJoinInternalAsync(properties, joinOptions, cancellationToken);
+                }
+                else if (properties != null)
+                {
+                    await relayHubProxy.UpdateAsync(properties, cancellationToken);
+                }
+            }
+            else
+            {
+                var joinHubInfo = await JoinHubProxyAsync(hubId, properties, joinOptions, cancellationToken);
+                relayHubProxy = new RelayHubProxy(this, hubId, joinHubInfo);
+                this.relayHubs[hubId] = relayHubProxy;
+            }
+
             return relayHubProxy;
+        }
+
+        private async Task<JoinHubInfo> JoinHubProxyAsync(string hubId, Dictionary<string, object> properties, JoinOptions joinOptions, CancellationToken cancellationToken)
+        {
+            var joinHubInfo = await HubProxy.InvokeAsync<JoinHubInfo>(nameof(IRelayServiceHub.JoinHubAsync), new object[] { hubId, properties, joinOptions }, cancellationToken);
+            Trace.Verbose($"JoinHubProxyAsync hubId:{hubId} -> stamp:{joinHubInfo.Stamp} service Id:{joinHubInfo.ServiceId} self id:{joinHubInfo.ParticipantId} participants:[{string.Join(",", joinHubInfo.Participants.Select(p => p.Id))}]");
+            return joinHubInfo;
         }
 
         private class RelayHubProxy : IRelayHubProxy
@@ -141,7 +178,6 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             private readonly ConcurrentDictionary<string, RelayHubParticipant> hubParticipants = new ConcurrentDictionary<string, RelayHubParticipant>();
             private readonly RelayServiceProxy relayServiceProxy;
             private bool isDisposed;
-            private bool isDisconnected;
 
             internal RelayHubProxy(RelayServiceProxy relayServiceProxy, string hubId, JoinHubInfo joinHubInfo)
             {
@@ -172,28 +208,52 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
             public IEnumerable<IRelayHubParticipant> Participants => this.hubParticipants.Values;
 
+            public bool IsDisconnected { get; private set; }
+
+            private TraceSource Trace => this.relayServiceProxy.Trace;
+
+            private IHubProxy HubProxy => this.relayServiceProxy.HubProxy;
+
             public async Task DisposeAsync()
             {
                 if (!this.isDisposed)
                 {
                     this.isDisposed = true;
                     this.relayServiceProxy.relayHubs.TryRemove(Id, out var _);
-                    await this.relayServiceProxy.HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.LeaveHubAsync), new object[] { Id }, default(CancellationToken));
+                    await HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.LeaveHubAsync), new object[] { Id }, default(CancellationToken));
                 }
             }
 
-            public Task SendDataAsync(
+            public async Task<int> SendDataAsync(
                 SendOption sendOption,
                 string[] targetParticipantIds,
                 string type,
                 byte[] data,
+                Dictionary<string, object> messageProperties,
+                HubMethodOption methodOption,
                 CancellationToken cancellationToken)
             {
                 CheckState();
+                if (this.relayServiceProxy.TraceHubData)
+                {
+                    Trace.Verbose($"SendData-> hubId:{Id} type:{type} data-length:{data?.Length} properties:{messageProperties.ConvertToString(this.relayServiceProxy.FormatProvider)}");
+                }
 
-                this.relayServiceProxy.Trace.Verbose($"SendData-> hubId:{Id} type:{type} data-length:{data.Length}");
+                if (methodOption == HubMethodOption.Send)
+                {
+                    await HubProxy.SendAsync(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data, messageProperties }, cancellationToken).ConfigureAwait(false);
+                    return 0;
+                }
+                else
+                {
+                    var uniqueId = await HubProxy.InvokeAsync<int>(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data, messageProperties }, cancellationToken);
+                    if (this.relayServiceProxy.TraceHubData)
+                    {
+                        Trace.Verbose($"SendData <- result:{uniqueId}");
+                    }
 
-                return this.relayServiceProxy.HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data }, cancellationToken);
+                    return uniqueId;
+                }
             }
 
             public Task UpdateAsync(
@@ -202,31 +262,33 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             {
                 CheckState();
 
-                return this.relayServiceProxy.HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.UpdateAsync), new object[] { Id, properties }, cancellationToken);
+                return HubProxy.InvokeAsync<object>(nameof(IRelayServiceHub.UpdateAsync), new object[] { Id, properties }, cancellationToken);
             }
 
             public async Task ReJoinAsync(JoinOptions joinOptions, CancellationToken cancellationToken)
             {
-                if (!(this.isDisconnected || this.isDisposed))
+                if (!(IsDisconnected || this.isDisposed))
                 {
                     throw new InvalidOperationException($"Relay hub:{Id} is connected");
                 }
 
-                var joinHubInfo = await this.relayServiceProxy.HubProxy.InvokeAsync<JoinHubInfo>(
-                    nameof(IRelayServiceHub.JoinHubAsync),
-                    new object[] { Id, SelfParticipant.Properties, joinOptions },
-                    cancellationToken);
-                SetJoinInfo(joinHubInfo);
-                this.isDisconnected = false;
-                this.isDisposed = false;
+                await ReJoinInternalAsync(SelfParticipant.Properties, joinOptions, cancellationToken);
                 this.relayServiceProxy.relayHubs[Id] = this;
             }
 
-            internal void OnReceiveData(string fromParticipantId, int uniqueId, string type, byte[] data)
+            public async Task ReJoinInternalAsync(Dictionary<string, object> properties, JoinOptions joinOptions, CancellationToken cancellationToken)
+            {
+                var joinHubInfo = await this.relayServiceProxy.JoinHubProxyAsync(Id, properties, joinOptions, cancellationToken);
+                SetJoinInfo(joinHubInfo);
+                IsDisconnected = false;
+                this.isDisposed = false;
+            }
+
+            internal void OnReceiveData(string fromParticipantId, int uniqueId, string type, byte[] data, Dictionary<string, object> messageProperties)
             {
                 if (this.hubParticipants.TryGetValue(fromParticipantId, out var relayHubParticipant))
                 {
-                    ReceiveData?.Invoke(this, new ReceiveDataEventArgs(relayHubParticipant, uniqueId, type, data));
+                    ReceiveData?.Invoke(this, new ReceiveDataEventArgs(relayHubParticipant, uniqueId, type, data, messageProperties));
                 }
             }
 
@@ -260,7 +322,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
             internal void OnHubDisconnected()
             {
-                this.isDisconnected = true;
+                IsDisconnected = true;
                 Disconnected?.Invoke(this, EventArgs.Empty);
             }
 
@@ -281,7 +343,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
             private void CheckState()
             {
-                if (this.isDisconnected)
+                if (IsDisconnected)
                 {
                     throw new InvalidOperationException($"Relay hub:{Id} disconnected");
                 }

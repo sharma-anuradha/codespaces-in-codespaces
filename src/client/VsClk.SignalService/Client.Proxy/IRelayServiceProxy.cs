@@ -14,6 +14,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     public interface IRelayServiceProxy : IServiceProxyBase
     {
         /// <summary>
+        /// Gets or sets a value indicating whether tracing data on the logger
+        /// </summary>
+        bool TraceHubData { get; set; }
+
+        /// <summary>
         /// Create a hub.
         /// </summary>
         /// <param name="hubId">The hub unique identifier.</param>

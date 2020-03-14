@@ -30,7 +30,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return false;
         }
 
-        public bool NotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, out RelayHubInfo relayInfo)
+        public bool NotifyParticipantChanged(RelayParticipantChanged dataChanged, out RelayHubInfo relayInfo)
         {
             if (RelayHubs.TryGetValue(dataChanged.HubId, out var relayHub))
             {
@@ -42,7 +42,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return false;
         }
 
-        public void NotifyRelayHubChangedAsync(RelayHubChanged dataChanged)
+        public void NotifyRelayHubChanged(RelayHubChanged dataChanged)
         {
             if (dataChanged.ChangeType == RelayHubChangeType.Removed)
             {

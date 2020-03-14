@@ -25,9 +25,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             };
             backplaneConnectorProvider.AddTarget(nameof(FireOnUpdateContactAsync), onUpdateCallback);
 
-            Func<string, MessageData, CancellationToken, Task> onSendMessageCallback = (sourceId, messageData, ct) =>
+            Func<MessageData, CancellationToken, Task> onSendMessageCallback = (messageData, ct) =>
             {
-                return FireOnSendMessageAsync(sourceId, messageData, ct);
+                return FireOnSendMessageAsync(messageData, ct);
             };
             backplaneConnectorProvider.AddTarget(nameof(FireOnSendMessageAsync), onSendMessageCallback);
         }
@@ -66,10 +66,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        public async Task SendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
-            await BackplaneConnectorProvider.InvokeAsync<object>(nameof(SendMessageAsync), new object[] { sourceId, messageData }, cancellationToken);
+            await BackplaneConnectorProvider.InvokeAsync<object>(nameof(SendMessageAsync), new object[] { messageData }, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -93,9 +93,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             return ContactChangedAsync?.Invoke(contactDataChanged, affectedProperties, cancellationToken);
         }
 
-        public Task FireOnSendMessageAsync(string sourceId, MessageData messageData, CancellationToken cancellationToken)
+        public Task FireOnSendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
         {
-            return MessageReceivedAsync?.Invoke(sourceId, messageData, cancellationToken);
+            return MessageReceivedAsync?.Invoke(messageData, cancellationToken);
         }
     }
 }

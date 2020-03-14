@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -40,9 +41,9 @@ namespace SignalService.Client.CLI
 
         public async Task<int> RunAsync(Program cli)
         {
-            HubProxyOptions = cli.HubName.HasValue() ? HubProxyOptions.None : HubProxyOptions.UseSignalRHub;
-            HubName = cli.HubName.HasValue() ? cli.HubName.Value() : SignalRHubName;
             string serviceEndpoint = cli.ServiceEndpointOption.Value();
+            HubProxyOptions = cli.HubName.HasValue() || serviceEndpoint?.EndsWith(SignalRHubName) == false ? HubProxyOptions.None : HubProxyOptions.UseSignalRHub;
+            HubName = cli.HubName.HasValue() ? cli.HubName.Value() : SignalRHubName;
             if (string.IsNullOrEmpty(serviceEndpoint))
             {
                 serviceEndpoint = DefaultServiceEndpointBase + HubName;
@@ -55,11 +56,14 @@ namespace SignalService.Client.CLI
                     serviceUri = serviceEndpoint;
                 }
 
+                var sb = new StringBuilder($"Create hub connection using uri:{serviceUri}");
+
                 var hubConnectionBuilder = new HubConnectionBuilder().WithUrl(serviceUri, options =>
                 {
                     options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
                     if (cli.AccessTokenOption.HasValue())
                     {
+                        sb.Append(" token:on");
                         options.AccessTokenProvider = () =>
                         {
                             return Task.FromResult(cli.AccessTokenOption.Value());
@@ -68,12 +72,14 @@ namespace SignalService.Client.CLI
 
                     if (cli.SkipNegotiate.HasValue())
                     {
+                        sb.Append(" skip negotiate:on");
                         options.SkipNegotiation = true;
                     }
-               });
-
+                });
+                hubConnectionBuilder.AddNewtonsoftJsonProtocol();
                 if (cli.MessagePackOption.HasValue())
                 {
+                    sb.Append(" messagePack:on");
                     hubConnectionBuilder.AddMessagePackProtocol((options) =>
                     {
                     });
@@ -81,6 +87,7 @@ namespace SignalService.Client.CLI
 
                 if (cli.DebugSignalROption.HasValue())
                 {
+                    sb.Append(" debug:on");
                     hubConnectionBuilder.ConfigureLogging(logging =>
                     {
                         // Log to the Console
@@ -91,6 +98,7 @@ namespace SignalService.Client.CLI
                     });
                 }
 
+                TraceSource.Verbose(sb.ToString());
                 return hubConnectionBuilder.Build();
             };
 

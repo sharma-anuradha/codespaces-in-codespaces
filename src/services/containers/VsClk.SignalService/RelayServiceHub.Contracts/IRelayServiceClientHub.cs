@@ -3,13 +3,12 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Contract definition for the relay client notifications
+    /// Contract definition for the relay client notifications.
     /// </summary>
     public interface IRelayServiceClientHub
     {
@@ -18,7 +17,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             string fromParticipantId,
             int uniqueId,
             string type,
-            byte[] data);
+            byte[] data,
+            Dictionary<string, object> messageProperties);
 
         Task ParticipantChangedAsync(
             string hubId,

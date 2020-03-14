@@ -26,7 +26,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Hub context name when used in a SignalRHubContextHost.
+        /// Gets hub context name when used in a SignalRHubContextHost.
         /// </summary>
         public static string HubContextName => "relayServiceHub";
 
@@ -62,19 +62,20 @@ namespace Microsoft.VsCloudKernel.SignalService
             return this.relayService.LeaveHubAsync(Context.ConnectionId, hubId, Context.ConnectionAborted);
         }
 
-        public Task SendDataHubAsync(
+        public Task<int> SendDataHubAsync(
             string hubId,
             SendOption sendOption,
             string[] targetParticipantIds,
             string type,
-            byte[] data)
+            byte[] data,
+            Dictionary<string, object> messageProperties)
         {
-            return this.relayService.SendDataHubAsync(Context.ConnectionId, hubId, sendOption, targetParticipantIds, type, data, Context.ConnectionAborted);
+            return this.relayService.SendDataHubAsync(Context.ConnectionId, hubId, sendOption, targetParticipantIds, type, data, messageProperties, Context.ConnectionAborted);
         }
 
-        public Task SendDataHubExAsync(SendHubData sendHubData, object[] data)
+        public Task<int> SendDataHubExAsync(SendHubData sendHubData, object[] data)
         {
-            var dataArray = Array.ConvertAll(data, b => Convert.ToByte(b));
+            var dataArray = data != null ? Array.ConvertAll(data, b => Convert.ToByte(b)) : null;
             return this.relayService.SendDataHubAsync(
                 Context.ConnectionId,
                 sendHubData.HubId,
@@ -82,6 +83,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 sendHubData.TargetParticipantIds,
                 sendHubData.Type,
                 dataArray,
+                sendHubData.MessageProperties,
                 Context.ConnectionAborted);
         }
 

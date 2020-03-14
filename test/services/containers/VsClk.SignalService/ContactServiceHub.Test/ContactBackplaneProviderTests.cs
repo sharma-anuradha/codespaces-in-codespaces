@@ -117,11 +117,10 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             string callbackSourceId = null;
             MessageData callbackMessageData = null;
             OnMessageReceivedAsync onMessageReceived = (
-                string sourceId,
                 MessageData messageData,
                 CancellationToken cancellationToken) =>
             {
-                callbackSourceId = sourceId;
+                callbackSourceId = messageData.ServiceId;
                 callbackMessageData = messageData;
                 callbackCompleted.Set();
                 return Task.CompletedTask;
@@ -131,12 +130,12 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
             var messageData = new MessageData(
                 Guid.NewGuid().ToString(),
+                "serviceId",
                 AsContactRef("conn1", "contact1"),
                 AsContactRef(null, "contact2"),
                 "typeTest",
                 100);
             await this.backplaneProvider.SendMessageAsync(
-                "serviceId",
                 messageData,
                 CancellationToken.None);
             await callbackCompleted.WaitAsync();

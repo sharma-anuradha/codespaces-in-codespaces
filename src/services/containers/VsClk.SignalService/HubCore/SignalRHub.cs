@@ -235,7 +235,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             var argumentValue = Activator.CreateInstance(argumentType);
             foreach (var kvp in objectProperties)
             {
-                GetProperty(kvp.Key.ToString(), argumentType).SetValue(argumentValue, kvp.Value);
+                var property = GetProperty(kvp.Key.ToString(), argumentType);
+                var value = ToArgumentType(kvp.Value, property.PropertyType);
+                property.SetValue(argumentValue, value);
             }
 
             return argumentValue;

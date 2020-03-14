@@ -100,7 +100,7 @@ namespace SignalService.Client.CLI
                 Console.Write($"Enter participant id:('*'):");
                 var participantId = Console.ReadLine();
 
-                await this.currentRelayHubProxy.SendDataAsync(SendOption.None, string.IsNullOrEmpty(participantId) ? null : new string[] { participantId }, TypeTest, Encoding.UTF8.GetBytes(message), DisposeToken);
+                await this.currentRelayHubProxy.SendDataAsync(SendOption.None, string.IsNullOrEmpty(participantId) ? null : new string[] { participantId }, TypeTest, Encoding.UTF8.GetBytes(message), null, HubMethodOption.Invoke, DisposeToken);
             }
             else if (key == 'l')
             {

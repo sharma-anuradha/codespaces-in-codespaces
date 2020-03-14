@@ -115,13 +115,13 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
 
             public async Task NotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken)
             {
-                relayHubManager.NotifyParticipantChangedAsync(dataChanged, out var relayHubInfo);
+                relayHubManager.NotifyParticipantChanged(dataChanged, out var relayHubInfo);
                 await Task.WhenAll(this.participantChangedAsyncs.Select(c => c.Invoke(dataChanged, cancellationToken)));
             }
 
             public async Task NotifyRelayHubChangedAsync(RelayHubChanged dataChanged, CancellationToken cancellationToken)
             {
-                relayHubManager.NotifyRelayHubChangedAsync(dataChanged);
+                relayHubManager.NotifyRelayHubChanged(dataChanged);
                 await Task.WhenAll(this.relayHubChangedAsyncs.Select(c => c.Invoke(dataChanged, cancellationToken)));
             }
 

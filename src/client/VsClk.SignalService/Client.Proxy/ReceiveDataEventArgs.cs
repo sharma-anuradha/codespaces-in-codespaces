@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
@@ -18,16 +19,19 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="uniqueId">Unique id of this data.</param>
         /// <param name="type">Type of data.</param>
         /// <param name="data">Raw data being sent.</param>
+        /// <param name="messageProperties">Message properties.</param>
         internal ReceiveDataEventArgs(
             IRelayHubParticipant fromParticipant,
             int uniqueId,
             string type,
-            byte[] data)
+            byte[] data,
+            Dictionary<string, object> messageProperties)
         {
             FromParticipant = fromParticipant;
             UniqueId = uniqueId;
             Type = type;
             Data = data;
+            MessageProperties = messageProperties;
         }
 
         /// <summary>
@@ -49,5 +53,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// Gets raw data being received.
         /// </summary>
         public byte[] Data { get; }
+
+        /// <summary>
+        /// Gets the message properties.
+        /// </summary>
+        public Dictionary<string, object> MessageProperties { get; }
     }
 }

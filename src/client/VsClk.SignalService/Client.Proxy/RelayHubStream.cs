@@ -3,10 +3,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
 {
@@ -15,10 +19,16 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     /// </summary>
     public class RelayHubStream : Stream
     {
-        private IRelayHubProxy relayHubProxy;
+        private readonly TraceSource trace;
+        private readonly List<byte[]> writeQueue = new List<byte[]>();
+        private readonly BufferBlock<byte[]> bufferBlock = new BufferBlock<byte[]>();
+        private SequenceRelayDataHubProxy sequenceReader;
+
         private CancellationTokenSource closeCts = new CancellationTokenSource();
-        private byte[] overflowData;
+        private Buffer readBuffer;
+        private int readBufferOffset;
         private bool isClosed;
+        private int nextMessageId;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RelayHubStream"/> class.
@@ -26,30 +36,29 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <param name="relayHubProxy">A relay hub proxy instance.</param>
         /// <param name="targetParticipantId">The participant Id.</param>
         /// <param name="streamId">The stream Id.</param>
-        /// <param name="relayStreamProvider">The relay stream provider.</param>
-        public RelayHubStream(IRelayHubProxy relayHubProxy, string targetParticipantId, string streamId, IRelayStreamProvider relayStreamProvider)
+        /// <param name="trace">Optional trace.</param>
+        public RelayHubStream(IRelayHubProxy relayHubProxy, string targetParticipantId, string streamId, TraceSource trace = null)
         {
-            this.relayHubProxy = Requires.NotNull(relayHubProxy, nameof(relayHubProxy));
+            RelayHubProxy = Requires.NotNull(relayHubProxy, nameof(relayHubProxy));
             Requires.NotNullOrEmpty(targetParticipantId, nameof(targetParticipantId));
             Requires.NotNullOrEmpty(streamId, nameof(streamId));
 
+            this.trace = trace;
             TargetParticipantId = targetParticipantId;
             StreamId = streamId;
-            RelayStreamProvider = Requires.NotNull(relayStreamProvider, nameof(relayStreamProvider));
 
             Attach();
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RelayHubStream"/> class.
+        /// Gets the IRelayHubProxy underlying proxy.
         /// </summary>
-        /// <param name="relayHubProxy">A relay hub proxy instance.</param>
-        /// <param name="targetParticipantId">The participant Id.</param>
-        /// <param name="streamId">The stream Id.</param>
-        public RelayHubStream(IRelayHubProxy relayHubProxy, string targetParticipantId, string streamId)
-            : this(relayHubProxy, targetParticipantId, streamId, new DefaultRelayStreamProvider())
-        {
-        }
+        public IRelayHubProxy RelayHubProxy { get; }
+
+        /// <summary>
+        /// Gets the target participant id.
+        /// </summary>
+        public string TargetParticipantId { get; }
 
         /// <inheritdoc/>
         public override bool CanRead => true;
@@ -83,33 +92,29 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }
         }
 
-        private IRelayStreamProvider RelayStreamProvider { get; }
-
         private string StreamId { get; }
 
-        private string TargetParticipantId { get; }
-
         private CancellationToken CloseToken => this.closeCts.Token;
-
-        /// <summary>
-        /// re join the hub to re-open the closed stream.
-        /// </summary>
-        /// <param name="cancellationToken">Optional cancellation token.</param>
-        /// <returns>Task completion.</returns>
-        public async Task ReJoinAsync(CancellationToken cancellationToken)
-        {
-            if (!this.isClosed)
-            {
-                throw new InvalidOperationException("RelayHubStream hasn't beeen closed");
-            }
-
-            await this.relayHubProxy.ReJoinAsync(default, cancellationToken);
-            Attach();
-        }
 
         /// <inheritdoc/>
         public override void Flush()
         {
+        }
+
+        /// <inheritdoc/>
+        public override Task FlushAsync(CancellationToken cancellationToken)
+        {
+            var flushedData = Combine(this.writeQueue.ToArray());
+            this.writeQueue.Clear();
+
+            return RelayHubProxy.SendDataAsync(
+                SendOption.None,
+                new string[] { TargetParticipantId },
+                StreamId,
+                flushedData,
+                RelayHubMessageProperties.CreateMessageSequence(Interlocked.Increment(ref this.nextMessageId)),
+                HubMethodOption.Send,
+                cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -146,6 +151,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <inheritdoc/>
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
+            if (this.isClosed)
+            {
+                throw new ObjectDisposedException(nameof(RelayHubStream));
+            }
+
             // Validate all arguments
             if (buffer == null)
             {
@@ -168,32 +178,34 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             }
 
             var data = new byte[count];
-            Buffer.BlockCopy(buffer, offset, data, 0, count);
+            System.Buffer.BlockCopy(buffer, offset, data, 0, count);
 
-            return relayHubProxy.SendDataAsync(
-                SendOption.None,
-                new string[] { TargetParticipantId },
-                StreamId,
-                RelayStreamProvider.EncodeHubData(data),
-                cancellationToken);
+            this.trace?.Verbose($"->WriteAsync buffer.Length:{buffer.Length} offset:{offset} count:{count}");
+            this.writeQueue.Add(data);
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc/>
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            int totalBytes;
-            if (overflowData != null)
+            if (this.isClosed)
             {
-                overflowData = ReturnData(overflowData, buffer, offset, count, out totalBytes);
+                throw new ObjectDisposedException(nameof(RelayHubStream));
             }
-            else
+
+            this.trace?.Verbose($"-> ReadAsync buffer.Length:{buffer.Length} offset:{offset} count:{count}");
+
+            if (this.readBuffer.Count == 0)
             {
                 using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, CloseToken))
                 {
                     try
                     {
-                        var data = await RelayStreamProvider.ReadDataAsync(cts.Token);
-                        overflowData = ReturnData(data, buffer, offset, count, out totalBytes);
+                        this.trace?.Verbose($"-> ReadDataAsync");
+                        var dataRead = await this.bufferBlock.ReceiveAsync(cts.Token).ConfigureAwait(false);
+                        this.readBuffer = dataRead;
+                        this.trace?.Verbose($"<- ReadDataAsync length:{this.readBuffer.Count}");
+                        this.readBufferOffset = 0;
                     }
                     catch (OperationCanceledException ex)
                     {
@@ -208,37 +220,57 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 }
             }
 
-            return totalBytes;
+            return ReadFromBuffer(buffer, offset, count);
         }
 
-        private static byte[] ReturnData(byte[] data, byte[] buffer, int offset, int count, out int totalBytes)
+        private static byte[] Combine(byte[][] arrays)
         {
-            totalBytes = Math.Min(data.Length, count);
-            Buffer.BlockCopy(data, 0, buffer, offset, totalBytes);
-            if (data.Length > count)
+            byte[] rv = new byte[arrays.Sum(a => a.Length)];
+            int offset = 0;
+            foreach (byte[] array in arrays)
             {
-                System.Diagnostics.Debug.WriteLine($"overflow data length:{data.Length - count}");
-
-                byte[] array = new byte[data.Length - count];
-                Buffer.BlockCopy(data, count, array, 0, array.Length);
-                return array;
+                System.Buffer.BlockCopy(array, 0, rv, offset, array.Length);
+                offset += array.Length;
             }
 
-            return null;
+            return rv;
+        }
+
+        private int ReadFromBuffer(byte[] buffer, int offset, int count)
+        {
+            int available = this.readBuffer.Count - this.readBufferOffset;
+            if (count >= available)
+            {
+                // Fully consume the read buffer.
+                this.readBuffer.Slice(this.readBufferOffset, available).CopyTo(buffer, offset);
+                this.readBuffer = Buffer.Empty;
+                return available;
+            }
+            else
+            {
+                // Partially consume the read buffer.
+                this.readBuffer.Slice(this.readBufferOffset, count).CopyTo(buffer, offset);
+                this.readBufferOffset += count;
+                return count;
+            }
         }
 
         private void Attach()
         {
-            this.relayHubProxy.ReceiveData += OnReceiveData;
-            this.relayHubProxy.ParticipantChanged += OnParticipantChanged;
-            this.relayHubProxy.Disconnected += OnDisconnected;
+            this.sequenceReader = new SequenceRelayDataHubProxy(
+                RelayHubProxy,
+                (e) => e.Data != null && e.FromParticipant.Id == TargetParticipantId && e.Type == StreamId);
+            this.sequenceReader.ReceiveData += OnReceiveData;
+            RelayHubProxy.ParticipantChanged += OnParticipantChanged;
+            RelayHubProxy.Disconnected += OnDisconnected;
         }
 
         private void Detach()
         {
-            this.relayHubProxy.ReceiveData -= OnReceiveData;
-            this.relayHubProxy.ParticipantChanged -= OnParticipantChanged;
-            this.relayHubProxy.Disconnected -= OnDisconnected;
+            this.sequenceReader.ReceiveData += OnReceiveData;
+            this.sequenceReader.Dispose();
+            RelayHubProxy.ParticipantChanged -= OnParticipantChanged;
+            RelayHubProxy.Disconnected -= OnDisconnected;
         }
 
         private void OnDisconnected(object sender, EventArgs e)
@@ -248,10 +280,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private void OnReceiveData(object sender, ReceiveDataEventArgs e)
         {
-            if (e.FromParticipant.Id == TargetParticipantId && e.Type == StreamId)
-            {
-                RelayStreamProvider.HandleReceivedData(e.Data);
-            }
+            this.trace?.Verbose($"OnReceiveData length:{e.Data.Length}");
+
+            var copy = new byte[e.Data.Length];
+            System.Buffer.BlockCopy(e.Data, 0, copy, 0, e.Data.Length);
+            this.bufferBlock.Post(copy);
         }
 
         private void OnParticipantChanged(object sender, ParticipantChangedEventArgs e)
@@ -273,7 +306,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private void CloseInternal()
         {
-            if (this.relayHubProxy != null)
+            if (RelayHubProxy != null)
             {
                 Detach();
             }
