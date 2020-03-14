@@ -44,7 +44,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
                 new Claim(CustomClaims.UserId, userProfile.Id),
 
                 // Make the token narrowly scoped to this one sharing session.
-                new Claim(CustomClaims.Scope, PlanAccessTokenScopes.ShareSession),
+                // Credential helpers in the environment also need access to join the session.
+                new Claim(CustomClaims.Scope, string.Join(
+                    ' ',
+                    PlanAccessTokenScopes.ShareSession,
+                    PlanAccessTokenScopes.JoinSession)),
                 new Claim(CustomClaims.Session, environment.Connection.ConnectionSessionId),
             };
 
