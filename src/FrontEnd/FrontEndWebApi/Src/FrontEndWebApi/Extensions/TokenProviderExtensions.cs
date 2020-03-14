@@ -10,6 +10,7 @@ using System.Security.Claims;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Partners;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Tokens;
@@ -83,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         /// </summary>
         /// <param name="provider">The token provider.</param>
         /// <param name="plan">The plan the token applies to.</param>
+        /// <param name="partner">The partner requesting the token, if they are known.</param>
         /// <param name="scopes">The scope claim of the token.</param>
         /// <param name="identity">The identity of the user the token is granted to.</param>
         /// <param name="armTokenExpiration">The expiration of the source ARM token.</param>
@@ -92,6 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         public static string GenerateDelegatedVsSaaSToken(
             this ITokenProvider provider,
             VsoPlan plan,
+            Partner? partner,
             string[] scopes,
             DelegateIdentity identity,
             DateTime? armTokenExpiration,
@@ -100,18 +103,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         {
             Requires.NotNull(identity, nameof(identity));
 
+            string providerId;
+            IEnumerable<Claim> extraClaims;
+
+            if (partner == Partner.GitHub)
+            {
+                providerId = "github";
+
+                if (IsEmail(identity.Username))
+                {
+                    extraClaims = null;
+                }
+                else
+                {
+                    var githubUserEmail = $"{identity.Username}@users.noreply.github.com";
+                    extraClaims = new[] { new Claim(CustomClaims.Email, githubUserEmail), };
+                }
+            }
+            else
+            {
+                providerId = "vso";
+                extraClaims = null;
+            }
+
             return GenerateVsSaaSToken(
                 provider,
                 plan,
                 scopes,
-                "vso", // TODO - check for known providers (e.g. github)
+                providerId,
                 plan.Id,
-                identity.Id ?? identity.Username, // TODO - make Id a required field (requires a swagger update)
+                identity.Id,
                 identity.Username,
                 identity.DisplayName,
                 armTokenExpiration,
                 requestedExpiration,
-                logger);
+                logger,
+                extraClaims);
         }
 
         private static string GenerateVsSaaSToken(
@@ -125,7 +152,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
             string displayName,
             DateTime? sourceTokenExpiration,
             DateTime? requestedExpiration,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IEnumerable<Claim> extraClaims = null)
         {
             Requires.NotNull(plan, nameof(plan));
             Requires.NotNull(scopes, nameof(scopes));
@@ -162,9 +190,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
                 new Claim(CustomClaims.Scope, serializedScopes),
             };
 
-            if (username.Contains("@"))
+            if (IsEmail(username))
             {
                 claims.Add(new Claim(CustomClaims.Email, username));
+            }
+
+            if (extraClaims != null)
+            {
+                claims.AddRange(extraClaims);
             }
 
             var token = provider.JwtWriter.WriteToken(
@@ -175,6 +208,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
                 claims.ToArray());
 
             return token;
+        }
+
+        private static bool IsEmail(string maybeEmail)
+        {
+            return maybeEmail.Contains('@');
         }
     }
 }

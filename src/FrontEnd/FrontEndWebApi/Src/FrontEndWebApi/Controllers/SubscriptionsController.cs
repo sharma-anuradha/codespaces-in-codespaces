@@ -17,11 +17,13 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Partners;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
@@ -45,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private readonly IEnvironmentManager environmentManager;
         private readonly ITokenProvider tokenProvider;
         private readonly IMapper mapper;
+        private readonly ISystemConfiguration systemConfiguration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
@@ -53,16 +56,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="tokenProvider">The ITokenProvider interface.</param>
         /// <param name="mapper">The IMapper interface.</param>
         /// <param name="environmentManager">The IEnvironmentManager interface.</param>
+        /// <param name="systemConfiguration">The ISystemConfiguration interface.</param>
         public SubscriptionsController(
             IPlanManager planManager,
             ITokenProvider tokenProvider,
             IMapper mapper,
-            IEnvironmentManager environmentManager)
+            IEnvironmentManager environmentManager,
+            ISystemConfiguration systemConfiguration)
         {
             this.planManager = planManager;
             this.tokenProvider = tokenProvider;
             this.mapper = mapper;
             this.environmentManager = environmentManager;
+            this.systemConfiguration = systemConfiguration;
         }
 
         /// <summary>
@@ -829,8 +835,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         sourceArmTokenExpiration = DateTime.UnixEpoch.AddSeconds(secSinceEpoch);
                     }
 
+                    var partner = await HttpContext.GetPartnerAsync(systemConfiguration, logger);
+
                     var token = tokenProvider.GenerateDelegatedVsSaaSToken(
                         plan,
+                        partner,
                         scopesArray,
                         requestBody.Identity,
                         sourceArmTokenExpiration,
