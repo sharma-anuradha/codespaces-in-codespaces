@@ -10,14 +10,53 @@ import { ApplicationState } from '../../reducers/rootReducer';
 import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
 import { defaultConfig } from '../../services/configurationService';
 
+import { getShortEnvironmentName } from '../../utils/getShortEnvironmentName';
+
 export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareWebExtensionEndpoint: string;
+    portalEndpoint: string;
     sessionId: string;
 }
+
+const liveShareEnvParam = (env: string, currentSearch: string): string | null => {
+    const currentEnv = getShortEnvironmentName(env);
+
+    const isDEV = (currentEnv === 'dev');
+    const isDEVStg = (currentEnv === 'dev-stg');
+    const isPPE = (currentEnv === 'ppe');
+    if (!isDEV && !isDEVStg && !isPPE) {
+        return null;
+    }
+
+    const params = new URLSearchParams(currentSearch);
+    /// if param already set, don't override it
+    const setParam = params.get('env');
+    if (setParam && setParam.trim()) {
+        return setParam;
+    }
+
+    return (currentEnv === 'dev-stg')
+        ? 'dev'
+        : currentEnv;
+};
 
 class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShareWorkbenchProps> {
     private resolveExternalUri: (uri: URI) => Promise<URI>;
     private applicationLinksProvider: () => IApplicationLink[];
+
+    private getSessionLinkParamsWithEnvironment = (otherParams: string[][]) => {
+        const { history, portalEndpoint } = this.props;
+        const { location } = history;
+
+        const params = new URLSearchParams(otherParams);
+
+        const envParam = liveShareEnvParam(portalEndpoint, location.search);
+        if (envParam) {
+            params.append('env', envParam);
+        }
+
+        return params;
+    }
 
     constructor(props: LiveShareWorkbenchProps) {
         super(props);
@@ -28,12 +67,19 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
         };
 
         this.applicationLinksProvider = () => {
+            const params = this.getSessionLinkParamsWithEnvironment([
+                ['action', 'join'],
+                ['workspaceId', this.props.sessionId],
+                ['correlationId', 'null'],
+            ]);
+
             const link: IApplicationLink = {
                 uri: vscode.URI.parse(
-                    `vsls:?action=join&workspaceId=${this.props.sessionId}&correlationId=null`
+                    `vsls:?${params}`
                 ),
                 label: 'Open in Desktop',
             };
+
             return [link];
         };
     }
@@ -52,8 +98,15 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
 
         const extensionUrls = [extensionUrl];
 
+        const { sessionId } = this.props;
+        const params = this.getSessionLinkParamsWithEnvironment([
+            ['sessionId',  this.props.sessionId],
+        ]);
+
         // This is the folder URI format recognized by the LiveShare file system provider.
-        const folderUri = `vsls:///?${this.props.sessionId}`;
+        // we use `?{sessionId}` for cbackward compat reasons, should be removed
+        // when LS extension understands the `sessionId={id}` parameter
+        const folderUri = `vsls:///?${sessionId}&${params}`;
 
         const commands = [
             {
@@ -78,9 +131,10 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
 const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: string }>) => {
     const sessionId = props.match.params.id;
 
-    const { liveShareWebExtensionEndpoint } = state.configuration || defaultConfig;
+    const { liveShareWebExtensionEndpoint, portalEndpoint } = state.configuration || defaultConfig;
     return {
         sessionId,
+        portalEndpoint,
         liveShareWebExtensionEndpoint,
     };
 };
