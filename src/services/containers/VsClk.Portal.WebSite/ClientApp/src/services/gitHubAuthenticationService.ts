@@ -16,6 +16,7 @@ type GitHubAccessTokenResponse = {
     readonly accessToken: string;
     readonly state: string;
     readonly scope?: string;
+    readonly repoId?: string;
 };
 
 export function isGitHubTokenUpdate(event: StorageEvent) {
@@ -26,18 +27,19 @@ export async function storeGitHubAccessTokenResponse({
     accessToken,
     state,
     scope,
+    repoId,
 }: GitHubAccessTokenResponse) {
     await localStorageKeychain.set(
         gitHubLocalStorageKey,
-        JSON.stringify({ accessToken, state, scope })
+        JSON.stringify({ accessToken, state, scope, repoId })
     );
 }
 
-async function clearGitHubAccessTokenResponse() {
+export async function clearGitHubAccessTokenResponse() {
     await localStorageKeychain.delete(gitHubLocalStorageKey);
 }
 
-async function getStoredGitHubAccessTokenResponse(): Promise<GitHubAccessTokenResponse | null> {
+export async function getStoredGitHubAccessTokenResponse(): Promise<GitHubAccessTokenResponse | null> {
     // We migrate the existing token first for background compatibility
     const unencryptedToken = localStorage.getItem(unencryptedLocalStorageKey);
     if (unencryptedToken) {

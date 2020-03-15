@@ -1,6 +1,7 @@
 import {
-    getStoredGitHubToken,
     getGitHubAccessToken,
+    getStoredGitHubAccessTokenResponse,
+    clearGitHubAccessTokenResponse,
 } from '../../services/gitHubAuthenticationService';
 import { addDefaultGithubKey } from '../../cache/localStorageKeychain/localstorageKeychainKeys';
 import { Signal } from '../../utils/signal';
@@ -9,7 +10,6 @@ import { PostMessageRepoInfoRetriever, IRepoInfo } from './postMessageRepoInfoRe
 import { parseCascadeToken } from './parseCascadeToken';
 
 const vsoCascadeTokenKeychainKeyPrefix = 'vso-cascade-token';
-const vsoGithubTokenKeychainKeyPrefix = 'vso-github-token';
 
 export class AuthServiceGithub {
     private initializeSignal = new Signal();
@@ -47,10 +47,6 @@ export class AuthServiceGithub {
         return `${vsoCascadeTokenKeychainKeyPrefix}_${environmentId}`;
     }
 
-    private createGithubTokenKey(environmentId: string) {
-        return `${vsoGithubTokenKeychainKeyPrefix}_${environmentId}`;
-    }
-
     public getCascadeToken = async () => {
         await this.initializeSignal.promise;
 
@@ -58,20 +54,18 @@ export class AuthServiceGithub {
             throw new Error('No repo info found.');
         }
 
-        const githubToken = await getStoredGitHubToken();
-        if (!githubToken) {
+        const { repositoryId, environmentId } = this.repoInfo;
+
+        const githubTokenResponse = await getStoredGitHubAccessTokenResponse();
+
+        if (!githubTokenResponse || (githubTokenResponse.repoId !== repositoryId)) {
+            clearGitHubAccessTokenResponse();
+
             return await getGitHubAccessToken(true, location.pathname);
         }
 
-        if (!githubToken) {
-            return null;
-        }
-        const { environmentId } = this.repoInfo;
-
-        const githubKeychainKey = this.createGithubTokenKey(environmentId);
-        await localStorageKeychain.set(githubKeychainKey, githubToken);
-
-        const cascadeToken = await this.getFreshCascadeToken(githubToken);
+        const { accessToken } = githubTokenResponse;
+        const cascadeToken = await this.getFreshCascadeToken(accessToken);
 
         if (!cascadeToken) {
             return cascadeToken;

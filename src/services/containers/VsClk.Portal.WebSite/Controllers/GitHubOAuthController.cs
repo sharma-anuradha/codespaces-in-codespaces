@@ -97,6 +97,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 responseQuery.Add("errorMessage", "Failed to get token from GitHub");
             }
 
+            if (!string.IsNullOrEmpty(repoId))
+            {
+                responseQuery.Add("repoId", repoId);
+            }
+
             var responseUriBuilder = GetUriBuilder();
             responseUriBuilder.Path = ClientFlowFeedbackEndpoint;
             responseUriBuilder.Query = responseQuery.ToString();

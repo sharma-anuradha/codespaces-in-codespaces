@@ -29,12 +29,14 @@ export function GitHubLogin() {
             const accessToken = url.searchParams.get('accessToken');
             const state = url.searchParams.get('state');
             const scope = url.searchParams.get('scope');
+            const repoId = url.searchParams.get('repoId') || undefined;
 
             if (accessToken && state && scope) {
                 await storeGitHubAccessTokenResponse({
                     accessToken,
                     state,
                     scope,
+                    repoId
                 });
                 
                 const redirectUrl = getRedirectionUrl(state);
