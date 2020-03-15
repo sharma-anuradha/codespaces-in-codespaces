@@ -88,7 +88,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             tokenProvider = MockTokenProvider();
             resourceBroker = new MockResourceBrokerClient();
             this.environmentMonitor = new MockEnvironmentMonitor();
-            skuCatalog = new Mock<ISkuCatalog>(MockBehavior.Strict).Object;
+
+            var skuMock = new Mock<ICloudEnvironmentSku>(MockBehavior.Strict);
+            skuMock.Setup((s) => s.ComputeOS).Returns(ComputeOS.Linux);
+            var skuDictionary = new Dictionary<string, ICloudEnvironmentSku>
+            {
+                ["test"] = skuMock.Object,
+            };
+            var skuCatalogMock = new Mock<ISkuCatalog>(MockBehavior.Strict);
+            skuCatalogMock.Setup((sc) => sc.CloudEnvironmentSkus).Returns(skuDictionary);
+            this.skuCatalog = skuCatalogMock.Object;
 
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,

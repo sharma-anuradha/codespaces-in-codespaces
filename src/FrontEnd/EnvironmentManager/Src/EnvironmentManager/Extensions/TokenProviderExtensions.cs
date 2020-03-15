@@ -3,11 +3,13 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -26,12 +28,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// </summary>
         /// <param name="provider">The token provider.</param>
         /// <param name="environment">Environment that will connect with the token.</param>
+        /// <param name="environmentSku">SKU of the environment.</param>
         /// <param name="userProfile">Profile of the environment owner.</param>
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>JWT.</returns>
         public static string GenerateEnvironmentConnectionToken(
             this ITokenProvider provider,
             CloudEnvironment environment,
+            ICloudEnvironmentSku environmentSku,
             Profile userProfile,
             IDiagnosticsLogger logger)
         {
@@ -42,14 +46,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
                 // the tokens used for environment connection.
                 new Claim(CustomClaims.Provider, userProfile.Provider),
                 new Claim(CustomClaims.UserId, userProfile.Id),
-
-                // Make the token narrowly scoped to this one sharing session.
-                // Credential helpers in the environment also need access to join the session.
-                new Claim(CustomClaims.Scope, string.Join(
-                    ' ',
-                    PlanAccessTokenScopes.ShareSession,
-                    PlanAccessTokenScopes.JoinSession)),
-                new Claim(CustomClaims.Session, environment.Connection.ConnectionSessionId),
             };
 
             var settings = provider.Settings.ConnectionTokenSettings;
@@ -60,6 +56,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
                 requiredClaims,
                 notBefore: null,
                 expires: DateTime.UtcNow + lifetime);
+
+            if (environmentSku.ComputeOS == ComputeOS.Linux)
+            {
+                // For Linux environments, make the token scoped to this one sharing session.
+                // Credential helpers in the environment also need access to join the session.
+                // TODO: Enable scoped tokens for Windows (Nexus) environments also.
+                payload.AddClaim(new Claim(CustomClaims.Scope, string.Join(
+                    ' ',
+                    PlanAccessTokenScopes.ShareSession,
+                    PlanAccessTokenScopes.JoinSession)));
+                payload.AddClaim(
+                    new Claim(CustomClaims.Session, environment.Connection.ConnectionSessionId));
+            }
 
             // Copy additional optional identity claims from the authenticated user.
             AddOptionalClaim(payload, CustomClaims.DisplayName, userProfile.Name);

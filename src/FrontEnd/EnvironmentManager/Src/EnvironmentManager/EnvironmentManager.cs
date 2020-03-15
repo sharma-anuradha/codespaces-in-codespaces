@@ -1159,8 +1159,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var callbackUri = new Uri(string.Format(startCloudEnvironmentParameters.CallbackUriFormat, cloudEnvironment.Id));
             Requires.Argument(callbackUri.IsAbsoluteUri, nameof(callbackUri), "Must be an absolute URI.");
 
+            if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku))
+            {
+                throw new ArgumentException($"Invalid SKU: {cloudEnvironment.SkuName}");
+            }
+
             var connectionToken = TokenProvider.GenerateEnvironmentConnectionToken(
-                cloudEnvironment, startCloudEnvironmentParameters.UserProfile, logger);
+                cloudEnvironment, sku, startCloudEnvironmentParameters.UserProfile, logger);
 
             // Construct the start-compute environment variables
             var environmentVariables = EnvironmentVariableGenerator.Generate(
