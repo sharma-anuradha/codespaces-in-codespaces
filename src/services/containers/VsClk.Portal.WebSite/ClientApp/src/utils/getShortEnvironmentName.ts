@@ -6,7 +6,7 @@ export const getShortEnvironmentName = (env: string): 'dev' | 'dev-stg' | 'ppe' 
             return 'dev';
         }
 
-        case 'online-ppe.dev.core.vsengsaas.visualstudio.com': {
+        case 'online-ppe.core.vsengsaas.visualstudio.com': {
             return 'ppe';
         }
 
