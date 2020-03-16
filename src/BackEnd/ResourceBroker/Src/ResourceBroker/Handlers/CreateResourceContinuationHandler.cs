@@ -257,6 +257,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     });
             }
 
+            if (result.Status == OperationState.Succeeded)
+            {
+                var activator = (IContinuationTaskActivator)ServiceProvider.GetService(typeof(IContinuationTaskActivator));
+                var initializeInput = new InitializeResourceContinuationInput()
+                {
+                    Type = input.Type,
+                    ResourceId = input.ResourceId,
+                    Reason = input.Reason,
+                };
+
+                var target = InitializeResourceContinuationHandler.DefaultQueueTarget;
+                await activator.Execute(target, initializeInput, logger, initializeInput.ResourceId);
+            }
+
             return result;
         }
 

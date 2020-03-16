@@ -75,6 +75,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<CreateResourceContinuationHandler>();
             services.AddSingleton<ICreateResourceContinuationHandler>(x => x.GetRequiredService<CreateResourceContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateResourceContinuationHandler>());
+            services.AddSingleton<InitializeResourceContinuationHandler>();
+            services.AddSingleton<IInitializeResourceContinuationHandler>(x => x.GetRequiredService<InitializeResourceContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<InitializeResourceContinuationHandler>());
             services.AddSingleton<StartEnvironmentContinuationHandler>();
             services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());

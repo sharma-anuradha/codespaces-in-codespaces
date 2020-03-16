@@ -128,8 +128,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             // Trigger auto pool create to replace assigned item
                             TaskHelper.RunBackground(
                                 $"{LogBaseName}_run_create",
-                                (taskLogger) => ResourceContinuationOperations.CreateAsync(
-                                    Guid.NewGuid(), pool.Type, pool.Details, "ResourceAssignedReplace", taskLogger),
+                                async (taskLogger) =>
+                                {
+                                    var reason = "ResourceAssignedReplace";
+                                    var id = Guid.NewGuid();
+                                    await ResourceContinuationOperations.CreateAsync(
+                                        id, pool.Type, pool.Details, reason, taskLogger);
+                                },
                                 childLogger);
 
                             results.Add(Mapper.Map<AllocateResult>(record));
@@ -186,8 +191,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     // Trigger auto pool create to replace assigned item
                     TaskHelper.RunBackground(
                         $"{LogBaseName}_run_create",
-                        (taskLogger) => ResourceContinuationOperations.CreateAsync(
-                            Guid.NewGuid(), assignResult.ResourceSku.Type, assignResult.ResourceSku.Details, "ResourceAssignedReplace", taskLogger),
+                        async (taskLogger) =>
+                        {
+                            var reason = "ResourceAssignedReplace";
+                            var id = Guid.NewGuid();
+                            await ResourceContinuationOperations.CreateAsync(
+                                id, assignResult.ResourceSku.Type, assignResult.ResourceSku.Details, reason, taskLogger);
+                        },
                         childLogger);
 
                     return Mapper.Map<AllocateResult>(assignResult.Resource);

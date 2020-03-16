@@ -114,6 +114,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public IList<OperationStateChanges> ProvisioningStatusChanges { get; set; }
 
         /// <summary>
+        /// Gets or sets the initialization reason.
+        /// </summary>
+        [JsonProperty(PropertyName = "initializationReason")]
+        public string InitializationReason { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Provisioning Status.
+        /// </summary>
+        [JsonProperty(PropertyName = "initializationStatus")]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public OperationState? InitializationStatus { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Provisioning Status Changed date.
+        /// </summary>
+        [JsonProperty(PropertyName = "initializationStatusChanged")]
+        public DateTime? InitializationStatusChanged { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Provisioning Status Changes.
+        /// </summary>
+        [JsonProperty(PropertyName = "initializationStatusChanges")]
+        public IList<OperationStateChanges> InitializationStatusChanges { get; set; }
+
+        /// <summary>
         /// Gets or sets the starting reason.
         /// </summary>
         [JsonProperty(PropertyName = "startingReason")]
@@ -241,6 +266,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             ProvisioningStatus = newState;
             ProvisioningStatusChanged = time;
             ProvisioningStatusChanges.Add(new OperationStateChanges
+            {
+                Status = newState,
+                Time = time,
+                Trigger = trigger,
+            });
+
+            return true;
+        }
+
+        /// <summary>
+        /// Updates the initialization status.
+        /// </summary>
+        /// <param name="newState">Target new state.</param>
+        /// <param name="trigger">Trigger that caused the action.</param>
+        /// <param name="newTime">Time if that is being set.</param>
+        /// <returns>Returns if the update occured.</returns>
+        public bool UpdateInitializationStatus(OperationState newState, string trigger, DateTime? newTime = null)
+        {
+            if (InitializationStatus == newState)
+            {
+                return false;
+            }
+
+            if (InitializationStatusChanges == null)
+            {
+                InitializationStatusChanges = new List<OperationStateChanges>();
+            }
+
+            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
+            InitializationStatus = newState;
+            InitializationStatusChanged = time;
+            InitializationStatusChanges.Add(new OperationStateChanges
             {
                 Status = newState,
                 Time = time,
