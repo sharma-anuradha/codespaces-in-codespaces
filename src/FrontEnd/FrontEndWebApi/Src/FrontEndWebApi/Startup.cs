@@ -123,7 +123,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                             .WithOrigins(currentOrigins.ToArray())
                             .AllowAnyHeader()
                             .WithExposedHeaders(vssaasHeaders)
-                            .AllowAnyMethod());
+                            .AllowAnyMethod()
+                            .SetIsOriginAllowedToAllowWildcardSubdomains());
 
                     var currentOriginsDev = currentOrigins.GetRange(0, currentOrigins.Count);
 

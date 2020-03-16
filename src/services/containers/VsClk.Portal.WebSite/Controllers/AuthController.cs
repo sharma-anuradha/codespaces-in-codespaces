@@ -118,8 +118,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return Ok(200);
         }
 
-        public static CookiePayload DecryptCookie(string encryptedCookie)
+        public static CookiePayload DecryptCookie(string encryptedCookie, string key)
         {
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new Exception("AES key is not set.");
+            }
+
             try
             {
                 var cookiePair = ParseCascadeCookie(encryptedCookie);
@@ -128,7 +133,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                     return null;
                 }
 
-                var decryptedCookie = AesEncryptor.DecryptStringFromHex_Aes(cookiePair.Item1, AppSettings.AesKey, cookiePair.Item2);
+                var decryptedCookie = AesEncryptor.DecryptStringFromHex_Aes(cookiePair.Item1, key, cookiePair.Item2);
                 var payload = JsonConvert.DeserializeObject<CookiePayload>(decryptedCookie);
 
                 return payload;
@@ -160,7 +165,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 Path = "/",
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Lax
+                SameSite = SameSiteMode.None
             };
 
             return option;

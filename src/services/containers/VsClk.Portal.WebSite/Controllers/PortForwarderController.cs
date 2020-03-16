@@ -28,6 +28,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             this.controllerProvider = controllerProvider;
         }
 
+        private string GetTokenClaim(string claimName, JwtSecurityToken token)
+        {
+            foreach (Claim claim in token.Claims)
+            {
+                if (claim.Type == claimName)
+                {
+                    return claim.Value;
+                }
+            }
+
+            return string.Empty;
+        }
+
         [HttpGet("~/portforward")]
         public async Task<IActionResult> Index(
             [FromQuery] string path,
@@ -80,7 +93,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var cookie = Request.Cookies[Constants.PFCookieName];
             if (!string.IsNullOrEmpty(cookie))
             {
-                var payload = AuthController.DecryptCookie(cookie);
+                var payload = AuthController.DecryptCookie(cookie, AppSettings.AesKey);
                 if (payload == null)
                 {
                     // Cookie is expired or there was an error decrypting the cookie. So we will redirect the user to the main page to set new cookie.
@@ -94,20 +107,26 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return ExceptionView(PortForwardingFailure.NotAuthenticated);
             }
 
-            var userId = string.Empty;
             var handler = new JwtSecurityTokenHandler();
             var token = handler.ReadToken(cascadeToken) as JwtSecurityToken;
-            foreach (Claim claim in token.Claims)
+            var userId = GetTokenClaim("userId", token);
+
+            /* 
+             * For the VSO tokens generated for partners, there is no `userId` nor `subject` claims 
+             * so calculate the user id based on the `tid`/`oid` claims instead.
+             */
+            if (string.IsNullOrEmpty(userId))
             {
-                if (claim.Type == "userId")
+                var tid = GetTokenClaim("tid", token);
+                var oid = GetTokenClaim("oid", token);
+
+                if (!string.IsNullOrEmpty(tid) && !string.IsNullOrEmpty(oid))
                 {
-                    userId = claim.Value;
-                    break;
+                    userId = $"{tid}_{oid}";
                 }
             }
 
             var ownerId = await WorkSpaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId, AppSettings.LiveShareEndpoint);
-
             if (ownerId == null || userId == null)
             {
                 return ExceptionView(PortForwardingFailure.InvalidWorkspaceOrOwner);
