@@ -70,7 +70,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
         {
             var logger = GetNewLogger();
             logger.LogInfo(GetType().FormatLogMessage(nameof(ProcessDeleteAsync)));
-            await PerformDeleteAsync(command, logger);
+
+            // Only AgeOuts and AccountCloseOuts results in deletion. Manual delete commands are not supported.
+            await command.CheckpointAsync(CommandStatus.Complete, 0);
         }
 
         /// <inheritdoc/>

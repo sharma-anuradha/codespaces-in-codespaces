@@ -2,12 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.PrivacyServices.CommandFeed.Client;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 {
@@ -17,6 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
     [LoggingBaseName("pcf_agent_worker")]
     public class PcfAgentWorker : BackgroundService
     {
+        private const string PcfAgentOverrideKey = "pcf:enable";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PcfAgentWorker"/> class.
         /// </summary>
@@ -24,12 +28,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
         /// <param name="dataAgent">Privacy Data Agent.</param>
         /// <param name="commandFeedLogger">Command Feed Logger.</param>
         /// <param name="logger">VsSaas Logger.</param>
-        public PcfAgentWorker(ICommandFeedClient commandFeedClient, IPrivacyDataAgent dataAgent, CommandFeedLogger commandFeedLogger, IDiagnosticsLogger logger)
+        /// <param name="systemConfiguration">System Configuration.</param>
+        public PcfAgentWorker(ICommandFeedClient commandFeedClient, IPrivacyDataAgent dataAgent, CommandFeedLogger commandFeedLogger, IDiagnosticsLogger logger, ISystemConfiguration systemConfiguration)
         {
             CommandFeedClient = commandFeedClient;
             DataAgent = dataAgent;
             CommandFeedLogger = commandFeedLogger;
             Logger = logger;
+            SystemConfiguration = systemConfiguration;
         }
 
         private ICommandFeedClient CommandFeedClient { get; }
@@ -40,17 +46,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
         private IDiagnosticsLogger Logger { get; }
 
+        private ISystemConfiguration SystemConfiguration { get; }
+
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             Logger.LogInfo(GetType().FormatLogMessage(nameof(ExecuteAsync)));
 
-            PrivacyCommandReceiver receiver = new PrivacyCommandReceiver(
-                   DataAgent,
-                   CommandFeedClient,
-                   CommandFeedLogger);
+            var isEnabled = false;
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
 
-            await receiver.BeginReceivingAsync(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                // Defaults to true if no systemConfig record exists.
+                var enabledInSystemConfig = await SystemConfiguration.GetValueAsync(PcfAgentOverrideKey, Logger.NewChildLogger(), true);
+
+                if (enabledInSystemConfig != isEnabled)
+                {
+                    if (enabledInSystemConfig)
+                    {
+                        // If the current cancellationToken is previously cancelled, create a new one to use with PCF.
+                        if (cts.Token.IsCancellationRequested)
+                        {
+                            cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                        }
+
+                        PrivacyCommandReceiver receiver = new PrivacyCommandReceiver(
+                        DataAgent,
+                        CommandFeedClient,
+                        CommandFeedLogger);
+                        _ = receiver.BeginReceivingAsync(cts.Token);
+                    }
+                    else
+                    {
+                        cts.Cancel();
+                    }
+
+                    isEnabled = enabledInSystemConfig;
+                }
+
+                // Check the system config record every minute, to determine whether the PCF processing needs to be disabled.
+                await Task.Delay(TimeSpan.FromMinutes(1));
+            }
         }
     }
 }
