@@ -442,10 +442,20 @@ export class CreateEnvironmentPanelView extends Component<
                 {this.state.dotfilesRepository.errorMessage}
             </MessageBar>
         ) : null;
+        const selfHostedMessageBar = (
+            <MessageBar messageBarType={MessageBarType.info} isMultiline={true} truncated={true}>
+                Want to access your machines remotely?
+                <br /> Use self-hosting!
+                <Link href='https://aka.ms/vso-self-hosted' target='_blank'>
+                    More info...
+                </Link>
+            </MessageBar>
+        );
 
         return (
             <Stack tokens={{ childrenGap: 'l1' }}>
                 <Stack>
+                    {selfHostedMessageBar}
                     {errorMessageBar}
                     {repoMessageBar}
                     {dotfilesRepoMessageBar}
@@ -629,16 +639,16 @@ export class CreateEnvironmentPanelView extends Component<
             let authStatusMessageString;
             switch (this.state.authenticationAttempt.gitServiceType) {
                 case SupportedGitService.AzureDevOps:
-                    authStatusMessageString = "We've opened a new tab for you to grant permission to the specified Azure DevOps repositories";
+                    authStatusMessageString =
+                        "We've opened a new tab for you to grant permission to the specified Azure DevOps repositories";
                     break;
                 default:
-                    authStatusMessageString = "We've opened a new tab for you to grant permission to the specified GitHub repositories";
+                    authStatusMessageString =
+                        "We've opened a new tab for you to grant permission to the specified GitHub repositories";
             }
             authStatusMessage = (
                 <div className='create-environment-panel__auth'>
-                    <p>
-                        {authStatusMessageString}
-                    </p>
+                    <p>{authStatusMessageString}</p>
 
                     <p>
                         In case you closed it before finishing or it didn't appear at all,{' '}
@@ -752,8 +762,7 @@ export class CreateEnvironmentPanelView extends Component<
         event.persist();
 
         if (
-            (!this.props.gitHubAccessToken ||
-            !this.props.azDevAccessToken) &&
+            (!this.props.gitHubAccessToken || !this.props.azDevAccessToken) &&
             (this.state.shouldTryToAuthenticateForDotfiles ||
                 this.state.shouldTryToAuthenticateForRepo)
         ) {
@@ -830,8 +839,13 @@ export class CreateEnvironmentPanelView extends Component<
             gitServiceProviders.push(getSupportedGitService(this.state.gitRepositoryUrl.value));
         }
         if (this.state.shouldTryToAuthenticateForDotfiles) {
-            let dotFilesGitServiceProvider = getSupportedGitService(this.state.dotfilesRepository.value);
-            if (gitServiceProviders.length === 0 || gitServiceProviders[0] !== dotFilesGitServiceProvider) {
+            let dotFilesGitServiceProvider = getSupportedGitService(
+                this.state.dotfilesRepository.value
+            );
+            if (
+                gitServiceProviders.length === 0 ||
+                gitServiceProviders[0] !== dotFilesGitServiceProvider
+            ) {
                 gitServiceProviders.push(dotFilesGitServiceProvider);
             }
         }
@@ -839,8 +853,7 @@ export class CreateEnvironmentPanelView extends Component<
             let authenticationAttempt: IAuthenticationAttempt;
             if (this.state.authenticationAttempt) {
                 authenticationAttempt = this.state.authenticationAttempt;
-            }
-            else {
+            } else {
                 switch (gitServiceProvider) {
                     case SupportedGitService.AzureDevOps:
                         authenticationAttempt = new AzDevAuthenticationAttempt();
@@ -857,7 +870,7 @@ export class CreateEnvironmentPanelView extends Component<
                 this.state.authenticationAttempt.dispose();
             }
             this.setState({
-                authenticationAttempt: undefined
+                authenticationAttempt: undefined,
             });
             if (!accessToken) {
                 switch (gitServiceProvider) {
@@ -1029,7 +1042,11 @@ export class CreateEnvironmentPanelView extends Component<
     };
 
     private onGetErrorMessage = async (value: string, textField: string) => {
-        const validationResult = await validateGitRepository(value, this.props.gitHubAccessToken, this.props.azDevAccessToken);
+        const validationResult = await validateGitRepository(
+            value,
+            this.props.gitHubAccessToken,
+            this.props.azDevAccessToken
+        );
         switch (validationResult) {
             case validationMessages.invalidGitUrl:
             case validationMessages.unableToConnect:
