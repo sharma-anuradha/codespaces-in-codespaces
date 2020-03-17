@@ -69,7 +69,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    ValidateCloudEnvironment(cloudEnvironment, environmentData.EnvironmentId);
 
                    cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
-                   cloudEnvironment.Connection.ConnectionSessionPath = environmentData.SessionPath;
+
+                   // This switch gives preference to the existing value instead of the incomming value.
+                   // This prevents new values from ovewritting the existing one.
+                   cloudEnvironment.Connection.ConnectionSessionPath = !string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionPath) ? cloudEnvironment.Connection.ConnectionSessionPath : environmentData.SessionPath;
                    var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
                    handlerContext.CloudEnvironmentState = newState.state;
                    handlerContext.Reason = newState.reason.ToString();

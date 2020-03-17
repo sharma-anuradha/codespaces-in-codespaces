@@ -19,6 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         /// <summary>
         /// Gets or sets the connection session path.
+        /// This becomes the default path to connect to the environment from vscode and is set the first time the environment becomes available.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "sessionPath")]
         public string ConnectionSessionPath { get; set; }

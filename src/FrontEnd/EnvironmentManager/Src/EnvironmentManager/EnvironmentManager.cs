@@ -374,6 +374,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                 cloudEnvironment.Id,
                                 Guid.Empty,
                                 startCloudEnvironmentParameters.ConnectionServiceUri,
+                                cloudEnvironment.Connection?.ConnectionSessionPath,
                                 childLogger.NewChildLogger());
                         }
 
@@ -444,6 +445,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Id,
                         cloudEnvironment.Compute.ResourceId,
                         startCloudEnvironmentParameters.ConnectionServiceUri,
+                        cloudEnvironment.Connection?.ConnectionSessionPath,
                         childLogger.NewChildLogger());
                     if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                     {
@@ -604,7 +606,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // Delete the previous liveshare session from database.
                         // Do not block start process on delete of old workspace from liveshare db.
                         _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId, childLogger.NewChildLogger()));
-                        cloudEnvironment.Connection = null;
+                        cloudEnvironment.Connection.ConnectionComputeId = null;
+                        cloudEnvironment.Connection.ConnectionComputeTargetId = null;
+                        cloudEnvironment.Connection.ConnectionServiceUri = null;
+                        cloudEnvironment.Connection.ConnectionSessionId = null;
                     }
 
                     // Allocate Compute
@@ -651,6 +656,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Id,
                         cloudEnvironment.Compute.ResourceId,
                         startCloudEnvironmentParameters.ConnectionServiceUri,
+                        cloudEnvironment.Connection?.ConnectionSessionPath,
                         childLogger.NewChildLogger());
                     if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                     {
@@ -1021,6 +1027,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string cloudEnvironmentId,
             Guid computeIdToken,
             Uri connectionServiceUri,
+            string sessionPath,
             IDiagnosticsLogger logger)
         {
             var duration = logger.StartDuration();
@@ -1051,7 +1058,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ConnectionComputeId = computeIdToken.ToString(),
                 ConnectionComputeTargetId = type.ToString(),
                 ConnectionSessionId = workspaceResponse.Id,
-                ConnectionSessionPath = null,
+                ConnectionSessionPath = sessionPath,
             };
         }
 
