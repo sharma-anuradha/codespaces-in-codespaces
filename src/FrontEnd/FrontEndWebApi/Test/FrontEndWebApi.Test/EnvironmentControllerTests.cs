@@ -214,7 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var currentUser = MockUtil.MockCurrentUserProvider(
                 new Dictionary<string, object>
                 {
-                    { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
+                    { ProfileExtensions.VisualStudioOnlineWindowsSkuPreviewUserProgram, true },
                 },
                 "test@microsoft.com");
 
@@ -257,7 +257,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var currentUser = MockUtil.MockCurrentUserProvider(new Dictionary<string, object>
             {
-                { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
+                { ProfileExtensions.VisualStudioOnlineWindowsSkuPreviewUserProgram, true },
             });
 
             var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog, currentUserProvider: currentUser);

@@ -6,6 +6,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Moq;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Xunit;
 
@@ -35,6 +36,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private readonly Profile fakeProfile = new Profile
         {
             Email = "person@fakemicrosoft.com"
+        };
+
+        private readonly Profile featureFlagEnabledProfile = new Profile
+        {
+            Email = "external@gmail.com",
+            Programs = new Dictionary<string, object>()
+            {
+                {
+                    ProfileExtensions.VisualStudioOnlineInternalWindowsSkuUserProgram,
+                    true
+                },
+            },
+        };
+
+        private readonly Profile nullEmailProfile = new Profile
+        {
+            Email = null
         };
 
         private Mock<ICurrentImageInfoProvider> currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
@@ -107,8 +125,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windowsSku));
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windowsSku));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(featureFlagEnabledProfile, windowsSku));
             Assert.False(ProfileUtils.IsSkuVisibleToProfile(outsideProfile, windowsSku));
             Assert.False(ProfileUtils.IsSkuVisibleToProfile(fakeProfile, windowsSku));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(nullEmailProfile, windowsSku));
         }
 
         [Fact]
@@ -154,8 +174,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windows64Sku));
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windows64Sku));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(featureFlagEnabledProfile, windows64Sku));
             Assert.False(ProfileUtils.IsSkuVisibleToProfile(outsideProfile, windows64Sku));
             Assert.False(ProfileUtils.IsSkuVisibleToProfile(fakeProfile, windows64Sku));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(nullEmailProfile, windows64Sku));
         }
 
         [Fact]
@@ -201,8 +223,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windows32Sku));
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windows32Sku));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(featureFlagEnabledProfile, windows32Sku));
             Assert.False(ProfileUtils.IsSkuVisibleToProfile(outsideProfile, windows32Sku));
             Assert.False(ProfileUtils.IsSkuVisibleToProfile(fakeProfile, windows32Sku));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(nullEmailProfile, windows32Sku));
         }
     }
 }

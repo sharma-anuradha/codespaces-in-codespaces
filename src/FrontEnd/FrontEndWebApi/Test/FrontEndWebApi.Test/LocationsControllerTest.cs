@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var currentUserProvider = MockCurrentUserProvider(new Dictionary<string, object>
             {
-                { ProfileExtensions.VisualStudioOnlineWidowsSkuPreviewUserProgram, true },
+                { ProfileExtensions.VisualStudioOnlineWindowsSkuPreviewUserProgram, true },
             });
 
             var skuUtils = MockUtil.MockSkuUtils(true);

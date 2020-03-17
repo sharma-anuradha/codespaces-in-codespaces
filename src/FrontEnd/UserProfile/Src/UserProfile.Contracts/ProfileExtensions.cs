@@ -17,7 +17,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <summary>
         /// The Windows Preview program name.
         /// </summary>
-        public const string VisualStudioOnlineWidowsSkuPreviewUserProgram = "vsonline.windowsskupreview";
+        public const string VisualStudioOnlineWindowsSkuPreviewUserProgram = "vsonline.windowsskupreview";
+
+        /// <summary>
+        /// The Internal Windows SKU program name.
+        /// </summary>
+        public const string VisualStudioOnlineInternalWindowsSkuUserProgram = "vsonline.internalwindowssku";
 
         /// <summary>
         /// Test whether the given user profile is a member of the Windows SKU preview.
@@ -26,17 +31,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <returns>True if the test succeeded.</returns>
         public static bool IsWindowsSkuPreviewUser(this Profile profile)
         {
-            return profile.GetProgramsItem<bool>(VisualStudioOnlineWidowsSkuPreviewUserProgram)
+            return profile.GetProgramsItem<bool>(VisualStudioOnlineWindowsSkuPreviewUserProgram)
                 || (profile.Email?.EndsWith("@microsoft.com") ?? false);
         }
 
         /// <summary>
-        /// Test whether the given user profile is an internal AAD member.
+        /// Test whether the given user profile has access to internal-only Windows SKUs.
         /// </summary>
         /// <param name="profile">The user profile.</param>
         /// <returns>True if the test succeeded.</returns>
         public static bool IsWindowsSkuInternalUser(this Profile profile)
         {
+            // Check feature flag first
+            var featureFlagEnabled = profile.GetProgramsItem<bool>(VisualStudioOnlineInternalWindowsSkuUserProgram);
+            if (featureFlagEnabled)
+            {
+                return true;
+            }
+
+            // Fallback to email check if feature flag is not set
             var email = profile.Email;
             if (string.IsNullOrEmpty(email))
             {
