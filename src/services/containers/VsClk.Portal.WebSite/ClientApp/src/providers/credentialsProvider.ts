@@ -132,6 +132,14 @@ export class CredentialsProvider implements ICredentialsProvider {
         if (!strategy) {
             trace.verbose('Cannot respond to VSCode keytar-shim request.', { service, account });
 
+            // generic keytar request
+            const genericKey = this.generateGenericLocalStorageKey(service, account);
+            const password = await localStorageKeychain.get(genericKey);
+
+            if (password) {
+                return password;
+            }
+
             return null;
         }
 
@@ -139,14 +147,6 @@ export class CredentialsProvider implements ICredentialsProvider {
 
         if (token) {
             return token;
-        }
-
-        // generic keytar request
-        const genericKey = this.generateGenericLocalStorageKey(service, account);
-        const password = await localStorageKeychain.get(genericKey);
-
-        if (password) {
-            return password;
         }
 
         trace.warn('No token available.');
