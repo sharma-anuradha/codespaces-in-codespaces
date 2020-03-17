@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     5,
                     5,
                     new ReadOnlyCollection<string>(new string[0]),
-                    new ReadOnlyCollection<string>(new string[0]));
+                    new ReadOnlyCollection<string>(new string[0]),1);
             }
 
             var skuCatalog = new Mock<ISkuCatalog>();
@@ -116,8 +116,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             Assert.NotNull(locationInfo);
             Assert.Equal(3, locationInfo.Skus.Length);
-            Assert.Equal("premiumLinux", locationInfo.Skus[0].Name);
-            Assert.Equal("StandardLinux", locationInfo.Skus[1].Name);
+            Assert.Equal("premiumLinux", locationInfo.Skus[1].Name);
+
+            // Standard is always set as top priority when it comes to ordering.
+            Assert.Equal("StandardLinux", locationInfo.Skus[0].Name); 
             Assert.Equal("PremiuimWindows", locationInfo.Skus[2].Name);
             Assert.Equal(DefaultAutoSuspendDelayMinutes, locationInfo.DefaultAutoSuspendDelayMinutes);
         }

@@ -54,22 +54,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility
 
             var isEnabled = ProfileUtils.IsSkuVisibleToProfile(profile, sku);
 
-            // If planInfo is available, then check for feature flags enabled for Basic Linux Sku at subscription level.
-            if (sku.Tier == SkuTier.Basic && sku.ComputeOS == ComputeOS.Linux && isEnabled)
+            /*
+             * If planInfo is available, then check for feature flags enabled
+             * As of now it is available only for Basic Linux Sku at subscription level.
+             */
+            if (planInfo != null)
             {
-                if (planInfo == null)
+                foreach (var featureFlag in sku.SupportedFeatureFlags)
                 {
-                    isEnabled = false;
-                }
-                else
-                {
-                    foreach (var featureFlag in sku.SupportedFeatureFlags)
+                    var isTurnedOn = await SystemConfiguration.GetSubscriptionValueAsync(featureFlag, planInfo.Subscription, Logger, false);
+                    if (!isTurnedOn && isEnabled)
                     {
-                        var isTurnedOn = await SystemConfiguration.GetSubscriptionValueAsync(featureFlag, planInfo.Subscription, Logger, false);
-                        if (!isTurnedOn)
-                        {
-                            isEnabled = false;
-                        }
+                        isEnabled = false;
                     }
                 }
             }

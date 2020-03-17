@@ -121,5 +121,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the set feature flags for the Sku.
         /// </summary>
         IEnumerable<string> SupportedFeatureFlags { get; }
+
+        /// <summary>
+        /// Gets the priority of the Sku. This is used for the display of skus in the clients.
+        /// </summary>
+        int Priority { get; }
     }
 }

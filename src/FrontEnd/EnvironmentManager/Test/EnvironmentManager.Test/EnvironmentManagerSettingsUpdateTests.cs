@@ -315,7 +315,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 5,
                 5,
                 new ReadOnlyCollection<string>(skuTransitions.ToList()),
-                new ReadOnlyCollection<string>(skuTransitions.ToList()));
+                new ReadOnlyCollection<string>(skuTransitions.ToList()),
+                1);
         }
 
         private static ISkuCatalog MockSkuCatalog(params ICloudEnvironmentSku[] skus)

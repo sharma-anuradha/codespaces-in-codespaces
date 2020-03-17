@@ -159,6 +159,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     ? Array.Empty<string>()
                     : cloudEnvironmentSettings.SupportedFeatureFlags.Distinct().ToArray();
 
+                var priority = cloudEnvironmentSettings.Priority;
+
                 // Get the VM and storage image familes.
                 var computeImageFamily = NewVmImageFamily(
                     controlPlaneInfo.Stamp,
@@ -202,7 +204,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     enabled ? skuConfiguration.ComputePoolSize.GetValueOrDefault() : 0,
                     enabled ? skuConfiguration.StoragePoolSize.GetValueOrDefault() : 0,
                     supportedSkuTransitions,
-                    supportedFeatures);
+                    supportedFeatures,
+                    priority);
 
                 Skus.Add(skuName, cloudEnvironment);
             }

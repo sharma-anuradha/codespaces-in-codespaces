@@ -102,7 +102,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 5,
                 5,
                 new ReadOnlyCollection<string>(new string[0]),
-                new ReadOnlyCollection<string>(new string[0]));
+                new ReadOnlyCollection<string>(new string[0]),
+                1);
 
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windowsSku));
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windowsSku));
@@ -148,7 +149,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 5,
                 5,
                 new ReadOnlyCollection<string>(new string[0]),
-                new ReadOnlyCollection<string>(new string[0]));
+                new ReadOnlyCollection<string>(new string[0]),
+                1);
 
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windows64Sku));
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windows64Sku));
@@ -194,7 +196,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 5,
                 5,
                 new ReadOnlyCollection<string>(new string[0]),
-                new ReadOnlyCollection<string>(new string[0]));
+                new ReadOnlyCollection<string>(new string[0]),
+                1);
 
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windows32Sku));
             Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windows32Sku));

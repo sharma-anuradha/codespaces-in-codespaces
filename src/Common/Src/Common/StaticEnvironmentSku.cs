@@ -84,5 +84,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public IEnumerable<string> SupportedFeatureFlags { get; } = Enumerable.Empty<string>();
+
+        /// <inheritdoc/>
+        public int Priority => throw new NotImplementedException();
     }
 }

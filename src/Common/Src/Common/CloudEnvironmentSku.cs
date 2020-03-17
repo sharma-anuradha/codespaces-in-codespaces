@@ -38,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="storagePoolLevel">The size of the storage pool that should be maintained.</param>
         /// <param name="supportedSkuTransitions">The set of SKUs which environments using this SKU are allowed to migrate to.</param>
         /// <param name="supportedFeatureFlags">The set of feature flags for the SKU.</param>
+        /// <param name="priority">The priority for the display of Sku in the clients.</param>
         public CloudEnvironmentSku(
             string skuName,
             SkuTier tier,
@@ -59,7 +60,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             int computePoolLevel,
             int storagePoolLevel,
             IReadOnlyCollection<string> supportedSkuTransitions,
-            IReadOnlyCollection<string> supportedFeatureFlags)
+            IReadOnlyCollection<string> supportedFeatureFlags,
+            int priority)
         {
             Requires.NotNullOrEmpty(skuName, nameof(skuName));
             Requires.NotNullOrEmpty(displayName, nameof(displayName));
@@ -80,6 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.Argument(!enabled || storagePoolLevel > 0, nameof(storagePoolLevel), "The storage pool level must be greater than zero.");
             Requires.NotNull(supportedSkuTransitions, nameof(supportedSkuTransitions));
             Requires.NotNull(supportedFeatureFlags, nameof(supportedFeatureFlags));
+            Requires.Argument(priority > 0, nameof(priority), "The priority must be greater than zero.");
 
             SkuName = skuName;
             Tier = tier;
@@ -102,6 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             StoragePoolLevel = storagePoolLevel;
             SupportedSkuTransitions = supportedSkuTransitions;
             SupportedFeatureFlags = supportedFeatureFlags;
+            Priority = priority;
         }
 
         /// <inheritdoc/>
@@ -170,5 +174,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public IEnumerable<string> SupportedFeatureFlags { get; }
+
+        /// <inheritdoc/>
+        public int Priority { get; set; }
     }
 }

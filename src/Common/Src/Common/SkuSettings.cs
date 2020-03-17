@@ -68,5 +68,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public IEnumerable<string> SupportedFeatureFlags { get; set; }
+
+        /// <summary>
+        /// Gets or sets the priority for the Sku. This is used for the display of skus in the clients.
+        /// The lower the priority the higher it appers in the list of Skus.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public int Priority { get; set; }
     }
 }

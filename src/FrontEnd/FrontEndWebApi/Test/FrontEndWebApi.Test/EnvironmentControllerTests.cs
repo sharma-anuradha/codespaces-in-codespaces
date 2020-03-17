@@ -301,7 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         AllowedAutoShutdownDelayMinutes = new int[0],
                         AllowedSkus = new ICloudEnvironmentSku[]
                         {
-                            MockUtil.MockSku("MockSkuName", SkuTier.Standard, "MockSku", ComputeOS.Linux, 0, 0, new string[0], new string[0]),
+                            MockUtil.MockSku("MockSkuName", SkuTier.Standard, "MockSku", ComputeOS.Linux, 0, 0, new string[0], new string[0], 1),
                         },
                     },
                     new CloudEnvironmentAvailableUpdatesResult

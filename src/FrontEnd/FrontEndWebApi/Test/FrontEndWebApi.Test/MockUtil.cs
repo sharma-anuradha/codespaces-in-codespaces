@@ -118,7 +118,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             decimal storageUnits,
             decimal computeUnits,
             IEnumerable<string> skuTransitions,
-            IEnumerable<string> supportedFeatures)
+            IEnumerable<string> supportedFeatures,
+            int priority)
         {
             var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
             currentImageInfoProvider
@@ -164,7 +165,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 5,
                 5,
                 new ReadOnlyCollection<string>(skuTransitions.ToList()),
-                new ReadOnlyCollection<string>(supportedFeatures.ToList()));
+                new ReadOnlyCollection<string>(supportedFeatures.ToList()),
+                priority);
         }
 
         public static ISkuCatalog MockSkuCatalog()
@@ -213,7 +215,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 5,
                 5,
                 new ReadOnlyCollection<string>(new string[0]),
-                new ReadOnlyCollection<string>(new string[0])));
+                new ReadOnlyCollection<string>(new string[0]),
+                1));
         }
 
         public static ISkuCatalog MockSkuCatalog(params ICloudEnvironmentSku[] skus)

@@ -254,6 +254,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 controlPlaneInfo.Object,
                 controlPlaneResourceAccessor.Object,
                 currentImageInfoProvider.Object);
+                
             var provider = new SystemCatalogProvider(azureSubscriptionCatalog, skuCatalog);
             return provider;
         }
@@ -392,6 +393,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             DisplayName = "test-sku-linux-standard-name",
                             StorageVsoUnitsPerHour = 1.0m,
                             ComputeVsoUnitsPerHour = 10.0m,
+                            Priority = 1
                         }
                     },
                     {
@@ -411,7 +413,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                                 },
                                 ComputePoolSize = 1,
                                 StoragePoolSize = 1,
-                            }
+                            },
+                            Priority = 2
                         }
                     },
                 },
