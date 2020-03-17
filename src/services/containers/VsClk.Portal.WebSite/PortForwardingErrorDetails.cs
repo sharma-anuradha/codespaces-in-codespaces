@@ -1,12 +1,13 @@
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
-    public enum PortForwardingFailure {
+    public enum PortForwardingFailure
+    {
         Unknown,
-        InvalidPath,
         InvalidCookiePayload,
         NotAuthenticated,
         NotAuthorized,
-        InvalidWorkspaceOrOwner
+        InvalidWorkspaceOrOwner,
+        None,
     }
 
     public class PortForwardingErrorDetails

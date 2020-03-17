@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 portString = portStringValues.FirstOrDefault();
             }
 
-            if (context.Request.Headers.TryGetValue("X-VSOnline-Authentication", out var tokenValues))
+            if (context.Request.Headers.TryGetValue("X-VSOnline-Forwarding-Token", out var tokenValues))
             {
                 token = tokenValues.FirstOrDefault();
             }

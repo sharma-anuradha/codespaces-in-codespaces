@@ -9,10 +9,6 @@
 <body>
     <div class="vsonline__redirect">
         @switch (@Model.FailureReason) {
-            case PortForwardingFailure.InvalidPath:
-                <p>Failed connecting to Visual Studio Online environment.</p>
-                break;
-
             case PortForwardingFailure.InvalidCookiePayload:
                 <p>Redirecting back to the portal...</p>
                 <p>Click <a href="@Model.RedirectUrl">here</a> if your browser does not automatically redirect.</p>

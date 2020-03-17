@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +12,8 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.ControllerAccess;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -44,7 +47,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [HttpGet("~/portforward")]
         public async Task<IActionResult> Index(
             [FromQuery] string path,
-            [FromQuery] string devSessionId
+            [FromServices] IDiagnosticsLogger logger
         )
         {
             if (path == "error")
@@ -79,72 +82,65 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return await FetchStaticAsset("ms-logo.svg", "image/svg+xml");
             }
 
-            if (devSessionId != null && devSessionId.EndsWith('/'))
+            var (cascadeToken, error) = GetAuthToken(logger);
+            if (cascadeToken == default)
             {
-                devSessionId = devSessionId.Substring(0, devSessionId.Length - 1);
+                return ExceptionView(error);
             }
 
-            string cascadeToken;
-            string host = Request.Host.Value;
-            ViewBag.HtmlStr = host;
-            string sessionId = AppSettings.IsLocal
-                ? devSessionId
-                : host.Split("-")[0];
-            var cookie = Request.Cookies[Constants.PFCookieName];
-            if (!string.IsNullOrEmpty(cookie))
+            string sessionId;
+            try
             {
-                var payload = AuthController.DecryptCookie(cookie, AppSettings.AesKey);
-                if (payload == null)
-                {
-                    // Cookie is expired or there was an error decrypting the cookie. So we will redirect the user to the main page to set new cookie.
-                    return ExceptionView(PortForwardingFailure.InvalidCookiePayload);
-                }
-                cascadeToken = payload.CascadeToken;
+                (sessionId, _) = GetPortForwardingSessionDetails(logger);
             }
-            else
+            catch (InvalidOperationException)
             {
-                // In this case user probably try to access the portForwarding link directory without signing in, so will redirect to SignIn page and redirect back to PF
-                return ExceptionView(PortForwardingFailure.NotAuthenticated);
+                return BadRequest();
             }
 
-            var handler = new JwtSecurityTokenHandler();
-            var token = handler.ReadToken(cascadeToken) as JwtSecurityToken;
-            var userId = GetTokenClaim("userId", token);
-
-            /* 
-             * For the VSO tokens generated for partners, there is no `userId` nor `subject` claims 
-             * so calculate the user id based on the `tid`/`oid` claims instead.
-             */
-            if (string.IsNullOrEmpty(userId))
+            var isUserAllowedToAccessEnvironment = await CheckUserAccessAsync(cascadeToken, sessionId, logger);
+            if (!isUserAllowedToAccessEnvironment)
             {
-                var tid = GetTokenClaim("tid", token);
-                var oid = GetTokenClaim("oid", token);
-
-                if (!string.IsNullOrEmpty(tid) && !string.IsNullOrEmpty(oid))
-                {
-                    userId = $"{tid}_{oid}";
-                }
+                return ExceptionView(PortForwardingFailure.NotAuthorized);
             }
 
-            var ownerId = await WorkSpaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId, AppSettings.LiveShareEndpoint);
-            if (ownerId == null || userId == null)
+            var cookiePayload = new LiveShareConnectionDetails
             {
-                return ExceptionView(PortForwardingFailure.InvalidWorkspaceOrOwner);
+                CascadeToken = cascadeToken,
+                SessionId = sessionId,
+                LiveShareEndPoint = AppSettings.LiveShareEndpoint
+            };
+
+            return View(cookiePayload);
+        }
+
+        [HttpGet("~/auth")]
+        public async Task<IActionResult> AuthAsync([FromServices] IDiagnosticsLogger logger)
+        {
+            var (cascadeToken, error) = GetAuthToken(logger);
+            if (cascadeToken == default)
+            {
+                return ExceptionView(error);
             }
 
-            if (ownerId == userId)
+            string sessionId;
+            try
             {
-                var cookiePayload = new LiveShareConnectionDetails
-                {
-                    CascadeToken = cascadeToken,
-                    SessionId = sessionId,
-                    LiveShareEndPoint = AppSettings.LiveShareEndpoint
-                };
-
-                return View(cookiePayload);
+                (sessionId, _) = GetPortForwardingSessionDetails(logger);
+            }
+            catch (InvalidOperationException)
+            {
+                return BadRequest();
             }
 
-            return ExceptionView(PortForwardingFailure.NotAuthorized);
+            var isUserAllowedToAccessEnvironment = await CheckUserAccessAsync(cascadeToken, sessionId, logger);
+            if (!isUserAllowedToAccessEnvironment)
+            {
+                return ExceptionView(PortForwardingFailure.NotAuthorized);
+            }
+
+            Response.Headers.Add("X-VSOnline-Forwarding-Token", cascadeToken);
+            return Ok();
         }
 
         [HttpPost("~/portforward")]
@@ -172,7 +168,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 var authController = controllerProvider.Create<AuthController>(this.ControllerContext);
                 return authController.LogoutPortForwarder();
             }
-            
+
             // This most likely should have gone to the service worker instead
             return BadRequest();
         }
@@ -221,6 +217,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 RedirectUrl = redirectUriBuilder.Uri.ToString()
             };
 
+            Response.StatusCode = StatusCodes.Status401Unauthorized;
             return View("exception", details);
         }
 
@@ -242,5 +239,131 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return PhysicalFile(asset, mediaType);
         }
 
+        private (string, PortForwardingFailure) GetAuthToken(IDiagnosticsLogger logger)
+        {
+            if (Request.Headers.TryGetValue("X-VSOnline-Authentication", out var tokenValues))
+            {
+                logger.AddValue("token_source", "header");
+                logger.LogInfo("portforwarding_get_token");
+                return (tokenValues.FirstOrDefault(), PortForwardingFailure.None);
+            }
+
+            var cookie = Request.Cookies[Constants.PFCookieName];
+            if (string.IsNullOrEmpty(cookie))
+            {
+                logger.AddValue("failure_reason", "not_authenticated");
+                logger.LogInfo("portforwarding_get_token_failed");
+                // In this case user probably try to access the portForwarding link directory without signing in, so will redirect to SignIn page and redirect back to PF
+                return (null, PortForwardingFailure.NotAuthenticated);
+            }
+
+            logger.AddValue("token_source", "cookie");
+            var payload = AuthController.DecryptCookie(cookie, AppSettings.AesKey);
+            if (payload == null)
+            {
+                logger.AddValue("failure_reason", "invalid_cookie_payload");
+                logger.LogInfo("portforwarding_get_token_failed");
+                // Cookie is expired or there was an error decrypting the cookie.
+                return (null, PortForwardingFailure.InvalidCookiePayload);
+            }
+
+            logger.LogInfo("portforwarding_get_token");
+            return (payload.CascadeToken, PortForwardingFailure.None);
+        }
+
+        private (string SessionId, int Port) GetPortForwardingSessionDetails(IDiagnosticsLogger logger)
+        {
+            string workspaceId;
+            string portString;
+            if (!Request.Headers.TryGetValue("X-VSOnline-Forwarding-WorkspaceId", out var workspaceIdValues) ||
+                !Request.Headers.TryGetValue("X-VSOnline-Forwarding-Port", out var portStringValues))
+            {
+                logger.AddValue("session_details_source", "host");
+
+                var hostString = Request.Host.ToString();
+
+                var match = Regex.Match(hostString, "(?<workspaceId>[0-9A-Fa-f]{36})-(?<port>\\d{2,5})");
+                workspaceId = match.Groups["workspaceId"].Value;
+                portString = match.Groups["port"].Value;
+            }
+            else
+            {
+                logger.AddValue("session_details_source", "headers");
+
+                workspaceId = workspaceIdValues.FirstOrDefault();
+                portString = portStringValues.FirstOrDefault();
+            }
+
+            if (!Regex.IsMatch(workspaceId, "^[0-9A-Fa-f]{36}$") || !int.TryParse(portString, out int port))
+            {
+                logger.LogInfo("portforwarding_get_session_details_failed");
+                throw new InvalidOperationException("Cannot extract workspace id and port from current request.");
+            }
+
+            logger.AddValue("workspace_id", workspaceId);
+            logger.AddValue("port", port.ToString());
+            logger.LogInfo("portforwarding_get_session_details");
+            return (workspaceId, port);
+        }
+
+        private async Task<bool> CheckUserAccessAsync(string cascadeToken, string sessionId, IDiagnosticsLogger logger)
+        {
+            var userId = string.Empty;
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var token = handler.ReadToken(cascadeToken) as JwtSecurityToken;
+                userId = GetTokenClaim("userId", token);
+
+                // For the VSO tokens generated for partners, there is no `userId` nor `subject` claims 
+                // so calculate the user id based on the `tid`/`oid` claims instead.
+                if (string.IsNullOrEmpty(userId))
+                {
+                    var tid = GetTokenClaim("tid", token);
+                    var oid = GetTokenClaim("oid", token);
+
+                    if (!string.IsNullOrEmpty(tid) && !string.IsNullOrEmpty(oid))
+                    {
+                        userId = $"{tid}_{oid}";
+                    }
+                }
+            }
+            catch (ArgumentException)
+            {
+                logger.AddValue("failure_reason", "unable_to_read_token");
+                logger.LogWarning("portforwarding_check_user_access_failed");
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                logger.AddValue("failure_reason", "no_user_claim");
+                logger.LogWarning("portforwarding_check_user_access_failed");
+                return false;
+            }
+
+            logger.AddValue("workspace_id", sessionId);
+            var lsWorkspaceQueryDuration = logger.StartDuration();
+            var ownerId = await WorkSpaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId, AppSettings.LiveShareEndpoint);
+            logger.AddDuration(lsWorkspaceQueryDuration);
+            logger.LogInfo("portforwarding_check_user_access_query_workspace");
+
+            if (string.IsNullOrEmpty(ownerId))
+            {
+                logger.AddValue("failure_reason", "no_workspace_owner");
+                logger.LogWarning("portforwarding_check_user_access_failed");
+                return false;
+            }
+
+            if (ownerId != userId)
+            {
+                logger.AddValue("failure_reason", "user_owner_dont_match");
+                logger.LogWarning("portforwarding_check_user_access_failed");
+                return false;
+            }
+
+            logger.LogInfo("portforwarding_check_user_access");
+            return true;
+        }
     }
 }
