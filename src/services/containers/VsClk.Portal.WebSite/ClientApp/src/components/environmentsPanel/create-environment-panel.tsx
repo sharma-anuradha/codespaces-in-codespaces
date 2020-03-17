@@ -444,8 +444,7 @@ export class CreateEnvironmentPanelView extends Component<
         ) : null;
         const selfHostedMessageBar = (
             <MessageBar messageBarType={MessageBarType.info} isMultiline={true} truncated={true}>
-                Want to access your machines remotely?
-                <br /> Use self-hosting!
+                Want to access your existing machines remotely? Use self-hosting!
                 <Link href='https://aka.ms/vso-self-hosted' target='_blank'>
                     More info...
                 </Link>
