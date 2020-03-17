@@ -1,26 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.AspNetCore.Authentication;
 using Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Azure.KeyVault;
+using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common.Identity;
+using Microsoft.VsSaaS.Common.Warmup;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Tokens;
 using StackExchange.Redis;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
 {
     public static class AuthenticationServiceCollectionExtensions
     {
+        public const string VsoAuthenticationScheme = "vso";
+
+        public const string JwtBearerAuthenticationSchemes =
+            JwtBearerDefaults.AuthenticationScheme + "," + VsoAuthenticationScheme;
+
         public static IServiceCollection AddPortalWebSiteAuthentication(
             this IServiceCollection services,
-            IWebHostEnvironment env,
             AppSettings appSettings)
         {
             // Add Data protection
@@ -38,12 +50,23 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
             }
 
             // Authentication
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            })
-            .AddCookie(options =>
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerAuthenticationSchemes;
+                    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddCookieAuthentication()
+                .AddAadAuthentication()
+                .AddVsoAuthentication(appSettings);
+
+            return services;
+        }
+
+        private static AuthenticationBuilder AddCookieAuthentication(
+            this AuthenticationBuilder builder)
+        {
+            return builder.AddCookie(options =>
             {
                 options.LoginPath = "/login";
                 options.LogoutPath = "/signout";
@@ -73,8 +96,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                     return Task.CompletedTask;
                 };
                 options.Events.OnValidatePrincipal = CookieValidatedAsync;
-            })
-            .AddJwtBearerAuthentication2(
+            });
+        }
+
+        private static AuthenticationBuilder AddAadAuthentication(
+            this AuthenticationBuilder builder)
+        {
+            return builder.AddJwtBearerAuthentication2(
                 JwtBearerDefaults.AuthenticationScheme,
                 options =>
                 {
@@ -92,13 +120,60 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                         OnTokenValidated = JwtTokenValidatedAsync,
                     };
                 });
+        }
 
-            return services;
+        private static AuthenticationBuilder AddVsoAuthentication(
+            this AuthenticationBuilder builder,
+            AppSettings appSettings)
+        {
+            var cascadeJwtReader = new JwtReader();
+
+            builder.AddJwtBearer(
+                VsoAuthenticationScheme,
+                options =>
+                {
+                    var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
+
+                    options.TokenValidationParameters = cascadeJwtReader.GetValidationParameters(logger);
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnTokenValidated = JwtTokenValidatedAsync,
+                    };
+                })
+                .Services
+                .AddSingleton<IAsyncWarmup>((serviceProvider) =>
+                {
+                    var keyVaultReader = ApplicationServicesProvider.GetRequiredService<IKeyVaultSecretReader>();
+                    var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
+
+                    var certCache = new JwtCertificateCredentialsKeyVaultCache(
+                        keyVaultReader,
+                        ClientKeyvaultReader.GetAppKeyVaultName(),
+                        appSettings.VsSaaSCertificateSecretName,
+                        logger)
+                    {
+                        ConvertPrivateCertificatesToPublic = true
+                    };
+
+                    certCache.StartPeriodicRefresh(TimeSpan.FromDays(1));
+
+                    cascadeJwtReader.AddIssuer(appSettings.VsSaaSTokenIssuer, certCache);
+                    cascadeJwtReader.AddAudience(appSettings.VsSaaSTokenIssuer); // Same as issuer
+
+                    return certCache;
+                });
+
+            return builder;
         }
 
         private static async Task JwtTokenValidatedAsync(TokenValidatedContext context)
         {
             var principal = context.Principal;
+
+            // Verify email claim exists
+            principal.Identities.First().GetUserEmail(isEmailClaimRequired: true);
+
             var jwtSecurityToken = (JwtSecurityToken)context.SecurityToken;
             await ValidatedPrincipalAsync(principal, jwtSecurityToken);
         }

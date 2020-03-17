@@ -45,5 +45,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         // The app service principal that has access to reading the app key vault
         public string KeyVaultReaderServicePrincipalClientId { get; set; }
         public string KeyVaultReaderServicePrincipalClientSecret { get; set; }
+        public string VsSaaSTokenIssuer { get; set; }
+        public string VsSaaSCertificateSecretName { get; set; }
     }
 }

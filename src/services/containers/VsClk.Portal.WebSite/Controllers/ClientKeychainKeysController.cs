@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Cryptography;
 using System.Collections.Concurrent;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -145,7 +146,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             );
         }
         
-        [Authorize]
+        [Authorize(AuthenticationSchemes = AuthenticationServiceCollectionExtensions.JwtBearerAuthenticationSchemes)]
         [HttpPost("~/keychain-keys")]
         public async Task<IActionResult> CreateKeychainKeysAsync ()
         {

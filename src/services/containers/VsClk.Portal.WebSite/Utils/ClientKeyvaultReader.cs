@@ -1,14 +1,12 @@
 ﻿
 using System;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Azure.KeyVault;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Audit;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 {

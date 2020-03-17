@@ -41,6 +41,8 @@ config:
   githubClientId: 15a84bcaef36dd681c52
   githubNativeClientId: Iv1.ad5f73e593b03f40
   azDevClientId: 282DE6CF-8729-4112-A472-CFB80960C5CD
+  vsSaaSTokenIssuer: https://insiders.liveshare.vsengsaas.visualstudio.com/
+  vsSaaSCertificateSecretName: vsls-prod-auth-cert-primary
 
 azure-secrets:
   # vsclk-core-dev

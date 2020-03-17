@@ -1,19 +1,20 @@
-﻿﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
-using System;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.ControllerAccess;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.ControllerAccess;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -71,9 +72,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 throw new Exception("AesKey, AesIV or Domain keys are not found in the app settings.");
             }
 
-            // VS SaaS Authentication
-            services.AddPortalWebSiteAuthentication(HostEnvironment, appSettings);
-
             // Basic VS SaaS Hosting: health provider, in memory caching, logging, hosting environment, http context accessor, and key vault reader
             services.AddVsSaaSHosting(
                 this.HostEnvironment, 
@@ -87,7 +85,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                     options.ServicePrincipalClientId = appSettings.KeyVaultReaderServicePrincipalClientId;
                     options.GetServicePrincipalClientSecretAsyncCallback = () => Task.FromResult(appSettings.KeyVaultReaderServicePrincipalClientSecret);
                 });
-             
+
+            // VS SaaS Authentication
+            services.AddPortalWebSiteAuthentication(appSettings);
+
             // Forwarded headers
             services.Configure<ForwardedHeadersOptions>(options =>
             {
@@ -96,6 +97,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             });
 
             services.AddSingleton<IControllerProvider, ControllerProvider>();
+
+            services.AddSingleton<AsyncWarmupHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -114,6 +117,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                     context.Request.Scheme = "https";
                     return next();
                 });
+            }
+
+            if (AppSettings.IsLocal)
+            {
+                // Enable PII data in logs for Local
+                IdentityModelEventSource.ShowPII = true;
             }
 
             if (env.IsDevelopment() || AppSettings.IsLocal)
@@ -175,6 +184,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             });
 
             ClientKeyvaultReader.GetKeyvaultKeys().Wait();
+
+            app.ApplicationServices.GetRequiredService<AsyncWarmupHelper>().RunAsync().Wait();
         }
     }
 }
