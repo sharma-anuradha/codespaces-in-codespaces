@@ -61,7 +61,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             CookieOptions option = CreateCookieOptions();
             option.Expires = DateTime.Now.AddDays(Constants.PortForwarderCookieExpirationDays);
-            option.SameSite = SameSiteMode.Lax;
 
             var cookie = $"{iv}{CookieIVSeparator}{encryptedCookie}";
             Response.Cookies.Append(Constants.PFCookieName, cookie, option);
