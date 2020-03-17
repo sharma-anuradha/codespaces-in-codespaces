@@ -32,7 +32,7 @@ export async function fetchEnvironments() {
         dispatch(fetchEnvironmentsSuccessAction(environments));
     } catch (err) {
         if (err instanceof ServiceAuthenticationError) {
-            dispatch(logout());
+            dispatch(logout({ isExplicit: false }));
             dispatch(fetchEnvironmentsFailureAction(err));
 
             throw err;

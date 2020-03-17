@@ -7,15 +7,26 @@ import { INDEXEDDB_VSONLINE_DB, deleteDatabase as deleteIndexedDb } from '../uti
 import { deleteAuthCookie } from '../utils/setAuthCookie';
 
 export const logoutActionType = 'async.authentication.clearData';
+const exemptCookieList = ['MSCC'];
+const exemptLocalStorageItems = [
+    'azDevAccessTokenEncrypted',
+    'githubAccessTokenEncrypted',
+    'vso-featureset',
+];
+const alwaysExemptLocalStorageItems = ['vso_machine_id'];
 
 // Basic actions dispatched for reducers
 const logoutAction = () => action(logoutActionType);
+
+interface LocalStorageItems {
+    [key: string]: string;
+}
 
 // Types to register with reducers
 export type LogoutAction = ReturnType<typeof logoutAction>;
 
 // Exposed - callable actions that have side-effects
-export async function logout() {
+export async function logout(props: { isExplicit: boolean }) {
     const dispatch = useDispatch();
     dispatch(logoutAction());
 
@@ -26,7 +37,11 @@ export async function logout() {
 
     // clear storage
     try {
-        localStorage.clear();
+        if (props.isExplicit) {
+            clearLocalStorage(alwaysExemptLocalStorageItems);
+        } else {
+            clearLocalStorage([...alwaysExemptLocalStorageItems, ...exemptLocalStorageItems]);
+        }
     } catch {}
 
     try {
@@ -40,7 +55,6 @@ export async function logout() {
 
     // clear cookie and auth cookie
     // tslint:disable: no-cookies
-    const exemptCookieList = ['MSCC'];
     var cookies = document.cookie.split(';');
     for (var i = 0; i < cookies.length; i++) {
         const cookieName = cookies[i].split('=')[0];
@@ -51,4 +65,24 @@ export async function logout() {
     // tslint:enable: no-cookies
 
     await deleteAuthCookie();
+}
+
+function clearLocalStorage(exemptKeys: string[]) {
+    let keyValues: LocalStorageItems = {};
+    for (var i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && exemptKeys.includes(key)) {
+            const value = localStorage.getItem(key);
+            if (value) {
+                keyValues[key] = value;
+            }
+        }
+    }
+    localStorage.clear();
+    exemptKeys.forEach((key: string) => {
+        const value = keyValues[key];
+        if (value) {
+            localStorage.setItem(key, value);
+        }
+    });
 }

@@ -78,7 +78,7 @@ export const selectPlan = async (plan: IPlan | null) => {
         }
     } catch (err) {
         if (err instanceof ServiceAuthenticationError) {
-            dispatch(logout());
+            dispatch(logout({ isExplicit: false }));
         }
 
         return dispatch(selectPlanFailureAction(err));
@@ -131,7 +131,7 @@ export async function getPlans() {
         return plansList;
     } catch (err) {
         if (err instanceof ServiceAuthenticationError) {
-            dispatch(logout());
+            dispatch(logout({ isExplicit: false }));
         }
 
         return dispatch(getPlansFailureAction(err));

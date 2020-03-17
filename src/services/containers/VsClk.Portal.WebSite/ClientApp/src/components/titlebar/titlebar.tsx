@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 import { withRouter } from 'react-router';
@@ -64,6 +64,7 @@ function TitleBarNoRouter(props: RouteComponentProps) {
     let persona = null;
 
     let hoverCardRef = React.createRef<IHoverCard>();
+    const logoutfn = useCallback(() => logout({ isExplicit: true }), []);
 
     if (isAuthenticated) {
         const plainCardProps: IPlainCardProps = {
@@ -83,7 +84,7 @@ function TitleBarNoRouter(props: RouteComponentProps) {
                     <div className='vsonline-avatarmenu__item'>
                         <DefaultButton
                             className='vsonline-avatarmenu__item-button'
-                            onClick={logout}
+                            onClick={logoutfn}
                         >
                             Sign out
                         </DefaultButton>

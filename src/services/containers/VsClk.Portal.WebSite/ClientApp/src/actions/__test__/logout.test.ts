@@ -20,7 +20,7 @@ describe('logout', () => {
 
     it('signs user out', async () => {
         const signout = jest.spyOn(authService, 'logout');
-        await store.dispatch(logout());
+        await store.dispatch(logout({ isExplicit: true }));
 
         expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(logoutActionType);
         expect(signout).toHaveBeenCalled();

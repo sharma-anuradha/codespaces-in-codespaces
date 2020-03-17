@@ -47,7 +47,7 @@ export async function notificationsSubscribe(email: string) {
         dispatch(notificationsSubscribeSuccessAction());
     } catch (err) {
         if (err instanceof ServiceAuthenticationError) {
-            dispatch(logout());
+            dispatch(logout({ isExplicit: false }));
         }
 
         dispatch(notificationsSubscribeFailureAction(err));
