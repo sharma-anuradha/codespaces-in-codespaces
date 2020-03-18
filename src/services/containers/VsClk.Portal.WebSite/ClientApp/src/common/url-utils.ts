@@ -73,7 +73,9 @@ function tryCreatePortForwardingRoutingDetails(
 
     // Port forwarding domains are in form of:
     // https://<sessionId>-<targetPort>.app.online.visualstudio.com/<user content path>
-    if (app !== 'app') {
+    // https://<sessionId>-<targetPort>.apps.workspaces.githubusercontent.com/<user content path>
+    const appPrefixes = ['app', 'apps'];
+    if (!appPrefixes.includes(app)) {
         return undefined;
     }
 
