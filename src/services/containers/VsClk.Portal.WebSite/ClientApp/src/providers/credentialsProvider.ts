@@ -109,6 +109,10 @@ class GitHubStrategy implements IAuthStrategy {
     }
 
     async getToken(service: string, account: string): Promise<string | null> {
+        if (account.startsWith('github-token_')) {
+            return await getStoredGitHubToken();
+        }
+        
         return await localStorageKeychain.get(`vso-${account}`) || null;
     }
 }
