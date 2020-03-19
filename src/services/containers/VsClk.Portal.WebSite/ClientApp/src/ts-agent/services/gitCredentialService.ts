@@ -38,7 +38,9 @@ export class GitCredentialService {
             if (fillRequest.protocol === 'https' || fillRequest.protocol === 'http') {
                 trace.verbose('Resolving ' + fillRequest.host + ' credential.');
 
-                const token = await this.getTokenByHost(getSupportedGitServiceByHost(fillRequest.host));
+                const token = await this.getTokenByHost(
+                    getSupportedGitServiceByHost(fillRequest.host)
+                );
 
                 if (token) {
                     trace.verbose('Filled credential.', maybePii(fillRequest));

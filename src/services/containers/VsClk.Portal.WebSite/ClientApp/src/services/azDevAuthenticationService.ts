@@ -4,6 +4,7 @@ import { Signal } from '../utils/signal';
 import { IAuthenticationAttempt } from './authenticationServiceBase';
 import { SupportedGitService } from '../utils/gitUrlNormalization';
 import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
+import { useWebClient } from '../actions/middleware/useWebClient';
 
 export const trace = createTrace('AzDevCredentialService');
 
@@ -24,7 +25,10 @@ export async function storeAzDevAccessTokenResponse({
     refreshToken,
     expiresOn,
 }: AzDevAccessTokenResponse) {
-    await localStorageKeychain.set(azDevLocalStorageKey, JSON.stringify({ accessToken, state, scope, refreshToken, expiresOn: expiresOn.getTime() }));
+    await localStorageKeychain.set(
+        azDevLocalStorageKey,
+        JSON.stringify({ accessToken, state, scope, refreshToken, expiresOn: expiresOn.getTime() })
+    );
 }
 
 async function clearAzDevAccessTokenResponse() {
@@ -66,16 +70,50 @@ async function getStoredAzDevAccessTokenResponse(): Promise<AzDevAccessTokenResp
 }
 
 export async function getStoredAzDevToken(scope: string | null = null): Promise<string | null> {
-    const storedToken = await getStoredAzDevAccessTokenResponse();
+    let storedToken = await getStoredAzDevAccessTokenResponse();
+    storedToken = await refreshTokenIfExpired(storedToken);
 
-    // TODO #1069280: Use refresh token to generate AccessToken without opening a new tab
     if (scope) {
-        return storedToken && storedToken.scope && storedToken.scope.includes(scope) && storedToken.expiresOn && storedToken.expiresOn > new Date()
+        return storedToken &&
+            storedToken.scope &&
+            storedToken.scope.includes(scope) &&
+            storedToken.expiresOn &&
+            storedToken.expiresOn > new Date()
             ? storedToken.accessToken
             : null;
     }
 
     return storedToken && storedToken.accessToken;
+}
+
+async function refreshTokenIfExpired(
+    storedToken: AzDevAccessTokenResponse | null
+): Promise<AzDevAccessTokenResponse | null> {
+    if (storedToken && storedToken.expiresOn && storedToken.expiresOn <= new Date()) {
+        const webClient = useWebClient();
+        const refreshEndpoint = new URL(
+            `${window.location.origin}/azdev-auth/getAccessTokenFromRefreshToken`
+        );
+        refreshEndpoint.searchParams.append('refreshToken', storedToken.refreshToken);
+        const response: any = await webClient.get(refreshEndpoint.toString());
+        if (response && response.access_token) {
+            const expiresInInt = parseInt(response.expires_in);
+            const expiresOn = new Date(new Date().getTime() + expiresInInt * 1000);
+            storedToken = {
+                accessToken: response.access_token,
+                state: storedToken.state,
+                scope: response.scope,
+                refreshToken: response.refresh_token,
+                expiresOn,
+            };
+            storeAzDevAccessTokenResponse(storedToken);
+        } else {
+            // This happens if refresh token expired or did not work. Clear token so that auth window will open again.
+            await clearAzDevAccessTokenResponse();
+            return null;
+        }
+    }
+    return storedToken;
 }
 
 let currentAttempt: AzDevAuthenticationAttempt | undefined;
@@ -104,7 +142,7 @@ export class AzDevAuthenticationAttempt implements IAuthenticationAttempt {
     get target() {
         return '_azdev_auth_window';
     }
-    
+
     get gitServiceType(): SupportedGitService {
         return SupportedGitService.AzureDevOps;
     }
@@ -116,15 +154,10 @@ export class AzDevAuthenticationAttempt implements IAuthenticationAttempt {
             return this.tokenRequest.promise;
         }
 
-        const storedTokenResponse = await getStoredAzDevAccessTokenResponse();
+        let storedTokenResponse = await getStoredAzDevAccessTokenResponse();
+        storedTokenResponse = await refreshTokenIfExpired(storedTokenResponse);
         if (storedTokenResponse && storedTokenResponse.accessToken) {
-            if (storedTokenResponse.expiresOn > new Date()) {
-                return Promise.resolve(storedTokenResponse.accessToken);
-            } else {
-                // TODO: Temporaryly clear token so that auth window will open again.
-                //       In future do a request to get a new accessToken using refresh token.
-                await clearAzDevAccessTokenResponse();
-            }
+            return Promise.resolve(storedTokenResponse.accessToken);
         }
 
         this.tokenRequest = new Signal();
@@ -144,7 +177,7 @@ export class AzDevAuthenticationAttempt implements IAuthenticationAttempt {
             clearTimeout(timeout);
         });
 
-        const resolveWithToken = async(event: StorageEvent) => {
+        const resolveWithToken = async (event: StorageEvent) => {
             if (event.key === azDevLocalStorageKey) {
                 window.removeEventListener('storage', resolveWithToken);
 

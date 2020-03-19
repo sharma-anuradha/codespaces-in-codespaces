@@ -20,8 +20,8 @@ import { ISelectableOption } from 'office-ui-fabric-react/lib/utilities/selectab
 
 import { useWebClient, ServiceResponseError } from '../../actions/middleware/useWebClient';
 import { createEnvironment } from '../../actions/createEnvironment';
-import { storeGitHubCredentials } from '../../actions/getGitHubCredentials';
-import { storeAzDevCredentials } from '../../actions/getAzDevCredentials';
+import { storeGitHubCredentials, getGitHubCredentials } from '../../actions/getGitHubCredentials';
+import { storeAzDevCredentials, getAzDevCredentials } from '../../actions/getAzDevCredentials';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { GithubAuthenticationAttempt } from '../../services/gitHubAuthenticationService';
 import { AzDevAuthenticationAttempt } from '../../services/azDevAuthenticationService';
@@ -639,7 +639,7 @@ export class CreateEnvironmentPanelView extends Component<
             switch (this.state.authenticationAttempt.gitServiceType) {
                 case SupportedGitService.AzureDevOps:
                     authStatusMessageString =
-                        "We've opened a new tab for you to grant permission to the specified Azure DevOps repositories";
+                        "We've opened a new tab for you to grant permission to the Azure DevOps repositories";
                     break;
                 default:
                     authStatusMessageString =
@@ -864,7 +864,14 @@ export class CreateEnvironmentPanelView extends Component<
                     authenticationAttempt,
                 });
             }
-            const accessToken = await authenticationAttempt.authenticate();
+            let accessToken;
+            switch (gitServiceProvider) {
+                case SupportedGitService.AzureDevOps:
+                    accessToken = await getAzDevCredentials(authenticationAttempt);
+                    break;
+                default:
+                    accessToken = await getGitHubCredentials(authenticationAttempt);
+            }
             if (this.state.authenticationAttempt) {
                 this.state.authenticationAttempt.dispose();
             }

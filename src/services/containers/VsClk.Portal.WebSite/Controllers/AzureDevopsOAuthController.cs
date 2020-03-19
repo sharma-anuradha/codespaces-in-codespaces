@@ -44,7 +44,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var responseQuery = HttpUtility.ParseQueryString(string.Empty);
 
             // Exchange the auth code for an access token and refresh token
-            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://app.vssps.visualstudio.com/oauth2/token");
+            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, Constants.AzureDevOpsTokenURL);
             requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             Dictionary<string, string> form = new Dictionary<string, string>()
@@ -79,9 +79,37 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return Redirect(responseUriBuilder.Uri.ToString());
         }
 
+        [HttpGet("~/azdev-auth/getAccessTokenFromRefreshToken")]
+        public async Task<IActionResult> GetAccessTokenFromRefreshToken(
+            [FromQuery(Name = "refreshToken")] string refreshToken
+        )
+        {
+            // Exchange the auth code for an access token and refresh token
+            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, Constants.AzureDevOpsTokenURL);
+            requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            Dictionary<string, string> form = new Dictionary<string, string>()
+            {
+                { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
+                { "client_assertion", AppSettings.AzDevAppClientSecret },
+                { "grant_type", "refresh_token" },
+                { "assertion", refreshToken },
+                { "redirect_uri", GetCallbackUrl() }
+            };
+            requestMessage.Content = new FormUrlEncodedContent(form);
+            HttpClient client = new HttpClient();
+
+            HttpResponseMessage httpResponseMessage = await client.SendAsync(requestMessage);
+            httpResponseMessage.EnsureSuccessStatusCode();
+
+            string responseMessage = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            return Ok(responseMessage);
+        }
+
         private string GetAuthorizationUrl(string state)
         {
-            UriBuilder uriBuilder = new UriBuilder("https://app.vssps.visualstudio.com/oauth2/authorize");
+            UriBuilder uriBuilder = new UriBuilder(Constants.AzureDevOpsAuthorizeURL);
             var queryParams = HttpUtility.ParseQueryString(uriBuilder.Query ?? string.Empty);
 
             queryParams["client_id"] = AppSettings.AzDevAppClientId;
@@ -116,10 +144,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
     }
 
-    
+
     [DataContract]
     public class TokenModel
-    {    
+    {
         [DataMember(Name = "access_token")]
         public string AccessToken { get; set; }
 

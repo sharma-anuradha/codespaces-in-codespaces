@@ -5,6 +5,7 @@ import {
     getStoredGitHubToken,
     GithubAuthenticationAttempt,
 } from '../services/gitHubAuthenticationService';
+import { IAuthenticationAttempt } from '../services/authenticationServiceBase';
 
 export const getGitHubCredentialsActionType = 'async.githubCredentials.get';
 export const getGitHubCredentialsSuccessActionType = 'async.githubCredentials.get.success';
@@ -27,13 +28,17 @@ export type GetGitHubCredentialsFailureAction = ReturnType<
 >;
 
 // Exposed - callable actions that have side-effects
-export async function getGitHubCredentials() {
+export async function getGitHubCredentials(
+    gitHubAuthAttempt?: IAuthenticationAttempt
+): Promise<string> {
     const dispatch = useDispatch();
 
     try {
         dispatch(getGitHubCredentialsAction());
 
-        const gitHubAuthAttempt = new GithubAuthenticationAttempt();
+        if (!gitHubAuthAttempt) {
+            gitHubAuthAttempt = new GithubAuthenticationAttempt();
+        }
         const accessToken = await gitHubAuthAttempt.authenticate();
         if (!accessToken) {
             throw new Error('GitHub authentication failed.');
