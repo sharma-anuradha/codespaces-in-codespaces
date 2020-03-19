@@ -16,11 +16,6 @@
     box-sizing: border-box;
 }
 
-.vsonline-splash-screen-preparation-container {
-    float: right;
-    width: 50%;
-}
-
 /* Editor Header */
 .vsonline-splash-screen-titlebar {
     position: relative;

@@ -157,57 +157,17 @@ export class EnvConnector {
         correlationId: string
     ): Promise<WorkspaceClient | undefined> {
         window.performance.mark(`EnvConnector.connectWithRetry ${correlationId}`);
-
-        const webClient = new WebClient(liveShareEndpoint, {
-            getToken() {
-                return accessToken;
-            },
-        });
-        const workspaceClient = new WorkspaceClient(webClient);
-
+        let workspaceClient;
         // Poll to connect to environment once its available.
         let endPoll = Date.now() + 5 * 60 * 1000; // minutes.
-        let timeout = true;
         while (Date.now() < endPoll) {
             try {
-                await workspaceClient.connect(sessionId);
-                timeout = false;
+                workspaceClient = await this.connectWorkspaceClient(sessionId, accessToken, liveShareEndpoint);
                 break;
             } catch {
                 await wait(500);
             }
         }
-
-        if (!timeout) {
-            try {
-                await workspaceClient.authenticate();
-            } catch (e) {
-                trace('Error authenticating to liveshare.', e);
-                return undefined;
-            }
-            // Poll to join, this waits till liveshare agent is available.
-            endPoll = Date.now() + 10 * 1000; // seconds
-            timeout = true;
-            while (Date.now() < endPoll) {
-                try {
-                    await workspaceClient.join();
-                    timeout = false;
-                    break;
-                } catch {
-                    await wait(500);
-                }
-            }
-        }
-
-        if (timeout) {
-            trace('Timed out trying to connect');
-            return undefined;
-        }
-
-        await this.registerGitCredentialService(
-            workspaceClient.getCurrentWorkspaceClient()!,
-            workspaceClient.getCurrentRpcConnection()!
-        );
 
         window.performance.measure(`EnvConnector.connectWithRetry ${correlationId}`);
         const [measure] = window.performance.getEntriesByName(
@@ -263,9 +223,21 @@ export class EnvConnector {
             await workspaceClient.authenticate(clientAuthCompletion);
             await Promise.all([clientAuthCompletion.promise, workspaceClient.join()]);
             await workspaceClient.invokeEnvironmentConfiguration();
+
+            const workspaceService = workspaceClient.getCurrentWorkspaceClient();
+            const rpcConnection = workspaceClient.getCurrentRpcConnection();
+
+            if (!workspaceService) {
+                throw new Error('workspaceService not set.');
+            }
+
+            if (!rpcConnection) {
+                throw new Error('rpcConnection not set.');
+            }
+
             await this.registerGitCredentialService(
-                workspaceClient.getCurrentWorkspaceClient()!,
-                workspaceClient.getCurrentRpcConnection()!
+                workspaceService,
+                rpcConnection,
             );
 
             BrowserSyncService.init(workspaceClient);

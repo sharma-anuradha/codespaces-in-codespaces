@@ -80,9 +80,7 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
                                 <div className='vsonline-splash-screen-titlebar-tab'></div>
                             </div>
                             <div className="vsonline-splash-screen-body">
-                                <div className="vsonline-splash-screen-preparation-container">
-                                    <VSOSplashScreen connection={connection} title={title}></VSOSplashScreen>
-                                </div>
+                                <VSOSplashScreen connection={connection} title={title}></VSOSplashScreen>
                             </div>
                         </div>
                     </div>

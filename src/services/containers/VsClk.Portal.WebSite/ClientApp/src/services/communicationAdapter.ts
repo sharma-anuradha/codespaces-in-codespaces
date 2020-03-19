@@ -1,10 +1,10 @@
 import * as vsls from '../ts-agent/contracts/VSLS';
-import { authService } from '../services/authService';
 import { EnvConnector } from '../ts-agent/envConnector';
 import { WorkspaceClient } from '../ts-agent/workspaceClient';
 import { openSshChannel } from '../ts-agent/openSshChannel';
 import { SplashCommunicationProvider } from '../providers/splashCommunicationProvider';
 import { createTrace } from '../utils/createTrace';
+import { useActionContext } from '../actions/middleware/useActionContext';
 
 export class CommunicationAdapter {
     private envConnector: EnvConnector;
@@ -29,11 +29,18 @@ export class CommunicationAdapter {
         this.logger = createTrace('Communication Adapter');
     }
 
-    public async connect(workspaceId: string) {
-        const token = await authService.getCachedToken();
+    public async connect(sessionId: string) {
+        const { state } = useActionContext();
+        const { authentication } = state;
+        const { token } = authentication;
+
+        if (!token) {
+            throw new Error('Not authorized.');
+        }
+            
         const workspaceClient = await this.envConnector.connectWithRetry(
-            workspaceId,
-            token!.accessToken,
+            sessionId,
+            token,
             this.liveShareEndpoint,
             this.correlationId,
         );
@@ -80,8 +87,6 @@ export class CommunicationAdapter {
                 this.logger.error('Exception on ssh communication');
             }
         }
-        workspaceClient.disconnect();
-        workspaceClient.dispose();
     }
 
     private processData(data: string): string {
