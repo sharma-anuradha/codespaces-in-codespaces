@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PrivacyServices.CommandFeed.Client;
 using Microsoft.PrivacyServices.CommandFeed.Client.CommandFeedContracts;
@@ -83,8 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
             await logger.OperationScopeAsync("pcf_perform_export", async (childLogger) =>
             {
-                var affectedRowCount = 0;
-                var jsonExport = default(JObject);
+                var totalAffectedEntitiesCount = 0;
                 var exportDetails = new List<ExportedFileSizeDetails>();
 
                 try
@@ -94,9 +94,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
                             command.AzureBlobContainerTargetUri,
                             command.AzureBlobContainerPath))
                     {
-                        var userIdSet = await GetUserIdSetAsync(command, childLogger);
-                        (affectedRowCount, jsonExport) = await PrivacyDataManager.PerformExportAsync(userIdSet, childLogger);
-                        childLogger.AddValue("PcfAffectedEntitiesCount", affectedRowCount.ToString());
+                        var jsonExport = new JArray();
+                        var userIdSets = await GetUserIdSetsAsync(command, childLogger);
+
+                        foreach (var userIdSet in userIdSets)
+                        {
+                            var (affectedEntitiesCount, userData) = await PrivacyDataManager.PerformExportAsync(userIdSet, childLogger);
+                            totalAffectedEntitiesCount += affectedEntitiesCount;
+                            jsonExport.Add(userData);
+                        }
+
+                        childLogger.AddValue("PcfAffectedEntitiesCount", totalAffectedEntitiesCount.ToString());
 
                         var details = await Retry.DoAsync(async attempt =>
                         {
@@ -109,12 +117,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
                         }
 
                         exportDetails.Add(details);
-                        await command.CheckpointAsync(CommandStatus.Complete, affectedRowCount, exportedFileSizeDetails: exportDetails);
+                        await command.CheckpointAsync(CommandStatus.Complete, totalAffectedEntitiesCount, exportedFileSizeDetails: exportDetails);
                     }
                 }
                 catch (Exception e)
                 {
-                    await command.CheckpointAsync(CommandStatus.Failed, affectedRowCount, exportedFileSizeDetails: exportDetails);
+                    await command.CheckpointAsync(CommandStatus.Failed, totalAffectedEntitiesCount, exportedFileSizeDetails: exportDetails);
                     throw e;
                 }
             });
@@ -122,34 +130,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
         private async Task PerformDeleteAsync(IPrivacyCommand command, IDiagnosticsLogger logger)
         {
-            var userIdSet = await GetUserIdSetAsync(command, logger.NewChildLogger());
-            if (userIdSet != default)
+            var affectedRowCount = 0;
+            var userIdSets = await GetUserIdSetsAsync(command, logger.NewChildLogger());
+            foreach (var userIdSet in userIdSets)
             {
-                var affectedRowCount = await Retry.DoAsync(async attempt =>
+                affectedRowCount += await Retry.DoAsync(async attempt =>
                 {
                     return await PrivacyDataManager.PerformDeleteAsync(userIdSet, logger);
                 });
-                await command.CheckpointAsync(CommandStatus.Complete, affectedRowCount);
             }
+
+            await command.CheckpointAsync(CommandStatus.Complete, affectedRowCount);
         }
 
-        private async Task<UserIdSet> GetUserIdSetAsync(IPrivacyCommand command, IDiagnosticsLogger logger)
+        private async Task<IEnumerable<UserIdSet>> GetUserIdSetsAsync(IPrivacyCommand command, IDiagnosticsLogger logger)
         {
-            var userIdSet = ConstructUserIdSet(command.Subject);
-            if (userIdSet == default)
+            var userIdSets = ConstructUserIdSets(command.Subject);
+            if (!userIdSets.Any())
             {
                 logger.LogError(GetType().FormatLogErrorMessage("invalid_subject"));
                 await command.CheckpointAsync(CommandStatus.UnexpectedCommand, affectedRowCount: 0);
             }
 
-            return userIdSet;
+            return userIdSets;
         }
 
-        private UserIdSet ConstructUserIdSet(IPrivacySubject subject)
+        private IEnumerable<UserIdSet> ConstructUserIdSets(IPrivacySubject subject)
         {
             string tenantId;
             string objectId;
-            var userIdSet = default(UserIdSet);
+            var userIdSets = new List<UserIdSet>();
 
             switch (subject)
             {
@@ -158,10 +168,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
                     tenantId = AuthenticationConstants.MsaPseudoTenantId;
                     var altSecId = $"1:live.com:{msa.HexPuid}";
 
+                    // Create standard MSA UserIdSet.
                     var legacyId = IdentityUtility.MakeLegacyUserId(tenantId, objectId, altSecId);
                     var canonicalId = IdentityUtility.MakeCanonicalUserId(tenantId, objectId, msa.Puid.ToString(), altSecId);
+                    userIdSets.Add(new UserIdSet(canonicalId, legacyId, legacyId));
 
-                    userIdSet = new UserIdSet(canonicalId, legacyId, legacyId);
+                    // Create Passthrough UserIdSet.
+                    tenantId = AuthenticationConstants.MicrosoftFirstPartyAppTenantId;
+                    legacyId = IdentityUtility.MakeLegacyUserId(tenantId, null, altSecId);
+                    userIdSets.Add(new UserIdSet(null, legacyId, legacyId));
                     break;
                 case AadSubject aad:
                     tenantId = aad.TenantId.ToString("D");
@@ -169,18 +184,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
                     var aadCanonical = IdentityUtility.MakeCanonicalUserId(tenantId, objectId, aad.OrgIdPUID.ToString(), null);
                     var aadLegacy = IdentityUtility.MakeLegacyUserId(tenantId, objectId, null);
-                    userIdSet = new UserIdSet(aadCanonical, aadLegacy, aadLegacy);
+                    userIdSets.Add(new UserIdSet(aadCanonical, aadLegacy, aadLegacy));
                     break;
-                default:
-                    return userIdSet;
             }
 
-            return userIdSet;
-        }
-
-        private string ConstructUserIdFromTenantIdAndObjectId(string tenantId, string objectId)
-        {
-            return $"{tenantId}_{objectId}";
+            return userIdSets;
         }
 
         private string ConvertToGuidFormat(string id)
