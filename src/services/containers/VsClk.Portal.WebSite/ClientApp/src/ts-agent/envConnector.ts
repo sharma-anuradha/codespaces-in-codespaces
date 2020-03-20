@@ -162,7 +162,7 @@ export class EnvConnector {
         let endPoll = Date.now() + 5 * 60 * 1000; // minutes.
         while (Date.now() < endPoll) {
             try {
-                workspaceClient = await this.connectWorkspaceClient(sessionId, accessToken, liveShareEndpoint);
+                workspaceClient = await this.connectWorkspaceClient(sessionId, accessToken, liveShareEndpoint, true);
                 break;
             } catch {
                 await wait(500);
@@ -184,7 +184,8 @@ export class EnvConnector {
     public async connectWorkspaceClient(
         sessionId: string,
         accessToken: string,
-        liveShareEndpoint: string
+        liveShareEndpoint: string,
+        skipServiceWorkerNotification = false
     ): Promise<WorkspaceClient> {
         if (this.workspaceClient && !this.workspaceClient.isRejected) {
             const workspaceClient = await this.workspaceClient.promise;
@@ -210,15 +211,17 @@ export class EnvConnector {
 
             await workspaceClient.connect(sessionId);
 
-            postServiceWorkerMessage({
-                type: updateLiveShareConnectionInfo,
-                payload: {
-                    sessionId,
-                    workspaceInfo: workspaceClient.getWorkspaceInfo()!,
-                    workspaceAccess: workspaceClient.getWorkspaceAccess()!,
-                },
-            });
-
+            if (!skipServiceWorkerNotification) {
+                postServiceWorkerMessage({
+                    type: updateLiveShareConnectionInfo,
+                    payload: {
+                        sessionId,
+                        workspaceInfo: workspaceClient.getWorkspaceInfo()!,
+                        workspaceAccess: workspaceClient.getWorkspaceAccess()!,
+                    },
+                });
+            }
+            
             const clientAuthCompletion = new PromiseCompletionSource<void>();
             await workspaceClient.authenticate(clientAuthCompletion);
             await Promise.all([clientAuthCompletion.promise, workspaceClient.join()]);
