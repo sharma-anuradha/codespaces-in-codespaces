@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
@@ -25,6 +26,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
 
         /// <inheritdoc/>
         public Task RemoveBusyAgentFromDeploymentAsync(string agentName, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }

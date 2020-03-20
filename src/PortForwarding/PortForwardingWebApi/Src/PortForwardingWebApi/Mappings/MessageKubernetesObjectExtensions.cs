@@ -37,5 +37,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         {
             return $"{connection.WorkspaceId.ToLower()}-{connection.SourcePort}";
         }
+
+        /// <summary>
+        /// Returns Kubernetes service name based on connection mapping.
+        /// </summary>
+        /// <param name="connection">Connection mapping.</param>
+        /// <returns>Kubernetes service name.</returns>
+        public static string GetKubernetesServiceName(this ConnectionRequest connection)
+        {
+            return $"{connection.WorkspaceId.ToLower()}-{connection.Port}";
+        }
     }
 }

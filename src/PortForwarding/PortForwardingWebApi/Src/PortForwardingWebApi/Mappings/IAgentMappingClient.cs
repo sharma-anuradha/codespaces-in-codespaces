@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
@@ -36,5 +37,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <param name="logger">Target Logger.</param>
         /// <returns>Task.</returns>
         Task RemoveBusyAgentFromDeploymentAsync(string agentName, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Wait until kubernetes service is available.
+        /// </summary>
+        /// <param name="serviceName">Kubernetes service name.</param>
+        /// <param name="logger">Target Logger.</param>
+        /// <returns>Task.</returns>
+        Task WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Wait until kubernetes service is available.
+        /// </summary>
+        /// <param name="serviceName">Kubernetes service name.</param>
+        /// <param name="timeout">Timeout.</param>
+        /// <param name="logger">Target Logger.</param>
+        /// <returns>Task.</returns>
+        Task WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger);
     }
 }

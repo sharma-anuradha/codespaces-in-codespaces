@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,36 +29,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
         /// Initializes a new instance of the <see cref="EstablishedConnectionsWorker"/> class.
         /// </summary>
         /// <param name="queueClientProvider">The service bus queue provider.</param>
-        /// <param name="loggerFactory">The logger factory.</param>
+        /// <param name="logger">The logger.</param>
         /// <param name="agentMappingClient">The agent mapping client.</param>
         public EstablishedConnectionsWorker(
                 IServiceBusQueueClientProvider queueClientProvider,
-                IDiagnosticsLoggerFactory loggerFactory,
+                IDiagnosticsLogger logger,
                 IAgentMappingClient agentMappingClient)
         {
             QueueClientProvider = Requires.NotNull(queueClientProvider, nameof(queueClientProvider));
-            LoggerFactory = Requires.NotNull(loggerFactory, nameof(loggerFactory));
+            Logger = Requires.NotNull(logger, nameof(logger));
             AgentMappingClient = Requires.NotNull(agentMappingClient, nameof(agentMappingClient));
         }
 
         private IServiceBusQueueClientProvider QueueClientProvider { get; }
 
-        private IDiagnosticsLoggerFactory LoggerFactory { get; }
+        private IDiagnosticsLogger Logger { get; }
 
         private IAgentMappingClient AgentMappingClient { get; }
 
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var logger = LoggerFactory.New();
-
-            var client = await QueueClientProvider.GetQueueClientAsync("connections-established", logger);
+            var client = await QueueClientProvider.GetQueueClientAsync("connections-established", Logger);
 
             client.RegisterSessionHandler(
                 ProcessSessionMessage,
                 new SessionHandlerOptions((e) =>
                 {
-                    logger.LogException("established_connection_worker_handle_session_message_exception", e.Exception);
+                    Logger.LogException("established_connection_worker_handle_session_message_exception", e.Exception);
 
                     return Task.CompletedTask;
                 })
@@ -71,28 +68,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
 
         private Task ProcessSessionMessage(IMessageSession session, Message message, CancellationToken cancellationToken)
         {
-            var logger = LoggerFactory.New();
-
             // We don't care about establishing connections in case of worker.
             if (message.Label == MessageLabels.ConnectionEstablishing)
             {
                 return Task.CompletedTask;
             }
 
-            return logger.OperationScopeAsync(
+            return Logger.OperationScopeAsync(
                 "established_connection_worker_process_connection_established",
                 async (childLogger) =>
                 {
                     var connection = JsonSerializer.Deserialize<ConnectionDetails>(message.Body, jsonSerializerOptions);
-                    try
-                    {
-                        await AgentMappingClient.CreateAgentConnectionMappingAsync(connection, childLogger);
-                    }
-                    catch (Exception ex)
-                    {
-                        childLogger.LogException("established_connection_worker_create_mapping_failed", ex);
-                    }
-                });
+                    await AgentMappingClient.CreateAgentConnectionMappingAsync(connection, childLogger);
+
+                    await session.CloseAsync();
+                },
+                swallowException: true);
         }
     }
 }

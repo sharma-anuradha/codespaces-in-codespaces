@@ -9,7 +9,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.ServiceBus;
-using Microsoft.Rest;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
@@ -53,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
             IAgentMappingClient mappingClient,
             PortForwardingAppSettings appSettings)
         {
+            // 1. Extract connection information from the request context.
             string workspaceId = string.Empty;
             string portString = string.Empty;
             string token = string.Empty;
@@ -92,6 +92,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 return;
             }
 
+            // 2. Send the ConnectionRequest message to the queue
+            // Note:
+            // This message will be picked up by a Port Forwarding Agent and new LiveShare port forwarding session will be established.
             var connectionInfo = new ConnectionRequest
             {
                 WorkspaceId = workspaceId,
@@ -99,88 +102,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 Token = token,
             };
 
+            await logger.OperationScopeAsync(
+                "connection_creation_middleware_send_create_new_message",
+                async (childLogger) =>
+                {
+                    var client = await queueClientProvider.GetQueueClientAsync("connections-new", childLogger);
+
+                    var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, serializationOptions))
+                    {
+                        SessionId = workspaceId,
+                    };
+
+                    await client.SendAsync(message);
+                });
+
+            // 3. Wait for the connection kubernetes service is available
+            // Note:
+            // The service is created by EstablishedConnectionsWorker based on "connection-established" message from PFA.
+            // Having service creation and responding to requests separate allows us to respond to multiple requests, not just the first one.
             try
             {
-                var session = await logger.OperationScopeAsync<IMessageSession>(
-                    "connection_creation_middleware_lock_connection_established_session",
-                    async (childLogger) =>
-                    {
-                        var client = await queueClientProvider.GetSessionClientAsync("connections-established", childLogger);
-                        return await client.AcceptMessageSessionAsync(connectionInfo.GetMessagingSessionId(), TimeSpan.FromSeconds(60));
-                    });
-
-                await logger.OperationScopeAsync(
-                    "connection_creation_middleware_send_create_new_message",
-                    async (childLogger) =>
-                    {
-                        var client = await queueClientProvider.GetQueueClientAsync("connections-new", childLogger);
-
-                        var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, serializationOptions))
-                        {
-                            SessionId = workspaceId,
-                        };
-
-                        await client.SendAsync(message);
-                    });
-
-                await logger.OperationScopeAsync(
-                    "connection_creation_middleware_subscribe_connection_establishing",
-                    async (childLogger) =>
-                    {
-                        var message = await session.ReceiveAsync(TimeSpan.FromSeconds(60));
-                        if (message != default && message.Label == MessageLabels.ConnectionEstablishing)
-                        {
-                            var mapping = JsonSerializer.Deserialize<ConnectionDetails>(message.Body, serializationOptions);
-
-                            try
-                            {
-                                await mappingClient.CreateAgentConnectionMappingAsync(mapping, childLogger.NewChildLogger());
-                            }
-                            catch (HttpOperationException ex)
-                            {
-                                // Handle only conflict exceptions from Kubernetes (the HttpOperationException).
-                                childLogger.LogException("connection_creation_middleware_create_kubernetes_objects_failed", ex);
-                            }
-                        }
-                    });
-
-                await logger.OperationScopeAsync(
-                    "connection_creation_middleware_subscribe_connection_established",
-                    async (childLogger) =>
-                    {
-                        var message = await session.ReceiveAsync(TimeSpan.FromSeconds(60));
-                        if (message != default && message.Label == MessageLabels.ConnectionEstablished)
-                        {
-                            var mapping = JsonSerializer.Deserialize<ConnectionDetails>(message.Body, serializationOptions);
-
-                            try
-                            {
-                                var uriBuilder = new UriBuilder(
-                                    context.Request.Scheme,
-                                    $"{mapping.GetKubernetesServiceName()}.svc.cluster.local");
-
-                                uriBuilder.Path = context.Request.Path;
-                                uriBuilder.Query = context.Request.QueryString.ToString();
-
-                                context.Response.Redirect(uriBuilder.Uri.ToString());
-                                return;
-                            }
-                            catch (HttpOperationException ex)
-                            {
-                                childLogger.LogException("connection_creation_middleware_create_kubernetes_objects_failed", ex);
-                            }
-                        }
-                    });
+                await mappingClient.WaitForServiceAvailableAsync(connectionInfo.GetKubernetesServiceName(), logger);
             }
-            catch (SessionCannotBeLockedException)
+            catch (TaskCanceledException)
             {
-                context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
+                context.Response.Headers.Add("X-Powered-By", "Visual Studio Online Portal");
                 await context.Response.CompleteAsync();
 
                 return;
             }
 
-            // Call the next delegate/middleware in the pipeline
+            var uriBuilder = new UriBuilder(
+                context.Request.Scheme,
+                $"{connectionInfo.GetKubernetesServiceName()}.svc.cluster.local");
+
+            uriBuilder.Path = context.Request.Path;
+            uriBuilder.Query = context.Request.QueryString.ToString();
+
+            context.Response.Redirect(uriBuilder.Uri.ToString());
+
             await Next(context);
         }
     }

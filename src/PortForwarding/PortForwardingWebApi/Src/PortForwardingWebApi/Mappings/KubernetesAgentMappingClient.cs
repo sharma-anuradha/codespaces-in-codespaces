@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using k8s;
 using k8s.Models;
@@ -192,6 +193,64 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                     patch.Replace(p => p.Metadata.Labels, updatedLabels);
 
                     await KubernetesClient.PatchNamespacedPodAsync(new V1Patch(patch), agentName, DefaultNamespace);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger)
+        {
+            return WaitForServiceAvailableAsync(serviceName, TimeSpan.FromSeconds(30), logger);
+        }
+
+        /// <inheritdoc/>
+        public Task WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                "kubernetes_register_wait_for_service_added",
+                async (childLogger) =>
+                {
+                    childLogger.AddValue("service_name", serviceName);
+
+                    var taskSource = new TaskCompletionSource<bool>();
+                    var cts = new CancellationTokenSource();
+                    cts.CancelAfter(timeout);
+
+                    var cancellationRegistration = cts.Token.Register(() =>
+                    {
+                        taskSource.SetCanceled();
+                    });
+
+                    // ListNamespacedServiceWithHttpMessagesAsync ignores the cancellation token.
+                    // Passing the cancellation token in case it gets fixed in future versions.
+                    // https://github.com/kubernetes-client/csharp/issues/375
+                    var service = await KubernetesClient.ListNamespacedServiceWithHttpMessagesAsync(
+                        namespaceParameter: DefaultNamespace,
+                        fieldSelector: $"metadata.name={serviceName}",
+                        watch: true,
+                        timeoutSeconds: Convert.ToInt32(timeout.TotalSeconds),
+                        cancellationToken: cts.Token);
+
+                    using (cts)
+                    using (cancellationRegistration)
+                    using (service.Watch<V1Service, V1ServiceList>((eventType, pod) =>
+                    {
+                        switch (eventType)
+                        {
+                            case WatchEventType.Added:
+                            // We might need to modify the service in some cases instead of addding it.
+                            case WatchEventType.Modified:
+                                taskSource.SetResult(true);
+                                break;
+
+                            default:
+                                childLogger.AddValue("event_type", eventType.ToString());
+                                childLogger.LogInfo($"service_watch_event");
+                                break;
+                        }
+                    }))
+                    {
+                        await taskSource.Task;
+                    }
                 });
         }
     }

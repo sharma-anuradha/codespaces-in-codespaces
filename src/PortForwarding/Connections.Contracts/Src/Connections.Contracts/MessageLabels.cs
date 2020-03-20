@@ -10,12 +10,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
     public static class MessageLabels
     {
         /// <summary>
-        /// Message label for connection-establishing queue messages.
+        /// Gets message label for connection-establishing queue messages.
         /// </summary>
         public static string ConnectionEstablishing { get => "connection-establishing"; }
 
         /// <summary>
-        /// Message label for connection-established queue messages.
+        /// Gets message label for connection-established queue messages.
         /// </summary>
         public static string ConnectionEstablished { get => "connection-established"; }
     }
