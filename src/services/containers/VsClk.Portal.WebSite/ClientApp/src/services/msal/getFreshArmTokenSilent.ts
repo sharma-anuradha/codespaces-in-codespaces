@@ -2,8 +2,8 @@
 /* tslint:disable */
 
 import { ensureRedirectionIframe } from './ensureRedirectionIframe';
-import { renewTokenFactory, IRenewTokenFactoryOptions } from './renewTokenFactory';
-import { randomString } from '../../utils/randomString';
+import { renewTokenFactory } from './renewTokenFactory';
+import { randomString } from 'vso-client-core';
 
 export const getFreshArmTokenSilentFactory = (paramOfInterest: 'access_token' | 'code', mode: 'hash' | 'query') => {
     let iframe: HTMLIFrameElement | undefined;

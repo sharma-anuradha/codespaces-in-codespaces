@@ -1,7 +1,5 @@
     import { createUniqueId } from '../dependencies';
-import { createTrace } from '../utils/createTrace';
-import { Signal } from '../utils/signal';
-import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
+import { Signal, createTrace, localStorageKeychain } from 'vso-client-core';
 import { isHostedOnGithub } from '../utils/isHostedOnGithub';
 import { IAuthenticationAttempt } from './authenticationServiceBase';
 import { SupportedGitService } from '../utils/gitUrlNormalization';

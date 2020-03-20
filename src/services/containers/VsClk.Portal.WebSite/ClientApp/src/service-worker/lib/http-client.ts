@@ -3,7 +3,7 @@ import { SshChannel } from '@vs/vs-ssh';
 
 import { ConnectionManager } from './connection-manager';
 import { getRoutingDetails, RoutingDetails } from '../../common/url-utils';
-import { Signal } from '../../utils/signal';
+import { Signal } from 'vso-client-core';
 import { createLogger, Logger } from './logger';
 import { createUniqueId } from '../../dependencies';
 import { CriticalError } from './errors/CriticalError';

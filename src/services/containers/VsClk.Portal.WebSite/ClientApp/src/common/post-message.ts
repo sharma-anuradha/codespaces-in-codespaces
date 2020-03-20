@@ -1,5 +1,5 @@
 import { ServiceWorkerMessage } from './service-worker-messages';
-import { createTrace } from '../utils/createTrace';
+import { createTrace } from 'vso-client-core';
 
 const trace = createTrace('post-message');
 

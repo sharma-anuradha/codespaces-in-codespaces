@@ -11706,6 +11706,10 @@ vscode-jsonrpc@^4.0.0:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vscode-jsonrpc/-/vscode-jsonrpc-4.0.0.tgz#a7bf74ef3254d0a0c272fab15c82128e378b3be9"
   integrity sha1-p7907zJU0KDCcvqxXIISjjeLO+k=
 
+"vso-client-core@link:./vso-client-core":
+  version "0.0.0"
+  uid ""
+
 w3c-hr-time@^1.0.1:
   version "1.0.1"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/w3c-hr-time/-/w3c-hr-time-1.0.1.tgz#82ac2bff63d950ea9e3189a58a65625fedf19045"

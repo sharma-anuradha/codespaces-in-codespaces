@@ -1,7 +1,11 @@
-import { cleanupPIIForExternal } from '../cleanupPII';
-import { exceptionEventName } from './TelemetryEventNames';
+import {
+    cleanupPIIForExternal,
+    ITelemetryEvent,
+    TelemetryPropertyValue
+} from 'vso-client-core';
+import { useActionContext } from '../../actions/middleware/useActionContext';
 
-import { ITelemetryEvent, TelemetryPropertyValue } from './types';
+import { exceptionEventName } from './TelemetryEventNames';
 
 export class ExceptionTelemetryEvent implements ITelemetryEvent {
     constructor(readonly name: string = exceptionEventName, private readonly error: Error) {}
@@ -9,8 +13,11 @@ export class ExceptionTelemetryEvent implements ITelemetryEvent {
     get properties() {
         const { name, message, stack } = this.error;
 
+        const context = useActionContext();
+        const { isInternal } = context.state.authentication;
+
         return {
-            stack: cleanupPIIForExternal(stack),
+            stack: cleanupPIIForExternal(isInternal, stack),
             message,
             name,
         };

@@ -1,7 +1,8 @@
+import { maybePii } from 'vso-client-core';
+
 import { trace } from '../../utils/trace';
 import { IWorkspaceAccess, IWorkspaceInfo, ILiveShareClient } from './ILiveShareClient';
 import { ICredentialsProvider } from './ICredentialsProvider';
-import { maybePii } from '../../utils/createTrace';
 
 export interface AuthToken {
     access_token: string;

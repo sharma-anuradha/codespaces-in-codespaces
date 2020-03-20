@@ -1,6 +1,8 @@
-import { IActionContext } from '../../interfaces/IActionContext';
 import { AnyAction } from 'redux';
-import { TelemetryPropertyValue } from '../../utils/telemetry/types';
+
+import { TelemetryPropertyValue } from 'vso-client-core';
+
+import { IActionContext } from '../../interfaces/IActionContext';
 
 export interface BaseAction<
     TType extends string = string,

@@ -46,7 +46,7 @@ import {
 } from '../../actions/environmentSettingsChanges';
 import { Loader } from '../loader/loader';
 import { ServiceResponseError } from '../../actions/middleware/useWebClient';
-import { Signal } from '../../utils/signal';
+import { Signal } from 'vso-client-core';
 import { isDefined } from '../../utils/isDefined';
 
 const friendlyNameDisplayLength = 20;

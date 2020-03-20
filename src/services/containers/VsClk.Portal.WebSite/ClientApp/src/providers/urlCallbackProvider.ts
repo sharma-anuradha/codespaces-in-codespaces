@@ -6,7 +6,7 @@ import { Emitter, Event } from 'vscode-jsonrpc';
 
 import { getQueryParams } from '../utils/getQueryParams';
 
-import { randomString } from '../utils/randomString';
+import { randomString } from 'vso-client-core';
 import { getVscodeQuality } from '../utils/configurationUtil';
 
 export const callbackSymbol = Symbol('URICallbackSymbol');

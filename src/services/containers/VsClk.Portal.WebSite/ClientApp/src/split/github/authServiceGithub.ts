@@ -1,11 +1,11 @@
+import { addDefaultGithubKey, Signal, localStorageKeychain } from 'vso-client-core';
+
 import {
     getGitHubAccessToken,
     getStoredGitHubAccessTokenResponse,
     clearGitHubAccessTokenResponse,
 } from '../../services/gitHubAuthenticationService';
-import { addDefaultGithubKey } from '../../cache/localStorageKeychain/localstorageKeychainKeys';
-import { Signal } from '../../utils/signal';
-import { localStorageKeychain } from '../../cache/localStorageKeychainInstance';
+
 import { PostMessageRepoInfoRetriever, IRepoInfo } from './postMessageRepoInfoRetriever';
 import { parseCascadeToken } from './parseCascadeToken';
 

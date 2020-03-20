@@ -1,6 +1,6 @@
 import * as msal from '@vs/msal';
 
-import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
+import { localStorageKeychain } from 'vso-client-core';
 
 class StorageAdapter extends msal.CustomStorage {
     async setItem(key: string, value: string) {

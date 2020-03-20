@@ -7,7 +7,7 @@ import { IWebSocket } from 'vscode-web';
 import { EnvConnector } from '../ts-agent/envConnector';
 import { bufferToArrayBuffer } from '../utils/bufferToArrayBuffer';
 import { trace as baseTrace } from '../utils/trace';
-import { createTrace } from '../utils/createTrace';
+import { createTrace } from 'vso-client-core';
 
 import { ICloudEnvironment, StateInfo } from '../interfaces/cloudenvironment';
 import { sendTelemetry } from '../utils/telemetry';

@@ -22,6 +22,8 @@ import {
     Dropdown,
 } from 'office-ui-fabric-react';
 import { Loader } from '../loader/loader';
+import { getVSCodeVersion } from '../../constants';
+import { getFeatureSet } from '../../utils/featureSet';
 
 interface ISettingsMenuProps extends RouteComponentProps {
     selectedPlan: ActivePlanInfo | null;
@@ -36,6 +38,11 @@ interface ISettingsMenuState {
     showSuccessMessage: boolean;
     failureMessage: string | undefined;
 }
+
+const setTelemetryVSCodeConfig = () => {
+    const vscodeConfig = getVSCodeVersion(getFeatureSet());
+    telemetry.setVscodeConfig(vscodeConfig.commit, vscodeConfig.quality);
+};
 
 export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMenuState> {
     public constructor(props: ISettingsMenuProps) {
@@ -113,7 +120,8 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
                                 'vso-featureset',
                                 checked ? 'insider' : 'stable'
                             );
-                            telemetry.setVscodeConfig();
+
+                            setTelemetryVSCodeConfig();
                         }}
                     ></Toggle>
                     <div className='vsonline-settings-panel__separator' />

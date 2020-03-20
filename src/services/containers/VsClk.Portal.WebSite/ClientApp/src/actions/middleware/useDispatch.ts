@@ -7,7 +7,7 @@ import {
     ErrorActionWithContext,
     ActionWithPayloadWithContext,
 } from './types';
-import { isThenable } from '../../utils/isThenable';
+import { isThenable } from 'vso-client-core';
 import { createMetadataFor } from './useActionCreator';
 
 export type Dispatch = ReturnType<typeof useDispatch>;

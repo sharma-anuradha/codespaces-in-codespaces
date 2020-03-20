@@ -2,7 +2,7 @@ import * as rpc from 'vscode-jsonrpc';
 import { SharedServiceImp } from './sharedService';
 
 import * as vsls from '../contracts/VSLS';
-import { createTrace, maybePii } from '../../utils/createTrace';
+import { createTrace, maybePii } from 'vso-client-core';
 import { getGitHubAccessToken } from '../../services/gitHubAuthenticationService';
 import { getAzDevAccessToken } from '../../services/azDevAuthenticationService';
 import { SupportedGitService, getSupportedGitServiceByHost } from '../../utils/gitUrlNormalization';

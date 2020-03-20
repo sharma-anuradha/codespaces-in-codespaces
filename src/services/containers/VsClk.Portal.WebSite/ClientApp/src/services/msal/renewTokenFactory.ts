@@ -1,7 +1,6 @@
 import { CancellationToken } from 'vscode-jsonrpc';
 
-import { Signal } from '../../utils/signal';
-import { createTrace } from '../../utils/createTrace';
+import { Signal, createTrace } from 'vso-client-core';
 
 export const trace = createTrace('RenewTokenFactory');
 

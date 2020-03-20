@@ -1,4 +1,4 @@
-import { isGithubTLD } from '../../utils/isHostedOnGithub';
+import { isGithubTLD } from 'vso-client-core';
 import { createUniqueId } from '../../dependencies';
 
 export interface IRepoInfo {

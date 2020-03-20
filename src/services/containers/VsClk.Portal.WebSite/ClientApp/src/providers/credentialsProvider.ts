@@ -1,9 +1,10 @@
 import { ICredentialsProvider } from 'vscode-web';
 
-import { createTrace } from '../utils/createTrace';
+import { createTrace } from 'vso-client-core';
+
 import { authService } from '../services/authService';
 import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
-import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
+import { localStorageKeychain } from 'vso-client-core';
 
 const trace = createTrace('credentials-provider:info');
 

@@ -1,7 +1,8 @@
 import { MiddlewareAPI } from 'redux';
+import { TelemetryPropertyValue } from 'vso-client-core';
+
 import { DispatchWithContext } from '../actions/middleware/types';
 import { ApplicationState } from '../reducers/rootReducer';
-import { TelemetryPropertyValue } from '../utils/telemetry/types';
 
 export interface IActionContext {
     readonly makeRequest: typeof fetch;

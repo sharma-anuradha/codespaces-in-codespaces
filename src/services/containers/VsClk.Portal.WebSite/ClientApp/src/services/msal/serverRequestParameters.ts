@@ -1,4 +1,4 @@
-import { randomString } from '../../utils/randomString';
+import { randomString } from 'vso-client-core';
 import { StringDict } from './stringDict';
 import { Account } from './account';
 import { Authority } from './authority';

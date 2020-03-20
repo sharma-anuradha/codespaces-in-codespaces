@@ -1,6 +1,6 @@
 import { Disposable, CancellationToken } from 'vscode-jsonrpc';
 
-import { Signal } from '../../utils/signal';
+import { Signal } from 'vso-client-core';
 import { createCancellationToken } from '../../utils/timer';
 
 export class RequestStore<TResponse> implements Disposable {

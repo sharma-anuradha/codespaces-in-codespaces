@@ -6,17 +6,18 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Stack, StackItem } from 'office-ui-fabric-react/lib/Stack';
 import { Text } from 'office-ui-fabric-react/lib/Text';
+
+import { Signal, createTrace } from 'vso-client-core';
+
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { login, complete2FA } from '../../actions/login';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
 import { environmentsPath } from '../../routerPaths';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
-import { Signal } from '../../utils/signal';
 import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
 import './login.css';
 import { blogPostUrl, pricingInfoUrl, privacyStatementUrl } from '../../constants';
-import { createTrace } from '../../utils/createTrace';
 
 const trace = createTrace('Login');
 

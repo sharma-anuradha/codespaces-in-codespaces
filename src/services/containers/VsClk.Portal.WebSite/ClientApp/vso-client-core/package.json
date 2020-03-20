@@ -1,0 +1,15 @@
+{
+  "name": "vso-client-core",
+  "version": "0.1.0",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "compile": "tsc -b ./",
+    "watch": "tsc -b -watch ./",
+    "postinstall": "yarn compile"
+  },
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  }
+}

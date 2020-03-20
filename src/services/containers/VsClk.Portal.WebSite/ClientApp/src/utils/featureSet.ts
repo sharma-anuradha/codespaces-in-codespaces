@@ -3,15 +3,14 @@ export const customContainers = 'customContainers';
 export const azureDevOpsOAuth = 'azureDevOpsOAuth';
 
 const stableFeatures: string[] = [customContainers];
-
 const insiderFeatures: string[] = [azureDevOpsOAuth];
 
-export function getFeatureSet() : string
+export function getFeatureSet()
 {
-    return window.localStorage.getItem('vso-featureset') || 'stable';
+    return window.localStorage.getItem('vso-featureset') === 'insider' ? 'insider' : 'stable';
 }
 
-export function evaluateFeatureFlag(flag: string) : boolean
+export function evaluateFeatureFlag(flag: string): boolean
 {
     let featureSet = getFeatureSet();
 

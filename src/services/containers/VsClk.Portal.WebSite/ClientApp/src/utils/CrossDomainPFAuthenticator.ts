@@ -1,4 +1,4 @@
-import { randomString } from './randomString';
+import { randomString } from 'vso-client-core';
 
 export class CrossDomainPFAuthenticator {
     private id: string;

@@ -29,6 +29,9 @@ package-lock.json
 
 # vscode
 /public/static/web-standalone/
+/public/platform-auth.js
+/public/platform-auth.js.map
+
 /src/product-vscode-web.json
 /src/package-vscode-web.json
 
@@ -41,3 +44,4 @@ junit.xml
 
 service-worker-graph.svg
 main-graph.svg
+

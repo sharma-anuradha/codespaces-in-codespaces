@@ -1,9 +1,9 @@
+import { Signal, createTrace } from 'vso-client-core';
+
 import { createUniqueId } from '../dependencies';
-import { createTrace } from '../utils/createTrace';
-import { Signal } from '../utils/signal';
 import { IAuthenticationAttempt } from './authenticationServiceBase';
 import { SupportedGitService } from '../utils/gitUrlNormalization';
-import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
+import { localStorageKeychain } from 'vso-client-core';
 import { useWebClient } from '../actions/middleware/useWebClient';
 
 export const trace = createTrace('AzDevCredentialService');

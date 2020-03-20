@@ -1,6 +1,7 @@
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
 
-import { createTrace } from './utils/createTrace';
+import { createTrace } from 'vso-client-core';
+
 import { ServiceWorkerConfiguration } from './common/service-worker-configuration';
 import { postServiceWorkerMessage } from './common/post-message';
 import {

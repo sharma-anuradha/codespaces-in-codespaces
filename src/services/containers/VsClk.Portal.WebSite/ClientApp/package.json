@@ -114,29 +114,30 @@
     "tslint": "5.14.0",
     "tslint-microsoft-contrib": "6.1.0",
     "uuid": "^3.3.2",
+    "vso-client-core": "link:./vso-client-core",
     "webpack": "4.28.3",
     "webpack-cli": "^3.3.8"
   },
   "scripts": {
     "preinstall": "node scripts/npm/preinstall.js",
-    "postinstall": "node scripts/npm/postinstall.js",
+    "postinstall": "node scripts/npm/postinstall.js && yarn compile-client-core",
+    "compile-client-core": "cd ./vso-client-core && yarn compile",
+    "compile-platform-auth": "cd ./vso-platform-auth && yarn compile",
     "clean": "run-p clean:vscode clean:build",
     "clean:vscode": "rimraf public/static/web-standalone",
     "clean:build": "rimraf build",
     "prestart": "yarn get-service-principal",
     "start": "run-p watch:portal watch:client",
-    "start:github": "run-p watch:portal:github watch:client",
     "start:portal": "dotnet run --launch-profile Local --project ..",
     "start:webpack-dev-server": "run-p watch:client",
     "start:pf-proxy": "node port-forwarding-dev-server.js",
     "prewatch:client": "cross-env NODE_ENV=development node scripts/npm/generate-version-file.js",
     "watch:portal": "dotnet watch --project ../VsClk.Portal.WebSite.csproj run --launch-profile Local",
-    "watch:portal:github": "dotnet watch --project ../VsClk.Portal.WebSite.csproj run --launch-profile GitHubLocal",
     "watch:client": "node scripts/start",
     "watch:pf-proxy": "nodemon --watch ./port-forwarding-dev-server.js port-forwarding-dev-server.js",
     "build": "run-s build:client",
     "prebuild:client": "cross-env NODE_ENV=production node scripts/npm/generate-version-file.js",
-    "build:client": "node scripts/build",
+    "build:client": "node scripts/build && yarn compile-platform-auth",
     "test:ui": "node test/uitest/uitest.js",
     "test:ui-prep-json": "node test/uitest/prepTestJson.js",
     "pretest": "cross-env NODE_ENV=test node scripts/npm/generate-version-file.js",
@@ -169,6 +170,14 @@
     "insider": "64b65cf8e401cb98d4ddfc8324cb6635ff6fc2ed"
   },
   "jest": {
+    "setupFilesAfterEnv": [
+      "./jest.setup.js"
+    ],
+    "globals": {
+      "ts-jest": {
+        "tsConfig": "tsconfig.test.json"
+      }
+    },
     "collectCoverageFrom": [
       "src/**/*.{js,jsx,ts,tsx}",
       "!src/**/*.d.ts"

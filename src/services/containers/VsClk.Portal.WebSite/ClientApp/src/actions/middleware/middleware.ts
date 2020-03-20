@@ -1,7 +1,8 @@
 import { Middleware } from 'redux';
+
+import { isThenable, createTrace } from 'vso-client-core';
+
 import { recreateContext, Context } from './useActionContext';
-import { isThenable } from '../../utils/isThenable';
-import { createTrace } from '../../utils/createTrace';
 import { DispatchWithContext } from './types';
 import { ApplicationState } from '../../reducers/rootReducer';
 

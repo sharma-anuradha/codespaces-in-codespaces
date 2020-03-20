@@ -42,7 +42,7 @@ import {
 import './create-environment-panel.css';
 import { isDefined } from '../../utils/isDefined';
 import { Loader } from '../loader/loader';
-import { Signal } from '../../utils/signal';
+import { Signal } from 'vso-client-core';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
 import { getSkuSpecLabel } from '../../utils/environmentUtils';
 import { IAuthenticationAttempt } from '../../services/authenticationServiceBase';

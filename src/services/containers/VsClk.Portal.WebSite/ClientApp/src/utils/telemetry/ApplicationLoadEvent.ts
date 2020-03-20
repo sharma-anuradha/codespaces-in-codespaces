@@ -1,4 +1,4 @@
-import { ITelemetryEvent } from './types';
+import { ITelemetryEvent } from 'vso-client-core';
 
 export class ApplicationLoadEvent implements ITelemetryEvent {
     static readonly markName: string = 'vsonline/application/loaded';

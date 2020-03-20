@@ -25,5 +25,10 @@
   },
   "include": [
     "src", "test/uitest"
+  ],
+  "references": [
+    {
+        "path": "./vso-client-core"
+    }
   ]
 }

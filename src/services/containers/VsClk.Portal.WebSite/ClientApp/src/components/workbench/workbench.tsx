@@ -8,7 +8,8 @@ import {
     IApplicationLink,
 } from 'vscode-web';
 
-import { createTrace } from '../../utils/createTrace';
+import { createTrace } from 'vso-client-core';
+
 import { getVSCodeVersion } from '../../constants';
 
 import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';

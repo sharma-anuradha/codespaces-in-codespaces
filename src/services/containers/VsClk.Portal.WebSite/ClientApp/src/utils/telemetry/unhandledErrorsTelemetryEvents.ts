@@ -1,8 +1,7 @@
+import { ITelemetryEvent, cleanupPIIForExternal } from 'vso-client-core';
+
 import { unhandledRejectionEventName, unhandledErrorEventName, unhandledOnErrorEventName } from './TelemetryEventNames';
-
-import { cleanupPIIForExternal } from '../cleanupPII';
-
-import { ITelemetryEvent } from './types';
+import { useActionContext } from '../../actions/middleware/useActionContext';
 
 
 export class UnhandledRejectionTelemetryEvent implements ITelemetryEvent {
@@ -16,10 +15,13 @@ export class UnhandledRejectionTelemetryEvent implements ITelemetryEvent {
     constructor(private readonly rejection: PromiseRejectionEvent) {}
 
     get properties() {
+        const { state } = useActionContext();
+        const { authentication } = state;
+
         return {
             reason: this.rejection.reason,
             detail: (this.rejection as any).detail,
-            stack: cleanupPIIForExternal(this.getStack(this.rejection)),
+            stack: cleanupPIIForExternal(authentication.isInternal, this.getStack(this.rejection)),
         }
     }
 }
@@ -32,9 +34,11 @@ export class UnhandledErrorTelemetryEvent implements ITelemetryEvent {
 
     get properties() {
         const { name, message, stack } = this.error;
+        const { state } = useActionContext();
+        const { authentication } = state;
 
         return {
-            stack: cleanupPIIForExternal(stack),
+            stack: cleanupPIIForExternal(authentication.isInternal, stack),
             message,
             name,
         }
@@ -55,12 +59,15 @@ export class UnhandledOnErrorTelemetryEvent implements ITelemetryEvent {
 
     get properties() {
         const { name = '', message = '', stack = '' } = this.error || {};
+        const { state } = useActionContext();
+        const { authentication } = state;
+        const { isInternal } = authentication;
 
         return {
-            errorStack: cleanupPIIForExternal(stack),
+            errorStack: cleanupPIIForExternal(isInternal, stack),
             errorMessage: message,
             errorName: name,
-            source: cleanupPIIForExternal(this.source),
+            source: cleanupPIIForExternal(isInternal, this.source),
             lineno: this.lineno,
             colno: this.colno,
         }

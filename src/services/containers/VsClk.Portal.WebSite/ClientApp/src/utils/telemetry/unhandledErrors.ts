@@ -1,3 +1,5 @@
+import { createTrace } from 'vso-client-core';
+
 import { telemetry } from '.';
 import { unhandledUnexpectedEventName } from './TelemetryEventNames';
 import {
@@ -5,7 +7,6 @@ import {
     UnhandledOnErrorTelemetryEvent,
     UnhandledRejectionTelemetryEvent
 } from './unhandledErrorsTelemetryEvents';
-import { createTrace } from '../createTrace';
 
 const trace = createTrace('UnhandledExceptions');
 

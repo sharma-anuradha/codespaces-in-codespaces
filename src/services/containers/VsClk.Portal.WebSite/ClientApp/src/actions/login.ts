@@ -7,7 +7,7 @@ import { tokenFromTokenResponse } from '../services/tokenFromTokenResponse';
 import { clientApplication } from '../services/msalConfig';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
 import { getAuthToken } from './getAuthToken';
-import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
+import { localStorageKeychain } from 'vso-client-core';
 import { IUser } from '../interfaces/IUser';
 
 export const loginActionType = 'async.authentication.login';

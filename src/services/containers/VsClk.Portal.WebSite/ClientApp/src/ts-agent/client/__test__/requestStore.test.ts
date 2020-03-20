@@ -1,4 +1,4 @@
-import { CancellationError } from '../../../utils/signal';
+import { CancellationError } from 'vso-client-core';
 import { CancellationTokenSource } from 'vscode-jsonrpc';
 import { RequestStore } from '../RequestStore';
 

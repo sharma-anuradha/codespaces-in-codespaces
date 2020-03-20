@@ -3,9 +3,7 @@ import { Emitter } from 'vscode-jsonrpc';
 import { IJWTCache, IJWTAsyncCache } from '../typings/IJWTCache';
 import { inMemoryCacheFactory } from './inMemoryJWTCache';
 import { TokenType } from '../typings/TokenType';
-import { localStorageKeychain } from './localStorageKeychainInstance';
-
-import { IKeychain } from '../interfaces/IKeychain';
+import { localStorageKeychain, IKeychain } from 'vso-client-core';
 
 export const inLocalStorageJWTTokenCacheFactory = (keyPrefix?: string)=> {
     const inMemoryCache = inMemoryCacheFactory();

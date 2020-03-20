@@ -1,9 +1,10 @@
 import { MiddlewareAPI } from 'redux';
+import { TelemetryPropertyValue } from 'vso-client-core';
 
 import { createUniqueId } from '../../dependencies';
 import { DispatchWithContext } from './types';
 import { ApplicationState } from '../../reducers/rootReducer';
-import { TelemetryPropertyValue } from '../../utils/telemetry/types';
+
 import { IActionContext } from '../../interfaces/IActionContext';
 
 let context: Context | undefined;

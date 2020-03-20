@@ -13,7 +13,7 @@ import { SshChannelOpenner } from './sshChannelOpenner';
 import { onMessage as onServiceWorkerMessage } from '../serviceWorker';
 
 import { trace } from '../utils/trace';
-import { Signal } from '../utils/signal';
+import { Signal } from 'vso-client-core';
 import { VSCodeQuality } from '../utils/vscode';
 
 import { DEFAULT_EXTENSIONS, getVSCodeVersion, HOSTED_IN_GITHUB_EXTENSIONS } from '../constants';

@@ -1,5 +1,5 @@
+import { ITelemetryEvent } from 'vso-client-core';
 import { WithMetadata, ErrorAction } from '../../actions/middleware/types';
-import { ITelemetryEvent } from './types';
 
 export class ActionErrorEvent implements ITelemetryEvent {
     readonly name: string = 'vsonline/action/failure';

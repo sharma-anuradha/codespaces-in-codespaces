@@ -1,9 +1,10 @@
+import { createTrace } from 'vso-client-core';
+
 import * as vsls from '../ts-agent/contracts/VSLS';
 import { EnvConnector } from '../ts-agent/envConnector';
 import { WorkspaceClient } from '../ts-agent/workspaceClient';
 import { openSshChannel } from '../ts-agent/openSshChannel';
 import { SplashCommunicationProvider } from '../providers/splashCommunicationProvider';
-import { createTrace } from '../utils/createTrace';
 import { useActionContext } from '../actions/middleware/useActionContext';
 
 export class CommunicationAdapter {

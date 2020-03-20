@@ -1,6 +1,6 @@
+import { randomString, createTrace } from 'vso-client-core';
+
 import { expirationTimeBackgroundTokenRefreshThreshold, armAPIVersion } from '../constants';
-import { randomString } from '../utils/randomString';
-import { createTrace } from '../utils/createTrace';
 import { getTokenExpiration } from '../utils/getTokenExpiration';
 import { createNavigateUrl } from './msal/createNavigateUrl';
 import { inLocalStorageJWTTokenCacheFactory } from '../cache/localstorageJWTCache';

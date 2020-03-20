@@ -18,12 +18,13 @@ import { acquireToken, acquireTokenSilent } from './acquireToken';
 
 import { autServiceTrace } from './autServiceTrace';
 import {
+    Signal,
+    enhanceEncryptionKeys,
+    createKeys,
+    localStorageKeychain,
     setKeychainKeys,
     addRandomKey,
-} from '../cache/localStorageKeychain/localstorageKeychainKeys';
-import { localStorageKeychain } from '../cache/localStorageKeychainInstance';
-import { IKeychainKey, IKeychainKeyWithoutMethods } from '../interfaces/IKeychainKey';
-import { Signal } from '../utils/signal';
+} from 'vso-client-core';
 import { getUserFromMsalToken } from '../utils/getUserFromMsalToken';
 
 const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'];
@@ -31,20 +32,6 @@ const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed
 const LOCAL_STORAGE_KEY = 'vsonline.default.account';
 
 const tokenCache = inLocalStorageJWTTokenCacheFactory();
-
-export const enhanceEncryptionKeys = (keys: IKeychainKeyWithoutMethods[]): IKeychainKey[] => {
-    const keysWithMethods = keys.map((key: IKeychainKeyWithoutMethods) => {
-        return {
-            id: key.id,
-            key: new Buffer(key.key, 'base64'),
-            expiresOn: parseInt(`${key.expiresOn}`, 10),
-            method: 'AES',
-            methodMode: 'CBC',
-        } as IKeychainKey;
-    });
-
-    return keysWithMethods;
-};
 
 export const fetchKeychainKeys = async () => {
     try {
@@ -61,20 +48,6 @@ export const fetchKeychainKeys = async () => {
     }
 
     return null;
-};
-
-export const createKeys = async (token: string) => {
-    const result = await fetch('/keychain-keys', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        },
-    });
-
-    const keys = await result.json();
-
-    return enhanceEncryptionKeys(keys);
 };
 
 interface IAuthCode {
