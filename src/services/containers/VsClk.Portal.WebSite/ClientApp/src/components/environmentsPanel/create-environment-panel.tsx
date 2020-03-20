@@ -835,17 +835,21 @@ export class CreateEnvironmentPanelView extends Component<
     private async getGitHubAndAzureDevOpsAccessTokens() {
         let gitServiceProviders = [];
         if (this.state.shouldTryToAuthenticateForRepo) {
-            gitServiceProviders.push(getSupportedGitService(this.state.gitRepositoryUrl.value));
+            const normalizedGitUrl = normalizeGitUrl(this.state.gitRepositoryUrl.value);
+            if (normalizedGitUrl) {
+                gitServiceProviders.push(getSupportedGitService(normalizedGitUrl));
+            }
         }
         if (this.state.shouldTryToAuthenticateForDotfiles) {
-            let dotFilesGitServiceProvider = getSupportedGitService(
-                this.state.dotfilesRepository.value
-            );
-            if (
-                gitServiceProviders.length === 0 ||
-                gitServiceProviders[0] !== dotFilesGitServiceProvider
-            ) {
-                gitServiceProviders.push(dotFilesGitServiceProvider);
+            const normalizedGitUrl = normalizeGitUrl(this.state.dotfilesRepository.value);
+            if (normalizedGitUrl) {
+                let dotFilesGitServiceProvider = getSupportedGitService(normalizedGitUrl);
+                if (
+                    gitServiceProviders.length === 0 ||
+                    gitServiceProviders[0] !== dotFilesGitServiceProvider
+                ) {
+                    gitServiceProviders.push(dotFilesGitServiceProvider);
+                }
             }
         }
         for (let gitServiceProvider of gitServiceProviders) {
