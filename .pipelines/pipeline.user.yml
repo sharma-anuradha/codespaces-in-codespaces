@@ -43,3 +43,4 @@ static_analysis_options:
           - 'webpack.config.worker.js'
           - 'port-forwarding-dev-server.js'
           - 'public\amdconfig.js'
+          - 'vso-platform-auth\webpack.config.js'
